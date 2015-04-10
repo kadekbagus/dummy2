@@ -159,6 +159,8 @@ We can do some fancy things inside `bootstrap/start.php` to detect environment, 
 
 So to begin working with project one should copy `app/config/app.php.sample` to `app/config/app.php` and also `app/config/database.php.sample` to `app/config/database.php`. Then make some changes as you need to the configuration file. Here is an example of `app/config/app.php`.
 
+There is also one file specific to Orbit Mall config in `app/config/orbit.php.sample`, you have to copy this file to `app/config/orbit.php`.
+
 #### Application Timezone
 
 Always use UTC when saving data to the database. It is very important so we can easily convert date/time data to any timezone if the source is UTC. Laravel application uses to many magic as example when it saving created_at and updated_at. It is best to keep the application timezone to UTC and display the date and time based on user specific timezone.
