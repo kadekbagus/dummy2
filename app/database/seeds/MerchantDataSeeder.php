@@ -1,6 +1,6 @@
 <?php
 /**
- * Seeder for User
+ * Seeder for Mall
  *
  * @author Rio Astamal <me@rioastamal.net>
  */
@@ -8,27 +8,31 @@ class MerchantDataSeeder extends Seeder
 {
     public function run()
     {
-        $passwordMerchant = 'merchant2015';
+        // Mall account but this on the database is recorded as "Merchant"
+        $passwordMall = 'mastermall2015';
+        $role = Role::where('role_name', 'Mall Owner')->first();
         $merchantUserData = [
             'user_id'           => 2,
-            'username'          => 'merchant',
-            'user_email'        => 'merchant@myorbit.com',
-            'user_password'     => Hash::make($passwordMerchant),
+            'username'          => 'mastermall',
+            'user_email'        => 'mastermall@myorbit.com',
+            'user_password'     => Hash::make($passwordMall),
             'user_firstname'    => 'Orbit',
-            'user_lastname'     => 'Merchant',
+            'user_lastname'     => 'Master Mall',
             'status'            => 'active',
-            'user_role_id'      => 4 // => Merchant Owner
+            'user_role_id'      => $role->role_id
         ];
-        $passwordRetailer = 'retailer2015';
+
+        // Mall location account but this on the database is recorded as "Retailer"
+        $passwordRetailer = 'mastermall2015';
         $retailerUserData = [
             'user_id'           => 3,
-            'username'          => 'retailer',
-            'user_email'        => 'retailer@myorbit.com',
+            'username'          => 'mall',
+            'user_email'        => 'mall@myorbit.com',
             'user_password'     => Hash::make($passwordRetailer),
             'user_firstname'    => 'Orbit',
-            'user_lastname'     => 'Retailer',
+            'user_lastname'     => 'Mall',
             'status'            => 'active',
-            'user_role_id'      => 5 // => Retailer Owner
+            'user_role_id'      => $role->role_id
         ];
 
         // ------- MERCHANT USER
@@ -76,17 +80,17 @@ class MerchantDataSeeder extends Seeder
             'merchant_id'   => 1,
             'omid'          => 'ORBIT-MERCHANT-01',
             'user_id'       => 2,
-            'email'         => 'merchant@myorbit.com',
-            'name'          => 'Orbit Merchant',
-            'description'   => 'Dummy merchant for Orbit test',
+            'email'         => 'mastermall@myorbit.com',
+            'name'          => 'Orbit Master Mall',
+            'description'   => 'Dummy Master mall for Orbit',
             'status'        => 'active',
             'start_date_activity'   => date('Y-m-d 00:00:00'),
             'postal_code'           => '60123',
             'city_id'               => 0,
-            'city'                  => 'Denpasar',
+            'city'                  => 'Jakarta',
             'country_id'            => 101,
             'country'               => 'Indonesia',
-            'phone'                 => '62|#|361|#|987654321',
+            'phone'                 => '62|#|21|#|987654321',
             'currency'              => 'USD',
             'currency_symbol'       => '$',
             'vat_included'          => 'no',
@@ -95,7 +99,7 @@ class MerchantDataSeeder extends Seeder
             'contact_person_position'   => 'Marketing',
             'contact_person_phone'      => '62|#||#|812345678',
             'contact_person_email'      => 'john-doe@myorbit.com',
-            'sector_of_activity'        => 'Retail',
+            'sector_of_activity'        => '',
             'url'                       => 'myorbit.com',
             'modified_by'               => 0,
         ];
@@ -105,18 +109,18 @@ class MerchantDataSeeder extends Seeder
             'merchant_id'   => 2,
             'omid'          => 'ORBIT-RETAILER-01',
             'user_id'       => 3,
-            'email'         => 'retailer@myorbit.com',
-            'name'          => 'Orbit Retailer',
-            'description'   => 'Dummy retailer for Orbit test',
+            'email'         => 'mall@myorbit.com',
+            'name'          => 'Orbit Mall',
+            'description'   => 'Dummy mall location for Orbit',
             'status'        => 'active',
             'parent_id'     => 1,
             'start_date_activity'   => date('Y-m-d 00:00:00'),
             'postal_code'           => '60123',
             'city_id'               => 0,
-            'city'                  => 'Denpasar',
+            'city'                  => 'Jakarta',
             'country_id'            => 101,
             'country'               => 'Indonesia',
-            'phone'                 => '62|#|361|#|987654321',
+            'phone'                 => '62|#|21|#|987654321',
             'currency'              => 'USD',
             'currency_symbol'       => '$',
             'vat_included'          => 'no',
