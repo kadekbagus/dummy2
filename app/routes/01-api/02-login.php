@@ -8,12 +8,12 @@
  */
 Route::post('/api/v1/login', function()
 {
-    return LoginAPIController::create()->postLogin();
+    return DummyAPIController::create()->unsupported();
 });
 
 Route::post('/api/v1/logout', function()
 {
-    return LoginAPIController::create()->postLogout();
+    return DummyAPIController::create()->unsupported();
 });
 
 /**

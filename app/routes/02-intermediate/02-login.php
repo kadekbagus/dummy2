@@ -7,8 +7,9 @@
 /**
  * Login and logout user
  */
-Route::post('/app/v1/login', 'IntermediateLoginController@postLogin');
-Route::get('/app/v1/logout', 'IntermediateLoginController@getLogout');
+Route::post('/app/v1/login', 'IntermediateLoginController@Dummy_unsupported');
+Route::post('/app/v1/logout', 'IntermediateLoginController@Dummy_unsupported');
+Route::get('/app/v1/logout', 'IntermediateLoginController@Dummy_unsupported');
 Route::get('/app/v1/session', 'IntermediateLoginController@getSession');
 
 /**

@@ -9,12 +9,23 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 
 class DummyAPIController extends ControllerAPI
 {
     public function IamOK()
     {
         return $this->render();
+    }
+
+    public function unsupported()
+    {
+        $this->response->code = Status::UNKNOWN_ERROR;
+        $this->response->status = 'error';
+        $this->response->message = 'Call to this URL is unsupported.';
+        $this->response->data = NULL;
+
+        return $this->render(410);
     }
 
     public function hisName()
