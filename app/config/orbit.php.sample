@@ -24,7 +24,7 @@ return array(
     // General contact data
     'contact_information' => array(
         'customer_service'  => array(
-            'email' => 'cs@localhost.org',
+            'email' => 'cs@myorbit.com',
             'name'  => 'Orbit Customer Service',
             'phone' => '+62123456789',
             'fax'   => '+62123456789',
@@ -163,6 +163,17 @@ return array(
             'max_record'    => 100,
         ),
 
+        // News
+        'news' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Lucky Draw
+        'lucky_draw' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
     ),
 
     'registration' => array(
@@ -175,19 +186,19 @@ return array(
 
             // Sender
             'sender' => array(
-                'email' => 'no-reply@localhost.org',
-                'name'  => 'DominoPOS'
+                'email' => 'no-reply@myorbit.com',
+                'name'  => 'Orbit'
             ),
 
             // Activation URL
             // This should be frontend URL not backend
-            'activation_base_url' => 'http://orbit-shop.here/#/activate-account?token=%s',
+            'activation_base_url' => 'http://orbit-mall.here/#/activate-account?token=%s',
 
             // Number of days the activation link will expires
             'activation_expire' => 365,
 
             // Sign in URL
-            'signin_url' => 'http://orbit-shop.here/signin',
+            'signin_url' => 'http://orbit-mall.here/',
 
             // Fake registration means it does not save the data, only sends
             // the welcome email
@@ -264,6 +275,144 @@ return array(
                 'httponly'  => TRUE
             ),
         ),
+
+        /**
+         * Where is session data should be coming from
+         * @Todo: use this config instead
+         */
+        'origin' => array(
+            'mobile' => array(
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-Mobile'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-Mobile',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'admin_portal' => array(
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-Admin'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-Admin'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-Admin',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'mall_portal' => array(
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-Mall'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-Mall'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-Mall',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'cs_portal' => array(
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-CS'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-CS'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-CS',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+        ),
     ),
 
     // Security related configuration
@@ -320,10 +469,10 @@ return array(
        'merchant'  => array(
             'logo' => array(
                 // Allowed Extension
-                'file_type'     => array('jpg', 'png', 'jpeg'),
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
 
                 // Allowed Mimetype
-                'mime_type'     => array('image/jpeg', 'image/png'),
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
                 'file_size'     => 150000,
@@ -390,10 +539,10 @@ return array(
         'retailer'  => array(
             'logo'  => array(
                 // Allowed Extension
-                'file_type'     => array('jpg', 'png', 'jpeg'),
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
 
                 // Allowed Mimetype
-                'mime_type'     => array('image/jpeg', 'image/png'),
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
                 'file_size'     => 150000,
@@ -463,10 +612,10 @@ return array(
         'product'  => array(
             'main' => array(
                 // Allowed Extension
-                'file_type'     => array('jpg', 'png', 'jpeg'),
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
 
                 // Allowed Mimetype
-                'mime_type'     => array('image/jpeg', 'image/png'),
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
                 'file_size'     => 150000,
@@ -536,10 +685,10 @@ return array(
         'promotion'  => array(
             'main' => array(
                 // Allowed Extension
-                'file_type'     => array('jpg', 'png', 'jpeg'),
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
 
                 // Allowed Mimetype
-                'mime_type'     => array('image/jpeg', 'image/png'),
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
                 'file_size'     => 150000,
@@ -609,10 +758,10 @@ return array(
        'user'  => array(
             'profile_picture' => array(
                 // Allowed Extension
-                'file_type'     => array('jpg', 'png', 'jpeg'),
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
 
                 // Allowed Mimetype
-                'mime_type'     => array('image/jpeg', 'image/png'),
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
                 'file_size'     => 150000,
@@ -686,10 +835,10 @@ return array(
         'coupon'  => array(
             'main' => array(
                 // Allowed Extension
-                'file_type'     => array('jpg', 'png', 'jpeg'),
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
 
                 // Allowed Mimetype
-                'mime_type'     => array('image/jpeg', 'image/png'),
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
                 'file_size'     => 150000,
@@ -759,10 +908,10 @@ return array(
         'event'  => array(
             'main' => array(
                 // Allowed Extension
-                'file_type'     => array('jpg', 'png', 'jpeg'),
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
 
                 // Allowed Mimetype
-                'mime_type'     => array('image/jpeg', 'image/png'),
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
                 'file_size'     => 150000,
@@ -832,16 +981,89 @@ return array(
         'widget'  => array(
             'main' => array(
                 // Allowed Extension
-                'file_type'     => array('jpg', 'png', 'jpeg'),
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
 
                 // Allowed Mimetype
-                'mime_type'     => array('image/jpeg', 'image/png'),
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 1500000,
+                'file_size'     => 150000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/widgets',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 400,
+                        'height'    => 400
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        // -------------------------------------------------------------------//
+        // News Related Uploads
+        // -------------------------------------------------------------------//
+        'news'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/news',
 
                 // Default HTML element name
                 'name'          => 'images',
