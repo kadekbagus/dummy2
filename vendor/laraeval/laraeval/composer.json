@@ -1,0 +1,24 @@
+{
+    "name": "laraeval/laraeval",
+    "description": "PHP Code evaluator for Laravel 4",
+    "keywords": ["laravel", "eval", "illuminate"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rio Astamal",
+            "email": "me@rioastamal.net"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.7"
+    },
+    "autoload": {
+        "classmap": [
+            "src/migrations"
+        ],
+        "psr-0": {
+            "Laraeval\\Laraeval": "src/"
+        }
+    },
+    "minimum-stability": "dev"
+}

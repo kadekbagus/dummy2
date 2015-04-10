@@ -1,0 +1,935 @@
+<?php
+/**
+ * Orbit specific configuraiton.
+ */
+return array(
+
+    // Languages that supported by orbit app
+    'languages' => array('en','id'),
+
+    'api' => array(
+        'signature' => array(
+                // How long signature should expires in seconds
+                'expiration' => 60
+        )
+    ),
+
+    'shop' => array(
+        // Id of the retailer
+        'id'    => NULL,
+        // search result limit
+        'search_limit' => 300,
+    ),
+
+    // General contact data
+    'contact_information' => array(
+        'customer_service'  => array(
+            'email' => 'cs@localhost.org',
+            'name'  => 'Orbit Customer Service',
+            'phone' => '+62123456789',
+            'fax'   => '+62123456789',
+            'office_hour'   => '9am - 6pm'
+        )
+    ),
+
+    // Default Pagination
+    'pagination' => array(
+        'per_page'      => 25,
+        'max_record'    => 50,
+
+        // Activity
+        'activity' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Country
+        'country' => array(
+            'per_page'      => 300,
+            'max_record'    => 300,
+        ),
+
+        // Coupon
+        'coupon' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Employee
+        'employee' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Event
+        'event' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Issued Coupon
+        'issuedcoupon' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Merchant
+        'merchant' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Merchant Tax
+        'merchanttax' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Personal Interest
+        'personal_interest' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Pos Quick Product
+        'pos_quick_product' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Product
+        'product' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Product attribute
+        'product_attribute' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Product Category
+        'product_category' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Promotion
+        'promotion' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Retailer
+        'retailer' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Role
+        'role' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Setting
+        'setting' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Token
+        'token' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Transaction History
+        'transaction_history' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // User
+        'user' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Widget
+        'widget' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+    ),
+
+    'registration' => array(
+        'mobile'    => array(
+            // New role assigned to the user
+            'role' => 'Consumer',
+
+            // Status of the user
+            'status' => 'pending',
+
+            // Sender
+            'sender' => array(
+                'email' => 'no-reply@localhost.org',
+                'name'  => 'DominoPOS'
+            ),
+
+            // Activation URL
+            // This should be frontend URL not backend
+            'activation_base_url' => 'http://orbit-shop.here/#/activate-account?token=%s',
+
+            // Number of days the activation link will expires
+            'activation_expire' => 365,
+
+            // Sign in URL
+            'signin_url' => 'http://orbit-shop.here/signin',
+
+            // Fake registration means it does not save the data, only sends
+            // the welcome email
+            'fake'  => FALSE,
+
+            // Flag to send welcome email
+            'send_welcome_email'    => FALSE
+        ),
+    ),
+
+    // Session related configuration
+    'session' => array(
+        /**
+         * How long session will expire in seconds
+         */
+        'expire' => 3600,
+
+        /**
+         * Path to write the session data
+         */
+        'path' => sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'orbit-session',
+
+        /**
+         * Strict mode, will check the user agent and ip address
+         */
+        'strict' => TRUE,
+
+        /**
+         * Session Driver
+         */
+        'driver' => 'file',
+
+        /**
+         * Session data available
+         */
+        'availability' => array(
+            'header'        => TRUE,
+            'query_string'  => TRUE,
+            'cookie'        => TRUE,
+        ),
+
+        /**
+         * Where is session data should be coming from
+         */
+        'session_origin' => array(
+            // From HTTP Headers
+            'header'  => array(
+                'name'      => 'X-Orbit-Session'
+            ),
+
+            // From Query String
+            'query_string' => array(
+                'name'      => 'orbit_session'
+            ),
+
+            // From Cookie
+            'cookie'    => array(
+                'name'      => 'orbit_sessionx',
+
+                // Expire time, should be set equals or higher than
+                // SessionConifg.expire
+                'expire' => 62208000,   // two years
+
+                // Path of the cookie
+                'path'      => '/',
+
+                // domain
+                'domain'    => NULL,
+
+                // secure transfer via HTTPS only
+                'secure'    => FALSE,
+
+                // Deny access from client side script
+                'httponly'  => TRUE
+            ),
+        ),
+    ),
+
+    // Security related configuration
+    'security' => array(
+        // Super Admin Roles
+        'superadmin' => array(
+            'super admin',
+        ),
+
+        'csrf' => array(
+            // Use CSRF protection?
+            'protect'   => TRUE,
+
+            // Name of the form input field to store the token
+            // available mode: `normal` and `angularjs`
+            'mode'      => 'angularjs',
+
+            // CSRF normal mode configuration
+            'normal'    => array(
+                'name'  => 'orbit_token'
+            ),
+
+            // CSRF AngularJS mode configuration
+            // https://docs.angularjs.org/api/ng/service/$http
+            'angularjs' => array(
+                'name'              => 'orbit_token',
+                'header_name'       => 'X-Orbit-Token',
+                'header_name_php'   => 'HTTP_X_ORBIT_TOKEN',
+            ),
+        ),
+
+        // Firewall on Orbit Box
+        'firewall'  => array(
+            // Fake call means, no real call to the router
+            'fake_call' => TRUE,
+
+            // Command to register or deregister client Mac address
+            'command'   => 'sudo /home/orbit/scripts/firewall/register_mac.sh'
+        ),
+
+        // Box management related commands
+        'commands' => array(
+            // The shutdown command, the caller should send the "shutdown"
+            // string via STDIN
+            'shutdown'  => 'sudo /home/orbit/scripts/helpers/shutdown.sh',
+
+            // The reboot command, the caller should send the "reboot" string
+            // via STDIN
+            'reboot'    => 'sudo /home/orbit/scripts/helpers/shutdown.sh'
+        ),
+    ),
+
+    'upload'    => array(
+       'merchant'  => array(
+            'logo' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/merchants',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        'retailer'  => array(
+            'logo'  => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        // -------------------------------------------------------------------//
+        // Product Related Uploads
+        // -------------------------------------------------------------------//
+        'product'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/product',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        // -------------------------------------------------------------------//
+        // Promotion Related Uploads
+        // -------------------------------------------------------------------//
+        'promotion'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/promotion',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        // -------------------------------------------------------------------//
+        // User Image Related Uploads
+        // -------------------------------------------------------------------//
+       'user'  => array(
+            'profile_picture' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/users',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 500,
+                        'height'    => 500
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'square' => array(
+                        'width'     => 500,
+                        'height'    => 500,
+                    ),
+                    'thumbnail' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    ),
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        // -------------------------------------------------------------------//
+        // Coupon Related Uploads
+        // -------------------------------------------------------------------//
+        'coupon'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/coupon',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        // -------------------------------------------------------------------//
+        // Event Related Uploads
+        // -------------------------------------------------------------------//
+        'event'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/event',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        // -------------------------------------------------------------------//
+        // Widget Related Uploads
+        // -------------------------------------------------------------------//
+        'widget'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 1500000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/widgets',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 400,
+                        'height'    => 400
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+    ),
+
+    'devices'  => array(
+        'barcode'    => array(
+            'path'   => '/home/dominopos1/drivers/64bits/barcode',
+            'params' => '/dev/domino/scanner'
+        ),
+
+        'edc'        => array(
+            'path'   => '/home/dominopos1/drivers/edc_ict220_V102/ict220',
+            'params' => '/dev/ttyUSB0'
+        ),
+
+        'cdisplay'   => array(
+            'path'   => '/home/dominopos1/drivers/64bits/cdisplay_newborn',
+            'params' => '/dev/ttyACM0'
+        ),
+
+        'printer'    => array(
+            'params' => '/dev/domino/printer'
+        ),
+
+        'cutpaper'   => array(
+            'path'   => '/home/dominopos1/drivers/64bits/cut_paper'
+        ),
+
+        'cashdrawer' => array(
+            'path'   => '/home/dominopos1/drivers/64bits/cash_drawer'
+        ),
+
+        'prepare_screen'    => array(
+            'path'  => '/home/orbitadmin/scripts/helpers/screen-display.sh'
+        )
+    ),
+);
