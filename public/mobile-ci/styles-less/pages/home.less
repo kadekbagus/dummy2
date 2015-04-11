@@ -1,0 +1,131 @@
+html{
+  -ms-content-zooming: none;
+  -ms-touch-action: pan-x pan-y;
+}
+.mobile-ci.home-widget.widget-container {
+  margin-top: 2em;
+  .single-widget-container {
+    margin-bottom: 2em;
+    .widget-title {
+      color: @theme-main-complimentary-2;
+      background-color: @theme-main;
+      font-size: 3vw;
+      padding-left: .5em;
+      overflow: hidden;
+      div {
+        width:500px;
+      }
+      &.widget-subtitle{
+        font-size:2.5vw;
+      }
+    }
+    .widget-single {
+      border: 1px solid @theme-main-gray;
+      border-top: none;
+      .top-container, .bottom-container {
+        text-align: center;
+      }
+      .top-container, .bottom-container, .left-arrow, .right-arrow {
+        color: darken(@theme-main-gray, 10%);
+        font-size: 1.5em;
+      }
+      .middle-container {
+        width: 100%;
+        overflow: auto;
+        padding: 0 7px;
+        .left-arrow {
+          width: 10%;
+          float: left;
+          text-align: left;
+        }
+        .widget-content-container {
+          width: 80%;
+          text-align: center;
+          float: left;
+          margin: 0 auto;
+          position: relative;
+          .widget-content {
+
+          }
+        }
+        .right-arrow {
+          width: 10%;
+          float: right;
+          text-align: right;
+        }
+        .left-arrow, .right-arrow {
+          position: relative;
+          top: 50%;
+          transform: translateY(250%);
+        }
+      }
+      .bottom-container {}
+    }
+    .widget-single.animate-horizontal {
+      padding: .5em 0;
+    }
+    .widget-single.animate-vertical {
+      padding: 0 .5em;
+    }
+  }
+}
+.merchant-logo{
+  margin-top:20px;
+  img{
+    max-width:120px;
+    width:100%;
+  }
+}
+.rslides_nav {
+  z-index: 3;
+  position: absolute;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  top: 50%;
+  left: 16px;
+  opacity: 0.2;
+  // text-indent: -9999px;
+  overflow: hidden;
+  text-decoration: none;
+  height: 61px;
+  width: 38px;
+  background: transparent url("../images/themes.gif") no-repeat left top;
+  margin-top: -10px;
+  padding: 2px 8px;
+  color: #fff;
+  font-size: 21px;
+}
+
+.rslides_nav:active {
+  
+}
+
+.rslides_nav.next {
+  left: auto;
+  padding: 2px 14px;
+  background-position: right top;
+  right: 16px;
+}
+.widget-slogan{
+  color:#fff;
+  position:absolute;
+  bottom:0;
+  background:rgba(0,0,0,.8);
+  z-index:9999;
+  font-size:2.5vw;
+  padding:4px;
+  display: block;
+  width:80%;
+}
+.rslides li{
+  position: relative;
+}
+.rslides li a img.vcenter{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}

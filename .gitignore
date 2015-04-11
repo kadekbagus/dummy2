@@ -1,0 +1,31 @@
+/bootstrap/compiled.php
+composer.phar
+.env.*.php
+.env.php
+.DS_Store
+Thumbs.db
+/.idea
+*.iml
+
+# Config
+app/config/app.php
+app/config/database.php
+app/config/testing/database.php
+app/config/orbit.php
+app/config/mail.php
+public/mobile-ci/scripts/config.js
+public/templatepos/js/config.js
+
+# Uploads directory
+public/uploads/**
+
+# Environment
+app/config/rio/**
+orbit.env.php
+
+# Laraeval config
+app/config/packages/laraeval/laraeval/config.php
+
+# Test vendor
+vendor/fzaninotto/
+vendor/laracasts/

@@ -1,0 +1,9 @@
+language: php
+
+php: 
+  - 5.3
+  - 5.4
+
+before_script: ./laraeval-travis-build.sh
+
+script: phpunit -c ./laraeval-travis-build/phpunit.xml

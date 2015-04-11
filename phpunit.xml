@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         bootstrap="bootstrap/autoload.php"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="true"
+         stopOnError="true"
+         syntaxCheck="false"
+>
+    <testsuites>
+        <testsuite name="Model Test Suite">
+            <directory>./app/tests/models/</directory>
+        </testsuite>
+
+        <testsuite name="Base APIv1 Test Suite">
+            <directory>./app/tests/api/v1/base/</directory>
+        </testsuite>
+
+        <testsuite name="User APIv1 Test Suite">
+            <directory>./app/tests/api/v1/user/</directory>
+        </testsuite>
+
+        <testsuite name="Merchant APIv1 Test Suite">
+            <directory>./app/tests/api/v1/merchant/</directory>
+        </testsuite>
+
+        <testsuite name="Retailer APIv1 Test Suite">
+            <directory>./app/tests/api/v1/retailer/</directory>
+        </testsuite>
+
+        <testsuite name="Orbit ACL Test Suite">
+            <directory>./app/tests/acl</directory>
+        </testsuite>
+
+        <testsuite name="Orbit Uploader Test Suite">
+            <directory>./app/tests/uploader</directory>
+        </testsuite>
+
+        <testsuite name="Application Test Suite">
+            <directory>./app/tests/</directory>
+        </testsuite>
+
+    </testsuites>
+</phpunit>

@@ -1,0 +1,55 @@
+{
+    "name": "laravel/laravel",
+    "description": "The Laravel Framework.",
+    "keywords": ["framework", "laravel"],
+    "license": "MIT",
+    "type": "project",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.zendframework.com/"
+        }
+    ],
+    "require": {
+        "laravel/framework": "4.2.9",
+        "zendframework/zend-permissions-acl": "2.3",
+        "laraeval/laraeval": "dev-master",
+        "barryvdh/laravel-debugbar": "1.7.7"
+    },
+    "autoload": {
+                "psr-0": {
+                    "DominoPOS\\OrbitAPI\\": "vendor/dominopos/orbit-api/",
+                    "OrbitShop\\API\\": "vendor/dominopos/orbit-shop-api/",
+                    "DominoPOS\\OrbitACL\\": "vendor/dominopos/orbit-acl/",
+                    "DominoPOS\\OrbitUploader\\": "vendor/dominopos/orbit-uploader/",
+                    "DominoPOS\\OrbitSession\\": "vendor/dominopos/orbit-session/"
+                },
+        "classmap": [
+            "app/commands",
+            "app/controllers",
+            "app/models",
+            "app/database/migrations",
+            "app/database/seeds",
+            "app/tests/TestCase.php",
+            "app/tests/OrbitTestCase.php",
+            "app/helpers"
+        ]
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "php artisan clear-compiled",
+            "php artisan optimize"
+        ],
+        "post-update-cmd": [
+            "php artisan clear-compiled",
+            "php artisan optimize"
+        ],
+        "post-create-project-cmd": [
+            "php artisan key:generate"
+        ]
+    },
+    "config": {
+        "preferred-install": "dist"
+    },
+    "minimum-stability": "stable"
+}

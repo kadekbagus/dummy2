@@ -1,0 +1,22 @@
+{
+    "name": "dominopos/orbit-api",
+    "description": "General API for Orbit application",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rio Astamal",
+            "email": "me@rioastamal.net"
+        }
+    ],
+    "autoload": {
+        "classmap": [
+        ],
+        "psr-0": {
+            "DominoPOS\\OrbitAPI\\": ""
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=5.3.10"
+    }
+}
