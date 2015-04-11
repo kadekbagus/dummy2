@@ -24,6 +24,12 @@ class Merchant extends Eloquent
     use MerchantTypeTrait;
 
     /**
+     * Use Trait MallTrait so we only displaying records with value related
+     * to Mall.
+     */
+    use MallTrait;
+
+    /**
      * Column name which determine the type of Merchant or Retailer.
      */
     const OBJECT_TYPE = 'object_type';
@@ -52,6 +58,14 @@ class Merchant extends Eloquent
     public function children()
     {
         return $this->retailers();
+    }
+
+    /**
+     * Merchant belongs to and has many category.
+     */
+    public function categories()
+    {
+        return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
     }
 
     /**

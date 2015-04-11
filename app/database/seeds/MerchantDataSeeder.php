@@ -9,25 +9,25 @@ class MerchantDataSeeder extends Seeder
     public function run()
     {
         // Mall account but this on the database is recorded as "Merchant"
-        $passwordMall = 'mastermall2015';
+        $passwordMall = 'lippomall';
         $role = Role::where('role_name', 'Mall Owner')->first();
         $merchantUserData = [
             'user_id'           => 2,
-            'username'          => 'mastermall',
-            'user_email'        => 'mastermall@myorbit.com',
+            'username'          => 'lippomall',
+            'user_email'        => 'lippomall@myorbit.com',
             'user_password'     => Hash::make($passwordMall),
-            'user_firstname'    => 'Orbit',
-            'user_lastname'     => 'Master Mall',
+            'user_firstname'    => 'Lippo',
+            'user_lastname'     => 'Mall',
             'status'            => 'active',
             'user_role_id'      => $role->role_id
         ];
 
         // Mall location account but this on the database is recorded as "Retailer"
-        $passwordRetailer = 'mastermall2015';
+        $passwordRetailer = 'lippomallpuri';
         $retailerUserData = [
             'user_id'           => 3,
-            'username'          => 'mall',
-            'user_email'        => 'mall@myorbit.com',
+            'username'          => 'lippomallpuri',
+            'user_email'        => 'lippomallpuri@myorbit.com',
             'user_password'     => Hash::make($passwordRetailer),
             'user_firstname'    => 'Orbit',
             'user_lastname'     => 'Mall',
@@ -78,11 +78,11 @@ class MerchantDataSeeder extends Seeder
         // Data for merchant
         $merchantData = [
             'merchant_id'   => 1,
-            'omid'          => 'ORBIT-MERCHANT-01',
+            'omid'          => 'LIPPO-MALL',
             'user_id'       => 2,
-            'email'         => 'mastermall@myorbit.com',
-            'name'          => 'Orbit Master Mall',
-            'description'   => 'Dummy Master mall for Orbit',
+            'email'         => 'lippomall@myorbit.com',
+            'name'          => 'Lippo Mall',
+            'description'   => 'Lippo Mall',
             'status'        => 'active',
             'start_date_activity'   => date('Y-m-d 00:00:00'),
             'postal_code'           => '60123',
@@ -99,19 +99,20 @@ class MerchantDataSeeder extends Seeder
             'contact_person_position'   => 'Marketing',
             'contact_person_phone'      => '62|#||#|812345678',
             'contact_person_email'      => 'john-doe@myorbit.com',
-            'sector_of_activity'        => '',
-            'url'                       => 'myorbit.com',
+            'sector_of_activity'        => 'Retail',
+            'url'                       => 'www.lippomalls.com',
+            'is_mall'                   => 'yes',
             'modified_by'               => 0,
         ];
 
         // Data for retailer
         $retailerData = [
             'merchant_id'   => 2,
-            'omid'          => 'ORBIT-RETAILER-01',
+            'omid'          => 'LIPPO-MALL-PURI-01',
             'user_id'       => 3,
-            'email'         => 'mall@myorbit.com',
-            'name'          => 'Orbit Mall',
-            'description'   => 'Dummy mall location for Orbit',
+            'email'         => 'lippomallpuri@myorbit.com',
+            'name'          => 'Lippo Mall Puri',
+            'description'   => 'Lippo Mall Puri',
             'status'        => 'active',
             'parent_id'     => 1,
             'start_date_activity'   => date('Y-m-d 00:00:00'),
@@ -130,7 +131,9 @@ class MerchantDataSeeder extends Seeder
             'contact_person_phone'      => '62|#||#|812345679',
             'contact_person_email'      => 'john-smith@myorbit.com',
             'sector_of_activity'        => 'Retail',
-            'modified_by'   => 0
+            'is_mall'                   => 'yes',
+            'url'                       => 'www.lippomallpuri.com',
+            'modified_by'               => 0
         ];
 
         // ------- MERCHANT DATA
