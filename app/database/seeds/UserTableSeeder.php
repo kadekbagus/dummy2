@@ -16,11 +16,6 @@ class UserTableSeeder extends Seeder
             throw new Exception ("File ${passwordFile} not found.");
         }
 
-        // The file permission should be 0600
-        if (0600 !== (fileperms($passwordFile) & 0777)) {
-            throw new Exception ("Permission of file ${passwordFile} must be 0600.");
-        }
-
         $password = trim(file_get_contents($passwordFile));
         $superAdminData = [
             'user_id'           => 1,
