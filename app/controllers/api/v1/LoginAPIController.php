@@ -107,6 +107,38 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Login Admin User
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginAdmin()
+    {
+        return $this->postLoginRole(['super admin']);
+    }
+
+    /**
+     * POST - Login Mall Owner or Admin User
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginMall()
+    {
+        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin']);
+    }
+
+    /**
      * POST - Logout user
      *
      * @author Tian <tian@dominopos.com>
@@ -529,4 +561,97 @@ class LoginAPIController extends ControllerAPI
         });
     }
 
+    /**
+     * Role based login.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    protected function postLoginRole($roles=[])
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('login');
+        try {
+            $email = trim(OrbitInput::post('email'));
+            $password = trim(OrbitInput::post('password'));
+
+            if (trim($email) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (trim($password) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'password'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $user = User::with('role')
+                        ->active()
+                        ->where('user_email', $email)
+                        ->first();
+
+            if (! is_object($user)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($password, $user->user_password)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            $roleIds = Role::roleIdsByName($roles);
+            if (! in_array($user->user_role_id, $roleIds)) {
+                $message = Lang::get('validation.orbit.access.forbidden', [
+                    'action' => 'Login (Role Denied)'
+                ]);
+                ACL::throwAccessForbidden($message);
+            }
+
+            // Successfull login
+            $activity->setUser($user)
+                     ->setActivityName('login_ok')
+                     ->setActivityNameLong('Sign in')
+                     ->responseOK();
+
+            $this->response->data = $user;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->setModuleName('Application')->save();
+
+        return $this->render();
+    }
 }

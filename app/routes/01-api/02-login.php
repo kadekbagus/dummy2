@@ -16,6 +16,26 @@ Route::post('/api/v1/logout', function()
     return DummyAPIController::create()->unsupported();
 });
 
+Route::post('/api/v1/login/admin', function()
+{
+    return LoginAPIController::create()->postLoginAdmin();
+});
+
+Route::post('/api/v1/logout/admin', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
+
+Route::post('/api/v1/login/mall', function()
+{
+    return LoginAPIController::create()->postLoginMall();
+});
+
+Route::post('/api/v1/logout/mall', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
+
 /**
  * Customer registration
  */
