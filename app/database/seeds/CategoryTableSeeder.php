@@ -15,6 +15,7 @@ class CategoryTableSeeder extends Seeder
     public function run()
     {
         $sources = <<<CATEGORIES
+Beauty & Personal Care
 Books
 Children Related & Education
 Department Store
@@ -50,7 +51,7 @@ CATEGORIES;
             $record = [
                 'merchant_id'       => $lippoMallPuri->merchant_id,
                 'category_name'     => $category,
-                'category_level'    => NULL,
+                'category_level'    => 1,
                 'category_order'    => 0,
                 'status'            => 'active',
                 'created_by'        => NULL,
@@ -59,8 +60,8 @@ CATEGORIES;
 
             Category::unguard();
             Category::create($record);
-
-            $this->command->info(sprintf('    Create record for %s.', $category));
         }
+
+        $this->command->info('categories table seeded.');
     }
 }

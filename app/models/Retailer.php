@@ -91,6 +91,14 @@ class Retailer extends Eloquent
     }
 
     /**
+     * Retailers belongs to and has many category.
+     */
+    public function categories()
+    {
+        return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
+    }
+
+    /**
      * Add Filter retailers based on user who request it.
      *
      * @author Rio Astamal <me@rioastamal.net>

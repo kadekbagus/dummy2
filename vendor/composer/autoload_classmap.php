@@ -8,6 +8,7 @@ $baseDir = dirname($vendorDir);
 return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
+    'AlterTableMerchantsAddFloorAndUnit' => $baseDir . '/app/database/migrations/2015_04_11_083827_alter_table_merchants_add_floor_and_unit.php',
     'AlterTableMerchantsAddIsMall' => $baseDir . '/app/database/migrations/2015_04_11_072135_alter_table_merchants_add_is_mall.php',
     'Apikey' => $baseDir . '/app/models/Apikey.php',
     'Arrays\\Util\\DuplicateChecker' => $baseDir . '/app/helpers/Arrays/Util/DuplicateChecker.php',
@@ -54,6 +55,7 @@ return array(
     'CartDetail' => $baseDir . '/app/models/CartDetail.php',
     'Category' => $baseDir . '/app/models/Category.php',
     'CategoryAPIController' => $baseDir . '/app/controllers/api/v1/CategoryAPIController.php',
+    'CategoryTableSeeder' => $baseDir . '/app/database/seeds/CategoryTableSeeder.php',
     'ClassPreloader\\Application' => $vendorDir . '/classpreloader/classpreloader/src/ClassPreloader/Application.php',
     'ClassPreloader\\ClassList' => $vendorDir . '/classpreloader/classpreloader/src/ClassPreloader/ClassList.php',
     'ClassPreloader\\ClassLoader' => $vendorDir . '/classpreloader/classpreloader/src/ClassPreloader/ClassLoader.php',

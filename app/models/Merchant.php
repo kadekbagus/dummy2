@@ -55,6 +55,14 @@ class Merchant extends Eloquent
     }
 
     /**
+     * Merchant belongs to and has many category.
+     */
+    public function categories()
+    {
+        return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
+    }
+
+    /**
      * Eagler load the count query. It is not very optimized but it works for now
      *
      * @author Rio Astamal <me@rioastamal.net>
