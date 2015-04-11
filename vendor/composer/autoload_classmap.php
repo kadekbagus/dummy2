@@ -8,6 +8,7 @@ $baseDir = dirname($vendorDir);
 return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
+    'AlterTableMerchantsAddIsMall' => $baseDir . '/app/database/migrations/2015_04_11_072135_alter_table_merchants_add_is_mall.php',
     'Apikey' => $baseDir . '/app/models/Apikey.php',
     'Arrays\\Util\\DuplicateChecker' => $baseDir . '/app/helpers/Arrays/Util/DuplicateChecker.php',
     'Barryvdh\\Debugbar\\Console\\ClearCommand' => $vendorDir . '/barryvdh/laravel-debugbar/src/Console/ClearCommand.php',
@@ -72,6 +73,7 @@ return array(
     'CouponRetailerRedeem' => $baseDir . '/app/models/CouponRetailerRedeem.php',
     'CouponRule' => $baseDir . '/app/models/CouponRule.php',
     'CreateInitialTables' => $baseDir . '/app/database/migrations/2015_04_10_133107_create_initial_tables.php',
+    'CreateTableCategoryMerchant' => $baseDir . '/app/database/migrations/2015_04_11_072738_create_table_category_merchant.php',
     'Crypt_AES' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/AES.php',
     'Crypt_Base' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Base.php',
     'Crypt_Blowfish' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Blowfish.php',
