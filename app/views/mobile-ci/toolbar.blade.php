@@ -6,35 +6,7 @@
         <ul class="buttons-list right">
             <!-- <li><a id="barcodeBtn"><span><i class="glyphicon glyphicon-barcode"></i></span></a></li> -->
             <li><a id="searchBtn"><span><i class="glyphicon glyphicon-search"></i></span></a></li>
-            <li><a href="{{ url('/customer/catalogue') }}"><span class="fa fa-list-ul"></span></a></li>
-            <li>
-                <a href="{{ url('/customer/cart') }}">
-                    <span id="shopping-cart-span">
-                        <span class="fa-1x fa-stack cart-qty ">
-                            <i class="fa fa-circle fa-stack-2x cart-circle"></i>
-                            <?php
-                            if(is_null($cartitems) || $cartitems == 0){
-                            $cartnumber = 0;
-                            } elseif ($cartitems > 9){
-                            $cartnumber = '9+';
-                            } else {
-                            $cartnumber = $cartitems;
-                            }
-                            ?>
-                            <strong class="fa-stack-1x" id="cart-number" data-cart-number="{{$cartnumber}}">
-                            @if(! is_null($cartitems))
-                            @if($cartitems > 9)
-                            {{ '9+' }}
-                            @else
-                            {{ $cartitems }}
-                            @endif
-                            @endif
-                            </strong>
-                        </span>
-                        <i id="shopping-cart" class="fa fa-shopping-cart"></i>
-                    </span>
-                </a>
-            </li>
+            <li><a href="{{ url('/customer/tenants') }}"><span class="fa fa-list-ul"></span></a></li>
             <li><a data-toggle="dropdown" aria-expanded="true"><span><i class="glyphicon glyphicon-cog"></i></span></a>
                 <ul class="dropdown-menu" role="menu">
                     <!-- <li class="complimentary-bg"><span><span class="glyphicon glyphicon-user"></span> {{ Lang::get('mobileci.page_title.my_account') }}</span></li> -->

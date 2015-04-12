@@ -6,6 +6,18 @@
   color: @theme-main-complimentary-2;
   background-color: @theme-main; 
 }
+.main-theme-mall{
+  color: #000;
+  background-color: @theme-main-complimentary-2;
+  h3{
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: -8px;
+  }
+  h4{
+
+  }
+}
 .col-xs-height {
   display:table-cell;
   float:none;
@@ -54,8 +66,7 @@ a:hover{
 
 .catalogue {
     margin-bottom: 0px;
-    border: 1px solid #dedede;
-    border-bottom: 12px solid #fff;
+    border-bottom: 1px solid #dedede;
     .catalogue-img {
         .zoom-wrapper {
             width: 24px;
@@ -158,11 +169,11 @@ a:hover{
     background: #fefefe;
     a {
         display: block;
-        max-width: 480px;
     }
     img {
         max-height: 120px;
-        margin: 0 auto;
+        margin-top: 4px;
+        //margin: 0 auto;
     }
 }
 .ribbon-wrapper-red {
@@ -329,6 +340,9 @@ a:hover{
         top: 13px;
     }
 }
+.rght{
+    margin:0 auto;
+}
 .circlet.btn-blue.detail-btn.cart-spinner a i{
     font-size:16px;
     left: 0;
@@ -364,6 +378,7 @@ span.little-circlet {
     top: 8px;
     right: 8px;
     cursor: pointer;
+    z-index:99;
 }
 .zoom {
     img {
