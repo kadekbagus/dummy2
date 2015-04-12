@@ -457,7 +457,7 @@ class UserAPIController extends ControllerAPI
             Event::fire('orbit.user.postupdateuser.before.authz', array($this, $user));
 
             $user_id = OrbitInput::post('user_id');
-            if (! ACL::create($user)) {
+            if (! ACL::create($user)->isAllowed('update_user')) {
                 // No need to check if it is the user itself
                 if ((string)$user->user_id !== (string)$user_id) {
                     Event::fire('orbit.user.postupdateuser.authz.notallowed', array($this, $user));
@@ -954,7 +954,12 @@ class UserAPIController extends ControllerAPI
             OrbitInput::get('with', function($_with) use (&$with) {
                 $with = array_merge($_with, $with);
             });
-            $users = User::with($with)->excludeDeleted();
+            $users = User::Consumers()
+                        ->select('users.*')
+                        ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
+                        ->with(array('userDetail', 'userDetail.lastVisitedShop'))
+                        ->excludeDeleted('users');
 
             // Filter user by Ids
             OrbitInput::get('user_id', function ($userIds) use ($users) {
@@ -1004,6 +1009,13 @@ class UserAPIController extends ControllerAPI
             // Filter user by their role id
             OrbitInput::get('role_id', function ($roleId) use ($users) {
                 $users->whereIn('users.user_role_id', $roleId);
+            });
+
+            // Filter user by their role id
+            OrbitInput::get('role_name', function ($roleId) use ($users) {
+                $users->whereHas('role', function($q) use ($roleId) {
+                    $q->where('roles.role_name', $roleId);
+                });
             });
 
             // Clone the query builder which still does not include the take,
