@@ -370,5 +370,21 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->postResetCart();
             })
         );
+
+        Route::get(
+            '/customer/tenants',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getTenantsView();
+            }
+        );
+
+        Route::get(
+            '/customer/tenant',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getTenantDetailView();
+            }
+        );
     }
 );

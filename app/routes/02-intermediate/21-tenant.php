@@ -46,6 +46,16 @@ Route::post('/app/v1/tenant-logo/delete', 'IntermediateAuthController@Upload_pos
 Route::post('/app/v1/tenant-image/upload', 'IntermediateAuthController@Upload_postUploadTenantImage');
 
 /**
- * Delete Tenant Logo
+ * Delete Tenant Picture
  */
 Route::post('/app/v1/tenant-image/delete', 'IntermediateAuthController@Upload_postDeleteTenantImage');
+
+/**
+ * Upload Tenant Map
+ */
+Route::post('/app/v1/tenant-map/upload', 'IntermediateAuthController@Upload_postUploadTenantMap');
+
+/**
+ * Delete Tenant Map
+ */
+Route::post('/app/v1/tenant-map/delete', 'IntermediateAuthController@Upload_postDeleteTenantMap');

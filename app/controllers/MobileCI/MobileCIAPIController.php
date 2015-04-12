@@ -7388,4 +7388,463 @@ class MobileCIAPIController extends ControllerAPI
 
         return $all;
     }
+
+    /**
+     * GET - Tenant list (this function is used when the family is clicked on catalogue page)
+     *
+     * @param string    `sort_by`        (optional)
+     * @param string    `sort_mode`      (optional)
+     * @param array     `families`       (optional)
+     * @param integer   `family_id`      (optional)
+     * @param integer   `family_level`   (optional)
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getTenantList()
+    {
+        $user = null;
+        $family_id = null;
+        $activityCategory = Activity::mobileci()
+                            ->setActivityType('view');
+        try {
+            $user = $this->getLoggedInUser();
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $family_id = OrbitInput::get('family_id');
+            $family_level = '0';
+            $families = OrbitInput::get('families');
+
+            if (count($families) == 1) {
+                \Session::put('f1', $family_id);
+            }
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                    'family_id' => $family_id,
+                ),
+                array(
+                    'sort_by' => 'in:product_name,price',
+                    'family_id' => 'orbit.exists.category',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 20;
+            }
+
+            $retailer = $this->getRetailerInfo();
+            $nextfamily = $family_level + 1;
+
+            // $subfamilies = Category::active();
+            $subfamilies = null;
+
+            // if ($nextfamily < 6) {
+            //     $subfamilies = Category::where('merchant_id', $retailer->parent_id)->whereHas(
+            //         'product' . $nextfamily,
+            //         function ($q) use ($family_id, $family_level, $families, $retailer) {
+            //             $nextfamily = $family_level + 1;
+            //             for ($i = 1; $i <= count($families); $i++) {
+            //                 $q->where('products.category_id' . $i, $families[$i-1]);
+            //                 $q->whereHas(
+            //                     'retailers',
+            //                     function ($q2) use ($retailer) {
+            //                         $q2->where('product_retailer.retailer_id', $retailer->merchant_id);
+            //                     }
+            //                 );
+            //             }
+
+            //             $q->where('products.category_id' . $family_level, $family_id)
+            //                 ->where(
+            //                     function ($query) use ($nextfamily) {
+            //                         $query->whereNotNull('products.category_id' . $nextfamily)->orWhere('products.category_id' . $nextfamily, '<>', 0);
+            //                     }
+            //                 )
+            //             ->where('products.status', 'active');
+            //         }
+            //     )->get();
+            // } else {
+            //     $subfamilies = null;
+            // }
+
+            // $products = Product::with('variants')->whereHas(
+            //     'retailers',
+            //     function ($query) use ($retailer) {
+            //         $query->where('retailer_id', $retailer->merchant_id);
+            //     }
+            // )->where('merchant_id', $retailer->parent_id)->active()->where(
+            //     function ($q) use ($family_level, $family_id, $families) {
+            //         for ($i = 1; $i < count($families); $i++) {
+            //             $q->where('category_id' . $i, $families[$i-1]);
+            //         }
+            //             $q->where('category_id' . $family_level, $family_id);
+            //         for ($i = $family_level + 1; $i <= 5; $i++) {
+            //             $q->where(
+            //                 function ($q2) use ($i) {
+            //                     $q2->whereNull('category_id' . $i)->orWhere('category_id' . $i, 0);
+            //                 }
+            //             );
+            //         }
+            //     }
+            // );
+
+            $products = Retailer::active();
+
+            $_products = clone $products;
+
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
+            $products->orderBy($sortBy, $sortMode);
+
+            $totalRec = $_products->count();
+            $listOfRec = $products->get();
+
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+
+            $cartitems = $this->getCartForToolbar();
+
+            $activityfamily = Category::where('category_id', $family_id)->first();
+
+            $activityCategoryNotes = sprintf('Category viewed: %s', $activityfamily->category_name);
+            $activityCategory->setUser($user)
+                ->setActivityName('view_catalogue')
+                ->setActivityNameLong('View Catalogue ' . $activityfamily->category_name)
+                ->setObject($activityfamily)
+                ->setModuleName('Catalogue')
+                ->setNotes($activityCategoryNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.tenant-list', array('retailer' => $retailer, 'data' => $data, 'subfamilies' => $subfamilies, 'cartitems' => $cartitems));
+
+        } catch (Exception $e) {
+            $activityCategoryNotes = sprintf('Category viewed: %s', $family_id);
+            $activityCategory->setUser($user)
+                ->setActivityName('view_catalogue')
+                ->setActivityNameLong('View Catalogue Failed')
+                ->setObject(null)
+                ->setModuleName('Catalogue')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
+
+            // return $this->redirectIfNotLoggedIn($e);
+                return $e;
+        }
+
+    }
+
+    /**
+     * GET - catalogue tenant page
+     *
+     * @param string    `keyword`        (optional) - The keyword, could be: upc code, product name, short or long description
+     * @param string    `sort_by`        (optional)
+     * @param string    `new`            (optional) - Fill with 1 to filter for new product only (new product page)
+     * @param string    `take`           (optional)
+     * @param string    `skip`           (optional)
+     * @param string    `sort_mode`      (optional)
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getTenantsView()
+    {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor = trim(OrbitInput::get('floor'));
+
+            // $pagetitle = Lang::get('mobileci.page_title.searching');
+            $pagetitle = 'TENANT DIRECTORY';
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+            }
+
+            $retailer = $this->getRetailerInfo();
+
+            $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 300;
+            }
+
+            $products = Retailer::active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
+
+            // Filter product by name pattern
+            OrbitInput::get(
+                'keyword',
+                function ($name) use ($products) {
+                    $products->where(
+                        function ($q) use ($name) {
+                            $q->where('merchants.name', 'like', "%$name%")
+                                ->orWhere('merchants.description', 'like', "%$name%");
+                        }
+                    );
+                }
+            );
+
+            OrbitInput::get(
+                'cid',
+                function ($cid) use ($products) {
+                    if (! empty($cid)) {
+                        $products->where(
+                            function ($q) use ($cid) {
+                                $q->whereHas('categories', function ($q2) use ($cid) {
+                                    $q2->where('category_merchant.category_id', $cid);
+                                });
+                            }
+                        );
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'fid',
+                function ($fid) use ($products) {
+                    if (! empty($fid)) {
+                        $products->where('merchants.floor', $fid);
+                    }
+                }
+            );
+
+            $_products = clone $products;
+
+            // Get the take args
+            $take = 1000;
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $products->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $products) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $products->skip($skip);
+
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get(
+                'sort_by',
+                function ($_sortBy) use (&$sortBy) {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'name'      => 'merchants.name',
+                    );
+
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
+            );
+
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
+            $products->orderBy($sortBy, $sortMode);
+
+            $cartitems = $this->getCartForToolbar();
+
+            $totalRec = $_products->count();
+            $listOfRec = $products->get();
+            foreach ($listOfRec as $tenant) {
+                if (empty($tenant->logo)) {
+                    $tenant->logo = 'mobile-ci/images/default_product.png';
+                }
+            }
+
+            // should not be limited for new products - limit only when searching
+            $search_limit = Config::get('orbit.shop.search_limit');
+            if ($totalRec>$search_limit) {
+                $data = new stdclass();
+                $data->status = 0;
+            } else {
+                $data = new stdclass();
+                $data->status = 1;
+                $data->total_records = $totalRec;
+                $data->returned_records = count($listOfRec);
+                $data->records = $listOfRec;
+            }
+
+            if (! empty(OrbitInput::get('new'))) {
+                $pagetitle = Lang::get('mobileci.page_title.new_products');
+                $activityPageNotes = sprintf('Page viewed: New Product Page, keyword: %s', $keyword);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_new_product')
+                    ->setActivityNameLong('View (New Product Page)')
+                    ->setObject(null)
+                    ->setModuleName('New Product')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_search')
+                    ->setActivityNameLong('View (Search Page)')
+                    ->setObject(null)
+                    ->setModuleName('Product')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view: Search Page, keyword: %s', $keyword);
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_search')
+                ->setActivityNameLong('View (Search Page)')
+                ->setObject(null)
+                ->setModuleName('Product')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            // return $this->redirectIfNotLoggedIn($e);
+                return $e;
+        }
+    }
+
+    /**
+     * GET - Tenant detail page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getTenantDetailView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityProduct = Activity::mobileci()
+                                   ->setActivityType('view');
+        $product = null;
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+            $product_id = trim(OrbitInput::get('id'));
+
+            $product = Retailer::active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
+
+            if (empty($product)) {
+                // throw new Exception('Product id ' . $product_id . ' not found');
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
+
+            if (empty($product->logo)) {
+                $product->logo = 'mobile-ci/images/default_product.png';
+            }
+
+            $activityProductNotes = sprintf('Product viewed: %s', $product->product_name);
+            $activityProduct->setUser($user)
+                ->setActivityName('view_product')
+                ->setActivityNameLong('View Product')
+                ->setObject($product)
+                ->setProduct($product)
+                ->setModuleName('Product')
+                ->setNotes($activityProductNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'retailer' => $retailer, 'product' => $product));
+
+        } catch (Exception $e) {
+            $activityProductNotes = sprintf('Product viewed: %s', $product_id);
+            $activityProduct->setUser($user)
+                ->setActivityName('view_product')
+                ->setActivityNameLong('View Product Not Found')
+                ->setObject(null)
+                ->setProduct($product)
+                ->setModuleName('Product')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
 }

@@ -29,3 +29,6 @@ app/config/packages/laraeval/laraeval/config.php
 # Test vendor
 vendor/fzaninotto/
 vendor/laracasts/
+
+#node_module
+node_modules/
