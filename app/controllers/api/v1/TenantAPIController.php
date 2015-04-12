@@ -16,14 +16,14 @@ class TenantAPIController extends ControllerAPI
     /**
      * POST - Delete Retailer
      *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Rio Astamal <me@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
      * @param integer    `retailer_id`                 (required) - ID of the retailer
      * @return Illuminate\Support\Facades\Response
      */
-    public function postDeleteRetailer()
+    public function postDeleteTenant()
     {
         $activity = Activity::portal()
                           ->setActivityType('delete');
@@ -33,25 +33,25 @@ class TenantAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.retailer.postdeleteretailer.before.auth', array($this));
+            Event::fire('orbit.tenant.postdeletetenant.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.retailer.postdeleteretailer.after.auth', array($this));
+            Event::fire('orbit.tenant.postdeletetenant.after.auth', array($this));
 
             // Try to check access control list, does this retailer allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.retailer.postdeleteretailer.before.authz', array($this, $user));
+            Event::fire('orbit.tenant.postdeletetenant.before.authz', array($this, $user));
 
             if (! ACL::create($user)->isAllowed('delete_retailer')) {
-                Event::fire('orbit.retailer.postdeleteretailer.authz.notallowed', array($this, $user));
+                Event::fire('orbit.tenant.postdeletetenant.authz.notallowed', array($this, $user));
                 $deleteRetailerLang = Lang::get('validation.orbit.actionlist.delete_retailer');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteRetailerLang));
                 ACL::throwAccessForbidden($message);
             }
-            Event::fire('orbit.retailer.postdeleteretailer.after.authz', array($this, $user));
+            Event::fire('orbit.tenant.postdeletetenant.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -64,48 +64,37 @@ class TenantAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'retailer_id' => 'required|numeric|orbit.empty.retailer|orbit.exists.deleted_retailer_is_box_current_retailer',
-                    'password'    => 'required|orbit.access.wrongpassword',
+                    'retailer_id' => 'required|numeric|orbit.empty.tenant|orbit.exists.deleted_retailer_is_box_current_retailer',
+                    'password'    => 'required|orbit.masterpassword.delete',
+                ),
+                array(
+                    'required.password'             => 'The master is password is required.',
+                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
                 )
             );
 
-            Event::fire('orbit.retailer.postdeleteretailer.before.validation', array($this, $validator));
+            Event::fire('orbit.tenant.postdeletetenant.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.retailer.postdeleteretailer.after.validation', array($this, $validator));
+            Event::fire('orbit.tenant.postdeletetenant.after.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
 
             // soft delete retailer.
-            $deleteretailer = Retailer::excludeDeleted()->allowedForUser($user)->where('merchant_id', $retailer_id)->first();
+            $deleteretailer = App::make('orbit.empty.tenant');
             $deleteretailer->status = 'deleted';
             $deleteretailer->modified_by = $this->api->user->user_id;
 
-            Event::fire('orbit.retailer.postdeleteretailer.before.save', array($this, $deleteretailer));
+            Event::fire('orbit.tenant.postdeletetenant.before.save', array($this, $deleteretailer));
 
             $deleteretailer->save();
 
-            // soft delete user.
-            $deleteuser = User::with(array('apikey', 'role'))->excludeDeleted()->find($deleteretailer->user_id);
-            if (! $deleteuser->isSuperAdmin()) {
-                $deleteuser->status = 'deleted';
-                $deleteuser->modified_by = $this->api->user->user_id;
-
-                // soft delete api key.
-                if (! empty($deleteuser->apikey)) {
-                    $deleteapikey = Apikey::where('apikey_id', '=', $deleteuser->apikey->apikey_id)->first();
-                    $deleteapikey->status = 'deleted';
-                    $deleteapikey->save();
-                }
-
-                $deleteuser->save();
-            }
-            Event::fire('orbit.retailer.postdeleteretailer.after.save', array($this, $deleteretailer));
+            Event::fire('orbit.tenant.postdeletetenant.after.save', array($this, $deleteretailer));
             $this->response->data = null;
             $this->response->message = Lang::get('statuses.orbit.deleted.retailer');
 
@@ -121,9 +110,9 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.retailer.postdeleteretailer.after.commit', array($this, $deleteretailer));
+            Event::fire('orbit.tenant.postdeletetenant.after.commit', array($this, $deleteretailer));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.retailer.postdeleteretailer.access.forbidden', array($this, $e));
+            Event::fire('orbit.tenant.postdeletetenant.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -142,7 +131,7 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.retailer.postdeleteretailer.invalid.arguments', array($this, $e));
+            Event::fire('orbit.tenant.postdeletetenant.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -161,7 +150,7 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
-            Event::fire('orbit.retailer.postdeleteretailer.query.error', array($this, $e));
+            Event::fire('orbit.tenant.postdeletetenant.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -186,7 +175,7 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
-            Event::fire('orbit.retailer.postdeleteretailer.general.exception', array($this, $e));
+            Event::fire('orbit.tenant.postdeletetenant.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -206,7 +195,7 @@ class TenantAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.retailer.postdeleteretailer.before.render', array($this, $output));
+        Event::fire('orbit.tenant.postdeletetenant.before.render', array($this, $output));
 
         // Save the activity
         $activity->save();
@@ -1652,6 +1641,28 @@ class TenantAPIController extends ControllerAPI
                 if ($retailer_id === $box_retailer_id) {
                     return FALSE;
                 }
+            }
+
+            return TRUE;
+        });
+
+        // Tenant deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
             }
 
             return TRUE;

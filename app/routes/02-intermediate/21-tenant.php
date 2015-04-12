@@ -11,7 +11,7 @@ Route::post('/app/v1/tenant/new', 'IntermediateAuthController@Tenant_postNewTena
 /**
  * Delete tenant
  */
-Route::post('/app/v1/tenant/delete', 'IntermediateAuthController@Tenant_postDeleteTenant');
+Route::post('/app/v1/tenant/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@Tenant_postDeleteTenant']);
 
 /**
  * Update tenant
