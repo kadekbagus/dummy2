@@ -8,6 +8,7 @@ $baseDir = dirname($vendorDir);
 return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
+    'AlterTableLuckyDrawNumbersChangeUserIdToNullable' => $baseDir . '/app/database/migrations/2015_04_12_153306_alter_table_lucky_draw_numbers_change_user_id_to_nullable.php',
     'AlterTableMerchantsAddFloorAndUnit' => $baseDir . '/app/database/migrations/2015_04_11_083827_alter_table_merchants_add_floor_and_unit.php',
     'AlterTableMerchantsAddIsMall' => $baseDir . '/app/database/migrations/2015_04_11_072135_alter_table_merchants_add_is_mall.php',
     'Apikey' => $baseDir . '/app/models/Apikey.php',
@@ -548,6 +549,7 @@ return array(
     'Laraeval\\Laraeval\\LaraevalServiceProvider' => $vendorDir . '/laraeval/laraeval/src/Laraeval/Laraeval/LaraevalServiceProvider.php',
     'LippoPuriTenantSeeder' => $baseDir . '/app/database/seeds/LippoPuriTenantSeeder.php',
     'LoginAPIController' => $baseDir . '/app/controllers/api/v1/LoginAPIController.php',
+    'LuckyDraw' => $baseDir . '/app/models/LuckyDraw.php',
     'MallTrait' => $baseDir . '/app/models/MallTrait.php',
     'Math_BigInteger' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Math/BigInteger.php',
     'Media' => $baseDir . '/app/models/Media.php',
