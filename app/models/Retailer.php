@@ -175,4 +175,27 @@ class Retailer extends Eloquent
                        ->whereIn('merchants.parent_id', $merchantIds)
                        ->groupBy('merchants.merchant_id');
     }
+
+    /**
+     * Retailer has many uploaded media.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function media()
+    {
+        return $this->hasMany('Media', 'object_id', 'merchant_id')
+                    ->where('object_name', 'retailer');
+    }
+
+    /**
+     * Retailer has many uploaded logo.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaLogo()
+    {
+        return $this->media()->where('media_name_id', 'retailer_logo');
+    }
 }
