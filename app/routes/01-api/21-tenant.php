@@ -44,7 +44,7 @@ Route::get('/api/v1/tenant/city', function()
 });
 
 /**
- * Upload Merchant logo
+ * Upload Retailer/Tenant logo
  */
 Route::post('/api/v1/tenant-logo/upload', function()
 {
@@ -52,7 +52,7 @@ Route::post('/api/v1/tenant-logo/upload', function()
 });
 
 /**
- * Delete Merchant logo
+ * Delete Retailer/Tenant logo
  */
 Route::post('/api/v1/tenant-logo/delete', function()
 {
@@ -60,7 +60,7 @@ Route::post('/api/v1/tenant-logo/delete', function()
 });
 
 /**
- * Upload Merchant logo
+ * Upload Retailer/Tenant images
  */
 Route::post('/api/v1/tenant-image/upload', function()
 {
@@ -68,9 +68,25 @@ Route::post('/api/v1/tenant-image/upload', function()
 });
 
 /**
- * Delete Merchant logo
+ * Delete Retailer/Tenant images
  */
 Route::post('/api/v1/tenant-image/delete', function()
 {
     return UploadAPIController::create()->postDeleteTenantImage();
+});
+
+/**
+ * Upload Retailer/Tenant map
+ */
+Route::post('/api/v1/tenant-map/upload', function()
+{
+    return UploadAPIController::create()->postUploadTenantMap();
+});
+
+/**
+ * Delete Retailer/Tenant map
+ */
+Route::post('/api/v1/tenant-map/delete', function()
+{
+    return UploadAPIController::create()->postDeleteTenantMap();
 });
