@@ -189,6 +189,47 @@ class Retailer extends Eloquent
     }
 
     /**
+     * Retailer has many uploaded media with original type.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaOrig()
+    {
+        return $this->hasMany('Media', 'object_id', 'merchant_id')
+                    ->where('object_name', 'retailer')
+                    ->where('media_name_long', 'like', '%_orig')
+                    ->orderBy('metadata', 'asc');
+    }
+
+    /**
+     * Retailer has many uploaded media with cropped_default type.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaCroppedDefault()
+    {
+        return $this->hasMany('Media', 'object_id', 'merchant_id')
+                    ->where('object_name', 'retailer')
+                    ->where('media_name_long', 'like', '%_cropped_default')
+                    ->orderBy('metadata', 'asc');
+    }
+
+    /**
+     * Retailer has many uploaded media with cropped_default type.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaResizedDefault()
+    {
+        return $this->hasMany('Media', 'object_id', 'merchant_id')
+                    ->where('object_name', 'retailer')
+                    ->where('media_name_long', 'like', '%_resized_default');
+    }
+
+    /**
      * Retailer has many uploaded logo.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -197,5 +238,60 @@ class Retailer extends Eloquent
     public function mediaLogo()
     {
         return $this->media()->where('media_name_id', 'retailer_logo');
+    }
+
+    /**
+     * Retailer has many uploaded logo.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaLogoOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'retailer_logo');
+    }
+
+    /**
+     * Retailer has many uploaded images.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaImage()
+    {
+        return $this->media()->where('media_name_id', 'retailer_image');
+    }
+
+    /**
+     * Retailer has many uploaded images.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaImageOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'retailer_image');
+    }
+
+    /**
+     * Retailer has many uploaded maps.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaMap()
+    {
+        return $this->media()->where('media_name_id', 'retailer_map');
+    }
+
+    /**
+     * Retailer has many uploaded maps.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaMapOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'retailer_map');
     }
 }
