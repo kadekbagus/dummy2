@@ -386,5 +386,13 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->getTenantDetailView();
             }
         );
+
+        Route::get(
+            '/customer/luckydraw',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getLuckyDrawView();
+            }
+        );
     }
 );
