@@ -22,6 +22,7 @@ return array(
             'coupon'         => 'Coupon telah berhasil dihapus.',
             'issued_coupon'  => 'Issued Coupon telah berhasil dihapus.',
             'event'          => 'Event telah berhasil dihapus.',
+            'lucky_draw'     => 'Lucky Draw telah berhasil dihapus.',
         ),
         'updated'   => array(
             'user'           => 'User telah berhasil diupdate.',
@@ -47,6 +48,7 @@ return array(
             'personalinterest' => 'Tidak ada personal interest yang sesuai kriteria.',
             'role'          => 'Tidak ada role yang sesuai kriteria.',
             'token'         => 'Tidak ada token yang sesuai kriteria.',
+            'lucky_draw'    => 'Tidak ada lucky draw yang sesuai kriteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
@@ -79,6 +81,10 @@ return array(
             'widget' => array(
                 'main'           => 'Widget picture telah berhasil diunggah.',
                 'delete_image'   => 'Widget picture telah berhasil dihapus.'
+            ),
+            'lucky_draw' => array(
+                'main'          => 'Lucky Draw image telah berhasil diunggah.',
+                'delete_image'  => 'Lucky Draw image telah berhasil dihapus.'
             ),
         )
     )
