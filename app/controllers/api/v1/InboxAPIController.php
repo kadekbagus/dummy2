@@ -40,7 +40,8 @@ class InboxAPIController extends ControllerAPI
             $user = $this->api->user;
 
             $alerts = Inbox::latestOne($user->user_id)
-                            ->where('inbox_type', 'a');
+                            ->where('inbox_type', 'a')
+                            ->take(1);
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -141,13 +142,13 @@ class InboxAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $alertId = OrbitInput::post('alert_id');
+            $alertId = OrbitInput::post('inbox_id');
             $validator = Validator::make(
                 array(
-                    'alert_id'             => $alertId,
+                    'inbox_id'             => $alertId,
                 ),
                 array(
-                    'alert_id'             => 'required|numeric|orbit.empty.alert',
+                    'inbox_id'             => 'required|numeric|orbit.empty.alert',
                 )
             );
 
