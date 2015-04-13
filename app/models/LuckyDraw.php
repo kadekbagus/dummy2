@@ -42,6 +42,15 @@ class LuckyDraw extends Eloquent
         return $this->hasMany('LuckyDrawNumber', 'lucky_draw_id', 'lucky_draw_id');
     }
 
+    public function issuedNumbers()
+    {
+        return $this->hasMany('LuckyDrawNumber', 'lucky_draw_id', 'lucky_draw_id')
+                    ->where(function($query) {
+                        $query->whereNotNull('user_id');
+                        $query->orWhere('user_id', '!=', 0);
+                    });
+    }
+
     /**
      * Lucky Draw has many uploaded media.
      *
