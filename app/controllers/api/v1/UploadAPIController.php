@@ -2661,6 +2661,8 @@ class UploadAPIController extends ControllerAPI
                     ACL::throwAccessForbidden($message);
                 }
                 Event::fire('orbit.upload.postuploadtenantlogo.after.authz', array($this, $user));
+            } else {
+                $user = App::make('orbit.upload.user');
             }
 
             // Load the orbit configuration for merchant upload logo
@@ -2707,7 +2709,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.merchant');
+            $merchant = App::make('orbit.empty.tenant');
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
@@ -2752,7 +2754,7 @@ class UploadAPIController extends ControllerAPI
                 'id'            => $merchant->merchant_id,
                 'name'          => 'retailer',
                 'media_name_id' => 'retailer_logo',
-                'modified_by'   => $this->api->user->user_id
+                'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
 
@@ -2910,7 +2912,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.merchant');
+            $merchant = App::make('orbit.empty.tenant');
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
@@ -3049,6 +3051,9 @@ class UploadAPIController extends ControllerAPI
                     ACL::throwAccessForbidden($message);
                 }
                 Event::fire('orbit.upload.postuploadtenantimage.after.authz', array($this, $user));
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
             }
 
             // Load the orbit configuration for merchant upload logo
@@ -3095,7 +3100,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.merchant');
+            $merchant = App::make('orbit.empty.tenant');
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
@@ -3140,7 +3145,7 @@ class UploadAPIController extends ControllerAPI
                 'id'            => $merchant->merchant_id,
                 'name'          => 'retailer',
                 'media_name_id' => 'retailer_image',
-                'modified_by'   => $this->api->user->user_id
+                'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
 
@@ -3298,7 +3303,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.merchant');
+            $merchant = App::make('orbit.empty.tenant');
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
@@ -3437,6 +3442,9 @@ class UploadAPIController extends ControllerAPI
                     ACL::throwAccessForbidden($message);
                 }
                 Event::fire('orbit.uploadpostuploadtenantmap.after.authz', array($this, $user));
+            } else {
+                // Comes from the events trigger
+                $user = App::make('orbit.upload.user');
             }
 
             // Load the orbit configuration for merchant upload logo
@@ -3483,7 +3491,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.merchant');
+            $merchant = App::make('orbit.empty.tenant');
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
@@ -3528,7 +3536,7 @@ class UploadAPIController extends ControllerAPI
                 'id'            => $merchant->merchant_id,
                 'name'          => 'retailer',
                 'media_name_id' => 'retailer_map',
-                'modified_by'   => $this->api->user->user_id
+                'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
 
@@ -3686,7 +3694,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.merchant');
+            $merchant = App::make('orbit.empty.tenant');
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
@@ -3820,7 +3828,7 @@ class UploadAPIController extends ControllerAPI
                     return FALSE;
                 }
 
-                App::instance('orbit.empty.merchant', $merchant);
+                App::instance('orbit.empty.tenant', $merchant);
 
                 return TRUE;
             });

@@ -14,4 +14,19 @@ class Setting extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+
+    /**
+     * Get master password from particular mall.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param $merchantId - The merchant ID
+     * @return Setting
+     */
+    public static function getMasterPasswordFor($merchantId)
+    {
+        return Setting::where('setting_name', 'master_password')
+                      ->where('object_id', $merchantId)
+                      ->where('object_type', 'merchant')
+                      ->first();
+    }
 }

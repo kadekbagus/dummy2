@@ -16,14 +16,14 @@ class TenantAPIController extends ControllerAPI
     /**
      * POST - Delete Retailer
      *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Rio Astamal <me@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
      * @param integer    `retailer_id`                 (required) - ID of the retailer
      * @return Illuminate\Support\Facades\Response
      */
-    public function postDeleteRetailer()
+    public function postDeleteTenant()
     {
         $activity = Activity::portal()
                           ->setActivityType('delete');
@@ -33,25 +33,25 @@ class TenantAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.retailer.postdeleteretailer.before.auth', array($this));
+            Event::fire('orbit.tenant.postdeletetenant.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.retailer.postdeleteretailer.after.auth', array($this));
+            Event::fire('orbit.tenant.postdeletetenant.after.auth', array($this));
 
             // Try to check access control list, does this retailer allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.retailer.postdeleteretailer.before.authz', array($this, $user));
+            Event::fire('orbit.tenant.postdeletetenant.before.authz', array($this, $user));
 
             if (! ACL::create($user)->isAllowed('delete_retailer')) {
-                Event::fire('orbit.retailer.postdeleteretailer.authz.notallowed', array($this, $user));
+                Event::fire('orbit.tenant.postdeletetenant.authz.notallowed', array($this, $user));
                 $deleteRetailerLang = Lang::get('validation.orbit.actionlist.delete_retailer');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteRetailerLang));
                 ACL::throwAccessForbidden($message);
             }
-            Event::fire('orbit.retailer.postdeleteretailer.after.authz', array($this, $user));
+            Event::fire('orbit.tenant.postdeletetenant.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -64,48 +64,37 @@ class TenantAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'retailer_id' => 'required|numeric|orbit.empty.retailer|orbit.exists.deleted_retailer_is_box_current_retailer',
-                    'password'    => 'required|orbit.access.wrongpassword',
+                    'retailer_id' => 'required|numeric|orbit.empty.tenant|orbit.exists.deleted_retailer_is_box_current_retailer',
+                    'password'    => 'required|orbit.masterpassword.delete',
+                ),
+                array(
+                    'required.password'             => 'The master is password is required.',
+                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
                 )
             );
 
-            Event::fire('orbit.retailer.postdeleteretailer.before.validation', array($this, $validator));
+            Event::fire('orbit.tenant.postdeletetenant.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.retailer.postdeleteretailer.after.validation', array($this, $validator));
+            Event::fire('orbit.tenant.postdeletetenant.after.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
 
             // soft delete retailer.
-            $deleteretailer = Retailer::excludeDeleted()->allowedForUser($user)->where('merchant_id', $retailer_id)->first();
+            $deleteretailer = App::make('orbit.empty.tenant');
             $deleteretailer->status = 'deleted';
             $deleteretailer->modified_by = $this->api->user->user_id;
 
-            Event::fire('orbit.retailer.postdeleteretailer.before.save', array($this, $deleteretailer));
+            Event::fire('orbit.tenant.postdeletetenant.before.save', array($this, $deleteretailer));
 
             $deleteretailer->save();
 
-            // soft delete user.
-            $deleteuser = User::with(array('apikey', 'role'))->excludeDeleted()->find($deleteretailer->user_id);
-            if (! $deleteuser->isSuperAdmin()) {
-                $deleteuser->status = 'deleted';
-                $deleteuser->modified_by = $this->api->user->user_id;
-
-                // soft delete api key.
-                if (! empty($deleteuser->apikey)) {
-                    $deleteapikey = Apikey::where('apikey_id', '=', $deleteuser->apikey->apikey_id)->first();
-                    $deleteapikey->status = 'deleted';
-                    $deleteapikey->save();
-                }
-
-                $deleteuser->save();
-            }
-            Event::fire('orbit.retailer.postdeleteretailer.after.save', array($this, $deleteretailer));
+            Event::fire('orbit.tenant.postdeletetenant.after.save', array($this, $deleteretailer));
             $this->response->data = null;
             $this->response->message = Lang::get('statuses.orbit.deleted.retailer');
 
@@ -121,9 +110,9 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.retailer.postdeleteretailer.after.commit', array($this, $deleteretailer));
+            Event::fire('orbit.tenant.postdeletetenant.after.commit', array($this, $deleteretailer));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.retailer.postdeleteretailer.access.forbidden', array($this, $e));
+            Event::fire('orbit.tenant.postdeletetenant.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -142,7 +131,7 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.retailer.postdeleteretailer.invalid.arguments', array($this, $e));
+            Event::fire('orbit.tenant.postdeletetenant.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -161,7 +150,7 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
-            Event::fire('orbit.retailer.postdeleteretailer.query.error', array($this, $e));
+            Event::fire('orbit.tenant.postdeletetenant.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -186,7 +175,7 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
-            Event::fire('orbit.retailer.postdeleteretailer.general.exception', array($this, $e));
+            Event::fire('orbit.tenant.postdeletetenant.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -206,7 +195,7 @@ class TenantAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.retailer.postdeleteretailer.before.render', array($this, $output));
+        Event::fire('orbit.tenant.postdeletetenant.before.render', array($this, $output));
 
         // Save the activity
         $activity->save();
@@ -541,11 +530,10 @@ class TenantAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
-
     /**
-     * POST - Update retailer
+     * POST - Update Tenant
      *
-     * @author <Kadek> <kadek@dominopos.com>
+     * @author Rio Astamal <me@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
@@ -584,9 +572,12 @@ class TenantAPIController extends ControllerAPI
      * @param string     `sector_of_activity`       (optional) - Sector of activity
      * @param string     `object_type`              (optional) - Object type
      * @param string     `parent_id`                (optional) - The merchant id
+     * @param string     `floor`                    (optional) - The Floor
+     * @param string     `unit`                     (optional) - The unit number
+     * @param string     `category_ids`            (optional) - List of category ids
      * @return Illuminate\Support\Facades\Response
      */
-    public function postUpdateRetailer()
+    public function postUpdateTenant()
     {
         $activity = Activity::portal()
                            ->setActivityType('update');
@@ -596,25 +587,25 @@ class TenantAPIController extends ControllerAPI
         try {
             $httpCode=200;
 
-            Event::fire('orbit.retailer.postupdateretailer.before.auth', array($this));
+            Event::fire('orbit.tenant.postupdatetenant.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.retailer.postupdateretailer.after.auth', array($this));
+            Event::fire('orbit.tenant.postupdatetenant.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.retailer.postupdateretailer.before.authz', array($this, $user));
+            Event::fire('orbit.tenant.postupdatetenant.before.authz', array($this, $user));
 
             if (! ACL::create($user)->isAllowed('update_retailer')) {
-                Event::fire('orbit.retailer.postupdateretailer.authz.notallowed', array($this, $user));
+                Event::fire('orbit.tenant.postupdatetenant.authz.notallowed', array($this, $user));
                 $updateRetailerLang = Lang::get('validation.orbit.actionlist.update_retailer');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateRetailerLang));
                 ACL::throwAccessForbidden($message);
             }
-            Event::fire('orbit.retailer.postupdateretailer.after.authz', array($this, $user));
+            Event::fire('orbit.tenant.postupdatetenant.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -625,6 +616,7 @@ class TenantAPIController extends ControllerAPI
             $orid = OrbitInput::post('orid');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
+            $category_ids = OrbitInput::post('category_ids');
 
             $validator = Validator::make(
                 array(
@@ -635,15 +627,17 @@ class TenantAPIController extends ControllerAPI
                     'orid'              => $orid,
                     'parent_id'         => $parent_id,
                     'url'               => $url,
+                    'category_ids'      => $category_ids,
                 ),
                 array(
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
+                    'retailer_id'       => 'required|numeric|orbit.empty.tenant',
                     'user_id'           => 'numeric|orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.retailer_status|orbit.exists.inactive_retailer_is_box_current_retailer:'.$retailer_id,
                     'orid'              => 'orid_exists_but_me',
                     'parent_id'         => 'numeric|orbit.empty.merchant',
-                    'url'               => 'orbit.formaterror.url.web'
+                    'url'               => 'orbit.formaterror.url.web',
+                    'category_ids'      => 'array'
                 ),
                 array(
                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
@@ -651,19 +645,19 @@ class TenantAPIController extends ControllerAPI
                )
             );
 
-            Event::fire('orbit.retailer.postupdateretailer.before.validation', array($this, $validator));
+            Event::fire('orbit.tenant.postupdatetenant.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.retailer.postupdateretailer.after.validation', array($this, $validator));
+            Event::fire('orbit.tenant.postupdatetenant.after.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
 
-            $updatedretailer = Retailer::excludeDeleted()->allowedForUser($user)->where('merchant_id', $retailer_id)->first();
+            $updatedretailer = App::make('orbit.empty.tenant');
 
             OrbitInput::post('orid', function($orid) use ($updatedretailer) {
                 $updatedretailer->orid = $orid;
@@ -678,7 +672,7 @@ class TenantAPIController extends ControllerAPI
             });
 
             OrbitInput::post('name', function($name) use ($updatedretailer) {
-                $updatedretailer->name = $name;
+                // do nothing
             });
 
             OrbitInput::post('description', function($description) use ($updatedretailer) {
@@ -741,7 +735,7 @@ class TenantAPIController extends ControllerAPI
             });
 
             OrbitInput::post('logo', function($logo) use ($updatedretailer) {
-                $updatedretailer->logo = $logo;
+                // do nothing
             });
 
             OrbitInput::post('currency', function($currency) use ($updatedretailer) {
@@ -816,24 +810,38 @@ class TenantAPIController extends ControllerAPI
                 $updatedretailer->slavebox_number = $slavebox_number;
             });
 
+            OrbitInput::post('floor', function($floor) use ($updatedretailer) {
+                $updatedretailer->floor = $floor;
+            });
+
+            OrbitInput::post('unit', function($unit) use ($updatedretailer) {
+                $updatedretailer->unit = $unit;
+            });
+
+            OrbitInput::post('category_ids', function($catids) use ($updatedretailer) {
+                $updatedretailer->categories()->sync($catids);
+            });
+
             $updatedretailer->modified_by = $this->api->user->user_id;
 
-            Event::fire('orbit.retailer.postupdateretailer.before.save', array($this, $updatedretailer));
+            Event::fire('orbit.tenant.postupdatetenant.before.save', array($this, $updatedretailer));
 
             $updatedretailer->save();
 
             // update user status
             OrbitInput::post('status', function($status) use ($updatedretailer) {
                 $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedretailer->user_id);
-                if (! $updateuser->isSuperAdmin()) {
-                    $updateuser->status = $status;
-                    $updateuser->modified_by = $this->api->user->user_id;
+                if (is_object($updateuser)) {
+                    if (! $updateuser->isSuperAdmin()) {
+                        $updateuser->status = $status;
+                        $updateuser->modified_by = $this->api->user->user_id;
 
-                    $updateuser->save();
+                        $updateuser->save();
+                    }
                 }
             });
 
-            Event::fire('orbit.retailer.postupdateretailer.after.save', array($this, $updatedretailer));
+            Event::fire('orbit.tenant.postupdatetenant.after.save', array($this, $updatedretailer));
             $this->response->data = $updatedretailer;
 
             // Commit the changes
@@ -848,9 +856,9 @@ class TenantAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.retailer.postupdateretailer.after.commit', array($this, $updatedretailer));
+            Event::fire('orbit.tenant.postupdatetenant.after.commit', array($this, $updatedretailer));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.retailer.postupdateretailer.access.forbidden', array($this, $e));
+            Event::fire('orbit.tenant.postupdatetenant.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -865,11 +873,11 @@ class TenantAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('update_retailer')
                     ->setActivityNameLong('Update Retailer Failed')
-                    ->setObject($updatedretailer)
+                    ->setObject(NULL)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.retailer.postupdateretailer.invalid.arguments', array($this, $e));
+            Event::fire('orbit.tenant.postupdatetenant.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -884,11 +892,11 @@ class TenantAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('update_retailer')
                     ->setActivityNameLong('Update Retailer Failed')
-                    ->setObject($updatedretailer)
+                    ->setObject(NULL)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
-            Event::fire('orbit.retailer.postupdateretailer.query.error', array($this, $e));
+            Event::fire('orbit.tenant.postupdatetenant.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -909,16 +917,16 @@ class TenantAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('update_retailer')
                     ->setActivityNameLong('Update Retailer Failed')
-                    ->setObject($updatedretailer)
+                    ->setObject(NULL)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
-            Event::fire('orbit.retailer.postupdateretailer.general.exception', array($this, $e));
+            Event::fire('orbit.tenant.postupdatetenant.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
 
             // Rollback the changes
             $this->rollBack();
@@ -927,7 +935,7 @@ class TenantAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('update_retailer')
                     ->setActivityNameLong('Update Retailer Failed')
-                    ->setObject($updatedretailer)
+                    ->setObject(NULL)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         }
@@ -992,7 +1000,6 @@ class TenantAPIController extends ControllerAPI
      * @param string|array      `with_count`                    (optional) - Also include the "count" relation or not, should be used in conjunction with `with`
      * @return Illuminate\Support\Facades\Response
      */
-
     public function getSearchTenant()
     {
         try {
@@ -1332,31 +1339,39 @@ class TenantAPIController extends ControllerAPI
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
-                   // Map the sortby request to the real column name
-                  $sortByMapping = array(
-                  'orid' => 'merchants.orid',
-                  'registered_date' => 'merchants.created_at',
-                  'retailer_name' => 'merchants.name',
-                  'retailer_email' => 'merchants.email',
-                  'retailer_userid' => 'merchants.user_id',
-                  'retailer_description' => 'merchants.description',
-                  'retailerid' => 'merchants.merchant_id',
-                  'retailer_address1' => 'merchants.address_line1',
-                  'retailer_address2' => 'merchants.address_line2',
-                  'retailer_address3' => 'merchants.address_line3',
-                  'retailer_cityid' => 'merchants.city_id',
-                  'retailer_city' => 'merchants.city',
-                  'retailer_countryid' => 'merchants.country_id',
-                  'retailer_country' => 'merchants.country',
-                  'retailer_phone' => 'merchants.phone',
-                  'retailer_fax' => 'merchants.fax',
-                  'retailer_status' => 'merchants.status',
-                  'retailer_currency' => 'merchants.currency',
-                  'contact_person_firstname' => 'merchants.contact_person_firstname',
-                  'merchant_name' => 'merchant_name',
-                  );
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'orid' => 'merchants.orid',
+                    'registered_date' => 'merchants.created_at',
+                    'retailer_name' => 'merchants.name',
+                    'retailer_email' => 'merchants.email',
+                    'retailer_userid' => 'merchants.user_id',
+                    'retailerid' => 'merchants.merchant_id',
+                    'retailer_cityid' => 'merchants.city_id',
+                    'retailer_city' => 'merchants.city',
+                    'retailer_countryid' => 'merchants.country_id',
+                    'retailer_country' => 'merchants.country',
+                    'retailer_phone' => 'merchants.phone',
+                    'retailer_fax' => 'merchants.fax',
+                    'retailer_status' => 'merchants.status',
 
-                $sortBy = $sortByMapping[$_sortBy];
+                    // Synonyms
+                    'tenant_name' => 'merchants.name',
+                    'tenant_email' => 'merchants.email',
+                    'tenant_userid' => 'merchants.user_id',
+                    'tenantid' => 'merchants.merchant_id',
+                    'tenant_cityid' => 'merchants.city_id',
+                    'tenant_city' => 'merchants.city',
+                    'tenant_countryid' => 'merchants.country_id',
+                    'tenant_country' => 'merchants.country',
+                    'tenant_phone' => 'merchants.phone',
+                    'tenant_fax' => 'merchants.fax',
+                    'tenant_status' => 'merchants.status',
+                );
+
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
             });
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
@@ -1444,6 +1459,22 @@ class TenantAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.retailer', $retailer);
+
+            return TRUE;
+        });
+
+        // Check the existance of retailer id
+        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
+            $retailer = Retailer::where('merchant_id', $value)
+                                ->excludeDeleted()
+                                ->isMall('no')
+                                ->first();
+
+            if (empty($retailer)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.tenant', $retailer);
 
             return TRUE;
         });
@@ -1610,6 +1641,28 @@ class TenantAPIController extends ControllerAPI
                 if ($retailer_id === $box_retailer_id) {
                     return FALSE;
                 }
+            }
+
+            return TRUE;
+        });
+
+        // Tenant deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
             }
 
             return TRUE;
