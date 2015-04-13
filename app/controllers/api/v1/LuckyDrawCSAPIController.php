@@ -237,6 +237,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $luckyDraw->user_numbers = $luckyDrawnumbers;
             $this->response->data = $luckyDraw;
 
+            // Insert to alert system
+            $this->insertIntoInbox($userId, $luckyDrawnumbers);
+
             // Commit the changes
             $this->commit();
 
@@ -353,5 +356,64 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    /**
+     * Insert issued lucky draw numbers into inbox table.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param int $userId - The user id
+     * @param array $numbers - Issued numbers
+     * @return void
+     */
+    protected function insertIntoInbox($userId, $numbers)
+    {
+        $user = User::active()->find($userId);
+        $name = $user->getFullName();
+        $name = $name ? $name : $user->email;
+
+        // Oh yeah, we have mixed the view!!
+        $template = <<<VIEW
+<div class="modal fade" id="numberModal" tabindex="-1" role="dialog" aria-labelledby="numberModalLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <p style="margin-bottom: 1em;"><strong>You Got New Lucky Draw Numbers!</strong></p>
+                <p>Hello {{NAME}},
+                <br><br>
+
+                Congratulation you got {{NUMBERS}} lucky draw number:
+                <ul>
+                    {{LIST}}
+                </ul>
+                </p>
+
+                <br>
+                <p>Lippo Mall</p>
+            </div>
+        </div>
+    </div>
+</div>
+VIEW;
+
+        $list = '';
+        foreach ($numbers as $number) {
+            $list .= '<li>' . str_pad($number->lucky_draw_number_code, '0', STR_PAD_LEFT) . '</li>' . "\n";
+        }
+
+        $template = str_replace('{{NAME}}', $name, $template);
+        $template = str_replace('{{NUMBERS}}', count($numbers), $template);
+        $template = str_replace('{{LIST}}', $list, $template);
+
+        $inbox = new Inbox();
+        $inbox->user_id = $userId;
+        $inbox->from_id = 0;
+        $inbox->from_name = 'Orbit';
+        $inbox->subject = 'You got new lucky draw number.';
+        $inbox->content = $template;
+        $inbox->inbox_type = 'alert';
+        $inbox->status = 'active';
+        $inbox->is_read = 'N';
+        $inbox->save();
     }
 }

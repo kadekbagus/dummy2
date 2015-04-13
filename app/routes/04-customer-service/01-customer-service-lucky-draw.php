@@ -10,7 +10,7 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::post('/api/v1/cs/lucky-draw-number/issue', function()
     {
-        return TenantAPIController::create()->postNewTenant();
+        return LuckyDrawCSAPIController::create()->postIssueLuckyDrawNumber();
     });
 
     /**
