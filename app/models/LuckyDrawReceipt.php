@@ -29,7 +29,7 @@ class LuckyDrawReceipt extends Eloquent
 
     public function receiptRetailer()
     {
-        return $this->belongsTo('Retailer', 'receipt_retailer_id', 'merchant_id')->isMall('no', 'yes');
+        return $this->belongsTo('Retailer', 'receipt_retailer_id', 'merchant_id')->isMall('no');
     }
 
     public function numbers()

@@ -109,6 +109,21 @@ class Activity extends Eloquent
      * @author Rio Astamal <me@rioastamal.net>
      * @return Activity
      */
+    public static function csportal()
+    {
+        $activity = new static();
+        $activity->group = 'cs-portal';
+        $activity->fillCommonValues();
+
+        return $activity;
+    }
+
+    /**
+     * Set the value of `group`, `ip_address`, `user_agent`, and `location_id`
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return Activity
+     */
     public static function pos()
     {
         $activity = new static();
