@@ -7626,7 +7626,7 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $products = Retailer::active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
+            $products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
 
             // Filter product by name pattern
             OrbitInput::get(
@@ -7730,6 +7730,11 @@ class MobileCIAPIController extends ControllerAPI
                 if (empty($tenant->logo)) {
                     $tenant->logo = 'mobile-ci/images/default_product.png';
                 }
+                if (!empty($tenant->phone)) {
+                    $phone = explode('|#|', $tenant->phone);
+                    $tenant->phone = implode(' ', $phone);
+                    // dd($tenant->phone);
+                }
             }
 
             // should not be limited for new products - limit only when searching
@@ -7808,8 +7813,8 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
             $product_id = trim(OrbitInput::get('id'));
 
-            $product = Retailer::active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
-
+            $product = Retailer::with('media', 'mediaLogoOrig', 'mediaMapOrig', 'mediaImageOrig')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
+            
             if (empty($product)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
@@ -7844,7 +7849,56 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            return $this->redirectIfNotLoggedIn($e);
+            // return $this->redirectIfNotLoggedIn($e);
+                return $e;
+        }
+    }
+
+    /**
+     * GET - Lucky draw page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getLuckyDrawView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityProduct = Activity::mobileci()
+                                   ->setActivityType('view');
+        $product = null;
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+
+            $activityProductNotes = sprintf('Lucky Draw Page');
+            $activityProduct->setUser($user)
+                ->setActivityName('view_lucky_draw')
+                ->setActivityNameLong('View Lucky Draw')
+                ->setNotes($activityProductNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.luckydraw', array('page_title' => 'LUCKY DRAW', 'retailer' => $retailer));
+
+        } catch (Exception $e) {
+            $activityProductNotes = sprintf('Product viewed: %s', $product_id);
+            $activityProduct->setUser($user)
+                ->setActivityName('view_product')
+                ->setActivityNameLong('View Product Not Found')
+                ->setObject(null)
+                ->setProduct($product)
+                ->setModuleName('Product')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
+
+            // return $this->redirectIfNotLoggedIn($e);
+                return $e;
         }
     }
 }

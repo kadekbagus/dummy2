@@ -11,7 +11,7 @@
                 <div class="row">
                     <div class="col-xs-6 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel" type="button" class="btn btn-default btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('cid')))
                                         <?php
@@ -27,6 +27,7 @@
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="category">
+                                <li data-category=""><span>All</span></li>
                                 @foreach($categories as $category)
                                 <li data-category="{{ $category->category_id }}"><span>{{ $category->category_name }}</span></li>
                                 @endforeach
@@ -35,7 +36,7 @@
                     </div>
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel2" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel2" type="button" class="btn btn-default btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('fid')))
                                         {{ Input::get('fid') }}
@@ -46,6 +47,7 @@
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel2" id="floor">
+                                <li data-category=""><span>All</span></li>
                                 <li data-floor="LG"><span>LG</span></li>
                                 <li data-floor="UG"><span>UG</span></li>
                                 <li data-floor="G"><span>G</span></li>
@@ -63,7 +65,11 @@
                 <div class="main-theme-mall catalogue" id="product-{{$product->product_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-6 catalogue-img">
-                            <a href="{{ asset($product->logo) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->logo) }}"></a>
+                            @foreach($product->mediaLogo as $media)
+                            @if($media->media_name_long == 'retailer_logo_orig')
+                            <a href="{{ asset($media->path) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($media->path) }}"></a>
+                            @endif
+                            @endforeach
                         </div>
                     </div>
 
@@ -71,6 +77,11 @@
                         <div class="col-xs-9">
                             <h4>{{ $product->name }} at</h4>
                             <h3>{{ $retailer->name }} - {{ $product->floor }} - {{ $product->unit }}</h3>
+                            <h5 class="tenant-category">
+                            @foreach($product->categories as $cat)
+                                <span>{{$cat->category_name}}</span>
+                            @endforeach
+                            </h5>
                         </div>
                         <div class="col-xs-3">
                             <div class="circlet btn-blue detail-btn pull-right">
@@ -85,7 +96,7 @@
                 <div class="row">
                     <div class="col-xs-6 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel" type="button" class="btn btn-default btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('cid')))
                                         <?php
@@ -101,6 +112,7 @@
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="category">
+                                <li data-category=""><span>All</span></li>
                                 @foreach($categories as $category)
                                 <li data-category="{{ $category->category_id }}"><span>{{ $category->category_name }}</span></li>
                                 @endforeach
@@ -109,7 +121,7 @@
                     </div>
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel2" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel2" type="button" class="btn btn-default btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('fid')))
                                         {{ Input::get('fid') }}
@@ -120,6 +132,7 @@
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel2" id="floor">
+                                <li data-category=""><span>All</span></li>
                                 <li data-floor="LG"><span>LG</span></li>
                                 <li data-floor="UG"><span>UG</span></li>
                                 <li data-floor="G"><span>G</span></li>
@@ -199,11 +212,17 @@
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
         $('#category>li').click(function(){
+            if(!$(this).data('category')) {
+                $(this).data('category', '');
+            }
             path = updateQueryStringParameter(path, 'cid', $(this).data('category'));
             console.log(path);
             window.location.replace(path);
         });
         $('#floor>li').click(function(){
+            if(!$(this).data('floor')) {
+                $(this).data('floor', '');
+            }
             path = updateQueryStringParameter(path, 'fid', $(this).data('floor'));
             console.log(path);
             window.location.replace(path);

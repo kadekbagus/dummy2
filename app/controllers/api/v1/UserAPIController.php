@@ -51,7 +51,7 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.postnewuser.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('create_user')) {
+            if (! ACL::create($user)) {
                 Event::fire('orbit.user.postnewuser.authz.notallowed', array($this, $user));
                 $createUserLang = Lang::get('validation.orbit.actionlist.add_new_user');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createUserLang));
@@ -255,7 +255,7 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.postdeleteuser.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('delete_user')) {
+            if (! ACL::create($user)) {
                 Event::fire('orbit.user.postdeleteuser.authz.notallowed', array($this, $user));
                 $deleteUserLang = Lang::get('validation.orbit.actionlist.delete_user');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteUserLang));
@@ -885,7 +885,7 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.getsearchuser.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_user')) {
+            if (! ACL::create($user)) {
                 $user_ids = OrbitInput::get('user_id');
                 $need_check = TRUE;
                 if (! empty($user_ids) && is_array($user_ids)) {
@@ -954,7 +954,12 @@ class UserAPIController extends ControllerAPI
             OrbitInput::get('with', function($_with) use (&$with) {
                 $with = array_merge($_with, $with);
             });
-            $users = User::with($with)->excludeDeleted();
+            $users = User::Consumers()
+                        ->select('users.*')
+                        ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
+                        ->with(array('userDetail', 'userDetail.lastVisitedShop'))
+                        ->excludeDeleted('users');
 
             // Filter user by Ids
             OrbitInput::get('user_id', function ($userIds) use ($users) {
@@ -1004,6 +1009,13 @@ class UserAPIController extends ControllerAPI
             // Filter user by their role id
             OrbitInput::get('role_id', function ($roleId) use ($users) {
                 $users->whereIn('users.user_role_id', $roleId);
+            });
+
+            // Filter user by their role id
+            OrbitInput::get('role_name', function ($roleId) use ($users) {
+                $users->whereHas('role', function($q) use ($roleId) {
+                    $q->where('roles.role_name', $roleId);
+                });
             });
 
             // Clone the query builder which still does not include the take,
@@ -1165,7 +1177,7 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.getconsumer.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_user')) {
+            if (! ACL::create($user)) {
                 $user_ids = OrbitInput::get('user_id');
                 $need_check = TRUE;
                 if (! empty($user_ids) && is_array($user_ids)) {

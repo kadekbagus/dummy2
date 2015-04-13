@@ -10,18 +10,20 @@
 <div class="row product">
     <div class="col-xs-12 product-img">
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{ asset('mobile-ci/images/default_product.png') }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
+            <div class="zoom"><a href="#" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
-            <li data-thumb="{{ asset('mobile-ci/images/default_product.png') }}"> 
-                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}" />
+            @foreach($product->mediaLogoOrig as $media)
+            <li data-thumb="{{ asset($media->path) }}">
+                <span class="gallery-helper"></span>
+                <img class="img-responsive" src="{{ asset($media->path) }}" />
             </li>
-            <li data-thumb="{{ asset('mobile-ci/images/default_product.png') }}"> 
-                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}" />
+            @endforeach
+            @foreach($product->mediaImageOrig as $media)
+            <li data-thumb="{{ asset($media->path) }}"> 
+                <img class="img-responsive" src="{{ asset($media->path) }}" />
             </li>
-            <li data-thumb="{{ asset('mobile-ci/images/default_product.png') }}"> 
-                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}" />
-            </li>
+            @endforeach
         </ul>
     </div>
     <div class="col-xs-12 main-theme product-detail">
@@ -42,9 +44,11 @@
             <div class="col-xs-12">
                 <p>{{ $product->name }} at</p>
                 <p>{{ $retailer->name }} - {{ $product->floor }} - {{ $product->unit }}</p>
+                @foreach($product->mediaMapOrig as $map)
                 <p>
-                    <img class="img-responsive maps" src="{{ asset('mobile-ci/images/default_product.png') }}">
+                    <img class="img-responsive maps" src="{{ asset($map->path) }}">
                 </p>
+                @endforeach
             </div>
         </div>
     </div>
@@ -100,9 +104,11 @@
                 auto:true,
                 loop:true,
                 onSliderLoad: function() {
+                    $('.zoom a').attr('href', $('.lslide.active img').attr('src'));
                     $('#image-gallery').removeClass('cS-hidden');
                 },
                 onAfterSlide: function() {
+                    console.log('asd');
                     $('.zoom a').attr('href', $('.lslide.active img').attr('src'));
                 }
             });
