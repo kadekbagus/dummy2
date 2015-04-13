@@ -8,6 +8,7 @@ $baseDir = dirname($vendorDir);
 return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
+    'AlterTableLuckyDrawNumbersAddColumnHash' => $baseDir . '/app/database/migrations/2015_04_13_090851_alter_table_lucky_draw_numbers_add_column_hash.php',
     'AlterTableLuckyDrawNumbersAddUniqueIndexForIdNumberStatus' => $baseDir . '/app/database/migrations/2015_04_13_034658_alter_table_lucky_draw_numbers_add_unique_index_for_id_number_status.php',
     'AlterTableLuckyDrawNumbersChangeUserIdToNullable' => $baseDir . '/app/database/migrations/2015_04_12_153306_alter_table_lucky_draw_numbers_change_user_id_to_nullable.php',
     'AlterTableMerchantsAddFloorAndUnit' => $baseDir . '/app/database/migrations/2015_04_11_083827_alter_table_merchants_add_floor_and_unit.php',
@@ -551,6 +552,7 @@ return array(
     'LippoPuriTenantSeeder' => $baseDir . '/app/database/seeds/LippoPuriTenantSeeder.php',
     'LoginAPIController' => $baseDir . '/app/controllers/api/v1/LoginAPIController.php',
     'LuckyDraw' => $baseDir . '/app/models/LuckyDraw.php',
+    'LuckyDrawAPIController' => $baseDir . '/app/controllers/api/v1/LuckyDrawAPIController.php',
     'LuckyDrawNumber' => $baseDir . '/app/models/LuckyDrawNumber.php',
     'LuckyDrawNumberReceipt' => $baseDir . '/app/models/LuckyDrawNumberReceipt.php',
     'LuckyDrawReceipt' => $baseDir . '/app/models/LuckyDrawReceipt.php',
