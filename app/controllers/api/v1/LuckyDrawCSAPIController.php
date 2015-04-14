@@ -410,7 +410,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'receipt_dates' => $receiptDates,
                     'payment_types' => $paymentTypes,
                     'user_id'       => $userId,
-                    'lucky_number'  => $userLuckyNumber
                 ),
                 array(
                     'tenants'       => 'array|required',
@@ -419,7 +418,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'receipt_dates' => 'array|required',
                     'payment_types' => 'array|required',
                     'user_id'       => 'required|numeric',
-                    'lucky_number'  => 'numeric|min:0:max:9'
                 )
             );
 
@@ -458,10 +456,10 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 }
             }
 
-            $applicableCoupons = Coupon::getApplicableCoupons($totalAmount);
+            $applicableCoupons = Coupon::getApplicableCoupons($totalAmount, $tenants);
             $applicableCouponsCount = RecordCounter::create($applicableCoupons)->count();
 
-            if ($applicableCoupons === 0) {
+            if ($applicableCouponsCount === 0) {
                 $errorMessage = sprintf('There is no applicable coupon for those amount (or tenants).');
                 ACL::throwAccessForbidden($errorMessage);
             }
@@ -474,6 +472,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
+
+            $applicableCoupons = $applicableCoupons->get();
 
             $applicableCouponIds = [];
             $applicableCouponNames = [];
@@ -488,10 +488,21 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $numberOfCouponIssued = 0;
             $issuedCoupons = [];
             foreach ($applicableCoupons as $applicable) {
-                $issuedCoupon = new IssuedCoupon();
-                $issuedCoupon->issue($applicable, $userId, $user);
+                $numberNeedToIssue = floor($totalAmount / $applicable->rule_value);
 
-                $issuedCoupons[$issuedCoupon->issued_coupon_code] = $applicable->promotion_name;
+                for ($i=0; $i<$numberNeedToIssue; $i++) {
+                    $issuedCoupon = new IssuedCoupon();
+                    $tmp = $issuedCoupon->issue($applicable, $userId, $user);
+
+                    $obj = new stdClass();
+                    $obj->coupon_number = $tmp->issued_coupon_code;
+                    $obj->coupon_name = $applicable->promotion_name;
+                    $issuedCoupons[] = $obj;
+                    $numberOfCouponIssued++;
+
+                    $tmp = NULL;
+                    $obj = NULL;
+                }
             }
 
             // Save each receipt numbers
@@ -539,6 +550,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
                 $luckyDrawReceipt->receipt_amount = $amounts[$i];
+                $luckyDrawReceipt->receipt_payment_type = $paymentTypes[$i];
                 $luckyDrawReceipt->status = 'active';
                 $luckyDrawReceipt->created_by = $user->user_id;
                 $luckyDrawReceipt->object_type = 'coupon';
@@ -553,20 +565,21 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $data = new stdClass();
             $data->coupon_names = $applicableCouponNames;
             $data->coupon_numbers = $issuedCoupons;
+            $data->total_coupon_issued = $numberOfCouponIssued;
 
             $this->response->data = $data;
 
             // Insert to alert system
-            // $this->insertIntoInbox($userId, $luckyDrawnumbers);
+            $this->insertCouponInbox($userId, $issuedCoupons);
 
             // Commit the changes
             $this->commit();
 
             // Successfull Creation
             $activity->setUser($user)
-                    ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw')
-                    ->setObject($luckyDraw)
+                    ->setActivityName('issue_coupon_number')
+                    ->setActivityNameLong('Issue Coupon Number')
+                    ->setObject(NULL)
                     ->responseOK();
 
             Event::fire('orbit.issuecoupon.postnewissuecoupon.after.commit', array($this, $widget));
@@ -584,8 +597,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Creation failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityName('issue_coupon_number')
+                    ->setActivityNameLong('Issue Coupon Number Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -603,7 +616,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Issue Coupon Number Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
@@ -627,7 +640,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Issue Coupon Number Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
@@ -649,7 +662,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Issue Coupon Number Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         }
@@ -685,7 +698,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
      * @param array $numbers - Issued numbers
      * @return void
      */
-    protected function insertIntoInbox($userId, $numbers)
+    protected function insertLuckyDrawNumberInbox($userId, $numbers)
     {
         $user = User::active()->find($userId);
         $name = $user->getFullName();
@@ -729,6 +742,65 @@ VIEW;
         $inbox->from_id = 0;
         $inbox->from_name = 'Orbit';
         $inbox->subject = 'You got new lucky draw number.';
+        $inbox->content = $template;
+        $inbox->inbox_type = 'alert';
+        $inbox->status = 'active';
+        $inbox->is_read = 'N';
+        $inbox->save();
+    }
+
+    /**
+     * Insert issued coupon numbers into inbox table.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param int $userId - The user id
+     * @param array $numbers - Issued numbers
+     * @return void
+     */
+    protected function insertCouponInbox($userId, $numbers)
+    {
+        $user = User::active()->find($userId);
+        $name = $user->getFullName();
+        $name = $name ? $name : $user->email;
+
+        // Oh yeah, we have mixed the view!!
+        $template = <<<VIEW
+<div class="modal fade" id="numberModal" tabindex="-1" role="dialog" aria-labelledby="numberModalLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <p style="margin-bottom: 1em;"><strong>You Got New Coupon(s) Number!</strong></p>
+                <p>Hello {{NAME}},
+                <br><br>
+
+                Congratulation you got {{NUMBERS}} coupon(s) number:
+                <ul>
+                    {{LIST}}
+                </ul>
+                </p>
+
+                <br>
+                <p>Lippo Mall</p>
+            </div>
+        </div>
+    </div>
+</div>
+VIEW;
+
+        $list = '';
+        foreach ($numbers as $number) {
+            $list .= sprintf("<li>%s (%s)\n", $number->coupon_number, $number->coupon_name);
+        }
+
+        $template = str_replace('{{NAME}}', $name, $template);
+        $template = str_replace('{{NUMBERS}}', count($numbers), $template);
+        $template = str_replace('{{LIST}}', $list, $template);
+
+        $inbox = new Inbox();
+        $inbox->user_id = $userId;
+        $inbox->from_id = 0;
+        $inbox->from_name = 'Orbit';
+        $inbox->subject = 'You got new coupon number.';
         $inbox->content = $template;
         $inbox->inbox_type = 'alert';
         $inbox->status = 'active';

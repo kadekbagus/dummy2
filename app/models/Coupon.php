@@ -100,6 +100,58 @@ class Coupon extends Eloquent
     }
 
     /**
+     * Join promotion retailer
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     */
+    public function scopeJoinPromotionRetailer($query)
+    {
+        return $query->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id');
+    }
+
+    /**
+     * Join promotion retailer
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     */
+    public function scopeJoinPromotionRules($query)
+    {
+        return $query->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id');
+    }
+
+    /**
+     * Join promotion retailer
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param double $amount - User receipt money amount
+     */
+    public static function getApplicableCoupons($amount, $retailerIds=[])
+    {
+        if (empty($retailerIds)) {
+            throw new Exception('Could not get applicable coupons, tenants argument is empty.');
+        }
+
+        $prefix = DB::getTablePrefix();
+        $now = date('Y-m-d');
+        $amount = (double)$amount;
+        return Coupon::selectRaw("(floor ($amount / {$prefix}promotion_rules.rule_value)) issue_count,
+                                  {$prefix}promotion_rules.rule_value,
+                                  {$prefix}promotions.*")
+                    ->joinPromotionRetailer()
+                    ->joinPromotionRules()
+                    ->whereRaw("(floor ($amount / {$prefix}promotion_rules.rule_value)) > 0")
+                    ->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))")
+                    ->whereRaw("(select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
+                                        where {$prefix}issued_coupons.promotion_id={$prefix}promotions.promotion_id
+                                        and status!='deleted') < {$prefix}promotions.maximum_issued_coupon")
+                    ->active('promotions')
+                    ->whereIn('promotion_retailer.retailer_id', $retailerIds)
+                    ->groupBy('promotions.promotion_id');
+    }
+
+    /**
      * Add Filter coupons based on user who request it. (Should be used on view only)
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $builder

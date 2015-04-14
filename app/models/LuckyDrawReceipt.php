@@ -44,7 +44,7 @@ class LuckyDrawReceipt extends Eloquent
      */
     public function coupons()
     {
-        return $this->belongsToMany('Coupon', 'lucky_draw_number_receipt', 'promotion_id', 'lucky_draw_receipt_id');
+        return $this->belongsToMany('Coupon', 'lucky_draw_number_receipt', 'lucky_draw_number_id', 'lucky_draw_receipt_id');
     }
 
     public function creator()

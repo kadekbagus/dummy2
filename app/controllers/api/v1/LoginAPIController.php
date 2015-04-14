@@ -151,7 +151,7 @@ class LoginAPIController extends ControllerAPI
      */
     public function postLoginMallCustomerService()
     {
-        return $this->postLoginRole(['Mall Customer Service]']);
+        return $this->postLoginRole(['Mall Customer Service']);
     }
 
     /**
