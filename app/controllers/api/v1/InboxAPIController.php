@@ -170,7 +170,7 @@ class InboxAPIController extends ControllerAPI
 
             Event::fire('orbit.inbox.postreadalert.after.save', array($this, $inbox));
             $this->response->message = 'Message has been flagged as read';
-            $this->response->data = $inbox;
+            $this->response->data = NULL;
 
             // Commit the changes
             $this->commit();
