@@ -717,7 +717,7 @@ class LuckyDrawAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `with`                  (optional) - Valid value: mall.
+     * @param string   `with`                  (optional) - Valid value: mall, media, winners, numbers.
      * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, lucky_draw_name, description, start_date, end_date, status.
      * @param string   `sortmode`              (optional) - ASC or DESC
      * @param integer  `take`                  (optional) - Limit
@@ -864,6 +864,12 @@ class LuckyDrawAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'mall') {
                         $luckydraws->with('mall');
+                    } elseif ($relation === 'media') {
+                        $luckydraws->with('media');
+                    } elseif ($relation === 'winners') {
+                        $luckydraws->with('winners');
+                    } elseif ($relation === 'numbers') {
+                        $luckydraws->with('numbers');
                     }
                 }
             });
