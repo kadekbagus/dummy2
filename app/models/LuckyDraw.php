@@ -19,7 +19,7 @@ class LuckyDraw extends Eloquent
 
     public function mall()
     {
-        return $this->belongsTo('Retailer', 'mall_id', 'merchant_id');
+        return $this->belongsTo('Retailer', 'mall_id', 'merchant_id')->isMall();
     }
 
     public function creator()
