@@ -394,5 +394,13 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->getLuckyDrawView();
             }
         );
+
+        Route::post(
+            '/app/v1/customer/luckydrawnumberpopup',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->postLuckyNumberPopup();
+            }
+        );
     }
 );

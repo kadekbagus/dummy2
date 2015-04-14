@@ -156,7 +156,7 @@ return array(
     ),
 
     'search'                => array(
-        'no_item'           => 'There is no product matching the criteria.',
+        'no_item'           => 'There is no tenant matching the criteria.',
         'too_much_items'     => 'Search result is too broad, please narrow it down.',
     ),
 
