@@ -18,6 +18,9 @@ Route::post('/app/v1/logout/admin', 'IntermediateLoginController@getLogout');
 Route::post('/app/v1/login/mall', 'IntermediateLoginController@postLoginMall');
 Route::post('/app/v1/logout/mall', 'IntermediateLoginController@getLogout');
 
+Route::post('/app/v1/login/mallcs', 'IntermediateLoginController@postLoginMallCustomerService');
+Route::post('/app/v1/logout/mallcs', 'IntermediateLoginController@getLogout');
+
 /**
  * Customer registration
  */
