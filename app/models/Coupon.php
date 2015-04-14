@@ -28,14 +28,14 @@ class Coupon extends Eloquent
 
     protected $primaryKey = 'promotion_id';
 
-    public function couponrule()
+    public function couponRule()
     {
         return $this->hasOne('CouponRule', 'promotion_id', 'promotion_id');
     }
 
-    public function merchant()
+    public function mall()
     {
-        return $this->belongsTo('Merchant', 'merchant_id', 'merchant_id');
+        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall();
     }
 
     public function creator()
@@ -48,92 +48,14 @@ class Coupon extends Eloquent
         return $this->belongsTo('User', 'modified_by', 'user_id');
     }
 
-    public function issueretailers()
+    public function tenants()
     {
         return $this->belongsToMany('Retailer', 'promotion_retailer', 'promotion_id', 'retailer_id');
     }
 
-    public function redeemretailers()
-    {
-        return $this->belongsToMany('Retailer', 'promotion_retailer_redeem', 'promotion_id', 'retailer_id');
-    }
-
-    public function issuedcoupons()
+    public function issuedCoupons()
     {
         return $this->hasMany('IssuedCoupon', 'promotion_id', 'promotion_id');
-    }
-
-    /**
-     * Add Filter coupons based on user who request it.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $builder
-     * @param  User $user Instance of object user
-     */
-    public function scopeAllowedForUser($builder, $user)
-    {
-        // Super admin allowed to see all entries
-        $superAdmin = Config::get('orbit.security.superadmin');
-        if (empty($superAdmin))
-        {
-            $superAdmin = array('super admin');
-        }
-
-        // Transform all array into lowercase
-        $superAdmin = array_map('strtolower', $superAdmin);
-        $userRole = trim(strtolower($user->role->role_name));
-        if (in_array($userRole, $superAdmin))
-        {
-            // do nothing return as is
-            return $builder;
-        }
-
-        // This will filter only coupons which belongs to merchant
-        // The merchant owner has an ability to view all coupons
-        $builder->where(function($query) use ($user)
-        {
-            $prefix = DB::getTablePrefix();
-            $query->whereRaw("{$prefix}promotions.merchant_id in (select m2.merchant_id from {$prefix}merchants m2
-                                where m2.user_id=? and m2.object_type='merchant')", array($user->user_id));
-        });
-
-        return $builder;
-    }
-
-    /**
-     * Add Filter coupons based on user who request it. (Should be used on view only)
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $builder
-     * @param  User $user Instance of object user
-     */
-    public function scopeAllowedForViewOnly($builder, $user)
-    {
-        // Super admin and Consumer allowed to see all entries
-        // Weird? yeah this is supposed to call on merchant portal only
-        $superAdmin = Config::get('orbit.security.superadmin');
-        if (empty($superAdmin))
-        {
-            $superAdmin = array('super admin', 'consumer');
-        }
-
-        // Transform all array into lowercase
-        $superAdmin = array_map('strtolower', $superAdmin);
-        $userRole = trim(strtolower($user->role->role_name));
-        if (in_array($userRole, $superAdmin))
-        {
-            // do nothing return as is
-            return $builder;
-        }
-
-        // This will filter only coupons which belongs to merchant
-        // The merchant owner has an ability to view all coupons
-        $builder->where(function($query) use ($user)
-        {
-            $prefix = DB::getTablePrefix();
-            $query->whereRaw("{$prefix}promotions.merchant_id in (select m2.merchant_id from {$prefix}merchants m2
-                                where m2.user_id=? and m2.object_type='merchant')", array($user->user_id));
-        });
-
-        return $builder;
     }
 
     /**
