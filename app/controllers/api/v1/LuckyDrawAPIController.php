@@ -61,12 +61,22 @@ class LuckyDrawAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.luckydraw.postnewluckydraw.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('create_lucky_draw')) {
                 Event::fire('orbit.luckydraw.postnewluckydraw.authz.notallowed', array($this, $user));
                 $createLuckyDrawLang = Lang::get('validation.orbit.actionlist.new_lucky_draw');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createLuckyDrawLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.luckydraw.postnewluckydraw.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -315,12 +325,22 @@ class LuckyDrawAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.luckydraw.postupdateluckydraw.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('update_lucky_draw')) {
                 Event::fire('orbit.luckydraw.postupdateluckydraw.authz.notallowed', array($this, $user));
                 $updateLuckyDrawLang = Lang::get('validation.orbit.actionlist.update_lucky_draw');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateLuckyDrawLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.luckydraw.postupdateluckydraw.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -561,12 +581,22 @@ class LuckyDrawAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.luckydraw.postdeleteluckydraw.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('delete_lucky_draw')) {
                 Event::fire('orbit.luckydraw.postdeleteluckydraw.authz.notallowed', array($this, $user));
                 $deleteLuckyDrawLang = Lang::get('validation.orbit.actionlist.delete_lucky_draw');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteLuckyDrawLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.luckydraw.postdeleteluckydraw.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -717,7 +747,7 @@ class LuckyDrawAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `with`                  (optional) - Valid value: mall, media, winners, numbers.
+     * @param string   `with`                  (optional) - Valid value: mall, media, winners, numbers, issued_numbers.
      * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, lucky_draw_name, description, start_date, end_date, status.
      * @param string   `sortmode`              (optional) - ASC or DESC
      * @param integer  `take`                  (optional) - Limit
@@ -751,12 +781,22 @@ class LuckyDrawAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.luckydraw.getsearchluckydraw.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_lucky_draw')) {
                 Event::fire('orbit.luckydraw.getsearchluckydraw.authz.notallowed', array($this, $user));
                 $viewLuckyDrawLang = Lang::get('validation.orbit.actionlist.view_lucky_draw');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewLuckyDrawLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.luckydraw.getsearchluckydraw.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -870,6 +910,8 @@ class LuckyDrawAPIController extends ControllerAPI
                         $luckydraws->with('winners');
                     } elseif ($relation === 'numbers') {
                         $luckydraws->with('numbers');
+                    } elseif ($relation === 'issued_numbers') {
+                        $luckydraws->with('issuedNumbers');
                     }
                 }
             });
