@@ -156,7 +156,7 @@ return array(
     ),
 
     'search'                => array(
-        'no_item'           => 'Tidak ada produk yang sesuai kriteria.',
+        'no_item'           => 'Tidak ada tenant yang sesuai kriteria.',
         'too_much_items'     => 'Hasil pencarian terlalu banyak, tolong persempit pencarian Anda.',
     ),
 
