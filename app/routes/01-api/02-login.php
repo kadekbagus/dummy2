@@ -36,6 +36,16 @@ Route::post('/api/v1/logout/mall', function()
     return LoginAPIController::create()->postLogout();
 });
 
+Route::post('/api/v1/login/mallcs', function()
+{
+    return LoginAPIController::create()->postLoginMallCustomerService();
+});
+
+Route::post('/api/v1/logout/mallcs', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
+
 /**
  * Customer registration
  */

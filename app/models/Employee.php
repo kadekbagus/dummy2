@@ -32,6 +32,17 @@ class Employee extends Eloquent
     }
 
     /**
+     * Scope to join with user table.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    public function scopeJoinUser()
+    {
+        return $this->select('employees.*')
+                    ->join('users', 'users.user_id', '=', 'employees.user_id');
+    }
+
+    /**
      * Employee belongs to many merchant ids.
      *
      * @return
