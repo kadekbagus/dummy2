@@ -290,7 +290,7 @@ class CouponAPIController extends ControllerAPI
             $couponrule->is_cumulative_with_promotions = $is_cumulative_with_promotions;
             $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
             $couponrule = $newcoupon->couponRule()->save($couponrule);
-            $newcoupon->couponRule = $couponrule;
+            $newcoupon->coupon_rule = $couponrule;
 
             // save CouponRetailer
             $retailers = array();
@@ -729,7 +729,7 @@ class CouponAPIController extends ControllerAPI
 
             $couponrule->save();
             $updatedcoupon->setRelation('couponRule', $couponrule);
-            $updatedcoupon->couponRule = $couponrule;
+            $updatedcoupon->coupon_rule = $couponrule;
 
 
             // save CouponRetailer
@@ -1082,8 +1082,8 @@ class CouponAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `with`                  (optional) - Valid value: retailers, product, family.
-     * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, is_permanent, status, rule_type, display_discount_value.
+     * @param string   `with`                  (optional) - Valid value: mall, tenants.
+     * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status.
      * @param string   `sortmode`              (optional) - ASC or DESC
      * @param integer  `take`                  (optional) - Limit
      * @param integer  `skip`                  (optional) - Limit offset
@@ -1094,6 +1094,8 @@ class CouponAPIController extends ControllerAPI
      * @param string   `promotion_type`        (optional) - Coupon type. Valid value: product, cart.
      * @param string   `description`           (optional) - Description
      * @param string   `description_like`      (optional) - Description like
+     * @param string   `long_description`      (optional) - Long description
+     * @param string   `long_description_like` (optional) - Long description like
      * @param datetime `begin_date`            (optional) - Begin date. Example: 2014-12-30 00:00:00
      * @param datetime `end_date`              (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
@@ -1112,8 +1114,7 @@ class CouponAPIController extends ControllerAPI
      * @param integer  `discount_object_id3`   (optional) - Discount object ID3 (category_id3).
      * @param integer  `discount_object_id4`   (optional) - Discount object ID4 (category_id4).
      * @param integer  `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
-     * @param integer  `issue_retailer_id`     (optional) - Issue Retailer IDs
-     * @param integer  `redeem_retailer_id`    (optional) - Redeem Retailer IDs
+     * @param integer  `retailer_id`           (optional) - Retailer IDs
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1134,12 +1135,22 @@ class CouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.coupon.getsearchcoupon.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_coupon')) {
                 Event::fire('orbit.coupon.getsearchcoupon.authz.notallowed', array($this, $user));
                 $viewCouponLang = Lang::get('validation.orbit.actionlist.view_coupon');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.coupon.getsearchcoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1150,7 +1161,7 @@ class CouponAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status,rule_type,display_discount_value',
+                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.coupon_sortby'),
@@ -1188,9 +1199,8 @@ class CouponAPIController extends ControllerAPI
             $table_prefix = DB::getTablePrefix();
             // Builder object
             // Addition select case and join for sorting by discount_value.
-            $coupons = Coupon::with('couponrule')
+            $coupons = Coupon::with('couponRule')
                 ->excludeDeleted()
-                ->allowedForViewOnly($user)
                 ->select(DB::raw($table_prefix . "promotions.*,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
@@ -1247,6 +1257,18 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::get('description_like', function($description) use ($coupons)
             {
                 $coupons->where('promotions.description', 'like', "%$description%");
+            });
+
+            // Filter coupon by long description
+            OrbitInput::get('long_description', function($long_description) use ($coupons)
+            {
+                $coupons->whereIn('promotions.long_description', $long_description);
+            });
+
+            // Filter coupon by matching long_description pattern
+            OrbitInput::get('long_description_like', function($long_description) use ($coupons)
+            {
+                $coupons->where('promotions.long_description', 'like', "%$long_description%");
             });
 
             // Filter coupon by begin date
@@ -1367,17 +1389,10 @@ class CouponAPIController extends ControllerAPI
                 });
             });
 
-            // Filter coupon by issue retailer id
-            OrbitInput::get('issue_retailer_id', function ($issueRetailerIds) use ($coupons) {
-                $coupons->whereHas('issueretailers', function($q) use ($issueRetailerIds) {
-                    $q->whereIn('retailer_id', $issueRetailerIds);
-                });
-            });
-
-            // Filter coupon by redeem retailer id
-            OrbitInput::get('redeem_retailer_id', function ($redeemRetailerIds) use ($coupons) {
-                $coupons->whereHas('redeemretailers', function($q) use ($redeemRetailerIds) {
-                    $q->whereIn('retailer_id', $redeemRetailerIds);
+            // Filter coupon by retailer id
+            OrbitInput::get('retailer_id', function ($retailerIds) use ($coupons) {
+                $coupons->whereHas('tenants', function($q) use ($retailerIds) {
+                    $q->whereIn('retailer_id', $retailerIds);
                 });
             });
 
@@ -1386,12 +1401,10 @@ class CouponAPIController extends ControllerAPI
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
-                    if ($relation === 'retailers') {
-                        $coupons->with('issueretailers', 'redeemretailers');
-                    } elseif ($relation === 'product') {
-                        $coupons->with('couponrule.ruleproduct', 'couponrule.discountproduct');
-                    } elseif ($relation === 'family') {
-                        $coupons->with('couponrule.rulecategory1', 'couponrule.rulecategory2', 'couponrule.rulecategory3', 'couponrule.rulecategory4', 'couponrule.rulecategory5', 'couponrule.discountcategory1', 'couponrule.discountcategory2', 'couponrule.discountcategory3', 'couponrule.discountcategory4', 'couponrule.discountcategory5');
+                    if ($relation === 'mall') {
+                        $coupons->with('mall');
+                    } elseif ($relation === 'tenants') {
+                        $coupons->with('tenants');
                     }
                 }
             });
@@ -1443,7 +1456,6 @@ class CouponAPIController extends ControllerAPI
                     'is_permanent'             => 'promotions.is_permanent',
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
-                    'display_discount_value'   => 'display_discount_value' // only to avoid error 'Undefined index'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -1456,12 +1468,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            if (trim(OrbitInput::get('sortby')) === 'display_discount_value') {
-                $coupons->orderBy('display_discount_type', $sortMode);
-                $coupons->orderBy('display_discount_value', $sortMode);
-            } else {
-                $coupons->orderBy($sortBy, $sortMode);
-            }
+            $coupons->orderBy($sortBy, $sortMode);
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
