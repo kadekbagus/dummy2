@@ -59,7 +59,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $role = $user->role;
             $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to login.';
+                $message = 'Your role are not allowed to access this page.';
                 ACL::throwAccessForbidden($message);
             }
 

@@ -286,6 +286,282 @@ class EmployeeAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Create New Employee
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `firstname`             (required) - Employee first name
+     * @param string    `lastname`              (required) - Employee last name
+     * @param string    `birthdate`             (optional) - Employee birthdate
+     * @param string    `position`              (optional) - Employee position, i.e: 'Cashier 1', 'Supervisor'
+     * @param string    `employee_id_char`      (optional) - Employee ID, i.e: 'EMP001', 'CASHIER001`
+     * @param string    `username`              (required) - Username used to login
+     * @param string    `password`              (required) - Password for the account
+     * @param string    `password_confirmation` (required) - Confirmation password
+     * @param string    `employee_role`         (required) - Role of the employee, i.e: 'cashier', 'manager', 'supervisor'
+     * @param array     `retailer_ids`          (optional) - List of Retailer IDs
+     * @param array     `status`                (optional) - 'active' or 'inactive'
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postNewMallEmployee()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('create');
+
+        $user = NULL;
+        $newEmployee = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.employee.postnewemployee.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.employee.postnewemployee.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.employee.postnewemployee.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('create_employee')) {
+                Event::fire('orbit.employee.postnewemployee.authz.notallowed', array($this, $user));
+
+                $createUserLang = Lang::get('validation.orbit.actionlist.add_new_employee');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createUserLang));
+
+                ACL::throwAccessForbidden($message);
+            }
+            Event::fire('orbit.employee.postnewemployee.after.authz', array($this, $user));
+            // dd();
+            $this->registerCustomValidation();
+
+            $loginId = OrbitInput::post('username');
+            $birthdate = OrbitInput::post('birthdate');
+            $password = OrbitInput::post('password');
+            $password2 = OrbitInput::post('password_confirmation');
+            $position = OrbitInput::post('position');
+            $employeeId = OrbitInput::post('employee_id_char');
+            $firstName = OrbitInput::post('firstname');
+            $lastName = OrbitInput::post('lastname');
+            $employeeRole = OrbitInput::post('employee_role');
+            $retailerIds = OrbitInput::post('retailer_ids', []);
+            $empStatus = OrbitInput::post('status', 'active');
+
+            $errorMessage = [
+                'orbit.empty.employee.role' => Lang::get('validation.orbit.empty.employee.role', array(
+                    'role' => $employeeRole
+                ))
+            ];
+            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+            $validator = Validator::make(
+                array(
+                    'firstname'             => $firstName,
+                    'lastname'              => $lastName,
+                    'birthdate'             => $birthdate,
+                    'position'              => $position,
+                    'employee_id_char'      => $employeeId,
+                    'username'              => $loginId,
+                    'password'              => $password,
+                    'password_confirmation' => $password2,
+                    'employee_role'         => $employeeRole,
+                    'retailer_ids'          => $retailerIds,
+                    'status'                => $empStatus
+                ),
+                array(
+                    'firstname'         => 'required',
+                    'lastname'          => 'required',
+                    'birthdate'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'employee_id_char'  => 'orbit.exists.employeeid',
+                    'username'          => 'required|orbit.exists.username.mall',
+                    'password'          => 'required|min:5|confirmed',
+                    'employee_role'     => 'required|orbit.empty.employee.role',
+                    'retailer_ids'      => 'array|min:1|orbit.empty.retailer',
+                    'status'            => 'in:active,inactive'
+                ),
+                array(
+                    'orbit.empty.employee.role' => $errorMessage['orbit.empty.employee.role'],
+                )
+            );
+
+            Event::fire('orbit.employee.postnewemployee.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+
+                // WTHell Laravel message wont work!! I need to subtitute manually
+                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.employee.postnewemployee.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $role = App::make('orbit.empty.employee.role');
+
+            $newUser = new User();
+            $newUser->username = $loginId;
+            $newUser->user_email = $loginId;
+            $newUser->user_password = Hash::make($password);
+            $newUser->status = $empStatus;
+            $newUser->user_role_id = $role->role_id;
+            $newUser->user_ip = $_SERVER['REMOTE_ADDR'];
+            $newUser->modified_by = $this->api->user->user_id;
+            $newUser->user_firstname = $firstName;
+            $newUser->user_lastname = $lastName;
+
+            Event::fire('orbit.employee.postnewemployee.before.save', array($this, $newUser));
+
+            $newUser->save();
+
+            $apikey = new Apikey();
+            $apikey->api_key = Apikey::genApiKey($newUser);
+            $apikey->api_secret_key = Apikey::genSecretKey($newUser);
+            $apikey->status = 'active';
+            $apikey->user_id = $newUser->user_id;
+            $apikey = $newUser->apikey()->save($apikey);
+
+            $newUser->setRelation('apikey', $apikey);
+            $newUser->setHidden(array('user_password'));
+
+            $userdetail = new UserDetail();
+
+            OrbitInput::post('birthdate', function($_birthdate) use ($userdetail) {
+                $userdetail->birthdate = $_birthdate;
+            });
+            $userdetail = $newUser->userdetail()->save($userdetail);
+
+            $newUser->setRelation('userDetail', $userdetail);
+
+            $newEmployee = new Employee();
+            $newEmployee->employee_id_char = $employeeId;
+            $newEmployee->position = $position;
+            $newEmployee->status = $newUser->status;
+            $newEmployee = $newUser->employee()->save($newEmployee);
+
+            $newUser->setRelation('employee', $newEmployee);
+
+            // @Todo: Remove this hardcode
+            $myRetailerIds = (array)Config::get('orbit.shop.id');
+            $retailerIds = array_merge($retailerIds, $myRetailerIds);
+
+            if ($retailerIds) {
+                $newEmployee->retailers()->sync($retailerIds);
+            }
+
+            Event::fire('orbit.employee.postnewemployee.after.save', array($this, $newUser));
+            $this->response->data = $newUser;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('Employee Created: %s', $newUser->username);
+            $activity->setUser($user)
+                    ->setActivityName('create_employee')
+                    ->setActivityNameLong('Create Employee OK')
+                    ->setObject($newEmployee)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.employee.postnewemployee.after.commit', array($this, $newUser));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.employee.postnewemployee.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_employee')
+                    ->setActivityNameLong('Create Employee Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.employee.postnewemployee.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_employee')
+                    ->setActivityNameLong('Create Employee Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.employee.postnewemployee.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_employee')
+                    ->setActivityNameLong('Create Employee Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.employee.postnewemployee.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_employee')
+                    ->setActivityNameLong('Create Employee Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    /**
      * POST - Update Existing Employee
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -1116,14 +1392,14 @@ class EmployeeAPIController extends ControllerAPI
             $merchantowner = $this->api->user;
             $retailer_ids = $merchantowner->getMyRetailerIds();
             $merchant_ids = implode(', ', $merchantowner->getMyMerchantIds());
-           
+
             if (! empty($retailer_ids) && ! empty($merchant_ids)) {
                 $user = User::whereHas('employee',  function($q) use($retailer_ids, $merchant_ids) {
                                 $q->whereHas('retailers', function($q) use($retailer_ids, $merchant_ids) {
                                     $q->whereIn('employee_retailer.retailer_id', $retailer_ids);
                                     $prefix = DB::getTablePrefix();
-                                    $q->whereRaw("(SELECT COUNT(*) from {$prefix}merchants m, {$prefix}merchants r 
-                                        WHERE m.merchant_id = r.parent_id AND m.merchant_id not in (?)) >= 1", 
+                                    $q->whereRaw("(SELECT COUNT(*) from {$prefix}merchants m, {$prefix}merchants r
+                                        WHERE m.merchant_id = r.parent_id AND m.merchant_id not in (?)) >= 1",
                                         array($merchant_ids)
                                     );
                                 });
@@ -1134,12 +1410,25 @@ class EmployeeAPIController extends ControllerAPI
             } else {
                 return FALSE;
             }
-            
+
             if (! empty($user)) {
                 return FALSE;
             }
 
             App::instance('orbit.validation.username', $user);
+
+            return TRUE;
+        });
+
+        // Check username, it should not exists
+        Validator::extend('orbit.exists.username.mall', function ($attribute, $value, $parameters) {
+            $user = Employee::joinUser()->where('users.username', $value)->first();
+
+            if (! empty($user)) {
+                OrbitShopAPI::throwInvalidArgument('Login ID has already been exists.');
+            }
+
+            App::instance('orbit.validation.mallemployee', $user);
 
             return TRUE;
         });
@@ -1207,7 +1496,7 @@ class EmployeeAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.employee.role', function ($attribute, $value, $parameters) {
-            $invalidRoles = array('super admin', 'administrator', 'consumer', 'customer', 'merchant owner', 'retailer owner');
+            $invalidRoles = array('super admin', 'administrator', 'consumer', 'customer', 'merchant owner', 'retailer owner', 'mall owner');
             if (in_array(strtolower($value), $invalidRoles)) {
                 return FALSE;
             }

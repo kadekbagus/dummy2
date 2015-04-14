@@ -139,6 +139,22 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Login Mall Customer Service
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginMallCustomerService()
+    {
+        return $this->postLoginRole(['Mall Customer Service]']);
+    }
+
+    /**
      * POST - Logout user
      *
      * @author Tian <tian@dominopos.com>
