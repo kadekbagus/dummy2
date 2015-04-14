@@ -39,6 +39,11 @@ use \TransactionDetail;
 use \TransactionDetailPromotion;
 use \TransactionDetailCoupon;
 use \TransactionDetailTax;
+use \LuckyDraw;
+use \LuckyDrawNumber;
+use \LuckyDrawNumberReceipt;
+use \LuckyDrawReceipt;
+use \LuckyDrawWinner;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -159,29 +164,9 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $random_products = Product::with('media')
-                ->whereHas(
-                    'retailers',
-                    function ($q) use ($retailer) {
-                        $q->where('product_retailer.retailer_id', $retailer->merchant_id);
-                    }
-                )
-                ->active()
-                ->orderByRaw("RAND()")
-                ->take(10)
-                ->get();
+            $random_products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->get();
 
-            $new_products = Product::with('media')
-                ->whereHas(
-                    'retailers',
-                    function ($q) use ($retailer) {
-                        $q->where('product_retailer.retailer_id', $retailer->merchant_id);
-                    }
-                )
-                ->active()
-                ->where('new_from', '<=', Carbon::now())
-                ->where('new_until', '>=', Carbon::now())
-                ->get();
+            $new_products = LuckyDraw::with('media')->active()->first();
 
             $promotion = Promotion::active()->where('is_coupon', 'N')->where('merchant_id', $retailer->parent_id)->whereHas(
                 'retailers',
@@ -357,7 +342,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            return $this->redirectIfNotLoggedIn($e);
+            // return $this->redirectIfNotLoggedIn($e);
+                return $e;
         }
     }
 
@@ -7874,6 +7860,9 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
 
             $retailer = $this->getRetailerInfo();
+            $luckydraw = LuckyDraw::with(array('numbers'=> function ($q) use($user) {
+                $q->where('user_id', $user->user_id);
+            }))->active()->where('mall_id', $retailer->merchant_id)->first();
 
             $activityProductNotes = sprintf('Lucky Draw Page');
             $activityProduct->setUser($user)
@@ -7883,7 +7872,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.luckydraw', array('page_title' => 'LUCKY DRAW', 'retailer' => $retailer));
+            return View::make('mobile-ci.luckydraw', array('page_title' => 'LUCKY DRAW', 'retailer' => $retailer, 'luckydraw' => $luckydraw));
 
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Product viewed: %s', $product_id);
@@ -7899,6 +7888,47 @@ class MobileCIAPIController extends ControllerAPI
 
             // return $this->redirectIfNotLoggedIn($e);
                 return $e;
+        }
+    }
+
+    /**
+     * POST - Pop up for product on cart page
+     *
+     * @param integer    `detail`        (required) - THe product ID
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function postLuckyNumberPopup()
+    {
+        $user = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            $this->registerCustomValidation();
+            $luckyid = OrbitInput::post('lid');
+
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+
+            $receipts = LuckyDrawNumber::with('receipts.receiptRetailer')->where('lucky_draw_number_id', $luckyid)->first();
+
+            foreach ($receipts->receipts as $receipt) {
+                if(!empty($receipt->receipt_date)) {
+                    $receipt->receipt_date = date('d M Y', strtotime($receipt->receipt_date));
+                }
+            }
+
+            $this->response->message = 'success';
+            $this->response->data = $receipts;
+
+            return $this->render();
+        } catch (Exception $e) {
+            // return $this->redirectIfNotLoggedIn($e);
+            return $e;
         }
     }
 }
