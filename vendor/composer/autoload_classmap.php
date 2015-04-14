@@ -78,6 +78,7 @@ return array(
     'CouponRetailer' => $baseDir . '/app/models/CouponRetailer.php',
     'CouponRetailerRedeem' => $baseDir . '/app/models/CouponRetailerRedeem.php',
     'CouponRule' => $baseDir . '/app/models/CouponRule.php',
+    'CreateInboxesTable' => $baseDir . '/app/database/migrations/2015_04_13_151949_create_inboxes_table.php',
     'CreateInitialTables' => $baseDir . '/app/database/migrations/2015_04_10_133107_create_initial_tables.php',
     'CreateTableCategoryMerchant' => $baseDir . '/app/database/migrations/2015_04_11_072738_create_table_category_merchant.php',
     'CreateTableLuckyDrawNumberReceipt' => $baseDir . '/app/database/migrations/2015_04_12_115229_create_table_lucky_draw_number_receipt.php',
