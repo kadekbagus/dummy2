@@ -204,6 +204,10 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                                         ->where('receipt_retailer_id', $tenants[$i])
                                                         ->where('mall_id', $mallId)
                                                         ->where('receipt_number', $receipt)
+                                                        ->where(function($query) {
+                                                            $query->where('object_type', 'lucky_draw');
+                                                            $query->orwhereNull('object_type');
+                                                        })
                                                         ->first();
 
                 if (is_object($prevLuckyDrawReceipt)) {
@@ -224,8 +228,10 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
                 $luckyDrawReceipt->receipt_amount = $amounts[$i];
+                $luckyDrawReceipt->receipt_payment_type = $paymentTypes[$i];
                 $luckyDrawReceipt->status = 'active';
                 $luckyDrawReceipt->created_by = $user->user_id;
+                $luckyDrawReceipt->object_type = 'lucky_draw';
 
                 $luckyDrawReceipt->save();
 
@@ -238,7 +244,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->response->data = $luckyDraw;
 
             // Insert to alert system
-            $this->insertIntoInbox($userId, $luckyDrawnumbers);
+            $this->insertLuckyDrawNumberInbox($userId, $luckyDrawnumbers);
 
             // Commit the changes
             $this->commit();
