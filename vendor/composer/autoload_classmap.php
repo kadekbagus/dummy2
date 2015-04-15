@@ -89,6 +89,8 @@ return array(
     'CreateTableLuckyDrawReceipts' => $baseDir . '/app/database/migrations/2015_04_12_101432_create_table_lucky_draw_receipts.php',
     'CreateTableLuckyDrawWinners' => $baseDir . '/app/database/migrations/2015_04_12_094146_create_table_lucky_draw_winners.php',
     'CreateTableLuckyDraws' => $baseDir . '/app/database/migrations/2015_04_12_085805_create_table_lucky_draws.php',
+    'CreateTableNews' => $baseDir . '/app/database/migrations/2015_04_15_092339_create_table_news.php',
+    'CreateTableNewsMerchant' => $baseDir . '/app/database/migrations/2015_04_15_092417_create_table_news_merchant.php',
     'Crypt_AES' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/AES.php',
     'Crypt_Base' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Base.php',
     'Crypt_Blowfish' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Blowfish.php',
