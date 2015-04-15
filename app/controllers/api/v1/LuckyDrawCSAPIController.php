@@ -95,7 +95,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'receipts'      => 'array|required',
                     'receipt_dates' => 'array|required',
                     'payment_types' => 'array|required',
-                    'user_id'       => 'required|numeric',
+                    'user_id'       => 'required|numeric|orbit.empty.user',
                     'lucky_draw_id' => 'required|numeric|orbit.empty.lucky_draw',
                     'mode'          => 'required|in:sequence,number_driven,random',
                     'lucky_number'  => 'numeric|min:0:max:9'
@@ -110,6 +110,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.after.validation', array($this, $validator));
+
+            $customer = App::make('orbit.empty.user');
+            $userId = $customer->user_id;
 
             // Begin database transaction
             $this->beginTransaction();
@@ -362,7 +365,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
         $activity = Activity::portal()
                             ->setActivityType('create');
 
-        $user = NULL;
+        $customer = NULL;
         $widget = NULL;
         try {
             $httpCode = 200;
@@ -407,7 +410,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $receiptDates = OrbitInput::post('receipt_dates');
             $paymentTypes = OrbitInput::post('payment_types');
             $userId = OrbitInput::post('user_id');
-            $userLuckyNumber = OrbitInput::post('lucky_number', NULL);
 
             $validator = Validator::make(
                 array(
@@ -424,7 +426,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'receipts'      => 'array|required',
                     'receipt_dates' => 'array|required',
                     'payment_types' => 'array|required',
-                    'user_id'       => 'required|numeric',
+                    'user_id'       => 'required|numeric|orbit.empty.user',
                 )
             );
 
@@ -436,6 +438,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.issuecoupon.postnewissuecoupon.after.validation', array($this, $validator));
+
+            $customer = App::make('orbit.empty.user');
+            $userId = $customer->user_id;
 
             // Begin database transaction
             $this->beginTransaction();
@@ -682,7 +687,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
-        // Check the existance of widget id
+        // Check the existance of lucky draw id
         Validator::extend('orbit.empty.lucky_draw', function ($attribute, $value, $parameters) {
             $luckyDraw = LuckyDraw::active()->where('lucky_draw_id', $value)->first();
 
@@ -692,6 +697,20 @@ class LuckyDrawCSAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.lucky_draw', $luckyDraw);
+
+            return TRUE;
+        });
+
+        // Check the existance of user id
+        Validator::extend('orbit.empty.user', function ($attribute, $value, $parameters) {
+            $user = User::excludeDeleted()->where('user_id', $value)->first();
+
+            if (empty($user)) {
+                $errorMessage = sprintf('User ID %s is not found.', $value);
+                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            }
+
+            App::instance('orbit.empty.user', $user);
 
             return TRUE;
         });

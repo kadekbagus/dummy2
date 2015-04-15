@@ -1115,6 +1115,7 @@ class CouponAPIController extends ControllerAPI
      * @param integer  `discount_object_id4`   (optional) - Discount object ID4 (category_id4).
      * @param integer  `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
      * @param integer  `retailer_id`           (optional) - Retailer IDs
+     * @param integer  `tenant_name`           (optional) - Tenant name
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1145,7 +1146,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1195,12 +1196,11 @@ class CouponAPIController extends ControllerAPI
                     $perPage = 20;
                 }
             }
-//test
+
             $table_prefix = DB::getTablePrefix();
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
-                ->excludeDeleted()
                 ->select(DB::raw($table_prefix . "promotions.*,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
@@ -1213,10 +1213,24 @@ class CouponAPIController extends ControllerAPI
                         WHEN 'cart_discount_by_percentage' THEN discount_value * 100
                         WHEN 'product_discount_by_percentage' THEN discount_value * 100
                         ELSE discount_value
-                    END AS 'display_discount_value'
+                    END AS 'display_discount_value',
+                    {$tableprefix}merchants.name as tenant_name,
+                    {$tableprefix}merchants.merchant_id as tenant_id
                     ")
                 )
-                ->join('promotion_rules', 'promotions.promotion_id', '=', 'promotion_rules.promotion_id');
+                ->joinPromotionRules()
+                ->joinPromotionRetailer()
+                ->joinMerchant();
+
+            if (strtolower($user->role->role_name) === 'mall customer service') {
+                $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))")
+                        ->whereRaw("(select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
+                                        where {$prefix}issued_coupons.promotion_id={$prefix}promotions.promotion_id
+                                        and status!='deleted') < {$prefix}promotions.maximum_issued_coupon")
+                        ->active('promotions');
+            } else {
+                $coupons->excludeDeleted('promotions')
+            }
 
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($coupons)
