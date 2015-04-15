@@ -16,6 +16,7 @@ return array(
     'AlterTableMerchantsAddFloorAndUnit' => $baseDir . '/app/database/migrations/2015_04_11_083827_alter_table_merchants_add_floor_and_unit.php',
     'AlterTableMerchantsAddIsMall' => $baseDir . '/app/database/migrations/2015_04_11_072135_alter_table_merchants_add_is_mall.php',
     'AlterTablePromotionsAddColumns' => $baseDir . '/app/database/migrations/2015_04_14_080934_alter_table_promotions_add_columns.php',
+    'AlterTableUsersAddColumnMembershipNumber' => $baseDir . '/app/database/migrations/2015_04_15_080956_alter_table_users_add_column_membership_number.php',
     'Apikey' => $baseDir . '/app/models/Apikey.php',
     'Arrays\\Util\\DuplicateChecker' => $baseDir . '/app/helpers/Arrays/Util/DuplicateChecker.php',
     'Barryvdh\\Debugbar\\Console\\ClearCommand' => $vendorDir . '/barryvdh/laravel-debugbar/src/Console/ClearCommand.php',
