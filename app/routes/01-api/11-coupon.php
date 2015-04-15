@@ -98,3 +98,11 @@ Route::get('/api/v1/issued-coupon/by-redeem-retailer/search', function()
 {
     return IssuedCouponAPIController::create()->getSearchIssuedCouponByRedeemRetailer();
 });
+
+/**
+ * Redeem coupon for consumer
+ */
+Route::post('/api/v1/issued-coupon/redeem', function()
+{
+    return CouponAPIController::create()->postRedeemCoupon();
+});
