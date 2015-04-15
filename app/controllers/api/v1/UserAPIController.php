@@ -1640,6 +1640,245 @@ class UserAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * POST - Create new membership
+     *
+     * @author me@rioastamal.net
+     *
+     * List of API Parameters
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postNewMembership()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('create');
+
+        $user = NULL;
+        $newuser = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.user.postnewmembership.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.user.postnewmembership.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.user.postnewmembership.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)) {
+                Event::fire('orbit.user.postnewmembership.authz.notallowed', array($this, $user));
+                $createUserLang = Lang::get('validation.orbit.actionlist.add_new_user');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createUserLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this page.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.user.postnewmembership.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $email = OrbitInput::post('email');
+            $firstname = OrbitInput::post('firstname');
+            $lastname = OrbitInput::post('lastname');
+            $gender = OrbitInput::post('gender');
+            $birthdate = OrbitInput::post('birthdate');
+            $phone = OrbitInput::post('phone');
+            $joindate = OrbitInput::post('joindate');
+            $membershipNumber = OrbitInput::post('membership_number');
+            $status = OrbitInput::post('status');
+
+            $validator = Validator::make(
+                array(
+                    'email'                 => $email,
+                    'firstname'             => $firstname,
+                    'lastname'              => $lastname,
+                    'gender'                => $gender,
+                    'birthdate'             => $birthdate,
+                    'phone'                 => $phone,
+                    'joindate'              => $joindate,
+                    'membership_number'     => $membershipNumber,
+                    'status'                => $status,
+                ),
+                array(
+                    'email'                 => 'required|email|orbit.email.exists',
+                    'firstname'             => 'required',
+                    'lastname'              => 'required',
+                    'gender'                => 'required|in:m,f',
+                    'birthdate'             => 'required|date_format:Y-m-d',
+                    'phone'                 => 'required',
+                    'joindate'              => 'required|date_format:Y-m-d',
+                    'membership_number'     => 'required|orbit.membership.exists',
+                    'status'                => 'required|in:active,inactive,pending',
+                )
+            );
+
+            Event::fire('orbit.user.postnewmembership.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.user.postnewmembership.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $role = Role::where('role_name', 'consumer')->first();
+
+            $newuser = new User();
+            $newuser->username = $email;
+            $newuser->user_email = $email;
+            $newuser->status = $status;
+            $newuser->user_firstname = $firstname;
+            $newuser->user_lastname = $lastname;
+            $newuser->user_role_id = $role->role_id;
+            $newuser->membership_number = $membershipNumber;
+            $newuser->modified_by = $this->api->user->user_id;
+
+            Event::fire('orbit.user.postnewmembership.before.save', array($this, $newuser));
+
+            $newuser->save();
+
+            $userdetail = new UserDetail();
+            $userdetail->gender = $gender;
+            $userdetail->birthdate = $birthdate;
+            $userdetail->phone = $phone;
+            $userdetail->merchant_acquired_date = $joindate;
+            $userdetail = $newuser->userdetail()->save($userdetail);
+
+            $newuser->setRelation('userdetail', $userdetail);
+            $newuser->userdetail = $userdetail;
+
+            $apikey = new Apikey();
+            $apikey->api_key = Apikey::genApiKey($newuser);
+            $apikey->api_secret_key = Apikey::genSecretKey($newuser);
+            $apikey->status = 'active';
+            $apikey->user_id = $newuser->user_id;
+            $apikey = $newuser->apikey()->save($apikey);
+
+            $newuser->setRelation('apikey', $apikey);
+            $newuser->apikey = $apikey;
+            $newuser->setHidden(array('user_password'));
+
+            Event::fire('orbit.user.postnewmembership.after.save', array($this, $newuser));
+            $this->response->data = $newuser;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('User Created: %s', $newuser->username);
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Membership')
+                    ->setObject($newuser)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.user.postnewmembership.after.commit', array($this, $newuser));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.user.postnewmembership.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.user.postnewmembership.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.user.postnewmembership.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.user.postnewmembership.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
     protected function registerCustomValidation()
     {
         // Check user email address, it should not exists
@@ -1650,6 +1889,22 @@ class UserAPIController extends ControllerAPI
 
             if (! empty($user)) {
                 return FALSE;
+            }
+
+            App::instance('orbit.validation.user', $user);
+
+            return TRUE;
+        });
+
+        // Check user membership, it should not exists
+        Validator::extend('orbit.membership.exists', function ($attribute, $value, $parameters) {
+            $user = User::excludeDeleted()
+                        ->where('membership_number', $value)
+                        ->first();
+
+            if (! empty($user)) {
+                $errorMessage = 'Membership number already exists.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
             App::instance('orbit.validation.user', $user);
