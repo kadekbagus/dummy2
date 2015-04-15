@@ -685,6 +685,233 @@ class LuckyDrawCSAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * POST - Issue Coupon Number (the manual way)
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postIssueCouponManual()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('create');
+
+        $customer = NULL;
+        $widget = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)->isAllowed('create_lucky_draw')) {
+                Event::fire('orbit.issuecoupon.postnewissuecoupon.authz.notallowed', array($this, $user));
+
+                $errorMessage = Lang::get('validation.orbit.actionlist.a');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
+
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this page.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $coupons = OrbitInput::post('coupon_ids');
+            $userId = OrbitInput::post('user_id');
+
+            $validator = Validator::make(
+                array(
+                    'coupon_ids'       => $coupons,
+                    'user_id'          => $userId,
+                ),
+                array(
+                    'coupon_ids'        => 'array|required',
+                    'user_id'           => 'required|numeric|orbit.empty.user',
+                )
+            );
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.after.validation', array($this, $validator));
+
+            $customer = App::make('orbit.empty.user');
+            $userId = $customer->user_id;
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.before.save', array($this, $widget));
+
+            // Issue coupons
+            $issuedCoupons = [];
+            $numberOfCouponIssued = 0;
+            $applicableCouponNames = [];
+            foreach ($coupons as $couponId) {
+                $coupon = Coupon::active()->find($couponId);
+
+                if (empty($coupon)) {
+                    $errorMessage = sprintf('Coupon ID %s is not found.', $couponId);
+                    OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+                }
+
+                $issuedCoupon = new IssuedCoupon();
+                $tmp = $issuedCoupon->issue($coupon, $userId, $user);
+
+                $obj = new stdClass();
+                $obj->coupon_number = $tmp->issued_coupon_code;
+                $obj->coupon_name = $coupon->promotion_name;
+                $obj->promotion_id = $coupon->promotion_id;
+
+                $issuedCoupons[] = $obj;
+                $applicableCouponNames[] = $coupon->promotion_name;
+
+                $tmp = NULL;
+                $obj = NULL;
+
+                $numberOfCouponIssued++;
+            }
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.after.save', array($this, $widget));
+
+            $data = new stdClass();
+            $data->coupon_names = $applicableCouponNames;
+            $data->coupon_numbers = $issuedCoupons;
+            $data->total_coupon_issued = $numberOfCouponIssued;
+
+            $this->response->data = $data;
+
+            // Insert to alert system
+            $this->insertCouponInbox($userId, $issuedCoupons);
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activity->setUser($customer)
+                    ->setActivityName('issue_coupon_number')
+                    ->setActivityNameLong('Issue Coupon Number')
+                    ->setObject(NULL)
+                    ->setStaff($user)
+                    ->responseOK();
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.after.commit', array($this, $widget));
+        } catch (ACLForbiddenException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('issue_coupon_number')
+                    ->setActivityNameLong('Issue Coupon Number Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 400;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('issue_lucky_draw')
+                    ->setActivityNameLong('Issue Coupon Number Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('issue_lucky_draw')
+                    ->setActivityNameLong('Issue Coupon Number Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            Event::fire('orbit.issuecoupon.postnewissuecoupon.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('issue_lucky_draw')
+                    ->setActivityNameLong('Issue Coupon Number Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
     protected function registerCustomValidation()
     {
         // Check the existance of lucky draw id
@@ -707,6 +934,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             if (empty($user)) {
                 $errorMessage = sprintf('User ID %s is not found.', $value);
+                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            }
+
+            // The user should be already membership
+            if (trim($user->membership_number) === '') {
+                $errorMessage = sprintf('User %s does not have membership number.', $user->user_email);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
@@ -825,7 +1058,7 @@ VIEW;
 
         $list = '';
         foreach ($numbers as $number) {
-            $list .= sprintf("<li>%s (%s)\n", $number->coupon_number, $number->coupon_name);
+            $list .= sprintf("<li>%s (%s)</li>\n", $number->coupon_number, $number->coupon_name);
         }
 
         $template = str_replace('{{NAME}}', $name, $template);
