@@ -1195,7 +1195,7 @@ class CouponAPIController extends ControllerAPI
                     $perPage = 20;
                 }
             }
-
+//test
             $table_prefix = DB::getTablePrefix();
             // Builder object
             // Addition select case and join for sorting by discount_value.
