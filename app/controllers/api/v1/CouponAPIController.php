@@ -1114,8 +1114,7 @@ class CouponAPIController extends ControllerAPI
      * @param integer  `discount_object_id3`   (optional) - Discount object ID3 (category_id3).
      * @param integer  `discount_object_id4`   (optional) - Discount object ID4 (category_id4).
      * @param integer  `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
-     * @param integer  `retailer_id`           (optional) - Retailer IDs
-     * @param integer  `tenant_name`           (optional) - Tenant name
+     * @param integer  `retailer_name`           (optional) - Retailer name
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1214,8 +1213,7 @@ class CouponAPIController extends ControllerAPI
                         WHEN 'product_discount_by_percentage' THEN discount_value * 100
                         ELSE discount_value
                     END AS 'display_discount_value',
-                    {$tableprefix}merchants.name as tenant_name,
-                    {$tableprefix}merchants.merchant_id as tenant_id
+                    {$tableprefix}merchants.name as retailer_name
                     ")
                 )
                 ->joinPromotionRules()
@@ -1410,6 +1408,11 @@ class CouponAPIController extends ControllerAPI
                 });
             });
 
+            // Filter
+            OrbitInput::get('retailer_name', function ($name) use ($coupons) {
+                $coupons->where('merchants.merchant_name', 'like', "%$name%");
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($coupons) {
                 $with = (array) $with;
@@ -1470,6 +1473,7 @@ class CouponAPIController extends ControllerAPI
                     'is_permanent'             => 'promotions.is_permanent',
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
+                    'tenant_name'              => 'tenant_name'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

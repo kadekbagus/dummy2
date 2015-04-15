@@ -10,11 +10,11 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::post('/api/v1/cs/coupon/issue', function()
     {
-        return LuckyDrawCSAPIController::create()->postIssueCouponNumber();
+        return LuckyDrawCSAPIController::create()->postIssueCouponManual();
     });
 
     /**
      * Intermediate.
      */
-    Route::post('/app/v1/cs/coupon/issue', 'IntermediateAuthController@LuckyDrawCS_postIssueCouponNumber');
+    Route::post('/app/v1/cs/coupon/issue', 'IntermediateAuthController@LuckyDrawCS_postIssueCouponManual');
 });
