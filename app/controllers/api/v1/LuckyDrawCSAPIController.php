@@ -351,6 +351,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
      * POST - Issue Coupon Number Number
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @deprecated use postIssueCoupon() instead
      *
      * List of API Parameters
      * ----------------------
@@ -706,7 +707,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
      */
     protected function insertLuckyDrawNumberInbox($userId, $numbers)
     {
-        $user = User::active()->find($userId);
+        $user = User::find($userId);
+
+        if (empty($user)) {
+            throw new Exception ('Customer user ID not found.');
+        }
+
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
 
@@ -765,7 +771,12 @@ VIEW;
      */
     protected function insertCouponInbox($userId, $numbers)
     {
-        $user = User::active()->find($userId);
+        $user = User::find($userId);
+
+        if (empty($user)) {
+            throw new Exception ('Customer user ID not found.');
+        }
+
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
 
