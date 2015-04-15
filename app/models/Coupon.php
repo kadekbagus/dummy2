@@ -106,6 +106,17 @@ class Coupon extends Eloquent
     }
 
     /**
+     * Join promotion retailer with merchants
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     */
+    public function scopeJoinMerchant($query)
+    {
+        return $query->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id');
+    }
+
+    /**
      * Join promotion retailer
      *
      * @author Rio Astamal <me@rioastamal.net>
