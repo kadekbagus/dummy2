@@ -61,6 +61,72 @@
                     </ul>
                 </section>
             </div>
+
+            <div class="single-widget-container col-xs-6 col-sm-6">
+                <header class="widget-title">
+                    <div><strong>Promotions</strong></div>
+                </header>
+                <header class="widget-title widget-subtitle">
+                    <div>Check our latest promotions!</div>
+                </header>
+                <section class="widget-single">
+                    <ul class="rslides" id="slider1">
+                        <li>
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">    
+                                @if(! empty($new_product->media->path))
+                                <img class="img-responsive" alt="" src="{{ asset($new_product->media->path) }}">
+                                @else
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                @endif
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+
+            <div class="single-widget-container col-xs-6 col-sm-6">
+                <header class="widget-title">
+                    <div><strong>Coupons</strong></div>
+                </header>
+                <header class="widget-title widget-subtitle">
+                    <div>Use it wisely!</div>
+                </header>
+                <section class="widget-single">
+                    <ul class="rslides" id="slider1">
+                        <li>
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">    
+                                @if(! empty($new_product->media->path))
+                                <img class="img-responsive" alt="" src="{{ asset($new_product->media->path) }}">
+                                @else
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                @endif
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+
+            <div class="single-widget-container col-xs-12 col-sm-12">
+                <header class="widget-title">
+                    <div><strong>News</strong></div>
+                </header>
+                <header class="widget-title widget-subtitle">
+                    <div>Latest news you have to know</div>
+                </header>
+                <section class="widget-single">
+                    <ul class="rslides" id="slider1">
+                        <li>
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
+                                @if(! empty($new_product->media->path))
+                                <img class="img-responsive" alt="" src="{{ asset($new_product->media->path) }}">
+                                @else
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                @endif
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+            </div>
         </div>
     </div>
     <div class="row">
