@@ -13,7 +13,7 @@ class News extends Eloquent
      */
     use ModelStatusTrait;
 
-    protected $table = 'News';
+    protected $table = 'news';
 
     protected $primaryKey = 'news_id';
 

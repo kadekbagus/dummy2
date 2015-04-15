@@ -129,6 +129,7 @@ return array(
             'deleted_retailer_is_box_current_retailer' => 'The retailer cannot be deleted, because is set to box current retailer.',
             'inactive_retailer_is_box_current_retailer' => 'The retailer status cannot be set to inactive, because is set to box current retailer.',
             'lucky_draw_name'        => 'The lucky draw name has already been used.',
+            'news_name'              => 'The news name has already been used.',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action.',
@@ -241,6 +242,9 @@ return array(
             ),
             'lucky_draw_status'    => 'The lucky draw status you specified is not found.',
             'lucky_draw_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, lucky_draw_name, description, start_date, end_date, status.',
+            'news_object_type'     => 'The news object type you specified is not found. Valid value: promotion, news',
+            'news_status'          => 'The news status you specified is not found.',
+            'news_sortby'          => 'The sort by argument you specified is not valid, the valid values are: registered_date, news_name, object_type, description, begin_date, end_date, status',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

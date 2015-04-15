@@ -12,6 +12,8 @@ class NewsMerchant extends Eloquent
 
     protected $primaryKey = 'news_merchant_id';
 
+    public $timestamps = false;
+
     public function news()
     {
         return $this->belongsTo('News', 'news_id', 'news_id');
