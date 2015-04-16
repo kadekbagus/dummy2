@@ -1198,6 +1198,8 @@ class UserAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $details = OrbitInput::get('details');
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
@@ -1246,11 +1248,16 @@ class UserAPIController extends ControllerAPI
 
             // Builder object
             $users = User::Consumers()
-                        ->select('users.*')
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
                         ->with(array('userDetail', 'userDetail.lastVisitedShop'))
                         ->excludeDeleted('users');
+
+            if ($details === 'yes') {
+
+            } else {
+                $users->select('users.*');
+            }
 
             // Filter by merchant ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
@@ -1681,7 +1688,7 @@ class UserAPIController extends ControllerAPI
                     'mobile_phone'          => $mobile,
                     'work_phone'            => $workphone,
                     'occupation'            => $occupation,
-                    'dateofwork'            => $occupation,
+                    'date_of_work'          => $dateofwork,
                 ),
                 array(
                     'email'                 => 'required|email|orbit.email.exists',
@@ -1698,7 +1705,7 @@ class UserAPIController extends ControllerAPI
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
-                    'dateofwork'            => 'date_format:Y-m-d'
+                    'date_of_work'          => 'date_format:Y-m-d'
                 )
             );
 
@@ -1948,7 +1955,7 @@ class UserAPIController extends ControllerAPI
                     'mobile_phone'          => $mobile,
                     'work_phone'            => $workphone,
                     'occupation'            => $occupation,
-                    'dateofwork'            => $occupation,
+                    'date_of_work'          => $occupation,
                     'user_id'               => $userId,
                 ),
                 array(
@@ -1966,7 +1973,8 @@ class UserAPIController extends ControllerAPI
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
-                    'user_id'               => 'required|numeric|orbit.empty.user',
+                    'date_of_work'          => 'date_format:Y-m-d',
+                    'user_id'               => 'required|numeric|orbit.empty.user'
                 )
             );
 
