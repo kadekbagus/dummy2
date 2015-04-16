@@ -50,7 +50,7 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::post('/api/v1/employee/new', function()
     {
-        return UserAPIController::create()->postNewMallEmployee();
+        return EmployeeAPIController::create()->postNewMallEmployee();
     });
 
     /**
@@ -58,7 +58,7 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::post('/api/v1/employee/update', function()
     {
-        return UserAPIController::create()->postUpdateEmployee();
+        return EmployeeAPIController::create()->postUpdateEmployee();
     });
 
     /**
@@ -66,7 +66,7 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::post('/api/v1/employee/delete', function()
     {
-        return UserAPIController::create()->postDeleteEmployee();
+        return EmployeeAPIController::create()->postDeleteEmployee();
     });
 
     /**
@@ -74,7 +74,23 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::get('/api/v1/employee/list', function()
     {
-        return UserAPIController::create()->getSearchEmployee();
+        return EmployeeAPIController::create()->getSearchEmployee();
+    });
+
+    /**
+     * Create New Membership
+     */
+    Route::post('/api/v1/membership/new', function()
+    {
+        return UserAPIController::create()->postNewMembership();
+    });
+
+    /**
+     * Update Membership
+     */
+    Route::post('/api/v1/membership/update', function()
+    {
+        return UserAPIController::create()->postUpdateMembership();
     });
 });
 
