@@ -1258,66 +1258,23 @@ class UserAPIController extends ControllerAPI
                 $listOfMerchantIds = (array)$merchantIds;
             });
 
-            // @To do: Replace this stupid hacks
-            if (! $user->isSuperAdmin()) {
-                $listOfMerchantIds = $user->getMyMerchantIds();
-
-                if (empty($listOfMerchantIds)) {
-                    $listOfMerchantIds = [-1];
-                }
-
-                //$users->merchantIds($listOfMerchantIds);
-            } else {
-                // if (! empty($listOfMerchantIds)) {
-                //     $users->merchantIds($listOfMerchantIds);
-                // }
-            }
-
             // Filter by retailer (shop) ids
             OrbitInput::get('retailer_id', function($retailerIds) use ($users) {
                 // $users->retailerIds($retailerIds);
                 $listOfRetailerIds = (array)$retailerIds;
             });
 
-            // @To do: Repalce this stupid hacks
-            if (! $user->isSuperAdmin()) {
-                $listOfRetailerIds = $user->getMyRetailerIds();
-
-                if (empty($listOfRetailerIds)) {
-                    $listOfRetailerIds = [-1];
-                }
-
-                //$users->retailerIds($listOfRetailerIds);
+            if ($user->isRoleName('consumer')) {
+                // Filter user by Ids
+                OrbitInput::get('user_id', function ($userIds) use ($users, $user) {
+                    $users->whereIn('users.user_id', $user->user_id);
+                });
             } else {
-                // if (! empty($listOfRetailerIds)) {
-                //     $users->retailerIds($listOfRetailerIds);
-                // }
-            }
-
-            if (! $user->isSuperAdmin()) {
-                // filter only by merchant_id, not include retailer_id yet.
-                // @TODO: include retailer_id.
-                $users->where(function($query) use($listOfMerchantIds) {
-                    // get users registered in shop.
-                    $query->whereIn('users.user_id', function($query2) use($listOfMerchantIds) {
-                        $query2->select('user_details.user_id')
-                            ->from('user_details')
-                            ->whereIn('user_details.merchant_id', $listOfMerchantIds);
-                    })
-                    // get users have transactions in shop.
-                    ->orWhereIn('users.user_id', function($query3) use($listOfMerchantIds) {
-                        $query3->select('customer_id')
-                            ->from('transactions')
-                            ->whereIn('merchant_id', $listOfMerchantIds)
-                            ->groupBy('customer_id');
-                    });
+                // Filter user by Ids
+                OrbitInput::get('user_id', function ($userIds) use ($users) {
+                    $users->whereIn('users.user_id', $userIds);
                 });
             }
-
-            // Filter user by Ids
-            OrbitInput::get('user_id', function ($userIds) use ($users) {
-                $users->whereIn('users.user_id', $userIds);
-            });
 
             // Filter user by username
             OrbitInput::get('username', function ($username) use ($users) {
