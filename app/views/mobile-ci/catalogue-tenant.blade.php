@@ -9,9 +9,9 @@
         @if(sizeof($data->records) > 0)
             <div id="search-tool">
                 <div class="row">
-                    <div class="col-xs-6 search-tool-col">
+                    <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-default btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('cid')))
                                         <?php
@@ -36,7 +36,7 @@
                     </div>
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel2" type="button" class="btn btn-default btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel2" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('fid')))
                                         {{ Input::get('fid') }}
@@ -56,8 +56,13 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="col-xs-1 search-tool-col text-right">
-                        <a href="{{ url('/customer/tenants') }}"><span class="fa-stack"><i class="fa fa-square fa-stack-2x"></i><i class="fa fa-close fa-stack-1x sort-chevron"></i></span></a>
+                    <div class="col-xs-2 search-tool-col text-right">
+                        <a href="{{ url('/customer/tenants') }}" class="btn btn-info btn-block reset-btn">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-filter fa-stack-2x"></i>
+                                <i class="fa fa-times fa-stack-1x"></i>
+                            </span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -94,9 +99,9 @@
         @else
             <div id="search-tool">
                 <div class="row">
-                    <div class="col-xs-6 search-tool-col">
+                    <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-default btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('cid')))
                                         <?php
@@ -121,7 +126,7 @@
                     </div>
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel2" type="button" class="btn btn-default btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel2" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('fid')))
                                         {{ Input::get('fid') }}
@@ -141,8 +146,13 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="col-xs-1 search-tool-col text-right">
-                        <a href="{{ url('/customer/tenants') }}"><span class="fa-stack"><i class="fa fa-square fa-stack-2x"></i><i class="fa fa-close fa-stack-1x sort-chevron"></i></span></a>
+                    <div class="col-xs-2 search-tool-col text-right">
+                        <a href="{{ url('/customer/tenants') }}" class="btn btn-info btn-block reset-btn">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-filter fa-stack-2x"></i>
+                                <i class="fa fa-times fa-stack-1x"></i>
+                            </span>
+                        </a>
                     </div>
                 </div>
             </div>
