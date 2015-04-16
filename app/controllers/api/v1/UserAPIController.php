@@ -1656,6 +1656,14 @@ class UserAPIController extends ControllerAPI
             $joindate = OrbitInput::post('joindate');
             $membershipNumber = OrbitInput::post('membership_number');
             $status = OrbitInput::post('status');
+            $categoryIds = OrbitInput::post('category_ids');
+            $idcard = OrbitInput::post('idcard_number');
+            $mobile = OrbitInput::post('mobile_phone');
+            $workphone = OrbitInput::post('work_phone');
+            $occupation = OrbitInput::post('occupation');
+            $dateofwork = OrbitInput::post('date_of_work');
+            $homeAddress = OrbitInput::post('home_address');
+            $workAddress = OrbitInput::post('work_address');
 
             $validator = Validator::make(
                 array(
@@ -1668,6 +1676,12 @@ class UserAPIController extends ControllerAPI
                     'joindate'              => $joindate,
                     'membership_number'     => $membershipNumber,
                     'status'                => $status,
+                    'category_ids'          => $categoryIds,
+                    'idcard_number'         => $idcard,
+                    'mobile_phone'          => $mobile,
+                    'work_phone'            => $workphone,
+                    'occupation'            => $occupation,
+                    'dateofwork'            => $occupation,
                 ),
                 array(
                     'email'                 => 'required|email|orbit.email.exists',
@@ -1679,6 +1693,12 @@ class UserAPIController extends ControllerAPI
                     'joindate'              => 'required|date_format:Y-m-d',
                     'membership_number'     => 'required|orbit.membership.exists',
                     'status'                => 'required|in:active,inactive,pending',
+                    'category_ids'          => 'array',
+                    'idcard_number'         => 'required|numeric',
+                    'mobile_phone'          => '',
+                    'work_phone'            => '',
+                    'occupation'            => '',
+                    'dateofwork'            => 'date_format:Y-m-d'
                 )
             );
 
@@ -1704,6 +1724,7 @@ class UserAPIController extends ControllerAPI
             $newuser->user_lastname = $lastname;
             $newuser->user_role_id = $role->role_id;
             $newuser->membership_number = $membershipNumber;
+            $newuser->status = $status;
             $newuser->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.user.postnewmembership.before.save', array($this, $newuser));
@@ -1713,8 +1734,14 @@ class UserAPIController extends ControllerAPI
             $userdetail = new UserDetail();
             $userdetail->gender = $gender;
             $userdetail->birthdate = $birthdate;
-            $userdetail->phone = $phone;
+            $userdetail->phone = $mobile;
+            $userdetail->phone2 = $workphone;
             $userdetail->merchant_acquired_date = $joindate;
+            $userdetail->idcard = $idcard;
+            $userdetail->occupation = $occupation;
+            $userdetail->date_of_work = $dateofwork;
+            $userdetail->address_line1 = $homeAddress;
+            $userdetail->address_line2 = $workAddress;
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $newuser->setRelation('userdetail', $userdetail);
@@ -1895,6 +1922,15 @@ class UserAPIController extends ControllerAPI
             $joindate = OrbitInput::post('joindate');
             $membershipNumber = OrbitInput::post('membership_number');
             $status = OrbitInput::post('status');
+            $categoryIds = OrbitInput::post('category_ids');
+            $idcard = OrbitInput::post('idcard_number');
+            $mobile = OrbitInput::post('mobile_phone');
+            $workphone = OrbitInput::post('work_phone');
+            $occupation = OrbitInput::post('occupation');
+            $dateofwork = OrbitInput::post('date_of_work');
+            $homeAddress = OrbitInput::post('home_address');
+            $workAddress = OrbitInput::post('work_address');
+
             $userId = OrbitInput::post('user_id');
 
             $validator = Validator::make(
@@ -1908,6 +1944,11 @@ class UserAPIController extends ControllerAPI
                     'joindate'              => $joindate,
                     'membership_number'     => $membershipNumber,
                     'status'                => $status,
+                    'idcard_number'         => $categoryIds,
+                    'mobile_phone'          => $mobile,
+                    'work_phone'            => $workphone,
+                    'occupation'            => $occupation,
+                    'dateofwork'            => $occupation,
                     'user_id'               => $userId,
                 ),
                 array(
@@ -1920,6 +1961,11 @@ class UserAPIController extends ControllerAPI
                     'joindate'              => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists',
                     'status'                => 'in:active,inactive,pending',
+                    'category_ids'          => 'array',
+                    'idcard_number'         => 'required|numeric',
+                    'mobile_phone'          => '',
+                    'work_phone'            => '',
+                    'occupation'            => '',
                     'user_id'               => 'required|numeric|orbit.empty.user',
                 )
             );
@@ -1972,8 +2018,32 @@ class UserAPIController extends ControllerAPI
                 $userdetail->gender = $gender;
             });
 
-            OrbitInput::post('phone', function($phone) use ($userdetail) {
+            OrbitInput::post('mobile_phone', function($phone) use ($userdetail) {
                 $userdetail->phone = $phone;
+            });
+
+            OrbitInput::post('work_phone', function($phone) use ($userdetail) {
+                $userdetail->phone2 = $phone;
+            });
+
+            OrbitInput::post('home_address', function($data) use ($userdetail) {
+                $userdetail->address_line1 = $data;
+            });
+
+            OrbitInput::post('work_address', function($data) use ($userdetail) {
+                $userdetail->address_line2 = $data;
+            });
+
+            OrbitInput::post('idcard', function($data) use ($userdetail) {
+                $userdetail->idcard = $data;
+            });
+
+            OrbitInput::post('occupation', function($data) use ($userdetail) {
+                $userdetail->idcard = $data;
+            });
+
+            OrbitInput::post('date_of_work', function($data) use ($userdetail) {
+                $userdetail->date_of_work = $data;
             });
 
             Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
