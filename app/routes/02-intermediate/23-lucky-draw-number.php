@@ -21,5 +21,5 @@ Route::post('/app/v1/lucky-draw-number/update', 'IntermediateAuthController@Luck
 /**
  * List and/or Search lucky draw number
  */
-Route::get('/app/v1/lucky-draw-number/{search}', 'IntermediateAuthController@LuckyDrawNumber_getSearchLuckyDrawNumber')
+Route::get('/app/v1/lucky-draw-number/{search}', 'IntermediateAuthController@LuckyDraw_getSearchLuckyDrawNumber')
      ->where('search', '(list|search)');

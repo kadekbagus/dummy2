@@ -42,4 +42,35 @@ class LuckyDrawNumber extends Eloquent
         return $this->belongsTo('User', 'modified_by', 'user_id');
     }
 
+    /**
+     * Join with lucky_draw_receipts
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     */
+    public function scopeJoinReceipts($query) {
+        $query->join('lucky_draw_number_receipt',
+                     'lucky_draw_number_receipt.lucky_draw_number_id', '=',
+                     'lucky_draw_numbers.lucky_draw_number_id')
+              ->join('lucky_draw_receipts', function($join) {
+                     $join->on('lucky_draw_receipts.lucky_draw_receipt_id', '=', 'lucky_draw_number_receipt.lucky_draw_receipt_id');
+                     $join->on('lucky_draw_receipts.object_type', '=', DB::raw("'lucky_draw'"));
+               })->join('merchants', 'merchants.merchant_id', '=', 'lucky_draw_receipts.receipt_retailer_id');
+
+        return $query;
+    }
+
+    /**
+     * Join with lucky_draws
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     */
+    public function scopeJoinLuckyDraw($query) {
+        $query->join('lucky_draws',
+                     'lucky_draws.lucky_draw_id', '=',
+                     'lucky_draw_numbers.lucky_draw_id');
+
+        return $query;
+    }
 }
