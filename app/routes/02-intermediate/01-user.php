@@ -43,7 +43,7 @@ Route::group(['before' => 'orbit-settings'], function()
     /**
      * Update an Employee
      */
-    Route::post('/app/v1/employee/update', 'IntermediateAuthController@Employee_postUpdateEmployee');
+    Route::post('/app/v1/employee/update', 'IntermediateAuthController@Employee_postUpdateMallEmployee');
 
     /**
      * Delete an Employee
