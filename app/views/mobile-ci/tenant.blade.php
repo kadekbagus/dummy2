@@ -44,6 +44,7 @@
             <div class="col-xs-12">
                 <p>{{ $product->name }} at</p>
                 <p>{{ $retailer->name }} - {{ $product->floor }} - {{ $product->unit }}</p>
+                <p>{{ $product->url }}</p>
                 @foreach($product->mediaMapOrig as $map)
                 <p>
                     <img class="img-responsive maps" src="{{ asset($map->path) }}">
