@@ -579,6 +579,7 @@ class NewsAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer    `news_id`                  (required) - ID of the news
+     * @param string     `password`                 (required) - master password
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -625,13 +626,20 @@ class NewsAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $news_id = OrbitInput::post('news_id');
+            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'news_id' => $news_id,
+                    'news_id'  => $news_id,
+                    'password' => $password,
                 ),
                 array(
-                    'news_id' => 'required|numeric|orbit.empty.news',
+                    'news_id'  => 'required|numeric|orbit.empty.news',
+                    'password' => 'required|orbit.masterpassword.delete',
+                ),
+                array(
+                    'required.password'             => 'The master is password is required.',
+                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
                 )
             );
 
@@ -1197,5 +1205,28 @@ class NewsAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // News deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
+
     }
+
 }
