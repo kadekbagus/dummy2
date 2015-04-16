@@ -60,4 +60,8 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::post('/app/v1/membership/new', 'IntermediateAuthController@User_postNewMembership');
 
+    /**
+     * Create New Membership
+     */
+    Route::post('/app/v1/membership/update', 'IntermediateAuthController@User_postUpdateMembership');
 });
