@@ -8,7 +8,7 @@
 
 class MacAddress extends Eloquent {
     /**
-     * LuckyDraw Model
+     * MacAddress Model
      *
      * @author Yudi <yudi.rahono@dominopos.com>
      */
