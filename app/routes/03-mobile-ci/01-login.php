@@ -402,5 +402,21 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->postLuckyNumberPopup();
             }
         );
+
+        Route::get(
+            '/customer/mallcoupons',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getMallCouponList();
+            }
+        );
+
+        Route::get(
+            '/customer/mallcoupon',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
+            }
+        );
     }
 );

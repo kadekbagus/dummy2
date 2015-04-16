@@ -7931,4 +7931,198 @@ class MobileCIAPIController extends ControllerAPI
             return $e;
         }
     }
+
+    /**
+     * GET - Get coupon list in mall
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getMallCouponList() {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor = trim(OrbitInput::get('floor'));
+
+            // $pagetitle = Lang::get('mobileci.page_title.searching');
+            $pagetitle = 'COUPONS';
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+            }
+
+            $retailer = $this->getRetailerInfo();
+
+            // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 300;
+            }
+
+            $coupons = DB::select(
+                DB::raw(
+                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
+                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '"'
+                ),
+                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+            );
+            
+            if (sizeof($coupons) < 1) {
+                $data = new stdclass();
+                $data->status = 0;
+            } else {
+                $data = new stdclass();
+                $data->status = 1;
+                $data->total_records = sizeof($coupons);
+                $data->returned_records = sizeof($coupons);
+                $data->records = $coupons;
+            }
+
+            if (! empty(OrbitInput::get('new'))) {
+                $pagetitle = Lang::get('mobileci.page_title.new_products');
+                $activityPageNotes = sprintf('Page viewed: New Product Page, keyword: %s', $keyword);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_new_product')
+                    ->setActivityNameLong('View (New Product Page)')
+                    ->setObject(null)
+                    ->setModuleName('New Product')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_search')
+                    ->setActivityNameLong('View (Search Page)')
+                    ->setObject(null)
+                    ->setModuleName('Product')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view: Search Page, keyword: %s', $keyword);
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_search')
+                ->setActivityNameLong('View (Search Page)')
+                ->setObject(null)
+                ->setModuleName('Product')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            // return $this->redirectIfNotLoggedIn($e);
+                return $e;
+        }
+    }
+
+    /**
+     * GET - Coupon detail page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getMallCouponDetailView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityProduct = Activity::mobileci()
+                                   ->setActivityType('view');
+        $product = null;
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+            $product_id = trim(OrbitInput::get('id'));
+
+            $coupons = DB::select(
+                DB::raw(
+                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
+                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '" AND ic.issued_coupon_id = :issuedid'
+                ),
+                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id, 'issuedid' => $product_id)
+            );
+            // dd($coupons);
+            // if (count($promotions) > 0) {
+            //     $data = new stdclass();
+            //     $data->status = 1;
+            //     $data->records = $promotions;
+            // } else {
+            //     $data = new stdclass();
+            //     $data->status = 0;
+            // }
+            
+            if (empty($coupons)) {
+                // throw new Exception('Product id ' . $product_id . ' not found');
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
+
+            if (empty($coupons[0]->promo_image)) {
+                $coupons[0]->promo_image = 'mobile-ci/images/default_product.png';
+            }
+
+            // $activityProductNotes = sprintf('Product viewed: %s', $product->product_name);
+            // $activityProduct->setUser($user)
+            //     ->setActivityName('view_product')
+            //     ->setActivityNameLong('View Product')
+            //     ->setObject($product)
+            //     ->setProduct($product)
+            //     ->setModuleName('Product')
+            //     ->setNotes($activityProductNotes)
+            //     ->responseOK()
+            //     ->save();
+
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons[0]->promotion_name, 'retailer' => $retailer, 'product' => $coupons[0]));
+
+        } catch (Exception $e) {
+            // $activityProductNotes = sprintf('Product viewed: %s', $product_id);
+            // $activityProduct->setUser($user)
+            //     ->setActivityName('view_product')
+            //     ->setActivityNameLong('View Product Not Found')
+            //     ->setObject(null)
+            //     ->setProduct($product)
+            //     ->setModuleName('Product')
+            //     ->setNotes($e->getMessage())
+            //     ->responseFailed()
+            //     ->save();
+
+            // return $this->redirectIfNotLoggedIn($e);
+                return $e;
+        }
+    }
 }

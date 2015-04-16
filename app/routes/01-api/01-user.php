@@ -84,6 +84,14 @@ Route::group(['before' => 'orbit-settings'], function()
     {
         return UserAPIController::create()->postNewMembership();
     });
+
+    /**
+     * Update Membership
+     */
+    Route::post('/api/v1/membership/update', function()
+    {
+        return UserAPIController::create()->postUpdateMembership();
+    });
 });
 
 /**

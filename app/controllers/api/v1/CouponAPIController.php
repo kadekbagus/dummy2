@@ -1213,12 +1213,13 @@ class CouponAPIController extends ControllerAPI
                         WHEN 'product_discount_by_percentage' THEN discount_value * 100
                         ELSE discount_value
                     END AS 'display_discount_value',
-                    {$tableprefix}merchants.name as retailer_name
+                    {$table_prefix}merchants.name as retailer_name
                     ")
                 )
                 ->joinPromotionRules()
                 ->joinPromotionRetailer()
-                ->joinMerchant();
+                ->joinMerchant()
+                ->groupBy('promotions.promotion_id');
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
                 $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))")
