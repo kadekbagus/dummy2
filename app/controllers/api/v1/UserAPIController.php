@@ -1982,7 +1982,6 @@ class UserAPIController extends ControllerAPI
             $role = Role::where('role_name', 'consumer')->first();
 
             $updateduser = App::make('orbit.empty.user');
-            $userdetail = $updateduser->userdetail
 
             OrbitInput::post('email', function($email) use ($updateduser) {
                 $updateduser->user_email = $email;

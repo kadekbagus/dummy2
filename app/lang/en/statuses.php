@@ -23,6 +23,7 @@ return array(
             'issued_coupon'  => 'Issued Coupon has been successfully deleted.',
             'event'          => 'Event has been successfully deleted.',
             'lucky_draw'     => 'Lucky Draw has been successfully deleted.',
+            'news'           => 'News has been successfully deleted.',
         ),
         'updated'   => array(
             'user'           => 'User has been successfully updated.',
@@ -49,6 +50,7 @@ return array(
             'role'          => 'There is no role that matched your search criteria.',
             'token'         => 'There is no token that matched your search criteria.',
             'lucky_draw'    => 'There is no lucky draw that matched your search criteria.',
+            'news'          => 'There is no news that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
@@ -85,6 +87,10 @@ return array(
             'lucky_draw' => array(
                 'main'          => 'Lucky Draw image has been successfully uploaded.',
                 'delete_image'  => 'Lucky Draw image has been successfully deleted.'
+            ),
+            'news' => array(
+                'main'          => 'News image has been successfully uploaded.',
+                'delete_image'  => 'News image has been successfully deleted.'
             ),
         )
     )
