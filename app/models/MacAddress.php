@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: palanglung
- * Date: 16/04/15
- * Time: 11:23
- */
 
 class MacAddress extends Eloquent {
     /**
