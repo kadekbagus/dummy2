@@ -245,6 +245,7 @@ return array(
             'news_object_type'     => 'The news object type you specified is not found. Valid value: promotion, news',
             'news_status'          => 'The news status you specified is not found.',
             'news_sortby'          => 'The sort by argument you specified is not valid, the valid values are: registered_date, news_name, object_type, description, begin_date, end_date, status',
+            'news'                 => 'The News ID you specified is not found.',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

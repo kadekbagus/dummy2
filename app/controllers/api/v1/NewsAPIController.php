@@ -98,7 +98,7 @@ class NewsAPIController extends ControllerAPI
                 array(
                     'mall_id'            => 'required|numeric|orbit.empty.mall',
                     'news_name'          => 'required|max:255|orbit.exists.news_name',
-                    'object_type'        => 'required|orbit.empty.news_object_type',
+                    'object_type'        => 'orbit.empty.news_object_type',
                     'status'             => 'required|orbit.empty.news_status',
                     'link_object_type'   => 'orbit.empty.link_object_type',
                 )
@@ -270,7 +270,7 @@ class NewsAPIController extends ControllerAPI
     /**
      * POST - Update News
      *
-     * @author <Tian> <tian@dominopos.com>
+     * @author Tian <tian@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -283,7 +283,7 @@ class NewsAPIController extends ControllerAPI
      * @param datetime   `begin_date`            (optional) - Begin date. Example: 2015-04-15 00:00:00
      * @param datetime   `end_date`              (optional) - End date. Example: 2015-04-18 23:59:59
      * @param integer    `sticky_order`          (optional) - Sticky order.
-     * @param file       `images`                (optional) - News image
+     * @param file       `image`                 (optional) - News image
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: tenant, tenant_category.
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
@@ -333,14 +333,14 @@ class NewsAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $news_id = OrbitInput::post('news_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $mall_id = OrbitInput::post('mall_id');
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
 
             $data = array(
                 'news_id'          => $news_id,
-                'merchant_id'      => $merchant_id,
+                'mall_id'          => $mall_id,
                 'object_type'      => $object_type,
                 'status'           => $status,
                 'link_object_type' => $link_object_type,
@@ -355,7 +355,7 @@ class NewsAPIController extends ControllerAPI
                 $data,
                 array(
                     'news_id'          => 'required|numeric|orbit.empty.news',
-                    'merchant_id'      => 'numeric|orbit.empty.merchant',
+                    'mall_id'          => 'numeric|orbit.empty.mall',
                     'news_name'        => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
                     'object_type'      => 'orbit.empty.news_object_type',
                     'status'           => 'orbit.empty.news_status',
@@ -381,8 +381,8 @@ class NewsAPIController extends ControllerAPI
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
 
             // save News
-            OrbitInput::post('merchant_id', function($merchant_id) use ($updatednews) {
-                $updatednews->merchant_id = $merchant_id;
+            OrbitInput::post('mall_id', function($mall_id) use ($updatednews) {
+                $updatednews->mall_id = $mall_id;
             });
 
             OrbitInput::post('news_name', function($news_name) use ($updatednews) {
@@ -409,8 +409,8 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->end_date = $end_date;
             });
 
-            OrbitInput::post('is_permanent', function($is_permanent) use ($updatednews) {
-                $updatednews->is_permanent = $is_permanent;
+            OrbitInput::post('sticky_order', function($sticky_order) use ($updatednews) {
+                $updatednews->sticky_order = $sticky_order;
             });
 
             OrbitInput::post('link_object_type', function($link_object_type) use ($updatednews) {
@@ -429,7 +429,7 @@ class NewsAPIController extends ControllerAPI
             // save NewsMerchant
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatednews) {
                 if ($no_retailer == 'Y') {
-                    $deleted_retailer_ids = NewsMerchant::where('news_id', $updatednews->news_id)->get(array('retailer_id'))->toArray();
+                    $deleted_retailer_ids = NewsMerchant::where('news_id', $updatednews->news_id)->get(array('merchant_id'))->toArray();
                     $updatednews->tenants()->detach($deleted_retailer_ids);
                     $updatednews->load('tenants');
                 }
@@ -441,10 +441,10 @@ class NewsAPIController extends ControllerAPI
                 foreach ($retailer_ids as $retailer_id_check) {
                     $validator = Validator::make(
                         array(
-                            'retailer_id'   => $retailer_id_check,
+                            'merchant_id'   => $retailer_id_check,
                         ),
                         array(
-                            'retailer_id'   => 'orbit.empty.retailer',
+                            'merchant_id'   => 'orbit.empty.retailer',
                         )
                     );
 
@@ -579,6 +579,7 @@ class NewsAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer    `news_id`                  (required) - ID of the news
+     * @param string     `password`                 (required) - master password
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -625,13 +626,20 @@ class NewsAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $news_id = OrbitInput::post('news_id');
+            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'news_id' => $news_id,
+                    'news_id'  => $news_id,
+                    'password' => $password,
                 ),
                 array(
-                    'news_id' => 'required|numeric|orbit.empty.news',
+                    'news_id'  => 'required|numeric|orbit.empty.news',
+                    'password' => 'required|orbit.masterpassword.delete',
+                ),
+                array(
+                    'required.password'             => 'The master is password is required.',
+                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
                 )
             );
 
@@ -1197,5 +1205,28 @@ class NewsAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // News deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
+
     }
+
 }
