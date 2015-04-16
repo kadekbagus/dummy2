@@ -32,5 +32,5 @@ Route::post('/api/v1/lucky-draw-number/update', function()
  */
 Route::get('/api/v1/lucky-draw-number/{search}', function()
 {
-    return LuckyDrawNumberAPIController::create()->getSearchLuckyDrawNumber();
+    return LuckyDrawAPIController::create()->getSearchLuckyDrawNumber();
 })->where('search', '(list|search)');

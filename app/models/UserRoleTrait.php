@@ -260,6 +260,22 @@ trait UserRoleTrait
     }
 
     /**
+     * Super admin check.
+     *
+     * @Todo: Prevent query.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @Param string $rolename
+     * @return boolean
+     */
+    public function isRoleName($rolename)
+    {
+        $rolename = strtolower($rolename);
+
+        return strtolower($this->role->role_name) === $rolename;
+    }
+
+    /**
      * Get list of retailer ids owned by this user. This is f*cking wrong,
      * normally I hate doing loop on query.
      *
