@@ -1158,6 +1158,7 @@ class UserAPIController extends ControllerAPI
      * @param array|string  `retailer_id`       (optional) - Id of the retailer (Shop), could be array or string with comma separated value
      * @param integer       `take`              (optional) - limit
      * @param integer       `skip`              (optional) - limit offset
+     * @param integer       `details`           (optional) - Include detailed issued coupon and lucky draw number
      * @return Illuminate\Support\Facades\Response
      */
     public function getConsumerListing()
@@ -1247,14 +1248,25 @@ class UserAPIController extends ControllerAPI
             $listOfRetailerIds = [];
 
             // Builder object
+            $prefix = DB::getTablePrefix();
             $users = User::Consumers()
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
                         ->with(array('userDetail', 'userDetail.lastVisitedShop'))
-                        ->excludeDeleted('users');
+                        ->excludeDeleted('users')
+                        ->groupBy('users.user_id');
 
             if ($details === 'yes') {
-
+                $users->select('users.*', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_number"),
+                               DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
+                                        where status='active' and cp.user_id={$prefix}users.user_id) as total_issued_coupon"))
+                                  ->LeftJoin(
+                                        // Table
+                                        DB::raw("(select * from `{$prefix}lucky_draw_numbers`
+                                                 where status='active' and (user_id is not null or user_id != 0))
+                                                 {$prefix}tmp_lucky"),
+                                        // ON
+                                        'tmp_lucky.user_id', '=', 'users.user_id');
             } else {
                 $users->select('users.*');
             }
@@ -1373,10 +1385,14 @@ class UserAPIController extends ControllerAPI
                     'city'                    => 'user_details.city',
                     'last_visit_shop'         => 'merchants.name',
                     'last_visit_date'         => 'user_details.last_visit_any_shop',
-                    'last_spent_amount'       => 'user_details.last_spent_any_shop'
+                    'last_spent_amount'       => 'user_details.last_spent_any_shop',
+                    'total_issued_coupon'     => 'total_issued_coupon',
+                    'total_lucky_draw_number' => 'total_lucky_draw_number'
                 );
 
-                $sortBy = $sortByMapping[$_sortBy];
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
             });
 
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
