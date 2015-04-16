@@ -1222,6 +1222,8 @@ class CouponAPIController extends ControllerAPI
                 ->groupBy('promotions.promotion_id');
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
+                $now = date('Y-m-d');
+                $prefix = DB::getTablePrefix();
                 $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))")
                         ->whereRaw("(select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
                                         where {$prefix}issued_coupons.promotion_id={$prefix}promotions.promotion_id
