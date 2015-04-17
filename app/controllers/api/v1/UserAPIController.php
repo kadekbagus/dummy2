@@ -1981,7 +1981,7 @@ class UserAPIController extends ControllerAPI
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'joindate'              => 'date_format:Y-m-d',
-                    'membership_number'     => 'orbit.membership.exists',
+                    'membership_number'     => 'orbit.membership.exists_but_me',
                     'status'                => 'in:active,inactive,pending',
                     'category_ids'          => 'array',
                     'idcard_number'         => 'required|numeric',
@@ -2200,6 +2200,24 @@ class UserAPIController extends ControllerAPI
         Validator::extend('orbit.membership.exists', function ($attribute, $value, $parameters) {
             $user = User::excludeDeleted()
                         ->where('membership_number', $value)
+                        ->first();
+
+            if (! empty($user)) {
+                $errorMessage = 'Membership number already exists.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.validation.user', $user);
+
+            return TRUE;
+        });
+
+        // Check user membership, it should not exists
+        Validator::extend('orbit.membership.exists_but_me', function ($attribute, $value, $parameters) {
+            $userId = OrbitInput::post('user_id');
+            $user = User::excludeDeleted()
+                        ->where('membership_number', $value)
+                        ->where('user_id', '!=', $userId)
                         ->first();
 
             if (! empty($user)) {
