@@ -53,7 +53,7 @@ Route::group(['before' => 'orbit-settings'], function()
     /**
      * Search Employees
      */
-    Route::get('/app/v1/employee/list', 'IntermediateAuthController@Employee_getSearchEmployee');
+    Route::get('/app/v1/employee/list', 'IntermediateAuthController@Employee_getSearchMallEmployee');
 
     /**
      * Create New Membership

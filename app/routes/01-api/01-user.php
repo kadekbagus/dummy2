@@ -74,7 +74,7 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::get('/api/v1/employee/list', function()
     {
-        return EmployeeAPIController::create()->getSearchEmployee();
+        return EmployeeAPIController::create()->getSearchMallEmployee();
     });
 
     /**
