@@ -1341,7 +1341,7 @@ return array(
                 'name'          => 'images',
 
                 // Force create directory when not exists
-                'create_directory'  => TRUE,
+                'create_directory'  => FALSE,
 
                 // Append year and month to the path
                 'append_year_month' => TRUE,

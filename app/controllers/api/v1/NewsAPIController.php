@@ -25,7 +25,7 @@ class NewsAPIController extends ControllerAPI
      * @param string     `news_name`             (required) - News name
      * @param string     `status`                (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param string     `description`           (optional) - Description
-     * @param file       `image`                 (optional) - News image
+     * @param file       `images`                (optional) - News image
      * @param datetime   `begin_date`            (optional) - Begin date. Example: 2015-04-15 00:00:00
      * @param datetime   `end_date`              (optional) - End date. Example: 2015-04-18 23:59:59
      * @param integer    `sticky_order`          (optional) - Sticky order.
@@ -283,7 +283,7 @@ class NewsAPIController extends ControllerAPI
      * @param datetime   `begin_date`            (optional) - Begin date. Example: 2015-04-15 00:00:00
      * @param datetime   `end_date`              (optional) - End date. Example: 2015-04-18 23:59:59
      * @param integer    `sticky_order`          (optional) - Sticky order.
-     * @param file       `image`                 (optional) - News image
+     * @param file       `images`                (optional) - News image
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: tenant, tenant_category.
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
