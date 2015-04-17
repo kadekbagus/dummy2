@@ -2196,6 +2196,215 @@ class UserAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * POST - Delete membership
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer   `user_id`                 (required) - ID of the user
+     * @param string    `password`                (required) - The mall master password
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteMembership()
+    {
+        $activity = Activity::portal()
+                          ->setActivityType('delete');
+
+        $user = NULL;
+        $deletedUser = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.user.postdeletemembership.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.user.postdeletemembership.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.user.postdeletemembership.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)) {
+                Event::fire('orbit.user.postdeletemembership.authz.notallowed', array($this, $user));
+                $deleteUserLang = Lang::get('validation.orbit.actionlist.delete_user');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteUserLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.user.postdeletemembership.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $user_id = OrbitInput::post('user_id');
+            $password = OrbitInput::post('password');
+
+            // Error message when access is forbidden
+            $deleteYourSelf = Lang::get('validation.orbit.actionlist.delete_your_self');
+            $message = Lang::get('validation.orbit.access.forbidden',
+                                 array('action' => $deleteYourSelf));
+
+            $validator = Validator::make(
+                array(
+                    'user_id'   => $user_id,
+                    'password'  => $password,
+                ),
+                array(
+                    'user_id'   => 'required|numeric|orbit.empty.membership|no_delete_themself',
+                    'password'  => 'required|orbit.masterpassword.delete',
+                ),
+                array(
+                    'no_delete_themself'            => $message,
+                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
+                )
+            );
+
+            Event::fire('orbit.user.postdeletemembership.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.user.postdeletemembership.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $deletedUser = App::make('orbit.empty.membership');
+            $deletedUser->status = 'deleted';
+            $deletedUser->modified_by = $this->api->user->user_id;
+
+            $deleteapikey = $deletedUser->apikey;
+            $deleteapikey->status = 'deleted';
+
+            Event::fire('orbit.user.postdeletemembership.before.save', array($this, $deletedUser));
+
+            $deletedUser->save();
+            $deleteapikey->save();
+
+            Event::fire('orbit.user.postdeletemembership.after.save', array($this, $deletedUser));
+            $this->response->data = null;
+            $this->response->message = Lang::get('statuses.orbit.deleted.user');
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('User Deleted: %s', $deletedUser->username);
+            $activity->setUser($user)
+                    ->setActivityName('delete_membership')
+                    ->setActivityNameLong('Delete Membership OK')
+                    ->setObject($deletedUser)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.user.postdeletemembership.after.commit', array($this, $deletedUser));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.user.postdeletemembership.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_membership')
+                    ->setActivityNameLong('Delete Membership Failed')
+                    ->setObject($deletedUser)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.user.postdeletemembership.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_user')
+                    ->setActivityNameLong('Delete User Failed')
+                    ->setObject($deletedUser)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.user.postdeletemembership.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_user')
+                    ->setActivityNameLong('Delete User Failed')
+                    ->setObject($deletedUser)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.user.postdeletemembership.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_user')
+                    ->setActivityNameLong('Delete User Failed')
+                    ->setObject($deletedUser)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.user.postdeletemembership.before.render', array($this, $output));
+
+        // Save the activity
+        $activity->save();
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         // Check user email address, it should not exists
@@ -2272,7 +2481,37 @@ class UserAPIController extends ControllerAPI
                 return FALSE;
             }
 
+            if ($user->isSuperAdmin()) {
+                $errorMessage = 'You can not delete super admin account.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.empty.membership', $user);
+
             App::instance('orbit.empty.user', $user);
+
+            return TRUE;
+        });
+
+        // Check the existance of user id
+        Validator::extend('orbit.empty.membership', function ($attribute, $value, $parameters) {
+            $role = Role::where('role_name', 'consumer')->first();
+
+            $user = User::excludeDeleted()
+                        ->where('user_id', $value)
+                        ->where('user_role_id', $role->role_id)
+                        ->first();
+
+            if (empty($user)) {
+                return FALSE;
+            }
+
+            if ($user->isSuperAdmin()) {
+                $errorMessage = 'You can not delete super admin account.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.empty.membership', $user);
 
             return TRUE;
         });
@@ -2357,5 +2596,26 @@ class UserAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Membership deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
     }
 }
