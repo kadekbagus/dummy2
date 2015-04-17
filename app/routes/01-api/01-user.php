@@ -92,6 +92,14 @@ Route::group(['before' => 'orbit-settings'], function()
     {
         return UserAPIController::create()->postUpdateMembership();
     });
+
+    /**
+     * Delete Membership
+     */
+    Route::post('/api/v1/membership/delete', function()
+    {
+        return UserAPIController::create()->postDeleteMembership();
+    });
 });
 
 /**

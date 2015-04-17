@@ -14,13 +14,14 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class TenantAPIController extends ControllerAPI
 {
     /**
-     * POST - Delete Retailer
+     * POST - Delete Tenant/Retailer
      *
      * @author Rio Astamal <me@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `retailer_id`                 (required) - ID of the retailer
+     * @param integer    `retailer_id`              (required) - ID of the retailer
+     * @param string     `password`                 (required) - The mall master password
      * @return Illuminate\Support\Facades\Response
      */
     public function postDeleteTenant()

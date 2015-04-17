@@ -135,6 +135,7 @@ class LoginAPIController extends ControllerAPI
      */
     public function postLoginMall()
     {
+        $_GET['from_portal'] = 'mall';
         return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin']);
     }
 
@@ -151,6 +152,7 @@ class LoginAPIController extends ControllerAPI
      */
     public function postLoginMallCustomerService()
     {
+        $_GET['from_portal'] = 'cs-portal';
         return $this->postLoginRole(['Mall Customer Service']);
     }
 
@@ -622,6 +624,17 @@ class LoginAPIController extends ControllerAPI
                 ]);
                 ACL::throwAccessForbidden($message);
             }
+
+            // Return the current mall object if this login process coming
+            // from mall or cs-portal
+            $from = OrbitInput::get('from_portal', NULL);
+            $mall = NULL;
+
+            if (in_array($from, ['mall', 'cs-portal'])) {
+                $mallId = Config::get('orbit.shop.id');
+                $mall = Retailer::excludeDeleted()->find($mallId);
+            }
+            $user->mall = $mall;
 
             // Successfull login
             $activity->setUser($user)

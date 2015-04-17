@@ -12,14 +12,16 @@ Route::post('/app/v1/logout', 'IntermediateLoginController@Dummy_unsupported');
 Route::get('/app/v1/logout', 'IntermediateLoginController@Dummy_unsupported');
 Route::get('/app/v1/session', 'IntermediateLoginController@getSession');
 
-Route::post('/app/v1/login/admin', 'IntermediateLoginController@postLoginAdmin');
-Route::post('/app/v1/logout/admin', 'IntermediateLoginController@getLogout');
+Route::group(['before' => 'orbit-settings'], function() {
+    Route::post('/app/v1/login/admin', 'IntermediateLoginController@postLoginAdmin');
+    Route::post('/app/v1/logout/admin', 'IntermediateLoginController@getLogout');
 
-Route::post('/app/v1/login/mall', 'IntermediateLoginController@postLoginMall');
-Route::post('/app/v1/logout/mall', 'IntermediateLoginController@getLogout');
+    Route::post('/app/v1/login/mall', 'IntermediateLoginController@postLoginMall');
+    Route::post('/app/v1/logout/mall', 'IntermediateLoginController@getLogout');
 
-Route::post('/app/v1/login/mallcs', 'IntermediateLoginController@postLoginMallCustomerService');
-Route::post('/app/v1/logout/mallcs', 'IntermediateLoginController@getLogout');
+    Route::post('/app/v1/login/mallcs', 'IntermediateLoginController@postLoginMallCustomerService');
+    Route::post('/app/v1/logout/mallcs', 'IntermediateLoginController@getLogout');
+});
 
 /**
  * Customer registration

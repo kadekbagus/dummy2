@@ -1059,6 +1059,7 @@ class LuckyDrawAPIController extends ControllerAPI
      * @param datetime `issued_date_from`      (optional) - Issued begin date.
      * @param datetime `issued_date_to`        (optional) - Issued end date.
      * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param string   `group_by_receipt`      (optional) - 'yes' to group the based on receipt number
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1100,6 +1101,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $groupByReceipt = OrbitInput::get('group_by_receipt');
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
@@ -1146,6 +1148,19 @@ class LuckyDrawAPIController extends ControllerAPI
                                          ->joinReceipts()
                                          ->joinLuckyDraw();
 
+            if ($groupByReceipt === 'yes') {
+                $luckydraws->select('lucky_draw_receipts.*',
+                                    DB::raw('count(orb_lucky_draw_numbers.lucky_draw_number_id) as total_lucky_draw_number'),
+                                    'merchants.name as retailer_name',
+                                    'merchants.merchant_id as retailer_id',
+                                    'lucky_draws.lucky_draw_id',
+                                    'lucky_draws.lucky_draw_name',
+                                    'lucky_draws.image as lucky_draw_image',
+                                    'lucky_draws.start_date',
+                                    'lucky_draws.end_date')
+                           ->groupBy('lucky_draw_receipts.lucky_draw_receipt_id');
+            }
+
             // Filter lucky draw by ids
             OrbitInput::get('lucky_draw_id', function($id) use ($luckydraws)
             {
@@ -1154,7 +1169,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             // Filter lucky draw by ids
             if ($user->isRoleName('consumer')) {
-                $luckydraws->whereIn('lucky_draw_numbers.user_id', $user->user_id);
+                $luckydraws->whereIn('lucky_draw_numbers.user_id', [$user->user_id]);
             } else {
                 OrbitInput::get('user_id', function($id) use ($luckydraws)
                 {

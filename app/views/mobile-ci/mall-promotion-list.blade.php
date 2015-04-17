@@ -11,19 +11,19 @@
                 <div class="main-theme-mall catalogue" id="product-{{$product->promotion_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">
-                            @if(!empty($product->promo_image))
-                            <a href="{{ asset($product->promo_image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->promo_image) }}"></a>
+                            @if(!empty($product->image))
+                            <a href="{{ asset($product->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->image) }}"></a>
                             @else
                             <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                             @endif
                         </div>
                         <div class="col-xs-6">
-                            <h4>{{ $product->promotion_name }} at</h4>
-                            <p>{{ substr($product->description, 0, 120) }}</p>
+                            <h4>{{ $product->news_name }}</h4>
+                            <p>{{ substr($product->description, 0, 80) . '...' }}</p>
                         </div>
                         <div class="col-xs-3" style="margin-top:20px">
                             <div class="circlet btn-blue detail-btn pull-right">
-                                <a href="{{ url('customer/mallcoupon?id='.$product->issued_coupon_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
+                                <a href="{{ url('customer/mallpromotion?id='.$product->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
                             </div>
                         </div>
                     </div>
@@ -32,14 +32,14 @@
         @else
             <div class="row padded">
                 <div class="col-xs-12">
-                    <h4>You have no coupon.</h4>
+                    <h4>We have no promotion.</h4>
                 </div>
             </div>
         @endif
     @else
         <div class="row padded">
             <div class="col-xs-12">
-                <h4>You have no coupon.</h4>
+                <h4>We have no promotion.</h4>
             </div>
         </div>
     @endif

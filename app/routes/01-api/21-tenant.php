@@ -90,3 +90,19 @@ Route::post('/api/v1/tenant-map/delete', function()
 {
     return UploadAPIController::create()->postDeleteTenantMap();
 });
+
+/**
+ * Upload Retailer/Tenant background
+ */
+Route::post('/api/v1/mall-background/upload', function()
+{
+    return UploadAPIController::create()->postUploadMallBackground();
+});
+
+/**
+ * Delete Retailer/Tenant background
+ */
+Route::post('/api/v1/mall-background/delete', function()
+{
+    return UploadAPIController::create()->postDeleteMallBackground();
+});

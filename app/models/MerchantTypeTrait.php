@@ -53,4 +53,16 @@ trait MerchantTypeTrait
 
         return parent::save( $options );
     }
+
+    /**
+     * Get particular settings for this object.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'merchant_id')
+                    ->where('object_type', 'merchant')
+                    ->where('setting_name', '!=', 'master_password');
+    }
 }
