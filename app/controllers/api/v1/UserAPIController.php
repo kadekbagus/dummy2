@@ -1967,11 +1967,11 @@ class UserAPIController extends ControllerAPI
                     'joindate'              => $joindate,
                     'membership_number'     => $membershipNumber,
                     'status'                => $status,
-                    'idcard_number'         => $categoryIds,
+                    'idcard_number'         => $idcard,
                     'mobile_phone'          => $mobile,
                     'work_phone'            => $workphone,
                     'occupation'            => $occupation,
-                    'date_of_work'          => $occupation,
+                    'date_of_work'          => $dateofwork,
                     'user_id'               => $userId,
                 ),
                 array(
