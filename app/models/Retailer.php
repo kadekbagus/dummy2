@@ -294,4 +294,26 @@ class Retailer extends Eloquent
     {
         return $this->mediaOrig()->where('media_name_id', 'retailer_map');
     }
+
+    /**
+     * Merchant/Retailer/Mall has many uploaded backgrounds.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaBackground()
+    {
+        return $this->media()->where('media_name_id', 'retailer_background');
+    }
+
+    /**
+     * Retailer has many uploaded backgrounds.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaBackgroundOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'retailer_background');
+    }
 }
