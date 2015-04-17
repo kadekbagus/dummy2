@@ -3107,6 +3107,16 @@ class UploadAPIController extends ControllerAPI
                               ->where('object_name', 'retailer')
                               ->where('media_name_id', 'retailer_image');
 
+            // Get the index of the image to delete the right one
+            $increment = 0;
+            $imgOrder = array_keys($images['name']);
+
+            $pastMedia->where(function($q) use ($increment, $imgOrder) {
+                foreach ($imgOrder as $indexOrder) {
+                    $q->orWhere('metadata', 'order-' . $indexOrder);
+                }
+            });
+
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
             foreach ($oldMediaFiles as $oldMedia) {
@@ -3219,7 +3229,7 @@ class UploadAPIController extends ControllerAPI
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
 
             // Rollback the changes
             if (! $this->calledFrom('tenant.new, tenant.update')) {
@@ -3240,7 +3250,8 @@ class UploadAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `merchant_id`                  (required) - ID of the merchant
+     * @param integer    `merchant_id`                  (required) - ID of the merchant/retailer
+     * @param integer    `picture_index`                (required) - Index of the picture
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -3277,13 +3288,16 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $merchant_id = OrbitInput::post('merchant_id');
+            $picture_index = OrbitInput::post('picture_index');
 
             $validator = Validator::make(
                 array(
                     'merchant_id'   => $merchant_id,
+                    'picture_index' => $picture_index,
                 ),
                 array(
-                    'merchant_id'   => 'required|numeric|orbit.empty.tenant',
+                    'merchant_id'    => 'required|numeric|orbit.empty.tenant',
+                    'picture_index'  => 'array',
                 )
             );
 
@@ -3309,6 +3323,14 @@ class UploadAPIController extends ControllerAPI
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
                               ->where('object_name', 'retailer')
                               ->where('media_name_id', 'retailer_image');
+
+            if (! empty($picture_index)) {
+                $pastMedia->where(function($q) use ($picture_index) {
+                    foreach ($picture_index as $indexOrder) {
+                        $q->orWhere('metadata', 'order-' . $indexOrder);
+                    }
+                });
+            }
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
