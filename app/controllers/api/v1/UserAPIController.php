@@ -2008,6 +2008,7 @@ class UserAPIController extends ControllerAPI
             $role = Role::where('role_name', 'consumer')->first();
 
             $updateduser = App::make('orbit.empty.user');
+            $userdetail = $updateduser->userdetail;
 
             OrbitInput::post('email', function($email) use ($updateduser) {
                 $updateduser->user_email = $email;
@@ -2026,11 +2027,11 @@ class UserAPIController extends ControllerAPI
             });
 
             OrbitInput::post('membership_number', function($number) use ($updateduser) {
-                $updateduser->membership = $status;
+                $updateduser->membership_number = $number;
             });
 
             OrbitInput::post('joindate', function($date) use ($userdetail) {
-                $userdetail->merchant_aqcuired_date = $date;
+                $userdetail->merchant_acquired_date = $date;
             });
 
             OrbitInput::post('birthdate', function($date) use ($userdetail) {
@@ -2159,7 +2160,7 @@ class UserAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
 
             // Rollback the changes
             $this->rollBack();
