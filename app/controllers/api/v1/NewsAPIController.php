@@ -161,6 +161,7 @@ class NewsAPIController extends ControllerAPI
                 $newsretailer = new NewsMerchant();
                 $newsretailer->merchant_id = $retailer_id;
                 $newsretailer->news_id = $newnews->news_id;
+                $newsretailer->object_type = 'retailer';
                 $newsretailer->save();
                 $newsretailers[] = $newsretailer;
             }
@@ -459,7 +460,9 @@ class NewsAPIController extends ControllerAPI
                     Event::fire('orbit.news.postupdatenews.after.retailervalidation', array($this, $validator));
                 }
                 // sync new set of retailer ids
-                $updatednews->tenants()->sync($retailer_ids);
+                $pivotData = array_fill(0, count($retailer_ids), ['object_type' => 'retailer']);
+                $syncData = array_combine($retailer_ids, $pivotData);
+                $updatednews->tenants()->sync($syncData);
 
                 // reload tenants relation
                 $updatednews->load('tenants');

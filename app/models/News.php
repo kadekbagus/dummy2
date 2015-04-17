@@ -34,7 +34,7 @@ class News extends Eloquent
 
     public function tenants()
     {
-        return $this->belongsToMany('Retailer', 'news_merchant', 'news_id', 'merchant_id');
+        return $this->belongsToMany('Retailer', 'news_merchant', 'news_id', 'merchant_id')->withPivot('object_type');
     }
 
     /**
