@@ -418,5 +418,37 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
             }
         );
+
+        Route::get(
+            '/customer/mallpromotions',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getMallPromotionList();
+            }
+        );
+
+        Route::get(
+            '/customer/mallpromotion',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getMallPromotionDetailView();
+            }
+        );
+
+        Route::get(
+            '/customer/mallnews',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getMallNewsList();
+            }
+        );
+
+        Route::get(
+            '/customer/mallnewsdetail',
+            function () {
+        
+                return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
+            }
+        );
     }
 );
