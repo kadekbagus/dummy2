@@ -357,9 +357,19 @@ class MobileCIAPIController extends ControllerAPI
     public function getSignInView()
     {
         try {
-            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
 
-            return \Redirect::to('/customer/welcome');
+            // Get email from query string
+            $user_email = OrbitInput::get('email', '');
+            if (! empty($user_email)) {
+                \DummyAPIController::create()->getUserSignInNetwork();
+            }
+
+            if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email)));
+            } else {
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email)));
+            }
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
             $user_email = '';
