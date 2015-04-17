@@ -931,13 +931,16 @@ class CouponAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $promotion_id = OrbitInput::post('promotion_id');
+            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $promotion_id,
+                    'promotion_id'  => $promotion_id,
+                    'password'      => $password
                 ),
                 array(
-                    'promotion_id' => 'required|numeric|orbit.empty.coupon',
+                    'promotion_id'  => 'required|numeric|orbit.empty.coupon|orbit.issuedcoupon.exists',
+                    'password'      => 'required|orbit.masterpassword.delete'
                 )
             );
 
@@ -1763,6 +1766,28 @@ class CouponAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Mall deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
+
         // Check the existance of coupon id
         Validator::extend('orbit.empty.coupon', function ($attribute, $value, $parameters) {
             $coupon = Coupon::excludeDeleted()
@@ -2097,5 +2122,16 @@ class CouponAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Check the existance of retailer id
+        Validator::extend('orbit.issuedcoupon.exists', function ($attribute, $value, $parameters) {
+            $coupon = IssuedCoupon::active()->where('promotion_id', $value)->count();
+
+            if ($count > 0)) {
+                $message = coupon('Can not delete coupon since there is still %s issued coupon which not redeemed yet.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
     }
 }
