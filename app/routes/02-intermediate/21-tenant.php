@@ -59,3 +59,13 @@ Route::post('/app/v1/tenant-map/upload', 'IntermediateAuthController@Upload_post
  * Delete Tenant Map
  */
 Route::post('/app/v1/tenant-map/delete', 'IntermediateAuthController@Upload_postDeleteTenantMap');
+
+/**
+ * Upload Tenant Background
+ */
+Route::post('/app/v1/mall-background/upload', 'IntermediateAuthController@Upload_postUploadMallBackground');
+
+/**
+ * Delete Tenant Background
+ */
+Route::post('/app/v1/mall-background/delete', 'IntermediateAuthController@Upload_postDeleteMallBackground');
