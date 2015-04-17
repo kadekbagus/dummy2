@@ -417,10 +417,9 @@ class Uploader
             }
         }
 
-        // How many files being uploaded
-        $count = count($files['name']);
-
-        for ($i=0; $i<$count; $i++) {
+        // Get the array of files and maintain their key index
+        $imageIndexes = array_keys($files['name']);
+        foreach ($imageIndexes as $i) {
             $object = new \stdClass();
 
             foreach ($keys as $key) {
