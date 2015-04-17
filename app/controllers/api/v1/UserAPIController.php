@@ -1206,7 +1206,7 @@ class UserAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1257,10 +1257,12 @@ class UserAPIController extends ControllerAPI
                         ->groupBy('users.user_id');
 
             if ($details === 'yes') {
-                $users->select('users.*', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_number"),
+                $users->select('users.*', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         where status='active' and cp.user_id={$prefix}users.user_id and
-                                        current_date() <= date(cp.expired_date)) as total_issued_coupon"))
+                                        current_date() <= date(cp.expired_date)) as total_usable_coupon,
+                                        (select count(cp.user_id) from {$prefix}issued_coupons cp
+                                        where status='redeemed' and cp.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
                                   ->leftJoin(
                                         // Table
                                         DB::raw("(select ldn.user_id from `{$prefix}lucky_draw_numbers` ldn
@@ -1391,10 +1393,12 @@ class UserAPIController extends ControllerAPI
                     'firstname'               => 'users.user_firstname',
                     'gender'                  => 'user_details.gender',
                     'city'                    => 'user_details.city',
+                    'status'                  => 'users.status',
                     'last_visit_shop'         => 'merchants.name',
                     'last_visit_date'         => 'user_details.last_visit_any_shop',
                     'last_spent_amount'       => 'user_details.last_spent_any_shop',
-                    'total_issued_coupon'     => 'total_issued_coupon',
+                    'total_usable_coupon'     => 'total_usable_coupon',
+                    'total_redeemed_coupon'   => 'total_redeemed_coupon',
                     'total_lucky_draw_number' => 'total_lucky_draw_number'
                 );
 
@@ -1408,6 +1412,13 @@ class UserAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
+
+            // If sortby not active means we should add active as second argument
+            // of sorting
+            if ($sortBy !== 'users.status') {
+                $users->orderBy('users.status', 'asc');
+            }
+
             $users->orderBy($sortBy, $sortMode);
 
             $totalUsers = RecordCounter::create($_users)->count();
