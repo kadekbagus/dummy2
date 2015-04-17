@@ -346,12 +346,11 @@ class IntermediateLoginController extends IntermediateBaseController
             /**
              * The orbit mall does not have other application which reside at the same domain.
              * So we can safely use standard session name 'orbit_sessionx' for cookie.
-             *
+             */
             $this->session->getSessionConfig()->setConfig('session_origin.header.name', $this->mobileCISessionName['header']);
             $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
             $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
             $this->session->enableForceNew()->start($data);
-            */
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
