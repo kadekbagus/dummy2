@@ -1333,6 +1333,11 @@ class UserAPIController extends ControllerAPI
                 $users->whereIn('users.user_email', $email);
             });
 
+            // Filter user by their email
+            OrbitInput::get('membership_number_like', function ($membershipnumber) use ($users) {
+                $users->where('users.membership_number', 'like', "%$membershipnumber%");
+            });
+
             // Filter user by their email pattern
             OrbitInput::get('email_like', function ($email) use ($users) {
                 $users->where('users.user_email', 'like', "%$email%");
