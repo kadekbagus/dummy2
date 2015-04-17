@@ -2126,8 +2126,8 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.issuedcoupon.exists', function ($attribute, $value, $parameters) {
             $coupon = IssuedCoupon::active()->where('promotion_id', $value)->count();
 
-            if ($count > 0)) {
-                $message = coupon('Can not delete coupon since there is still %s issued coupon which not redeemed yet.';
+            if ($count > 0) {
+                $message = sprintf('Can not delete coupon since there is still %s issued coupon which not redeemed yet.', $coupon);
                 ACL::throwAccessForbidden($message);
             }
 
