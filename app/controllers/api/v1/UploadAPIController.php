@@ -3023,7 +3023,7 @@ class UploadAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer    `merchant_id`                 (required) - ID of the merchant
-     * @param file|array `images`                      (required) - Images of the logo
+     * @param file|array `pictures`                    (required) - Images of the logo
      * @return Illuminate\Support\Facades\Response
      */
     public function postUploadTenantImage()
