@@ -1564,8 +1564,8 @@ class CouponAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer       `promotion_id`          (required) - ID of the coupon
-     * @param string      `password`              (required) - The mall master password
+     * @param integer     `promotion_id`                    (required) - ID of the coupon
+     * @param string      `merchant_verification_number`    (required) - Merchant/Tenant verification number
      *
      * @return Illuminate\Support\Facades\Response
      */

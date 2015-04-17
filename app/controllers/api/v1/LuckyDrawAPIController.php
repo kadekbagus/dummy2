@@ -1154,7 +1154,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             // Filter lucky draw by ids
             if ($user->isRoleName('consumer')) {
-                $luckydraws->whereIn('lucky_draw_numbers.user_id', $user->user_id);
+                $luckydraws->whereIn('lucky_draw_numbers.user_id', [$user->user_id]);
             } else {
                 OrbitInput::get('user_id', function($id) use ($luckydraws)
                 {

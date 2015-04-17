@@ -40,7 +40,7 @@ class IssuedCouponAPIController extends ControllerAPI
             Event::fire('orbit.issuedcoupon.postnewissuedcoupon.before.auth', array($this));
 
             $this->checkAuth();
-            
+
             Event::fire('orbit.issuedcoupon.postnewissuedcoupon.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
@@ -602,9 +602,13 @@ class IssuedCouponAPIController extends ControllerAPI
             });
 
             // Filter coupon by user Ids
-            OrbitInput::get('user_id', function ($userIds) use ($issuedcoupons) {
-                $issuedcoupons->whereIn('issued_coupons.user_id', $userIds);
-            });
+            if ($user->isRoleName('consumer')) {
+                $issuedcoupons->whereIn('issued_coupons.user_id', [$user->user_id]);
+            } else {
+                OrbitInput::get('user_id', function ($userIds) use ($issuedcoupons) {
+                    $issuedcoupons->whereIn('issued_coupons.user_id', $userIds);
+                });
+            }
 
             // Filter coupon by status
             OrbitInput::get('status', function ($statuses) use ($issuedcoupons) {
