@@ -1669,10 +1669,10 @@ class EmployeeAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string    `sort_by`               (optional) - column order by
+     * @param string    `sort_by`               (optional) - column order by: username,firstname,lastname,registered_date,employee_id_char,position
      * @param string    `sort_mode`             (optional) - asc or desc
      * @param array     `user_ids`              (optional)
-     * @param array     `role_ids`              (optional)
+     * @param array     `role_names`            (optional)
      * @param array     `retailer_ids`          (optional)
      * @param array     `merchant_ids`          (optional)
      * @param array     `usernames`             (optional)
@@ -1686,10 +1686,9 @@ class EmployeeAPIController extends ControllerAPI
      * @param array     `employee_id_char_like` (optional)
      * @param integer   `take`                  (optional) - limit
      * @param integer   `skip`                  (optional) - limit offset
-     * @param array     `with`                  (optional) - default to ['employee.retailers', 'userDetail']
+     * @param array     `with`                  (optional) -
      * @return Illuminate\Support\Facades\Response
      */
-
     public function getSearchMallEmployee()
     {
         try {
@@ -1802,7 +1801,8 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             // Filter user by Retailer Ids
-            OrbitInput::get('retailer_ids', function ($retailerIds) use ($listOfMerchantIds, $joined) {
+            $listOfRetailerIds = (array)Config::get('orbit.shop.id');
+            OrbitInput::get('retailer_ids', function ($retailerIds) use ($listOfRetailerIds, $joined) {
                 // $joined = TRUE;
                 // $users->employeeRetailerIds($retailerIds);
                 $listOfRetailerIds = (array)$retailerIds;
@@ -1868,7 +1868,7 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             // Filter user by their role name
-            OrbitInput::get('role_name', function ($data) use ($users) {
+            OrbitInput::get('role_names', function ($data) use ($users) {
                 $data = (array)$data;
                 foreach ($data as $employeeRoleName) {
                     if (! in_array(strtolower($employeeRoleName), ['mall admin', 'mall customer service'])) {
@@ -1922,6 +1922,7 @@ class EmployeeAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'   => 'users.created_at',
+                    'create_at'         => 'users.created_at',
                     'username'          => 'users.username',
                     'login_id'          => 'users.username',
                     'employee_id_char'  => 'employees.employee_id_char',
