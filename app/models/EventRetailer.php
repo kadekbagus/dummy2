@@ -14,11 +14,11 @@ class EventRetailer extends Eloquent
 
     public function event()
     {
-        return $this->belongsTo('Event', 'event_id', 'event_id');
+        return $this->belongsTo('EventModel', 'event_id', 'event_id');
     }
 
     public function retailer()
     {
-        return $this->belongsTo('Retailer', 'retailer_id', 'merchant_id');
+        return $this->belongsTo('Retailer', 'retailer_id', 'merchant_id')->isMall('no');
     }
 }
