@@ -246,6 +246,7 @@ return array(
             'news_status'          => 'The news status you specified is not found.',
             'news_sortby'          => 'The sort by argument you specified is not valid, the valid values are: registered_date, news_name, object_type, description, begin_date, end_date, status',
             'news'                 => 'The News ID you specified is not found.',
+            'link_object_id'       => 'The Link Object ID you specified is not found.',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
