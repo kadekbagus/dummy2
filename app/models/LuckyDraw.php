@@ -54,7 +54,7 @@ class LuckyDraw extends Eloquent
     /**
      * Lucky Draw has many uploaded media.
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
      */
     public function media()
     {
@@ -62,4 +62,19 @@ class LuckyDraw extends Eloquent
                     ->where('object_name', 'lucky_draw');
     }
 
+    /**
+     * Join with lucky draw numbers.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public function scopeJoinLuckyDrawNumbers($query)
+    {
+        return $query->leftJoin('lucky_draw_numbers', function($join) {
+                    $prefix = DB::getTablePrefix();
+                    $join->on('lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id');
+                    $join->on('lucky_draw_numbers.status', '!=',
+                              DB::raw("'deleted' and ({$prefix}lucky_draw_numbers.user_id is not null and {$prefix}lucky_draw_numbers.user_id != 0)"));
+        });
+    }
 }

@@ -769,6 +769,7 @@ class LuckyDrawAPIController extends ControllerAPI
      * @param datetime `start_date`            (optional) - Start date. Example: 2015-04-13 00:00:00
      * @param datetime `end_date`              (optional) - End date. Example: 2015-04-13 23:59:59
      * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param string   `details`               (optional) - Value: 'yes' will shows the total of issued lucky draw number in field 'total_issued_lucky_draw_number'
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -810,12 +811,13 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $details_view = OrbitInput::get('details');
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status',
+                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.lucky_draw_sortby'),
@@ -851,7 +853,15 @@ class LuckyDrawAPIController extends ControllerAPI
             }
 
             // Builder object
-            $luckydraws = LuckyDraw::excludeDeleted();
+            $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')->select('lucky_draws.*');
+
+            if ($details_view === 'yes') {
+                $prefix = DB::getTablePrefix();
+                $luckydraws->select('lucky_draws.*',
+                                    DB::raw("count({$prefix}lucky_draw_numbers.lucky_draw_number_id) as total_issued_lucky_draw_number"))
+                                    ->joinLuckyDrawNumbers()
+                                    ->groupBy('lucky_draws.lucky_draw_id');
+            }
 
             // Filter lucky draw by ids
             OrbitInput::get('lucky_draw_id', function($id) use ($luckydraws)
@@ -969,10 +979,12 @@ class LuckyDrawAPIController extends ControllerAPI
                     'description'              => 'lucky_draws.description',
                     'start_date'               => 'lucky_draws.start_date',
                     'end_date'                 => 'lucky_draws.end_date',
-                    'status'                   => 'lucky_draws.status'
+                    'status'                   => 'lucky_draws.status',
                 );
 
-                $sortBy = $sortByMapping[$_sortBy];
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
             });
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
