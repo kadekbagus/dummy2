@@ -3179,7 +3179,7 @@ class UploadAPIController extends ControllerAPI
             Event::fire('orbit.upload.postuploadtenantimage.after.save', array($this, $merchant, $uploader));
 
             $this->response->data = $mediaList;
-            $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.logo');
+            $this->response->message = 'Tenant picture has been successfully uploaded.';
 
             // Commit the changes
             if (! $this->calledFrom('tenant.new, tenant.update')) {

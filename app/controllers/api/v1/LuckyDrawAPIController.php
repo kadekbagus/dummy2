@@ -1149,8 +1149,9 @@ class LuckyDrawAPIController extends ControllerAPI
                                          ->joinLuckyDraw();
 
             if ($groupByReceipt === 'yes') {
+                $prefix = DB::getTablePrefix();
                 $luckydraws->select('lucky_draw_receipts.*',
-                                    DB::raw('count(orb_lucky_draw_numbers.lucky_draw_number_id) as total_lucky_draw_number'),
+                                    DB::raw("count({$prefix}lucky_draw_numbers.lucky_draw_number_id) as total_lucky_draw_number"),
                                     'merchants.name as retailer_name',
                                     'merchants.merchant_id as retailer_id',
                                     'lucky_draws.lucky_draw_id',
