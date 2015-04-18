@@ -1303,6 +1303,208 @@ class EmployeeAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Delete Existing Mall Employee
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer     `user_id`               (required) - User ID of the employee
+     * @param password    `password`              (required) - User ID of the employee
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteMallEmployee()
+    {
+        $activity = Activity::portal()
+                          ->setActivityType('delete');
+
+        $user = NULL;
+        $employee = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.employee.postdeletemallemployee.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.employee.postdeletemallemployee.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.employee.postdeletemallemployee.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)->isAllowed('delete_employee')) {
+                Event::fire('orbit.employee.postdeletemallemployee.authz.notallowed', array($this, $user));
+
+                $lang = Lang::get('validation.orbit.actionlist.delete_employee');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $lang));
+
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+            Event::fire('orbit.employee.postdeletemallemployee.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $userId = OrbitInput::post('user_id');
+            $password = OrbitInput::post('password');
+
+            $validator = Validator::make(
+                array(
+                    'user_id'        => $userId,
+                    'password'       => $password,
+                ),
+                array(
+                    'user_id'       => 'required|numeric|orbit.empty.user',
+                    'password'      => 'required|orbit.masterpassword.delete',
+                )
+            );
+
+            Event::fire('orbit.employee.postdeletemallemployee.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.employee.postdeletemallemployee.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $deletedUser = App::make('orbit.empty.user');
+            $deletedUser->status = 'deleted';
+            $deletedUser->modified_by = $this->api->user->user_id;
+
+            Event::fire('orbit.employee.postdeletemallemployee.before.save', array($this, $deletedUser));
+
+            $deletedUser->save();
+
+            // Get the relation
+            $employee = $deletedUser->employee;
+            $employee->status = $deletedUser->status;
+            $employee->save();
+
+            Event::fire('orbit.employee.postdeletemallemployee.after.save', array($this, $deletedUser));
+            $this->response->data = $deletedUser;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('Employee Deleted: %s', $deletedUser->username);
+            $activity->setUser($user)
+                    ->setActivityName('delete_employee')
+                    ->setActivityNameLong('Delete Employee OK')
+                    ->setObject($employee)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.employee.postdeletemallemployee.after.commit', array($this, $deletedUser));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.employee.postdeletemallemployee.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_employee')
+                    ->setActivityNameLong('Delete Employee Failed')
+                    ->setObject($employee)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.employee.postdeletemallemployee.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 400;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_employee')
+                    ->setActivityNameLong('Delete Employee Failed')
+                    ->setObject($employee)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.employee.postdeletemallemployee.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_employee')
+                    ->setActivityNameLong('Delete Employee Failed')
+                    ->setObject($employee)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.employee.postdeletemallemployee.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_employee')
+                    ->setActivityNameLong('Delete Employee Failed')
+                    ->setObject($employee)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    /**
      * GET - Search employees
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -2216,6 +2418,28 @@ class EmployeeAPIController extends ControllerAPI
 
             if ((string)$realNumber !== (string)$number) {
                 return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Membership deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
             }
 
             return TRUE;
