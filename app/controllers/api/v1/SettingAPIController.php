@@ -250,11 +250,11 @@ class SettingAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string        `language`         (optional) - Mobile language in:en,id
-     * @param files array   `backgrounds`      (optional) - Image background for mobile ci
-     * @param string        `landing_page`     (optional) - in:widget,news,promotion,tenant
-     * @param string        `password`         (optional) - Master password for deletion
-     * @param string        `password_confirm` (optional) - Master password confirmation
+     * @param string        `language`              (optional) - Mobile language in:en,id
+     * @param files array   `backgrounds`           (optional) - Image background for mobile ci
+     * @param string        `landing_page`          (optional) - in:widget,news,promotion,tenant
+     * @param string        `password`              (optional) - Master password for deletion
+     * @param string        `password_confirmation` (optional) - Master password confirmation
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -360,7 +360,7 @@ class SettingAPIController extends ControllerAPI
                 }
             }
 
-            OrbitInput::post('password', function($passwd) use ($masterPasswordSetting, $mall, $user) {
+            OrbitInput::post('password', function($passwd) use (&$masterPasswordSetting, $mall, $user) {
                 // Master password setting
                 if (is_null($masterPasswordSetting)) {
                     $masterPasswordSetting = new Setting();
@@ -374,7 +374,7 @@ class SettingAPIController extends ControllerAPI
                 $masterPasswordSetting->save();
             });
 
-            OrbitInput::post('landing_page', function($page) use ($landingPageSetting, $mall, $user) {
+            OrbitInput::post('landing_page', function($page) use (&$landingPageSetting, $mall, $user) {
                 // Landing page setting
                 if (is_null($landingPageSetting)) {
                     $landingPageSetting = new Setting();
@@ -393,7 +393,7 @@ class SettingAPIController extends ControllerAPI
                 $mall->save();
             });
 
-            OrbitInput::files('backgrounds', function($files) use ($mall, $user, $backgroundSetting) {
+            OrbitInput::files('backgrounds', function($files) use ($mall, $user, &$backgroundSetting) {
                 $_POST['merchant_id'] = $mall->merchant_id;
 
                 // This will be used on UploadAPIController
@@ -423,7 +423,8 @@ class SettingAPIController extends ControllerAPI
             });
 
             $this->response->data = [
-                'landing_page'      => $landingPageSetting->setting_value,
+                'landing_page'      => $landingPageSetting,
+                'background'        => $backgroundSetting,
                 'mall'              => $mall
             ];
 
