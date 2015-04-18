@@ -26,7 +26,7 @@ class LuckyDrawAPIController extends ControllerAPI
      * @param string     `description`           (optional) - Description
      * @param datetime   `start_date`            (optional) - Start date. Example: 2015-04-13 00:00:00
      * @param datetime   `end_date`              (optional) - End date. Example: 2015-04-13 23:59:59
-     * @param file       `image`                 (optional) - Lucky Draw image
+     * @param file       `images`                (optional) - Lucky Draw image
      * @param string     `rule_type`             (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
      * @param decimal    `rule_value`            (optional) - Rule value
      * @param string     `discount_object_type`  (optional) - Discount object type. Valid value: product, family.
@@ -291,7 +291,7 @@ class LuckyDrawAPIController extends ControllerAPI
      * @param integer    `mall_id`               (optional) - Mall ID
      * @param string     `lucky_draw_name`       (optional) - Lucky Draw name
      * @param string     `description`           (optional) - Description
-     * @param file       `image`                 (optional) - Lucky Draw image
+     * @param file       `images`                (optional) - Lucky Draw image
      * @param datetime   `start_date`            (optional) - Start date. Example: 2014-12-30 00:00:00
      * @param datetime   `end_date`              (optional) - End date. Example: 2014-12-31 23:59:59
      * @param decimal    `minimum_amount`        (optional) - Minimum amount

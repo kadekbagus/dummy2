@@ -240,6 +240,7 @@ return array(
                     'sortby'       => 'The sort by argument you specified is not valid, the valid values are: name, last_transaction.',
                 ),
             ),
+            'lucky_draw'           => 'The lucky draw you specified is not found.',
             'lucky_draw_status'    => 'The lucky draw status you specified is not found.',
             'lucky_draw_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, lucky_draw_name, description, start_date, end_date, status.',
             'news_object_type'     => 'The news object type you specified is not found. Valid value: promotion, news',
