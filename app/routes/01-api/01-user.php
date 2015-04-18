@@ -66,7 +66,7 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::post('/api/v1/employee/delete', function()
     {
-        return EmployeeAPIController::create()->postDeleteEmployee();
+        return EmployeeAPIController::create()->postDeleteMallEmployee();
     });
 
     /**

@@ -48,7 +48,7 @@ Route::group(['before' => 'orbit-settings'], function()
     /**
      * Delete an Employee
      */
-    Route::post('/app/v1/employee/delete', 'IntermediateAuthController@Employee_postDeleteEmployee');
+    Route::post('/app/v1/employee/delete', 'IntermediateAuthController@Employee_postDeleteMallEmployee');
 
     /**
      * Search Employees
