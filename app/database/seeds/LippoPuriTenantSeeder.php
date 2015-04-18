@@ -18,14 +18,14 @@ class LippoPuriTenantSeeder extends Seeder
 
         $init = <<<INIT
 TRUNCATE TABLE {$prefix}category_merchant;
-ALTER TABLE `orbs_category_merchant` AUTO_INCREMENT =1;
+ALTER TABLE `{{$prefix}}category_merchant` AUTO_INCREMENT =1;
 DELETE FROM {$prefix}merchants WHERE merchant_id >= 3;
 ALTER TABLE {$prefix}merchants SET AUTO_INCREMENT=3;
 INIT;
         DB::unprepared($init);
 
         $tenants = <<<TENANT
-INSERT INTO `orbs_merchants` (`merchant_id`, `omid`, `orid`, `user_id`, `email`, `name`, `description`, `address_line1`, `address_line2`, `address_line3`, `postal_code`, `city_id`, `city`, `country_id`, `country`, `phone`, `fax`, `start_date_activity`, `end_date_activity`, `status`, `logo`, `currency`, `currency_symbol`, `tax_code1`, `tax_code2`, `tax_code3`, `slogan`, `vat_included`, `contact_person_firstname`, `contact_person_lastname`, `contact_person_position`, `contact_person_phone`, `contact_person_phone2`, `contact_person_email`, `sector_of_activity`, `object_type`, `parent_id`, `is_mall`, `url`, `masterbox_number`, `slavebox_number`, `mobile_default_language`, `pos_language`, `ticket_header`, `ticket_footer`, `floor`, `unit`, `modified_by`, `created_at`, `updated_at`) VALUES
+INSERT INTO `{$prefix}merchants` (`merchant_id`, `omid`, `orid`, `user_id`, `email`, `name`, `description`, `address_line1`, `address_line2`, `address_line3`, `postal_code`, `city_id`, `city`, `country_id`, `country`, `phone`, `fax`, `start_date_activity`, `end_date_activity`, `status`, `logo`, `currency`, `currency_symbol`, `tax_code1`, `tax_code2`, `tax_code3`, `slogan`, `vat_included`, `contact_person_firstname`, `contact_person_lastname`, `contact_person_position`, `contact_person_phone`, `contact_person_phone2`, `contact_person_email`, `sector_of_activity`, `object_type`, `parent_id`, `is_mall`, `url`, `masterbox_number`, `slavebox_number`, `mobile_default_language`, `pos_language`, `ticket_header`, `ticket_footer`, `floor`, `unit`, `modified_by`, `created_at`, `updated_at`) VALUES
 (3, '', '', 0, '', 'THE BODY SHOP', 'The Body Shop adalah produsen produk perawatan tubuh dan kecantikan. Kami percaya kecantikan sejati berasal dari hati. Bagi kami, kecantikan jauh lebih dari sekedar wajah cantik.', NULL, NULL, NULL, NULL, NULL, NULL, 101, 'Indonesia', '021-29 111 072', NULL, NULL, NULL, 'active', NULL, 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'retailer', 2, 'no', 'www.thebodyshop.co.id', NULL, NULL, NULL, NULL, NULL, NULL, 'LG', '62', 0, '2015-04-11 04:21:25', '2015-04-11 04:21:25'),
 (4, '', '', 0, '', 'YVES ROCHER', 'Yves Rocher is reinventing beauty with a genuine compassion for nature and women. He is the creator of Botanical Beauty – a vision of beauty that now attracts 30 million women around the world.', NULL, NULL, NULL, NULL, NULL, NULL, 101, 'Indonesia', '021-29 111 073', NULL, NULL, NULL, 'active', NULL, 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'retailer', 2, 'no', 'www.yvesrocher.ca', NULL, NULL, NULL, NULL, NULL, NULL, 'LG', '63', 0, '2015-04-11 04:21:26', '2015-04-11 04:21:26'),
 (5, '', '', 0, '', 'BEYOND', '', NULL, NULL, NULL, NULL, NULL, NULL, 101, 'Indonesia', '021 - 29 111 318', NULL, NULL, NULL, 'active', NULL, 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'retailer', 2, 'no', '', NULL, NULL, NULL, NULL, NULL, NULL, 'LG', '66', 0, '2015-04-11 04:21:26', '2015-04-11 04:21:26'),
@@ -117,7 +117,7 @@ TENANT;
         $this->command->info('merchants table seeded.');
 
         $categories = <<<CAT
-INSERT INTO `orbs_category_merchant` (`category_merchant_id`, `category_id`, `merchant_id`, `created_at`, `updated_at`) VALUES
+INSERT INTO `{$prefix}category_merchant` (`category_merchant_id`, `category_id`, `merchant_id`, `created_at`, `updated_at`) VALUES
 (1, 1, 3, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
 (2, 9, 3, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
 (3, 1, 4, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
