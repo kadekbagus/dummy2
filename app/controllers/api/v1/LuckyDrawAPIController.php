@@ -425,10 +425,18 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             OrbitInput::post('min_number', function($min_number) use ($updatedluckydraw) {
+                if ((string)$min_number !== (string)$updatedluckydraw->min_number) {
+                    $errorMessage = 'You can not change the minumum number of lucky draw its already generated.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
                 $updatedluckydraw->min_number = $min_number;
             });
 
             OrbitInput::post('max_number', function($max_number) use ($updatedluckydraw) {
+                if ((string)$max_number !== (string)$updatedluckydraw->max_number) {
+                    $errorMessage = 'You can not change the maximum number of lucky draw its already generated.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
                 $updatedluckydraw->max_number = $max_number;
             });
 
