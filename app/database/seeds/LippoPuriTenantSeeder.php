@@ -25,6 +25,9 @@ ALTER TABLE {$prefix}merchants AUTO_INCREMENT=3;
 
 TRUNCATE TABLE {$prefix}lucky_draws;
 ALTER TABLE {$prefix}lucky_draws AUTO_INCREMENT=2;
+
+TRUNCATE TABLE {$prefix}lucky_numbers;
+ALTER TABLE {$prefix}lucky_numbers AUTO_INCREMENT=1;
 INIT;
         DB::unprepared($init);
 
@@ -238,10 +241,85 @@ CAT;
         $luckydraws = <<<LUCKY
 INSERT INTO `{$prefix}lucky_draws` (`lucky_draw_id`, `mall_id`, `lucky_draw_name`, `description`, `image`, `start_date`, `end_date`, `minimum_amount`, `grace_period_date`, `grace_period_in_days`, `min_number`, `max_number`, `status`, `created_by`, `modified_by`, `created_at`, `updated_at`) VALUES
 (1, 2, 'Lippo Mall Puri Lucky Draw', 'Lippo Mall Puri Lucky Draw.', NULL, '2015-04-01 00:00:00', '2015-04-30 23:59:59', 100000.00, NULL, 30, 100000, 200000, 'active', 0, 3, '0000-00-00 00:00:00', '2015-04-17 18:08:43');
+
+start transaction;
+call generate_lucky_draw_number(100001, 200000, 1, 3);
+commit;
 LUCKY;
 
         $this->command->info('Seeding lucky_draws table...');
         DB::unprepared($luckydraws);
         $this->command->info('table lucky_draws seeded.');
+
+        $this->command->info('Creating new customer service account...');
+        $this->createCustomerService();
+        $this->command->info('customer service created.');
+    }
+
+    protected function createCustomerService()
+    {
+        try {
+            $loginId = 'cs1';
+            $birthdate = '1990-01-01';
+            $password = '123456';
+            $position = 'Front Side';
+            $employeeId = 'CS001';
+            $firstName = 'Customer';
+            $lastName = 'Service';
+            $empStatus = 'active';
+
+            $current = User::where('username', 'cs1')->first();
+            if (is_object($current)) {
+                DB::table('users')->where('user_id', $current->user_id)->delete();
+                DB::table('apikeys')->where('user_id', $current->user_id)->delete();
+                DB::table('user_details')->where('user_id', $current->user_id)->delete();
+
+                $emp = Employee::where('user_id', $current->user_id)->first();
+                DB::table('employee_retailer')->where('employee_id', $emp->employee_id)->delete();
+                DB::table('employees')->where('user_id', $current->user_id)->delete();
+            }
+
+            $role = Role::where('role_name', 'mall customer service')->first();
+
+            $newUser = new User();
+            $newUser->username = $loginId;
+            $newUser->user_email = $loginId . '@myorbit.com';
+            $newUser->user_password = Hash::make($password);
+            $newUser->status = $empStatus;
+            $newUser->user_role_id = $role->role_id;
+            $newUser->user_ip = '127.0.0.1';
+            $newUser->modified_by = 0;
+            $newUser->user_firstname = $firstName;
+            $newUser->user_lastname = $lastName;
+
+            $newUser->save();
+
+            $apikey = new Apikey();
+            $apikey->api_key = Apikey::genApiKey($newUser);
+            $apikey->api_secret_key = Apikey::genSecretKey($newUser);
+            $apikey->status = 'active';
+            $apikey->user_id = $newUser->user_id;
+            $apikey = $newUser->apikey()->save($apikey);
+
+            $newUser->setRelation('apikey', $apikey);
+            $newUser->setHidden(array('user_password'));
+
+            $userdetail = new UserDetail();
+            $userdetail->birthdate = $birthdate;
+            $userdetail = $newUser->userdetail()->save($userdetail);
+
+            $newEmployee = new Employee();
+            $newEmployee->employee_id_char = $employeeId;
+            $newEmployee->position = $position;
+            $newEmployee->status = $newUser->status;
+            $newEmployee = $newUser->employee()->save($newEmployee);
+
+            // @Todo: Remove this hardcode
+            $retailerIds = [2];
+            $newEmployee->retailers()->sync($retailerIds);
+
+        } catch (Exception $e) {
+            printf("(%s) %s\n", $e->getLine(), $e->getMessage());
+        }
     }
 }
