@@ -11,7 +11,7 @@ Route::post('/app/v1/event/new', 'IntermediateAuthController@Event_postNewEvent'
 /**
  * Delete event
  */
-Route::post('/app/v1/event/delete', 'IntermediateAuthController@Event_postDeleteEvent');
+Route::post('/app/v1/event/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@Event_postDeleteEvent']);
 
 /**
  * Update event

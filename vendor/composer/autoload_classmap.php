@@ -9,6 +9,8 @@ return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
     'AlterStoredProcModifyNumberDrivenIssue' => $baseDir . '/app/database/migrations/2015_04_13_124254_alter_stored_proc_modify_number_driven_issue.php',
+    'AlterTableEventRetailerAddColumnObjectType' => $baseDir . '/app/database/migrations/2015_04_17_103926_alter_table_event_retailer_add_column_object_type.php',
+    'AlterTableEventsRemoveColumns' => $baseDir . '/app/database/migrations/2015_04_17_102621_alter_table_events_remove_columns.php',
     'AlterTableLuckyDrawNumbersAddColumnHash' => $baseDir . '/app/database/migrations/2015_04_13_090851_alter_table_lucky_draw_numbers_add_column_hash.php',
     'AlterTableLuckyDrawNumbersAddUniqueIndexForIdNumberStatus' => $baseDir . '/app/database/migrations/2015_04_13_034658_alter_table_lucky_draw_numbers_add_unique_index_for_id_number_status.php',
     'AlterTableLuckyDrawNumbersChangeUserIdToNullable' => $baseDir . '/app/database/migrations/2015_04_12_153306_alter_table_lucky_draw_numbers_change_user_id_to_nullable.php',

@@ -17,49 +17,40 @@ class EventModel extends Eloquent
 
     protected $primaryKey = 'event_id';
 
-    public function merchant()
+    public function mall()
     {
-        return $this->belongsTo('Merchant', 'merchant_id', 'merchant_id');
+        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall();
     }
 
-    public function linkproduct()
+    public function retailers()
     {
-        return $this->belongsTo('Product', 'link_object_id1', 'product_id');
+        return $this->belongsToMany('Retailer', 'event_retailer', 'event_id', 'retailer_id')
+            ->withPivot('object_type')
+            ->where('merchants.is_mall', 'no')
+            ->where('event_retailer.object_type', 'retailer');
     }
 
-    public function linkcategory1()
+    public function retailerCategories()
     {
-        return $this->belongsTo('Category', 'link_object_id1', 'category_id');
+        return $this->belongsToMany('Category', 'event_retailer', 'event_id', 'retailer_id')
+            ->withPivot('object_type')
+            ->where('event_retailer.object_type', 'retailer_category');
     }
 
-    public function linkcategory2()
+    public function promotions()
     {
-        return $this->belongsTo('Category', 'link_object_id2', 'category_id');
+        return $this->belongsToMany('News', 'event_retailer', 'event_id', 'retailer_id')
+            ->withPivot('object_type')
+            ->where('news.object_type', 'promotion')
+            ->where('event_retailer.object_type', 'promotion');
     }
 
-    public function linkcategory3()
+    public function news()
     {
-        return $this->belongsTo('Category', 'link_object_id3', 'category_id');
-    }
-
-    public function linkcategory4()
-    {
-        return $this->belongsTo('Category', 'link_object_id4', 'category_id');
-    }
-
-    public function linkcategory5()
-    {
-        return $this->belongsTo('Category', 'link_object_id5', 'category_id');
-    }
-
-    public function linkpromotion()
-    {
-        return $this->belongsTo('Promotion', 'link_object_id1', 'promotion_id');
-    }
-
-    public function linkwidget()
-    {
-        return $this->belongsTo('Widget', 'link_object_id1', 'widget_id');
+        return $this->belongsToMany('News', 'event_retailer', 'event_id', 'retailer_id')
+            ->withPivot('object_type')
+            ->where('news.object_type', 'news')
+            ->where('event_retailer.object_type', 'news');
     }
 
     public function creator()
@@ -70,11 +61,6 @@ class EventModel extends Eloquent
     public function modifier()
     {
         return $this->belongsTo('User', 'modified_by', 'user_id');
-    }
-
-    public function retailers()
-    {
-        return $this->belongsToMany('Retailer', 'event_retailer', 'event_id', 'retailer_id');
     }
 
     /**
