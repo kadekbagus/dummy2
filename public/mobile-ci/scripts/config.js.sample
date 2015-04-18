@@ -1,4 +1,16 @@
-// var apiPath = 'http://shop.earth.dominopos.dev/app/v1/';
-var apiPath = 'http://192.168.0.111/orbit-shop/public/api/v1/';
-// var homePath = 'http://shop.earth.dominopos.dev/customer/home';
-var homePath = 'http://192.168.0.111/orbit-shop/public/customer/home';
+/**
+ * Default configuration for Mobile CI. It get the protocol and domain name
+ * from current browsed page.
+ *
+ * @author Rio Astamal <me@rioastamal.net>
+ */
+function orbitGetBaseUrl() {
+   var http = location.protocol;
+   var slashes = http.concat("//");
+   var host = slashes.concat(window.location.hostname);
+
+   return host;
+}
+
+var apiPath = orbitGetBaseUrl() + '/app/v1/';
+var homePath = orbitGetBaseUrl() + '/customer/home';
