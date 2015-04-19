@@ -1261,8 +1261,8 @@ class UserAPIController extends ControllerAPI
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         where status='active' and cp.user_id={$prefix}users.user_id and
                                         current_date() <= date(cp.expired_date)) as total_usable_coupon,
-                                        (select count(cp.user_id) from {$prefix}issued_coupons cp
-                                        where status='redeemed' and cp.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
+                                        (select count(cp2.user_id) from {$prefix}issued_coupons cp2
+                                        where status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
                                   ->leftJoin(
                                         // Table
                                         DB::raw("(select ldn.user_id from `{$prefix}lucky_draw_numbers` ldn
