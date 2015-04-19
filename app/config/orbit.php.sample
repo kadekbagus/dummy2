@@ -694,7 +694,7 @@ return array(
                 'create_directory'  => TRUE,
 
                 // Append year and month to the path
-                'append_year_month' => TRUE,
+                'append_year_month' => FALSE,
 
                 // Keeping the aspect ratio
                 'keep_aspect_ratio' => TRUE,
@@ -968,7 +968,7 @@ return array(
                 'create_directory'  => TRUE,
 
                 // Append year and month to the path
-                'append_year_month' => TRUE,
+                'append_year_month' => FALSE,
 
                 // Keeping the aspect ratio
                 'keep_aspect_ratio' => TRUE,
