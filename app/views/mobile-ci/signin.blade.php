@@ -14,12 +14,14 @@
 #signedIn{
   display: none;
 }
-@if(!empty($bg[0]))
-body.bg{
-  background: url('{{$bg[0]}}');
-  background-size: cover;
-  background-repeat: no-repeat;
-}
+@if(!empty($bg))
+  @if(!empty($bg[0]))
+  body.bg{
+    background: url('{{$bg[0]}}');
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+  @endif
 @endif
 </style>
 @stop
