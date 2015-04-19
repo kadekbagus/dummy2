@@ -1983,13 +1983,7 @@ class EmployeeAPIController extends ControllerAPI
 
             // Builder object
             $joined = FALSE;
-            $defaultWith = array('employee.retailers');
 
-            // Include Relationship
-            $with = $defaultWith;
-            OrbitInput::get('with', function ($_with) use (&$with) {
-                $with = array_merge($with, $_with);
-            });
             $users = Employee::excludeDeleted('employees')->joinUserRole()
                              ->select('employees.*', 'users.username',
                                      'users.username as login_id', 'users.user_email',
@@ -1997,6 +1991,14 @@ class EmployeeAPIController extends ControllerAPI
                                      'users.user_firstname', 'users.user_lastname',
                                      'roles.role_name')
                              ->groupBy('employees.user_id');
+
+            // Include Relationship
+            $defaultWith = array();
+            $with = $defaultWith;
+            OrbitInput::get('with', function ($_with) use (&$with, $users) {
+                $with = array_merge($with, $_with);
+                $users->with($with);
+            });
 
             // Filter user by Ids
             OrbitInput::get('user_ids', function ($userIds) use ($users) {
