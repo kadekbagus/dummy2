@@ -32,10 +32,8 @@ Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, 
         {
             throw new \Exception($response->message, $response->code);
         }
-
-        $tenant->setRelation('mediaLogo', $response->data);
-        $tenant->mediaLogo = $response->data;
     }
+    $tenant->load('mediaLogo');
 
     $maps = OrbitInput::files('maps');
 
@@ -54,9 +52,10 @@ Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, 
             throw new \Exception($response->message, $response->code);
         }
 
-        $tenant->setRelation('mediaMap', $response->data);
-        $tenant->mediaMap = $response->data;
+        $tenant->setRelation('media_map', $response->data);
+        $tenant->media_map = $response->data;
     }
+    $tenant->load('mediaMap');
 
     $pictures = OrbitInput::files('pictures');
 
@@ -75,7 +74,8 @@ Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, 
             throw new \Exception($response->message, $response->code);
         }
 
-        $tenant->setRelation('mediaImage', $response->data);
-        $tenant->mediaImage = $response->data;
+        $tenant->setRelation('media_image', $response->data);
+        $tenant->media_image = $response->data;
     }
+    $tenant->load('mediaImage');
 });
