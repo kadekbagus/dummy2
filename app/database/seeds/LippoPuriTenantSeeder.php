@@ -238,9 +238,10 @@ CAT;
         DB::unprepared($categories);
         $this->command->info('table category_merchant seeded.');
 
+        $twoMonth = date('Y-m-d H:i:s', strtotime('+2 month'));
         $luckydraws = <<<LUCKY
 INSERT INTO `{$prefix}lucky_draws` (`lucky_draw_id`, `mall_id`, `lucky_draw_name`, `description`, `image`, `start_date`, `end_date`, `minimum_amount`, `grace_period_date`, `grace_period_in_days`, `min_number`, `max_number`, `status`, `created_by`, `modified_by`, `created_at`, `updated_at`) VALUES
-(1, 2, 'Lippo Mall Puri Lucky Draw', 'Lippo Mall Puri Lucky Draw.', NULL, '2015-04-01 00:00:00', '2015-04-30 23:59:59', 100000.00, NULL, 30, 100000, 200000, 'active', 0, 3, '0000-00-00 00:00:00', '2015-04-17 18:08:43');
+(1, 2, 'Lippo Mall Puri Lucky Draw', 'Lippo Mall Puri Lucky Draw.', NULL, NOW(), '{$twoMonth}', 100000.00, NULL, 30, 100000, 200000, 'active', 0, 3, '0000-00-00 00:00:00', '2015-04-17 18:08:43');
 
 truncate table {$prefix}lucky_draw_numbers;
 start transaction;
