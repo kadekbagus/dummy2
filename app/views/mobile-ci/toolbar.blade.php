@@ -7,7 +7,7 @@
             <!-- <li><a id="barcodeBtn"><span><i class="glyphicon glyphicon-barcode"></i></span></a></li> -->
             <!-- <li><a id="searchBtn"><span><i class="glyphicon glyphicon-search"></i></span></a></li> -->
             <li><a href="{{ url('/customer/tenants') }}"><span class="fa fa-list-ul"></span></a></li>
-            <li><a data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span><i class="glyphicon glyphicon-cog"></i></span></a>
+            <li><a data-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span><i class="glyphicon glyphicon-cog"></i></span></a>
                 <ul class="dropdown-menu" role="menu">
                     <li class="complimentary-bg"><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off"></span> {{ Lang::get('mobileci.page_title.logout') }}</span></a></li>
                 </ul>

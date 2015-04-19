@@ -12,6 +12,11 @@
        </div>
     </div>
 </div>
+<div class="row">
+    <div class="col-xs-12 text-center">
+        <small>The Winner Number will appear here while you are in the Mall.</small>
+    </div>
+</div>
 <div class="row text-center winning-number-wrapper">
     <div class="col-xs-12">
         <b>Winning Number</b>
@@ -27,7 +32,13 @@
         <img src="{{ asset($retailer->logo) }}" clas="img-responsive">
     </div>
     <div class="col-xs-12">
-        <p class="congrats-txt vertically-spaced">Here are your lucky draw numbers, we wish you luck!</p>
+        <p class="congrats-txt vertically-spaced">
+            @if(!$luckydraw->numbers->isEmpty())
+            Here are your lucky draw numbers, we wish you luck!
+            @else
+            You got no Luck Draw Number yet
+            @endif
+        </p>
     </div>
     <div class="col-xs-12">
         @foreach($luckydraw->numbers as $number)
@@ -103,7 +114,7 @@
                 });
             @else
                 $('#save').css('display', 'none');
-                $('.congrats-txt').css('display', 'none');
+                // $('.congrats-txt').css('display', 'none');
             @endif
         });
     </script>
