@@ -32,14 +32,14 @@
         @else
             <div class="row padded">
                 <div class="col-xs-12">
-                    <h4>You have no coupon.</h4>
+                    <h4>Please check with customer service how to get coupons.</h4>
                 </div>
             </div>
         @endif
     @else
         <div class="row padded">
             <div class="col-xs-12">
-                <h4>You have no coupon.</h4>
+                <h4>Please check with customer service how to get coupons.</h4>
             </div>
         </div>
     @endif

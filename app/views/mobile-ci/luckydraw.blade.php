@@ -24,6 +24,12 @@
 </div>
 <div class="row text-center lucky-number-wrapper">
     <div class="col-xs-12">
+        <img src="{{ asset($retailer->logo) }}" clas="img-responsive">
+    </div>
+    <div class="col-xs-12">
+        <p class="vertically-spaced">Here are your lucky draw numbers, we wish you luck!</p>
+    </div>
+    <div class="col-xs-12">
         @foreach($luckydraw->numbers as $number)
         <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{$number->lucky_draw_number_code}}</div>
         @endforeach
@@ -79,6 +85,7 @@
                     $('#numberModal').modal();
                 });
             });
+            @if(!$luckydraw->numbers->isEmpty())
             html2canvas($('.lucky-number-wrapper'), {
                     background: '#fff',
                     onrendered: function(canvas) {
@@ -86,6 +93,13 @@
                         $('#save').attr('href', image);
                     }
                 });
+                $('#save').click(function(){
+                    $('#numberModal .modal-body').html('<h4>Your number is being downloaded, please check your Download folder later</h4>');
+                    $('#numberModal').modal();
+                });
+            @else
+                $('#save').css('display', 'none');
+            @endif
         });
     </script>
 @stop

@@ -32,14 +32,14 @@
         @else
             <div class="row padded">
                 <div class="col-xs-12">
-                    <h4>We have no promotion.</h4>
+                    <h4>Check for our news coming soon.</h4>
                 </div>
             </div>
         @endif
     @else
         <div class="row padded">
             <div class="col-xs-12">
-                <h4>We have no promotion.</h4>
+                <h4>Check for our news coming soon.</h4>
             </div>
         </div>
     @endif
