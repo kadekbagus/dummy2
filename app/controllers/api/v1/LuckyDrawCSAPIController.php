@@ -926,6 +926,14 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
+            $now = strtotime(date('Y-m-d'));
+            $luckyDrawDate = strtotime(date('Y-m-d', strtotime($luckyDraw->end_date)));
+
+            if ($now > $luckyDrawDate) {
+                $errorMessage = sprintf('The lucky draw already expired on %s.', date('d-M-Y', strtotime($luckyDraw->end_date)));
+                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            }
+
             App::instance('orbit.empty.lucky_draw', $luckyDraw);
 
             return TRUE;

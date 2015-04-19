@@ -1268,7 +1268,7 @@ class UserAPIController extends ControllerAPI
                                         DB::raw("(select ldn.user_id from `{$prefix}lucky_draw_numbers` ldn
                                                  join {$prefix}lucky_draws ld on ld.lucky_draw_id=ldn.lucky_draw_id
                                                  where ldn.status='active' and ld.status='active'
-                                                 and (ldn.user_id is not null and ldn.user_id != 0) and current_date() <= date(ld.end_date))
+                                                 and (ldn.user_id is not null and ldn.user_id != 0))
                                                  {$prefix}tmp_lucky"),
                                         // ON
                                         'tmp_lucky.user_id', '=', 'users.user_id');
