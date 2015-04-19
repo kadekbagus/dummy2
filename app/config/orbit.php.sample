@@ -552,7 +552,7 @@ return array(
                 'path'          => 'uploads/merchants/pictures',
 
                 // Default HTML element name
-                'name'          => 'images',
+                'name'          => 'pictures',
 
                 // Force create directory when not exists
                 'create_directory'  => TRUE,
@@ -826,7 +826,7 @@ return array(
                 'path'          => 'uploads/retailers/pictures',
 
                 // Default HTML element name
-                'name'          => 'images',
+                'name'          => 'pictures',
 
                 // Force create directory when not exists
                 'create_directory'  => TRUE,
