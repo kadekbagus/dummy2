@@ -293,6 +293,7 @@ class MobileCIAPIController extends ControllerAPI
      */
     public function getSignInView()
     {
+        $bg = null;
         try {
             $retailer = $this->getRetailerInfo();
             $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
