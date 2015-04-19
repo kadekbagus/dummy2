@@ -242,6 +242,7 @@ CAT;
 INSERT INTO `{$prefix}lucky_draws` (`lucky_draw_id`, `mall_id`, `lucky_draw_name`, `description`, `image`, `start_date`, `end_date`, `minimum_amount`, `grace_period_date`, `grace_period_in_days`, `min_number`, `max_number`, `status`, `created_by`, `modified_by`, `created_at`, `updated_at`) VALUES
 (1, 2, 'Lippo Mall Puri Lucky Draw', 'Lippo Mall Puri Lucky Draw.', NULL, '2015-04-01 00:00:00', '2015-04-30 23:59:59', 100000.00, NULL, 30, 100000, 200000, 'active', 0, 3, '0000-00-00 00:00:00', '2015-04-17 18:08:43');
 
+truncate table {$prefix}lucky_draw_numbers;
 start transaction;
 call generate_lucky_draw_number(100001, 200000, 1, 3);
 commit;
@@ -254,6 +255,10 @@ LUCKY;
         $this->command->info('Creating new customer service account...');
         $this->createCustomerService();
         $this->command->info('customer service created.');
+
+        $this->command->info('Creating settings...');
+        $this->createSetting();
+        $this->command->info('settings created.');
     }
 
     protected function createCustomerService()
@@ -321,5 +326,40 @@ LUCKY;
         } catch (Exception $e) {
             printf("(%s) %s\n", $e->getLine(), $e->getMessage());
         }
+    }
+
+    protected function createSetting()
+    {
+        $landingPage = Setting::where('object_type', 'merchant')
+                              ->where('object_id', 2)
+                              ->where('setting_name', 'landing_page')
+                              ->active()
+                              ->first();
+
+       if (empty($landingPage)) {
+            $landingPage = new Setting();
+            $landingPage->object_id = 2;
+            $landingPage->object_type = 'merchant';
+        }
+
+        $landingPage->setting_name = 'landing_page';
+        $landingPage->setting_value = 'news';
+        $landingPage->save();
+
+        $masterPassword = Setting::where('object_type', 'merchant')
+                              ->where('object_id', 2)
+                              ->where('setting_name', 'master_password')
+                              ->active()
+                              ->first();
+
+        if (empty($masterPassword)) {
+            $masterPassword = new Setting();
+            $masterPassword->object_id = 2;
+            $masterPassword->object_type = 'merchant';
+        }
+
+        $masterPassword->setting_name = 'master_password';
+        $masterPassword->setting_value = Hash::make('abc123');
+        $masterPassword->save();
     }
 }
