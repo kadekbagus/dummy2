@@ -413,7 +413,7 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             OrbitInput::post('minimum_amount', function($minimum_amount) use ($updatedluckydraw) {
-                if ((string)$minimum_amount !== (string)$updatedluckydraw->mininum_amount) {
+                if ((double)$minimum_amount !== (double)$updatedluckydraw->minimum_amount) {
                     $errorMessage = 'You can not change the minimum value to obtain.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
