@@ -34,7 +34,7 @@ class LuckyDrawReceipt extends Eloquent
 
     public function numbers()
     {
-        return $this->belongsToMany('LuckyDrawNumber', 'lucky_draw_number_receipt', 'lucky_draw_number_id', 'lucky_draw_receipt_id');
+        return $this->belongsToMany('LuckyDrawNumber', 'lucky_draw_number_receipt', 'lucky_draw_receipt_id', 'lucky_draw_number_id');
     }
 
     /**
@@ -42,9 +42,9 @@ class LuckyDrawReceipt extends Eloquent
      *
      * @author Rio Astamal <me@rioastamal.net>
      */
-    public function coupons()
+    public function issuedCoupons()
     {
-        return $this->belongsToMany('Coupon', 'lucky_draw_number_receipt', 'lucky_draw_number_id', 'lucky_draw_receipt_id');
+        return $this->belongsToMany('IssuedCoupon', 'lucky_draw_number_receipt', 'lucky_draw_receipt_id', 'issued_coupon_id');
     }
 
     public function creator()
