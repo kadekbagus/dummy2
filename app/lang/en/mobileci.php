@@ -200,4 +200,21 @@ return array(
     'recognize_me'  => array(
         'recognize_me_message' => 'To be recognized, show the following barcode to the cashier.'
     ),
+
+    'inbox'     => array(
+        'lucky_draw'        => array(
+            'subject'       => 'You Got New Lucky Draw Number(s)',
+        ),
+        'coupon'            => array(
+            'subject'       => 'You Got New Coupon(s)'
+        ),
+    ),
+    'inbox'     => array(
+        'lucky_draw'        => array(
+            'subject'       => 'You Got New Lucky Draw Number(s)',
+        ),
+        'coupon'            => array(
+            'subject'       => 'You Got New Coupon(s)'
+        ),
+    ),
 );

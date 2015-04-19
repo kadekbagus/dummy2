@@ -19,6 +19,9 @@ return array(
         'id'    => NULL,
         // search result limit
         'search_limit' => 300,
+
+        // Notification polling interval, in seconds.
+        'poll_interval' => 8
     ),
 
     // General contact data
