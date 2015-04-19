@@ -21,21 +21,11 @@
                 </header>
                 <section class="widget-single">
                     <ul class="rslides" id="slider1">
-                        @foreach($random_products as $random_product)
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">
-                                @foreach($random_product->mediaLogo as $media)
-                                @if($media->media_name_long == 'retailer_logo_orig')
-                                    @if(! empty($media->path))
-                                    <img class="img-responsive" alt="" src="{{ asset($media->path) }}">
-                                    @else
-                                    <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                    @endif
-                                @endif
-                                @endforeach
+                            <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                             </a>
                         </li>
-                        @endforeach
                     </ul>
                 </section>
             </div>
@@ -51,11 +41,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/luckydraw') }}">    
-                                @if(! empty($new_product->media->path))
-                                <img class="img-responsive" alt="" src="{{ asset($new_product->media->path) }}">
-                                @else
                                 <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                @endif
                             </a>
                         </li>
                     </ul>
@@ -73,11 +59,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">    
-                                @if(! empty($new_product->media->path))
-                                <img class="img-responsive" alt="" src="{{ asset($new_product->media->path) }}">
-                                @else
                                 <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                @endif
                             </a>
                         </li>
                     </ul>
@@ -95,11 +77,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">    
-                                @if(! empty($new_product->media->path))
-                                <img class="img-responsive" alt="" src="{{ asset($new_product->media->path) }}">
-                                @else
                                 <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                @endif
                             </a>
                         </li>
                     </ul>
@@ -117,11 +95,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
-                                @if(! empty($new_product->media->path))
-                                <img class="img-responsive" alt="" src="{{ asset($new_product->media->path) }}">
-                                @else
                                 <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                @endif
                             </a>
                         </li>
                     </ul>
@@ -183,21 +157,37 @@
                     {{ nl2br($events->description) }}
                     @endif
                     @elseif($events->link_object_type == 'promotion')
-                    @if(! empty($events->image))
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
+                        @if(! empty($events->image))
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
+                            <img class="img-responsive" src="{{ asset($events->image) }}">
+                        </a>
+                        <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @else
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
+                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
+                        </a>
+                        <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @endif
+                    @elseif($events->link_object_type == 'retailer')
+                        @if(! empty($events->image))
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">
+                            <img class="img-responsive" src="{{ asset($events->image) }}">
+                        </a>
+                        <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @else
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">
+                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
+                        </a>
+                        <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @endif
                     @elseif($events->link_object_type == 'widget')
                     @if($events->widget_object_type == 'promotion')
                     @if(! empty($events->image))
