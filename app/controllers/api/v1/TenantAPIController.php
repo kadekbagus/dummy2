@@ -999,6 +999,8 @@ class TenantAPIController extends ControllerAPI
      * @param integer           `parent_id`                     (optional) - Merchant id for the retailer
      * @param string|array      `with`                          (optional) - Relation which need to be included
      * @param string|array      `with_count`                    (optional) - Also include the "count" relation or not, should be used in conjunction with `with`
+     * @param string            `keyword`                       (optional) - keyword to search tenant name or description or email or category name
+     *
      * @return Illuminate\Support\Facades\Response
      */
     public function getSearchTenant()
@@ -1285,7 +1287,7 @@ class TenantAPIController extends ControllerAPI
 
             $retailers->where(function ($query) use ($retailers) {
 
-                // Filter retailer by or name pattern
+                // Filter retailer by keyword pattern
                 OrbitInput::get('keyword', function($keyword) use ($retailers)
                 {
                     $retailers->orWhere('merchants.name', 'like', "%$keyword%");
