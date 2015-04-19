@@ -60,7 +60,7 @@ return array(
         'message_transfer_cart' => 'Tunjukkan smartphone Anda ke kasir untuk menyelesaikan checkout.',
         'message_close_cart'    => 'Keranjang Anda belum dipindahkan ke kasir. Silahkan perlihatkan barcode berikut ini kepada kasir.',
         'message_reset_cart'    => 'Apakah Anda yakin akan menghapus cart Anda?',
-        
+
         'coupon_use'            => 'Gunakan',
         'coupon_ignore'         => 'Lain Kali',
         'search_label'          => 'Cari berdasarkan Nama Produk, Kode atau Deskripsi',
@@ -178,7 +178,7 @@ return array(
         'done_button'       => 'Selesai',
         'back_button'       => 'Kembali',
     ),
-    
+
     'payment'               => array(
         'total_to_pay_label'=> 'Total',
         'name_label'        => 'Nama',
@@ -199,5 +199,14 @@ return array(
 
     'recognize_me'  => array(
         'recognize_me_message' => 'Agar Anda dapat dikenali, perlihatkan barcode berikut ini kepada kasir.'
+    ),
+
+    'inbox'     => array(
+        'lucky_draw'        => array(
+            'subject'       => 'Anda Mendapatkan Nomor Lucky Draw Baru',
+        ),
+        'coupon'            => array(
+            'subject'       => 'Anda Mendapatkan Coupon Baru'
+        ),
     ),
 );

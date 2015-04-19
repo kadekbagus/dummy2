@@ -44,6 +44,7 @@ use \LuckyDrawNumber;
 use \LuckyDrawNumberReceipt;
 use \LuckyDrawReceipt;
 use \LuckyDrawWinner;
+use \Setting;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -164,75 +165,26 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $random_products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->get();
+            // $random_products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->get();
 
-            $new_products = LuckyDraw::with('media')->active()->first();
+            // $new_products = LuckyDraw::with('media')->active()->first();
 
-            $promotion = Promotion::active()->where('is_coupon', 'N')->where('merchant_id', $retailer->parent_id)->whereHas(
-                'retailers',
-                function ($q) use ($retailer) {
-                    $q->where('promotion_retailer.retailer_id', $retailer->merchant_id);
-                }
-            )
-                ->where(
-                    function ($q) {
-                        $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now())->orWhere(
-                            function ($qr) {
-                                $qr->where('begin_date', '<=', Carbon::now())->where('is_permanent', '=', 'Y');
-                            }
-                        );
-                    }
-                )
-                ->orderBy(DB::raw('RAND()'))->first();
-
-            $promo_products = DB::select(
-                DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND (p.promotion_type = "product" OR p.promotion_type = "cart") and p.status = "active" and ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y")) and p.is_coupon = "N"
-                inner join ' . DB::getTablePrefix() . 'promotion_retailer prr on prr.promotion_id = p.promotion_id
-                left join ' . DB::getTablePrefix() . 'products prod on
-                (
-                    (pr.discount_object_type="product" AND pr.discount_object_id1 = prod.product_id)
-                    OR
-                    (
-                        (pr.discount_object_type="family") AND
-                        ((pr.discount_object_id1 IS NULL) OR (pr.discount_object_id1=prod.category_id1)) AND
-                        ((pr.discount_object_id2 IS NULL) OR (pr.discount_object_id2=prod.category_id2)) AND
-                        ((pr.discount_object_id3 IS NULL) OR (pr.discount_object_id3=prod.category_id3)) AND
-                        ((pr.discount_object_id4 IS NULL) OR (pr.discount_object_id4=prod.category_id4)) AND
-                        ((pr.discount_object_id5 IS NULL) OR (pr.discount_object_id5=prod.category_id5))
-                    )
-                )
-                WHERE p.merchant_id = :merchantid AND prr.retailer_id = :retailerid'
-                ),
-                array('merchantid' => $retailer->parent_id, 'retailerid' => $retailer->merchant_id)
-            );
-
-            $coupons = DB::select(
-                DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
-                inner join ' . DB::getTablePrefix() . 'promotion_retailer_redeem prr on prr.promotion_id = p.promotion_id
-                left join ' . DB::getTablePrefix() . 'products prod on
-                (
-                    (pr.discount_object_type="product" AND pr.discount_object_id1 = prod.product_id)
-                    OR
-                    (
-                        (pr.discount_object_type="family") AND
-                        ((pr.discount_object_id1 IS NULL) OR (pr.discount_object_id1=prod.category_id1)) AND
-                        ((pr.discount_object_id2 IS NULL) OR (pr.discount_object_id2=prod.category_id2)) AND
-                        ((pr.discount_object_id3 IS NULL) OR (pr.discount_object_id3=prod.category_id3)) AND
-                        ((pr.discount_object_id4 IS NULL) OR (pr.discount_object_id4=prod.category_id4)) AND
-                        ((pr.discount_object_id5 IS NULL) OR (pr.discount_object_id5=prod.category_id5))
-                    )
-                )
-                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND prr.retailer_id = :retailerid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '"
-                GROUP BY prod.product_id
-                '
-                ),
-                array('merchantid' => $retailer->parent_id, 'retailerid' => $retailer->merchant_id, 'userid' => $user->user_id)
-            );
+            // $promotion = Promotion::active()->where('is_coupon', 'N')->where('merchant_id', $retailer->parent_id)->whereHas(
+            //     'retailers',
+            //     function ($q) use ($retailer) {
+            //         $q->where('promotion_retailer.retailer_id', $retailer->merchant_id);
+            //     }
+            // )
+            //     ->where(
+            //         function ($q) {
+            //             $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now())->orWhere(
+            //                 function ($qr) {
+            //                     $qr->where('begin_date', '<=', Carbon::now())->where('is_permanent', '=', 'Y');
+            //                 }
+            //             );
+            //         }
+            //     )
+            //     ->orderBy(DB::raw('RAND()'))->first();
 
             if (empty(\Cookie::get('event'))) {
                 $event_store = array();
@@ -240,25 +192,10 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store = \Cookie::get('event');
             }
 
-            $events = EventModel::active()->whereHas(
-                'retailers',
-                function ($q) use ($retailer) {
-                    $q->where('event_retailer.retailer_id', $retailer->merchant_id);
-                }
-            )
-                ->where('merchant_id', $retailer->parent->merchant_id)
+            $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
                     function ($q) {
-                        $q->where(
-                            function ($q2) {
-                                $q2->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
-                            }
-                        );
-                        $q->orWhere(
-                            function ($q2) {
-                                $q2->where('begin_date', '<=', Carbon::now())->where('is_permanent', 'Y');
-                            }
-                        );
+                        $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
                     }
                 );
 
@@ -269,7 +206,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $events = $events->orderBy('events.event_id', 'DESC')->first();
-
+            // dd($events);
             $event_families = array();
             if (! empty($events)) {
                 if ($events->link_object_type == 'family') {
@@ -304,21 +241,21 @@ class MobileCIAPIController extends ControllerAPI
                 \Cookie::queue('event', $event_store, 1440);
             }
 
-            $cartitems = $this->getCartForToolbar();
+            // $cartitems = $this->getCartForToolbar();
 
-            $widgets = Widget::with('media')
-                ->active()
-                ->where('merchant_id', $retailer->parent->merchant_id)
-                ->whereHas(
-                    'retailers',
-                    function ($q) use ($retailer) {
-                        $q->where('retailer_id', $retailer->merchant_id);
-                    }
-                )
-                ->orderBy('widget_order', 'ASC')
-                ->groupBy('widget_type')
-                ->take(4)
-                ->get();
+            // $widgets = Widget::with('media')
+            //     ->active()
+            //     ->where('merchant_id', $retailer->parent->merchant_id)
+            //     ->whereHas(
+            //         'retailers',
+            //         function ($q) use ($retailer) {
+            //             $q->where('retailer_id', $retailer->merchant_id);
+            //         }
+            //     )
+            //     ->orderBy('widget_order', 'ASC')
+            //     ->groupBy('widget_type')
+            //     ->take(4)
+            //     ->get();
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
@@ -330,7 +267,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'random_products' => $random_products, 'new_products' => $new_products, 'promo_products' => $promo_products, 'promotion' => $promotion, 'cartitems' => $cartitems, 'coupons' => $coupons, 'events' => $events, 'widgets' => $widgets, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -358,6 +295,9 @@ class MobileCIAPIController extends ControllerAPI
     {
         try {
             $retailer = $this->getRetailerInfo();
+            $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
+            $landing = Setting::getFromList($mall->settings, 'landing_page');
+            $bg = Setting::getFromList($mall->settings, 'background_image');
 
             // Get email from query string
             $user_email = OrbitInput::get('email', '');
@@ -366,17 +306,17 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email)));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg));
             } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email)));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg));
             }
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
             $user_email = '';
             if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg));
             } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg));
             }
         }
     }
@@ -7675,6 +7615,18 @@ class MobileCIAPIController extends ControllerAPI
             );
 
             OrbitInput::get(
+                'event_id',
+                function ($pid) use ($products) {
+                    if (! empty($pid)) {
+                        $retailers = \EventRetailer::whereHas('retailer', function($q) use($pid) {
+                            $q->where('event_id', $pid);
+                        })->get()->lists('retailer_id');
+                        $products->whereIn('merchants.merchant_id', $retailers);
+                    }
+                }
+            );
+
+            OrbitInput::get(
                 'fid',
                 function ($fid) use ($products) {
                     if (! empty($fid)) {
@@ -7770,17 +7722,21 @@ class MobileCIAPIController extends ControllerAPI
 
             if (! empty(OrbitInput::get('promotion_id'))) {
                 $pagetitle = 'PROMOTIONS TENANTS';
-            } else {
-                $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
-                $activityPage->setUser($user)
-                    ->setActivityName('view_search')
-                    ->setActivityNameLong('View (Search Page)')
-                    ->setObject(null)
-                    ->setModuleName('Product')
-                    ->setNotes($activityPageNotes)
-                    ->responseOK()
-                    ->save();
             }
+            if (! empty(OrbitInput::get('event_id'))) {
+                $pagetitle = 'EVENTS TENANTS';
+            }
+            //  else {
+            //     $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
+            //     $activityPage->setUser($user)
+            //         ->setActivityName('view_search')
+            //         ->setActivityNameLong('View (Search Page)')
+            //         ->setObject(null)
+            //         ->setModuleName('Product')
+            //         ->setNotes($activityPageNotes)
+            //         ->responseOK()
+            //         ->save();
+            // }
 
             return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories));
 

@@ -40,7 +40,7 @@ class InboxAPIController extends ControllerAPI
             $user = $this->api->user;
 
             $alerts = Inbox::latestOne($user->user_id)
-                            ->where('inbox_type', 'a')
+                            ->where('inbox_type', 'alert')
                             ->take(1);
 
             // Clone the query builder which still does not include the take,

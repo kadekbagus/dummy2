@@ -1938,7 +1938,7 @@ class EmployeeAPIController extends ControllerAPI
                     'with'      => OrbitInput::get('with')
                 ),
                 array(
-                    'sort_by'   => 'in:username,firstname,lastname,registered_date,employee_id_char,position',
+                    'sort_by'   => 'in:username,firstname,lastname,registered_date,employee_id_char,position,role_name',
                     'role_ids'  => 'array|orbit.employee.role.limited',
                     'with'      => 'array|min:1'
                 ),
@@ -1994,7 +1994,8 @@ class EmployeeAPIController extends ControllerAPI
                              ->select('employees.*', 'users.username',
                                      'users.username as login_id', 'users.user_email',
                                      'users.status as user_status',
-                                     'users.user_firstname', 'users.user_lastname')
+                                     'users.user_firstname', 'users.user_lastname',
+                                     'roles.role_name')
                              ->groupBy('employees.user_id');
 
             // Filter user by Ids
@@ -2131,7 +2132,8 @@ class EmployeeAPIController extends ControllerAPI
                     'lastname'          => 'users.user_lastname',
                     'firstname'         => 'users.user_firstname',
                     'position'          => 'employees.position',
-                    'email'             => 'users.email'
+                    'email'             => 'users.email',
+                    'role_name'         => 'roles.role_name'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
