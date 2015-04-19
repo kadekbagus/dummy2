@@ -27,7 +27,7 @@
         <img src="{{ asset($retailer->logo) }}" clas="img-responsive">
     </div>
     <div class="col-xs-12">
-        <p class="vertically-spaced">Here are your lucky draw numbers, we wish you luck!</p>
+        <p class="congrats-txt vertically-spaced">Here are your lucky draw numbers, we wish you luck!</p>
     </div>
     <div class="col-xs-12">
         @foreach($luckydraw->numbers as $number)
@@ -54,8 +54,12 @@
     {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
     {{ HTML::script('mobile-ci/scripts/jquery.countdown.min.js') }}
     {{ HTML::script('mobile-ci/scripts/html2canvas.min.js') }}
+    {{ HTML::script('mobile-ci/scripts/autoNumeric.js') }}
     <script type="text/javascript">
         $(document).ready(function(){
+            $('.lucky-number-container').each(function(index){
+                $(this).text(parseFloat($(this).text()).toFixed(0)).autoNumeric('init', {aSep: '-', aDec: '.', mDec: 0, vMin: -9999999999.99});
+            });
             $('#clock').countdown('{{ $luckydraw->end_date }}')
                 .on('update.countdown', function(event) {
                     var format = '<div class="clock-block"><div class="clock-content">%H</div><div class="clock-content clock-label">Hour%!H</div></div><div class="clock-block"><div class="clock-content">%M</div><div class="clock-content clock-label">Minute%!M</div></div><div class="clock-block"><div class="clock-content">%S</div><div class="clock-content clock-label">Second%!S</div></div>';
@@ -67,24 +71,24 @@
                     }
                     $(this).html(event.strftime(format));
                 });
-            $('.lucky-number-container').click(function(){
-                $('#numberModal .modal-body').html('');
-                var num = $(this).data('number');
-                $.ajax({
-                    url: apiPath+'customer/luckydrawnumberpopup',
-                    method: 'POST',
-                    data: {
-                        lid: num
-                    }
-                }).done(function(data){
-                    console.log(data);
-                    for(var x = 0; x < data.data.receipts.length; x++){
-                        console.log(data.data.receipts[x].receipt_amount);
-                        $('#numberModal .modal-body').html($('#numberModal .modal-body').html() + '<div class="row "><div class="col-xs-12 vertically-spaced"><p><b>Date</b><br><span class="date">'+ data.data.receipts[x].receipt_date +'</span></p><p><b>Tenant</b><br><span class="tenant">'+ data.data.receipts[x].receipt_retailer.name +'</span></p><p><b>Receipt No.</b><br><span class="receiptno">'+ data.data.receipts[x].receipt_number +'</span></p><p><b>Ammount Spent</b><br><span class="ammount">Rp '+ data.data.receipts[x].receipt_amount +'</span></p></div></div>');
-                    }
-                    $('#numberModal').modal();
-                });
-            });
+            // $('.lucky-number-container').click(function(){
+            //     $('#numberModal .modal-body').html('');
+            //     var num = $(this).data('number');
+            //     $.ajax({
+            //         url: apiPath+'customer/luckydrawnumberpopup',
+            //         method: 'POST',
+            //         data: {
+            //             lid: num
+            //         }
+            //     }).done(function(data){
+            //         console.log(data);
+            //         for(var x = 0; x < data.data.receipts.length; x++){
+            //             console.log(data.data.receipts[x].receipt_amount);
+            //             $('#numberModal .modal-body').html($('#numberModal .modal-body').html() + '<div class="row "><div class="col-xs-12 vertically-spaced"><p><b>Date</b><br><span class="date">'+ data.data.receipts[x].receipt_date +'</span></p><p><b>Tenant</b><br><span class="tenant">'+ data.data.receipts[x].receipt_retailer.name +'</span></p><p><b>Receipt No.</b><br><span class="receiptno">'+ data.data.receipts[x].receipt_number +'</span></p><p><b>Ammount Spent</b><br><span class="ammount">Rp '+ data.data.receipts[x].receipt_amount +'</span></p></div></div>');
+            //         }
+            //         $('#numberModal').modal();
+            //     });
+            // });
             @if(!$luckydraw->numbers->isEmpty())
             html2canvas($('.lucky-number-wrapper'), {
                     background: '#fff',
@@ -99,6 +103,7 @@
                 });
             @else
                 $('#save').css('display', 'none');
+                $('.congrats-txt').css('display', 'none');
             @endif
         });
     </script>
