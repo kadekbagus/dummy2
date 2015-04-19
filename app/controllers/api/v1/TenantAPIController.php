@@ -1106,7 +1106,7 @@ class TenantAPIController extends ControllerAPI
             // Filter retailer by description pattern
             OrbitInput::get('description_like', function($description) use ($retailers)
             {
-                $description->where('merchants.description', 'like', "%$description%");
+                $retailers->where('merchants.description', 'like', "%$description%");
             });
 
             // Filter retailer by their email
@@ -1281,6 +1281,21 @@ class TenantAPIController extends ControllerAPI
             OrbitInput::get('parent_id', function($parentIds) use ($retailers)
             {
                 $retailers->whereIn('merchants.parent_id', $parentIds);
+            });
+
+            $retailers->where(function ($query) use ($retailers) {
+
+                // Filter retailer by or name pattern
+                OrbitInput::get('keyword', function($keyword) use ($retailers)
+                {
+                    $retailers->orWhere('merchants.name', 'like', "%$keyword%");
+                    $retailers->orWhere('merchants.description', 'like', "%$keyword%");
+                    $retailers->orWhere('merchants.email', 'like', "%$keyword%");
+                    $retailers->orWhereHas('categories', function($q) use ($keyword) {
+                        $q->where('category_name', 'like', "%$keyword%");
+                    });
+                });
+
             });
 
             // Add new relation based on request
