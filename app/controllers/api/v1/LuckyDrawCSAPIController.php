@@ -247,7 +247,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->response->data = $luckyDraw;
 
             // Insert to alert system
-            $this->insertLuckyDrawNumberInbox($userId, $luckyDrawnumbers);
+            $this->insertLuckyDrawNumberInbox($userId, $luckyDrawnumbers, $mallId);
 
             // Commit the changes
             $this->commit();
@@ -773,6 +773,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $issuedCoupons = [];
             $numberOfCouponIssued = 0;
             $applicableCouponNames = [];
+            $issuedCouponNames = [];
             foreach ($coupons as $couponId) {
                 $coupon = Coupon::active()->find($couponId);
 
@@ -791,6 +792,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
                 $issuedCoupons[] = $obj;
                 $applicableCouponNames[] = $coupon->promotion_name;
+                $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
 
                 $tmp = NULL;
                 $obj = NULL;
@@ -808,7 +810,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->response->data = $data;
 
             // Insert to alert system
-            $this->insertCouponInbox($userId, $issuedCoupons);
+            $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
+            $this->insertCouponInbox($userId, $issuedCoupons, $issuedCouponNames);
 
             // Commit the changes
             $this->commit();
@@ -950,14 +953,56 @@ class LuckyDrawCSAPIController extends ControllerAPI
     }
 
     /**
+     * Method to group the issued coupon number based on the coupon name.
+     *
+     * Array (
+     *    '101' => 'A',
+     *    '102' => 'A',
+     *    '103' => 'B'
+     * )
+     *
+     * Becomes
+     *
+     * Array(
+     *  'A' => [
+     *      '101',
+     *      '102',
+     *  ],
+     *  'B'  => [
+     *     '103'
+     *  ]
+     * )
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param array $source the Array element
+     * @return array
+     */
+    protected function flipArrayElement($source)
+    {
+        $flipped = [];
+
+        $names = array_flip(array_unique(array_values($source)));
+        foreach ($names as $key=>$name) {
+            $names[$key] = [];
+        }
+
+        foreach ($source as $number=>$name) {
+            $flipped[$name][] = $number;
+        }
+
+        return $flipped;
+    }
+
+    /**
      * Insert issued lucky draw numbers into inbox table.
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @param int $userId - The user id
      * @param array $numbers - Issued numbers
+     * @param int $retailerId - The retailer
      * @return void
      */
-    protected function insertLuckyDrawNumberInbox($userId, $numbers)
+    protected function insertLuckyDrawNumberInbox($userId, $numbers, $retailerId)
     {
         $user = User::find($userId);
 
@@ -967,49 +1012,37 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
-
-        // Oh yeah, we have mixed the view!!
-        $template = <<<VIEW
-<div class="modal fade" id="numberModal" tabindex="-1" role="dialog" aria-labelledby="numberModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-body">
-                <p style="margin-bottom: 1em;"><strong>You Got New Lucky Draw Numbers!</strong></p>
-                <p>Hello {{NAME}},
-                <br><br>
-
-                Congratulation you got {{NUMBERS}} lucky draw number:
-                <ul>
-                    {{LIST}}
-                </ul>
-                </p>
-
-                <br>
-                <p>Lippo Mall</p>
-            </div>
-        </div>
-    </div>
-</div>
-VIEW;
-
-        $list = '';
-        foreach ($numbers as $number) {
-            $list .= '<li>' . str_pad($number->lucky_draw_number_code, '0', STR_PAD_LEFT) . '</li>' . "\n";
-        }
-
-        $template = str_replace('{{NAME}}', $name, $template);
-        $template = str_replace('{{NUMBERS}}', count($numbers), $template);
-        $template = str_replace('{{LIST}}', $list, $template);
+        $subject = Lang::get('mobileci.inbox.lucky_draw.subject');
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
         $inbox->from_id = 0;
         $inbox->from_name = 'Orbit';
-        $inbox->subject = 'You got new lucky draw number.';
-        $inbox->content = $template;
+        $inbox->subject = $subject;
+        $inbox->content = '';
         $inbox->inbox_type = 'alert';
         $inbox->status = 'active';
         $inbox->is_read = 'N';
+        $inbox->save();
+
+        $luckyDraw = App::make('orbit.empty.lucky_draw');
+
+        $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+        $data = [
+            'fullName'          => $name,
+            'subject'           => 'Lucky Draw',
+            'inbox'             => $inbox,
+            'retailerName'      => $retailer->name,
+            'numberOfLuckyDraw' => count($numbers),
+            'numbers'           => $numbers,
+            'luckyDrawCampaign' => $luckyDraw->lucky_draw_name,
+            'mallName'          => $retailer->name
+        ];
+
+        $template = View::make('mobile-ci.push-notification-lucky-draw', $data);
+        $template = $template->render();
+
+        $inbox->content = $template;
         $inbox->save();
     }
 
@@ -1018,10 +1051,11 @@ VIEW;
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @param int $userId - The user id
-     * @param array $numbers - Issued numbers
+     * @param array $coupons - Issued Coupons
+     * @param array $couponNames - Issued Coupons with name based
      * @return void
      */
-    protected function insertCouponInbox($userId, $numbers)
+    protected function insertCouponInbox($userId, $coupons, $couponNames)
     {
         $user = User::find($userId);
 
@@ -1031,49 +1065,35 @@ VIEW;
 
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
-
-        // Oh yeah, we have mixed the view!!
-        $template = <<<VIEW
-<div class="modal fade" id="numberModal" tabindex="-1" role="dialog" aria-labelledby="numberModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-body">
-                <p style="margin-bottom: 1em;"><strong>You Got New Coupon(s) Number!</strong></p>
-                <p>Hello {{NAME}},
-                <br><br>
-
-                Congratulation you got {{NUMBERS}} coupon(s) number:
-                <ul>
-                    {{LIST}}
-                </ul>
-                </p>
-
-                <br>
-                <p>Lippo Mall</p>
-            </div>
-        </div>
-    </div>
-</div>
-VIEW;
-
-        $list = '';
-        foreach ($numbers as $number) {
-            $list .= sprintf("<li>%s (%s)</li>\n", $number->coupon_number, $number->coupon_name);
-        }
-
-        $template = str_replace('{{NAME}}', $name, $template);
-        $template = str_replace('{{NUMBERS}}', count($numbers), $template);
-        $template = str_replace('{{LIST}}', $list, $template);
+        $subject = Lang::get('mobileci.inbox.coupon.subject');
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
         $inbox->from_id = 0;
         $inbox->from_name = 'Orbit';
-        $inbox->subject = 'You got new coupon number.';
-        $inbox->content = $template;
+        $inbox->subject = $subject;
+        $inbox->content = '';
         $inbox->inbox_type = 'alert';
         $inbox->status = 'active';
         $inbox->is_read = 'N';
+        $inbox->save();
+
+        $retailerId = Config::get('orbit.shop.id');
+        $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+        $data = [
+            'fullName'          => $name,
+            'subject'           => 'Coupon',
+            'inbox'             => $inbox,
+            'retailerName'      => $retailer->name,
+            'numberOfCoupon'    => count($coupons),
+            'coupons'           => $couponNames,
+            'mallName'          => $retailer->name
+        ];
+
+        $template = View::make('mobile-ci.push-notification-coupon', $data);
+        $template = $template->render();
+
+        $inbox->content = $template;
         $inbox->save();
     }
 }
