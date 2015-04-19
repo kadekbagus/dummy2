@@ -23,6 +23,11 @@ class Employee extends Eloquent
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
 
+    public function userdetail()
+    {
+        return $this->hasOne('UserDetail', 'user_id', 'user_id');
+    }
+
     /**
      * Employee could belongs to and has many retailers
      */
