@@ -79,7 +79,6 @@
 
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-{{ HTML::script('mobile-ci/scripts/bootstrap.min.js') }}
 {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
 <script type="text/javascript">
     function updateQueryStringParameter(uri, key, value) {

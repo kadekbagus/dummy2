@@ -173,7 +173,6 @@
 
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-{{ HTML::script('mobile-ci/scripts/bootstrap.min.js') }}
 {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
 <script type="text/javascript">
     function updateQueryStringParameter(uri, key, value) {
@@ -193,6 +192,7 @@
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}'+promo;
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
+
         $('#category>li').click(function(){
             if(!$(this).data('category')) {
                 $(this).data('category', '');
