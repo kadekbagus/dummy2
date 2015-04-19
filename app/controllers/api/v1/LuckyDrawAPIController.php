@@ -1180,6 +1180,8 @@ class LuckyDrawAPIController extends ControllerAPI
                                     'lucky_draws.start_date',
                                     'lucky_draws.end_date')
                            ->groupBy('lucky_draw_receipts.lucky_draw_receipt_id');
+            } else {
+                $luckydraws->groupBy('lucky_draw_numbers.lucky_draw_number_id');
             }
 
             // Filter lucky draw by ids
@@ -1266,6 +1268,8 @@ class LuckyDrawAPIController extends ControllerAPI
                         $luckydraws->with('winners');
                     } elseif ($relation === 'issued_numbers') {
                         $luckydraws->with('issuedNumbers');
+                    } elseif ($relation === 'receipts') {
+                        $luckydraws->with('receipts');
                     }
                 }
             });

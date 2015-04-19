@@ -353,5 +353,4 @@ class Merchant extends Eloquent
                                      ->where('parent_id', $this->merchant_id)
                                      ->lists('merchant_id');
     }
-
 }
