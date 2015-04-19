@@ -1288,12 +1288,12 @@ class TenantAPIController extends ControllerAPI
             $retailers->where(function ($query) use ($retailers) {
 
                 // Filter retailer by keyword pattern
-                OrbitInput::get('keyword', function($keyword) use ($retailers)
+                OrbitInput::get('keyword', function($keyword) use ($retailers, $query)
                 {
-                    $retailers->orWhere('merchants.name', 'like', "%$keyword%");
-                    $retailers->orWhere('merchants.description', 'like', "%$keyword%");
-                    $retailers->orWhere('merchants.email', 'like', "%$keyword%");
-                    $retailers->orWhereHas('categories', function($q) use ($keyword) {
+                    $query->orWhere('merchants.name', 'like', "%$keyword%");
+                    $query->orWhere('merchants.description', 'like', "%$keyword%");
+                    $query->orWhere('merchants.email', 'like', "%$keyword%");
+                    $query->orWhereHas('categories', function($q) use ($keyword) {
                         $q->where('category_name', 'like', "%$keyword%");
                     });
                 });
