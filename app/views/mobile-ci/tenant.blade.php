@@ -44,6 +44,7 @@
             <div class="col-xs-12">
                 <p>{{ $product->name }} at</p>
                 <p>{{ $retailer->name }} - {{ $product->floor }} - {{ $product->unit }}</p>
+                <p>Phone : {{ $product->phone }}</p>
                 <p>{{ $product->url }}</p>
                 @foreach($product->mediaMapOrig as $map)
                 <p>
