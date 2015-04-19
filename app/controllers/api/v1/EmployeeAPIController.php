@@ -1994,7 +1994,8 @@ class EmployeeAPIController extends ControllerAPI
                              ->select('employees.*', 'users.username',
                                      'users.username as login_id', 'users.user_email',
                                      'users.status as user_status',
-                                     'users.user_firstname', 'users.user_lastname')
+                                     'users.user_firstname', 'users.user_lastname',
+                                     'roles.role_name'l)
                              ->groupBy('employees.user_id');
 
             // Filter user by Ids
