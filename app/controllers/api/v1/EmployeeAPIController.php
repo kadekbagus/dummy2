@@ -1310,7 +1310,7 @@ class EmployeeAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer     `user_id`               (required) - User ID of the employee
-     * @param password    `password`              (required) - User ID of the employee
+     * @param password    `password`              (required) - The mall master password
      * @return Illuminate\Support\Facades\Response
      */
     public function postDeleteMallEmployee()
