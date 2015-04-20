@@ -320,6 +320,20 @@ class Merchant extends Eloquent
     }
 
     /**
+     * Accessor for default big logo
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return string
+     */
+    public function getBigLogoAttribute($value)
+    {
+        if(is_null($value)){
+            return '/mobile-ci/images/default-logo-big.png';
+        } else {
+            return $value;
+        }
+    }
+
+    /**
      * Define a has-many-through relationship.
      *
      * @param  string  $related

@@ -37,7 +37,7 @@
             </div>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->parent->biglogo) }}" />
                 </div>
             </div>
         </header>
@@ -56,7 +56,7 @@
         <header>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->parent->biglogo) }}" />
                 </div>
             </div>
         </header>
