@@ -34,7 +34,7 @@
 </div>
 <div class="row text-center lucky-number-wrapper">
     <div class="col-xs-12">
-        <img src="{{ asset($retailer->logo) }}" clas="img-responsive">
+        <img src="{{ asset($retailer->parent->logo) }}" clas="img-responsive">
     </div>
     <div class="col-xs-12">
         <p class="congrats-txt vertically-spaced">
