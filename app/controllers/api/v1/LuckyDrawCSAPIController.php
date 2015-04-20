@@ -749,6 +749,10 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 array(
                     'coupon_ids'        => 'array|required',
                     'user_id'           => 'required|numeric|orbit.empty.user',
+                ),
+                array(
+                    'user_id.required'      => 'Please select customer first',
+                    'coupon_ids.required'   => 'Please select a coupon first'
                 )
             );
 
