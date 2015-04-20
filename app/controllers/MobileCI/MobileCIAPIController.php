@@ -285,8 +285,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -7513,8 +7513,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
 
     }
@@ -7758,8 +7758,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -7821,8 +7821,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -7872,8 +7872,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -7913,8 +7913,8 @@ class MobileCIAPIController extends ControllerAPI
 
             return $this->render();
         } catch (Exception $e) {
-            // return $this->redirectIfNotLoggedIn($e);
-            return $e;
+            return $this->redirectIfNotLoggedIn($e);
+            // return $e;
         }
     }
 
@@ -8027,8 +8027,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -8111,8 +8111,8 @@ class MobileCIAPIController extends ControllerAPI
             //     ->responseFailed()
             //     ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -8212,8 +8212,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -8253,8 +8253,8 @@ class MobileCIAPIController extends ControllerAPI
             return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
 
         } catch (Exception $e) {
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -8352,8 +8352,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseFailed()
                 ->save();
 
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 
@@ -8393,8 +8393,8 @@ class MobileCIAPIController extends ControllerAPI
             return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
 
         } catch (Exception $e) {
-            // return $this->redirectIfNotLoggedIn($e);
-                return $e;
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
         }
     }
 }
