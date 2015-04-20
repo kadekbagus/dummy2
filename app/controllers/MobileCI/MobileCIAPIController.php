@@ -8163,7 +8163,13 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'promotion')->get();
+            $coupons = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'promotion')
+                            ->whereRaw("NOW() between begin_date and end_date")
+                            ->orderBy('sticky_order', 'desc')
+                            ->orderBy('created_at', 'desc')
+                            ->get();
 
             if ($coupons->isEmpty()) {
                 $data = new stdclass();
