@@ -88,6 +88,8 @@ trait MerchantTypeTrait
      */
     public function newsPromotions()
     {
+        $prefix = DB::getTablePrefix();
+
         return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')
             ->withPivot('object_type')
             ->where('news.object_type', 'promotion')
