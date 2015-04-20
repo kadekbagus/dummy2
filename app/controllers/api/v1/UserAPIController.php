@@ -2079,7 +2079,7 @@ class UserAPIController extends ControllerAPI
             });
 
             OrbitInput::post('occupation', function($data) use ($userdetail) {
-                $userdetail->idcard = $data;
+                $userdetail->occupation = $data;
             });
 
             OrbitInput::post('date_of_work', function($data) use ($userdetail) {
