@@ -75,10 +75,7 @@
                 .on('update.countdown', function(event) {
                     var format = '<div class="clock-block"><div class="clock-content">%H</div><div class="clock-content clock-label">Hour%!H</div></div><div class="clock-block"><div class="clock-content">%M</div><div class="clock-content clock-label">Minute%!M</div></div><div class="clock-block"><div class="clock-content">%S</div><div class="clock-content clock-label">Second%!S</div></div>';
                     if (event.offset.days > 0) {
-                        format = '<div class="clock-block"><div class="clock-content">%-d</div><div class="clock-content clock-label">Day%!d</div></div>' + format;
-                    }
-                    if (event.offset.weeks > 0) {
-                        format = '<div class="clock-block"><div class="clock-content">%-w</div><div class="clock-content clock-label">Week%!w</div></div>' + format;
+                        format = '<div class="clock-block"><div class="clock-content">%d</div><div class="clock-content clock-label">Day%!d</div></div>' + format;
                     }
                     $(this).html(event.strftime(format));
                 });
