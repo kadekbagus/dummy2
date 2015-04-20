@@ -5,6 +5,8 @@
  * @author Rio Astamal <me@rioastamal.net>
  * @credit http://www.stetsenko.net/2011/01/php-mac-address-validating-and-formatting/
  */
+use OrbitShop\API\v1\Helper\Command;
+
 class MacAddr
 {
     protected $mac = NULL;
@@ -29,6 +31,31 @@ class MacAddr
     public static function create($mac)
     {
         return new static();
+    }
+
+    /**
+     * Method to get Mac based on IP address. It uses the linux utilities
+     * ip-utils.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string $ip IP address
+     * @return string
+     */
+    public function getMacFromIP($ip)
+    {
+        // Ping first to make sure we got arp table list,
+        // we don't care about the ping result
+        $pingCmdObject = Command::Factory('ping -w 1 -s 32 -c 1 ' . $ip)->run();
+
+        // Get the Mac Address
+        $arpCmd = sprintf("ip neigh show | grep %s | awk '{print \$5}'", $ip);
+        $arpCmdObject = Command::Factory($arpCmd, TRUE)->run();
+
+        if ($arpCmdObject->getExitCode() !== 0) {
+            return NULL;
+        }
+
+        return trim($arpCmdObject->getStdOut());
     }
 
     /**
