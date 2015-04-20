@@ -153,7 +153,7 @@ class CouponAPIController extends ControllerAPI
                     'begin_date'                => 'required|date_format:Y-m-d H:i:s',
                     'end_date'                  => 'required|date_format:Y-m-d H:i:s',
                     'status'                    => 'required|orbit.empty.coupon_status',
-                    'coupon_validity_in_date'   => 'required|date_format:Y-m-d',
+                    'coupon_validity_in_date'   => 'required|date_format:Y-m-d H:i:s',
                     'rule_value'                => 'required|numeric|min:0',
                     'discount_value'            => 'required|numeric|min:0',
                 ),
