@@ -136,16 +136,34 @@ class CouponAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'          => $merchant_id,
-                    'promotion_name'       => $promotion_name,
-                    'promotion_type'       => $promotion_type,
-                    'status'               => $status,
+                    'merchant_id'               => $merchant_id,
+                    'promotion_name'            => $promotion_name,
+                    'promotion_type'            => $promotion_type,
+                    'begin_date'                => $begin_date,
+                    'end_date'                  => $end_date,
+                    'status'                    => $status,
+                    'coupon_validity_in_date'   => $coupon_validity_in_date,
+                    'rule_value'                => $rule_value,
+                    'discount_value'            => $discount_value,
                 ),
                 array(
-                    'merchant_id'          => 'required|numeric|orbit.empty.merchant',
-                    'promotion_name'       => 'required|max:255|orbit.exists.coupon_name',
-                    'promotion_type'       => 'required|orbit.empty.coupon_type',
-                    'status'               => 'required|orbit.empty.coupon_status',
+                    'merchant_id'               => 'required|numeric|orbit.empty.merchant',
+                    'promotion_name'            => 'required|max:255|orbit.exists.coupon_name',
+                    'promotion_type'            => 'required|orbit.empty.coupon_type',
+                    'begin_date'                => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'                  => 'required|date_format:Y-m-d H:i:s',
+                    'status'                    => 'required|orbit.empty.coupon_status',
+                    'coupon_validity_in_date'   => 'required|date_format:Y-m-d',
+                    'rule_value'                => 'required|numeric|min:0',
+                    'discount_value'            => 'required|numeric|min:0',
+                ),
+                array(
+                    'rule_value.required'       => 'The amount to obtain is required',
+                    'rule_value.numeric'        => 'The amount to obtain must be a number',
+                    'rule_value.min'            => 'The amount to obtain must be greater than zero',
+                    'discount_value.required'       => 'The coupon value is required',
+                    'discount_value.numeric'        => 'The coupon value must be a number',
+                    'discount_value.min'            => 'The coupon value must be greater than zero',
                 )
             );
 
@@ -154,6 +172,14 @@ class CouponAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Check the end date should be less than validity in date
+            $int_before_end_date = strtotime(date('Y-m-d', strtotime($end_date)));
+            $int_validity_date = strtotime($coupon_validity_in_date);
+            if ($int_validity_date <= $int_before_end_date) {
+                $errorMessage = 'The validity in date should be not less than end date.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
