@@ -22,7 +22,7 @@ if (! defined('ORBIT_APP_BUILD_NUMBER')) {
  *   Y: Minor version
  */
 if (! defined('ORBIT_APP_VERSION')) {
-    define('ORBIT_APP_VERSION', '1.0-dev b' . ORBIT_APP_BUILD_NUMBER);
+    define('ORBIT_APP_VERSION', '1.0-M');
 }
 
 /**
