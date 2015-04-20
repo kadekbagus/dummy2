@@ -10,18 +10,12 @@
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced">
                         <h4 style="color:#d9534f">Halo {{ $fullName }},</h4>
-                        <p>Selamat anda mendapatkan {{ $numberOfCoupon }} coupon. Berikut ini adalah nomor anda:
+                        <p>Selamat anda mendapatkan {{ $numberOfCoupon }} coupon. Berikut ini adalah coupon anda:
                         </p>
 
                         <ol>
                         @foreach ($coupons as $couponName=>$couponNumbers)
-                            <li>{{ $couponName }}
-                            <ul>
-                                @foreach ($couponNumbers as $number)
-                                    <li>{{ $number }}</li>
-                                @endforeach
-                            </ul>
-                            </li>
+                            <li><strong>{{ $couponName }}</strong></li>
                         @endforeach
                         </ol>
 
