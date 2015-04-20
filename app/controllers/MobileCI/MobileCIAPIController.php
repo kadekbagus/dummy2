@@ -7785,8 +7785,8 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
             $product_id = trim(OrbitInput::get('id'));
 
-            $product = Retailer::with('media', 'mediaLogoOrig', 'mediaMapOrig', 'mediaImageOrig')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
-
+            $product = Retailer::with('media', 'mediaLogoOrig', 'mediaMapOrig', 'mediaImageOrig', 'news', 'newsPromotions')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
+            // dd($product);
             if (empty($product)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
