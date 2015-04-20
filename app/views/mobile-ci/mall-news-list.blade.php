@@ -19,7 +19,11 @@
                         </div>
                         <div class="col-xs-6">
                             <h4>{{ $product->news_name }}</h4>
-                            <p>{{ substr($product->description, 0, 80) . '...' }}</p>
+                            @if (strlen($product->description) > 120)
+                            <p>{{{ substr($product->description, 0, 120) }}} [<a href="{{ url('customer/mallnewsdetail?id='.$product->news_id) }}">...</a>] </p>
+                            @else
+                            <p>{{{ $product->description }}}</p>
+                            @endif
                         </div>
                         <div class="col-xs-3" style="margin-top:20px">
                             <div class="circlet btn-blue detail-btn pull-right">
