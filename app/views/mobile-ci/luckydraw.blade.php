@@ -5,6 +5,11 @@
 @stop
 
 @section('content')
+<div class="row">
+    <div class="col-xs-12 text-center">
+        <h4 id="ldtitle">{{ $luckydraw->lucky_draw_name }}</h4>
+    </div>
+</div>
 <div class="row counter">
     <div class="col-xs-12 text-center">
         <div class="countdown">
@@ -59,6 +64,28 @@
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="lddetail" tabindex="-1" role="dialog" aria-labelledby="lddetailLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
+                <h4 class="modal-title" id="lddetailLabel">Lucky Draw Info</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <b>{{ $luckydraw->lucky_draw_name }}</b>
+                        <br>
+                        <p>{{ $luckydraw->description }}</p>
+                        <p>Valid until: {{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('ext_script_bot')
@@ -71,11 +98,14 @@
             $('.lucky-number-container').each(function(index){
                 $(this).text(parseFloat($(this).text()).toFixed(0)).autoNumeric('init', {aSep: '-', aDec: '.', mDec: 0, vMin: -9999999999.99});
             });
+            $('#ldtitle').click(function(){
+                $('#lddetail').modal();
+            })
             $('#clock').countdown('{{ $luckydraw->end_date }}')
                 .on('update.countdown', function(event) {
                     var format = '<div class="clock-block"><div class="clock-content">%H</div><div class="clock-content clock-label">Hour%!H</div></div><div class="clock-block"><div class="clock-content">%M</div><div class="clock-content clock-label">Minute%!M</div></div><div class="clock-block"><div class="clock-content">%S</div><div class="clock-content clock-label">Second%!S</div></div>';
                     if (event.offset.days > 0) {
-                        format = '<div class="clock-block"><div class="clock-content">%d</div><div class="clock-content clock-label">Day%!d</div></div>' + format;
+                        format = '<div class="clock-block"><div class="clock-content">%D</div><div class="clock-content clock-label">Day%!D</div></div>' + format;
                     }
                     $(this).html(event.strftime(format));
                 });
