@@ -948,6 +948,11 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
+            if (strtolower($user->status) !== 'active') {
+                $errorMessage = sprintf('Status of user %s is not active.', $value);
+                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            }
+
             // The user should be already membership
             if (trim($user->membership_number) === '') {
                 $errorMessage = sprintf('User %s does not have membership number.', $user->user_email);
