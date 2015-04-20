@@ -23,7 +23,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
                             </a>
                         </li>
                     </ul>
@@ -41,7 +41,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/luckydraw') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}"/>
                             </a>
                         </li>
                     </ul>
@@ -59,7 +59,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
                             </a>
                         </li>
                     </ul>
@@ -71,13 +71,13 @@
                     <div><strong>Coupons</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>Use it wisely!</div>
+                    <div>Check your coupons!</div>
                 </header>
                 <section class="widget-single">
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
                             </a>
                         </li>
                     </ul>
@@ -89,13 +89,13 @@
                     <div><strong>News</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>Latest news you have to know</div>
+                    <div>Our latest news</div>
                 </header>
                 <section class="widget-single">
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
                             </a>
                         </li>
                     </ul>
