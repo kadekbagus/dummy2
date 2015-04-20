@@ -34,7 +34,7 @@
 </div>
 <div class="row text-center lucky-number-wrapper">
     <div class="col-xs-12">
-        <img src="{{ asset($retailer->logo) }}" clas="img-responsive">
+        <img src="{{ asset($retailer->parent->logo) }}" clas="img-responsive">
     </div>
     <div class="col-xs-12">
         <p class="congrats-txt vertically-spaced">
@@ -44,6 +44,7 @@
             You got no Luck Draw Number yet
             @endif
         </p>
+        <p id="datenow"></p>
     </div>
     <div class="col-xs-12">
         @foreach($luckydraw->numbers as $number)
@@ -127,12 +128,14 @@
             //         $('#numberModal').modal();
             //     });
             // });
+            $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
             @if(!$luckydraw->numbers->isEmpty())
             html2canvas($('.lucky-number-wrapper'), {
                     background: '#fff',
                     onrendered: function(canvas) {
                         var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");  // here is the most important part because if you dont replace you will get a DOM 18 exception.    
                         $('#save').attr('href', image);
+                        $('#datenow').text('');
                     }
                 });
                 $('#save').click(function(){
