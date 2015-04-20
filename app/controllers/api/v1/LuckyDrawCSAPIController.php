@@ -774,12 +774,27 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $numberOfCouponIssued = 0;
             $applicableCouponNames = [];
             $issuedCouponNames = [];
+            $prefix = DB::getTablePrefix();
+
             foreach ($coupons as $couponId) {
-                $coupon = Coupon::active()->find($couponId);
+                $coupon = Coupon::select('promotions.*',
+                                         DB::raw("(select count(ic.issued_coupon_id) from {$prefix}issued_coupons ic
+                                                  where ic.promotion_id={$prefix}promotions.promotion_id
+                                                  and ic.status!='deleted') as total_issued_coupon"))
+                                ->active('promotions')
+                                ->where('end_date', '>=', DB::raw('now()'))
+                                ->where('promotion_id', $couponId)->first();
 
                 if (empty($coupon)) {
                     $errorMessage = sprintf('Coupon ID %s is not found.', $couponId);
                     OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+                }
+
+                if (! trim($coupon->maximum_issued_coupon) !== '' &&  trim($coupon->maximum_issued_coupon) !== '0') {
+                    if ($coupon->maximum_issued_coupon <= $coupon->total_issued_coupon) {
+                        $errorMessage = sprintf('Coupon `%s` has been exceeded maximum issued coupon.', $coupon->promotion_name);
+                        OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+                    }
                 }
 
                 $issuedCoupon = new IssuedCoupon();
