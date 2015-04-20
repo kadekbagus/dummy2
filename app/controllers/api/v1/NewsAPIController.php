@@ -138,6 +138,9 @@ class NewsAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
+            // Reformat sticky order
+            $sticky_order = (string)$sticky_order === 'true' || (string)$sticky_order !== '0' ? 1 : 0;
+
             // save News.
             $newnews = new News();
             $newnews->mall_id = $mall_id;
@@ -411,6 +414,9 @@ class NewsAPIController extends ControllerAPI
             });
 
             OrbitInput::post('sticky_order', function($sticky_order) use ($updatednews) {
+                // Reformat sticky order
+                $sticky_order = (string)$sticky_order === 'true' || (string)$sticky_order !== '0' ? 1 : 0;
+
                 $updatednews->sticky_order = $sticky_order;
             });
 

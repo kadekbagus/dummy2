@@ -3424,7 +3424,7 @@ class MobileCIAPIController extends ControllerAPI
                 ),
                 array('merchantid' => $retailer->parent_id, 'retailerid' => $retailer->merchant_id, 'userid' => $user->user_id, 'productid' => $product_id)
             );
-            
+
             foreach ($coupons as $coupon) {
                 if (empty($coupon->promo_image)) {
                     $coupon->promo_image = 'mobile-ci/images/default_product.png';
@@ -7780,7 +7780,7 @@ class MobileCIAPIController extends ControllerAPI
             $product_id = trim(OrbitInput::get('id'));
 
             $product = Retailer::with('media', 'mediaLogoOrig', 'mediaMapOrig', 'mediaImageOrig')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
-            
+
             if (empty($product)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
@@ -7973,7 +7973,7 @@ class MobileCIAPIController extends ControllerAPI
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );
-            
+
             if (sizeof($coupons) < 1) {
                 $data = new stdclass();
                 $data->status = 0;
@@ -8060,7 +8060,7 @@ class MobileCIAPIController extends ControllerAPI
             $coupon_id = $coupons[0]->promotion_id;
             $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
             // dd($tenants);
-            
+
             // dd($coupons);
             // if (count($promotions) > 0) {
             //     $data = new stdclass();
@@ -8070,7 +8070,7 @@ class MobileCIAPIController extends ControllerAPI
             //     $data = new stdclass();
             //     $data->status = 0;
             // }
-            
+
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
@@ -8164,7 +8164,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'promotion')->get();
-            
+
             if ($coupons->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
@@ -8176,7 +8176,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
-            
+
             $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
             $activityPage->setUser($user)
                 ->setActivityName('view_search')
@@ -8228,7 +8228,7 @@ class MobileCIAPIController extends ControllerAPI
             $product_id = trim(OrbitInput::get('id'));
 
             $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'promotion')->where('news_id', $product_id)->first();
-            
+
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
@@ -8295,11 +8295,16 @@ class MobileCIAPIController extends ControllerAPI
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
             if ($maxRecord <= 0) {
-                $maxRecord = 300;
+                $maxRecord = 250;
             }
 
-            $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'news')->get();
-            
+            $coupons = \News::active()->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'news')
+                            ->whereRaw("NOW() between begin_date and end_date")
+                            ->orderBy('sticky_order', 'desc')
+                            ->orderBy('created_at', 'desc')
+                            ->get();
+
             if ($coupons->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
@@ -8311,7 +8316,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
-            
+
             $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
             $activityPage->setUser($user)
                 ->setActivityName('view_search')
@@ -8363,7 +8368,7 @@ class MobileCIAPIController extends ControllerAPI
             $product_id = trim(OrbitInput::get('id'));
 
             $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'news')->where('news_id', $product_id)->first();
-            
+
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
