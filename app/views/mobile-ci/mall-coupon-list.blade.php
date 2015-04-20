@@ -18,7 +18,7 @@
                             @endif
                         </div>
                         <div class="col-xs-6">
-                            <h4>{{ $product->promotion_name }} at</h4>
+                            <h4>{{ $product->promotion_name }}</h4>
                             <p>{{ substr($product->description, 0, 120) }}</p>
                         </div>
                         <div class="col-xs-3" style="margin-top:20px">
