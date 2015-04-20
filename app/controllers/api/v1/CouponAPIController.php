@@ -179,7 +179,7 @@ class CouponAPIController extends ControllerAPI
             $int_before_end_date = strtotime(date('Y-m-d', strtotime($end_date)));
             $int_validity_date = strtotime($coupon_validity_in_date);
             if ($int_validity_date <= $int_before_end_date) {
-                $errorMessage = 'The validity in date should be not less than end date.';
+                $errorMessage = 'The validity redeem date should be greater than the end date.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -518,6 +518,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('merchant_id');
             $promotion_type = OrbitInput::post('promotion_type');
@@ -536,11 +537,26 @@ class CouponAPIController extends ControllerAPI
             $discount_object_id4 = OrbitInput::post('discount_object_id4');
             $discount_object_id5 = OrbitInput::post('discount_object_id5');
 
+            $begin_date = OrbitInput::post('begin_date');
+            $end_date = OrbitInput::post('end_date');
+            $is_permanent = OrbitInput::post('is_permanent');
+            $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
+            $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
+            $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
+            $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
+            $discount_value = OrbitInput::post('discount_value');
+            $rule_value = OrbitInput::post('rule_value');
+
             $data = array(
                 'promotion_id'         => $promotion_id,
                 'merchant_id'          => $merchant_id,
                 'promotion_type'       => $promotion_type,
                 'status'               => $status,
+                'begin_date'                => $begin_date,
+                'end_date'                  => $end_date,
+                'coupon_validity_in_date'   => $coupon_validity_in_date,
+                'rule_value'                => $rule_value,
+                'discount_value'            => $discount_value,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -556,9 +572,21 @@ class CouponAPIController extends ControllerAPI
                     'promotion_name'       => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
                     'promotion_type'       => 'orbit.empty.coupon_type',
                     'status'               => 'orbit.empty.coupon_status',
+                    'begin_date'                => 'date_format:Y-m-d H:i:s',
+                    'end_date'                  => 'date_format:Y-m-d H:i:s',
+                    'status'                    => 'orbit.empty.coupon_status',
+                    'coupon_validity_in_date'   => 'date_format:Y-m-d H:i:s',
+                    'rule_value'                => 'numeric|min:0',
+                    'discount_value'            => 'numeric|min:0',
                 ),
                 array(
                    'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
+                    'rule_value.required'       => 'The amount to obtain is required',
+                    'rule_value.numeric'        => 'The amount to obtain must be a number',
+                    'rule_value.min'            => 'The amount to obtain must be greater than zero',
+                    'discount_value.required'       => 'The coupon value is required',
+                    'discount_value.numeric'        => 'The coupon value must be a number',
+                    'discount_value.min'            => 'The coupon value must be greater than zero',
                 )
             );
 
@@ -625,7 +653,15 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->coupon_validity_in_days = $coupon_validity_in_days;
             });
 
-            OrbitInput::post('coupon_validity_in_date', function($coupon_validity_in_date) use ($updatedcoupon) {
+            OrbitInput::post('coupon_validity_in_date', function($coupon_validity_in_date) use ($updatedcoupon, $end_date) {
+                // Check the end date should be less than validity in date
+                $int_before_end_date = strtotime(date('Y-m-d', strtotime($end_date)));
+                $int_validity_date = strtotime($coupon_validity_in_date);
+                if ($int_validity_date <= $int_before_end_date) {
+                    $errorMessage = 'The validity redeem date should be greater than the end date.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
