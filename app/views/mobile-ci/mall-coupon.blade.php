@@ -46,7 +46,7 @@
                 <h4>Validity</h4>
                 <p>{{ date('d M Y', strtotime($product->coupon_validity_in_date)) }}</p>
             </div>
-            <div class="col-xs-12">
+            <div class="hide col-xs-12">
                 <h4>Coupon Type</h4>
                 @if($product->promotion_type == 'tenant')
                     <p>Tenant Based</p>
