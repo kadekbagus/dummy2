@@ -70,6 +70,7 @@ class MobileCIAPIController extends ControllerAPI
             }
             $retailer = $this->getRetailerInfo();
 
+            $notAllowedStatus = ['inactive'];
             $user = User::with('apikey', 'userdetail', 'role')
                         ->excludeDeleted()
                         ->where('user_email', $email)
@@ -87,6 +88,11 @@ class MobileCIAPIController extends ControllerAPI
                     throw new Exception($response->message, $response->code);
                 }
                 $user = $response->data;
+            }
+
+            $lowerCasedStatus = strtolower($user->status);
+            if (in_array($lowerCasedStatus, $notAllowedStatus)) {
+                throw new Exception('You are not allowed to login.', 13);
             }
 
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
