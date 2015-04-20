@@ -68,7 +68,7 @@
         <div class="row">
             <div class="col-xs-12 text-center">
                 <h4>Coupon Value</h4>
-                <p>{{ $retailer->parent->currency_symbol }} <span class="formatted-numx">{{ $product->discount_value }}</span></p>
+                <p>IDR <span class="formatted-numx">{{ $product->discount_value }}</span></p>
             </div>
         </div>
         <div class="row">
