@@ -152,7 +152,9 @@ class DummyAPIController extends ControllerAPI
     public function getServerTime()
     {
         $format = OrbitInput::get('format', 'U');
-        return date($format);
+        $this->response->data = date($format);
+
+        return $this->render(200);
     }
 
     public function IamOK()
