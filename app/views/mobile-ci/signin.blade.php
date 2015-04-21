@@ -78,7 +78,6 @@
         <a id="notMe">{{ Lang::get('mobileci.signin.not') }} <span class="signedUser"></span><span class="userName"></span>, {{ Lang::get('mobileci.signin.click_here') }}.</a>
     </div>
 </div>
-<pre>{{ var_dump(Setting::getFromList($retailer->settings, 'landing_page')[0]) }}</pre>
 @stop
 
 @section('footer')
@@ -198,11 +197,7 @@
               if (get('from_captive') == 'yes') {
                   afterLogin(xhr);
               } else {
-                  @if(empty(Setting::getFromList($retailer->settings, 'landing_page')))
-                      window.location.replace(homePath);
-                  @else
-                      window.location.replace('{{ Setting::getFromList($retailer->settings, 'landing_page')[0] }}');
-                  @endif
+                  window.location.replace('{{ $landing_url }}');
               }
             }
           }).fail(function(data){
@@ -289,19 +284,7 @@
                 if (get('from_captive') == 'yes') {
                     afterLogin(xhr);
                 } else {
-                    @if(empty(Setting::getFromList($retailer->settings, 'landing_page')[0]))
-                        window.location.replace(homePath);
-                    @else
-                        @if(Setting::getFromList($retailer->settings, 'landing_page')[0] == 'promotion')
-                            window.location.replace('customer/mallpromotions');
-                        @elseif(Setting::getFromList($retailer->settings, 'landing_page')[0] == 'tenant')
-                            window.location.replace('customer/tenants');
-                        @elseif(Setting::getFromList($retailer->settings, 'landing_page')[0] == 'news')
-                            window.location.replace('customer/mallnews');
-                        @elseif(Setting::getFromList($retailer->settings, 'landing_page')[0] == 'widget')
-                            window.location.replace(homePath);
-                        @endif
-                    @endif
+                    window.location.replace('{{ $landing_url }}');
                 }
               }
             }).fail(function(data){
