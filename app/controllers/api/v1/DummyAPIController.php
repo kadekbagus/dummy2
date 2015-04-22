@@ -141,6 +141,22 @@ class DummyAPIController extends ControllerAPI
 
         return $this->render($httpCode);
     }
+
+    /**
+     * Return time of the server in unix timestamp.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param `string`      `$mode`     (optional)  Unix timestamp $mode
+     * @return int
+     */
+    public function getServerTime()
+    {
+        $format = OrbitInput::get('format', 'U');
+        $this->response->data = date($format);
+
+        return $this->render(200);
+    }
+
     public function IamOK()
     {
         return $this->render();

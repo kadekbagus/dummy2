@@ -144,6 +144,13 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
+
+            // The total amount should be greater than the minimum amount of lucky draw
+            if ((double)$totalAmount < (double)$luckyDraw->minimum_amount) {
+                    $errorMessage = sprintf('The total spent is not enough to get Lucky Draw, minimum amount is %s.', number_format($luckyDraw->minimum_amount));
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $numberOfLuckyDraw = floor($totalAmount / $luckyDraw->minimum_amount);
 
             foreach ($receiptDates as $i=>$receiptDate) {
@@ -175,7 +182,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $storedProcArgs = [$number, $issueType, $luckyNumberDriven, $userId, $employeeUserId, $issueDate, $status];
             $luckyDrawnumbers = DB::select("call issue_lucky_draw_number(?, ?, ?, ?, ?, ?, ?)", $storedProcArgs);
 
-            if (empty($result) || count($result) === 0) {
+            if (empty($luckyDrawnumbers) || count($luckyDrawnumbers) === 0) {
                 $message = 'There is no lucky draw number left.';
                 ACL::throwAccessForbidden($message);
             }

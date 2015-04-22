@@ -38,3 +38,11 @@ Route::post('/api/v1/alert/read', function()
 {
     return InboxAPIController::create()->postReadAlert();
 });
+
+/**
+ * Get server time
+ */
+Route::get('/api/v1/server-time', function()
+{
+    return DummyAPIController::create()->getServerTime();
+});

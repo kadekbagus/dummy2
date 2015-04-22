@@ -24,3 +24,11 @@ Route::get('/app/v1/alert/poll', 'IntermediateAuthController@Inbox_getPollAlert'
  */
 Route::post('/app/v1/alert/read', 'IntermediateAuthController@Inbox_postReadAlert');
 
+/**
+ * Get the server time
+ */
+Route::get('/app/v1/server-time', [
+    'as'    => 'server-time',
+    'uses'  => 'DummyAPIController@getServerTime'
+]);
+
