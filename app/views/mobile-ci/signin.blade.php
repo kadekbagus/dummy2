@@ -78,7 +78,6 @@
         <a id="notMe">{{ Lang::get('mobileci.signin.not') }} <span class="signedUser"></span><span class="userName"></span>, {{ Lang::get('mobileci.signin.click_here') }}.</a>
     </div>
 </div>
-<pre>{{ var_dump(Setting::getFromList($retailer->settings, 'landing_page')[0]) }}</pre>
 @stop
 
 @section('footer')
