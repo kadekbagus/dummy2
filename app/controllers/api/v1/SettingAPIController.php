@@ -280,12 +280,14 @@ class SettingAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.setting.postupdatesetting.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('update_setting')) {
                 Event::fire('orbit.setting.postupdatesetting.authz.notallowed', array($this, $user));
                 $updateSettingLang = Lang::get('validation.orbit.actionlist.update_setting');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateSettingLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
             Event::fire('orbit.setting.postupdatesetting.after.authz', array($this, $user));
 
             $role = $user->role;
