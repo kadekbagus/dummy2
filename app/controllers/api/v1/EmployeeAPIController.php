@@ -2321,7 +2321,7 @@ class EmployeeAPIController extends ControllerAPI
 
         // Check the existance of the Status
         Validator::extend('orbit.empty.user_status', function ($attribute, $value, $parameters) {
-            $statuses = array('active', 'pending', 'blocked', 'deleted');
+            $statuses = array('active', 'pending', 'blocked', 'deleted', 'inactive');
             if (! in_array($value, $statuses)) {
                 return FALSE;
             }
