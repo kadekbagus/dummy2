@@ -1,7 +1,11 @@
 @extends('mobile-ci.layout')
 
 @section('ext_style')
-    
+    <style type="text/css">
+        #ldtitle{
+            cursor: pointer;
+        }
+    </style>
 @stop
 
 @section('content')
@@ -79,6 +83,7 @@
                     <div class="col-xs-12">
                         <b>{{ $luckydraw->lucky_draw_name }}</b>
                         <br>
+                        <img src="{{ asset($luckydraw->image) }}" class="img-responsive">
                         <p>{{ $luckydraw->description }}</p>
                         <p>Valid until: {{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}</p>
                     </div>
