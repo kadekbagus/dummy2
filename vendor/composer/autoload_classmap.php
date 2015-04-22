@@ -9,6 +9,7 @@ return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
     'AlterStoredProcModifyNumberDrivenIssue' => $baseDir . '/app/database/migrations/2015_04_13_124254_alter_stored_proc_modify_number_driven_issue.php',
+    'AlterStoredProcedureIssueLuckyDrawNumberAddMaxReturnedRecord' => $baseDir . '/app/database/migrations/2015_04_22_134819_alter_stored_procedure_issue_lucky_draw_number_add_max_returned_record.php',
     'AlterTableEventRetailerAddColumnObjectType' => $baseDir . '/app/database/migrations/2015_04_17_103926_alter_table_event_retailer_add_column_object_type.php',
     'AlterTableEventsRemoveColumns' => $baseDir . '/app/database/migrations/2015_04_17_102621_alter_table_events_remove_columns.php',
     'AlterTableInboxesChangeInboxType' => $baseDir . '/app/database/migrations/2015_04_19_113408_alter_table_inboxes_change_inbox_type.php',
