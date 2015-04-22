@@ -45,6 +45,7 @@ use \LuckyDrawNumberReceipt;
 use \LuckyDrawReceipt;
 use \LuckyDrawWinner;
 use \Setting;
+use URL;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -92,7 +93,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $lowerCasedStatus = strtolower($user->status);
             if (in_array($lowerCasedStatus, $notAllowedStatus)) {
-                throw new Exception('You are not allowed to login.', 13);
+                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
             }
 
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
@@ -294,6 +295,7 @@ class MobileCIAPIController extends ControllerAPI
      * GET - Sign in page
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Rio Astamal <me@rioastamal.net>
      *
      * @return Illuminate\View\View
      */
@@ -304,6 +306,29 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
             $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
             $landing = Setting::getFromList($mall->settings, 'landing_page');
+
+            // Get the landing page URL based on settings
+            $landing_url = '';
+
+            switch ($landing[0]) {
+                case 'tenant':
+                    $landing_url = URL::route('ci-tenants');
+                    break;
+
+                case 'promotion':
+                    $landing_url = URL::route('ci-mall-promotions');
+                    break;
+
+                case 'news':
+                    $landing_url = URL::route('ci-mall-news');
+                    break;
+
+                case 'widget':
+                default:
+                    $landing_url = URL::route('ci-customer-home');
+                    break;
+            }
+
             $bg = Setting::getFromList($mall->settings, 'background_image');
 
             // Get email from query string
@@ -313,17 +338,17 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
             } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
             }
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
             $user_email = '';
             if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
             } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
             }
         }
     }
