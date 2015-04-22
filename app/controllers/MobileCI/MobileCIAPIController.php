@@ -93,7 +93,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $lowerCasedStatus = strtolower($user->status);
             if (in_array($lowerCasedStatus, $notAllowedStatus)) {
-                throw new Exception('You are not allowed to login.', 13);
+                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
             }
 
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
