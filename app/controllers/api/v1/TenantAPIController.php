@@ -638,11 +638,12 @@ class TenantAPIController extends ControllerAPI
                     'orid'              => 'orid_exists_but_me',
                     'parent_id'         => 'numeric|orbit.empty.merchant',
                     'url'               => 'orbit.formaterror.url.web',
-                    'category_ids'      => 'array'
+                    'category_ids'      => 'required|array'
                 ),
                 array(
                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
                    'orid_exists_but_me'  => Lang::get('validation.orbit.exists.orid'),
+                   'category_ids.required' => 'The category is required.'
                )
             );
 
