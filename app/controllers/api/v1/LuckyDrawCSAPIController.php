@@ -250,8 +250,17 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.after.save', array($this, $widget));
 
-            $luckyDraw->user_numbers = $luckyDrawnumbers;
-            $this->response->data = $luckyDraw;
+            // prevent memory exhausted
+            $maxReturn = 150;
+            $luckyDrawNumberObjects = LuckyDrawNumber::with('receipts')
+                                                     ->whereIn('lucky_draw_number_id', $luckyDrawNumberIds)
+                                                     ->take($maxReturn)
+                                                     ->get();
+            $this->response->data = [
+                'user_numbers'              => $luckyDrawnumbers,
+                'user_numbers_count'        => count($luckyDrawnumbers),
+                'lucky_draw_numbers_object' => $luckyDrawNumberObjects
+            ];
 
             // Insert to alert system
             $this->insertLuckyDrawNumberInbox($userId, $luckyDrawnumbers, $mallId);
