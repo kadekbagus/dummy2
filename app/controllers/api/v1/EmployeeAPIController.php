@@ -960,7 +960,7 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             OrbitInput::post('status', function($status) use ($updatedUser) {
-                $updatedUser->status = 'active';
+                $updatedUser->status = $status;
             });
 
             OrbitInput::post('employee_role', function($_role) use ($updatedUser) {
@@ -2142,6 +2142,12 @@ class EmployeeAPIController extends ControllerAPI
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
+
+            // If sortby not active means we should add active as second argument
+            // of sorting
+            if ($sortBy !== 'users.status') {
+                $users->orderBy('users.status', 'asc');
+            }
 
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
                 if (strtolower($_sortMode) !== 'asc') {
