@@ -348,11 +348,15 @@ class LuckyDrawAPIController extends ControllerAPI
             $lucky_draw_id = OrbitInput::post('lucky_draw_id');
             $mall_id = OrbitInput::post('mall_id');
             $status = OrbitInput::post('status');
+            $start_date = OrbitInput::post('start_date');
+            $end_date = OrbitInput::post('end_date');
 
             $data = array(
                 'lucky_draw_id'        => $lucky_draw_id,
                 'mall_id'              => $mall_id,
                 'status'               => $status,
+                'start_date'           => $start_date,
+                'end_date'             => $end_date,
             );
 
             // Validate lucky_draw_name only if exists in POST.
@@ -367,9 +371,12 @@ class LuckyDrawAPIController extends ControllerAPI
                     'mall_id'              => 'numeric|orbit.empty.mall',
                     'lucky_draw_name'      => 'sometimes|required|min:5|max:255|lucky_draw_name_exists_but_me:'.$lucky_draw_id,
                     'status'               => 'orbit.empty.lucky_draw_status',
+                    'start_date'           => 'date_format:Y-m-d H:i:s',
+                    'end_date'             => 'date_format:Y-m-d H:i:s|after:'.$start_date,
                 ),
                 array(
                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
+                   'end_date.after'                => 'The end date should be greater than the start date.'
                 )
             );
 
