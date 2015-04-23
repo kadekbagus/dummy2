@@ -954,7 +954,9 @@ class EmployeeAPIController extends ControllerAPI
             $updatedUser = App::make('orbit.empty.user');
 
             OrbitInput::post('password', function($password) use ($updatedUser) {
-                $updatedUser->user_password = Hash::make($password);
+                if (! empty(trim($password))) {
+                    $updatedUser->user_password = Hash::make($password);
+                }
             });
 
             OrbitInput::post('status', function($status) use ($updatedUser) {
