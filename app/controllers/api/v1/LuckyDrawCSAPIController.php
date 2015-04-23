@@ -171,6 +171,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
              * -- @param 5 - The customer service user ID
              * -- @param 6 - Date issued
              * -- @param 7 - Status should be 'active'
+             * -- @param 8 - Maximum lucky draw number returned
              */
             $number = $numberOfLuckyDraw;
             $issueType = $mode;
@@ -178,14 +179,19 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $employeeUserId = $user->user_id;
             $issueDate = date('Y-m-d H:i:s');
             $status = 'active';
+            $maxRecordReturned = Config::get('orbit.pagination.lucky_draw.max_record', 50);
 
-            $storedProcArgs = [$number, $issueType, $luckyNumberDriven, $userId, $employeeUserId, $issueDate, $status];
-            $luckyDrawnumbers = DB::select("call issue_lucky_draw_number(?, ?, ?, ?, ?, ?, ?)", $storedProcArgs);
+            $storedProcArgs = [$number, $issueType, $luckyNumberDriven, $userId, $employeeUserId, $issueDate, $status, $maxRecordReturned];
+            $luckyDrawnumbers = DB::select("call issue_lucky_draw_number(?, ?, ?, ?, ?, ?, ?, ?)", $storedProcArgs);
 
             if (empty($luckyDrawnumbers) || count($luckyDrawnumbers) === 0) {
                 $message = 'There is no lucky draw number left.';
                 ACL::throwAccessForbidden($message);
             }
+
+            // Get total of lucky draw issued from `total_issued_number` field
+            // which exists on every record of this session/hash
+            $totalLuckyDrawNumberIssued = $luckyDrawnumbers[0]->total_issued_number;
 
             $luckyDrawNumberIds = [];
             foreach ($luckyDrawnumbers as $row) {
@@ -252,15 +258,13 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // prevent memory exhausted
             $maxReturn = 150;
-            $luckyDrawNumberObjects = LuckyDrawNumber::with('receipts')
-                                                     ->whereIn('lucky_draw_number_id', $luckyDrawNumberIds)
-                                                     ->take($maxReturn)
-                                                     ->get();
-            $this->response->data = [
-                'user_numbers'              => $luckyDrawnumbers,
-                'user_numbers_count'        => count($luckyDrawnumbers),
-                'lucky_draw_numbers_object' => $luckyDrawNumberObjects
-            ];
+
+            $data = new stdclass();
+            $data->total_records = (int)$totalLuckyDrawNumberIssued;
+            $data->returned_records = count($luckyDrawnumbers);
+            $data->records = $luckyDrawnumbers;
+
+            $this->response->data = $data;
 
             // Insert to alert system
             $this->insertLuckyDrawNumberInbox($userId, $luckyDrawnumbers, $mallId);

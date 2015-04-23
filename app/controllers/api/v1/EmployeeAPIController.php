@@ -954,11 +954,13 @@ class EmployeeAPIController extends ControllerAPI
             $updatedUser = App::make('orbit.empty.user');
 
             OrbitInput::post('password', function($password) use ($updatedUser) {
-                $updatedUser->user_password = Hash::make($password);
+                if (! empty(trim($password))) {
+                    $updatedUser->user_password = Hash::make($password);
+                }
             });
 
             OrbitInput::post('status', function($status) use ($updatedUser) {
-                $updatedUser->status = 'active';
+                $updatedUser->status = $status;
             });
 
             OrbitInput::post('employee_role', function($_role) use ($updatedUser) {
@@ -2141,6 +2143,12 @@ class EmployeeAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
+            // If sortby not active means we should add active as second argument
+            // of sorting
+            if ($sortBy !== 'users.status') {
+                $users->orderBy('users.status', 'asc');
+            }
+
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
                 if (strtolower($_sortMode) !== 'asc') {
                     $sortMode = 'desc';
@@ -2321,7 +2329,7 @@ class EmployeeAPIController extends ControllerAPI
 
         // Check the existance of the Status
         Validator::extend('orbit.empty.user_status', function ($attribute, $value, $parameters) {
-            $statuses = array('active', 'pending', 'blocked', 'deleted');
+            $statuses = array('active', 'pending', 'blocked', 'deleted', 'inactive');
             if (! in_array($value, $statuses)) {
                 return FALSE;
             }
