@@ -37,13 +37,15 @@
     </div>
 @endif
 
-@for ($i=1; $i<=$total_image; $i++)
-<div class="row save-btn text-center">
-    <div class="col-xs-12">
-        <a href="{{ URL::route('ci-luckydrawnumber-download') }}?mode=download&page={{ $i }}" class="btn btn-info" id="save">Download Image #{{ $i }}</a>
+<div class="row lucky-number-wrapper">
+    <div class="col-xs-12 text-center">
+        @for ($i=1; $i<=$total_image; $i++)
+        <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
+            <a href="{{ URL::route('ci-luckydrawnumber-download') }}?mode=download&page={{ $i }}" class="btn btn-info" id="save">Download Image #{{ $i }}</a>
+        </div>
+        @endfor
     </div>
 </div>
-@endfor
 
 @if ($total_number <= 160)
 <script>window.location.href = '{{ URL::route("ci-luckydrawnumber-download") }}?mode=download&amp;page=1'</script>

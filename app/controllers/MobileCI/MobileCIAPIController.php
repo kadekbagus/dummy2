@@ -48,6 +48,8 @@ use \Setting;
 use URL;
 use PDO;
 use Response;
+use LuckyDrawAPIController;
+use OrbitShop\API\v1\Helper\Generator;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -7874,9 +7876,49 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
 
             $retailer = $this->getRetailerInfo();
-            $luckydraw = LuckyDraw::with(array('numbers'=> function ($q) use($user) {
-                $q->where('user_id', $user->user_id);
-            }))->active()->where('mall_id', $retailer->merchant_id)->first();
+            $luckydraw = LuckyDraw::active()->where('mall_id', $retailer->merchant_id)->first();
+
+            // Pass information to the API
+            $_GET['user_id'] = $user->user_id;
+            $_GET['apikey'] = $user->apikey->api_key;
+            $_GET['apitimestamp'] = time();
+
+            $currentPage = (int)OrbitInput::get('page', 1);
+            $take = 50;
+            $start = ($currentPage - 1)  * $take;
+
+            $_GET['take'] = (int)OrbitInput::get('take', $take);
+            $_GET['skip'] = (int)OrbitInput::get('skip', $start);
+            $_GET['sortby'] = OrbitInput::get('sortby', 'lucky_draw_number');
+            $_GET['sortmode'] = OrbitInput::get('sortmode', 'desc');
+
+            $prevUrl = '';
+            $nextUrl = '';
+
+            $secretKey = $user->apikey->api_secret_key;
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $_SERVER['REQUEST_URI'] = '/api/v1/lucky-draw-number/list';
+            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+            $apiResponse = LuckyDrawAPIController::create('raw')->getSearchLuckyDrawNumber();
+            if ($apiResponse->code !== 0) {
+                throw new Exception ($apiResponse->message, $apiResponse->code);
+            }
+
+            $totalPages = ceil($apiResponse->data->total_records / $take);
+
+            if ($totalPages > 1) {
+                $prevUrl = URL::route('ci-luckydraw') . '?page=' . ($currentPage - 1);
+                $nextUrl = URL::route('ci-luckydraw') . '?page=' . ($currentPage + 1);
+
+                if ($currentPage >= $totalPages) {
+                    $nextUrl = '#';
+                }
+
+                if ($currentPage === 1) {
+                    $prevUrl = '#';
+                }
+            }
 
             $activityProductNotes = sprintf('Lucky Draw Page');
             $activityProduct->setUser($user)
@@ -7886,8 +7928,17 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.luckydraw', array('page_title' => 'LUCKY DRAW', 'retailer' => $retailer, 'luckydraw' => $luckydraw));
-
+            return View::make('mobile-ci.luckydraw', [
+                                'page_title'    => 'LUCKY DRAW',
+                                'retailer'      => $retailer,
+                                'luckydraw'     => $luckydraw,
+                                'numbers'       => $apiResponse->data->records,
+                                'total_number'  => $apiResponse->data->total_records,
+                                'prev_url'      => $prevUrl,
+                                'next_url'      => $nextUrl,
+                                'total_pages'   => $totalPages,
+                                'current_page'  => $currentPage
+            ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Product viewed: %s', $product_id);
             $activityProduct->setUser($user)
@@ -7901,7 +7952,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
+            // return $e;
         }
     }
 

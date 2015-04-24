@@ -31,29 +31,113 @@
         <b>Winning Number</b>
     </div>
 </div>
-<div class="row text-center save-btn">
-    <div class="col-xs-12">
-        <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info">Save Numbers</a>
-    </div>
-</div>
 <div class="row text-center lucky-number-wrapper">
     <div class="col-xs-12">
         <img src="{{ asset($retailer->parent->logo) }}" clas="img-responsive">
     </div>
-    <div class="col-xs-12">
-        <p class="congrats-txt vertically-spaced">
-            @if(!$luckydraw->numbers->isEmpty())
-            Here are your lucky draw numbers, we wish you luck!
-            @else
-            You got no Luck Draw Number yet
-            @endif
-        </p>
-        <p id="datenow"></p>
+
+    <div class="row">
+        <p>&nbsp;</p>
     </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <small>
+                @if ($total_number === 0)
+                    You got no Lucky Draw Number yet.
+                @else
+                    Here are your lucky draw numbers, you have {{ number_format($total_number) }} lucky draw number. We wish you luck!.
+                    @if ($total_number > 50)
+                        This list only showing your last 50 lucky draw numbers.
+                    @endif
+                @endif
+            </small>
+            <a name="ln-nav" id="ln-nav"></a>
+        </div>
+    </div>
+
+    <div class="row">
+        <p>&nbsp;</p>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 vertically-spaced">
+            <p id="datenow"></p>
+        </div>
+    </div>
+
     <div class="col-xs-12">
-        @foreach($luckydraw->numbers as $number)
-        <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{$number->lucky_draw_number_code}}</div>
+        @if ($total_pages > 1)
+        <div class="col-xs-6 col-sm-6 col-lg-6">
+            <div class="row">
+                <div class="col-xs-10 col-xs-offset-1">
+                    <a href="{{ $prev_url }}#ln-nav" class="btn btn-info btn-block {{ ($prev_url === '#' ? 'disabled' : ''); }}">Prev</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-6 col-sm-6 col-lg-6">
+            <div class="row">
+                <div class="col-xs-10 col-xs-offset-1 col-lg-10 col-lg-offset-1">
+                    <a href="{{ $next_url }}#ln-nav" class="btn btn-info btn-block {{ ($next_url === '#' ? 'disabled' : ''); }}">Next</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xs-12 text-center">
+                <small>Page {{ $current_page }} of {{ $total_pages }}.</small>
+            </div>
+        </div>
+        @endif
+
+        @foreach($numbers as $i=>$number)
+        <div class="col-xs-6 col-sm-6 col-lg-6">
+            <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
+        </div>
         @endforeach
+
+        @if ($total_number % 2 !== 0)
+        <div class="col-xs-12 col-sm-6 col-lg-6">
+            <div class="lucky-number-container" data-number=""></div>
+        </div>
+        @endif
+
+        @if ($total_pages > 1)
+        <div class="row ">
+        <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
+            <div class="row">
+                <div class="col-xs-10 col-xs-offset-1">
+                    <a href="{{ $prev_url }}#ln-nav" class="btn btn-info btn-block {{ ($prev_url === '#' ? 'disabled' : ''); }}">Prev</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
+            <div class="row">
+                <div class="col-xs-10 col-xs-offset-1 col-lg-10 col-lg-offset-1">
+                    <a href="{{ $next_url }}#ln-nav" class="btn btn-info btn-block {{ ($next_url === '#' ? 'disabled' : ''); }}">Next</a>
+                </div>
+            </div>
+        </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 text-center">
+                <small>Page {{ $current_page }} of {{ $total_pages }}.</small>
+            </div>
+        </div>
+        @endif
+    </div>
+</div>
+
+<div class="row">
+    <div class="row text-center save-btn">
+        <div class="col-xs-12">
+            <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info">Save Numbers</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xs-12 text-center">
+        <span>To save the numbers as image on your mobile phone press the &quot;Save Numbers&quot;</span>
     </div>
 </div>
 @stop
@@ -102,7 +186,7 @@
     <script type="text/javascript">
         $(document).ready(function(){
             $('.lucky-number-container').each(function(index){
-                $(this).text(parseFloat($(this).text()).toFixed(0)).autoNumeric('init', {aSep: '-', aDec: '.', mDec: 0, vMin: -9999999999.99});
+                // $(this).text(parseFloat($(this).text()).toFixed(0)).autoNumeric('init', {aSep: '-', aDec: '.', mDec: 0, vMin: -9999999999.99});
             });
             $('#ldtitle').click(function(){
                 $('#lddetail').modal();
@@ -115,42 +199,8 @@
                     }
                     $(this).html(event.strftime(format));
                 });
-            // $('.lucky-number-container').click(function(){
-            //     $('#numberModal .modal-body').html('');
-            //     var num = $(this).data('number');
-            //     $.ajax({
-            //         url: apiPath+'customer/luckydrawnumberpopup',
-            //         method: 'POST',
-            //         data: {
-            //             lid: num
-            //         }
-            //     }).done(function(data){
-            //         console.log(data);
-            //         for(var x = 0; x < data.data.receipts.length; x++){
-            //             console.log(data.data.receipts[x].receipt_amount);
-            //             $('#numberModal .modal-body').html($('#numberModal .modal-body').html() + '<div class="row "><div class="col-xs-12 vertically-spaced"><p><b>Date</b><br><span class="date">'+ data.data.receipts[x].receipt_date +'</span></p><p><b>Tenant</b><br><span class="tenant">'+ data.data.receipts[x].receipt_retailer.name +'</span></p><p><b>Receipt No.</b><br><span class="receiptno">'+ data.data.receipts[x].receipt_number +'</span></p><p><b>Ammount Spent</b><br><span class="ammount">Rp '+ data.data.receipts[x].receipt_amount +'</span></p></div></div>');
-            //         }
-            //         $('#numberModal').modal();
-            //     });
-            // });
+
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
-            @if(!$luckydraw->numbers->isEmpty())
-            html2canvas($('.lucky-number-wrapper'), {
-                    background: '#fff',
-                    onrendered: function(canvas) {
-                        var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");  // here is the most important part because if you dont replace you will get a DOM 18 exception.
-                        $('#save').attr('href', image);
-                        $('#datenow').text('');
-                    }
-                });
-                $('#save').click(function(){
-                    $('#numberModal .modal-body').html('<h4>Your number is being downloaded, please check your Download folder later</h4>');
-                    $('#numberModal').modal();
-                });
-            @else
-                $('#save').css('display', 'none');
-                // $('.congrats-txt').css('display', 'none');
-            @endif
         });
     </script>
 @stop
