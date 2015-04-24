@@ -7884,7 +7884,7 @@ class MobileCIAPIController extends ControllerAPI
             $_GET['apitimestamp'] = time();
 
             $currentPage = (int)OrbitInput::get('page', 1);
-            $take = 50;
+            $take = 100;
             $start = ($currentPage - 1)  * $take;
 
             $_GET['take'] = (int)OrbitInput::get('take', $take);
@@ -7937,7 +7937,8 @@ class MobileCIAPIController extends ControllerAPI
                                 'prev_url'      => $prevUrl,
                                 'next_url'      => $nextUrl,
                                 'total_pages'   => $totalPages,
-                                'current_page'  => $currentPage
+                                'current_page'  => $currentPage,
+                                'per_page'      => $take,
             ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Product viewed: %s', $product_id);

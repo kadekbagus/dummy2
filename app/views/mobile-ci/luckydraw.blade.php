@@ -47,9 +47,7 @@
                     You got no Lucky Draw Number yet.
                 @else
                     Here are your lucky draw numbers, you have {{ number_format($total_number) }} lucky draw number. We wish you luck!.
-                    @if ($total_number > 50)
-                        This list only showing your last 50 lucky draw numbers.
-                    @endif
+                    This list showing {{ $per_page }} lucky draw numbers per page.
                 @endif
             </small>
             <a name="ln-nav" id="ln-nav"></a>
