@@ -11,7 +11,7 @@
                     <div class="col-xs-12 vertically-spaced">
                         <h4 style="color:#d9534f">Halo {{ $fullName }},</h4>
                         <p>Selamat anda mendapatkan {{ $numberOfLuckyDraw }} nomor lucky draw <strong>{{ $luckyDrawCampaign }}</strong>.
-                        Berikut ini adalah nomor lucky draw anda:
+                        Berikut ini adalah nomor lucky draw yang anda dapat pada {{ $dateIssued }}.
                         </p>
 
                         <ol>
@@ -19,6 +19,17 @@
                             <li>{{ $number->lucky_draw_number_code }}</li>
                         @endforeach
                         </ol>
+
+                        @if ($numberOfLuckyDraw > $maxShown)
+                        <p>
+                        Catatan: Nomor yang ditampilkan di sini hanya {{ $maxShown }} nomor pertama yang anda dapat.
+                        </p>
+                        @endif
+
+                        <p>
+                        Total Saat ini anda memiliki <strong>{{ $totalLuckyDrawNumber }}</strong> nomor lucky draw, anda dapat melihat seluruh nomor anda di halaman
+                        Lucky Draw.
+                        </p>
 
                         <p style="margin-top:1em">
                             Semoga Beruntung!</br>
