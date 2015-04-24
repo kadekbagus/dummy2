@@ -270,7 +270,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->response->data = $data;
 
             // Insert to alert system
-            $this->insertLuckyDrawNumberInbox($userId, $luckyDrawnumbers, $mallId);
+            $this->insertLuckyDrawNumberInbox($userId, $data, $mallId);
 
             // Commit the changes
             $this->commit();
@@ -1053,11 +1053,11 @@ class LuckyDrawCSAPIController extends ControllerAPI
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @param int $userId - The user id
-     * @param array $numbers - Issued numbers
+     * @param array $response - Issued numbers
      * @param int $retailerId - The retailer
      * @return void
      */
-    protected function insertLuckyDrawNumberInbox($userId, $numbers, $retailerId)
+    protected function insertLuckyDrawNumberInbox($userId, $response, $retailerId)
     {
         $user = User::find($userId);
 
@@ -1081,17 +1081,28 @@ class LuckyDrawCSAPIController extends ControllerAPI
         $inbox->save();
 
         $luckyDraw = App::make('orbit.empty.lucky_draw');
+        $numbers = array_slice($response->records, 0, 15);
+
+        $dateIssued = date('d-M-Y H:i', strtotime($numbers[0]->issued_date));
+
+        $totalLuckyDrawNumber = LuckyDrawNumber::active()
+                                               ->where('user_id', $userId)
+                                               ->where('lucky_draw_id', $luckyDraw->lucky_draw_id)
+                                               ->count();
 
         $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
         $data = [
-            'fullName'          => $name,
-            'subject'           => 'Lucky Draw',
-            'inbox'             => $inbox,
-            'retailerName'      => $retailer->name,
-            'numberOfLuckyDraw' => count($numbers),
-            'numbers'           => $numbers,
-            'luckyDrawCampaign' => $luckyDraw->lucky_draw_name,
-            'mallName'          => $retailer->name
+            'fullName'              => $name,
+            'subject'               => 'Lucky Draw',
+            'inbox'                 => $inbox,
+            'retailerName'          => $retailer->name,
+            'numberOfLuckyDraw'     => $response->total_records,
+            'numbers'               => $numbers,
+            'luckyDrawCampaign'     => $luckyDraw->lucky_draw_name,
+            'mallName'              => $retailer->name,
+            'totalLuckyDrawNumber'  => $totalLuckyDrawNumber,
+            'dateIssued'            => $dateIssued,
+            'maxShown'              => 15
         ];
 
         $template = View::make('mobile-ci.push-notification-lucky-draw', $data);
