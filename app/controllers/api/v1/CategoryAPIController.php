@@ -725,7 +725,7 @@ class CategoryAPIController extends ControllerAPI
             }
 
             // Builder object
-            $categories = Category::excludeDeleted()->allowedForUser($user);
+            $categories = Category::excludeDeleted();
 
             // Filter category by Ids
             OrbitInput::get('category_id', function($categoryIds) use ($categories)
