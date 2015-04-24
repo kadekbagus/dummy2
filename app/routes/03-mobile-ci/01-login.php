@@ -444,5 +444,12 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
             }
         );
+
+        Route::get(
+            '/customer/luckydrawnumber/download', ['as' => 'ci-luckydrawnumber-download',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getMallLuckyDrawDownloadList();
+            }]
+        );
     }
 );

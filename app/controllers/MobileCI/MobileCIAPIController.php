@@ -46,6 +46,8 @@ use \LuckyDrawReceipt;
 use \LuckyDrawWinner;
 use \Setting;
 use URL;
+use PDO;
+use Response;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -8421,6 +8423,163 @@ class MobileCIAPIController extends ControllerAPI
         } catch (Exception $e) {
             return $this->redirectIfNotLoggedIn($e);
                 // return $e;
+        }
+    }
+
+    /**
+     * Get list of downloadable lucky draw number. There is possibilities that
+     * one user have hundred even thousands of luckydraw coupons. So, we could
+     * not fit all that number into one image. We need to split it into
+     * different image.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return Illuminate\View\View
+     */
+    public function getMallLuckyDrawDownloadList()
+    {
+        try {
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $luckyDraw = LuckyDraw::active()->first();
+
+            $mode = OrbitInput::get('mode', 'view');
+
+            switch ($mode) {
+                case 'download':
+                    return $this->getMallLuckyDrawDownloadNumber($user->user_id, $luckyDraw->lucky_draw_id);
+                    break;
+
+                case 'view':
+                default:
+                    $totalLuckyDrawNumber = LuckyDrawNumber::active()
+                                                           ->where('user_id', $user->user_id)
+                                                           ->where('lucky_draw_id', $luckyDraw->lucky_draw_id)
+                                                           ->count();
+                    $totalPerImage = 160;
+                    $totalImage = ceil($totalLuckyDrawNumber / $totalPerImage);
+
+                    return View::make('mobile-ci.lucky-draw-number-download', [
+                                     'page_title'   => 'Download Lucky Draw Number',
+                                     'luckydraw'    => $luckyDraw,
+                                     'retailer'     => $retailer,
+                                     'user'         => $user,
+                                     'total_number' => $totalLuckyDrawNumber,
+                                     'total_image'  => $totalImage,
+                                     'number_per_image'  => $totalPerImage,
+                    ]);
+            }
+        } catch (Exception $e) {
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * Method to ouput the download file to the user. Minimize the overhead
+     * by using raw queries and avoiding Eloquent.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param int $userId - The user ID
+     * @param int $luckyDrawId - The Lucky Draw ID
+     * @return string
+     */
+    protected function getMallLuckyDrawDownloadNumber($userId, $luckyDrawId)
+    {
+        $prefix = DB::getTablePrefix();
+        $default = Config::get('database.default');
+        $dbConfig = Config::get('database.connections.' . $default);
+
+        $pdo = new PDO("mysql:host=localhost;dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
+        $query = $pdo->query("SELECT * FROM {$prefix}lucky_draws
+                              where lucky_draw_id=$luckyDrawId and status='active' LIMIT 1");
+        $luckyDraw = $query->fetch(PDO::FETCH_ASSOC);
+
+        $countQuery = $pdo->query("SELECT count(*) as total FROM {$prefix}lucky_draw_numbers
+                                  where user_id=$userId");
+        $numberOfLuckyDraw = $countQuery->fetch(PDO::FETCH_ASSOC);
+        $numberOfLuckyDraw = (int)$numberOfLuckyDraw['total'];
+
+        // Pagination config
+        $currentPage = OrbitInput::get('page', 1);
+        $take = 160;
+        $start = ($currentPage - 1)  * $take;
+        $totalPages = ceil($numberOfLuckyDraw / $take);
+
+        // Image configuration
+        $fontSize = 16;
+        $xpos = 14;
+        $ypos = 5;
+
+        $heighPerLine = 20; // points
+        $imageWidth = 595;  // A4 Paper 72ppi
+
+        // Header height + total line + Footer height
+        $rowHeight = $take / 5;
+        $imageHeight = floor(100 + ($heighPerLine * $rowHeight) + 100);
+        $imageHeight = 842; // A4 Paper 72ppi
+
+        $im = imagecreatetruecolor($imageWidth, $imageHeight);
+        $black = imagecolorallocate($im, 0, 0, 0);
+        $white = imagecolorallocate($im, 255, 255, 255);
+        imagefill($im, 0, 0, $white);
+
+        $header = sprintf('%-12s: %s', 'Lucky Draw', $luckyDraw['lucky_draw_name']);
+        imagestring($im, $fontSize, $xpos, $ypos, $header, $black);
+
+        $periodHumanStart = date('d/m/Y H:i', strtotime($luckyDraw['start_date']));
+        $periodHumanEnd = date('d/m/Y H:i', strtotime($luckyDraw['end_date']));
+        $header = sprintf('%-12s: %s - %s', 'Periode', $periodHumanStart, $periodHumanEnd);
+
+        $ypos += $heighPerLine;
+        imagestring($im, $fontSize, $xpos, $ypos, $header, $black);
+
+        $totalSentences = 'Total nomor lucky draw yang anda peroleh per tanggal';
+        $ypos += $heighPerLine * 2;
+        imagestring($im, $fontSize, $xpos, $ypos, $totalSentences, $black);
+
+        $today = date('d/m/Y H:i');
+        $totalSentences = sprintf('%s adalah sebanyak %s nomor.', $today, $numberOfLuckyDraw);
+        $ypos += $heighPerLine;
+        imagestring($im, $fontSize, $xpos, $ypos, $totalSentences, $black);
+
+        $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+        $uresult = $pdo->query("SELECT * FROM {$prefix}lucky_draw_numbers
+                                where user_id=$userId order by issued_date desc,
+                                lucky_draw_number_code desc
+                                limit $start, $take");
+        if ($uresult) {
+            $i = 0;
+            $ypos += $heighPerLine * 2;
+            while ($row = $uresult->fetch(PDO::FETCH_ASSOC)) {
+                $string = sprintf('%10s', $row['lucky_draw_number_code']);
+
+                $yplus = 40;
+                if ($i++ % 5 === 0) {
+                    $string = sprintf('%-10s', $row['lucky_draw_number_code']);
+                    $ypos += $heighPerLine;
+                    $xpos = 14;
+                    $yplus = 0;
+                }
+                imagestring($im, $fontSize, $xpos, $ypos, $string, $black);
+                $xpos += 80 + $yplus;
+            }
+
+            $goodLuckString = 'Semoga Anda Beruntung!';;
+            $xpos = 14;
+            $ypos += $heighPerLine * 2;
+            imagestring($im, $fontSize, $xpos, $ypos, $goodLuckString, $black);
+
+            $pageInfoString = sprintf('Gambar %s dari %s', $currentPage, $totalPages, $take);
+            $ypos += $heighPerLine;
+            $xpos = $imageWidth - 150;
+            imagestring($im, 5, $xpos, $ypos, $pageInfoString, $black);
+
+            $file = sprintf('lucky-draw_image-%s_%s.png', $currentPage, date('d-m-Y'));
+            $file = storage_path() . '/views/' . $file;
+
+            imagepng($im, $file);
+            imagedestroy($im);
+
+            return Response::download($file);
         }
     }
 }

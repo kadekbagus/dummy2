@@ -18,7 +18,7 @@ class Media extends Eloquent
      *
      * @var array
      */
-    protected $hidden = array('realpath', 'metadata');
+    protected $hidden = array('realpath');
 
     /**
      * Table's primary key
