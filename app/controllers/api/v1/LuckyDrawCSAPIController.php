@@ -197,6 +197,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
             foreach ($luckyDrawnumbers as $row) {
                 $luckyDrawNumberIds[] = $row->lucky_draw_number_id;
             }
+            // The hash for current group always same so we can pick any object
+            // from the list.
+            $hashNumber = $luckyDrawnumbers[0]->hash;
 
             Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.before.save', array($this, $widget));
 
@@ -251,7 +254,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
                 $luckyDrawReceipt->save();
 
-                $luckyDrawReceipt->numbers()->sync($luckyDrawNumberIds);
+                LuckyDrawNumberReceipt::syncUsingHashNumber($luckyDrawReceipt->lucky_draw_receipt_id, $hashNumber);
             }
 
             Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.after.save', array($this, $widget));
