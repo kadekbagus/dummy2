@@ -30,10 +30,10 @@
     <div class="col-xs-12">
         <b>Winning Number</b>
     </div>
-</div> 
+</div>
 <div class="row text-center save-btn">
     <div class="col-xs-12">
-        <a download="Your_lucky_draw_number.png" class="btn btn-info" id="save">Save Numbers</a>
+        <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info">Save Numbers</a>
     </div>
 </div>
 <div class="row text-center lucky-number-wrapper">
@@ -64,7 +64,7 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-body">
-                
+
             </div>
         </div>
     </div>
@@ -138,7 +138,7 @@
             html2canvas($('.lucky-number-wrapper'), {
                     background: '#fff',
                     onrendered: function(canvas) {
-                        var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");  // here is the most important part because if you dont replace you will get a DOM 18 exception.    
+                        var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");  // here is the most important part because if you dont replace you will get a DOM 18 exception.
                         $('#save').attr('href', image);
                         $('#datenow').text('');
                     }
