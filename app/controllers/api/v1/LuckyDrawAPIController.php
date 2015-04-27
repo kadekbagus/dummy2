@@ -373,11 +373,11 @@ class LuckyDrawAPIController extends ControllerAPI
                     'lucky_draw_name'      => 'sometimes|required|min:5|max:255|lucky_draw_name_exists_but_me:'.$lucky_draw_id,
                     'status'               => 'orbit.empty.lucky_draw_status',
                     'start_date'           => 'date_format:Y-m-d H:i:s',
-                    'end_date'             => 'date_format:Y-m-d H:i:s|after:'.$start_date.','.$now,
+                    'end_date'             => 'date_format:Y-m-d H:i:s|end_date_greater_than_start_date_and_current_date:'.$start_date.','.$now,
                 ),
                 array(
                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
-                   'end_date.after'                => 'The end datetime should be greater than the start datetime or current datetime.'
+                   'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.'
                 )
             );
 
@@ -1481,6 +1481,19 @@ class LuckyDrawAPIController extends ControllerAPI
             }
 
             return $valid;
+        });
+
+        // Check end date should be greater than start date and current date
+        Validator::extend('end_date_greater_than_start_date_and_current_date', function ($attribute, $value, $parameters) {
+            $start_date = strtotime($parameters[0]);
+            $end_date = strtotime($value);
+            $current_date = strtotime($parameters[1]);
+
+            if (($end_date > $start_date) && ($end_date > $current_date)) {
+                return TRUE;
+            }
+
+            return FALSE;
         });
 
     }
