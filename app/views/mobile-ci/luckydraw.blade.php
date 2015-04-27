@@ -125,19 +125,21 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="row text-center save-btn">
-        <div class="col-xs-12">
-            <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info">Save Numbers</a>
+    @if ($total_number > 0)
+    <div class="row">
+        <div class="row text-center save-btn">
+            <div class="col-xs-12">
+                <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info">Save Numbers</a>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-xs-12 text-center">
-        <span>To save the numbers as image on your mobile phone press the &quot;Save Numbers&quot;</span>
+    <div class="row">
+        <div class="col-xs-12 text-center">
+            <span>To save the numbers as image on your mobile phone press the &quot;Save Numbers&quot;</span>
+        </div>
     </div>
-</div>
+    @endif
 @stop
 
 @section('modals')
