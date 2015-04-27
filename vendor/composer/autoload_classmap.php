@@ -21,6 +21,7 @@ return array(
     'AlterTableMerchantsAddFloorAndUnit' => $baseDir . '/app/database/migrations/2015_04_11_083827_alter_table_merchants_add_floor_and_unit.php',
     'AlterTableMerchantsAddIsMall' => $baseDir . '/app/database/migrations/2015_04_11_072135_alter_table_merchants_add_is_mall.php',
     'AlterTablePromotionsAddColumns' => $baseDir . '/app/database/migrations/2015_04_14_080934_alter_table_promotions_add_columns.php',
+    'AlterTableUserDetailsAddPhone3' => $baseDir . '/app/database/migrations/2015_04_27_095145_alter_table_user_details_add_phone3.php',
     'AlterTableUsersAddColumnMembershipNumber' => $baseDir . '/app/database/migrations/2015_04_15_080956_alter_table_users_add_column_membership_number.php',
     'AlterUserDetailAddDateOfWork' => $baseDir . '/app/database/migrations/2015_04_16_171310_alter_user_detail_add_date_of_work.php',
     'AlterUserDetailAddIdcard' => $baseDir . '/app/database/migrations/2015_04_16_162320_alter_user_detail_add_idcard.php',
