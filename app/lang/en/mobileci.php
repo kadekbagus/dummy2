@@ -44,7 +44,7 @@ return array(
         'event_title'           => 'Events',
         'info_title'            => 'Info',
         'coupon_title'          => 'My Coupons',
-        'search_title'          => 'Search Product',
+        'search_title'          => 'Search Tenant',
         'checkout_title'        => 'Checkout',
         'tip_title'             => 'Tip',
         'delete_item_title'     => 'Delete Item',
@@ -63,7 +63,7 @@ return array(
 
         'coupon_use'            => 'Use',
         'coupon_ignore'         => 'Later',
-        'search_label'          => 'Search by Product Name, Code or Description',
+        'search_label'          => 'Search by Tenant Name, Categories, FLoor or Description',
         'search_placeholder'    => 'Insert keyword(s)',
         'search_button'         => 'Search',
         'cancel_button'         => 'Cancel',
