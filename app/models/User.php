@@ -71,7 +71,7 @@ class User extends Eloquent implements UserInterface
     {
         return $this->belongsToMany('Object', 'object_relation', 'secondary_object_id', 'main_object_id')
                     ->where('objects.object_type', 'bank')
-                    ->where('main_object_type', 'general_object')
+                    ->where('main_object_type', 'bank')
                     ->where('secondary_object_type', 'user');
     }
 
