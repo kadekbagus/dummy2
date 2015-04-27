@@ -180,7 +180,7 @@
 
 @section('ext_script_bot')
     {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/jquery.countdown.min.js') }}
+    {{ HTML::script('mobile-ci/scripts/countdown.min.js') }}
     {{ HTML::script('mobile-ci/scripts/html2canvas.min.js') }}
     {{ HTML::script('mobile-ci/scripts/autoNumeric.js') }}
     <script type="text/javascript">
@@ -191,14 +191,24 @@
             $('#ldtitle').click(function(){
                 $('#lddetail').modal();
             })
-            $('#clock').countdown('{{ $luckydraw->end_date }}')
-                .on('update.countdown', function(event) {
-                    var format = '<div class="clock-block"><div class="clock-content">%H</div><div class="clock-content clock-label">Hour%!H</div></div><div class="clock-block"><div class="clock-content">%M</div><div class="clock-content clock-label">Minute%!M</div></div><div class="clock-block"><div class="clock-content">%S</div><div class="clock-content clock-label">Second%!S</div></div>';
-                    if (event.offset.days > 0) {
-                        format = '<div class="clock-block"><div class="clock-content">%D</div><div class="clock-content clock-label">Day%!D</div></div>' + format;
-                    }
-                    $(this).html(event.strftime(format));
-                });
+            // $('#clock').countdown('{{ $luckydraw->end_date }}')
+            //     .on('update.countdown', function(event) {
+            //         var format = '<div class="clock-block"><div class="clock-content">%H</div><div class="clock-content clock-label">Hour%!H</div></div><div class="clock-block"><div class="clock-content">%M</div><div class="clock-content clock-label">Minute%!M</div></div><div class="clock-block"><div class="clock-content">%S</div><div class="clock-content clock-label">Second%!S</div></div>';
+            //         if (event.offset.days > 0) {
+            //             format = '<div class="clock-block"><div class="clock-content">%D</div><div class="clock-content clock-label">Day%!D</div></div>' + format;
+            //         }
+            //         $(this).html(event.strftime(format));
+            //     });
+
+            // Instanciating a custom countdown
+            var countdown = new Countdown({
+                selector: '#clock',
+                msgBefore: "Waiting for the starting date.",
+                msgAfter: "The lucky draw has ended.",
+                msgPattern: '<div class="clock-block"><div class="clock-content">{days}</div><div class="clock-content clock-label">Days</div></div><div class="clock-block"><div class="clock-content">{hours}</div><div class="clock-content clock-label">Hours</div></div><div class="clock-block"><div class="clock-content">{minutes}</div><div class="clock-content clock-label">Minutes</div></div><div class="clock-block"><div class="clock-content">{seconds}</div><div class="clock-content clock-label">Seconds</div></div>',
+                dateStart: new Date('{{$servertime}}'),
+                dateEnd: new Date('{{$luckydraw->end_date}}')
+            });
 
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
         });
