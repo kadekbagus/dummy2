@@ -7932,11 +7932,13 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
+            $numbers = empty($apiResponse->data->records) ? array() : $apiResponse->data->records;
+
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
-                                'numbers'       => $apiResponse->data->records,
+                                'numbers'       => $numbers,
                                 'total_number'  => $apiResponse->data->total_records,
                                 'prev_url'      => $prevUrl,
                                 'next_url'      => $nextUrl,
