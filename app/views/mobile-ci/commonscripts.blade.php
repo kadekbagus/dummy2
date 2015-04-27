@@ -7,7 +7,7 @@
                 <h4 class="modal-title" id="SearchProduct">{{ Lang::get('mobileci.modals.search_title') }}</h4>
             </div>
             <div class="modal-body">
-                <form method="GET" name="searchForm" id="searchForm" action="{{ url('/customer/search') }}">
+                <form method="GET" name="searchForm" id="searchForm" action="{{ url('/customer/tenants') }}">
                     <div class="form-group">
                         <label for="keyword">{{ Lang::get('mobileci.modals.search_label') }}</label>
                         <input type="text" class="form-control" name="keyword" id="keyword" placeholder="{{ Lang::get('mobileci.modals.search_placeholder') }}">
