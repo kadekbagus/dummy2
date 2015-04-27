@@ -54,6 +54,7 @@ return array(
     'CreateTableMacAddresses' => $baseDir . '/app/database/migrations/2015_04_16_030911_create_table_mac_addresses.php',
     'CreateTableNews' => $baseDir . '/app/database/migrations/2015_04_15_092339_create_table_news.php',
     'CreateTableNewsMerchant' => $baseDir . '/app/database/migrations/2015_04_15_092417_create_table_news_merchant.php',
+    'CreateTableObjects' => $baseDir . '/app/database/migrations/2015_04_27_102237_create_table_objects.php',
     'CustomPermission' => $baseDir . '/app/models/CustomPermission.php',
     'DatabaseSeeder' => $baseDir . '/app/database/seeds/DatabaseSeeder.php',
     'DummyAPIController' => $baseDir . '/app/controllers/api/v1/DummyAPIController.php',
