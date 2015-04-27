@@ -44,7 +44,7 @@ return array(
         'event_title'           => 'Events',
         'info_title'            => 'Info',
         'coupon_title'          => 'Kupon Saya',
-        'search_title'          => 'Cari Produk',
+        'search_title'          => 'Cari Tenant',
         'checkout_title'        => 'Checkout',
         'tip_title'             => 'Tip',
         'delete_item_title'     => 'Hapus Item',
@@ -63,7 +63,7 @@ return array(
 
         'coupon_use'            => 'Gunakan',
         'coupon_ignore'         => 'Lain Kali',
-        'search_label'          => 'Cari berdasarkan Nama Produk, Kode atau Deskripsi',
+        'search_label'          => 'Cari berdasarkan nama tenant, kategori, lantai atau deskripsi',
         'search_placeholder'    => 'Input kata kunci',
         'search_button'         => 'Cari',
         'cancel_button'         => 'Batal',

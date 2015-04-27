@@ -7618,7 +7618,11 @@ class MobileCIAPIController extends ControllerAPI
                     $products->where(
                         function ($q) use ($name) {
                             $q->where('merchants.name', 'like', "%$name%")
-                                ->orWhere('merchants.description', 'like', "%$name%");
+                                ->orWhere('merchants.description', 'like', "%$name%")
+                                ->orWhere('merchants.floor', 'like', "%$name%");
+                            $q->orWhereHas('categories', function($q2) use ($name) {
+                                $q2->where('category_name', 'like', "%$name%");
+                            });
                         }
                     );
                 }
