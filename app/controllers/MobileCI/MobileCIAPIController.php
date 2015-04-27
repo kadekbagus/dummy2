@@ -7934,6 +7934,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $numbers = empty($apiResponse->data->records) ? array() : $apiResponse->data->records;
 
+            $servertime = Carbon::now();
+
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
                                 'retailer'      => $retailer,
@@ -7945,6 +7947,7 @@ class MobileCIAPIController extends ControllerAPI
                                 'total_pages'   => $totalPages,
                                 'current_page'  => $currentPage,
                                 'per_page'      => $take,
+                                'servertime'    => $servertime,
             ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Product viewed: %s', $product_id);
