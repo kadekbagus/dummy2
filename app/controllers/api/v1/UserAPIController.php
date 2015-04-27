@@ -87,6 +87,7 @@ class UserAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
             Event::fire('orbit.user.postnewuser.after.validation', array($this, $validator));
 
             // Begin database transaction
@@ -1252,7 +1253,7 @@ class UserAPIController extends ControllerAPI
             $users = User::Consumers()
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                        ->with(array('userDetail', 'userDetail.lastVisitedShop'))
+                        ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories'))
                         ->excludeDeleted('users')
                         ->groupBy('users.user_id');
 
@@ -1645,6 +1646,7 @@ class UserAPIController extends ControllerAPI
      * @author me@rioastamal.net
      *
      * List of API Parameters
+     * @param array     `category_ids`          (optional) - Category IDs
      * ----------------------
      * @return Illuminate\Support\Facades\Response
      */
@@ -1701,11 +1703,14 @@ class UserAPIController extends ControllerAPI
             $categoryIds = OrbitInput::post('category_ids');
             $idcard = OrbitInput::post('idcard_number');
             $mobile = OrbitInput::post('mobile_phone');
+            $mobile2 = OrbitInput::post('mobile_phone2');
             $workphone = OrbitInput::post('work_phone');
             $occupation = OrbitInput::post('occupation');
             $dateofwork = OrbitInput::post('date_of_work');
             $homeAddress = OrbitInput::post('home_address');
             $workAddress = OrbitInput::post('work_address');
+            $category_ids = OrbitInput::post('category_ids');
+            $category_ids = (array) $category_ids;
 
             $validator = Validator::make(
                 array(
@@ -1734,7 +1739,7 @@ class UserAPIController extends ControllerAPI
                     'membership_number'     => 'orbit.membership.exists',
                     'status'                => 'required|in:active,inactive,pending',
                     'category_ids'          => 'array',
-                    'idcard_number'         => 'required|numeric',
+                    'idcard_number'         => 'numeric',
                     'mobile_phone'          => 'required',
                     'work_phone'            => '',
                     'occupation'            => '',
@@ -1749,6 +1754,28 @@ class UserAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            foreach ($category_ids as $category_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'category_id'   => $category_id_check,
+                    ),
+                    array(
+                        'category_id'   => 'numeric|orbit.empty.category',
+                    )
+                );
+
+                Event::fire('orbit.user.postnewuser.before.categoryvalidation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                Event::fire('orbit.user.postnewuser.after.categoryvalidation', array($this, $validator));
+            }
+
             Event::fire('orbit.user.postnewmembership.after.validation', array($this, $validator));
 
             // Begin database transaction
@@ -1775,6 +1802,7 @@ class UserAPIController extends ControllerAPI
             $userdetail->gender = $gender;
             $userdetail->birthdate = $birthdate;
             $userdetail->phone = $mobile;
+            $userdetail->phone3 = $mobile2;
             $userdetail->phone2 = $workphone;
             $userdetail->merchant_acquired_date = $joindate;
             $userdetail->idcard = $idcard;
@@ -1797,6 +1825,18 @@ class UserAPIController extends ControllerAPI
             $newuser->setRelation('apikey', $apikey);
             $newuser->apikey = $apikey;
             $newuser->setHidden(array('user_password'));
+
+            // save categories.
+            $userCategories = array();
+            foreach ($category_ids as $category_id) {
+                $userPersonalInterest = new UserPersonalInterest();
+                $userPersonalInterest->user_id = $newuser->user_id;
+                $userPersonalInterest->personal_interest_id = $category_id;
+                $userPersonalInterest->object_type = 'category';
+                $userPersonalInterest->save();
+                $userCategories[] = $userPersonalInterest;
+            }
+            $newuser->categories = $userCategories;
 
             Event::fire('orbit.user.postnewmembership.after.save', array($this, $newuser));
             $this->response->data = $newuser;
@@ -1904,11 +1944,13 @@ class UserAPIController extends ControllerAPI
     }
 
     /**
-     * POST - Create new membership
+     * POST - Update membership
      *
      * @author me@rioastamal.net
      *
      * List of API Parameters
+     * @param string     `no_category`           (optional) - Flag to delete all category links. Valid value: Y.
+     * @param array      `category_ids`          (optional) - Category IDs
      * ----------------------
      * @return Illuminate\Support\Facades\Response
      */
@@ -2000,7 +2042,7 @@ class UserAPIController extends ControllerAPI
                     'membership_number'     => 'orbit.membership.exists_but_me',
                     'status'                => 'in:active,inactive,pending',
                     'category_ids'          => 'array',
-                    'idcard_number'         => 'required|numeric',
+                    'idcard_number'         => 'numeric',
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
@@ -2090,6 +2132,50 @@ class UserAPIController extends ControllerAPI
 
             $updateduser->save();
             $userdetail->save();
+
+            // save user categories
+            OrbitInput::post('no_category', function($no_category) use ($updateduser) {
+                if ($no_category == 'Y') {
+                    $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
+                                                                ->where('object_type', 'category')
+                                                                ->get(array('personal_interest_id'))
+                                                                ->toArray();
+                    $updateduser->categories()->detach($deleted_category_ids);
+                    $updateduser->load('categories');
+                }
+            });
+
+            OrbitInput::post('category_ids', function($category_ids) use ($updateduser) {
+                // validate category_ids
+                $category_ids = (array) $category_ids;
+                foreach ($category_ids as $category_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'category_id'   => $category_id_check,
+                        ),
+                        array(
+                            'category_id'   => 'orbit.empty.category',
+                        )
+                    );
+
+                    Event::fire('orbit.user.postupdatemembership.before.categoryvalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.user.postupdatemembership.after.categoryvalidation', array($this, $validator));
+                }
+                // sync new set of category ids
+                $pivotData = array_fill(0, count($category_ids), ['object_type' => 'category']);
+                $syncData = array_combine($category_ids, $pivotData);
+                $updateduser->categories()->sync($syncData);
+
+                // reload tenants relation
+                $updateduser->load('categories');
+            });
 
             Event::fire('orbit.user.postupdatemembership.after.save', array($this, $updateduser));
             $this->response->data = $updateduser;
@@ -2295,6 +2381,12 @@ class UserAPIController extends ControllerAPI
 
             $deletedUser->save();
             $deleteapikey->save();
+
+            // hard delete user personal interest.
+            $deleteUserPersonalInterests = UserPersonalInterest::where('user_id', $deletedUser->user_id)->get();
+            foreach ($deleteUserPersonalInterests as $deleteUserPersonalInterest) {
+                $deleteUserPersonalInterest->delete();
+            }
 
             Event::fire('orbit.user.postdeletemembership.after.save', array($this, $deletedUser));
             $this->response->data = null;
@@ -2617,5 +2709,21 @@ class UserAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        // Check the existance of category id
+        Validator::extend('orbit.empty.category', function ($attribute, $value, $parameters) {
+            $category = Category::excludeDeleted()
+                        ->where('category_id', $value)
+                        ->first();
+
+            if (empty($category)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.category', $category);
+
+            return TRUE;
+        });
+
     }
 }
