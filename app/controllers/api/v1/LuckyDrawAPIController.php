@@ -350,6 +350,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $start_date = OrbitInput::post('start_date');
             $end_date = OrbitInput::post('end_date');
+            $now = date('Y-m-d H:i:s');
 
             $data = array(
                 'lucky_draw_id'        => $lucky_draw_id,
@@ -372,11 +373,11 @@ class LuckyDrawAPIController extends ControllerAPI
                     'lucky_draw_name'      => 'sometimes|required|min:5|max:255|lucky_draw_name_exists_but_me:'.$lucky_draw_id,
                     'status'               => 'orbit.empty.lucky_draw_status',
                     'start_date'           => 'date_format:Y-m-d H:i:s',
-                    'end_date'             => 'date_format:Y-m-d H:i:s|after:'.$start_date,
+                    'end_date'             => 'date_format:Y-m-d H:i:s|after:'.$start_date.','.$now,
                 ),
                 array(
                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
-                   'end_date.after'                => 'The end date should be greater than the start date.'
+                   'end_date.after'                => 'The end datetime should be greater than the start datetime or current datetime.'
                 )
             );
 
