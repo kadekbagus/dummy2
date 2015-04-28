@@ -58,7 +58,7 @@ class ObjectAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -260,7 +260,7 @@ class ObjectAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -486,7 +486,7 @@ class ObjectAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -689,7 +689,7 @@ class ObjectAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
