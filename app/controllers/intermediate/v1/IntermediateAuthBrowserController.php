@@ -37,7 +37,12 @@ class IntermediateAuthBrowserController extends IntermediateBaseController
                     ACL::throwAccessForbidden($message);
                 }
 
-                $user = User::find($userId);
+                $user = User::excludeDeleted()->find($userId);
+
+                if (empty($user)) {
+                    $message = Lang::get('validation.orbit.access.needtologin');
+                    ACL::throwAccessForbidden($message);
+                }
 
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
@@ -54,10 +59,29 @@ class IntermediateAuthBrowserController extends IntermediateBaseController
                 $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
 
             } catch (ACLForbiddenException $e) {
-                return Redirect::to('/?forbidden');
+                if (Config::get('app.debug')) {
+                    return $e;
+                }
+
+                return Redirect::to( $this->getPortalUrl() . '/?forbidden' );
             } catch (Exception $e) {
-                return Redirect::to('/?unknown-exception');
+                if (Config::get('app.debug')) {
+                    return $e;
+                }
+
+                return Redirect::to( $this->getPortalUrl() . '/?unknown-exception' );
             }
         });
+    }
+
+    protected function getBaseDomain()
+    {
+        return $_SERVER['HTTP_HOST'];
+    }
+
+    protected function getPortalUrl()
+    {
+        // @Todo: Should be check the protocol also
+        return 'http://portal.' . $this->getBaseDomain();
     }
 }
