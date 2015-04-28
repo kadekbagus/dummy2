@@ -2075,16 +2075,20 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             // Filter user by their role name
-            OrbitInput::get('role_names', function ($data) use ($users) {
-                $data = (array)$data;
-                foreach ($data as $employeeRoleName) {
-                    if (! in_array(strtolower($employeeRoleName), ['mall admin', 'mall customer service'])) {
-                        $errorMessage = 'Employee role_name argument is not valid.';
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+            if (! is_null(OrbitInput::get('role_names', NULL))) {
+                OrbitInput::get('role_names', function ($data) use ($users) {
+                    $data = (array)$data;
+                    foreach ($data as $employeeRoleName) {
+                        if (! in_array(strtolower($employeeRoleName), ['mall admin', 'mall customer service'])) {
+                            $errorMessage = 'Employee role_name argument is not valid.';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
                     }
-                }
-                $users->whereIn('roles.role_name', $data);
-            });
+                    $users->whereIn('roles.role_name', $data);
+                });
+            } else {
+                $users->whereIn('roles.role_name', ['mall admin', 'mall customer service']);
+            }
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
