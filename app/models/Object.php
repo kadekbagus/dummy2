@@ -22,4 +22,12 @@ class Object extends Eloquent
         return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall();
     }
 
+    public function users()
+    {
+        return $this->belongsToMany('User', 'object_relation', 'main_object_id', 'secondary_object_id')
+                    ->withPivot('main_object_type', 'secondary_object_type')
+                    ->where('object_relation.main_object_type', 'bank')
+                    ->where('object_relation.secondary_object_type', 'user');
+    }
+
 }

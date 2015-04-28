@@ -24,6 +24,7 @@ return array(
             'event'          => 'Event has been successfully deleted.',
             'lucky_draw'     => 'Lucky Draw has been successfully deleted.',
             'news'           => 'News has been successfully deleted.',
+            'object'         => 'Object has been successfully deleted.',
         ),
         'updated'   => array(
             'user'           => 'User has been successfully updated.',
@@ -51,6 +52,7 @@ return array(
             'token'         => 'There is no token that matched your search criteria.',
             'lucky_draw'    => 'There is no lucky draw that matched your search criteria.',
             'news'          => 'There is no news that matched your search criteria.',
+            'object'        => 'There is no object that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(

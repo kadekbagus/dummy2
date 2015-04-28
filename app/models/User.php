@@ -67,6 +67,14 @@ class User extends Eloquent implements UserInterface
                     ->where('object_type', 'category');
     }
 
+    public function banks()
+    {
+        return $this->belongsToMany('Object', 'object_relation', 'secondary_object_id', 'main_object_id')
+                    ->where('objects.object_type', 'bank')
+                    ->where('main_object_type', 'bank')
+                    ->where('secondary_object_type', 'user');
+    }
+
     public function media()
     {
         return $this->hasMany('Media', 'object_id', 'user_id')

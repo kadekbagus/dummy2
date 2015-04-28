@@ -1253,7 +1253,7 @@ class UserAPIController extends ControllerAPI
             $users = User::Consumers()
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                        ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories'))
+                        ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
                         ->excludeDeleted('users')
                         ->groupBy('users.user_id');
 
@@ -1647,6 +1647,7 @@ class UserAPIController extends ControllerAPI
      *
      * List of API Parameters
      * @param array     `category_ids`          (optional) - Category IDs
+     * @param array     `bank_object_ids`       (optional) - Bank Object IDs
      * ----------------------
      * @return Illuminate\Support\Facades\Response
      */
@@ -1711,6 +1712,8 @@ class UserAPIController extends ControllerAPI
             $workAddress = OrbitInput::post('work_address');
             $category_ids = OrbitInput::post('category_ids');
             $category_ids = (array) $category_ids;
+            $bank_object_ids = OrbitInput::post('bank_object_ids');
+            $bank_object_ids = (array) $bank_object_ids;
 
             $validator = Validator::make(
                 array(
@@ -1755,6 +1758,7 @@ class UserAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // validate category_ids
             foreach ($category_ids as $category_id_check) {
                 $validator = Validator::make(
                     array(
@@ -1774,6 +1778,28 @@ class UserAPIController extends ControllerAPI
                 }
 
                 Event::fire('orbit.user.postnewuser.after.categoryvalidation', array($this, $validator));
+            }
+
+            // validate bank_object_ids
+            foreach ($bank_object_ids as $bank_object_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'bank_object_id'  => $bank_object_id_check,
+                    ),
+                    array(
+                        'bank_object_id'  => 'numeric|orbit.empty.bank_object',
+                    )
+                );
+
+                Event::fire('orbit.user.postnewuser.before.bankobjectvalidation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                Event::fire('orbit.user.postnewuser.after.bankobjectvalidation', array($this, $validator));
             }
 
             Event::fire('orbit.user.postnewmembership.after.validation', array($this, $validator));
@@ -1826,7 +1852,7 @@ class UserAPIController extends ControllerAPI
             $newuser->apikey = $apikey;
             $newuser->setHidden(array('user_password'));
 
-            // save categories.
+            // save categories
             $userCategories = array();
             foreach ($category_ids as $category_id) {
                 $userPersonalInterest = new UserPersonalInterest();
@@ -1837,6 +1863,19 @@ class UserAPIController extends ControllerAPI
                 $userCategories[] = $userPersonalInterest;
             }
             $newuser->categories = $userCategories;
+
+            // save bank_object_ids
+            $userBanks = array();
+            foreach ($bank_object_ids as $bank_object_id) {
+                $objectRelation = new ObjectRelation();
+                $objectRelation->main_object_id = $bank_object_id;
+                $objectRelation->main_object_type = 'bank';
+                $objectRelation->secondary_object_id = $newuser->user_id;
+                $objectRelation->secondary_object_type = 'user';
+                $objectRelation->save();
+                $userBanks[] = $objectRelation;
+            }
+            $newuser->banks = $userBanks;
 
             Event::fire('orbit.user.postnewmembership.after.save', array($this, $newuser));
             $this->response->data = $newuser;
@@ -1951,6 +1990,8 @@ class UserAPIController extends ControllerAPI
      * List of API Parameters
      * @param string     `no_category`           (optional) - Flag to delete all category links. Valid value: Y.
      * @param array      `category_ids`          (optional) - Category IDs
+     * @param string     `no_bank_object`        (optional) - Flag to delete all bank object links. Valid value: Y.
+     * @param array      `bank_object_ids`       (optional) - Bank Object IDs
      * ----------------------
      * @return Illuminate\Support\Facades\Response
      */
@@ -2173,8 +2214,53 @@ class UserAPIController extends ControllerAPI
                 $syncData = array_combine($category_ids, $pivotData);
                 $updateduser->categories()->sync($syncData);
 
-                // reload tenants relation
+                // reload categories relation
                 $updateduser->load('categories');
+            });
+
+            // save user bank_object_ids
+            OrbitInput::post('no_bank_object', function($no_bank_object) use ($updateduser) {
+                if ($no_bank_object == 'Y') {
+                    $deleted_bank_object_ids = ObjectRelation::where('secondary_object_id', $updateduser->user_id)
+                                                             ->where('secondary_object_type', 'user')
+                                                             ->where('main_object_type', 'bank')
+                                                             ->get(array('main_object_id'))
+                                                             ->toArray();
+                    $updateduser->banks()->detach($deleted_bank_object_ids);
+                    $updateduser->load('banks');
+                }
+            });
+
+            OrbitInput::post('bank_object_ids', function($bank_object_ids) use ($updateduser) {
+                // validate bank_object_ids
+                $bank_object_ids = (array) $bank_object_ids;
+                foreach ($bank_object_ids as $bank_object_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'bank_object_id'  => $bank_object_id_check,
+                        ),
+                        array(
+                            'bank_object_id'  => 'numeric|orbit.empty.bank_object',
+                        )
+                    );
+
+                    Event::fire('orbit.user.postupdatemembership.before.bankobjectvalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.user.postupdatemembership.after.bankobjectvalidation', array($this, $validator));
+                }
+                // sync new set of bank_object_ids
+                $pivotData = array_fill(0, count($bank_object_ids), ['main_object_type' => 'bank', 'secondary_object_type' => 'user']);
+                $syncData = array_combine($bank_object_ids, $pivotData);
+                $updateduser->banks()->sync($syncData);
+
+                // reload banks relation
+                $updateduser->load('banks');
             });
 
             Event::fire('orbit.user.postupdatemembership.after.save', array($this, $updateduser));
@@ -2386,6 +2472,15 @@ class UserAPIController extends ControllerAPI
             $deleteUserPersonalInterests = UserPersonalInterest::where('user_id', $deletedUser->user_id)->get();
             foreach ($deleteUserPersonalInterests as $deleteUserPersonalInterest) {
                 $deleteUserPersonalInterest->delete();
+            }
+
+            // hard delete user bank_object_ids.
+            $deleteUserBankObjects = ObjectRelation::where('secondary_object_id', $deletedUser->user_id)
+                                                         ->where('secondary_object_type', 'user')
+                                                         ->where('main_object_type', 'bank')
+                                                         ->get();
+            foreach ($deleteUserBankObjects as $deleteUserBankObject) {
+                $deleteUserBankObject->delete();
             }
 
             Event::fire('orbit.user.postdeletemembership.after.save', array($this, $deletedUser));
@@ -2721,6 +2816,21 @@ class UserAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.category', $category);
+
+            return TRUE;
+        });
+
+        // Check the existance of bank object id
+        Validator::extend('orbit.empty.bank_object', function ($attribute, $value, $parameters) {
+            $bankObject = Object::excludeDeleted()
+                        ->where('object_id', $value)
+                        ->first();
+
+            if (empty($bankObject)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.bank_object', $bankObject);
 
             return TRUE;
         });
