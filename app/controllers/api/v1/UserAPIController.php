@@ -1705,6 +1705,9 @@ class UserAPIController extends ControllerAPI
             $idcard = OrbitInput::post('idcard_number');
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
+            $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
             $workphone = OrbitInput::post('work_phone');
             $occupation = OrbitInput::post('occupation');
             $dateofwork = OrbitInput::post('date_of_work');
@@ -1829,6 +1832,9 @@ class UserAPIController extends ControllerAPI
             $userdetail->birthdate = $birthdate;
             $userdetail->phone = $mobile;
             $userdetail->phone3 = $mobile2;
+            $userdetail->city = $city;
+            $userdetail->province = $province;
+            $userdetail->postal_code = $postal_code;
             $userdetail->phone2 = $workphone;
             $userdetail->merchant_acquired_date = $joindate;
             $userdetail->idcard = $idcard;
@@ -2048,6 +2054,10 @@ class UserAPIController extends ControllerAPI
             $categoryIds = OrbitInput::post('category_ids');
             $idcard = OrbitInput::post('idcard_number');
             $mobile = OrbitInput::post('mobile_phone');
+            $mobile2 = OrbitInput::post('mobile_phone2');
+            $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
             $workphone = OrbitInput::post('work_phone');
             $occupation = OrbitInput::post('occupation');
             $dateofwork = OrbitInput::post('date_of_work');
@@ -2143,6 +2153,22 @@ class UserAPIController extends ControllerAPI
 
             OrbitInput::post('mobile_phone', function($phone) use ($userdetail) {
                 $userdetail->phone = $phone;
+            });
+
+            OrbitInput::post('mobiles_phone2', function($phone3) use ($userdetail) {
+                $userdetail->phone3 = $phone3;
+            });
+
+            OrbitInput::post('city', function($city) use ($userdetail) {
+                $userdetail->city = $city;
+            });
+
+            OrbitInput::post('province', function($province) use ($userdetail) {
+                $userdetail->province = $province;
+            });
+
+            OrbitInput::post('postal_code', function($postal) use ($userdetail) {
+                $userdetail->postal_code = $postal;
             });
 
             OrbitInput::post('work_phone', function($phone) use ($userdetail) {
