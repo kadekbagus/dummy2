@@ -2155,7 +2155,7 @@ class UserAPIController extends ControllerAPI
                 $userdetail->phone = $phone;
             });
 
-            OrbitInput::post('mobiles_phone2', function($phone3) use ($userdetail) {
+            OrbitInput::post('mobile_phone2', function($phone3) use ($userdetail) {
                 $userdetail->phone3 = $phone3;
             });
 
