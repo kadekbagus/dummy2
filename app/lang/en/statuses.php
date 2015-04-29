@@ -62,6 +62,10 @@ return array(
             'retailer' => array(
                 'logo'  => 'Retailer logo has been successfully uploaded.',
             ),
+            'mall' => array(
+                'background'         => 'Background image has been successfully uploaded.',
+                'delete_background'  => 'Background image has been successfully deleted.'
+            ),
             'product' => array(
                 'main'          => 'Product image has been successfully uploaded.',
                 'delete_image'  => 'Product images has been successfully deleted.'
