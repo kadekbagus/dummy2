@@ -1891,7 +1891,7 @@ class CouponAPIController extends ControllerAPI
 
             // issued coupon with verification number check
             $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
-                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotion_retailer.promotion_id')
+                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
