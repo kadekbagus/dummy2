@@ -27,7 +27,7 @@
 <div class="row product">
     <div class="col-xs-12 product-img">
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="#" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
+            <div class="zoom"><a href="{{ asset($product->promo_image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
         <a href="{{ asset($product->promo_image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($product->promo_image) }}" ></a>
     </div>
@@ -108,7 +108,7 @@
                 <div class="row">
                     <input type="hidden" name="detail" id="detail" value="">
                     <div class="col-xs-12">
-                        <button type="button" id="applyCoupon" class="btn btn-info btn-block">{{ Lang::get('mobileci.modals.coupon_use') }}</button>
+                        <button type="button" id="applyCoupon" class="btn btn-info btn-block">Validate</button>
                     </div>
                 </div>
             </div>

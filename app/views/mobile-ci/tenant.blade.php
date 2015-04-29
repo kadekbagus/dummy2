@@ -21,12 +21,12 @@
             @foreach($product->mediaLogoOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
                 <span class="gallery-helper"></span>
-                <img class="img-responsive" src="{{ asset($media->path) }}" />
+                <a href="{{ asset($media->path) }}" data-featherlight="image"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
             </li>
             @endforeach
             @foreach($product->mediaImageOrig as $media)
             <li data-thumb="{{ asset($media->path) }}"> 
-                <img class="img-responsive" src="{{ asset($media->path) }}" />
+                <a href="{{ asset($media->path) }}" data-featherlight="image"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
             </li>
             @endforeach
         </ul>
@@ -200,7 +200,6 @@
                     $('#image-gallery').removeClass('cS-hidden');
                 },
                 onAfterSlide: function() {
-                    console.log('asd');
                     $('.zoom a').attr('href', $('.lslide.active img').attr('src'));
                 }
             });
