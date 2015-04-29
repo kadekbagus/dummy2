@@ -99,6 +99,7 @@
             <option value="20">24</option>
         </select>
         <button id="printbtn" style="padding:0 6px;" onclick="window.print()">Print Page</button>
+        <button id="printbtn" style="padding:0 6px;" onclick="window.exportToCSV()">Export to CSV</button>
     </div>
     <div id="loadingbar">Loading all the data, please wait...</div>
 </div>
@@ -171,6 +172,13 @@
         document.getElementById('main').style.fontFamily = "Arial";
         document.getElementById('main').style.fontSize = "12px";
         document.getElementById('loadingbar').style.display = 'none';
+    }
+
+    function exportToCSV() {
+        // Replace the redundant query string argument 'export'
+        var url = window.location.href.replace('&export=print', '').replace('&export=csv', '');
+
+        window.location.href = url + '&export=csv';
     }
 </script>
 

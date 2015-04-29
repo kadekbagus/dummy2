@@ -62,6 +62,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
         $this->preparePDO();
         $prefix = DB::getTablePrefix();
 
+        $mode = OrbitInput::get('export', 'print');
         $luckyDrawId = (int)OrbitInput::get('lucky_draw_id', 1);
         $start = 0;
         $take = 250000;
@@ -134,25 +135,90 @@ class DataPrinterController extends IntermediateAuthBrowserController
             return "NO RESULT";
         }
 
-        $getFullName = function($user)
+        $getFullName = function($user, $format='with_email')
         {
             $fullname = trim($user->user_firstname . ' ' . $user->user_lastname);
 
-            if (empty($fullname)) {
-                // return only email
-                return $user->user_email;
-            }
-
             // return the full name with email
-            return sprintf('%s (%s)', $fullname, $user->user_email);
+            switch ($format) {
+                case 'no_email':
+                    return $fullname;
+
+                case 'with_email':
+                default:
+                    if (empty($fullname)) {
+                        // return only email
+                        return $user->user_email;
+                    }
+
+                    return sprintf('%s (%s)', $fullname, $user->user_email);
+            }
         };
 
-        $formatDate = function($date)
+        $formatDate = function($date, $with='noseconds')
         {
-            return date('d-M-Y H:i', strtotime($date));
+            switch ($with) {
+                case 'with_seconds':
+                    return date('d-M-Y H:i:s', strtotime($date));
+                    break;
+
+                case 'csv':
+                    return date('d-M-Y H:i:s', strtotime($date));
+                    break;
+
+                default:
+                    return date('d-M-Y H:i', strtotime($date));
+            }
         };
 
-        require app_path() . '/views/printer/list-lucky-draw-number-view.php';
+        switch ($mode) {
+            case 'csv':
+                $filename = 'lucky-draw-number-report-' . date('d_M_Y_HiA') . '.csv';
+                @header('Content-Description: File Transfer');
+                @header('Content-Type: text/csv');
+                @header('Content-Disposition: attachment; filename=' . $filename);
+
+                // CSV Header
+                // ----------
+                printf("%s,%s,%s,%s,%s,%s\n\n", '', '', strtoupper($currentRetailer->name), 'ISSUED LUCKY DRAW NUMBER REPORT', '', '');
+
+                // Lucky Draw Name
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Lucky Draw', $luckyDraw->lucky_draw_name, '', '', '');
+
+                // Period
+                $period = sprintf('%s - %s', $formatDate($luckyDraw->start_date), $formatDate($luckyDraw->end_date));
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Period', $period, '', '', '');
+
+                // Total Number
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Number', $totalLuckyDrawNumber, '', '', '');
+
+                // Total Issued Number
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Issued Number', $totalIssuedLuckyDrawNumber, '', '', '');
+
+                // Total Number Left
+                $totalNumberLeft = $totalLuckyDrawNumber - $totalIssuedLuckyDrawNumber;
+                printf("%s,%s,%s,%s,%s,%s\n\n", '', 'Total Number Left', $totalNumberLeft, '', '', '');
+
+                // CSV Format
+                // #, LUCKY DRAW NUMBER, ISSUED DATE, FULL NAME, EMAIL, MEMBERSHIP
+                printf("NO,LUCKY DRAW NUMBER,ISSUED DATE,FULL NAME,EMAIL,MEMBERSHIP\n");
+                while ($row = $result->fetch(PDO::FETCH_OBJ)) {
+                    printf("%s,%s,%s,%s,%s,%s\n",
+                            ++$rowCounter,
+                            $row->lucky_draw_number_code,
+                            $formatDate($row->issued_date, 'csv'),
+                            $getFullName($row, 'no_email'),
+                            $row->user_email,
+                            $row->membership_number
+                    );
+                }
+
+                break;
+
+            case 'print':
+            default:
+                require app_path() . '/views/printer/list-lucky-draw-number-view.php';
+        }
     }
 
     /**
