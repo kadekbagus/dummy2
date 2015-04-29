@@ -5539,10 +5539,10 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
         } catch (Exception $e) {
             $this->rollback();
-            $activityNotes = sprintf('Event Click Failed. Event Id : %s', $event_id);
+            $activityNotes = sprintf('Event View Failed. Event Id : %s', $event_id);
             $activity->setUser($user)
-                ->setActivityName('event_click')
-                ->setActivityNameLong('Event Click Failed')
+                ->setActivityName('event_view')
+                ->setActivityNameLong('Event View Failed')
                 ->setObject(null)
                 ->setModuleName('Event')
                 ->setEvent($event)
@@ -7763,31 +7763,50 @@ class MobileCIAPIController extends ControllerAPI
 
             if (! empty(OrbitInput::get('promotion_id'))) {
                 $pagetitle = 'PROMOTIONS TENANTS';
+                $activityPageNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailers')
+                    ->setActivityNameLong('View Promotion Tenants')
+                    ->setObject(null)
+                    ->setModuleName('Tenants')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
             }
+
             if (! empty(OrbitInput::get('event_id'))) {
                 $pagetitle = 'EVENTS TENANTS';
+                $activityPageNotes = sprintf('Page viewed: Events Tenants List Page, event ID: %s', OrbitInput::get('event_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailers')
+                    ->setActivityNameLong('View Events Tenants')
+                    ->setObject(null)
+                    ->setModuleName('Tenants')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
             }
-            //  else {
-            //     $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
-            //     $activityPage->setUser($user)
-            //         ->setActivityName('view_search')
-            //         ->setActivityNameLong('View (Search Page)')
-            //         ->setObject(null)
-            //         ->setModuleName('Product')
-            //         ->setNotes($activityPageNotes)
-            //         ->responseOK()
-            //         ->save();
-            // }
+            if (! empty(OrbitInput::get('event_id')) && ! empty(OrbitInput::get('promotion_id'))) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailers')
+                    ->setActivityNameLong('View Tenants')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories));
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view: Search Page, keyword: %s', $keyword);
+            $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_search')
-                ->setActivityNameLong('View (Search Page)')
+                ->setActivityName('view_retailers')
+                ->setActivityNameLong('View Tenants')
                 ->setObject(null)
-                ->setModuleName('Product')
+                ->setModuleName('Tenants')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -7810,7 +7829,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         $user = null;
         $product_id = 0;
-        $activityProduct = Activity::mobileci()
+        $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $product = null;
         try {
@@ -7818,6 +7837,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
             $product_id = trim(OrbitInput::get('id'));
+            $promo_id = trim(OrbitInput::get('pid'));
+            $news_id = trim(OrbitInput::get('nid'));
 
             $product = Retailer::with('media', 'mediaLogoOrig', 'mediaMapOrig', 'mediaImageOrig', 'news', 'newsPromotions')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
             // dd($product);
@@ -7830,28 +7851,52 @@ class MobileCIAPIController extends ControllerAPI
                 $product->logo = 'mobile-ci/images/default_product.png';
             }
 
-            $activityProductNotes = sprintf('Product viewed: %s', $product->product_name);
-            $activityProduct->setUser($user)
-                ->setActivityName('view_product')
-                ->setActivityNameLong('View Product')
-                ->setObject($product)
-                ->setProduct($product)
-                ->setModuleName('Product')
-                ->setNotes($activityProductNotes)
-                ->responseOK()
-                ->save();
+            if (! empty($promo_id)) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $product->merchant_id . ', promotion ID: '. $promo_id);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant')
+                    ->setObject($product)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty($news_id)) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from News, tenant ID: ' . $product->merchant_id . ', news ID: '. $news_id);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant')
+                    ->setObject($product)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (empty($promo_id) && empty($news_id)) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Detail Page, tenant ID: ' . $product->merchant_id);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant')
+                    ->setObject($product)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'retailer' => $retailer, 'product' => $product));
 
         } catch (Exception $e) {
-            $activityProductNotes = sprintf('Product viewed: %s', $product_id);
-            $activityProduct->setUser($user)
-                ->setActivityName('view_product')
-                ->setActivityNameLong('View Product Not Found')
+            $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant')
                 ->setObject(null)
-                ->setProduct($product)
-                ->setModuleName('Product')
-                ->setNotes($e->getMessage())
+                ->setModuleName('Tenants')
+                ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
 
@@ -7924,10 +7969,12 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            $activityProductNotes = sprintf('Lucky Draw Page');
+            $activityProductNotes = sprintf('Page viewed: Lucky Draw Page');
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Lucky Draw')
+                ->setObject($luckydraw)
+                ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()
                 ->save();
@@ -7950,15 +7997,14 @@ class MobileCIAPIController extends ControllerAPI
                                 'servertime'    => $servertime,
             ]);
         } catch (Exception $e) {
-            $activityProductNotes = sprintf('Product viewed: %s', $product_id);
+            $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
             $activityProduct->setUser($user)
-                ->setActivityName('view_product')
-                ->setActivityNameLong('View Product Not Found')
+                ->setActivityName('view_lucky_draw')
+                ->setActivityNameLong('View Lucky Draw')
                 ->setObject(null)
-                ->setProduct($product)
-                ->setModuleName('Product')
-                ->setNotes($e->getMessage())
-                ->responseFailed()
+                ->setModuleName('Lucky Draw')
+                ->setNotes($activityProductNotes)
+                ->responseOK()
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
@@ -8080,38 +8126,25 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
-            if (! empty(OrbitInput::get('new'))) {
-                $pagetitle = Lang::get('mobileci.page_title.new_products');
-                $activityPageNotes = sprintf('Page viewed: New Product Page, keyword: %s', $keyword);
-                $activityPage->setUser($user)
-                    ->setActivityName('view_new_product')
-                    ->setActivityNameLong('View (New Product Page)')
-                    ->setObject(null)
-                    ->setModuleName('New Product')
-                    ->setNotes($activityPageNotes)
-                    ->responseOK()
-                    ->save();
-            } else {
-                $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
-                $activityPage->setUser($user)
-                    ->setActivityName('view_search')
-                    ->setActivityNameLong('View (Search Page)')
-                    ->setObject(null)
-                    ->setModuleName('Product')
-                    ->setNotes($activityPageNotes)
-                    ->responseOK()
-                    ->save();
-            }
+            $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_coupon_list')
+                ->setActivityNameLong('View (Coupon List Page)')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
 
             return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view: Search Page, keyword: %s', $keyword);
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_search')
-                ->setActivityNameLong('View (Search Page)')
+                ->setActivityName('view_page_coupon_list')
+                ->setActivityNameLong('View (Coupon List) Failed')
                 ->setObject(null)
-                ->setModuleName('Product')
+                ->setModuleName('Coupon')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -8134,7 +8167,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         $user = null;
         $product_id = 0;
-        $activityProduct = Activity::mobileci()
+        $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $product = null;
         try {
@@ -8175,30 +8208,28 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons[0]->promo_image = 'mobile-ci/images/default_product.png';
             }
 
-            // $activityProductNotes = sprintf('Product viewed: %s', $product->product_name);
-            // $activityProduct->setUser($user)
-            //     ->setActivityName('view_product')
-            //     ->setActivityNameLong('View Product')
-            //     ->setObject($product)
-            //     ->setProduct($product)
-            //     ->setModuleName('Product')
-            //     ->setNotes($activityProductNotes)
-            //     ->responseOK()
-            //     ->save();
+            $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_coupon_detail')
+                ->setActivityNameLong('View (Coupon Detail Page)')
+                ->setObject($coupons)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
 
             return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons[0]->promotion_name, 'retailer' => $retailer, 'product' => $coupons[0], 'tenants' => $tenants));
 
         } catch (Exception $e) {
-            // $activityProductNotes = sprintf('Product viewed: %s', $product_id);
-            // $activityProduct->setUser($user)
-            //     ->setActivityName('view_product')
-            //     ->setActivityNameLong('View Product Not Found')
-            //     ->setObject(null)
-            //     ->setProduct($product)
-            //     ->setModuleName('Product')
-            //     ->setNotes($e->getMessage())
-            //     ->responseFailed()
-            //     ->save();
+            $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $promoid);
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_coupon_detail')
+                ->setActivityNameLong('View (Coupon Detail Page) Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
 
             return $this->redirectIfNotLoggedIn($e);
                 // return $e;
@@ -8278,12 +8309,12 @@ class MobileCIAPIController extends ControllerAPI
             }
 
 
-            $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
+            $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
             $activityPage->setUser($user)
-                ->setActivityName('view_search')
-                ->setActivityNameLong('View (Search Page)')
+                ->setActivityName('view_page_promotion_list')
+                ->setActivityNameLong('View (Promotion List Page)')
                 ->setObject(null)
-                ->setModuleName('Product')
+                ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
@@ -8291,12 +8322,12 @@ class MobileCIAPIController extends ControllerAPI
             return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view: Search Page, keyword: %s', $keyword);
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_search')
-                ->setActivityNameLong('View (Search Page)')
+                ->setActivityName('view_page_promotion_list')
+                ->setActivityNameLong('View (Promotion List) Failed')
                 ->setObject(null)
-                ->setModuleName('Product')
+                ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -8319,7 +8350,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         $user = null;
         $product_id = 0;
-        $activityProduct = Activity::mobileci()
+        $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $product = null;
         try {
@@ -8339,9 +8370,29 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
+            $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_promotion_detail')
+                ->setActivityNameLong('View (Promotion Detail Page)')
+                ->setObject($coupons)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
             return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
 
         } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_promotion_detail')
+                ->setActivityNameLong('View (Promotion Detail Page) Failed')
+                ->setObject(null)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
             return $this->redirectIfNotLoggedIn($e);
                 // return $e;
         }
@@ -8418,12 +8469,12 @@ class MobileCIAPIController extends ControllerAPI
             }
 
 
-            $activityPageNotes = sprintf('Page viewed: Search Page, keyword: %s', $keyword);
+            $activityPageNotes = sprintf('Page viewed: %s', 'News List Page');
             $activityPage->setUser($user)
-                ->setActivityName('view_search')
-                ->setActivityNameLong('View (Search Page)')
+                ->setActivityName('view_page_news_list')
+                ->setActivityNameLong('View (News List Page)')
                 ->setObject(null)
-                ->setModuleName('Product')
+                ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
@@ -8431,12 +8482,12 @@ class MobileCIAPIController extends ControllerAPI
             return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view: Search Page, keyword: %s', $keyword);
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_search')
-                ->setActivityNameLong('View (Search Page)')
+                ->setActivityName('view_page_news_list')
+                ->setActivityNameLong('View (News List) Failed')
                 ->setObject(null)
-                ->setModuleName('Product')
+                ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -8459,7 +8510,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         $user = null;
         $product_id = 0;
-        $activityProduct = Activity::mobileci()
+        $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
         $product = null;
         try {
@@ -8479,9 +8530,29 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
+            $activityPageNotes = sprintf('Page viewed: News Detail, news Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_news_detail')
+                ->setActivityNameLong('View (News Detail Page)')
+                ->setObject($coupons)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
             return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
 
         } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_page_news_detail')
+                ->setActivityNameLong('View (News Detail Page) Failed')
+                ->setObject(null)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
             return $this->redirectIfNotLoggedIn($e);
                 // return $e;
         }
