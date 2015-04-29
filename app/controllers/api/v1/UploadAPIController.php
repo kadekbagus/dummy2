@@ -4150,6 +4150,17 @@ class UploadAPIController extends ControllerAPI
             $merchant->logo = NULL;
             $merchant->save();
 
+            // On table settings, update background_image to null
+            $updatedsetting = Setting::active()
+                         ->where('object_id', $merchant->merchant_id)
+                         ->where('object_type', 'merchant')
+                         ->where('setting_name', 'background_image')
+                         ->first();
+            if (! empty($updatedsetting)) {
+                $updatedsetting->setting_value = null;
+                $updatedsetting->save();
+            }
+
             Event::fire('orbit.upload.postdeletemallbackground.after.save', array($this, $merchant));
 
             $this->response->data = $merchant;
