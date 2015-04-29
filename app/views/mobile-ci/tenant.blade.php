@@ -192,7 +192,7 @@
                 item:1,
                 thumbItem:3,
                 slideMargin: 0,
-                speed:500,
+                speed:2000,
                 auto:true,
                 loop:true,
                 onSliderLoad: function() {
