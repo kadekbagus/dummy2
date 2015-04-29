@@ -50,7 +50,7 @@
             </div>
             @elseif(count($product->tenants) == 1 )
             <div class="col-xs-12 text-center">
-                <a href="{{ url('customer/tenant?id='.$product->tenants[0]->merchant_id) }}" class="btn btn-info btn-block">See Tenant</a>
+                <a href="{{ url('customer/tenant?id='.$product->tenants[0]->merchant_id.'&nid='.$product->news_id) }}" class="btn btn-info btn-block">See Tenant</a>
             </div>
             @endif
         </div>
