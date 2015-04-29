@@ -249,6 +249,7 @@ return array(
             'news'                 => 'The News ID you specified is not found.',
             'link_object_id'       => 'The Link Object ID you specified is not found.',
             'bank_object'          => 'The Bank Object ID you specified is not found.',
+            'mall'                 => 'The Mall ID you specified is not found.',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
