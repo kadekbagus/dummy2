@@ -190,9 +190,10 @@
             $('#image-gallery').lightSlider({
                 gallery:true,
                 item:1,
-                thumbItem:3,
+                thumbItem:4,
                 slideMargin: 0,
-                speed:2000,
+                speed:500,
+                pause:2000,
                 auto:true,
                 loop:true,
                 onSliderLoad: function() {
