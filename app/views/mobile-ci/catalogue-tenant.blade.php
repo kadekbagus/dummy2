@@ -171,9 +171,38 @@
     @endif
 @stop
 
+@section('modals')
+<!-- Modal -->
+<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
+                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> Info</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <p>
+                            Mau browsing sepuasnya?<br>
+                            Atau mau ikutan undian berhadiah?<br>
+                            Buka email Anda untuk verifikasi sekarang juga!!<br>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="pull-right"><button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+@stop
+
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
 {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
+{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     function updateQueryStringParameter(uri, key, value) {
         var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
@@ -185,6 +214,18 @@
         }
     }
     $(document).ready(function(){
+        $(document).on('show.bs.modal', '.modal', function (event) {
+            var zIndex = 1040 + (10 * $('.modal:visible').length);
+            $(this).css('z-index', zIndex);
+            setTimeout(function() {
+                $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
+            }, 0);
+        });
+        if(!$.cookie('dismiss_verification_popup')) {
+            $.cookie('dismiss_verification_popup', 't', { expires: 1 });
+            $('#verifyModal').modal();
+        }
+
         var promo = '';
         @if(!empty(Input::get('promotion_id'))) 
             promo = '&promotion_id='+{{Input::get('promotion_id')}};
