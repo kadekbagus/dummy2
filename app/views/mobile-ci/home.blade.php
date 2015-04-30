@@ -327,26 +327,43 @@
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
-        $(document).on('show.bs.modal', '.modal', function (event) {
-            var zIndex = 1040 + (10 * $('.modal:visible').length);
-            $(this).css('z-index', zIndex);
-            setTimeout(function() {
-                $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
-            }, 0);
-        });
-        if(!$.cookie('dismiss_verification_popup')) {
-            $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-            $('#verifyModal').modal();
-        }
+        // $(document).on('show.bs.modal', '.modal', function (event) {
+        //     var zIndex = 1040 + (10 * $('.modal:visible').length);
+        //     $(this).css('z-index', zIndex);
+        //     setTimeout(function() {
+        //         $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
+        //     }, 0);
+        // });
+        
         @if(! is_null($events))
-          $('#promoModal').modal();
-          $.ajax({
-            url: '{{ route('display-event-popup-activity') }}',
-            data: {
-              eventdata: {{$events->event_id}}
-            },
-            method: 'POST'
-          });
+            if(!$.cookie('dismiss_verification_popup')) {
+                $.cookie('dismiss_verification_popup', 't', { expires: 1 });
+                $('#verifyModal').modal();
+            } else {
+                $('#promoModal').modal();
+                $.ajax({
+                    url: '{{ route('display-event-popup-activity') }}',
+                    data: {
+                        eventdata: {{$events->event_id}}
+                    },
+                    method: 'POST'
+                });
+            }
+            $('#verifyModal').on('hide.bs.modal', function(e){
+                $('#promoModal').modal();
+                $.ajax({
+                    url: '{{ route('display-event-popup-activity') }}',
+                    data: {
+                        eventdata: {{$events->event_id}}
+                    },
+                    method: 'POST'
+                });
+            })
+        @else
+            if(!$.cookie('dismiss_verification_popup')) {
+                $.cookie('dismiss_verification_popup', 't', { expires: 1 });
+                $('#verifyModal').modal();
+            }
         @endif
         $('#emptyCoupon').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
