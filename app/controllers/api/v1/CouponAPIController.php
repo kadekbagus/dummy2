@@ -1547,6 +1547,10 @@ class CouponAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
+            if ($sortBy !== 'promotions.status') {
+                $coupons->orderBy('promotions.status', 'asc');
+            }
+
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {

@@ -1031,6 +1031,10 @@ class NewsAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
+            if ($sortBy !== 'news.status') {
+                $news->orderBy('news.status', 'asc');
+            }
+
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {

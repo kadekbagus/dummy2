@@ -54,7 +54,6 @@ class IssuedCoupon extends Eloquent
         $issued->expired_date = $promotion->coupon_validity_in_date;
         $issued->issued_date = date('Y-m-d H:i:s');
         $issued->status = 'active';
-        $issued->created_at = $admin->user_id;
         $issued->save();
 
         return $issued;
