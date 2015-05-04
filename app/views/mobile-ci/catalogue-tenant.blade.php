@@ -57,10 +57,6 @@
                                 <li data-floor="L4"><span>L4</span></li>
                                 <li data-floor="L5"><span>L5</span></li>
                                 <li data-floor="L6"><span>L6</span></li>
-                                <li data-floor="L7"><span>L7</span></li>
-                                <li data-floor="L8"><span>L8</span></li>
-                                <li data-floor="L9"><span>L9</span></li>
-                                <li data-floor="L10"><span>L10</span></li>
                             </ul>
                         </div>
                     </div>
@@ -151,6 +147,10 @@
                                 <li data-floor="G"><span>G</span></li>
                                 <li data-floor="L1"><span>L1</span></li>
                                 <li data-floor="L2"><span>L2</span></li>
+                                <li data-floor="L3"><span>L3</span></li>
+                                <li data-floor="L4"><span>L4</span></li>
+                                <li data-floor="L5"><span>L5</span></li>
+                                <li data-floor="L6"><span>L6</span></li>
                             </ul>
                         </div>
                     </div>
