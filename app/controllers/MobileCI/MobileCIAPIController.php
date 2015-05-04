@@ -176,27 +176,6 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            // $random_products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->get();
-
-            // $new_products = LuckyDraw::with('media')->active()->first();
-
-            // $promotion = Promotion::active()->where('is_coupon', 'N')->where('merchant_id', $retailer->parent_id)->whereHas(
-            //     'retailers',
-            //     function ($q) use ($retailer) {
-            //         $q->where('promotion_retailer.retailer_id', $retailer->merchant_id);
-            //     }
-            // )
-            //     ->where(
-            //         function ($q) {
-            //             $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now())->orWhere(
-            //                 function ($qr) {
-            //                     $qr->where('begin_date', '<=', Carbon::now())->where('is_permanent', '=', 'Y');
-            //                 }
-            //             );
-            //         }
-            //     )
-            //     ->orderBy(DB::raw('RAND()'))->first();
-
             if (empty(\Cookie::get('event'))) {
                 $event_store = array();
             } else {
@@ -217,7 +196,6 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $events = $events->orderBy('events.event_id', 'DESC')->first();
-            // dd($events);
             $event_families = array();
             if (! empty($events)) {
                 if ($events->link_object_type == 'family') {
@@ -252,22 +230,6 @@ class MobileCIAPIController extends ControllerAPI
                 \Cookie::queue('event', $event_store, 1440);
             }
 
-            // $cartitems = $this->getCartForToolbar();
-
-            // $widgets = Widget::with('media')
-            //     ->active()
-            //     ->where('merchant_id', $retailer->parent->merchant_id)
-            //     ->whereHas(
-            //         'retailers',
-            //         function ($q) use ($retailer) {
-            //             $q->where('retailer_id', $retailer->merchant_id);
-            //         }
-            //     )
-            //     ->orderBy('widget_order', 'ASC')
-            //     ->groupBy('widget_type')
-            //     ->take(4)
-            //     ->get();
-
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
                 ->setActivityName('view_page_home')
@@ -291,7 +253,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -5969,6 +5930,10 @@ class MobileCIAPIController extends ControllerAPI
      */
     public function redirectIfNotLoggedIn($e)
     {
+        if (Config::get('debug')) {
+            return $e;
+        }
+
         if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'Session has ben expires.' || $e->getMessage() === 'User agent miss match.') {
             return \Redirect::to('/customer');
         } else {
@@ -6009,16 +5974,6 @@ class MobileCIAPIController extends ControllerAPI
      */
     protected function prepareSession()
     {
-        // if (! is_object($this->session)) {
-        //     // This user assumed are Consumer, which has been checked at login process
-        //     $config = new SessionConfig(Config::get('orbit.session'));
-        //     $config->setConfig('session_origin.header.name', 'X-Orbit-Mobile-Session');
-        //     $config->setConfig('session_origin.query_string.name', 'orbit_mobile_session');
-        //     $config->setConfig('session_origin.cookie.name', 'orbit_mobile_session');
-        //     $this->session = new Session($config);
-        //     $this->session->start();
-        // }
-
         if (! is_object($this->session)) {
             // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
@@ -8008,7 +7963,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
-            // return $e;
         }
     }
 
@@ -8049,7 +8003,6 @@ class MobileCIAPIController extends ControllerAPI
             return $this->render();
         } catch (Exception $e) {
             return $this->redirectIfNotLoggedIn($e);
-            // return $e;
         }
     }
 
@@ -8150,7 +8103,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -8187,17 +8139,6 @@ class MobileCIAPIController extends ControllerAPI
             );
             $coupon_id = $coupons[0]->promotion_id;
             $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
-            // dd($tenants);
-
-            // dd($coupons);
-            // if (count($promotions) > 0) {
-            //     $data = new stdclass();
-            //     $data->status = 1;
-            //     $data->records = $promotions;
-            // } else {
-            //     $data = new stdclass();
-            //     $data->status = 0;
-            // }
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
@@ -8232,7 +8173,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -8333,7 +8273,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -8493,7 +8432,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
@@ -8554,7 +8492,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
-                // return $e;
         }
     }
 
