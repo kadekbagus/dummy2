@@ -17,7 +17,7 @@
                                         <?php
                                             $namex = $categories->filter(function ($item) {
                                                 return $item->category_id == Input::get('cid');
-                                            })->first()->category_name; 
+                                            })->first()->category_name;
                                             echo $namex;
                                         ?>
                                     @else
@@ -53,6 +53,14 @@
                                 <li data-floor="G"><span>G</span></li>
                                 <li data-floor="L1"><span>L1</span></li>
                                 <li data-floor="L2"><span>L2</span></li>
+                                <li data-floor="L3"><span>L3</span></li>
+                                <li data-floor="L4"><span>L4</span></li>
+                                <li data-floor="L5"><span>L5</span></li>
+                                <li data-floor="L6"><span>L6</span></li>
+                                <li data-floor="L7"><span>L7</span></li>
+                                <li data-floor="L8"><span>L8</span></li>
+                                <li data-floor="L9"><span>L9</span></li>
+                                <li data-floor="L10"><span>L10</span></li>
                             </ul>
                         </div>
                     </div>
@@ -107,7 +115,7 @@
                                         <?php
                                             $namex = $categories->filter(function ($item) {
                                                 return $item->category_id == Input::get('cid');
-                                            })->first()->category_name; 
+                                            })->first()->category_name;
                                             echo $namex;
                                         ?>
                                     @else
@@ -227,7 +235,7 @@
         }
 
         var promo = '';
-        @if(!empty(Input::get('promotion_id'))) 
+        @if(!empty(Input::get('promotion_id')))
             promo = '&promotion_id='+{{Input::get('promotion_id')}};
         @endif
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}'+promo;
