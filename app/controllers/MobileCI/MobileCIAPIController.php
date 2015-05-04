@@ -5930,7 +5930,7 @@ class MobileCIAPIController extends ControllerAPI
      */
     public function redirectIfNotLoggedIn($e)
     {
-        if (Config::get('debug')) {
+        if (Config::get('app.debug')) {
             return $e;
         }
 
