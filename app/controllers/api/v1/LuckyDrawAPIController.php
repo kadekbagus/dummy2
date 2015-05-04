@@ -999,6 +999,10 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             });
 
+            if ($sortBy !== 'lucky_draws.status') {
+                $luckydraws->orderBy('lucky_draws.status', 'asc');
+            }
+
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {

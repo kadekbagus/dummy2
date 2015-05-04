@@ -1060,6 +1060,10 @@ class EventAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
+            if ($sortBy !== 'events.status') {
+                $events->orderBy('events.status', 'asc');
+            }
+
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {

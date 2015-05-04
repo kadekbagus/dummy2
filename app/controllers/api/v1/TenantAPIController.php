@@ -1393,6 +1393,10 @@ class TenantAPIController extends ControllerAPI
                 }
             });
 
+            if ($sortBy !== 'merchants.status') {
+                $retailers->orderBy('merchants.status', 'asc');
+            }
+
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
