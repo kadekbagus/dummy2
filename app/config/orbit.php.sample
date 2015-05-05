@@ -221,6 +221,19 @@ return array(
 
         /**
          * Path to write the session data
+         *
+         * - usage
+         * Driver File => DIRECTORY
+         * Driver Database => TABLE NAME
+         * Driver Redis, Memcached, APC => NAMESPACE
+         *
+         * example:
+         * FILE:
+         * 'path' => sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'orbit-session'
+         * TABLE NAME:
+         * 'path' => 'orb_sessions'
+         * NAMESPACE:
+         * 'path' => 'SESSIONS'
          */
         'path' => storage_path() . DIRECTORY_SEPARATOR . 'orbit-session',
 
@@ -228,6 +241,45 @@ return array(
          * Strict mode, will check the user agent and ip address
          */
         'strict' => TRUE,
+
+        /**
+         * Connection Information
+         *
+         * Example:
+         *
+         * DATABASE:
+         * 'connection' => array(
+         *     'driver'    => 'mysql',
+         *     'host'      => 'localhost',
+         *     'database'  => 'homestead',
+         *     'username'  => 'homestead',
+         *     'password'  => 'secret',
+         *     'charset'   => 'utf8',
+         *     'collation' => 'utf8_unicode_ci',
+         *     'prefix'    => 'orbs_',
+         * ),
+         * or can be pass direct pdo connection
+         * 'connection' => DB::connection()->getPdo(),
+         *
+         * REDIS:
+         * 'connection' => array(
+         *     'host'     => 'localhost',
+         *     'port'     => 6379,
+         *     'database' => 0,
+         * ),
+         * MEMCACHED:
+         * 'connection' => array(
+         *     array(
+         *            'host' => 'localhost',
+         *            'port' => 11211
+         *     ),
+         *     array(
+         *            'host' => 'mem1.host',
+         *            'port' => 11211
+         *     ),
+         * ),
+         */
+        'connection' => array(),
 
         /**
          * Session Driver
