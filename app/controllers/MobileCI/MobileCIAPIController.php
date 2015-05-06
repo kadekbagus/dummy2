@@ -7720,10 +7720,10 @@ class MobileCIAPIController extends ControllerAPI
                 $pagetitle = 'PROMOTIONS TENANTS';
                 $activityPageNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
-                    ->setActivityName('view_retailers')
-                    ->setActivityNameLong('View Promotion Tenants')
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Promotion Tenant')
                     ->setObject(null)
-                    ->setModuleName('Tenants')
+                    ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
                     ->save();
@@ -7733,10 +7733,10 @@ class MobileCIAPIController extends ControllerAPI
                 $pagetitle = 'EVENTS TENANTS';
                 $activityPageNotes = sprintf('Page viewed: Events Tenants List Page, event ID: %s', OrbitInput::get('event_id'));
                 $activityPage->setUser($user)
-                    ->setActivityName('view_retailers')
-                    ->setActivityNameLong('View Events Tenants')
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Events Tenant')
                     ->setObject(null)
-                    ->setModuleName('Tenants')
+                    ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
                     ->responseOK()
                     ->save();
@@ -7744,8 +7744,8 @@ class MobileCIAPIController extends ControllerAPI
             if (! empty(OrbitInput::get('event_id')) && ! empty(OrbitInput::get('promotion_id'))) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
                 $activityPage->setUser($user)
-                    ->setActivityName('view_retailers')
-                    ->setActivityNameLong('View Tenants')
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -7758,10 +7758,10 @@ class MobileCIAPIController extends ControllerAPI
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
             $activityPage->setUser($user)
-                ->setActivityName('view_retailers')
-                ->setActivityNameLong('View Tenants')
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant')
                 ->setObject(null)
-                ->setModuleName('Tenants')
+                ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -7850,7 +7850,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityName('view_retailer')
                 ->setActivityNameLong('View Tenant')
                 ->setObject(null)
-                ->setModuleName('Tenants')
+                ->setModuleName('Tenant')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -8081,8 +8081,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_coupon_list')
-                ->setActivityNameLong('View (Coupon List Page)')
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List')
                 ->setObject(null)
                 ->setModuleName('Coupon')
                 ->setNotes($activityPageNotes)
@@ -8094,8 +8094,8 @@ class MobileCIAPIController extends ControllerAPI
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_coupon_list')
-                ->setActivityNameLong('View (Coupon List) Failed')
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List Failed')
                 ->setObject(null)
                 ->setModuleName('Coupon')
                 ->setNotes($activityPageNotes)
@@ -8118,54 +8118,73 @@ class MobileCIAPIController extends ControllerAPI
     public function getMallCouponDetailView()
     {
         $user = null;
-        $product_id = 0;
+        $issued_coupon_id = 0;
         $activityPage = Activity::mobileci()
                                    ->setActivityType('view');
-        $product = null;
         try {
             $user = $this->getLoggedInUser();
 
             $retailer = $this->getRetailerInfo();
-            $product_id = trim(OrbitInput::get('id'));
+            $issued_coupon_id = trim(OrbitInput::get('id'));
 
-            $coupons = DB::select(
-                DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
-                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '" AND ic.issued_coupon_id = :issuedid'
-                ),
-                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id, 'issuedid' => $product_id)
-            );
-            $coupon_id = $coupons[0]->promotion_id;
+            // $coupons = Coupon::select(
+            //     DB::raw(
+            //         'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+            //     inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
+            //     inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+            //     WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '" AND ic.issued_coupon_id = :issuedid'
+            //     ),
+            //     array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id, 'issuedid' => $issued_coupon_id)
+            // );
+
+            $coupons = Coupon::with(array('couponRule', 'issuedCoupons' => function($q) use($issued_coupon_id, $user){
+                $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
+                $q->where('issued_coupons.user_id', $user->user_id);
+                $q->where('issued_coupons.expired_date', '>=', Carbon::now());
+                $q->where('issued_coupons.status', 'active');
+            }))->where('merchant_id', $retailer->merchant_id)->active()->where(function($q){
+                $q->where('begin_date', '<=', Carbon::now());
+                $q->where('end_date', '>=',  Carbon::now());
+                $q->orWhere(function($q2){
+                    $q2->where('begin_date', '<=', Carbon::now());
+                    $q2->where('is_permanent', 'Y');
+                });
+            })->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user) {
+                $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
+                $q->where('issued_coupons.user_id', $user->user_id);
+                $q->where('issued_coupons.expired_date', '>=', Carbon::now());
+                $q->where('issued_coupons.status', 'active');
+            })->first();
+            
+            $coupon_id = $coupons->promotion_id;
             $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
 
             if (empty($coupons)) {
-                // throw new Exception('Product id ' . $product_id . ' not found');
+                // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
             }
 
-            if (empty($coupons[0]->promo_image)) {
-                $coupons[0]->promo_image = 'mobile-ci/images/default_product.png';
+            if (empty($coupons->image)) {
+                $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
-            $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $product_id);
+            $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_page_coupon_detail')
-                ->setActivityNameLong('View (Coupon Detail Page)')
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail')
                 ->setObject($coupons)
                 ->setModuleName('Coupon')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons[0]->promotion_name, 'retailer' => $retailer, 'product' => $coupons[0], 'tenants' => $tenants));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants));
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $promoid);
+            $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_page_coupon_detail')
-                ->setActivityNameLong('View (Coupon Detail Page) Failed')
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
                 ->setObject(null)
                 ->setModuleName('Coupon')
                 ->setNotes($activityPageNotes)
@@ -8251,10 +8270,10 @@ class MobileCIAPIController extends ControllerAPI
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_promotion_list')
-                ->setActivityNameLong('View (Promotion List Page)')
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List')
                 ->setObject(null)
-                ->setModuleName('News')
+                ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
@@ -8264,10 +8283,10 @@ class MobileCIAPIController extends ControllerAPI
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_promotion_list')
-                ->setActivityNameLong('View (Promotion List) Failed')
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List Failed')
                 ->setObject(null)
-                ->setModuleName('News')
+                ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -8311,10 +8330,10 @@ class MobileCIAPIController extends ControllerAPI
 
             $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $product_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_page_promotion_detail')
-                ->setActivityNameLong('View (Promotion Detail Page)')
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion')
                 ->setObject($coupons)
-                ->setModuleName('News')
+                ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
@@ -8324,10 +8343,10 @@ class MobileCIAPIController extends ControllerAPI
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_page_promotion_detail')
-                ->setActivityNameLong('View (Promotion Detail Page) Failed')
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion Failed')
                 ->setObject(null)
-                ->setModuleName('News')
+                ->setModuleName('Promotion')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -8410,8 +8429,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $activityPageNotes = sprintf('Page viewed: %s', 'News List Page');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_news_list')
-                ->setActivityNameLong('View (News List Page)')
+                ->setActivityName('view_news_list')
+                ->setActivityNameLong('View News List')
                 ->setObject(null)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
@@ -8423,8 +8442,8 @@ class MobileCIAPIController extends ControllerAPI
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
             $activityPage->setUser($user)
-                ->setActivityName('view_page_news_list')
-                ->setActivityNameLong('View (News List) Failed')
+                ->setActivityName('view_news_list')
+                ->setActivityNameLong('View News List Failed')
                 ->setObject(null)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
@@ -8470,8 +8489,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $activityPageNotes = sprintf('Page viewed: News Detail, news Id: %s', $product_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_page_news_detail')
-                ->setActivityNameLong('View (News Detail Page)')
+                ->setActivityName('view_news')
+                ->setActivityNameLong('View News Detail')
                 ->setObject($coupons)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
@@ -8483,8 +8502,8 @@ class MobileCIAPIController extends ControllerAPI
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
             $activityPage->setUser($user)
-                ->setActivityName('view_page_news_detail')
-                ->setActivityNameLong('View (News Detail Page) Failed')
+                ->setActivityName('view_news')
+                ->setActivityNameLong('View News Detail Failed')
                 ->setObject(null)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
