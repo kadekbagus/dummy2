@@ -301,11 +301,7 @@ class MobileCIAPIController extends ControllerAPI
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
-            if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
-            } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
-            }
+            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
 
@@ -8158,7 +8154,7 @@ class MobileCIAPIController extends ControllerAPI
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now());
                 $q->where('issued_coupons.status', 'active');
             })->first();
-            
+
             $coupon_id = $coupons->promotion_id;
             $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
 
