@@ -451,7 +451,7 @@ class IntermediateLoginController extends IntermediateBaseController
             }
 
             // Display a view which showing that page is loading
-            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer]);
+            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg]);
         }
 
         if (isset($_GET['createsession'])) {
