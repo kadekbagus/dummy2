@@ -32,9 +32,6 @@ $appleCaptiveDomains = [
 // I don't have any clue about the capabilities of Laravel routing when
 // handling source which comes as array, so I just loop it.
 foreach ($appleCaptiveDomains as $appleDomain) {
-    // All unregistered devices will be redirected here
-    $blackHoleDomain = Config::get('orbit.captive.blackhole_domain');
-
     Route::group(array('domain' => $appleDomain), function()
     {
         // Does the user already logged in?
@@ -48,6 +45,9 @@ foreach ($appleCaptiveDomains as $appleDomain) {
                 $host = $_SERVER['HTTP_HOST'];
 
                 if ($return['status'] !== TRUE) {
+                    // All unregistered devices will be redirected here
+                    $blackHoleDomain = Config::get('orbit.captive.blackhole_domain');
+
                     $url = sprintf('http://%s/?from_captive=yes&e=%s&from=%s', $blackHoleDomain, urlencode($return['message']), $host);
                     return Redirect::to($url);
                 }
@@ -63,6 +63,9 @@ foreach ($appleCaptiveDomains as $appleDomain) {
 
             // Catch all URL
             Route::get('{all}', function() use ($e) {
+                // All unregistered devices will be redirected here
+                $blackHoleDomain = Config::get('orbit.captive.blackhole_domain');
+
                 $url = sprintf('http://%s/?from_captive=yes&e=%s', $blackHoleDomain, urlencode($e->getMessage()));
                 return Redirect::to($url);
             })->where('all', '.*');
