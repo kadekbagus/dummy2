@@ -16,6 +16,7 @@ return array(
     'AlterTableLuckyDrawNumbersAddColumnHash' => $baseDir . '/app/database/migrations/2015_04_13_090851_alter_table_lucky_draw_numbers_add_column_hash.php',
     'AlterTableLuckyDrawNumbersAddUniqueIndexForIdNumberStatus' => $baseDir . '/app/database/migrations/2015_04_13_034658_alter_table_lucky_draw_numbers_add_unique_index_for_id_number_status.php',
     'AlterTableLuckyDrawNumbersChangeUserIdToNullable' => $baseDir . '/app/database/migrations/2015_04_12_153306_alter_table_lucky_draw_numbers_change_user_id_to_nullable.php',
+    'AlterTableLuckyDrawReceiptsAddColumnExternalReceiptId' => $baseDir . '/app/database/migrations/2015_06_16_041805_alter_table_lucky_draw_receipts_add_column_external_receipt_id.php',
     'AlterTableLuckyDrawReceiptsAddColumnObjectType' => $baseDir . '/app/database/migrations/2015_04_14_120149_alter_table_lucky_draw_receipts_add_column_object_type.php',
     'AlterTableLuckyDrawsAddColumnExternalLuckyDrawId' => $baseDir . '/app/database/migrations/2015_06_15_081218_alter_table_lucky_draws_add_column_external_lucky_draw_id.php',
     'AlterTableMacAddressesAddIpAddress' => $baseDir . '/app/database/migrations/2015_04_20_035133_alter_table_mac_addresses_add_ip_address.php',
