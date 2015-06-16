@@ -1351,6 +1351,43 @@ class UserAPIController extends ControllerAPI
                 $users->whereIn('users.status', $status);
             });
 
+            // Filter user by created_at from date
+            OrbitInput::get('created_at_from', function ($from) use ($users)
+            {
+                $users->where('users.created_at', '>=', $from);
+            });
+
+            // Filter user by created_at to date
+            OrbitInput::get('created_at_to', function ($to) use ($users)
+            {
+                $users->where('users.created_at', '<=', $to);
+            });
+
+            // Filter user by updated_at from date
+            OrbitInput::get('updated_at_from', function ($from) use ($users)
+            {
+                $users->where('users.updated_at', '>=', $from);
+            });
+
+            // Filter user by updated_at to date
+            OrbitInput::get('updated_at_to', function ($to) use ($users)
+            {
+                $users->where('users.updated_at', '<=', $to);
+            });
+
+            // Filter user by membership number
+            OrbitInput::get('is_member', function ($isMember) use ($users)
+            {
+                if ($isMember === 'yes') {
+                    $users->where('users.membership_number', '!=', '');
+                } elseif ($isMember === 'no') {
+                    $users->where(function ($q) {
+                        $q->where('users.membership_number', '=', '')
+                          ->orWhereNull('users.membership_number');
+                    });
+                }
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_users = clone $users;
@@ -1738,15 +1775,15 @@ class UserAPIController extends ControllerAPI
                 array(
                     'email'                 => 'required|email|orbit.email.exists',
                     'firstname'             => 'required',
-                    'lastname'              => 'required',
-                    'gender'                => 'required|in:m,f',
-                    'birthdate'             => 'required|date_format:Y-m-d',
-                    'joindate'              => 'required|date_format:Y-m-d',
+                    'lastname'              => '',
+                    'gender'                => 'in:m,f',
+                    'birthdate'             => 'date_format:Y-m-d',
+                    'joindate'              => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists',
                     'status'                => 'required|in:active,inactive,pending',
                     'category_ids'          => 'array',
                     'idcard_number'         => 'numeric',
-                    'mobile_phone'          => 'required',
+                    'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
                     'date_of_work'          => 'date_format:Y-m-d'
