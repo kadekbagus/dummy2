@@ -88,7 +88,7 @@
             </div>
             @endif
             @if($widget->widget_type == 'coupon')
-                @if(! empty($enable_coupon) && $enable_coupon->setting_value == 'true')
+                @if(! empty($widget_flags->enable_coupon) && $widget_flags->enable_coupon->setting_value == 'true')
             <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
                 <header class="widget-title">
                     <div><strong>{{ Lang::get('mobileci.widgets.coupon') }}</strong></div>
@@ -113,7 +113,7 @@
                 @endif
             @endif
             @if($widget->widget_type == 'lucky_draw')
-                @if(! empty($enable_lucky_draw_widget) && $enable_lucky_draw_widget->setting_value == 'true')
+                @if(! empty($widget_flags->enable_lucky_draw_widget) && $widget_flags->enable_lucky_draw_widget->setting_value == 'true')
             <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
                 <header class="widget-title">
                     <div><strong>{{ Lang::get('mobileci.widgets.lucky_draw') }}</strong></div>
@@ -124,7 +124,11 @@
                 <section class="widget-single">
                     <ul class="rslides" @if($widget->animation == 'horizontal') id="slider5" @endif>
                         <li>
+                            @if(! empty($widget_flags->enable_lucky_draw) && $widget_flags->enable_lucky_draw->setting_value == 'true')
                             <a class="widget-link" data-widget="" href="{{ url('customer/luckydraw') }}">
+                            @else
+                            <a id="no-luck" class="widget-link" data-widget="">
+                            @endif
                                 @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
                                 <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
                                 @else
@@ -374,7 +378,7 @@
         //         $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
         //     }, 0);
         // });
-        
+
         @if(! is_null($events))
             if(!$.cookie('dismiss_verification_popup')) {
                 $.cookie('dismiss_verification_popup', 't', { expires: 1 });
@@ -418,6 +422,11 @@
         $('#emptyPromo').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
           $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_promotion') }}');
+          $('#noModal').modal();
+        });
+        $('#no-luck').click(function(){
+          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
+          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
         $('#promoModal a').click(function (event){ 

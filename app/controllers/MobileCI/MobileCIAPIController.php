@@ -244,9 +244,11 @@ class MobileCIAPIController extends ControllerAPI
                 ->take(5)
                 ->get();
 
-            $enable_coupon = $this->getObjFromArray($retailer->settings, 'enable_coupon');
-            $enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
-            $enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
+            $widget_flags = new stdclass();
+            $widget_flags->enable_coupon = $this->getObjFromArray($retailer->settings, 'enable_coupon');
+            $widget_flags->enable_coupon_widget = $this->getObjFromArray($retailer->settings, 'enable_coupon_widget');
+            $widget_flags->enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
+            $widget_flags->enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
@@ -258,7 +260,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'enable_coupon' => $enable_coupon, 'enable_lucky_draw' => $enable_lucky_draw, 'enable_lucky_draw_widget' => $enable_lucky_draw_widget))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)

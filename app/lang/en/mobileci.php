@@ -58,6 +58,7 @@ return array(
         'message_no_coupon'     => 'Sorry, you do not have any coupons yet.',
         'message_no_new_product'=> 'Sorry, there are no new products for today.',
         'message_no_promotion'  => 'Sorry, there are no promotions for today.',
+        'message_no_lucky_draw' => 'To obtain Lucky Draw, please go to Customer Service counter located at...need info from mall.',
         'message_delete_item'   => 'Are you sure to remove this item from your cart?',
         'message_delete_coupon' => 'Are you sure to remove this coupon from your cart? Removed coupon could be used next time.',
         'message_transfer_cart' => 'Show this screen to the cashier to complete your checkout.',
