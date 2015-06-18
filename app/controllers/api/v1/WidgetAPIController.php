@@ -88,9 +88,9 @@ class WidgetAPIController extends ControllerAPI
                 array(
                     'object_id'             => 'required|numeric',
                     'merchant_id'           => 'required|numeric|orbit.empty.merchant',
-                    'widget_type'           => 'required|in:catalogue,new_product,promotion,coupon|orbit.exists.widget_type:' . $merchantId,
+                    'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type:' . $merchantId,
                     'slogan'                => 'required',
-                    'animation'             => 'required|in:none,horizontal,vertical',
+                    'animation'             => 'in:none,horizontal,vertical',
                     'widget_order'          => 'required|numeric',
                     'images'                => 'required_if:animation,none',
                     'retailer_ids'          => 'array|orbit.empty.retailer'
@@ -109,6 +109,8 @@ class WidgetAPIController extends ControllerAPI
             }
             Event::fire('orbit.widget.postnewwidget.after.validation', array($this, $validator));
 
+            $mall = Retailer::find($merchantId);
+
             // Begin database transaction
             $this->beginTransaction();
 
@@ -117,8 +119,9 @@ class WidgetAPIController extends ControllerAPI
             $widget->widget_object_id = $widgetObjectId;
             $widget->widget_slogan = $slogan;
             $widget->widget_order = $widgetOrder;
-            $widget->merchant_id = $merchantId;
-            $widget->animation = $animation;
+            $widget->merchant_id = $mall->parent_id;
+            // $widget->animation = $animation;
+            $widget->animation = 'none';
             $widget->status = 'active';
             $widget->created_by = $user->user_id;
 
@@ -127,16 +130,16 @@ class WidgetAPIController extends ControllerAPI
             $widget->save();
 
             // Insert attribute values if specified by the caller
-            OrbitInput::post('retailer_ids', function($retailerIds) use ($widget) {
-                $widget->retailers()->sync($retailerIds);
-            });
+            // OrbitInput::post('retailer_ids', function($retailerIds) use ($widget) {
+            $widget->retailers()->sync(array($merchantId));
+            // });
 
-            // If widget is empty then it should be applied to all retailers
-            if (empty(OrbitInput::post('retailer_ids', NULL))) {
-                $merchant = App::make('orbit.empty.merchant');
-                $listOfRetailerIds = $merchant->getMyRetailerIds();
-                $widget->retailers()->sync($listOfRetailerIds);
-            }
+            // // If widget is empty then it should be applied to all retailers
+            // if (empty(OrbitInput::post('retailer_ids', NULL))) {
+            //     $merchant = App::make('orbit.empty.merchant');
+            //     $listOfRetailerIds = $merchant->getMyRetailerIds();
+            //     $widget->retailers()->sync($listOfRetailerIds);
+            // }
 
             Event::fire('orbit.widget.postnewwidget.after.save', array($this, $widget));
             $this->response->data = $widget;
@@ -322,7 +325,7 @@ class WidgetAPIController extends ControllerAPI
                     'widget_id'             => 'required|numeric|orbit.empty.widget',
                     'object_id'             => 'numeric',
                     'merchant_id'           => 'numeric|orbit.empty.merchant',
-                    'widget_type'           => 'required|in:catalogue,new_product,promotion,coupon|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
+                    'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
                     'animation'             => 'in:none,horizontal,vertical',
                     'images'                => 'required_if:animation,none',
                     'widget_order'          => 'numeric',
@@ -344,6 +347,8 @@ class WidgetAPIController extends ControllerAPI
 
             // Begin database transaction
             $this->beginTransaction();
+            
+            $mall = Retailer::find($merchantId);
 
             $widget = App::make('orbit.empty.widget');
 
@@ -355,8 +360,9 @@ class WidgetAPIController extends ControllerAPI
                 $widget->widget_object_id = $objectId;
             });
 
-            OrbitInput::post('merchant_id', function($merchantId) use ($widget) {
-                $widget->merchant_id = $merchantId;
+            OrbitInput::post('merchant_id', function($merchantId) use ($widget, $mall) {
+                // $widget->merchant_id = $merchantId;
+                $widget->merchant_id = $mall->parent_id;
             });
 
             OrbitInput::post('slogan', function($slogan) use ($widget) {
@@ -368,7 +374,9 @@ class WidgetAPIController extends ControllerAPI
             });
 
             OrbitInput::post('animation', function($animation) use ($widget) {
-                $widget->animation = $animation;
+                // disable animation
+                // $widget->animation = $animation;
+                $widget->animation = 'none';
             });
 
             Event::fire('orbit.widget.postupdatewidget.before.save', array($this, $widget));
@@ -378,15 +386,16 @@ class WidgetAPIController extends ControllerAPI
 
             // Insert attribute values if specified by the caller
             OrbitInput::post('retailer_ids', function($retailerIds) use ($widget) {
-                $widget->retailers()->sync($retailerIds);
+                // $widget->retailers()->sync($retailerIds);
+                $widget->retailers()->sync(array($merchantId));
             });
 
             // If widget is empty then it should be applied to all retailers
-            if (empty(OrbitInput::post('retailer_ids', NULL))) {
-                $merchant = App::make('orbit.empty.merchant');
-                $listOfRetailerIds = $merchant->getMyRetailerIds();
-                $widget->retailers()->sync($listOfRetailerIds);
-            }
+            // if (empty(OrbitInput::post('retailer_ids', NULL))) {
+            //     $merchant = App::make('orbit.empty.merchant');
+            //     $listOfRetailerIds = $merchant->getMyRetailerIds();
+            //     $widget->retailers()->sync($listOfRetailerIds);
+            // }
 
             Event::fire('orbit.widget.postupdatewidget.after.save', array($this, $widget));
             $this->response->data = $widget;
@@ -979,8 +988,9 @@ class WidgetAPIController extends ControllerAPI
         // Check the existance of merchant id
         $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
-            $merchant = Merchant::excludeDeleted()
+            $merchant = Retailer::excludeDeleted()
                         ->allowedForUser($user)
+                        ->isMall()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1027,6 +1037,7 @@ class WidgetAPIController extends ControllerAPI
 
                 if (empty($listOfRetailerIds)) {
                     $listOfRetailerIds = [-1];
+
                 }
                 $widget->whereIn('widget_retailer.retailer_id', $listOfRetailerIds);
             } else {

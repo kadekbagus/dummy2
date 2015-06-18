@@ -32,24 +32,6 @@
 
             <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
-                    <div><strong>Lucky Draw</strong></div>
-                </header>
-                <header class="widget-title widget-subtitle">
-                    <div>Check your lucky numbers!</div>
-                </header>
-                <section class="widget-single">
-                    <ul class="rslides" id="slider1">
-                        <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/luckydraw') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}"/>
-                            </a>
-                        </li>
-                    </ul>
-                </section>
-            </div>
-
-            <div class="single-widget-container col-xs-6 col-sm-6">
-                <header class="widget-title">
                     <div><strong>Promotions</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
@@ -68,6 +50,24 @@
 
             <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
+                    <div><strong>News</strong></div>
+                </header>
+                <header class="widget-title widget-subtitle">
+                    <div>Our latest news</div>
+                </header>
+                <section class="widget-single">
+                    <ul class="rslides" id="slider1">
+                        <li>
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+            
+            <div class="single-widget-container col-xs-6 col-sm-6">
+                <header class="widget-title">
                     <div><strong>Coupons</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
@@ -84,23 +84,29 @@
                 </section>
             </div>
 
+            @if(! empty($widget_flags->enable_lucky_draw_widget) && $widget_flags->enable_lucky_draw_widget->setting_value == 'true')
             <div class="single-widget-container col-xs-12 col-sm-12">
                 <header class="widget-title">
-                    <div><strong>News</strong></div>
+                    <div><strong>Lucky Draw</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>Our latest news</div>
+                    <div>Check your lucky numbers!</div>
                 </header>
                 <section class="widget-single">
                     <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
+                            @if(! empty($widget_flags->enable_lucky_draw) && $widget_flags->enable_lucky_draw->setting_value == 'true')
+                            <a class="widget-link" data-widget="" href="{{ url('customer/luckydraw') }}">
+                            @else
+                            <a class="widget-link" data-widget="" id="emptyLuck">
+                            @endif
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}"/>
                             </a>
                         </li>
                     </ul>
                 </section>
             </div>
+            @endif
         </div>
     </div>
     <div class="row">
@@ -378,6 +384,11 @@
         $('#emptyPromo').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
           $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_promotion') }}');
+          $('#noModal').modal();
+        });
+        $('#emptyLuck').click(function(){
+          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
+          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
         $('#promoModal a').click(function (event){ 

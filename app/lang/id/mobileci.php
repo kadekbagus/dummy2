@@ -31,6 +31,9 @@ return array(
         'new_product'   => 'PRODUK TERBARU',
         'promotion'     => 'PROMOSI',
         'coupon'        => 'KUPON SAYA',
+        "tenant"        => "TENANT",
+        "lucky_draw"    => "LUCKY DRAW",
+        "news"          => "BERITA",
     ),
 
     'greetings'         => array(
@@ -55,6 +58,7 @@ return array(
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',
         'message_no_new_product'=> 'Maaf, tidak ada produk baru untuk saat ini.',
         'message_no_promotion'  => 'Maaf, tidak ada promosi untuk saat ini.',
+        'message_no_lucky_draw' => 'Untuk memperoleh Lucky Draw, harap kunjungi counter Customer Service.',
         'message_delete_item'   => 'Apakah Anda yakin akan menghapus item ini dari keranjang belanja?',
         'message_delete_coupon' => 'Apakah Anda yakin akan menghapus kupon ini dari keranjang belanja? Kupon yang Anda hapus masih dapat digunakan lain kali.',
         'message_transfer_cart' => 'Tunjukkan smartphone Anda ke kasir untuk menyelesaikan checkout.',
