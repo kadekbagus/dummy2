@@ -11,141 +11,103 @@
 @section('content')
 <div class="container">
     <div class="mobile-ci home-widget widget-container">
-        @foreach($widgets as $i => $widget)
-        @if($i % 2 == 0)
         <div class="row">
-            @endif
-            @if($widget->widget_type == 'tenant')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
+            <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.tenant') }}</strong></div>
+                    <div><strong>Tenant Directory</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
+                    <div>Check our tenant list!</div>
                 </header>
                 <section class="widget-single">
-                    <ul class="rslides" @if($widget->animation == 'horizontal') id="slider1" @endif>
+                    <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">
-                                @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                @else
-                                <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}" />
-                                @endif
+                            <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
                             </a>
                         </li>
                     </ul>
                 </section>
             </div>
-            @endif
-            @if($widget->widget_type == 'promotion')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
+
+            <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.promotion') }}</strong></div>
+                    <div><strong>Promotions</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
+                    <div>Check our latest promotions!</div>
                 </header>
                 <section class="widget-single">
-                    <!-- Slideshow 4 -->
-                    <div class="callbacks_container">
-                        <ul class="rslides" @if($widget->animation == 'horizontal') id="slider2" @endif>
-                            <li>
-                                <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">
-                                    @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                    <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                    @else
-                                    <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_promotion.png') }}" />
-                                    @endif
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-            </div>
-            @endif
-            @if($widget->widget_type == 'news')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
-                <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.news') }}</strong></div>
-                </header>
-                <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
-                </header>
-                <section class="widget-single">
-                    <ul class="rslides" @if($widget->animation == 'horizontal') id="slider3" @endif>
+                    <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">
-                                @if(!empty($widget->media->path))
-                                <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                @else
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_no_promotion.png') }}"/>
-                                @endif
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
                             </a>
                         </li>
                     </ul>
                 </section>
             </div>
-            @endif
-            @if($widget->widget_type == 'coupon')
-                @if(! empty($widget_flags->enable_coupon) && $widget_flags->enable_coupon->setting_value == 'true')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
+
+            <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.coupon') }}</strong></div>
+                    <div><strong>News</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
+                    <div>Our latest news</div>
                 </header>
                 <section class="widget-single">
-                    <ul class="rslides" @if($widget->animation == 'horizontal') id="slider4" @endif>
+                    <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">
-                                @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                @else
-                                <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
-                                @endif
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
                             </a>
                         </li>
                     </ul>
                 </section>
             </div>
-                @endif
-            @endif
-            @if($widget->widget_type == 'lucky_draw')
-                @if(! empty($widget_flags->enable_lucky_draw_widget) && $widget_flags->enable_lucky_draw_widget->setting_value == 'true')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
+            
+            <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.lucky_draw') }}</strong></div>
+                    <div><strong>Coupons</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
+                    <div>Check your coupons!</div>
                 </header>
                 <section class="widget-single">
-                    <ul class="rslides" @if($widget->animation == 'horizontal') id="slider5" @endif>
+                    <ul class="rslides" id="slider1">
+                        <li>
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+
+            @if(! empty($widget_flags->enable_lucky_draw_widget) && $widget_flags->enable_lucky_draw_widget->setting_value == 'true')
+            <div class="single-widget-container col-xs-12 col-sm-12">
+                <header class="widget-title">
+                    <div><strong>Lucky Draw</strong></div>
+                </header>
+                <header class="widget-title widget-subtitle">
+                    <div>Check your lucky numbers!</div>
+                </header>
+                <section class="widget-single">
+                    <ul class="rslides" id="slider1">
                         <li>
                             @if(! empty($widget_flags->enable_lucky_draw) && $widget_flags->enable_lucky_draw->setting_value == 'true')
                             <a class="widget-link" data-widget="" href="{{ url('customer/luckydraw') }}">
                             @else
-                            <a id="no-luck" class="widget-link" data-widget="">
+                            <a class="widget-link" data-widget="" id="emptyLuck">
                             @endif
-                                @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                @else
-                                <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_no_coupon.png') }}"/>
-                                @endif
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}"/>
                             </a>
                         </li>
                     </ul>
                 </section>
             </div>
-                @endif
             @endif
-
-            @if($i % 2 == 1)
         </div>
-        @endif
-        @endforeach
     </div>
     <div class="row">
         <div class="col-xs-12 text-center merchant-logo">
@@ -378,7 +340,7 @@
         //         $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
         //     }, 0);
         // });
-
+        
         @if(! is_null($events))
             if(!$.cookie('dismiss_verification_popup')) {
                 $.cookie('dismiss_verification_popup', 't', { expires: 1 });
@@ -424,7 +386,7 @@
           $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_promotion') }}');
           $('#noModal').modal();
         });
-        $('#no-luck').click(function(){
+        $('#emptyLuck').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
           $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
