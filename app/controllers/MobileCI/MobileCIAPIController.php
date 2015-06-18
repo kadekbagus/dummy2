@@ -230,6 +230,24 @@ class MobileCIAPIController extends ControllerAPI
                 \Cookie::queue('event', $event_store, 1440);
             }
 
+            $widgets = Widget::with('media')
+                ->active()
+                ->where('merchant_id', $retailer->parent->merchant_id)
+                ->whereHas(
+                    'retailers',
+                    function ($q) use ($retailer) {
+                        $q->where('retailer_id', $retailer->merchant_id);
+                    }
+                )
+                ->orderBy('widget_order', 'ASC')
+                ->groupBy('widget_type')
+                ->take(5)
+                ->get();
+
+            $enable_coupon = $this->getObjFromArray($retailer->settings, 'enable_coupon');
+            $enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
+            $enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
                 ->setActivityName('view_page_home')
@@ -240,7 +258,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'enable_coupon' => $enable_coupon, 'enable_lucky_draw' => $enable_lucky_draw, 'enable_lucky_draw_widget' => $enable_lucky_draw_widget))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -254,6 +272,17 @@ class MobileCIAPIController extends ControllerAPI
 
             return $this->redirectIfNotLoggedIn($e);
         }
+    }
+
+    public function getObjFromArray($haystacks, $needle) {
+        $item = null;
+        foreach($haystacks as $haystack) {
+            if($needle == $haystack->setting_name) {
+                return $haystack;
+            }
+        }
+
+        return false;
     }
 
     /**

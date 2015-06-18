@@ -31,6 +31,9 @@ return array(
         'new_product'   => 'PRODUK TERBARU',
         'promotion'     => 'PROMOSI',
         'coupon'        => 'KUPON SAYA',
+        "tenant"        => "TENANT",
+        "lucky_draw"    => "LUCKY DRAW",
+        "news"          => "BERITA",
     ),
 
     'greetings'         => array(

@@ -31,6 +31,9 @@ return array(
         "new_product"   => "NEW PRODUCTS",
         "promotion"     => "PROMOTIONS",
         "coupon"        => "MY COUPONS",
+        "tenant"        => "TENANTS",
+        "lucky_draw"    => "LUCKY DRAW",
+        "news"          => "NEWS",
     ),
 
     "greetings"         => array(
