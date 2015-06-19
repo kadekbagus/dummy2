@@ -67,6 +67,7 @@ class ActivityAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.activity.getactivity.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_activity')) {
                 Event::fire('orbit.activity.getactivity.authz.notallowed', array($this, $user));
 
@@ -75,6 +76,15 @@ class ActivityAPIController extends ControllerAPI
 
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.activity.getactivity.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -83,19 +93,19 @@ class ActivityAPIController extends ControllerAPI
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
-            $tomorrow = date('Y-m-d', strtotime('tomorrow'));
+            $tomorrow = date('Y-m-d H:i:s', strtotime('tomorrow'));
             $validator = Validator::make(
                 array(
                     'sort_by'       => $sort_by,
                     'merchant_ids'  => OrbitInput::get('merchant_ids'),
-                    'start_date'     => $start_date,
+                    'start_date'    => $start_date,
                     'end_date'      => $end_date
                 ),
                 array(
                     'sort_by'       => 'in:id,ip_address,created,registered_at,email,full_name,object_name,product_name,coupon_name,promotion_name,event_name,action_name,action_name_long,activity_type,gender,staff_name,module_name',
                     'merchant_ids'  => 'orbit.check.merchants',
-                    'start_date'    => 'date_format:Y-m-d|before:' . $tomorrow,
-                    'end_date'      => 'date_format:Y-m-d|before:' . $tomorrow,
+                    'start_date'    => 'date_format:Y-m-d H:i:s|before:' . $tomorrow,
+                    'end_date'      => 'date_format:Y-m-d H:i:s|before:' . $tomorrow,
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.activity_sortby'),
@@ -137,8 +147,50 @@ class ActivityAPIController extends ControllerAPI
                 $with = array_merge($with, $_with);
             });
             $tablePrefix = DB::getTablePrefix();
-            $activities = Activity::with($with)->select('activities.*',
-                                                        DB::Raw("DATE_FORMAT({$tablePrefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"));
+            $activities = Activity::with($with)->select('activities.activity_id',
+                                                    'activities.activity_name',
+                                                    'activities.activity_name_long',
+                                                    'activities.activity_type',
+                                                    'activities.module_name',
+                                                    'activities.user_id',
+                                                    'activities.user_email',
+                                                    'activities.full_name',
+                                                    'activities.group',
+                                                    'activities.role',
+                                                    'activities.role_id',
+                                                    'activities.object_id',
+                                                    'activities.object_name',
+                                                    'activities.product_id',
+                                                    'activities.product_name',
+                                                    'activities.coupon_id',
+                                                    'activities.coupon_name',
+                                                    'activities.promotion_id',
+                                                    'activities.promotion_name',
+                                                    'activities.event_id',
+                                                    'activities.event_name',
+                                                    'activities.location_id',
+                                                    'activities.location_name',
+                                                    'activities.ip_address',
+                                                    'activities.user_agent',
+                                                    'activities.staff_id',
+                                                    'activities.staff_name',
+                                                    'activities.metadata_user',
+                                                    'activities.metadata_object',
+                                                    'activities.metadata_location',
+                                                    'activities.metadata_staff',
+                                                    'activities.notes',
+                                                    'activities.http_method',
+                                                    'activities.request_uri',
+                                                    'activities.post_data',
+                                                    'activities.status',
+                                                    'activities.parent_id',
+                                                    'activities.response_status',
+                                                    'activities.created_at',
+                                                    'activities.updated_at',
+                                                    DB::Raw("DATE_FORMAT({$tablePrefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"),
+                                                    'user_details.gender as gender')
+                                            ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
+                                            ->groupBy('activities.activity_id');
 
             // Filter by ids
             OrbitInput::get('id', function($activityIds) use ($activities) {
@@ -164,6 +216,21 @@ class ActivityAPIController extends ControllerAPI
                 $activities->whereIn('activities.activity_name_long', $nameLongs);
             });
 
+            // Filter by matching activity_name_long pattern
+            OrbitInput::get('activity_name_long_like', function($name) use ($activities) {
+                $activities->where('activities.activity_name_long', 'like', "%$name%");
+            });
+
+            // Filter by module_name
+            OrbitInput::get('module_names', function($names) use ($activities) {
+                $activities->whereIn('activities.module_name', $names);
+            });
+
+            // Filter by matching module_name pattern
+            OrbitInput::get('module_name_like', function($name) use ($activities) {
+                $activities->where('activities.module_name', 'like', "%{$name}%");
+            });
+
             // Filter by merchant ids
             OrbitInput::get('merchant_ids', function($merchantIds) use ($activities) {
                 $activities->merchantIds($merchantIds);
@@ -179,6 +246,16 @@ class ActivityAPIController extends ControllerAPI
                 $activities->whereIn('activities.user_email', $emails);
             });
 
+            // Filter by matching user_email pattern
+            OrbitInput::get('user_email_like', function($userEmail) use ($activities) {
+                $activities->where('activities.user_email', 'like', "%$userEmail%");
+            });
+
+            // Filter by gender
+            OrbitInput::get('genders', function($genders) use ($activities) {
+                $activities->whereIn('activities.gender', $genders);
+            });
+
             // Filter by groups
             if (! empty($_GET['groups'])) {
                 OrbitInput::get('groups', function($groups) use ($activities) {
@@ -187,6 +264,11 @@ class ActivityAPIController extends ControllerAPI
             } else {
                 $activities->whereIn('activities.group', ['mobile-ci', 'pos']);
             }
+
+            // Filter by matching group pattern
+            OrbitInput::get('group_like', function($group) use ($activities) {
+                $activities->where('activities.group', 'like', "%$group%");
+            });
 
             // Filter by role_ids
             OrbitInput::get('role_ids', function($roleIds) use ($activities) {
@@ -203,25 +285,55 @@ class ActivityAPIController extends ControllerAPI
                 $activities->whereIn('activities.object_name', $names);
             });
 
+            // Filter by matching object_name pattern
+            OrbitInput::get('object_name_like', function($name) use ($activities) {
+                $activities->where('activities.object_name', 'like', "%{$name}%");
+            });
+
             OrbitInput::get('product_names', function($names) use ($activities) {
                 $activities->whereIn('activities.product_name', $names);
+            });
+
+            // Filter by matching product_name pattern
+            OrbitInput::get('product_name_like', function($name) use ($activities) {
+                $activities->where('activities.product_name', 'like', "%$name%");
             });
 
             OrbitInput::get('promotion_names', function($names) use ($activities) {
                 $activities->whereIn('activities.promotion_name', $names);
             });
 
+            // Filter by matching promotion_name pattern
+            OrbitInput::get('promotion_name_like', function($name) use ($activities) {
+                $activities->where('activities.promotion_name', 'like', "%$name%");
+            });
+
             OrbitInput::get('coupon_names', function($names) use ($activities) {
                 $activities->whereIn('activities.coupon_name', $names);
+            });
+
+            // Filter by matching coupon_name pattern
+            OrbitInput::get('coupon_name_like', function($name) use ($activities) {
+                $activities->where('activities.coupon_name', 'like', "%$name%");
             });
 
             OrbitInput::get('event_names', function($names) use ($activities) {
                 $activities->whereIn('activities.event_name', $names);
             });
 
+            // Filter by matching event_name pattern
+            OrbitInput::get('event_name_like', function($name) use ($activities) {
+                $activities->where('activities.event_name', 'like', "%$name%");
+            });
+
             // Filter by staff Ids
             OrbitInput::get('staff_ids', function($staff) use ($activities) {
                 $activities->whereIn('activities.staff_id', $staff);
+            });
+
+            // Filter by matching staff_name pattern
+            OrbitInput::get('staff_name_like', function($name) use ($activities) {
+                $activities->where('activities.staff_name', 'like', "%$name%");
             });
 
             // Filter by status
@@ -271,7 +383,7 @@ class ActivityAPIController extends ControllerAPI
                 }
 
                 // Filter by user location id
-                $activities->whereIn('activities.location_id', $locationIds);
+                //$activities->whereIn('activities.location_id', $locationIds);
             } else {
                 // Filter by user ids, Super Admin could filter all
                 OrbitInput::get('user_ids', function($userIds) use ($activities) {
@@ -359,9 +471,9 @@ class ActivityAPIController extends ControllerAPI
             $data->returned_records = count($listOfActivities);
             $data->records = $listOfActivities;
 
-            if ($listOfActivities === 0) {
+            if ($totalActivities === 0) {
                 $data->records = null;
-                $this->response->message = Lang::get('statuses.orbit.nodata.attribute');
+                $this->response->message = Lang::get('statuses.orbit.nodata.activity');
             }
 
             $this->response->data = $data;
@@ -426,6 +538,7 @@ class ActivityAPIController extends ControllerAPI
             $merchants = Merchant::excludeDeleted()
                         ->allowedForUser($user)
                         ->whereIn('merchant_id', $value)
+                        ->where('is_mall', 'yes')
                         ->limit(50)
                         ->get();
 
