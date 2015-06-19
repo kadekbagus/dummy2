@@ -383,7 +383,7 @@ class ActivityAPIController extends ControllerAPI
                 }
 
                 // Filter by user location id
-                $activities->whereIn('activities.location_id', $locationIds);
+                //$activities->whereIn('activities.location_id', $locationIds);
             } else {
                 // Filter by user ids, Super Admin could filter all
                 OrbitInput::get('user_ids', function($userIds) use ($activities) {
@@ -473,7 +473,7 @@ class ActivityAPIController extends ControllerAPI
 
             if ($totalActivities === 0) {
                 $data->records = null;
-                $this->response->message = Lang::get('statuses.orbit.nodata.attribute');
+                $this->response->message = Lang::get('statuses.orbit.nodata.activity');
             }
 
             $this->response->data = $data;

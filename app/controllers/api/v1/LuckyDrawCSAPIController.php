@@ -996,10 +996,10 @@ class LuckyDrawCSAPIController extends ControllerAPI
             }
 
             // The user should be already membership
-            if (trim($user->membership_number) === '') {
-                $errorMessage = sprintf('User %s does not have membership number.', $user->user_email);
-                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
-            }
+            // if (trim($user->membership_number) === '') {
+            //     $errorMessage = sprintf('User %s does not have membership number.', $user->user_email);
+            //     OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            // }
 
             App::instance('orbit.empty.user', $user);
 
