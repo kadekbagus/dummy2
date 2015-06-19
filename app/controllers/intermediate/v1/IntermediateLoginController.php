@@ -436,9 +436,13 @@ class IntermediateLoginController extends IntermediateBaseController
          */
         if (isset($_GET['loadsession'])) {
             // Needed to show some information on the view
+            $bg = NULL;
+
             try {
                 $retailer_id = Config::get('orbit.shop.id');
-                $retailer = Retailer::with('parent')->where('merchant_id', $retailer_id)->first();
+                $retailer = Retailer::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
+
+                $bg = Setting::getFromList($retailer->settings, 'background_image');
             } catch (Exception $e) {
                 $retailer = new stdClass();
                 // Fake some properties
@@ -447,7 +451,7 @@ class IntermediateLoginController extends IntermediateBaseController
             }
 
             // Display a view which showing that page is loading
-            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer]);
+            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg]);
         }
 
         if (isset($_GET['createsession'])) {
@@ -471,7 +475,9 @@ class IntermediateLoginController extends IntermediateBaseController
             $this->session->rawUpdate($sessData);
             $newData = $this->session->getSession();
 
-            return Redirect::to('/customer');
+            $sessionName = $this->mobileCISessionName['query_string'];
+            $redirectTo = sprintf('/customer/?%s=%s', $sessionName, $sessionId);
+            return Redirect::to($redirectTo);
         }
 
         // Catch all

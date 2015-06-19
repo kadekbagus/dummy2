@@ -318,19 +318,18 @@ class MobileCIAPIController extends ControllerAPI
             $bg = Setting::getFromList($mall->settings, 'background_image');
 
             // Get email from query string
+            $loggedUser = $this->getLoggedInUser();
+            $user_email = $loggedUser->user_email;
+
+            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
+        } catch (Exception $e) {
+            $retailer = $this->getRetailerInfo();
+
             $user_email = OrbitInput::get('email', '');
             if (! empty($user_email)) {
                 \DummyAPIController::create()->getUserSignInNetwork();
             }
 
-            if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
-            } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
-            }
-        } catch (Exception $e) {
-            $retailer = $this->getRetailerInfo();
-            $user_email = '';
             if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
                 return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
             } else {
@@ -8205,7 +8204,7 @@ class MobileCIAPIController extends ControllerAPI
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now());
                 $q->where('issued_coupons.status', 'active');
             })->first();
-            
+
             $coupon_id = $coupons->promotion_id;
             $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
 

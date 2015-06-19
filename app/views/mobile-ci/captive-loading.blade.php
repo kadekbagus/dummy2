@@ -14,6 +14,15 @@
 #signedIn{
   display: none;
 }
+@if(!empty($bg))
+  @if(!empty($bg[0]))
+  body.bg{
+    background: url('{{ asset($bg[0]) }}');
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+  @endif
+@endif
 </style>
 @stop
 
@@ -28,7 +37,7 @@
             </div>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->parent->biglogo) }}" />
                 </div>
             </div>
         </header>
