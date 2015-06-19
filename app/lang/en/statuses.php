@@ -53,6 +53,7 @@ return array(
             'lucky_draw'    => 'There is no lucky draw that matched your search criteria.',
             'news'          => 'There is no news that matched your search criteria.',
             'object'        => 'There is no object that matched your search criteria.',
+            'activity'      => 'There is no activity that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
