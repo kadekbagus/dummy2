@@ -276,17 +276,6 @@ class MobileCIAPIController extends ControllerAPI
         }
     }
 
-    public function getObjFromArray($haystacks, $needle) {
-        $item = null;
-        foreach($haystacks as $haystack) {
-            if($needle == $haystack->setting_name) {
-                return $haystack;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * GET - Sign in page
      *
@@ -7634,6 +7623,23 @@ class MobileCIAPIController extends ControllerAPI
                     if (! empty($pid)) {
                         $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
                             $q->where('news_id', $pid);
+                        })->whereHas('news', function($q2) {
+                            $q2->where('object_type', 'promotion');
+                        })->get()->lists('merchant_id');
+                        // <-- should add exception if retailers not found
+                        $products->whereIn('merchants.merchant_id', $retailers);
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'news_id',
+                function ($pid) use ($products) {
+                    if (! empty($pid)) {
+                        $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
+                            $q->where('news_id', $pid);
+                        })->whereHas('news', function($q2) {
+                            $q2->where('object_type', 'news');
                         })->get()->lists('merchant_id');
                         $products->whereIn('merchants.merchant_id', $retailers);
                     }
@@ -7749,6 +7755,19 @@ class MobileCIAPIController extends ControllerAPI
             if (! empty(OrbitInput::get('promotion_id'))) {
                 $pagetitle = 'PROMOTIONS TENANTS';
                 $activityPageNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Promotion Tenant')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty(OrbitInput::get('news_id'))) {
+                $pagetitle = 'NEWS TENANTS';
+                $activityPageNotes = sprintf('Page viewed: News Tenants List Page, news ID: %s', OrbitInput::get('news_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Promotion Tenant')
@@ -8699,5 +8718,23 @@ class MobileCIAPIController extends ControllerAPI
 
             return Response::download($file);
         }
+    }
+
+    /**
+     * get object from array
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * @return object
+     */
+    public function getObjFromArray($haystacks, $needle) {
+        $item = null;
+        foreach($haystacks as $haystack) {
+            if($needle == $haystack->setting_name) {
+                return $haystack;
+            }
+        }
+
+        return false;
     }
 }
