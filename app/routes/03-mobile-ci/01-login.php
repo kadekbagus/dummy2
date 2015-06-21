@@ -385,18 +385,23 @@ Route::group(
             }
         );
 
-        Route::get(
-            '/customer/luckydraw', ['as' => 'ci-luckydraw',
-            function () {
-                return MobileCI\MobileCIAPIController::create()->getLuckyDrawView();
-            }]
-        );
+        Route::group(
+            array('before' => 'check-routes-luckydraw'),
+            function() {
+                Route::get(
+                    '/customer/luckydraw', ['as' => 'ci-luckydraw',
+                    function () {
+                        return MobileCI\MobileCIAPIController::create()->getLuckyDrawView();
+                    }]
+                );
 
-        Route::post(
-            '/app/v1/customer/luckydrawnumberpopup',
-            function () {
+                Route::post(
+                    '/app/v1/customer/luckydrawnumberpopup',
+                    function () {
 
-                return MobileCI\MobileCIAPIController::create()->postLuckyNumberPopup();
+                        return MobileCI\MobileCIAPIController::create()->postLuckyNumberPopup();
+                    }
+                );
             }
         );
 
