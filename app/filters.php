@@ -125,3 +125,21 @@ Route::filter('orbit-settings', function()
         }
     }
 });
+
+/*
+|--------------------------------------------------------------------------
+| Check luckydraw routes based on database setting
+|--------------------------------------------------------------------------
+*/
+Route::filter('check-routes-luckydraw', function() 
+{
+    $retailer = Retailer::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
+
+    foreach ($retailer->settings as $setting) {
+        if ($setting->setting_name == 'enable_lucky_draw') {
+            if ($setting->setting_value != 'true') {
+                return Redirect::route('ci-customer-home');
+            }
+        }
+    }
+});
