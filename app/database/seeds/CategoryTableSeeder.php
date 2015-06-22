@@ -30,6 +30,7 @@ Jewellery
 Services
 Sports Related
 Watches & Optics
+Entertainment
 CATEGORIES;
 
         $categories = explode("\n", $sources);
