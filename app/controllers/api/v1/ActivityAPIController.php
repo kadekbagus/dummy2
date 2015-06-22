@@ -190,6 +190,8 @@ class ActivityAPIController extends ControllerAPI
                                                     DB::Raw("DATE_FORMAT({$tablePrefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"),
                                                     'user_details.gender as gender')
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
+                                            ->joinNews()
+                                            ->joinPromotionNews()
                                             ->groupBy('activities.activity_id');
 
             // Filter by ids
