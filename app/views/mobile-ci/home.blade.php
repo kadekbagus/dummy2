@@ -23,7 +23,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_tenants.jpg') }}"/>
                             </a>
                         </li>
                     </ul>
@@ -41,7 +41,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_promotion.jpg') }}"/>
                             </a>
                         </li>
                     </ul>
@@ -59,7 +59,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_news.jpg') }}"/>
                             </a>
                         </li>
                     </ul>
@@ -77,7 +77,7 @@
                     <ul class="rslides" id="slider1">
                         <li>
                             <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">    
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_coupon.jpg') }}"/>
                             </a>
                         </li>
                     </ul>
@@ -100,7 +100,7 @@
                             @else
                             <a class="widget-link" data-widget="" id="emptyLuck">
                             @endif
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}"/>
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_lucky_draw.jpg') }}"/>
                             </a>
                         </li>
                     </ul>

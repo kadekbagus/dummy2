@@ -8731,7 +8731,6 @@ class MobileCIAPIController extends ControllerAPI
      * @return object
      */
     public function getObjFromArray($haystacks, $needle) {
-        $item = null;
         foreach($haystacks as $haystack) {
             if($needle == $haystack->setting_name) {
                 return $haystack;
