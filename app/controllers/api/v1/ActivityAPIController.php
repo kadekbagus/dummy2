@@ -102,7 +102,7 @@ class ActivityAPIController extends ControllerAPI
                     'end_date'      => $end_date
                 ),
                 array(
-                    'sort_by'       => 'in:id,ip_address,created,registered_at,email,full_name,object_name,product_name,coupon_name,promotion_name,event_name,action_name,action_name_long,activity_type,gender,staff_name,module_name',
+                    'sort_by'       => 'in:id,ip_address,created,registered_at,email,full_name,object_name,product_name,coupon_name,promotion_name,news_name,promotion_news_name,event_name,action_name,action_name_long,activity_type,gender,staff_name,module_name',
                     'merchant_ids'  => 'orbit.check.merchants',
                     'start_date'    => 'date_format:Y-m-d H:i:s|before:' . $tomorrow,
                     'end_date'      => 'date_format:Y-m-d H:i:s|before:' . $tomorrow,
@@ -462,6 +462,8 @@ class ActivityAPIController extends ControllerAPI
                     'product_name'      => 'activities.product_name',
                     'coupon_name'       => 'activities.coupon_name',
                     'promotion_name'    => 'activities.promotion_name',
+                    'news_name'         => 'news.news_name',
+                    'promotion_news_name' => DB::raw('promotion_news.news_name'),
                     'event_name'        => 'activities.event_name',
                     'action_name'       => 'activities.activity_name',
                     'action_name_long'  => 'activities.activity_name_long',
