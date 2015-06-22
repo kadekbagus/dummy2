@@ -310,6 +310,15 @@ class ActivityAPIController extends ControllerAPI
                 $activities->where('activities.promotion_name', 'like', "%$name%");
             });
 
+            OrbitInput::get('promotion_news_names', function($names) use ($activities) {
+                $activities->whereIn(DB::raw('promotion_news.news_name'), $names);
+            });
+
+            // Filter by matching promotion_news_name pattern
+            OrbitInput::get('promotion_news_name_like', function($name) use ($activities) {
+                $activities->where(DB::raw('promotion_news.news_name'), 'like', "%$name%");
+            });
+
             OrbitInput::get('coupon_names', function($names) use ($activities) {
                 $activities->whereIn('activities.coupon_name', $names);
             });
