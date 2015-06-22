@@ -387,6 +387,29 @@ class Activity extends Eloquent
     }
 
     /**
+     * Set the value of `news_id`, and `metadata_object`.
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @param Object $object
+     * @return Activity
+     */
+    public function setNews($object)
+    {
+        if (is_object($object)) {
+            $primaryKey = $object->getKeyName();
+            $this->news_id = $object->$primaryKey;
+
+            $this->metadata_object = $object->toJSON();
+        } else {
+            $this->news_id = null;
+
+            $this->metadata_object = null;
+        }
+
+        return $this;
+    }
+
+    /**
      * Set the value of `event_id`, `event_name`, and `metadata_object`.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -522,6 +545,42 @@ class Activity extends Eloquent
     public function children()
     {
         return $this->hasMany('Activity', 'parent_id', 'activity_id');
+    }
+
+    /**
+     * Scope to join with news table with object_type news
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $builder
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeJoinNews($builder)
+    {
+        return $builder->addSelect('news.news_name')
+                       ->leftJoin('news', function ($join) {
+                            $join->on('news.news_id', '=', 'activities.news_id');
+                            $join->on('news.object_type', '=', DB::raw('"news"'));
+                            $join->on('news.status', '!=', DB::raw('"deleted"'));
+                       });
+    }
+
+    /**
+     * Scope to join with news table with object_type promotion
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $builder
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeJoinPromotionNews($builder)
+    {
+        $prefix = DB::getTablePrefix();
+
+        return $builder->addSelect(DB::raw('promotion_news.news_name as promotion_news_name'))
+                       ->leftJoin(DB::raw($prefix . 'news promotion_news'), function ($join) {
+                            $join->on(DB::raw('promotion_news.news_id'), '=', 'activities.news_id');
+                            $join->on(DB::raw('promotion_news.object_type'), '=', DB::raw('"promotion"'));
+                            $join->on(DB::raw('promotion_news.status'), '!=', DB::raw('"deleted"'));
+                       });
     }
 
     /**

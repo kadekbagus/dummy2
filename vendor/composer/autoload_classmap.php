@@ -8,6 +8,7 @@ $baseDir = dirname($vendorDir);
 return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
+    'AlterNewsTableAddColumnNewsId' => $baseDir . '/app/database/migrations/2015_06_19_140539_alter_news_table_add_column_news_id.php',
     'AlterStoredProcModifyNumberDrivenIssue' => $baseDir . '/app/database/migrations/2015_04_13_124254_alter_stored_proc_modify_number_driven_issue.php',
     'AlterStoredProcedureIssueLuckyDrawNumberAddMaxReturnedRecord' => $baseDir . '/app/database/migrations/2015_04_22_134819_alter_stored_procedure_issue_lucky_draw_number_add_max_returned_record.php',
     'AlterTableEventRetailerAddColumnObjectType' => $baseDir . '/app/database/migrations/2015_04_17_103926_alter_table_event_retailer_add_column_object_type.php',
@@ -578,6 +579,7 @@ return array(
     'Laraeval\\Laraeval\\LaraevalServiceProvider' => $vendorDir . '/laraeval/laraeval/src/Laraeval/Laraeval/LaraevalServiceProvider.php',
     'LippoPuriBankSeeder' => $baseDir . '/app/database/seeds/LippoPuriBankSeeder.php',
     'LippoPuriTenantSeeder' => $baseDir . '/app/database/seeds/LippoPuriTenantSeeder.php',
+    'LippoPuriWidgetSettingTableSeeder' => $baseDir . '/app/database/seeds/LippoPuriWidgetSettingTableSeeder.php',
     'LoginAPIController' => $baseDir . '/app/controllers/api/v1/LoginAPIController.php',
     'LuckyDraw' => $baseDir . '/app/models/LuckyDraw.php',
     'LuckyDrawAPIController' => $baseDir . '/app/controllers/api/v1/LuckyDrawAPIController.php',
