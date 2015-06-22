@@ -13,3 +13,4 @@
 
 // Merchant or Retailer activation
 Artisan::add(new merchantActivation);
+Artisan::add(new CompileOrbitRoutes);

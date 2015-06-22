@@ -35,3 +35,6 @@ node_modules/
 
 # Orbit Storage Session
 app/storage/orbit-session/**
+
+# Orbit Compiled Routes
+app/routes/orbit-compiled-routes.php
