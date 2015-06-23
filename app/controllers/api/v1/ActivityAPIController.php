@@ -255,6 +255,7 @@ class ActivityAPIController extends ControllerAPI
 
             // Filter by gender
             OrbitInput::get('genders', function($genders) use ($activities) {
+                // dd($genders[0]);
                 $activities->whereIn('activities.gender', $genders);
             });
 
@@ -445,7 +446,7 @@ class ActivityAPIController extends ControllerAPI
             $activities->skip($skip);
 
             // Default sort by
-            $sortBy = 'activities.created_at';
+            $sortBy = 'activities.activity_id';
             // Default sort mode
             $sortMode = 'desc';
 
@@ -469,7 +470,7 @@ class ActivityAPIController extends ControllerAPI
                     'action_name_long'  => 'activities.activity_name_long',
                     'activity_type'     => 'activities.activity_type',
                     'staff_name'        => 'activities.staff_name',
-                    'gender'            => 'activities.gender',
+                    'gender'            => 'user_details.gender',
                     'module_name'       => 'activities.module_name',
                 );
 
