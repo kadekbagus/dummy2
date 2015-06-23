@@ -470,7 +470,7 @@ class ActivityAPIController extends ControllerAPI
                     'action_name_long'  => 'activities.activity_name_long',
                     'activity_type'     => 'activities.activity_type',
                     'staff_name'        => 'activities.staff_name',
-                    'gender'            => 'activities.gender',
+                    'gender'            => 'user_details.gender',
                     'module_name'       => 'activities.module_name',
                 );
 
