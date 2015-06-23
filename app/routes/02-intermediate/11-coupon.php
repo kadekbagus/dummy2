@@ -66,4 +66,7 @@ Route::get('/app/v1/issued-coupon/by-redeem-retailer/search', 'IntermediateAuthC
 /**
  * Redeem issued coupon for consumer
  */
-Route::post('/app/v1/issued-coupon/redeem', 'IntermediateAuthController@Coupon_postRedeemCoupon');
+Route::group(['before' => 'orbit-settings'], function()
+{
+	Route::post('/app/v1/issued-coupon/redeem', 'IntermediateAuthController@Coupon_postRedeemCoupon');
+});
