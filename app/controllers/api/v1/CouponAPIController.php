@@ -1637,10 +1637,11 @@ class CouponAPIController extends ControllerAPI
      */
     public function postRedeemCoupon()
     {
-        $activity = Activity::portal()
+        $activity = Activity::mobileci()
                           ->setActivityType('coupon');
 
         $user = NULL;
+        $mall_id = NULL;
         $issuedcoupon = NULL;
         try {
             $httpCode = 200;
@@ -1676,6 +1677,8 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.redeemcoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
+
+            $mall_id = Config::get('orbit.shop.id');
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
@@ -1737,6 +1740,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon OK')
                     ->setObject($issuedcoupon)
                     ->setNotes($activityNotes)
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseOK();
 
@@ -1759,6 +1763,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -1779,6 +1784,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (QueryException $e) {
@@ -1805,6 +1811,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (Exception $e) {
@@ -1824,6 +1831,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Delete Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         }
