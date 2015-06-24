@@ -58,7 +58,7 @@ return array(
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',
         'message_no_new_product'=> 'Maaf, tidak ada produk baru untuk saat ini.',
         'message_no_promotion'  => 'Maaf, tidak ada promosi untuk saat ini.',
-        'message_no_lucky_draw' => 'Untuk memperoleh Lucky Draw, harap kunjungi counter Customer Service.',
+        'message_no_lucky_draw' => "Daftar sekarang dan dapatkan kesempatan untuk memenangkan Mazda setiap 3 bulan! Tukarkan struk belanja Anda minimum Rp. 100,000 pada VIP Lounge L2. Dapatkan merchandise gratis jika mendaftar saat ini juga! <br><br> • Jika stok masih ada <br> • Syarat & ketentuan berlaku.",
         'message_delete_item'   => 'Apakah Anda yakin akan menghapus item ini dari keranjang belanja?',
         'message_delete_coupon' => 'Apakah Anda yakin akan menghapus kupon ini dari keranjang belanja? Kupon yang Anda hapus masih dapat digunakan lain kali.',
         'message_transfer_cart' => 'Tunjukkan smartphone Anda ke kasir untuk menyelesaikan checkout.',

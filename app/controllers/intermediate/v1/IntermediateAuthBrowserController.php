@@ -18,6 +18,13 @@ class IntermediateAuthBrowserController extends IntermediateBaseController
     protected $viewData = [];
 
     /**
+     * Hold the logged in user Object
+     *
+     * @var User
+     */
+    protected $loggedUser = NULL;
+
+    /**
      * Check the authenticated user on constructor
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -58,6 +65,10 @@ class IntermediateAuthBrowserController extends IntermediateBaseController
                 $signature = Generator::genSignature($apikey->api_secret_key);
                 $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
 
+                $this->loggedUser = $user;
+
+                $this->afterAuth();
+
             } catch (ACLForbiddenException $e) {
                 if (Config::get('app.debug')) {
                     return $e;
@@ -83,5 +94,10 @@ class IntermediateAuthBrowserController extends IntermediateBaseController
     {
         // @Todo: Should be check the protocol also
         return 'http://portal.' . $this->getBaseDomain();
+    }
+
+    protected function afterAuth()
+    {
+        // do nothing
     }
 }
