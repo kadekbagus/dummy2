@@ -126,9 +126,10 @@
             <th style="text-align:left;">Gender</th>
             <th style="text-align:left;">Date & Time</th>
             <th style="text-align:left;">Action</th>
+            <th style="text-align:left;">Tenant</th>
             <th style="text-align:left;">News</th>
-            <th style="text-align:left;">Promotion</th>
-            <th style="text-align:left;">Coupon</th>
+            <th style="text-align:left;">Promotions</th>
+            <th style="text-align:left;">Coupons</th>
         </thead>
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
@@ -138,6 +139,7 @@
                 <td><?php echo $me->printGender($row); ?></td>
                 <td><?php echo $me->printDateTime($row); ?></td>
                 <td><?php echo ($row->activity_name_long); ?></td>
+                <td><?php echo $me->printUtf8($row->retailer_name); ?></td>
                 <td><?php echo $me->printUtf8($row->news_name); ?></td>
                 <td><?php echo $me->printUtf8($row->promotion_news_name); ?></td>
                 <td><?php echo $me->printUtf8($row->coupon_name); ?></td>
