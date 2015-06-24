@@ -102,7 +102,7 @@ class ActivityAPIController extends ControllerAPI
                     'end_date'      => $end_date
                 ),
                 array(
-                    'sort_by'       => 'in:id,ip_address,created,registered_at,email,full_name,object_name,product_name,coupon_name,promotion_name,news_name,promotion_news_name,event_name,action_name,action_name_long,activity_type,gender,staff_name,module_name',
+                    'sort_by'       => 'in:id,ip_address,created,registered_at,email,full_name,object_name,product_name,coupon_name,promotion_name,news_name,promotion_news_name,event_name,action_name,action_name_long,activity_type,gender,staff_name,module_name,retailer_name',
                     'merchant_ids'  => 'orbit.check.merchants',
                     'start_date'    => 'date_format:Y-m-d H:i:s|before:' . $tomorrow,
                     'end_date'      => 'date_format:Y-m-d H:i:s|before:' . $tomorrow,
@@ -190,6 +190,7 @@ class ActivityAPIController extends ControllerAPI
                                                     DB::Raw("DATE_FORMAT({$tablePrefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"),
                                                     'user_details.gender as gender')
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
+                                            ->joinRetailer()
                                             ->joinNews()
                                             ->joinPromotionNews()
                                             ->groupBy('activities.activity_id');
@@ -280,7 +281,7 @@ class ActivityAPIController extends ControllerAPI
 
             // Filter by object ids
             OrbitInput::get('object_ids', function($objectIds) use ($activities) {
-                $activities->whereIn('activities.object_id', $roleIds);
+                $activities->whereIn('activities.object_id', $objectIds);
             });
 
             // Filter by object names
@@ -309,6 +310,15 @@ class ActivityAPIController extends ControllerAPI
             // Filter by matching promotion_name pattern
             OrbitInput::get('promotion_name_like', function($name) use ($activities) {
                 $activities->where('activities.promotion_name', 'like', "%$name%");
+            });
+
+            OrbitInput::get('retailer_names', function($names) use ($activities) {
+                $activities->whereIn('merchants.name', $names);
+            });
+
+            // Filter by matching retailer_name pattern
+            OrbitInput::get('retailer_name_like', function($name) use ($activities) {
+                $activities->where('merchants.name', 'like', "%$name%");
             });
 
             OrbitInput::get('news_names', function($names) use ($activities) {
@@ -472,6 +482,7 @@ class ActivityAPIController extends ControllerAPI
                     'staff_name'        => 'activities.staff_name',
                     'gender'            => 'user_details.gender',
                     'module_name'       => 'activities.module_name',
+                    'retailer_name'     => 'retailer_name',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
