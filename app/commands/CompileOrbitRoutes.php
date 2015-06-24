@@ -76,6 +76,11 @@ class CompileOrbitRoutes extends Command
                                 ->includeFullPath();
 
         foreach ($recursiveIterator->get() as $file) {
+
+            if (basename($file) === static::COMPILED_ROUTES) {
+                continue;
+            }
+
             $this->info('Compiling file ' . $file . '...');
             $content = trim(file_get_contents($file));
 
