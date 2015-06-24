@@ -58,7 +58,8 @@ return array(
         'message_no_coupon'     => 'Sorry, you do not have any coupons yet.',
         'message_no_new_product'=> 'Sorry, there are no new products for today.',
         'message_no_promotion'  => 'Sorry, there are no promotions for today.',
-        'message_no_lucky_draw' => 'To obtain Lucky Draw, please go to Customer Service counter.',
+        'message_no_lucky_draw' => "Sign up now and get a chance to win a Mazda car every three months! Exchange your transaction receipts minimum Rp. 100,000 at our VIP Lounge on L2. Get a FREE merchandise if you register now! <br><br> * While Stock Lasts <br> * Terms & Conditions Apply.",
+
         'message_delete_item'   => 'Are you sure to remove this item from your cart?',
         'message_delete_coupon' => 'Are you sure to remove this coupon from your cart? Removed coupon could be used next time.',
         'message_transfer_cart' => 'Show this screen to the cashier to complete your checkout.',

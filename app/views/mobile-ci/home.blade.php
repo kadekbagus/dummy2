@@ -388,7 +388,7 @@
         });
         $('#emptyLuck').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
+          $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
         $('#promoModal a').click(function (event){ 
