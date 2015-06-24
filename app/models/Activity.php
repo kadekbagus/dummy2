@@ -584,6 +584,26 @@ class Activity extends Eloquent
     }
 
     /**
+     * Scope to join with merchants table for tenants data
+     *
+     * @param Illuminate\Database\Query\Builder $builder
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeJoinRetailer($builder)
+    {
+        $prefix = DB::getTablePrefix();
+
+        return $builder->addSelect(DB::raw($prefix . 'merchants.name as retailer_name'))
+                       ->leftJoin('merchants', function ($join) {
+                            $join->on('activities.object_name', '=', DB::raw('"Retailer"'));
+                            $join->on('merchants.merchant_id', '=', 'activities.object_id');
+                            $join->on('merchants.object_type', '=', DB::raw('"retailer"'));
+                            $join->on('merchants.is_mall', '=', DB::raw('"no"'));
+                            $join->on('merchants.status', '!=', DB::raw('"deleted"'));
+                       });
+    }
+
+    /**
      * Scope to filter based on merchant ids
      *
      * @author Rio Astamal <me@rioastamal.net>
