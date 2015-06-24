@@ -2099,7 +2099,8 @@ class UserAPIController extends ControllerAPI
                     'occupation'            => '',
                     'date_of_work'          => 'date_format:Y-m-d',
                     'user_id'               => 'required|numeric|orbit.empty.user'
-                )
+                ),
+                array('email_exists_but_me' => Lang::get('validation.orbit.email.exists'))
             );
 
             Event::fire('orbit.user.postupdatemembership.before.validation', array($this, $validator));
