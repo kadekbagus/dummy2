@@ -161,6 +161,14 @@ class SessionDatabase implements GenericInterface
     {
         $current = $this->get($sessionId);
 
+        if (is_null($key)) {
+            return $current->value;
+        }
+
+        if (! array_key_exists($key, $current->value)) {
+            return NULL;
+        }
+
         return $current->value[$key];
     }
 
