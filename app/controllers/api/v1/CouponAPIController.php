@@ -1289,11 +1289,12 @@ class CouponAPIController extends ControllerAPI
             if (strtolower($user->role->role_name) === 'mall customer service') {
                 $now = date('Y-m-d');
                 $prefix = DB::getTablePrefix();
-                $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))")
-                        ->whereRaw("(select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
+                $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))");
+                $coupons->whereRaw("((select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
                                         where {$prefix}issued_coupons.promotion_id={$prefix}promotions.promotion_id
-                                        and status!='deleted') < {$prefix}promotions.maximum_issued_coupon")
-                        ->active('promotions');
+                                        and status!='deleted') < {$prefix}promotions.maximum_issued_coupon) or
+                                    ({$prefix}promotions.maximum_issued_coupon = 0 or {$prefix}promotions.maximum_issued_coupon is null)");
+                $coupons->active('promotions');
             } else {
                 $coupons->excludeDeleted('promotions');
             }

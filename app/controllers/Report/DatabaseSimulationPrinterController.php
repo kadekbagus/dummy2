@@ -70,6 +70,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                                                     DB::Raw("DATE_FORMAT({$prefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"),
                                                     'user_details.gender as gender')
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
+                                            ->joinRetailer()
                                             ->joinNews()
                                             ->joinPromotionNews()
                                             ->groupBy('activities.activity_id');
@@ -188,6 +189,15 @@ class DatabaseSimulationPrinterController extends DataPrinterController
         // Filter by matching promotion_name pattern
         OrbitInput::get('promotion_name_like', function($name) use ($activities) {
             $activities->where('activities.promotion_name', 'like', "%$name%");
+        });
+
+        OrbitInput::get('retailer_names', function($names) use ($activities) {
+            $activities->whereIn('merchants.name', $names);
+        });
+
+        // Filter by matching retailer_name pattern
+        OrbitInput::get('retailer_name_like', function($name) use ($activities) {
+            $activities->where('merchants.name', 'like', "%$name%");
         });
 
         OrbitInput::get('news_names', function($names) use ($activities) {
@@ -327,6 +337,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 'staff_name'        => 'activities.staff_name',
                 'gender'            => 'user_details.gender',
                 'module_name'       => 'activities.module_name',
+                'retailer_name'     => 'retailer_name',
             );
 
             if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -358,20 +369,20 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 @header('Content-Type: text/csv');
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Data List', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Data', $totalRec, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Data List', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Data', $totalRec, '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'News', 'Promotions', 'Coupon');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Promotions', 'Coupons');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
                 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $gender = $this->printGender($row);
                     $date = $this->printDateTime($row);
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $row->created_at, $row->activity_name_long, $this->printUtf8($row->news_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name));
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $row->created_at, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name));
                     $count++;
 
                 }
