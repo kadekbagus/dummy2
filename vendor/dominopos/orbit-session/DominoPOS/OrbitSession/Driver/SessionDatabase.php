@@ -259,6 +259,8 @@ class SessionDatabase implements GenericInterface
      */
     protected function __updateSession($sessionId, $sessionData)
     {
+        Helper::touch($sessionData, $this->getConfig('expire'));
+
         $data         = $this->pdo->quote(serialize($sessionData));
         $id           = $this->pdo->quote($sessionId);
         $expireAt     = $this->pdo->quote($sessionData->expireAt);
