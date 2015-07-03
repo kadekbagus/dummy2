@@ -76,6 +76,9 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
 
             $notAllowedStatus = ['inactive'];
+
+            DB::connection()->getPdo()->beginTransaction();
+
             $user = User::with('apikey', 'userdetail', 'role')
                         ->excludeDeleted()
                         ->where('user_email', $email)
@@ -84,11 +87,11 @@ class MobileCIAPIController extends ControllerAPI
                             function ($query) {
                                 $query->where('role_name', 'Consumer');
                             }
-                        )
+                        )->sharedLock()
                         ->first();
 
             if (! is_object($user)) {
-                $response = \LoginAPIController::create('raw')->postRegisterUserInShop();
+                $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
                 if ($response->code !== 0) {
                     throw new Exception($response->message, $response->code);
                 }
@@ -120,21 +123,29 @@ class MobileCIAPIController extends ControllerAPI
             $user->setHidden(array('user_password', 'apikey'));
             $this->response->data = $user;
 
+            DB::connection()->getPdo()->commit();
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            DB::connection()->getPdo()->rollback();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            DB::connection()->getPdo()->rollback();
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            DB::connection()->getPdo()->rollback();
         }
 
         return $this->render();
