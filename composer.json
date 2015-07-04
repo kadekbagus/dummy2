@@ -33,7 +33,8 @@
             "app/database/seeds",
             "app/tests/TestCase.php",
             "app/tests/OrbitTestCase.php",
-            "app/helpers"
+            "app/helpers",
+            "app/queue"
         ]
     },
     "scripts": {
