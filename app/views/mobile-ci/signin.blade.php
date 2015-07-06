@@ -17,7 +17,7 @@
 @if(!empty($bg))
   @if(!empty($bg[0]))
   body.bg{
-    background: url('{{$bg[0]}}');
+    background: url('{{ asset($bg[0]) }}');
     background-size: cover;
     background-repeat: no-repeat;
   }

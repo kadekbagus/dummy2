@@ -1779,7 +1779,7 @@ class UserAPIController extends ControllerAPI
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'joindate'              => 'date_format:Y-m-d',
-                    'membership_number'     => 'orbit.membership.exists',
+                    'membership_number'     => 'required|orbit.membership.exists',
                     'status'                => 'required|in:active,inactive,pending',
                     'category_ids'          => 'array',
                     'idcard_number'         => 'numeric',
@@ -2136,7 +2136,8 @@ class UserAPIController extends ControllerAPI
                     'occupation'            => '',
                     'date_of_work'          => 'date_format:Y-m-d',
                     'user_id'               => 'required|numeric|orbit.empty.user'
-                )
+                ),
+                array('email_exists_but_me' => Lang::get('validation.orbit.email.exists'))
             );
 
             Event::fire('orbit.user.postupdatemembership.before.validation', array($this, $validator));

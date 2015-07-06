@@ -27,9 +27,9 @@
 <div class="row product">
     <div class="col-xs-12 product-img">
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{ asset($product->promo_image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
+            <div class="zoom"><a href="{{ asset($product->image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
-        <a href="{{ asset($product->promo_image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($product->promo_image) }}" ></a>
+        <a href="{{ asset($product->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($product->image) }}" ></a>
     </div>
     <div class="col-xs-12 main-theme product-detail">
         <div class="row">
@@ -68,7 +68,7 @@
         <div class="row">
             <div class="col-xs-12 text-center">
                 <h4>Coupon Value</h4>
-                <p>IDR <span class="formatted-numx">{{ $product->discount_value }}</span></p>
+                <p>IDR <span class="formatted-numx">{{ $product->couponRule->discount_value }}</span></p>
             </div>
         </div>
         <div class="row">
@@ -211,7 +211,7 @@
                     url: apiPath+'issued-coupon/redeem',
                     method: 'POST',
                     data: {
-                        issued_coupon_id: {{$product->issued_coupon_id}},
+                        issued_coupon_id: {{$product->issuedCoupons[0]->issued_coupon_id}},
                         merchant_verification_number: $('#tenantverify').val()
                     }
                 }).done(function(data){

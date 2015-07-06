@@ -205,17 +205,14 @@ class TenantAPIController extends ControllerAPI
     }
 
      /**
-     * POST - Add new retailer
+     * POST - Add new tenant
      *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     * @author Kadek <kadek@dominopos.com>
      * @author Tian <tian@dominopos.com>
-     * @author Rio Astamal <me@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `user_id`                 (required) - User id for the retailer
-     * @param string     `orid`                    (required) - ORID of the retailer
+     * @param integer    `user_id`                 (optional) - User id for the retailer
+     * @param string     `orid`                    (optional) - ORID of the retailer
      * @param string     `email`                   (required) - Email address of the retailer
      * @param string     `name`                    (required) - Name of the retailer
      * @param string     `description`             (optional) - Merchant description
@@ -251,9 +248,14 @@ class TenantAPIController extends ControllerAPI
      * @param string     `url`                     (optional) - Url
      * @param string     `masterbox_number`        (optional) - Masterbox number
      * @param string     `slavebox_number`         (optional) - Slavebox number
+     * @param string     `floor`                   (optional) - The Floor
+     * @param string     `unit`                    (optional) - The unit number
+     * @param string     `category_ids`            (optional) - List of category ids
+     * @param string     `external_object_id`      (required) - External object ID
+     *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postNewRetailer()
+    public function postNewTenant()
     {
         $activity = Activity::portal()
                             ->setActivityType('create');
@@ -575,7 +577,7 @@ class TenantAPIController extends ControllerAPI
      * @param string     `parent_id`                (optional) - The merchant id
      * @param string     `floor`                    (optional) - The Floor
      * @param string     `unit`                     (optional) - The unit number
-     * @param string     `category_ids`            (optional) - List of category ids
+     * @param string     `category_ids`             (optional) - List of category ids
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateTenant()

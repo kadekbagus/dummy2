@@ -1289,11 +1289,12 @@ class CouponAPIController extends ControllerAPI
             if (strtolower($user->role->role_name) === 'mall customer service') {
                 $now = date('Y-m-d');
                 $prefix = DB::getTablePrefix();
-                $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))")
-                        ->whereRaw("(select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
+                $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))");
+                $coupons->whereRaw("((select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
                                         where {$prefix}issued_coupons.promotion_id={$prefix}promotions.promotion_id
-                                        and status!='deleted') < {$prefix}promotions.maximum_issued_coupon")
-                        ->active('promotions');
+                                        and status!='deleted') < {$prefix}promotions.maximum_issued_coupon) or
+                                    ({$prefix}promotions.maximum_issued_coupon = 0 or {$prefix}promotions.maximum_issued_coupon is null)");
+                $coupons->active('promotions');
             } else {
                 $coupons->excludeDeleted('promotions');
             }
@@ -1637,10 +1638,11 @@ class CouponAPIController extends ControllerAPI
      */
     public function postRedeemCoupon()
     {
-        $activity = Activity::portal()
+        $activity = Activity::mobileci()
                           ->setActivityType('coupon');
 
         $user = NULL;
+        $mall_id = NULL;
         $issuedcoupon = NULL;
         try {
             $httpCode = 200;
@@ -1676,6 +1678,8 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.redeemcoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
+
+            $mall_id = Config::get('orbit.shop.id');
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
@@ -1737,6 +1741,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon OK')
                     ->setObject($issuedcoupon)
                     ->setNotes($activityNotes)
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseOK();
 
@@ -1759,6 +1764,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -1779,6 +1785,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (QueryException $e) {
@@ -1805,6 +1812,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (Exception $e) {
@@ -1824,6 +1832,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Delete Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         }
