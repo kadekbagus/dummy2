@@ -1857,7 +1857,9 @@ class UserAPIController extends ControllerAPI
             $newuser->user_lastname = $lastname;
             $newuser->user_role_id = $role->role_id;
             $newuser->membership_number = $membershipNumber;
+            $newuser->membership_since = $joindate;
             $newuser->status = $status;
+
             $newuser->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.user.postnewmembership.before.save', array($this, $newuser));
@@ -1873,16 +1875,28 @@ class UserAPIController extends ControllerAPI
             $userdetail->province = $province;
             $userdetail->postal_code = $postal_code;
             $userdetail->phone2 = $workphone;
-            $userdetail->merchant_acquired_date = $joindate;
             $userdetail->idcard = $idcard;
             $userdetail->occupation = $occupation;
             $userdetail->date_of_work = $dateofwork;
             $userdetail->address_line1 = $homeAddress;
             $userdetail->address_line2 = $workAddress;
+            $userdetail->merchant_acquired_date = date('Y-m-d H:i:s');
+
+            // get current mall id and its mall group
+            $currentRetailerId = Config::get('orbit.shop.id');
+            $retailer = Retailer::select('parent_id')
+                                ->where('merchant_id', $currentRetailerId)
+                                ->where('object_type', 'retailer')
+                                ->where('is_mall', 'yes')
+                                ->first();
+            $userdetail->merchant_id = $retailer->parent_id;
+            $userdetail->retailer_id = $currentRetailerId;
+
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $newuser->setRelation('userdetail', $userdetail);
             $newuser->userdetail = $userdetail;
+            $newuser->load('userdetail');
 
             $apikey = new Apikey();
             $apikey->api_key = Apikey::genApiKey($newuser);
@@ -1891,8 +1905,8 @@ class UserAPIController extends ControllerAPI
             $apikey->user_id = $newuser->user_id;
             $apikey = $newuser->apikey()->save($apikey);
 
-            $newuser->setRelation('apikey', $apikey);
-            $newuser->apikey = $apikey;
+            //$newuser->setRelation('apikey', $apikey);
+            //$newuser->apikey = $apikey;
             $newuser->setHidden(array('user_password'));
 
             // save categories
@@ -1906,6 +1920,7 @@ class UserAPIController extends ControllerAPI
                 $userCategories[] = $userPersonalInterest;
             }
             $newuser->categories = $userCategories;
+            $newuser->load('categories');
 
             // save bank_object_ids
             $userBanks = array();
@@ -1919,6 +1934,7 @@ class UserAPIController extends ControllerAPI
                 $userBanks[] = $objectRelation;
             }
             $newuser->banks = $userBanks;
+            $newuser->load('banks');
 
             Event::fire('orbit.user.postnewmembership.after.save', array($this, $newuser));
             $this->response->data = $newuser;
@@ -2178,7 +2194,7 @@ class UserAPIController extends ControllerAPI
             });
 
             OrbitInput::post('joindate', function($date) use ($userdetail) {
-                $userdetail->merchant_acquired_date = $date;
+                $userdetail->membership_since = $date;
             });
 
             OrbitInput::post('birthdate', function($date) use ($userdetail) {
