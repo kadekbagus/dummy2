@@ -244,6 +244,31 @@ class MobileCIAPIController extends ControllerAPI
                 ->take(5)
                 ->get();
 
+            $widget_singles = new stdclass();
+            $widget_singles->tenant = NULL;
+            $widget_singles->promotion = NULL;
+            $widget_singles->news = NULL;
+            $widget_singles->coupon = NULL;
+            $widget_singles->luckydraw = NULL;
+
+            foreach ($widgets as $widget) {
+                if ($widget->widget_type == 'tenant') {
+                    $widget_singles->tenant = $widget;
+                }
+                if ($widget->widget_type == 'promotion') {
+                    $widget_singles->promotion = $widget;
+                }
+                if ($widget->widget_type == 'news') {
+                    $widget_singles->news = $widget;
+                }
+                if ($widget->widget_type == 'coupon') {
+                    $widget_singles->coupon = $widget;
+                }
+                if ($widget->widget_type == 'lucky_draw') {
+                    $widget_singles->luckydraw = $widget;
+                }
+            }
+
             $widget_flags = new stdclass();
             $widget_flags->enable_coupon = $this->getObjFromArray($retailer->settings, 'enable_coupon');
             $widget_flags->enable_coupon_widget = $this->getObjFromArray($retailer->settings, 'enable_coupon_widget');
@@ -260,7 +285,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
