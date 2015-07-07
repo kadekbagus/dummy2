@@ -23,7 +23,8 @@ return array(
         'coupon_single' => 'COUPON',
         'promotion'     => 'PROMOTION',
         'not_found'     => 'ERROR',
-        'recognize_me'  => 'RECOGNIZE ME'
+        'recognize_me'  => 'RECOGNIZE ME',
+        'membership'    => 'MEMBERSHIP'
     ),
 
     "widgets"           => array(
@@ -54,6 +55,7 @@ return array(
         'delete_coupon_title'   => 'Delete Coupon',
         'close_cart_title'      => 'Close Cart',
         'reset_cart_title'      => 'Reset Cart',
+        'membership_title'      => 'Membership Information',
 
         'message_no_coupon'     => 'Sorry, you do not have any coupons yet.',
         'message_no_new_product'=> 'Sorry, there are no new products for today.',
@@ -89,6 +91,7 @@ return array(
         'not'               => 'Not',
         'click_here'        => 'click here',
         'email_not_valid'   => 'Email address is not valid',
+        'logging_in_button' => 'Logging in. Please wait...',
     ),
 
     'catalogue'         => array(

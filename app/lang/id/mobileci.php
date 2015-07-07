@@ -23,7 +23,8 @@ return array(
         'coupon_single' => 'KUPON',
         'promotion'     => 'PROMOSI',
         'not_found'     => 'ERROR',
-        'recognize_me'  => 'KENALI SAYA'
+        'recognize_me'  => 'KENALI SAYA',
+        'membership'    => 'MEMBERSHIP'
     ),
 
     'widgets'           => array(
@@ -54,6 +55,7 @@ return array(
         'delete_coupon_title'   => 'Hapus Kupon',
         'close_cart_title'      => 'Tutup Keranjang',
         'reset_cart_title'      => 'Hapus Keranjang',
+        'membership_title'      => 'Informasi Membership',
 
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',
         'message_no_new_product'=> 'Maaf, tidak ada produk baru untuk saat ini.',
@@ -88,6 +90,7 @@ return array(
         'not'               => 'Bukan',
         'click_here'        => 'klik disini',
         'email_not_valid'   => 'Alamat email tidak valid',
+        'logging_in_button' => 'Sedang login. Harap tunggu...',
     ),
 
     'catalogue'         => array(
