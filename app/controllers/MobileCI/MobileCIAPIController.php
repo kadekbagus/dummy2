@@ -285,7 +285,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -7529,7 +7529,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.tenant-list', array('retailer' => $retailer, 'data' => $data, 'subfamilies' => $subfamilies, 'cartitems' => $cartitems));
+            return View::make('mobile-ci.tenant-list', array('user' => $user, 'retailer' => $retailer, 'data' => $data, 'subfamilies' => $subfamilies, 'cartitems' => $cartitems));
 
         } catch (Exception $e) {
             $activityCategoryNotes = sprintf('Category viewed: %s', $family_id);
@@ -7827,7 +7827,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories));
+            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
@@ -7916,7 +7916,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'retailer' => $retailer, 'product' => $product));
+            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
@@ -8014,6 +8014,7 @@ class MobileCIAPIController extends ControllerAPI
 
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
+                                'user'          => $user, 
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
                                 'numbers'       => $numbers,
@@ -8163,7 +8164,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
@@ -8253,7 +8254,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -8353,7 +8354,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
@@ -8414,7 +8415,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
@@ -8513,7 +8514,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
@@ -8574,7 +8575,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
