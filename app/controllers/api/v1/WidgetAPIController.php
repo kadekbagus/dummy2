@@ -80,19 +80,19 @@ class WidgetAPIController extends ControllerAPI
                     'merchant_id'           => $merchantId,
                     'widget_type'           => $widgetType,
                     'retailer_ids'          => $retailerIds,
-                    'slogan'                => $slogan,
+                    // 'slogan'                => $slogan,
                     'animation'             => $animation,
                     'widget_order'          => $widgetOrder,
-                    'images'                => $images
+                    // 'images'                => $images
                 ),
                 array(
                     'object_id'             => 'required|numeric',
                     'merchant_id'           => 'required|numeric|orbit.empty.merchant',
                     'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type:' . $merchantId,
-                    'slogan'                => 'required',
+                    // 'slogan'                => 'required',
                     'animation'             => 'in:none,horizontal,vertical',
                     'widget_order'          => 'required|numeric',
-                    'images'                => 'required_if:animation,none',
+                    // 'images'                => 'required_if:animation,none',
                     'retailer_ids'          => 'array|orbit.empty.retailer'
                 ),
                 array(
@@ -316,10 +316,10 @@ class WidgetAPIController extends ControllerAPI
                     'merchant_id'           => $merchantId,
                     'widget_type'           => $widgetType,
                     'retailer_ids'          => $retailerIds,
-                    'slogan'                => $slogan,
+                    // 'slogan'                => $slogan,
                     'animation'             => $animation,
                     'widget_order'          => $widgetOrder,
-                    'images'                => $images
+                    // 'images'                => $images
                 ),
                 array(
                     'widget_id'             => 'required|numeric|orbit.empty.widget',
@@ -327,7 +327,7 @@ class WidgetAPIController extends ControllerAPI
                     'merchant_id'           => 'numeric|orbit.empty.merchant',
                     'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
                     'animation'             => 'in:none,horizontal,vertical',
-                    'images'                => 'required_if:animation,none',
+                    // 'images'                => 'required_if:animation,none',
                     'widget_order'          => 'numeric',
                     'retailer_ids'          => 'array|orbit.empty.retailer',
                 ),
@@ -689,6 +689,188 @@ class WidgetAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Delete widget image
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer   `wiget_id`              (required) - The Widget ID
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteWidgetImage()
+    {
+        $activity = Activity::portal()
+                          ->setActivityType('delete');
+
+        $user = NULL;
+        $widget = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.widget.postdeletewigetimage.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.widget.postdeletewigetimage.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.widget.postdeletewigetimage.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('delete_widget')) {
+                Event::fire('orbit.widget.postdeletewigetimage.authz.notallowed', array($this, $user));
+
+                $errorMessage = Lang::get('validation.orbit.actionlist.delete_widget');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
+
+                ACL::throwAccessForbidden($message);
+            }
+            Event::fire('orbit.widget.postdeletewigetimage.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $widgetId = OrbitInput::post('widget_id');
+            $validator = Validator::make(
+                array(
+                    'widget_id'             => $widgetId,
+                ),
+                array(
+                    'widget_id'             => 'required|numeric|orbit.empty.widget',
+                )
+            );
+
+            Event::fire('orbit.widget.postdeletewigetimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.widget.postdeletewigetimage.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+            
+            $imgs = Media::where('object_name', 'widget')->where('object_id', $widgetId)->get();
+            // dd($img);
+            foreach ($imgs as $img) {
+                $img->delete(TRUE);
+            }
+
+            Event::fire('orbit.widget.postdeletewigetimage.after.save', array($this, $imgs));
+            $this->response->data = NULL;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('Widget Image Deleted');
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget_image')
+                    ->setActivityNameLong('Delete Widget Image OK')
+                    ->setObject($widget)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.widget.postdeletewigetimage.after.commit', array($this, $imgs));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.widget.postdeletewigetimage.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_widget')
+                    ->setActivityNameLong('Delete Widget Failed')
+                    ->setObject($widget)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    /**
      * GET - List of Widgets.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -821,32 +1003,32 @@ class WidgetAPIController extends ControllerAPI
             });
 
             // @To do: Replace this hacks
-            if (! $user->isSuperAdmin()) {
-                $listOfMerchantIds = $user->getMyMerchantIds();
+            // if (! $user->isSuperAdmin()) {
+            //     $listOfMerchantIds = $user->getMyMerchantIds();
 
-                if (empty($listOfMerchantIds)) {
-                    $listOfMerchantIds = [-1];
-                }
-                $widgets->whereIn('widgets.merchant_id', $listOfMerchantIds);
-            } else {
-                if (! empty($listOfMerchantIds)) {
-                    $widgets->whereIn('widgets.merchant_id', $listOfMerchantIds);
-                }
-            }
+            //     if (empty($listOfMerchantIds)) {
+            //         $listOfMerchantIds = [-1];
+            //     }
+            //     $widgets->whereIn('widgets.merchant_id', $listOfMerchantIds);
+            // } else {
+            //     if (! empty($listOfMerchantIds)) {
+            //         $widgets->whereIn('widgets.merchant_id', $listOfMerchantIds);
+            //     }
+            // }
 
             // @To do: Replace this hacks
-            if (! $user->isSuperAdmin()) {
-                $listOfRetailerIds = $user->getMyRetailerIds();
+            // if (! $user->isSuperAdmin()) {
+            //     $listOfRetailerIds = $user->getMyRetailerIds();
 
-                if (empty($listOfRetailerIds)) {
-                    $listOfRetailerIds = [-1];
-                }
-                $widgets->whereIn('widget_retailer.retailer_id', $listOfRetailerIds);
-            } else {
-                if (! empty($listOfRetailerIds)) {
-                    $widgets->whereIn('widget_retailer.retailer_id', $listOfRetailerIds);
-                }
-            }
+            //     if (empty($listOfRetailerIds)) {
+            //         $listOfRetailerIds = [-1];
+            //     }
+            //     $widgets->whereIn('widget_retailer.retailer_id', $listOfRetailerIds);
+            // } else {
+            //     if (! empty($listOfRetailerIds)) {
+            //         $widgets->whereIn('widget_retailer.retailer_id', $listOfRetailerIds);
+            //     }
+            // }
 
             // Clone the query builder which still does not include the take,
             // skip, and order by

@@ -21,6 +21,49 @@
     </div>
 </div>
 
+<div class="modal fade bs-example-modal-sm" id="membership-card-popup" tabindex="-1" role="dialog" aria-labelledby="membership-card" aria-hidden="true">
+    <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
+                <h4 class="modal-title">{{ Lang::get('mobileci.modals.membership_title') }}</h4>
+            </div>
+            <div class="modal-body">
+                @if(! empty($user->membership_number))
+                <div class="member-card">
+                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
+                    <h2>
+                        <span>
+                            <strong>
+                                {{ (strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
+                            </strong>
+                            <span class='spacery'></span>
+                            <br>
+                            <span class='spacery'></span>
+                            <strong>
+                                {{ $user->membership_number }}
+                            </strong>
+                        </span>
+                    </h2>
+                </div>
+                @else
+                <div class="no-member-card text-center">
+                    <h3><strong><i>Membership Not Found</i></strong></h3>
+                    <h4><strong>Want to be a member?</strong></h4>
+                    <p>To get special great deals from us</p>
+                    <p><i>Please, contact our customer service to get your membership number.</i></p>
+                    <br>
+                    <p><small>Lippo Mall Management</small></p>
+                </div>
+                @endif
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
@@ -70,5 +113,8 @@
         if($('#cart-number').attr('data-cart-number') == '0'){
             $('.cart-qty').css('display', 'none');
         }
+        $('#membership-card').click(function(){
+            $('#membership-card-popup').modal();
+        });
     });
 </script>
