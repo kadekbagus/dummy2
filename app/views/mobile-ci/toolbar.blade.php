@@ -9,6 +9,7 @@
             <li><a href="{{ url('/customer/tenants') }}"><span class="fa fa-list-ul"></span></a></li>
             <li><a data-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span><i class="glyphicon glyphicon-cog"></i></span></a>
                 <ul class="dropdown-menu" role="menu">
+                    <li class="complimentary-bg"><a id="membership-card"><span><span class="glyphicon glyphicon-credit-card"></span> {{ Lang::get('mobileci.page_title.membership') }}</span></a></li>
                     <li class="complimentary-bg"><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off"></span> {{ Lang::get('mobileci.page_title.logout') }}</span></a></li>
                 </ul>
             </li>
