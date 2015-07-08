@@ -866,6 +866,8 @@ class UserAPIController extends ControllerAPI
      * @param integer  `take`                  (optional) - limit
      * @param integer  `skip`                  (optional) - limit offset
      * @param array    `with`                  (optional) -
+     * @param datetime      `created_begin_date`        (optional) - Created begin date. Example: 2015-05-12 00:00:00
+     * @param datetime      `created_end_date`          (optional) - Created end date. Example: 2014-05-12 23:59:59
      * @return Illuminate\Support\Facades\Response
      */
 
@@ -1012,6 +1014,18 @@ class UserAPIController extends ControllerAPI
                 $users->whereIn('users.user_role_id', $roleId);
             });
 
+            // Filter user by created_at for begin_date
+            OrbitInput::get('created_begin_date', function($begindate) use ($users)
+            {
+                $users->where('users.created_at', '>=', $begindate);
+            });
+
+            // Filter user by created_at for end_date
+            OrbitInput::get('created_end_date', function($enddate) use ($users)
+            {
+                $users->where('users.created_at', '<=', $enddate);
+            });
+
             // Filter user by their role id
             OrbitInput::get('role_name', function ($roleId) use ($users) {
                 $users->whereHas('role', function($q) use ($roleId) {
@@ -1138,6 +1152,7 @@ class UserAPIController extends ControllerAPI
     /**
      * GET - Search Consumer (currently only basic info)
      *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
      * @author Kadek Bagus <kadek@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
      *
@@ -1160,6 +1175,8 @@ class UserAPIController extends ControllerAPI
      * @param integer       `take`              (optional) - limit
      * @param integer       `skip`              (optional) - limit offset
      * @param integer       `details`           (optional) - Include detailed issued coupon and lucky draw number
+     * @param datetime      `created_begin_date`        (optional) - Created begin date. Example: 2015-05-12 00:00:00
+     * @param datetime      `created_end_date`          (optional) - Created end date. Example: 2014-05-12 23:59:59
      * @return Illuminate\Support\Facades\Response
      */
     public function getConsumerListing()
@@ -1207,7 +1224,7 @@ class UserAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1336,6 +1353,13 @@ class UserAPIController extends ControllerAPI
                 $users->whereIn('users.user_email', $email);
             });
 
+            // Filter user by gender
+            OrbitInput::get('gender', function ($gender) use ($users) {
+                $users->whereHas('userdetail', function ($q) use ($gender) {
+                    $q->whereIn('gender', $gender);
+                });
+            });
+
             // Filter user by their email
             OrbitInput::get('membership_number_like', function ($membershipnumber) use ($users) {
                 $users->where('users.membership_number', 'like', "%$membershipnumber%");
@@ -1344,6 +1368,18 @@ class UserAPIController extends ControllerAPI
             // Filter user by their email pattern
             OrbitInput::get('email_like', function ($email) use ($users) {
                 $users->where('users.user_email', 'like', "%$email%");
+            });
+
+            // Filter user by created_at for begin_date
+            OrbitInput::get('created_begin_date', function($begindate) use ($users)
+            {
+                $users->where('users.created_at', '>=', $begindate);
+            });
+
+            // Filter user by created_at for end_date
+            OrbitInput::get('created_end_date', function($enddate) use ($users)
+            {
+                $users->where('users.created_at', '<=', $enddate);
             });
 
             // Filter user by their status
@@ -1431,6 +1467,8 @@ class UserAPIController extends ControllerAPI
                     'firstname'               => 'users.user_firstname',
                     'gender'                  => 'user_details.gender',
                     'city'                    => 'user_details.city',
+                    'mobile_phone'            => 'user_details.phone',
+                    'membership_number'       => 'users.membership_number',
                     'status'                  => 'users.status',
                     'last_visit_shop'         => 'merchants.name',
                     'last_visit_date'         => 'user_details.last_visit_any_shop',
@@ -1453,10 +1491,10 @@ class UserAPIController extends ControllerAPI
 
             // If sortby not active means we should add active as second argument
             // of sorting
-            if ($sortBy !== 'users.status') {
-                $users->orderBy('users.status', 'asc');
-            }
-
+            // if ($sortBy !== 'users.status') {
+            //     $users->orderBy('users.status', 'asc');
+            // }
+            
             $users->orderBy($sortBy, $sortMode);
 
             $totalUsers = RecordCounter::create($_users)->count();
