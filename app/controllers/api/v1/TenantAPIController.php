@@ -1097,6 +1097,13 @@ class TenantAPIController extends ControllerAPI
      * @param string            `masterbox_number`              (optional) - Masterbox number
      * @param string            `slavebox_number`               (optional) - Slavebox number
      * @param integer           `parent_id`                     (optional) - Merchant id for the retailer
+     * @param string            `floor`                         (optional) - The Floor
+     * @param string            `unit`                          (optional) - The unit number
+     * @param string            `external_object_id`            (optional) - External object ID
+     * @param datetime          `created_at_after`              (optional) -
+     * @param datetime          `created_at_before`             (optional) -
+     * @param datetime          `updated_at_after`              (optional) -
+     * @param datetime          `updated_at_before`             (optional) -
      * @param string|array      `with`                          (optional) - Relation which need to be included
      * @param string|array      `with_count`                    (optional) - Also include the "count" relation or not, should be used in conjunction with `with`
      * @param string            `keyword`                       (optional) - keyword to search tenant name or description or email or category name
@@ -1136,7 +1143,7 @@ class TenantAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:orid,registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name',
+                    'sortby' => 'in:orid,registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_external_object_id,retailer_created_at,retailer_updated_at',
                 ),
                 array(
                     'sortby.in' => Lang::get('validation.orbit.empty.retailer_sortby'),
@@ -1385,6 +1392,44 @@ class TenantAPIController extends ControllerAPI
                 $retailers->whereIn('merchants.parent_id', $parentIds);
             });
 
+            // Filter retailer by floor
+            OrbitInput::get('floor', function($floor) use ($retailers)
+            {
+                $retailers->whereIn('merchants.floor', $floor);
+            });
+
+            // Filter retailer by unit
+            OrbitInput::get('unit', function($unit) use ($retailers)
+            {
+                $retailers->whereIn('merchants.unit', $unit);
+            });
+
+            // Filter retailer by external_object_id
+            OrbitInput::get('external_object_id', function($external_object_id) use ($retailers)
+            {
+                $retailers->whereIn('merchants.external_object_id', $external_object_id);
+            });
+
+            // Filter by created_at date
+            OrbitInput::get('created_at_after', function($start) use ($retailers) {
+                $retailers->where('merchants.created_at', '>=', $start);
+            });
+
+            // Filter by created_at date
+            OrbitInput::get('created_at_before', function($end) use ($retailers) {
+                $retailers->where('merchants.created_at', '<=', $end);
+            });
+
+            // Filter by updated_at date
+            OrbitInput::get('updated_at_after', function($start) use ($retailers) {
+                $retailers->where('merchants.updated_at', '>=', $start);
+            });
+
+            // Filter by updated_at date
+            OrbitInput::get('updated_at_before', function($end) use ($retailers) {
+                $retailers->where('merchants.updated_at', '<=', $end);
+            });
+
             $retailers->where(function ($query) use ($retailers) {
 
                 // Filter retailer by keyword pattern
@@ -1472,6 +1517,11 @@ class TenantAPIController extends ControllerAPI
                     'retailer_phone' => 'merchants.phone',
                     'retailer_fax' => 'merchants.fax',
                     'retailer_status' => 'merchants.status',
+                    'retailer_floor' => 'merchants.floor',
+                    'retailer_unit' => 'merchants.unit',
+                    'retailer_external_object_id' => 'merchants.external_object_id',
+                    'retailer_created_at' => 'merchants.created_at',
+                    'retailer_updated_at' => 'merchants.updated_at',
 
                     // Synonyms
                     'tenant_name' => 'merchants.name',
@@ -1485,6 +1535,11 @@ class TenantAPIController extends ControllerAPI
                     'tenant_phone' => 'merchants.phone',
                     'tenant_fax' => 'merchants.fax',
                     'tenant_status' => 'merchants.status',
+                    'tenant_floor' => 'merchants.floor',
+                    'tenant_unit' => 'merchants.unit',
+                    'tenant_external_object_id' => 'merchants.external_object_id',
+                    'tenant_created_at' => 'merchants.created_at',
+                    'tenant_updated_at' => 'merchants.updated_at',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
