@@ -77,7 +77,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $notAllowedStatus = ['inactive'];
 
-            DB::connection()->getPdo()->beginTransaction();
+            $this->beginTransaction();
 
             $user = User::with('apikey', 'userdetail', 'role')
                         ->excludeDeleted()
@@ -123,7 +123,7 @@ class MobileCIAPIController extends ControllerAPI
             $user->setHidden(array('user_password', 'apikey'));
             $this->response->data = $user;
 
-            DB::connection()->getPdo()->commit();
+            $this->commit();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -131,21 +131,21 @@ class MobileCIAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
 
-            DB::connection()->getPdo()->rollback();
+            $this->rollback();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
 
-            DB::connection()->getPdo()->rollback();
+            $this->rollback();
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
 
-            DB::connection()->getPdo()->rollback();
+            $this->rollback();
         }
 
         return $this->render();
