@@ -1498,8 +1498,8 @@ return array(
                 'crop'          => array(
                     // Profile name
                     'default' => array(
-                        'width'     => 100,
-                        'height'    => 100,
+                        'width'     => 500,
+                        'height'    => 500,
                     )
                 ),
 
