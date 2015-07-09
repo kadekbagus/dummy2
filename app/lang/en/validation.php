@@ -149,6 +149,7 @@ return array(
             'user'                 => 'The User ID you specified is not found.',
             'merchant'             => 'The Merchant ID you specified is not found.',
             'retailer'             => 'The Retailer ID you specified is not found.',
+            'tenant'               => 'The Tenant ID you specified is not found.',
             'product'              => 'The Product ID you specified is not found.',
             'category'             => 'The Category ID you specified is not found.',
             'tax'                  => 'The Tax ID you specified is not found.',
