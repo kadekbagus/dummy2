@@ -346,6 +346,9 @@ class TenantAPIController extends ControllerAPI
             $category_ids = OrbitInput::post('category_ids');
             $category_ids = (array) $category_ids;
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             $validator = Validator::make(
                 array(
                     'email'                => $email,
@@ -375,6 +378,7 @@ class TenantAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // validate category_ids
             foreach ($category_ids as $category_id_check) {
                 $validator = Validator::make(
                     array(
@@ -397,9 +401,6 @@ class TenantAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.tenant.postnewtenant.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $roleRetailer = Role::where('role_name', 'retailer owner')->first();
             if (empty($roleRetailer)) {
