@@ -50,6 +50,7 @@ use PDO;
 use Response;
 use LuckyDrawAPIController;
 use OrbitShop\API\v1\Helper\Generator;
+use Event;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -124,6 +125,8 @@ class MobileCIAPIController extends ControllerAPI
             $this->response->data = $user;
 
             $this->commit();
+
+            Event::fire('orbit.postlogininshop.login.done', [$this, $user]);
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -8025,7 +8028,7 @@ class MobileCIAPIController extends ControllerAPI
 
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
-                                'user'          => $user, 
+                                'user'          => $user,
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
                                 'numbers'       => $numbers,

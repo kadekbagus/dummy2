@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "30d355d43c907dfea5830ad5b1a77970",
+    "hash": "4e78be7cf3f50c2b9c7df287841c6b70",
     "packages": [
         {
             "name": "barryvdh/laravel-debugbar",
@@ -998,6 +998,51 @@
                 "stack"
             ],
             "time": "2014-11-23 20:37:11"
+        },
+        {
+            "name": "svyatov/curlwrapper",
+            "version": "v1.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/svyatov/CurlWrapper.git",
+                "reference": "15596a4b544d897d969487222da2018f35717542"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/svyatov/CurlWrapper/zipball/15596a4b544d897d969487222da2018f35717542",
+                "reference": "15596a4b544d897d969487222da2018f35717542",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.2"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "CurlWrapper.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Leonid Svyatov",
+                    "email": "leonid@svyatov.ru",
+                    "homepage": "http://svyatov.ru",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Flexible wrapper class for PHP cURL extension",
+            "homepage": "https://github.com/svyatov/CurlWrapper",
+            "keywords": [
+                "curl",
+                "helper",
+                "http",
+                "util"
+            ],
+            "time": "2014-09-23 04:56:30"
         },
         {
             "name": "swiftmailer/swiftmailer",
