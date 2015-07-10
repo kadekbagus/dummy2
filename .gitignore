@@ -16,6 +16,7 @@ app/config/testing/database.php
 app/config/testing/mail.php
 app/config/orbit.php
 app/config/mail.php
+app/config/orbit-notifier.php
 public/mobile-ci/scripts/config.js
 public/templatepos/js/config.js
 
