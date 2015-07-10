@@ -120,7 +120,6 @@ return array(
     'OrbitTestCase' => $baseDir . '/app/tests/OrbitTestCase.php',
     'OrbitVersionAPIController' => $baseDir . '/app/controllers/OrbitVersionAPIController.php',
     'Orbit\\OS\\Shutdown' => $baseDir . '/app/helpers/Orbit/OS/Shutdown.php',
-    'Orbit\\Queue\\RegistrationMail' => $baseDir . '/app/queue/Orbit/Queue/RegistrationMail.php',
     'Orbit\\Setting' => $baseDir . '/app/helpers/Orbit/Setting.php',
     'Orbit\\Text' => $baseDir . '/app/helpers/Orbit/Text.php',
     'POS\\Product' => $baseDir . '/app/models/POS/Product.php',
