@@ -10,6 +10,9 @@ use Config;
 use Retailer;
 use CurlWrapper;
 use CurlWrapperCurlException;
+use Exception;
+use Validator;
+use DB;
 
 class UserLoginNotifier
 {
@@ -18,7 +21,7 @@ class UserLoginNotifier
      *
      * @var poster.
      */
-    $poster = NULL;
+    protected $poster = NULL;
 
     /**
      * Class constructor.
@@ -61,14 +64,24 @@ class UserLoginNotifier
         // No need to proceed
         if (empty($notifyData)) {
             $job->delete();
+
+            return [
+                'status' => 'fail',
+                'message' => sprintf('There is no user-login notify data found for retailer id %s.', $retailerId)
+            ];
         }
 
         if (! $notifyData['enabled']) {
             $job->delete();
+
+            return [
+                'status' => 'fail',
+                'message' => sprintf('Notify user-login found for retailer id %s but it was disabled.', $retailerId)
+            ];
         }
 
         $url = $notifyData['url'];
-        $message = sprintf('Notify post User ID: `%s` to Retailer: `%s` URL: `%s` -> Success.', $userId, $retailerId, $url);
+        $message = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Success.', $userId, $retailerId, $url);
 
         try {
             $postData = [
@@ -88,7 +101,7 @@ class UserLoginNotifier
             // We are only interesting in 200 OK status
             $httpCode = $this->poster->getTransferInfo('http_code');
             if ((int)$httpCode !== 200) {
-                $errorMessage = sprintf('Unexpected http response code %s, expected 200.', $httpCode);
+                $errorMessage = sprintf('Unexpected http response code %s, expected 200', $httpCode);
                 throw new Exception($errorMessage);
             }
 
@@ -98,7 +111,8 @@ class UserLoginNotifier
 
             // Non-Zero code means an error
             if ((string)$response->code !== '0') {
-                throw new Exception('Unexpected response code %s, expected 0 (zero).');
+                $errorMessage = sprintf('Unexpected response code %s, expected 0 (zero)', $response->code);
+                throw new Exception($errorMessage);
             }
 
             // Try to check the existence of expected field.
@@ -120,7 +134,7 @@ class UserLoginNotifier
                 'user_id' => $response->data->user_id,
                 'external_user_id' => $response->data->external_user_id,
                 'user_email' => $response->data->user_email,
-                'user_firstname' => $response->data->user_fistname,
+                'user_firstname' => $response->data->user_firstname,
                 'user_lastname' => $response->data->user_lastname,
                 'membership_number' => $response->data->membership_number,
                 'membership_since' => $response->data->membership_since
@@ -134,21 +148,55 @@ class UserLoginNotifier
                 'membership_number' => 'required',
                 'membership_since' => 'required'
             ];
+
+            $this->registerCustomValidation();
             $validator = Validator::make($validationData, $validationRule);
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                throw new Exception($errorMessage);
+            }
+
+            // Update the user object based on the return value of external system
+            DB::connection()->getPdo()->beginTransaction();
+            $user->external_user_id = $response->data->external_user_id;
+            $user->user_firstname = $response->data->user_firstname;
+            $user->user_lastname = $response->data->user_lastname;
+            $user->membership_number = $response->data->membership_number;
+            $user->membership_since = $response->data->membership_since;
+            $user->save();
 
             // Everything seems fine lets delete the job
             $job->delete();
 
+            DB::connection()->getPdo()->commit();
+
             Log::info($message);
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
         } catch (CurlWrapperCurlException $e) {
-            $message = sprintf('Notify post User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.', $userId, $retailerId, $url, $e->getMessage());
+            $message = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.', $userId, $retailerId, $url, $e->getMessage());
+
+            if (DB::connection()->getPdo()->inTransaction()) {
+                DB::connection()->getPdo()->rollBack();
+            }
 
             Log::error($message);
         } catch (Exception $e) {
-            $message = sprintf('Notify post User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.', $userId, $retailerId, $url, $e->getMessage());
+            $message = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.', $userId, $retailerId, $url, $e->getMessage());
+
+            if (DB::connection()->getPdo()->inTransaction()) {
+                DB::connection()->getPdo()->rollBack();
+            }
 
             Log::error($message);
         }
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     /**
@@ -163,7 +211,7 @@ class UserLoginNotifier
         Validator::extend('orbit.notify.same_id', function($attribute, $value, $parameters)
         {
             if ((string)$value !== (string)$parameters[0]) {
-                $errorMessage = sprintf('User Id is not same, expected %s got %s.', $parameters[0], $value);
+                $errorMessage = sprintf('User Id is not same, expected %s got %s', $parameters[0], $value);
                 throw new Exception ($errorMessage);
             }
 
@@ -174,7 +222,7 @@ class UserLoginNotifier
         Validator::extend('orbit.notify.same_email', function($attribute, $value, $parameters)
         {
             if ((string)$value !== (string)$parameters[0]) {
-                $errorMessage = sprintf('Email address is not same, expected %s got %s.', $parameters[0], $value);
+                $errorMessage = sprintf('Email address is not same, expected %s got %s', $parameters[0], $value);
                 throw new Exception ($errorMessage);
             }
 
