@@ -1,0 +1,42 @@
+<?php
+/**
+ * Notifier Configuration.
+ *
+ * This file contains list of URL which need to be notified when event happens
+ * on Orbit. In the future this setting should be on database.
+ */
+return [
+    'user-agent' => 'Orbit API Notifier/1',
+
+    // Notifiy when customer login to check their membership number
+    'user-login' => [
+
+        // Retailer/Mall ID (string)
+        // 0 should be default and always executed
+        '0' => [
+            'url' => 'http://dummy.url/orbit-notify/v1/check-member',
+            'auth_type' => '',
+            'auth_user' => '',
+            'auth_password' => '',
+            'notify_order' => 0,
+            'enabled' => 1, // 1=enabled or 0=disabled
+        ],
+
+    ],
+
+    // Notifiy when customer data has been updated
+    'update-member' => [
+
+        // Retailer/Mall ID (string)
+        // 0 should be default and always executed
+        '0' => [
+            'url' => 'http://dummy.url/orbit-notify/v1/check-member',
+            'auth_type' => '',
+            'auth_user' => '',
+            'auth_password' => '',
+            'notify_order' => 0,
+            'enabled' => 1, // 1=enabled or 0=disabled
+        ],
+
+    ],
+];

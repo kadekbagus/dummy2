@@ -50,6 +50,7 @@ use PDO;
 use Response;
 use LuckyDrawAPIController;
 use OrbitShop\API\v1\Helper\Generator;
+use Event;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -77,7 +78,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $notAllowedStatus = ['inactive'];
 
-            DB::connection()->getPdo()->beginTransaction();
+            $this->beginTransaction();
 
             $user = User::with('apikey', 'userdetail', 'role')
                         ->excludeDeleted()
@@ -123,7 +124,10 @@ class MobileCIAPIController extends ControllerAPI
             $user->setHidden(array('user_password', 'apikey'));
             $this->response->data = $user;
 
-            DB::connection()->getPdo()->commit();
+            $this->commit();
+
+            // @param: Controller, User, Mall/Retailer
+            Event::fire('orbit.postlogininshop.login.done', [$this, $user, $retailer]);
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -131,21 +135,21 @@ class MobileCIAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
 
-            DB::connection()->getPdo()->rollback();
+            $this->rollback();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
 
-            DB::connection()->getPdo()->rollback();
+            $this->rollback();
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
 
-            DB::connection()->getPdo()->rollback();
+            $this->rollback();
         }
 
         return $this->render();
@@ -8025,7 +8029,7 @@ class MobileCIAPIController extends ControllerAPI
 
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
-                                'user'          => $user, 
+                                'user'          => $user,
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
                                 'numbers'       => $numbers,

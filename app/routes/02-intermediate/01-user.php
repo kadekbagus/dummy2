@@ -61,6 +61,11 @@ Route::group(['before' => 'orbit-settings'], function()
     Route::post('/app/v1/membership/new', 'IntermediateAuthController@User_postNewMembership');
 
     /**
+     * List membership
+     */
+    Route::get('/app/v1/membership/list', 'IntermediateAuthController@User_getConsumerListing');
+
+    /**
      * Update New Membership
      */
     Route::post('/app/v1/membership/update', 'IntermediateAuthController@User_postUpdateMembership');
