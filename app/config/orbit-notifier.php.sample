@@ -12,14 +12,30 @@ return [
     'user-login' => [
 
         // Retailer/Mall ID (string)
-        // 0 should be default and always executed
+        // 0 should be default (Calling Orbit implmentation itself)
         '0' => [
             'url' => 'http://dummy.url/orbit-notify/v1/check-member',
             'auth_type' => '',
             'auth_user' => '',
             'auth_password' => '',
             'notify_order' => 0,
-            'enabled' => 1, // 1=enabled or 0=disabled
+
+            // 1=enabled or 0=disabled
+            'enabled' => 1,
+
+            // How long job will be release back onto the queue in seconds
+            'release_time' => 300,
+
+            // How many times we need to try before we delete the job
+            'max_try' => 5,
+
+            // Should we send email to notify that the job is failed?
+            'email_on_failed' => FALSE,
+
+            // Email address to send on job failed
+            'email_addr' => [
+                'Admin' => 'backend@dominopos.com'
+            ]
         ],
 
     ],
@@ -28,14 +44,30 @@ return [
     'update-member' => [
 
         // Retailer/Mall ID (string)
-        // 0 should be default and always executed
+        // 0 should be default (Calling Orbit implmentation itself)
         '0' => [
             'url' => 'http://dummy.url/orbit-notify/v1/check-member',
             'auth_type' => '',
             'auth_user' => '',
             'auth_password' => '',
             'notify_order' => 0,
-            'enabled' => 1, // 1=enabled or 0=disabled
+
+            // 1=enabled or 0=disabled
+            'enabled' => 1,
+
+            // How long job will be release back onto the queue in seconds
+            'release_time' => 300,
+
+            // How many times we need to try before we delete the job
+            'max_try' => 5,
+
+            // Should we send email to notify that the job is failed?
+            'email_on_failed' => FALSE,
+
+            // Email address to send on job failed
+            'email_addr' => [
+                'Admin' => 'backend@dominopos.com'
+            ]
         ],
 
     ],
