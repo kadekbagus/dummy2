@@ -3,6 +3,8 @@
  * Unit testing for queue notifier Orbit\Queue\Notifier\UserLoginNotifier
  *
  * @author Rio Astamal <me@rioastamal.net>
+ * @todo Add coverage for required fields which returned from external such as:
+ *      `membership_number`, `membership_since`, `external_user_id`
  */
 use Orbit\Queue\Notifier\UserLoginNotifier as QUserLoginNotifier;
 use Laracasts\TestDummy\Factory;
@@ -48,8 +50,13 @@ class UserLoginNotifierQueueTest extends TestCase
     {
         parent::setUp();
 
-        $stubJob = $this->getMockBuilder('Illuminate\Queue\Jobs\Job')->getMock();
+        // Mock the Jobs\SyncJob so we got some method which unavailable i.e getJobId()
+        // on the abstract Job class
+        $stubJob = $this->getMockBuilder('Illuminate\Queue\Jobs\SyncJob')
+                        ->disableOriginalConstructor()
+                        ->getMock();
         $stubJob->method('delete')->willReturn('job deleted');
+        $stubJob->method('getJobId')->willReturn(mt_rand(0, 100));
 
         $this->job = $stubJob;
 
@@ -112,7 +119,8 @@ class UserLoginNotifierQueueTest extends TestCase
 
         $this->assertSame('fail', $response['status']);
 
-        $errorMessage = sprintf('There is no user-login notify data found for retailer id %s.', $retailer->merchant_id);
+        $errorMessage = sprintf('[Job ID: `%s`] There is no user-login notify data found for retailer id %s.',
+                                $this->job->getJobId(), $retailer->merchant_id);
         $this->assertSame($errorMessage, $response['message']);
     }
 
@@ -131,7 +139,8 @@ class UserLoginNotifierQueueTest extends TestCase
 
         $this->assertSame('fail', $response['status']);
 
-        $errorMessage = sprintf('Notify user-login found for retailer id %s but it was disabled.', $retailer->merchant_id);
+        $errorMessage = sprintf('[Job ID: `%s`] Notify user-login found for retailer id %s but it was disabled.',
+                                $this->job->getJobId(), $retailer->merchant_id);
         $this->assertSame($errorMessage, $response['message']);
     }
 
@@ -152,7 +161,8 @@ class UserLoginNotifierQueueTest extends TestCase
 
         $this->assertSame('fail', $response['status']);
 
-        $errorMessage = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.',
+        $errorMessage = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.',
+                                $this->job->getJobId(),
                                 $user->user_id,
                                 $retailer->merchant_id,
                                 $this->configSample['url'],
@@ -184,7 +194,8 @@ class UserLoginNotifierQueueTest extends TestCase
 
         $this->assertSame('fail', $response['status']);
 
-        $errorMessage = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.',
+        $errorMessage = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.',
+                                $this->job->getJobId(),
                                 $user->user_id,
                                 $retailer->merchant_id,
                                 $this->configSample['url'],
@@ -213,7 +224,8 @@ class UserLoginNotifierQueueTest extends TestCase
 
         $this->assertSame('fail', $response['status']);
 
-        $errorMessage = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.',
+        $errorMessage = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.',
+                                $this->job->getJobId(),
                                 $user->user_id,
                                 $retailer->merchant_id,
                                 $this->configSample['url'],
@@ -244,7 +256,8 @@ class UserLoginNotifierQueueTest extends TestCase
 
         $this->assertSame('fail', $response['status']);
 
-        $errorMessage = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.',
+        $errorMessage = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.',
+                                $this->job->getJobId(),
                                 $user->user_id,
                                 $retailer->merchant_id,
                                 $this->configSample['url'],
@@ -253,7 +266,7 @@ class UserLoginNotifierQueueTest extends TestCase
         $this->assertSame($errorMessage, $response['message']);
     }
 
-    public function testOK_JobFiredSuccessfully()
+    public function testOK_MembershipNumberUpdated()
     {
         $retailer = Factory::create('Retailer');
         $user = $retailer->user;
@@ -270,7 +283,6 @@ class UserLoginNotifierQueueTest extends TestCase
         $hash = md5(microtime());
         $this->responseSample->data->user_firstname = 'John ' . $hash;
         $this->responseSample->data->user_lastname = 'Doe ' . $hash;
-
         $this->responseSample->data->membership_number = 'C123';
         $this->responseSample->data->membership_since = date('Y-m-d H:i:s', strtotime('last week'));
 
@@ -284,8 +296,8 @@ class UserLoginNotifierQueueTest extends TestCase
         $response = $qNotifier->fire($this->job, $data);
 
         $this->assertSame('ok', $response['status']);
-        $message = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Success.',
-                            $user->user_id, $retailer->merchant_id, $url);
+        $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Success.',
+                            $this->job->getJobId(), $user->user_id, $retailer->merchant_id, $url);
         $this->assertSame($message, $response['message']);
 
         // Check the updated user
@@ -295,5 +307,36 @@ class UserLoginNotifierQueueTest extends TestCase
         $this->assertSame($this->responseSample->data->user_lastname, (string)$updatedUser->user_lastname);
         $this->assertSame($this->responseSample->data->membership_number, (string)$updatedUser->membership_number);
         $this->assertSame($this->responseSample->data->membership_since, (string)$updatedUser->membership_since);
+    }
+
+    public function testOK_MembershipNotUpdated_EmailNotRecognizedOnExternalSystem()
+    {
+        $retailer = Factory::create('Retailer');
+        $user = $retailer->user;
+
+        // Replace the getTransferInfo() method to return 200
+        $this->curlWrapper->method('getTransferInfo')->willReturn(200);
+
+        // Response from external system should be on `data` attribute should be null.
+        $url = $this->configSample['url'];
+        $this->responseSample->data = NULL;
+
+        $this->curlWrapper->method('getResponse')->willReturn(json_encode($this->responseSample));
+
+        $qNotifier = new QUserLoginNotifier($this->curlWrapper);
+        Config::set($this->configPrefix . $retailer->merchant_id, $this->configSample);
+
+        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id];
+        $response = $qNotifier->fire($this->job, $data);
+
+        $this->assertSame('ok', $response['status']);
+        $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Success. Message: No data returned.',
+                            $this->job->getJobId(), $user->user_id, $retailer->merchant_id, $url);
+        $this->assertSame($message, $response['message']);
+
+        // Check the updated user, should be no changes
+        $updatedUser = User::find($user->user_id);
+        $this->assertSame('', (string)$updatedUser->membership_number);
+        $this->assertSame('', (string)$updatedUser->membership_since);
     }
 }

@@ -67,7 +67,8 @@ class UserLoginNotifier
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('There is no user-login notify data found for retailer id %s.', $retailerId)
+                'message' => sprintf('[Job ID: `%s`] There is no user-login notify data found for retailer id %s.',
+                                    $job->getJobId(), $retailerId)
             ];
         }
 
@@ -76,12 +77,14 @@ class UserLoginNotifier
 
             return [
                 'status' => 'fail',
-                'message' => sprintf('Notify user-login found for retailer id %s but it was disabled.', $retailerId)
+                'message' => sprintf('[Job ID: `%s`] Notify user-login found for retailer id %s but it was disabled.',
+                                    $job->getJobId(), $retailerId)
             ];
         }
 
         $url = $notifyData['url'];
-        $message = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Success.', $userId, $retailerId, $url);
+        $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Success.',
+                            $job->getJobId(), $userId, $retailerId, $url);
 
         try {
             $postData = [
@@ -101,7 +104,7 @@ class UserLoginNotifier
             // We are only interesting in 200 OK status
             $httpCode = $this->poster->getTransferInfo('http_code');
             if ((int)$httpCode !== 200) {
-                $errorMessage = sprintf('Unexpected http response code %s, expected 200', $httpCode);
+                $errorMessage = sprintf('Unexpected http response code %s, expected 200.', $httpCode);
                 throw new Exception($errorMessage);
             }
 
@@ -111,8 +114,19 @@ class UserLoginNotifier
 
             // Non-Zero code means an error
             if ((string)$response->code !== '0') {
-                $errorMessage = sprintf('Unexpected response code %s, expected 0 (zero)', $response->code);
+                $errorMessage = sprintf('Unexpected response code %s, expected 0 (zero).', $response->code);
                 throw new Exception($errorMessage);
+            }
+
+            // If the data is null then no need to continue the external system
+            // does not have the email address and not intented to update membership number
+            if (is_null($response->data)) {
+                $message .= ' Message: No data returned.';
+
+                return [
+                    'status' => 'ok',
+                    'message' => $message
+                ];
             }
 
             // Try to check the existence of expected field.
@@ -176,7 +190,8 @@ class UserLoginNotifier
                 'message' => $message
             ];
         } catch (CurlWrapperCurlException $e) {
-            $message = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.', $userId, $retailerId, $url, $e->getMessage());
+            $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
+                                $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
             if (DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->rollBack();
@@ -184,7 +199,8 @@ class UserLoginNotifier
 
             Log::error($message);
         } catch (Exception $e) {
-            $message = sprintf('Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s.', $userId, $retailerId, $url, $e->getMessage());
+            $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
+                                $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
             if (DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->rollBack();
@@ -211,7 +227,7 @@ class UserLoginNotifier
         Validator::extend('orbit.notify.same_id', function($attribute, $value, $parameters)
         {
             if ((string)$value !== (string)$parameters[0]) {
-                $errorMessage = sprintf('User Id is not same, expected %s got %s', $parameters[0], $value);
+                $errorMessage = sprintf('User Id is not same, expected %s got %s.', $parameters[0], $value);
                 throw new Exception ($errorMessage);
             }
 
@@ -222,7 +238,7 @@ class UserLoginNotifier
         Validator::extend('orbit.notify.same_email', function($attribute, $value, $parameters)
         {
             if ((string)$value !== (string)$parameters[0]) {
-                $errorMessage = sprintf('Email address is not same, expected %s got %s', $parameters[0], $value);
+                $errorMessage = sprintf('Email address is not same, expected %s got %s.', $parameters[0], $value);
                 throw new Exception ($errorMessage);
             }
 
