@@ -3,8 +3,11 @@
  * Unit testing for queue notifier Orbit\Queue\Notifier\UserLoginNotifier
  *
  * @author Rio Astamal <me@rioastamal.net>
- * @todo Add coverage for required fields which returned from external such as:
- *      `membership_number`, `membership_since`, `external_user_id`
+ * @todo Add coverage for:
+ *       1. Required fields which returned from external such as:
+ *          `membership_number`, `membership_since`, `external_user_id`
+ *       2. Number of maximum try
+ *       3. Email to sender about failed job
  */
 use Orbit\Queue\Notifier\UserLoginNotifier as QUserLoginNotifier;
 use Laracasts\TestDummy\Factory;
@@ -71,6 +74,20 @@ class UserLoginNotifierQueueTest extends TestCase
             'auth_password' => '',
             'notify_order' => 0,
             'enabled' => 1, // 1=enabled or 0=disabled
+
+            // How long job will be release back onto the queue in seconds
+            'release_time' => 300,
+
+            // How many times we need to try before we delete the job
+            'max_try' => 5,
+
+            // Should we send email to notify that the job is failed?
+            'email_on_failed' => FALSE,
+
+            // Email address to send on job failed
+            'email_addr' => [
+                'Admin' => 'backend@dominopos.com'
+            ]
         ];
 
         // {
