@@ -232,6 +232,7 @@ class LoginAPIController extends ControllerAPI
             $newuser->status = 'pending';
             $newuser->user_role_id = $customerRole->role_id;
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
+            $newuser->external_user_id = 0;
 
             $newuser->save();
 
