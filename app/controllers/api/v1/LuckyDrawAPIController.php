@@ -68,7 +68,11 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mall_id = Config::get('orbit.shop.id');
+            $mall_id = OrbitInput::post('mall_id');
+            if (trim($mall_id) === '') {
+                // if not being sent, then set to current box mall id
+                $mall_id = Config::get('orbit.shop.id');
+            }
 
             $lucky_draw_name = OrbitInput::post('lucky_draw_name');
             $description = OrbitInput::post('description');
@@ -313,11 +317,18 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
+            // set mall id
             $mall_id = OrbitInput::post('mall_id');
+            if (trim($mall_id) === '') {
+                // if not being sent, then set to current box mall id
+                $mall_id = Config::get('orbit.shop.id');
+            }
+
+            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
             $status = OrbitInput::post('status');
             $start_date = OrbitInput::post('start_date');
             $end_date = OrbitInput::post('end_date');
+            $grace_period_date = OrbitInput::post('grace_period_date');
             $now = date('Y-m-d H:i:s');
 
             $data = array(
@@ -326,6 +337,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 'status'               => $status,
                 'start_date'           => $start_date,
                 'end_date'             => $end_date,
+                'grace_period_date'    => $grace_period_date,
             );
 
             // Validate lucky_draw_name only if exists in POST.
@@ -333,15 +345,19 @@ class LuckyDrawAPIController extends ControllerAPI
                 $data['lucky_draw_name'] = $lucky_draw_name;
             });
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             $validator = Validator::make(
                 $data,
                 array(
                     'lucky_draw_id'        => 'required|numeric|orbit.empty.lucky_draw',
                     'mall_id'              => 'numeric|orbit.empty.mall',
-                    'lucky_draw_name'      => 'sometimes|required|min:5|max:255|lucky_draw_name_exists_but_me:'.$lucky_draw_id,
+                    'lucky_draw_name'      => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
                     'status'               => 'orbit.empty.lucky_draw_status',
                     'start_date'           => 'date_format:Y-m-d H:i:s',
                     'end_date'             => 'date_format:Y-m-d H:i:s|end_date_greater_than_start_date_and_current_date:'.$start_date.','.$now,
+                    'grace_period_date'    => 'date_format:Y-m-d H:i:s',
                 ),
                 array(
                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
@@ -357,9 +373,6 @@ class LuckyDrawAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.luckydraw.postupdateluckydraw.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedluckydraw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
 
@@ -1400,6 +1413,7 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $mall = Retailer::excludeDeleted()
+                            ->isMall()
                             ->where('merchant_id', $value)
                             ->first();
 
@@ -1430,7 +1444,9 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check lucky draw name, it should not exists (for update)
         Validator::extend('lucky_draw_name_exists_but_me', function ($attribute, $value, $parameters) {
             $lucky_draw_id = $parameters[0];
+            $mallId = $parameters[1];
             $lucky_draw = LuckyDraw::excludeDeleted()
+                                   ->where('mall_id', $mallId)
                                    ->where('lucky_draw_name', $value)
                                    ->where('lucky_draw_id', '!=', $lucky_draw_id)
                                    ->first();
