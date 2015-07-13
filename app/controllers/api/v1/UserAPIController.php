@@ -1224,7 +1224,7 @@ class UserAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,membership_since,created_at,updated_at',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1318,6 +1318,11 @@ class UserAPIController extends ControllerAPI
                 });
             }
 
+            // Filter user by external_user_id
+            OrbitInput::get('external_user_id', function ($data) use ($users) {
+                $users->whereIn('users.external_user_id', $data);
+            });
+
             // Filter user by username
             OrbitInput::get('username', function ($username) use ($users) {
                 $users->whereIn('users.username', $username);
@@ -1353,6 +1358,11 @@ class UserAPIController extends ControllerAPI
                 $users->whereIn('users.user_email', $email);
             });
 
+            // Filter user by their email pattern
+            OrbitInput::get('email_like', function ($email) use ($users) {
+                $users->where('users.user_email', 'like', "%$email%");
+            });
+
             // Filter user by gender
             OrbitInput::get('gender', function ($gender) use ($users) {
                 $users->whereHas('userdetail', function ($q) use ($gender) {
@@ -1360,14 +1370,14 @@ class UserAPIController extends ControllerAPI
                 });
             });
 
-            // Filter user by their email
-            OrbitInput::get('membership_number_like', function ($membershipnumber) use ($users) {
-                $users->where('users.membership_number', 'like', "%$membershipnumber%");
+            // Filter user by membership number
+            OrbitInput::get('membership_number', function ($data) use ($users) {
+                $users->whereIn('users.membership_number', $data);
             });
 
-            // Filter user by their email pattern
-            OrbitInput::get('email_like', function ($email) use ($users) {
-                $users->where('users.user_email', 'like', "%$email%");
+            // Filter user by membership number
+            OrbitInput::get('membership_number_like', function ($membershipnumber) use ($users) {
+                $users->where('users.membership_number', 'like', "%$membershipnumber%");
             });
 
             // Filter user by created_at for begin_date
@@ -1424,6 +1434,26 @@ class UserAPIController extends ControllerAPI
                 }
             });
 
+            // Filter by created_at date
+            OrbitInput::get('created_at_after', function($data) use ($users) {
+                $users->where('users.created_at', '>=', $data);
+            });
+
+            // Filter by created_at date
+            OrbitInput::get('created_at_before', function($data) use ($users) {
+                $users->where('users.created_at', '<=', $data);
+            });
+
+            // Filter by updated_at date
+            OrbitInput::get('updated_at_after', function($data) use ($users) {
+                $users->where('users.updated_at', '>=', $data);
+            });
+
+            // Filter by updated_at date
+            OrbitInput::get('updated_at_before', function($data) use ($users) {
+                $users->where('users.updated_at', '<=', $data);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_users = clone $users;
@@ -1469,6 +1499,9 @@ class UserAPIController extends ControllerAPI
                     'city'                    => 'user_details.city',
                     'mobile_phone'            => 'user_details.phone',
                     'membership_number'       => 'users.membership_number',
+                    'membership_since'        => 'users.membership_since',
+                    'created_at'              => 'users.created_at',
+                    'updated_at'              => 'users.updated_at',
                     'status'                  => 'users.status',
                     'last_visit_shop'         => 'merchants.name',
                     'last_visit_date'         => 'user_details.last_visit_any_shop',
@@ -1776,7 +1809,12 @@ class UserAPIController extends ControllerAPI
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
             $phone = OrbitInput::post('phone');
-            $membership_since = OrbitInput::post('membership_since');
+
+            $membership_since = OrbitInput::post('joindate');
+            if (trim($membership_since) === '') {
+                $membership_since = OrbitInput::post('membership_since');
+            }
+
             $membershipNumber = OrbitInput::post('membership_number');
 
             // set status
@@ -1836,7 +1874,7 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d H:i:s',
+                    'membership_since'      => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists',
                     'status'                => 'in:active,inactive,pending',
                     'category_ids'          => 'array',
@@ -2163,7 +2201,12 @@ class UserAPIController extends ControllerAPI
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
             $phone = OrbitInput::post('phone');
-            $membership_since = OrbitInput::post('membership_since');
+
+            $membership_since = OrbitInput::post('joindate');
+            if (trim($membership_since) === '') {
+                $membership_since = OrbitInput::post('membership_since');
+            }
+
             $membershipNumber = OrbitInput::post('membership_number');
             $status = OrbitInput::post('status');
             $category_ids = OrbitInput::post('category_ids');
@@ -2207,7 +2250,7 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d H:i:s',
+                    'membership_since'      => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists_but_me',
                     'status'                => 'in:active,inactive,pending',
                     'idcard_number'         => 'numeric',
