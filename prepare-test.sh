@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ROOT=$( pwd )
-TESTDUMMYDIR="${ROOT/vendor/laracasts/testdummy}"
-FAKERDIR="${ROOT/vendor/fzaninotto/faker}"
+TESTDUMMYDIR="${ROOT}/vendor/laracasts/testdummy"
+FAKERDIR="${ROOT}/vendor/fzaninotto/faker"
 
 if [ -d $TESTDUMMYDIR ]; then
     echo "Directory ${TESTDUMMYDIR} exists skipping testdummy"

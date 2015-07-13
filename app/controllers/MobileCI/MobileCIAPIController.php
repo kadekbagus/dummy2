@@ -126,7 +126,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $this->commit();
 
-            Event::fire('orbit.postlogininshop.login.done', [$this, $user]);
+            // @param: Controller, User, Mall/Retailer
+            Event::fire('orbit.postlogininshop.login.done', [$this, $user, $retailer]);
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
