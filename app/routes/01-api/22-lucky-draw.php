@@ -50,3 +50,11 @@ Route::post('/api/v1/lucky-draw-image/delete', function()
 {
     return UploadAPIController::create()->postDeleteLuckyDrawImage();
 });
+
+/**
+ * List/Search lucky draw by mall
+ */
+Route::get('/api/v1/lucky-draw/by-mall/{search}', function()
+{
+    return LuckyDrawAPIController::create()->getSearchLuckyDrawByMall();
+})->where('search', '(list|search)');
