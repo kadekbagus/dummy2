@@ -830,9 +830,9 @@ class IssuedCouponAPIController extends ControllerAPI
             // Builder object
             $issuedcoupons = DB::table('issued_coupons')
                 ->join('promotions', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                ->join('promotion_retailer_redeem', 'promotions.promotion_id', '=', 'promotion_retailer_redeem.promotion_id')
-                ->join('merchants', 'promotion_retailer_redeem.retailer_id', '=', 'merchants.merchant_id')
-                ->select('promotion_retailer_redeem.retailer_id', 'merchants.name AS redeem_retailer_name', 'promotions.*', 'issued_coupons.*')
+                ->join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
+                ->select('merchants.name AS redeem_retailer_name', 'promotions.*', 'issued_coupons.*')
+                ->where('promotions.promotion_type', 'mall')
                 ->where('issued_coupons.status', '!=', 'deleted');
 
             // Filter coupon by Ids
