@@ -1106,6 +1106,298 @@ class NewsAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * GET - Search Promotion - List By Retailer
+     *
+     * @author Tian <tian@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string   `sortby`                (optional) - column order by. Valid value: retailer_name, registered_date, promotion_name, promotion_type, description, begin_date, end_date, is_permanent, status.
+     * @param string   `sortmode`              (optional) - asc or desc
+     * @param integer  `take`                  (optional) - limit
+     * @param integer  `skip`                  (optional) - limit offset
+     * @param integer  `promotion_id`          (optional) - Promotion ID
+     * @param integer  `merchant_id`           (optional) - Merchant ID
+     * @param string   `promotion_name`        (optional) - Promotion name
+     * @param string   `promotion_name_like`   (optional) - Promotion name like
+     * @param string   `promotion_type`        (optional) - Promotion type. Valid value: product, cart.
+     * @param string   `description`           (optional) - Description
+     * @param string   `description_like`      (optional) - Description like
+     * @param datetime `begin_date`            (optional) - Begin date. Example: 2015-2-4 00:00:00
+     * @param datetime `end_date`              (optional) - End date. Example: 2015-2-4 23:59:59
+     * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
+     * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param string   `city`                  (optional) - City name
+     * @param string   `city_like`             (optional) - City name like
+     * @param integer  `retailer_id`           (optional) - Retailer IDs
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getSearchNewsPromotionByRetailer()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('view_promotion')) {
+                Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.authz.notallowed', array($this, $user));
+                $viewPromotionLang = Lang::get('validation.orbit.actionlist.view_promotion');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewPromotionLang));
+                ACL::throwAccessForbidden($message);
+            }
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sortby');
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.promotion_by_retailer_sortby'),
+                )
+            );
+
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.after.validation', array($this, $validator));
+
+            // Get the maximum record
+            $maxRecord = (int)Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 20;
+            }
+
+            // Builder object
+            $promotions = DB::table('news')
+                // ->join('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                ->join('merchants', 'news.mall_id', '=', 'merchants.merchant_id')
+                ->select('merchants.name AS retailer_name', 'news.*', 'news.news_name as promotion_name')
+                // ->where('news.object_type', '=', 'promotion')
+                ->where('news.status', '!=', 'deleted');
+
+            // Filter promotion by Ids
+            OrbitInput::get('news_id', function($promotionIds) use ($promotions)
+            {
+                $promotions->whereIn('news.news_id', $promotionIds);
+            });
+
+            // Filter promotion by merchant Ids
+            OrbitInput::get('merchant_id', function ($merchantIds) use ($promotions) {
+                $promotions->whereIn('news.merchant_id', $merchantIds);
+            });
+
+            // Filter promotion by promotion name
+            OrbitInput::get('news_name', function($newsname) use ($promotions)
+            {
+                $promotions->whereIn('news.news_name', $newsname);
+            });
+
+            // Filter promotion by matching promotion name pattern
+            OrbitInput::get('news_name_like', function($newsname) use ($promotions)
+            {
+                $promotions->where('news.news_name', 'like', "%$newsname%");
+            });
+
+            // Filter promotion by promotion type
+            OrbitInput::get('object_type', function($objectTypes) use ($promotions)
+            {
+                $promotions->whereIn('news.object_type', $objectTypes);
+            });
+
+            // Filter promotion by description
+            OrbitInput::get('description', function($description) use ($promotions)
+            {
+                $promotions->whereIn('news.description', $description);
+            });
+
+            // Filter promotion by matching description pattern
+            OrbitInput::get('description_like', function($description) use ($promotions)
+            {
+                $promotions->where('news.description', 'like', "%$description%");
+            });
+
+            // Filter promotion by begin date
+            OrbitInput::get('begin_date', function($begindate) use ($promotions)
+            {
+                $promotions->where('news.begin_date', '<=', $begindate);
+            });
+
+            // Filter promotion by end date
+            OrbitInput::get('end_date', function($enddate) use ($promotions)
+            {
+                $promotions->where('news.end_date', '>=', $enddate);
+            });
+
+            // Filter promotion by status
+            OrbitInput::get('status', function ($statuses) use ($promotions) {
+                $promotions->whereIn('news.status', $statuses);
+            });
+
+            // Filter promotion by city
+            OrbitInput::get('city', function($city) use ($promotions)
+            {
+                $promotions->whereIn('merchants.city', $city);
+            });
+
+            // Filter promotion by matching city pattern
+            OrbitInput::get('city_like', function($city) use ($promotions)
+            {
+                $promotions->where('merchants.city', 'like', "%$city%");
+            });
+
+            // Filter promotion by retailer Ids
+            OrbitInput::get('retailer_id', function ($retailerIds) use ($promotions) {
+                $promotions->whereIn('promotion_retailer.retailer_id', $retailerIds);
+            });
+
+            // Clone the query builder which still does not include the take,
+            // skip, and order by
+            $_promotions = clone $promotions;
+
+            // Get the take args
+            if (trim(OrbitInput::get('take')) === '') {
+                $take = $maxRecord;
+            } else {
+                OrbitInput::get('take', function($_take) use (&$take, $maxRecord)
+                {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                });
+            }
+            if ($take > 0) {
+                $promotions->take($take);
+            }
+
+            $skip = 0;
+            OrbitInput::get('skip', function($_skip) use (&$skip, $promotions)
+            {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            });
+            if (($take > 0) && ($skip > 0)) {
+                $promotions->skip($skip);
+            }
+
+            // Default sort by
+            $sortBy = 'news.created_at';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'retailer_name'     => 'retailer_name',
+                    'registered_date'   => 'news.created_at',
+                    'promotion_name'    => 'news.news_name',
+                    'object_type'       => 'news.obect_type',
+                    'description'       => 'news.description',
+                    'begin_date'        => 'news.begin_date',
+                    'end_date'          => 'news.end_date',
+                    'status'            => 'news.status'
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $promotions->orderBy($sortBy, $sortMode);
+
+            $totalPromotions = $_promotions->count();
+            $listOfPromotions = $promotions->get();
+
+            $data = new stdclass();
+            $data->total_records = $totalPromotions;
+            $data->returned_records = count($listOfPromotions);
+            $data->records = $listOfPromotions;
+
+            if ($totalPromotions === 0) {
+                $data->records = NULL;
+                $this->response->message = Lang::get('statuses.orbit.nodata.promotion');
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.promotion.getsearchnewspromotionbyretailer.before.render', array($this, &$output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         // Check the existance of news id

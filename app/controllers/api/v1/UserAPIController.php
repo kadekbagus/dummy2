@@ -1483,9 +1483,9 @@ class UserAPIController extends ControllerAPI
             $users->skip($skip);
 
             // Default sort by
-            $sortBy = 'users.user_email';
+            $sortBy = 'users.created_at';
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
@@ -1517,8 +1517,8 @@ class UserAPIController extends ControllerAPI
             });
 
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
+                if (strtolower($_sortMode) !== 'desc') {
+                    $sortMode = 'asc';
                 }
             });
 
