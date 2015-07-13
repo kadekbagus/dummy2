@@ -1836,7 +1836,7 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d',
+                    'membership_since'      => 'date_format:Y-m-d H:i:s',
                     'membership_number'     => 'orbit.membership.exists',
                     'status'                => 'in:active,inactive,pending',
                     'category_ids'          => 'array',
@@ -2154,6 +2154,9 @@ class UserAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            // set mall id
+            $mallId = Config::get('orbit.shop.id');
+
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
             $lastname = OrbitInput::post('lastname');
@@ -2163,7 +2166,10 @@ class UserAPIController extends ControllerAPI
             $membership_since = OrbitInput::post('membership_since');
             $membershipNumber = OrbitInput::post('membership_number');
             $status = OrbitInput::post('status');
-            $categoryIds = OrbitInput::post('category_ids');
+            $category_ids = OrbitInput::post('category_ids');
+            $category_ids = (array) $category_ids;
+            $bank_object_ids = OrbitInput::post('bank_object_ids');
+            $bank_object_ids = (array) $bank_object_ids;
             $idcard = OrbitInput::post('idcard_number');
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
@@ -2175,8 +2181,8 @@ class UserAPIController extends ControllerAPI
             $dateofwork = OrbitInput::post('date_of_work');
             $homeAddress = OrbitInput::post('home_address');
             $workAddress = OrbitInput::post('work_address');
-
             $userId = OrbitInput::post('user_id');
+            $externalUserId = OrbitInput::post('external_user_id');
 
             $validator = Validator::make(
                 array(
@@ -2201,10 +2207,9 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d',
+                    'membership_since'      => 'date_format:Y-m-d H:i:s',
                     'membership_number'     => 'orbit.membership.exists_but_me',
                     'status'                => 'in:active,inactive,pending',
-                    'category_ids'          => 'array',
                     'idcard_number'         => 'numeric',
                     'mobile_phone'          => '',
                     'work_phone'            => '',
@@ -2233,6 +2238,7 @@ class UserAPIController extends ControllerAPI
             $userdetail = $updateduser->userdetail;
 
             OrbitInput::post('email', function($email) use ($updateduser) {
+                $updateduser->username = $email;
                 $updateduser->user_email = $email;
             });
 
@@ -2254,6 +2260,10 @@ class UserAPIController extends ControllerAPI
 
             OrbitInput::post('membership_since', function($date) use ($updateduser) {
                 $updateduser->membership_since = $date;
+            });
+
+            OrbitInput::post('external_user_id', function($data) use ($updateduser) {
+                $updateduser->external_user_id = $data;
             });
 
             OrbitInput::post('birthdate', function($date) use ($userdetail) {
@@ -2325,7 +2335,7 @@ class UserAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('category_ids', function($category_ids) use ($updateduser) {
+            OrbitInput::post('category_ids', function($category_ids) use ($updateduser, $mallId) {
                 // validate category_ids
                 $category_ids = (array) $category_ids;
                 foreach ($category_ids as $category_id_check) {
@@ -2334,7 +2344,7 @@ class UserAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'orbit.empty.category',
+                            'category_id'   => 'numeric|orbit.empty.category:' . $mallId,
                         )
                     );
 
@@ -2370,7 +2380,7 @@ class UserAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('bank_object_ids', function($bank_object_ids) use ($updateduser) {
+            OrbitInput::post('bank_object_ids', function($bank_object_ids) use ($updateduser, $mallId) {
                 // validate bank_object_ids
                 $bank_object_ids = (array) $bank_object_ids;
                 foreach ($bank_object_ids as $bank_object_id_check) {
@@ -2379,7 +2389,7 @@ class UserAPIController extends ControllerAPI
                             'bank_object_id'  => $bank_object_id_check,
                         ),
                         array(
-                            'bank_object_id'  => 'numeric|orbit.empty.bank_object',
+                            'bank_object_id'  => 'numeric|orbit.empty.bank_object:' . $mallId,
                         )
                     );
 
