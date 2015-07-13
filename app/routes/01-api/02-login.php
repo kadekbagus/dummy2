@@ -46,6 +46,16 @@ Route::group(['before' => 'orbit-settings'], function() {
     {
         return LoginAPIController::create()->postLogout();
     });
+
+    Route::post('/api/v1/login/customer', function()
+    {
+        return LoginAPIController::create()->postLoginCustomer();
+    });
+
+    Route::post('/api/v1/logout/customer', function()
+    {
+        return LoginAPIController::create()->postLogout();
+    });
 });
 
 /**
