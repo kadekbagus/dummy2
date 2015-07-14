@@ -810,7 +810,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number',
+                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.lucky_draw_sortby'),
@@ -862,6 +862,12 @@ class LuckyDrawAPIController extends ControllerAPI
                 $luckydraws->whereIn('lucky_draws.lucky_draw_id', $id);
             });
 
+            // Filter lucky draw by external_lucky_draw_id
+            OrbitInput::get('external_lucky_draw_id', function($id) use ($luckydraws)
+            {
+                $luckydraws->whereIn('lucky_draws.external_lucky_draw_id', $id);
+            });
+
             // Filter lucky draw by mall ids
             OrbitInput::get('mall_id', function ($mallId) use ($luckydraws) {
                 $luckydraws->whereIn('lucky_draws.mall_id', $mallId);
@@ -906,6 +912,46 @@ class LuckyDrawAPIController extends ControllerAPI
             // Filter lucky draw by status
             OrbitInput::get('status', function ($status) use ($luckydraws) {
                 $luckydraws->whereIn('lucky_draws.status', $status);
+            });
+
+            // Filter by start date
+            OrbitInput::get('start_date_after', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.start_date', '>=', $data);
+            });
+
+            // Filter by start date
+            OrbitInput::get('start_date_before', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.start_date', '<=', $data);
+            });
+
+            // Filter by end date
+            OrbitInput::get('end_date_after', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.end_date', '>=', $data);
+            });
+
+            // Filter by end date
+            OrbitInput::get('end_date_before', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.end_date', '<=', $data);
+            });
+
+            // Filter by created_at date
+            OrbitInput::get('created_at_after', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.created_at', '>=', $data);
+            });
+
+            // Filter by created_at date
+            OrbitInput::get('created_at_before', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.created_at', '<=', $data);
+            });
+
+            // Filter by updated_at date
+            OrbitInput::get('updated_at_after', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.updated_at', '>=', $data);
+            });
+
+            // Filter by updated_at date
+            OrbitInput::get('updated_at_before', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.updated_at', '<=', $data);
             });
 
             // Add new relation based on request
@@ -973,6 +1019,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'start_date'               => 'lucky_draws.start_date',
                     'end_date'                 => 'lucky_draws.end_date',
                     'status'                   => 'lucky_draws.status',
+                    'external_lucky_draw_id'   => 'lucky_draws.external_lucky_draw_id',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {

@@ -243,7 +243,7 @@ return array(
             ),
             'lucky_draw'           => 'The lucky draw you specified is not found.',
             'lucky_draw_status'    => 'The lucky draw status you specified is not found.',
-            'lucky_draw_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, lucky_draw_name, description, start_date, end_date, status.',
+            'lucky_draw_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, lucky_draw_name, description, start_date, end_date, status, external_lucky_draw_id.',
             'news_object_type'     => 'The news object type you specified is not found. Valid value: promotion, news',
             'news_status'          => 'The news status you specified is not found.',
             'news_sortby'          => 'The sort by argument you specified is not valid, the valid values are: registered_date, news_name, object_type, description, begin_date, end_date, status',
