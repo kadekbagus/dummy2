@@ -186,6 +186,18 @@ return array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
+
+        // Lucky Draw Number Receipt
+        'lucky_draw_number_receipt' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Lucky Draw Number
+        'lucky_draw_number' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
     ),
 
     'registration' => array(
