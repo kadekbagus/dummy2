@@ -27,7 +27,7 @@ return array(
         'search_limit' => 300,
 
         // Notification polling interval, in seconds.
-        'poll_interval' => 8
+        'poll_interval' => 8,
 
         // config to validate if membership number have to be unique or not
         'membership_number_unique_check' => false
