@@ -3,15 +3,16 @@
  * Routes file for Intermediate Lucky Draw API
  */
 
-/**
- * Create new lucky draw
- */
-Route::post('/app/v1/lucky-draw/new', 'IntermediateAuthController@LuckyDraw_postNewLuckyDraw');
+Route::group(['before' => 'orbit-settings'], function() {
+    /**
+     * Create new lucky draw
+     */
+    Route::post('/app/v1/lucky-draw/new', 'IntermediateAuthController@LuckyDraw_postNewLuckyDraw');
 
-/**
- * Delete lucky draw
- */
-Route::post('/app/v1/lucky-draw/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@LuckyDraw_postDeleteLuckyDraw']);
+    /**
+     * Delete lucky draw
+     */
+    Route::post('/app/v1/lucky-draw/delete', 'IntermediateAuthController@LuckyDraw_postDeleteLuckyDraw');
 
 /**
  * Update lucky draw
@@ -29,13 +30,8 @@ Route::get('/app/v1/lucky-draw/{search}', 'IntermediateAuthController@LuckyDraw_
  */
 Route::post('/app/v1/lucky-draw-image/upload', 'IntermediateAuthController@Upload_postUploadLuckyDrawImage');
 
-/**
- * Delete lucky draw image
- */
-Route::post('/app/v1/lucky-draw-image/delete', 'IntermediateAuthController@Upload_postDeleteLuckyDrawImage');
-
-/**
- * List and/or Search lucky draw by mall
- */
-Route::get('/app/v1/lucky-draw/by-mall/{search}', 'IntermediateAuthController@LuckyDraw_getSearchLuckyDrawByMall')
-     ->where('search', '(list|search)');
+    /**
+     * Delete lucky draw image
+     */
+    Route::post('/app/v1/lucky-draw-image/delete', 'IntermediateAuthController@Upload_postDeleteLuckyDrawImage');
+});

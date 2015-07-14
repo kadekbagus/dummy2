@@ -16,27 +16,13 @@ class LuckyDrawAPIController extends ControllerAPI
     /**
      * POST - Create New Lucky Draw
      *
-     * @author Tian <tian@dominopos.com>
-     *
      * List of API Parameters
      * ----------------------
-     * @param integer    `mall_id`               (required) - Mall ID
      * @param string     `lucky_draw_name`       (required) - Lucky Draw name
      * @param string     `status`                (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param string     `description`           (optional) - Description
      * @param datetime   `start_date`            (optional) - Start date. Example: 2015-04-13 00:00:00
      * @param datetime   `end_date`              (optional) - End date. Example: 2015-04-13 23:59:59
-     * @param file       `images`                (optional) - Lucky Draw image
-     * @param string     `rule_type`             (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
-     * @param decimal    `rule_value`            (optional) - Rule value
-     * @param string     `discount_object_type`  (optional) - Discount object type. Valid value: product, family.
-     * @param integer    `discount_object_id1`   (optional) - Discount object ID1 (product_id or category_id1).
-     * @param integer    `discount_object_id2`   (optional) - Discount object ID2 (category_id2).
-     * @param integer    `discount_object_id3`   (optional) - Discount object ID3 (category_id3).
-     * @param integer    `discount_object_id4`   (optional) - Discount object ID4 (category_id4).
-     * @param integer    `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
-     * @param decimal    `discount_value`        (optional) - Discount value
-     * @param array      `retailer_ids`          (optional) - Retailer IDs
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -81,50 +67,58 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            // set mall id
+            $mall_id = OrbitInput::post('mall_id');
+            if (trim($mall_id) === '') {
+                // if not being sent, then set to current box mall id
+                $mall_id = Config::get('orbit.shop.id');
+            }
+
             $lucky_draw_name = OrbitInput::post('lucky_draw_name');
-            $status = OrbitInput::post('status');
             $description = OrbitInput::post('description');
-            $begin_date = OrbitInput::post('begin_date');
+            $start_date = OrbitInput::post('start_date');
             $end_date = OrbitInput::post('end_date');
-            $is_permanent = OrbitInput::post('is_permanent');
-            $image = OrbitInput::post('image');
-            $rule_type = OrbitInput::post('rule_type');
-            $rule_value = OrbitInput::post('rule_value');
-            $discount_object_type = OrbitInput::post('discount_object_type');
-            $discount_object_id1 = OrbitInput::post('discount_object_id1');
-            $discount_object_id2 = OrbitInput::post('discount_object_id2');
-            $discount_object_id3 = OrbitInput::post('discount_object_id3');
-            $discount_object_id4 = OrbitInput::post('discount_object_id4');
-            $discount_object_id5 = OrbitInput::post('discount_object_id5');
-            $discount_value = OrbitInput::post('discount_value');
-            $retailer_ids = OrbitInput::post('retailer_ids');
-            $retailer_ids = (array) $retailer_ids;
+            $minimum_amount = OrbitInput::post('minimum_amount');
+            $min_number = OrbitInput::post('min_number');
+            $max_number = OrbitInput::post('max_number');
+            $external_lucky_draw_id = OrbitInput::post('external_lucky_draw_id');
+            $grace_period_date = OrbitInput::post('grace_period_date');
+
+            // set default value for status
+            $status = OrbitInput::post('status');
+            if (trim($status) === '') {
+                $status = 'active';
+            }
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'          => $merchant_id,
-                    'lucky_draw_name'      => $lucky_draw_name,
-                    'status'               => $status,
-                    'rule_type'            => $rule_type,
-                    'discount_object_type' => $discount_object_type,
-                    'discount_object_id1'  => $discount_object_id1,
-                    'discount_object_id2'  => $discount_object_id2,
-                    'discount_object_id3'  => $discount_object_id3,
-                    'discount_object_id4'  => $discount_object_id4,
-                    'discount_object_id5'  => $discount_object_id5,
+                    'mall_id'                  => $mall_id,
+                    'lucky_draw_name'          => $lucky_draw_name,
+                    'description'              => $description,
+                    'start_date'               => $start_date,
+                    'end_date'                 => $end_date,
+                    'minimum_amount'           => $minimum_amount,
+                    'min_number'               => $min_number,
+                    'max_number'               => $max_number,
+                    'external_lucky_draw_id'   => $external_lucky_draw_id,
+                    'grace_period_date'        => $grace_period_date,
+                    'status'                   => $status,
                 ),
                 array(
-                    'merchant_id'          => 'required|numeric|orbit.empty.merchant',
-                    'lucky_draw_name'      => 'required|max:255|orbit.exists.lucky_draw_name',
-                    'status'               => 'required|orbit.empty.lucky_draw_status',
-                    'rule_type'            => 'orbit.empty.rule_type',
-                    'discount_object_type' => 'orbit.empty.discount_object_type',
-                    'discount_object_id1'  => 'orbit.empty.discount_object_id1',
-                    'discount_object_id2'  => 'orbit.empty.discount_object_id2',
-                    'discount_object_id3'  => 'orbit.empty.discount_object_id3',
-                    'discount_object_id4'  => 'orbit.empty.discount_object_id4',
-                    'discount_object_id5'  => 'orbit.empty.discount_object_id5',
+                    'mall_id'                  => 'required|numeric|orbit.empty.mall',
+                    'lucky_draw_name'          => 'required|max:255|orbit.exists.lucky_draw_name',
+                    'description'              => 'required',
+                    'start_date'               => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'                 => 'required|date_format:Y-m-d H:i:s',
+                    'minimum_amount'           => 'required|numeric',
+                    'min_number'               => 'required|numeric',
+                    'max_number'               => 'required|numeric',
+                    'external_lucky_draw_id'   => 'required',
+                    'grace_period_date'        => 'date_format:Y-m-d H:i:s',
+                    'status'                   => 'orbit.empty.lucky_draw_status',
                 )
             );
 
@@ -136,43 +130,21 @@ class LuckyDrawAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            foreach ($retailer_ids as $retailer_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'retailer_id'   => $retailer_id_check,
-
-                    ),
-                    array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
-                    )
-                );
-
-                Event::fire('orbit.luckydraw.postnewluckydraw.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.luckydraw.postnewluckydraw.after.retailervalidation', array($this, $validator));
-            }
-
             Event::fire('orbit.luckydraw.postnewluckydraw.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // save Lucky Draw.
             $newluckydraw = new LuckyDraw();
-            $newluckydraw->merchant_id = $merchant_id;
+            $newluckydraw->mall_id = $mall_id;
             $newluckydraw->lucky_draw_name = $lucky_draw_name;
-            $newluckydraw->status = $status;
             $newluckydraw->description = $description;
-            $newluckydraw->begin_date = $begin_date;
+            $newluckydraw->start_date = $start_date;
             $newluckydraw->end_date = $end_date;
-            $newluckydraw->is_permanent = $is_permanent;
-            $newluckydraw->image = $image;
+            $newluckydraw->minimum_amount = $minimum_amount;
+            $newluckydraw->min_number = $min_number;
+            $newluckydraw->max_number = $max_number;
+            $newluckydraw->external_lucky_draw_id = $external_lucky_draw_id;
+            $newluckydraw->grace_period_date = $grace_period_date;
+            $newluckydraw->status = $status;
             $newluckydraw->created_by = $this->api->user->user_id;
 
             Event::fire('orbit.luckydraw.postnewluckydraw.before.save', array($this, $newluckydraw));
@@ -345,11 +317,18 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
+            // set mall id
             $mall_id = OrbitInput::post('mall_id');
+            if (trim($mall_id) === '') {
+                // if not being sent, then set to current box mall id
+                $mall_id = Config::get('orbit.shop.id');
+            }
+
+            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
             $status = OrbitInput::post('status');
             $start_date = OrbitInput::post('start_date');
             $end_date = OrbitInput::post('end_date');
+            $grace_period_date = OrbitInput::post('grace_period_date');
             $now = date('Y-m-d H:i:s');
 
             $data = array(
@@ -358,6 +337,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 'status'               => $status,
                 'start_date'           => $start_date,
                 'end_date'             => $end_date,
+                'grace_period_date'    => $grace_period_date,
             );
 
             // Validate lucky_draw_name only if exists in POST.
@@ -365,15 +345,19 @@ class LuckyDrawAPIController extends ControllerAPI
                 $data['lucky_draw_name'] = $lucky_draw_name;
             });
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             $validator = Validator::make(
                 $data,
                 array(
                     'lucky_draw_id'        => 'required|numeric|orbit.empty.lucky_draw',
                     'mall_id'              => 'numeric|orbit.empty.mall',
-                    'lucky_draw_name'      => 'sometimes|required|min:5|max:255|lucky_draw_name_exists_but_me:'.$lucky_draw_id,
+                    'lucky_draw_name'      => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
                     'status'               => 'orbit.empty.lucky_draw_status',
                     'start_date'           => 'date_format:Y-m-d H:i:s',
                     'end_date'             => 'date_format:Y-m-d H:i:s|end_date_greater_than_start_date_and_current_date:'.$start_date.','.$now,
+                    'grace_period_date'    => 'date_format:Y-m-d H:i:s',
                 ),
                 array(
                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
@@ -389,9 +373,6 @@ class LuckyDrawAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.luckydraw.postupdateluckydraw.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedluckydraw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
 
@@ -1703,6 +1684,7 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $mall = Retailer::excludeDeleted()
+                            ->isMall()
                             ->where('merchant_id', $value)
                             ->first();
 
@@ -1733,7 +1715,9 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check lucky draw name, it should not exists (for update)
         Validator::extend('lucky_draw_name_exists_but_me', function ($attribute, $value, $parameters) {
             $lucky_draw_id = $parameters[0];
+            $mallId = $parameters[1];
             $lucky_draw = LuckyDraw::excludeDeleted()
+                                   ->where('mall_id', $mallId)
                                    ->where('lucky_draw_name', $value)
                                    ->where('lucky_draw_id', '!=', $lucky_draw_id)
                                    ->first();
@@ -1750,7 +1734,7 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check the existence of the lucky draw status
         Validator::extend('orbit.empty.lucky_draw_status', function ($attribute, $value, $parameters) {
             $valid = false;
-            $statuses = array('active', 'inactive', 'pending', 'blocked', 'deleted');
+            $statuses = array('active', 'inactive');
             foreach ($statuses as $status) {
                 if($value === $status) $valid = $valid || TRUE;
             }
