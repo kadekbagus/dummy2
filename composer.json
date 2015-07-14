@@ -14,7 +14,9 @@
         "laravel/framework": "4.2.9",
         "zendframework/zend-permissions-acl": "2.3",
         "laraeval/laraeval": "dev-master",
-        "barryvdh/laravel-debugbar": "1.7.7"
+        "barryvdh/laravel-debugbar": "1.7.7",
+        "pda/pheanstalk": "~2.1.1",
+        "svyatov/curlwrapper": "~1.3"
     },
     "autoload": {
                 "psr-0": {
@@ -22,7 +24,8 @@
                     "OrbitShop\\API\\": "vendor/dominopos/orbit-shop-api/",
                     "DominoPOS\\OrbitACL\\": "vendor/dominopos/orbit-acl/",
                     "DominoPOS\\OrbitUploader\\": "vendor/dominopos/orbit-uploader/",
-                    "DominoPOS\\OrbitSession\\": "vendor/dominopos/orbit-session/"
+                    "DominoPOS\\OrbitSession\\": "vendor/dominopos/orbit-session/",
+                    "Orbit\\Queue\\": "app/queue/"
                 },
         "classmap": [
             "app/commands",

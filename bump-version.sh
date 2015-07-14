@@ -11,6 +11,10 @@ export GIT_SSH=${JENKINS_HOME}/git-orbit-ssh.sh
 echo "Going into workspace directory ${WORKSPACE}..."
 cd "${WORKSPACE}"
 
+# Store HEAD status
+ORBIT_HEAD_COMMIT=$( cat "${WORKSPACE}/.git/HEAD" )
+echo "HEAD origin is ${ORBIT_HEAD_COMMIT}"
+
 # Pulling new changes from jenkins branch
 echo "Creating branch jenkins..."
 git branch jenkins 2>/dev/null
@@ -38,4 +42,4 @@ echo "Pushing new build number ${BUILD_NUMBER} to github..."
 ORBIT_SHOP_KEY=${ORBIT_SHOP_DEPLOY_KEY_PATH} git push origin jenkins:jenkins
 
 # checking out back to the development branch
-git checkout development
+git checkout ${ORBIT_HEAD_COMMIT}

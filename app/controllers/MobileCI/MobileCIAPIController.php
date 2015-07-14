@@ -50,6 +50,7 @@ use PDO;
 use Response;
 use LuckyDrawAPIController;
 use OrbitShop\API\v1\Helper\Generator;
+use Event;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -76,6 +77,9 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
 
             $notAllowedStatus = ['inactive'];
+
+            $this->beginTransaction();
+
             $user = User::with('apikey', 'userdetail', 'role')
                         ->excludeDeleted()
                         ->where('user_email', $email)
@@ -84,11 +88,11 @@ class MobileCIAPIController extends ControllerAPI
                             function ($query) {
                                 $query->where('role_name', 'Consumer');
                             }
-                        )
+                        )->sharedLock()
                         ->first();
 
             if (! is_object($user)) {
-                $response = \LoginAPIController::create('raw')->postRegisterUserInShop();
+                $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
                 if ($response->code !== 0) {
                     throw new Exception($response->message, $response->code);
                 }
@@ -120,21 +124,32 @@ class MobileCIAPIController extends ControllerAPI
             $user->setHidden(array('user_password', 'apikey'));
             $this->response->data = $user;
 
+            $this->commit();
+
+            // @param: Controller, User, Mall/Retailer
+            Event::fire('orbit.postlogininshop.login.done', [$this, $user, $retailer]);
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            $this->rollback();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            $this->rollback();
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            $this->rollback();
         }
 
         return $this->render();
@@ -8014,7 +8029,7 @@ class MobileCIAPIController extends ControllerAPI
 
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
-                                'user'          => $user, 
+                                'user'          => $user,
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
                                 'numbers'       => $numbers,

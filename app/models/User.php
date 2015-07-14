@@ -13,7 +13,7 @@ class User extends Eloquent implements UserInterface
 
     protected $table = 'users';
 
-    protected $hidden = array('user_password');
+    protected $hidden = array('user_password', 'apikey', 'api_key');
 
     public function role()
     {

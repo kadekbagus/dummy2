@@ -161,6 +161,14 @@ class SessionDatabase implements GenericInterface
     {
         $current = $this->get($sessionId);
 
+        if (is_null($key)) {
+            return $current->value;
+        }
+
+        if (! array_key_exists($key, $current->value)) {
+            return NULL;
+        }
+
         return $current->value[$key];
     }
 
@@ -251,6 +259,8 @@ class SessionDatabase implements GenericInterface
      */
     protected function __updateSession($sessionId, $sessionData)
     {
+        Helper::touch($sessionData, $this->getConfig('expire'));
+
         $data         = $this->pdo->quote(serialize($sessionData));
         $id           = $this->pdo->quote($sessionId);
         $expireAt     = $this->pdo->quote($sessionData->expireAt);
