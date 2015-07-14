@@ -503,6 +503,14 @@ class UserAPIController extends ControllerAPI
             $avg_monthly_spent2 = OrbitInput::post('avg_monthly_spent2');
             $personal_interests = OrbitInput::post('personal_interests');
 
+            $idcard = OrbitInput::post('idcard_number');
+            $mobile = OrbitInput::post('mobile_phone');
+            $mobile2 = OrbitInput::post('mobile_phone2');
+            $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
+            $workphone = OrbitInput::post('work_phone');
+
             $validator = Validator::make(
                 array(
                     'user_id'               => $user_id,
@@ -702,6 +710,23 @@ class UserAPIController extends ControllerAPI
 
             OrbitInput::post('personal_interests', function($interests) use ($updateduser) {
                 $updateduser->interests()->sync($interests);
+            });
+
+            // additions
+            OrbitInput::post('mobile_phone', function($phone) use ($updateduser) {
+                $updateduser->userdetail->phone = $phone;
+            });
+
+            OrbitInput::post('mobile_phone2', function($phone3) use ($updateduser) {
+                $updateduser->userdetail->phone3 = $phone3;
+            });
+
+            OrbitInput::post('work_phone', function($phone) use ($updateduser) {
+                $updateduser->userdetail->phone2 = $phone;
+            });
+
+            OrbitInput::post('idcard', function($data) use ($updateduser) {
+                $updateduser->userdetail->idcard = $data;
             });
 
             // Flag for deleting all personal interests which belongs to this user
@@ -961,7 +986,7 @@ class UserAPIController extends ControllerAPI
                         ->select('users.*')
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                        ->with(array('userDetail', 'userDetail.lastVisitedShop'))
+                        ->with(array('userDetail', 'interestsShop', 'userDetail.lastVisitedShop'))
                         ->excludeDeleted('users');
 
             // Filter user by Ids
