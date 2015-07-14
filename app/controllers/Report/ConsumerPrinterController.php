@@ -306,7 +306,7 @@ class ConsumerPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Consumer', $totalRec, '', '', '', '','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Gender', 'Location', 'Last Visited Store', 'Last Visit Date', 'Last Spent Amount', 'Customer Since', 'First Name', 'Last Name', 'Date of Birth', 'Relationship Status', 'Number of Children', 'Occupation', 'Sector of Activity', 'Education Level', 'Preferred Language', 'Annual Income (IDR)', 'Average Monthly Shopping Spent', 'Personal Interest');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'First Name', 'Last Name', 'Date of Birth', 'Gender', 'Join Date', 'Mobile Phone', 'Membership Number', 'Issued Coupon', 'Redeemed Coupon');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','');
                 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
@@ -322,10 +322,9 @@ class ConsumerPrinterController extends DataPrinterController
                     $avg_annual_income = $this->printAverageAnnualIncome($row);
                     $avg_monthly_spent = $this->printAverageShopping($row);
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\", %s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", 
-                        '', $row->user_email, $gender, $address, $this->printUtf8($row->merchant_name), $row->last_visit_date, $row->last_spent_amount, $row->created_at,
-                        $this->printUtf8($row->user_firstname), $this->printUtf8($row->user_lastname), $row->birthdate, $row->relationship_status, $row->number_of_children, $occupation, $sector_of_activity,
-                        $row->last_education_degree, $preferred_language, $avg_annual_income, $avg_monthly_spent, $row->personal_interest_list);
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\", %s,\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\"\n", 
+                        '', $row->user_email, $this->printUtf8($row->user_firstname), $this->printUtf8($row->user_lastname), $row->birthdate, $gender, $row->created_at,
+                        $row->phone, ($row->membership_number), $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon));
                 }
                 break;
 

@@ -541,16 +541,16 @@ class UserAPIController extends ControllerAPI
                     'status'                => 'orbit.empty.user_status',
 
                     'firstname'             => 'required',
-                    'lastname'              => 'required',
+                    // 'lastname'              => 'required',
 
-                    'birthdate'             => 'required|date_format:Y-m-d',
-                    'gender'                => 'required|in:m,f',
-                    'address_line1'         => 'required',
-                    'city'                  => 'required',
-                    'province'              => 'required',
-                    'postal_code'           => 'required',
-                    'country'               => 'required',
-                    'phone'                 => 'required',
+                    'birthdate'             => 'date_format:Y-m-d',
+                    'gender'                => 'in:m,f',
+                    // 'address_line1'         => 'required',
+                    // 'city'                  => 'required',
+                    // 'province'              => 'required',
+                    // 'postal_code'           => 'required',
+                    // 'country'               => 'required',
+                    // 'phone'                 => 'required',
                     'relationship_status'   => 'in:none,single,in a relationship,engaged,married,divorced,widowed',
                     'number_of_children'    => 'numeric|min:0',
                     'education_level'       => 'in:none,junior high school,high school,diploma,bachelor,master,ph.d,doctor,other',
@@ -1453,9 +1453,9 @@ class UserAPIController extends ControllerAPI
             $users->skip($skip);
 
             // Default sort by
-            $sortBy = 'users.user_email';
+            $sortBy = 'users.created_at';
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
@@ -1484,8 +1484,8 @@ class UserAPIController extends ControllerAPI
             });
 
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
+                if (strtolower($_sortMode) !== 'desc') {
+                    $sortMode = 'asc';
                 }
             });
 
