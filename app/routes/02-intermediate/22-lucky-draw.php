@@ -30,7 +30,6 @@ Route::group(['before' => 'orbit-settings'], function() {
      */
     Route::post('/app/v1/lucky-draw-image/upload', 'IntermediateAuthController@Upload_postUploadLuckyDrawImage');
 
-
 	/**
 	 * Delete lucky draw image
 	 */
@@ -41,10 +40,4 @@ Route::group(['before' => 'orbit-settings'], function() {
 	 */
 	Route::get('/app/v1/lucky-draw/by-mall/{search}', 'IntermediateAuthController@LuckyDraw_getSearchLuckyDrawByMall')
      	->where('search', '(list|search)');
-
-    /**
-     * Delete lucky draw image
-     */
-    Route::post('/app/v1/lucky-draw-image/delete', 'IntermediateAuthController@Upload_postDeleteLuckyDrawImage');
 });
-
