@@ -1166,6 +1166,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $groupByReceipt = OrbitInput::get('group_by_receipt');
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
@@ -1436,6 +1437,276 @@ class LuckyDrawAPIController extends ControllerAPI
 
         $output = $this->render($httpCode);
         Event::fire('orbit.luckydraw.getsearchluckydraw.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+    /**
+     * GET - Search Luckydraw - List By Mall
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string   `with`                  (optional) - Valid value: mall, media, winners, numbers, issued_numbers.
+     * @param string   `sortby`                (optional) - column order by. Valid value: issue_retailer_name, registered_date, promotion_name, promotion_type, description, begin_date, end_date, is_permanent, status.
+     * @param string   `sortmode`              (optional) - asc or desc
+     * @param integer  `take`                  (optional) - limit
+     * @param integer  `skip`                  (optional) - limit offset
+     * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param string   `user_id`               (optional) - User ID
+     * @param string   `city`                  (optional) - City name
+     * @param string   `city_like`             (optional) - City name like
+     * @param integer  `mall_id`               (optional) - Mall ID
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getSearchLuckyDrawByMall()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.before.authz', array($this, $user));
+
+            // if (! ACL::create($user)->isAllowed('view_lucky_draw')) {
+            //     Event::fire('orbit.coupon.getsearchluckydrawbymall.authz.notallowed', array($this, $user));
+            //     $viewLuckyDrawLang = Lang::get('validation.orbit.actionlist.view_lucky_draw');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewLuckyDrawLang));
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service', 'consumer'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sortby');
+            $details_view = OrbitInput::get('details_view');
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:registered_date,lucky_draw_name,end_date,status',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.coupon_by_issue_retailer_sortby'),
+                )
+            );
+
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.after.validation', array($this, $validator));
+
+            // Get the maximum record
+            $maxRecord = (int)Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 20;
+            }
+
+            // Builder object
+            $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')->select('lucky_draws.*');
+
+            if ($details_view === 'yes') {
+                $prefix = DB::getTablePrefix();
+                $luckydraws->select('lucky_draws.*',
+                                    DB::raw("count({$prefix}lucky_draw_numbers.lucky_draw_number_id) as total_issued_lucky_draw_number"))
+                                    ->joinLuckyDrawNumbers()
+                                    ->groupBy('lucky_draws.lucky_draw_id');
+            }
+
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($luckydraws) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'mall') {
+                        $luckydraws->with('mall');
+                    } elseif ($relation === 'media') {
+                        $luckydraws->with('media');
+                    } elseif ($relation === 'winners') {
+                        $luckydraws->with('winners');
+                    } elseif ($relation === 'numbers') {
+                        $luckydraws->with('numbers');
+                    } elseif ($relation === 'issued_numbers') {
+                        $luckydraws->with('issuedNumbers');
+                    }
+                }
+            });
+
+            // Filter lucky draw by ids
+            if ($user->isRoleName('consumer')) {
+                $luckydraws->whereIn('lucky_draw_numbers.user_id', [$user->user_id]);
+            } else {
+                OrbitInput::get('user_id', function($id) use ($luckydraws)
+                {
+                    $luckydraws->whereIn('lucky_draw_numbers.user_id', $id);
+                });
+            }
+
+            // Filter coupon by status
+            OrbitInput::get('status', function ($statuses) use ($luckydraws) {
+                $luckydraws->whereIn('lucky_draws.status', $statuses);
+            });
+
+            // Filter coupon by city
+            OrbitInput::get('city', function($city) use ($luckydraws)
+            {
+                $luckydraws->whereIn('merchants.city', $city);
+            });
+
+            // Filter coupon by matching city pattern
+            OrbitInput::get('city_like', function($city) use ($luckydraws)
+            {
+                $luckydraws->where('merchants.city', 'like', "%$city%");
+            });
+
+            // Filter coupon by issue retailer Ids
+            OrbitInput::get('mall_id', function ($issueRetailerIds) use ($luckydraws) {
+                $luckydraws->whereIn('lucky_draws.mall_id', $issueRetailerIds);
+            });
+
+            // Clone the query builder which still does not include the take,
+            // skip, and order by
+            $_luckydraws = clone $luckydraws;
+
+            // Get the take args
+            if (trim(OrbitInput::get('take')) === '') {
+                $take = $maxRecord;
+            } else {
+                OrbitInput::get('take', function($_take) use (&$take, $maxRecord)
+                {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                });
+            }
+            if ($take > 0) {
+                $luckydraws->take($take);
+            }
+
+            $skip = 0;
+            OrbitInput::get('skip', function($_skip) use (&$skip, $luckydraws)
+            {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            });
+            if (($take > 0) && ($skip > 0)) {
+                $luckydraws->skip($skip);
+            }
+
+            // Default sort by
+            $sortBy = 'lucky_draw_name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'registered_date'        => 'lucky_draws.created_at',
+                    'lucky_draw_name'        => 'lucky_draws.lucky_draw_name',
+                    'end_date'               => 'lucky_draws.end_date',
+                    'status'                 => 'lucky_draws.status'
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $luckydraws->orderBy($sortBy, $sortMode);
+
+            $totalLuckyDraws = $_luckydraws->count();
+            $listOfLuckyDraws = $luckydraws->get();
+
+            $data = new stdclass();
+            $data->total_records = $totalLuckyDraws;
+            $data->returned_records = count($listOfLuckyDraws);
+            $data->records = $listOfLuckyDraws;
+
+            if ($totalLuckyDraws === 0) {
+                $data->records = NULL;
+                $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.coupon.getsearchluckydrawbymall.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.coupon.getsearchluckydrawbymall.before.render', array($this, &$output));
 
         return $output;
     }
