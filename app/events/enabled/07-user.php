@@ -66,11 +66,11 @@ Event::listen('orbit.postlogininshop.login.done', function($controller, $user, $
 Event::listen('orbit.postlogininshop.login.done', function($controller, $customer)
 {
     // @Todo the Retailer object should comes from parameter
-    $retailerId = App::make('OrbitSetting')->getSetting('current_retailer', 0);
+    $retailerId = App::make('orbitSetting')->getSetting('current_retailer', 0);
 
     // Notify the queueing system
     Queue::push('Orbit\\Queue\\Notifier\\UserLoginNotifier', [
-        'user_id' => $user->user_id,
-        'retailer_id' => $retailer->merchant_id
+        'user_id' => $customer->user_id,
+        'retailer_id' => $retailerId
     ]);
 });

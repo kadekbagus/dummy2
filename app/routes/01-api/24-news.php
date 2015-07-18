@@ -50,3 +50,11 @@ Route::post('/api/v1/news-image/delete', function()
 {
     return UploadAPIController::create()->postDeleteNewsImage();
 });
+
+/**
+ * List/Search promotion by retailer
+ */
+Route::get('/api/v1/newspromotion/by-retailer/search', function()
+{
+    return NewsAPIController::create()->getSearchNewsPromotionByRetailer();
+});

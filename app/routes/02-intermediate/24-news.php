@@ -33,3 +33,8 @@ Route::post('/app/v1/news-image/upload', 'IntermediateAuthController@Upload_post
  * Delete news image
  */
 Route::post('/app/v1/news-image/delete', 'IntermediateAuthController@Upload_postDeleteNewsImage');
+
+/**
+ * List and/or Search promotion by retailer
+ */
+Route::get('/app/v1/newspromotion/by-retailer/search', 'IntermediateAuthController@News_getSearchNewsPromotionByRetailer');

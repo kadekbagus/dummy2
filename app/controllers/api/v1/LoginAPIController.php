@@ -157,6 +157,20 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Login Mall Consumer
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginCustomer()
+    {
+        return $this->postLoginRole(['Consumer']);
+    }
+
+    /**
      * POST - Logout user
      *
      * @author Tian <tian@dominopos.com>
@@ -232,6 +246,7 @@ class LoginAPIController extends ControllerAPI
             $newuser->status = 'pending';
             $newuser->user_role_id = $customerRole->role_id;
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
+            $newuser->external_user_id = 0;
 
             $newuser->save();
 
