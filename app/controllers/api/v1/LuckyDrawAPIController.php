@@ -87,7 +87,7 @@ class LuckyDrawAPIController extends ControllerAPI
             // set default value for status
             $status = OrbitInput::post('status');
             if (trim($status) === '') {
-                $status = 'active';
+                $status = 'inactive';
             }
 
             // Begin database transaction

@@ -8,6 +8,7 @@ $baseDir = dirname($vendorDir);
 return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
+    'AlterLuckyDrawReceiptsAddExternalRetailerId' => $baseDir . '/app/database/migrations/2015_07_21_235015_alter_lucky_draw_receipts_add_external_retailer_id.php',
     'AlterNewsTableAddColumnNewsId' => $baseDir . '/app/database/migrations/2015_06_19_140539_alter_news_table_add_column_news_id.php',
     'AlterStoredProcModifyNumberDrivenIssue' => $baseDir . '/app/database/migrations/2015_04_13_124254_alter_stored_proc_modify_number_driven_issue.php',
     'AlterStoredProcedureIssueLuckyDrawNumberAddMaxReturnedRecord' => $baseDir . '/app/database/migrations/2015_04_22_134819_alter_stored_procedure_issue_lucky_draw_number_add_max_returned_record.php',

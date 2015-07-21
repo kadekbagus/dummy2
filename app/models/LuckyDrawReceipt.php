@@ -98,6 +98,7 @@ class LuckyDrawReceipt extends Eloquent
             $numberReceipt->receipt_amount = $receipt->receipt_amount;
             $numberReceipt->receipt_group = $group;
             $numberReceipt->external_receipt_id = $receipt->external_receipt_id;
+            $numberReceipt->external_retailer_id = $receipt->external_retailer_id;
             $numberReceipt->status = 'active';
             $numberReceipt->object_type = 'lucky_draw';
             $numberReceipt->created_by = $user->user_id;

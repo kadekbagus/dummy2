@@ -334,7 +334,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $attributes = ['receipt_retailer_id', 'receipt_number', 'receipt_date', 'receipt_payment_type', 'receipt_card_number', 'receipt_amount', 'external_receipt_id'];
+            $attributes = ['receipt_retailer_id', 'receipt_number', 'receipt_date', 'receipt_payment_type', 'receipt_card_number', 'receipt_amount', 'external_receipt_id', 'external_retailer_id'];
             $validPayments = ['cash', 'credit_card', 'debit_card', 'other'];
             foreach ($result as $receipt) {
                 // Check attributes

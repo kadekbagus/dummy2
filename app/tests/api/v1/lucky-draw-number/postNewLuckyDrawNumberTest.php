@@ -190,6 +190,7 @@ class postNewLuckyDrawNumberTest extends TestCase
             $receipt->receipt_card_number = $faker->creditCardNumber;
             $receipt->receipt_amount = 250000;
             $receipt->external_receipt_id = $faker->numerify('EXT?????');
+            $receipt->external_retailer_id = $faker->numerify('EXT?????');
 
             $receipts[] = $receipt;
         }
