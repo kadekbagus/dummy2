@@ -334,6 +334,31 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $attributes = ['receipt_retailer_id', 'receipt_number', 'receipt_date', 'receipt_payment_type', 'receipt_card_number', 'receipt_amount', 'external_retailer_id'];
+            $validPayments = ['cash', 'credit_card', 'debit_card', 'other'];
+            foreach ($result as $receipt) {
+                // Check attributes
+                foreach ($attributes as $attr) {
+                    if (! property_exists($receipt, $attr)) {
+                        $errorMessage = sprintf('Attribute %s in receipts json is not found.', $attr);
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+
+                // Check retailer ID
+                $retailer = Retailer::excludeDeleted()->find($receipt->receipt_retailer_id);
+                if (empty($retailer)) {
+                    $errorMessage = sprintf('Retailer ID %s on receipt is not found.', $receipt->receipt_retailer_id);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // Check payment type
+                if (! in_array($receipt->receipt_payment_type, $validPayments)) {
+                    $errorMessage = sprintf('Payment type %s on receipt is not found.', $receipt->receipt_retailer_id);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
             $this->cachedValidationResult['orbit.check_json'] = $result;
 
             return TRUE;
