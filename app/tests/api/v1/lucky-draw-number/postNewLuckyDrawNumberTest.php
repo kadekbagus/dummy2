@@ -68,6 +68,11 @@ class postNewLuckyDrawNumberTest extends TestCase
                                            ->where('receipt_group', $hash)
                                            ->count();
         $this->assertSame(4, $numberOfReceipt);
+
+        // All the user should be the same
+        foreach ($response->data->records as $number) {
+            $this->assertSame((string)$user->user_id, (string)$number->user_id);
+        }
     }
 
     public function testIssueFiveLuckyDrawNumberThenThree()
@@ -103,6 +108,8 @@ class postNewLuckyDrawNumberTest extends TestCase
         // -- First Request
         $_GET = [];
         $_POST = [];
+
+        $user = Factory::create('User');
 
         $_GET['apikey'] = $this->apikey->api_key;
         $_GET['apitimestamp'] = time();
@@ -143,6 +150,11 @@ class postNewLuckyDrawNumberTest extends TestCase
                                            ->where('receipt_group', $hash)
                                            ->count();
         $this->assertSame(10, $numberOfReceipt);
+
+        // All the user should be the same
+        foreach ($response->data->records as $number) {
+            $this->assertSame((string)$user->user_id, (string)$number->user_id);
+        }
     }
 
     protected function genLuckyDrawNumber($min, $max)
