@@ -3,8 +3,8 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class StoredProducedureIssueNumberv2 extends Migration {
-
+class StoredProducedureIssueNumberv2 extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -124,5 +124,4 @@ ISSUE_NUMBER;
     {
         DB::unprepared('DROP PROCEDURE IF EXISTS issue_lucky_draw_numberv2;');
     }
-
 }

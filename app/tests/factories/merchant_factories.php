@@ -67,3 +67,13 @@ $factory('Retailer', [
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
 ]);
+
+$factory('Retailer', 'retailer_mall', [
+    'parent_id' => 'factory:Merchant',
+    'name'      => $faker->company,
+    'user_id'   => 'factory:User',
+    'is_mall'   => 'yes',
+    'contact_person_firstname' => $faker->firstName,
+    'contact_person_lastname'  => $faker->lastName,
+    'contact_person_phone'     => $faker->phoneNumber,
+]);

@@ -57,4 +57,55 @@ class LuckyDrawReceipt extends Eloquent
         return $this->belongsTo('User', 'modified_by', 'user_id');
     }
 
+    /**
+     * Generate receipt group
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string Identifier
+     */
+    public static function genReceiptGroup($identifier)
+    {
+        $group = sha1($identifier . microtime());
+
+        return $group;
+    }
+
+    /**
+     * Save receipt from array of object. This should coming from decoded JSON.
+     * Assuming data already validated before.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param int $retailerId Mall/Retailer ID
+     * @param User $user User who's submit this action
+     * @param array $receipts Array of objects
+     * @return string Receipt group
+     */
+    public static function saveFromArrayObject($retailerId, $user, array $receipts)
+    {
+        $identifier = mt_rand(0, 100000) . serialize($receipts);
+        $group = static::genReceiptGroup($identifier);
+        $returned = [];
+
+        foreach ($receipts as $receipt) {
+            $numberReceipt = new static();
+            $numberReceipt->mall_id = $retailerId;
+            $numberReceipt->user_id = $receipt->user_id;
+            $numberReceipt->receipt_retailer_id = $receipt->receipt_retailer_id;
+            $numberReceipt->receipt_number = $receipt->receipt_number;
+            $numberReceipt->receipt_date = $receipt->receipt_date;
+            $numberReceipt->receipt_payment_type = $receipt->receipt_payment_type;
+            $numberReceipt->receipt_card_number = $receipt->receipt_card_number;
+            $numberReceipt->receipt_amount = $receipt->receipt_amount;
+            $numberReceipt->receipt_group = $group;
+            $numberReceipt->external_receipt_id = $receipt->external_receipt_id;
+            $numberReceipt->status = 'active';
+            $numberReceipt->object_type = 'lucky_draw';
+            $numberReceipt->created_by = $user->user_id;
+            $numberReceipt->save();
+
+            $returned[] = $numberReceipt;
+        }
+
+        return $returned;
+    }
 }
