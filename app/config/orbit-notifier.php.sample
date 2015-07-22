@@ -75,7 +75,7 @@ return [
 
         // Retailer/Mall ID (string)
         '0' => [
-            'url' => 'http://dummy.url/orbit-notify/v1/check-member',
+            'url' => 'http://dummy.url/orbit-notify/v1/lucky-draw-number',
             'auth_type' => '',
             'auth_user' => '',
             'auth_password' => '',
