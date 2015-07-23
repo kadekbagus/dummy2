@@ -82,6 +82,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             $luckyDrawNumberStart = OrbitInput::post('lucky_draw_number_start');
             $luckyDrawNumberEnd = OrbitInput::post('lucky_draw_number_end');
             $receipts = OrbitInput::post('receipts');
+            $popup = OrbitInput::post('popup', 'no');
 
             // Mall ID
             $currentMallId = Config::get('orbit.shop.id');
@@ -158,6 +159,11 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             $data->records = $luckyDrawnumbers;
 
             $this->response->data = $data;
+
+            if ($popup === 'yes') {
+                $luckyDraw = $this->cachedValidationResult['orbit.lucky_draw.exists'];
+                $this->insertLuckyDrawNumberInbox($customer, $data, $mallId, $luckyDraw);
+            }
 
             // Commit the changes
             $this->commit();
@@ -363,5 +369,63 @@ class LuckyDrawNumberAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    /**
+     * Insert issued lucky draw numbers into inbox table.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param User $userId - The User object
+     * @param array $response - Issued numbers
+     * @param int $retailerId - The retailer
+     * @param LuckyDraw $luckyDraw - The LuckyDraw object
+     * @return void
+     */
+    public function insertLuckyDrawNumberInbox($user, $response, $retailerId, $luckyDraw)
+    {
+        $name = $user->getFullName();
+        $name = $name ? $name : $user->email;
+        $subject = Lang::get('mobileci.inbox.lucky_draw.subject');
+
+        $inbox = new Inbox();
+        $inbox->user_id = $userId;
+        $inbox->from_id = 0;
+        $inbox->from_name = 'Orbit';
+        $inbox->subject = $subject;
+        $inbox->content = '';
+        $inbox->inbox_type = 'alert';
+        $inbox->status = 'active';
+        $inbox->is_read = 'N';
+        $inbox->save();
+
+        $numbers = array_slice($response->records, 0, 15);
+
+        $dateIssued = date('d-M-Y H:i', strtotime($numbers[0]->issued_date));
+
+        $totalLuckyDrawNumber = LuckyDrawNumber::active()
+                                               ->where('user_id', $userId)
+                                               ->where('lucky_draw_id', $luckyDraw->lucky_draw_id)
+                                               ->count();
+
+        $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+        $data = [
+            'fullName'              => $name,
+            'subject'               => 'Lucky Draw',
+            'inbox'                 => $inbox,
+            'retailerName'          => $retailer->name,
+            'numberOfLuckyDraw'     => $response->total_records,
+            'numbers'               => $numbers,
+            'luckyDrawCampaign'     => $luckyDraw->lucky_draw_name,
+            'mallName'              => $retailer->name,
+            'totalLuckyDrawNumber'  => $totalLuckyDrawNumber,
+            'dateIssued'            => $dateIssued,
+            'maxShown'              => 15
+        ];
+
+        $template = View::make('mobile-ci.push-notification-lucky-draw', $data);
+        $template = $template->render();
+
+        $inbox->content = $template;
+        $inbox->save();
     }
 }

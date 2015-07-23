@@ -521,7 +521,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 }
             }
 
-            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this, $luckyDraw, $customer));
 
             // Save each receipt numbers
             // @Todo: remove query inside loop
@@ -580,9 +580,13 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 $luckyDrawReceipt->save();
             }
 
-            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.save', array($this, $hash));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.save', array($this, $hash, $luckyDraw, $customer, $mallId));
 
-            $receipts = LuckyDrawReceipt::excludeDeleted()->where('receipt_group', $hash)->take(50)->get();
+            $receipts = LuckyDrawReceipt::excludeDeleted()
+                                        ->where('receipt_group', $hash)
+                                        ->where('user_id', $customer->user_id)
+                                        ->take(50)
+                                        ->get();
 
             $data = new stdclass();
             $data->total_records = (int)$receipts;
@@ -601,7 +605,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     ->setObject($luckyDraw)
                     ->responseOK();
 
-            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.commit', array($this, $hash));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.commit', array($this, $hash, $luckyDraw, $customer, $mallId));
         } catch (ACLForbiddenException $e) {
             // Rollback the changes
             $this->rollBack();
