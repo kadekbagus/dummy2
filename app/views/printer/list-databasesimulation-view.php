@@ -128,9 +128,9 @@
             <th style="text-align:left;">Action</th>
             <th style="text-align:left;">Tenant</th>
             <th style="text-align:left;">News</th>
+            <th style="text-align:left;">Events</th>
             <th style="text-align:left;">Promotions</th>
             <th style="text-align:left;">Coupons</th>
-            <th style="text-align:left;">Events</th>
         </thead>
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
@@ -142,9 +142,9 @@
                 <td><?php echo ($row->activity_name_long); ?></td>
                 <td><?php echo $me->printUtf8($row->retailer_name); ?></td>
                 <td><?php echo $me->printUtf8($row->news_name); ?></td>
+                <td><?php echo $me->printUtf8($row->event_name); ?></td>
                 <td><?php echo $me->printUtf8($row->promotion_news_name); ?></td>
                 <td><?php echo $me->printUtf8($row->coupon_name); ?></td>
-                <td><?php echo $me->printUtf8($row->event_name); ?></td>
             </tr>
         <?php $count++; endwhile; ?>
         </tbody>
