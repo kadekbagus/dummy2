@@ -105,7 +105,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Consumer List</h2>
+    <h2 style="margin-bottom:0.5em;">Customer List</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -113,7 +113,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Consumer</td>
+            <td>Total Customer</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
