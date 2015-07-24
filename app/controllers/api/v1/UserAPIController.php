@@ -1202,6 +1202,8 @@ class UserAPIController extends ControllerAPI
      * @param integer       `details`           (optional) - Include detailed issued coupon and lucky draw number
      * @param datetime      `created_begin_date`        (optional) - Created begin date. Example: 2015-05-12 00:00:00
      * @param datetime      `created_end_date`          (optional) - Created end date. Example: 2014-05-12 23:59:59
+     * @param datetime      `last_visit_begin_date`     (optional) - Last visit begin date. Example: 2015-05-12 00:00:00
+     * @param datetime      `last_visit_end_date`       (optional) - Last visit end date. Example: 2015-05-12 23:59:59
      * @return Illuminate\Support\Facades\Response
      */
     public function getConsumerListing()
@@ -1477,6 +1479,22 @@ class UserAPIController extends ControllerAPI
             // Filter by updated_at date
             OrbitInput::get('updated_at_before', function($data) use ($users) {
                 $users->where('users.updated_at', '<=', $data);
+            });
+
+            // Filter user by last_visit_begin_date
+            OrbitInput::get('last_visit_begin_date', function($begindate) use ($users)
+            {
+                $users->whereHas('userdetail', function ($q) use ($begindate) {
+                    $q->where('last_visit_any_shop', '>=', $begindate);
+                });
+            });
+
+            // Filter user by last_visit_end_date
+            OrbitInput::get('last_visit_end_date', function($enddate) use ($users)
+            {
+                $users->whereHas('userdetail', function ($q) use ($enddate) {
+                    $q->where('last_visit_any_shop', '<=', $enddate);
+                });
             });
 
             // Clone the query builder which still does not include the take,
