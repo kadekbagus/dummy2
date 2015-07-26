@@ -105,7 +105,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Consumer List</h2>
+    <h2 style="margin-bottom:0.5em;">Customer List</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -113,7 +113,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Consumer</td>
+            <td>Total Customer</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -125,7 +125,8 @@
             <th style="text-align:left;">Name</th>
             <th style="text-align:left;">Gender</th>
             <th style="text-align:left;">Mobile Phone</th>
-            <th style="text-align:left;">Join Date</th>
+            <th style="text-align:left;">Orbit Join Date</th>
+            <th style="text-align:left;">Membership Join Date</th>
             <th style="text-align:left;">Membership Number</th>
             <th style="text-align:left;">Issued Coupon</th>
             <th style="text-align:left;">Redeemed Coupon</th>
@@ -138,6 +139,7 @@
                 <td><?php echo $me->printGender($row); ?></td>
                 <td><?php echo $me->printUtf8($row->phone); ?></td>
                 <td><?php echo $me->printCustomerSince($row); ?></td>
+                <td><?php echo $me->printMemberSince($row); ?></td>
                 <td><?php echo ($row->membership_number); ?></td>
                 <td><?php echo ($row->total_usable_coupon); ?></td>
                 <td><?php echo ($row->total_redeemed_coupon); ?></td>
