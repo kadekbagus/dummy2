@@ -1466,20 +1466,20 @@ class LuckyDrawAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.before.auth', array($this));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.after.auth', array($this));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.before.authz', array($this, $user));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.before.authz', array($this, $user));
 
             // if (! ACL::create($user)->isAllowed('view_lucky_draw')) {
-            //     Event::fire('orbit.coupon.getsearchluckydrawbymall.authz.notallowed', array($this, $user));
+            //     Event::fire('orbit.luckydraw.getsearchluckydrawbymall.authz.notallowed', array($this, $user));
             //     $viewLuckyDrawLang = Lang::get('validation.orbit.actionlist.view_lucky_draw');
             //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewLuckyDrawLang));
             //     ACL::throwAccessForbidden($message);
@@ -1493,7 +1493,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.after.authz', array($this, $user));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -1508,18 +1508,18 @@ class LuckyDrawAPIController extends ControllerAPI
                     'sort_by' => 'in:registered_date,lucky_draw_name,end_date,status',
                 ),
                 array(
-                    'in' => Lang::get('validation.orbit.empty.coupon_by_issue_retailer_sortby'),
+                    'in' => Lang::get('validation.orbit.empty.luckydraw_by_issue_retailer_sortby'),
                 )
             );
 
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.before.validation', array($this, $validator));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.after.validation', array($this, $validator));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.after.validation', array($this, $validator));
 
             // Get the maximum record
             $maxRecord = (int)Config::get('orbit.pagination.max_record');
@@ -1567,24 +1567,24 @@ class LuckyDrawAPIController extends ControllerAPI
                 });
             }
 
-            // Filter coupon by status
+            // Filter luckydraw by status
             OrbitInput::get('status', function ($statuses) use ($luckydraws) {
                 $luckydraws->whereIn('lucky_draws.status', $statuses);
             });
 
-            // Filter coupon by city
+            // Filter luckydraw by city
             OrbitInput::get('city', function($city) use ($luckydraws)
             {
                 $luckydraws->whereIn('merchants.city', $city);
             });
 
-            // Filter coupon by matching city pattern
+            // Filter luckydraw by matching city pattern
             OrbitInput::get('city_like', function($city) use ($luckydraws)
             {
                 $luckydraws->where('merchants.city', 'like', "%$city%");
             });
 
-            // Filter coupon by issue retailer Ids
+            // Filter luckydraw by issue retailer Ids
             OrbitInput::get('mall_id', function ($issueRetailerIds) use ($luckydraws) {
                 $luckydraws->whereIn('lucky_draws.mall_id', $issueRetailerIds);
             });
@@ -1658,12 +1658,12 @@ class LuckyDrawAPIController extends ControllerAPI
 
             if ($totalLuckyDraws === 0) {
                 $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
+                $this->response->message = Lang::get('statuses.orbit.nodata.lucky_draw');
             }
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.access.forbidden', array($this, $e));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1671,7 +1671,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.invalid.arguments', array($this, $e));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1683,7 +1683,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.query.error', array($this, $e));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1697,7 +1697,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.coupon.getsearchluckydrawbymall.general.exception', array($this, $e));
+            Event::fire('orbit.luckydraw.getsearchluckydrawbymall.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -1706,7 +1706,7 @@ class LuckyDrawAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.coupon.getsearchluckydrawbymall.before.render', array($this, &$output));
+        Event::fire('orbit.luckydraw.getsearchluckydrawbymall.before.render', array($this, &$output));
 
         return $output;
     }
