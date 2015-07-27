@@ -128,7 +128,7 @@
             <th style="text-align:left;">Orbit Join Date</th>
             <th style="text-align:left;">Membership Join Date</th>
             <th style="text-align:left;">Membership Number</th>
-            <th style="text-align:left;">Issued Coupon</th>
+            <th style="text-align:left;">Obtained Coupon</th>
             <th style="text-align:left;">Redeemed Coupon</th>
         </thead>
         <tbody>
