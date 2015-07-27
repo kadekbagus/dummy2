@@ -163,8 +163,9 @@ class UserUpdateNotifierQueueTest extends TestCase
 
     public function testFail_Non200OK_Status()
     {
-        $retailer = Factory::create('Retailer');
-        $user = $retailer->user;
+        $userdetail = Factory::create('UserDetail');
+        $retailer = $userdetail->retailer;
+        $user = $userdetail->user;
 
         // Replace the getTransferInfo() method to return 404
         $this->curlWrapper->method('getTransferInfo')->willReturn(404);
@@ -190,8 +191,9 @@ class UserUpdateNotifierQueueTest extends TestCase
 
     public function testFail_NonZero_ReturnCode()
     {
-        $retailer = Factory::create('Retailer');
-        $user = $retailer->user;
+        $userdetail = Factory::create('UserDetail');
+        $retailer = $userdetail->retailer;
+        $user = $userdetail->user;
 
         // Replace the getTransferInfo() method to return 404
         $this->curlWrapper->method('getTransferInfo')->willReturn(200);
@@ -223,8 +225,9 @@ class UserUpdateNotifierQueueTest extends TestCase
 
     public function testFail_userIdReturned_NotSame()
     {
-        $retailer = Factory::create('Retailer');
-        $user = $retailer->user;
+        $userdetail = Factory::create('UserDetail');
+        $retailer = $userdetail->retailer;
+        $user = $userdetail->user;
 
         // Replace the getTransferInfo() method to return 200
         $this->curlWrapper->method('getTransferInfo')->willReturn(200);
@@ -253,8 +256,9 @@ class UserUpdateNotifierQueueTest extends TestCase
 
     public function testFail_userEmailReturned_NotSame()
     {
-        $retailer = Factory::create('Retailer');
-        $user = $retailer->user;
+        $userdetail = Factory::create('UserDetail');
+        $retailer = $userdetail->retailer;
+        $user = $userdetail->user;
 
         // Replace the getTransferInfo() method to return 200
         $this->curlWrapper->method('getTransferInfo')->willReturn(200);
@@ -285,8 +289,9 @@ class UserUpdateNotifierQueueTest extends TestCase
 
     public function testOK_MembershipNumberUpdated()
     {
-        $retailer = Factory::create('Retailer');
-        $user = $retailer->user;
+        $userdetail = Factory::create('UserDetail');
+        $retailer = $userdetail->retailer;
+        $user = $userdetail->user;
 
         // Replace the getTransferInfo() method to return 200
         $this->curlWrapper->method('getTransferInfo')->willReturn(200);
@@ -322,8 +327,9 @@ class UserUpdateNotifierQueueTest extends TestCase
 
     public function testOK_MembershipNotUpdated_EmailNotRecognizedOnExternalSystem()
     {
-        $retailer = Factory::create('Retailer');
-        $user = $retailer->user;
+        $userdetail = Factory::create('UserDetail');
+        $retailer = $userdetail->retailer;
+        $user = $userdetail->user;
 
         // Replace the getTransferInfo() method to return 200
         $this->curlWrapper->method('getTransferInfo')->willReturn(200);
