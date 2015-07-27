@@ -778,6 +778,299 @@ class SettingAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * GET - Agreement Setting
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getAgreement()
+    {
+        try {
+            $httpCode = 200;
+
+            // set mall id
+            $mallId = Config::get('orbit.shop.id');
+
+            // Builder object
+            $settings = Setting::excludeDeleted()
+                               ->where('object_type', 'merchant')
+                               ->where('object_id', $mallId)
+                               ->where('setting_name', 'agreement')
+                               ->first();
+
+            if (empty($settings)) {
+                $agreement = 'no';
+            } else {
+                $agreement = $settings->setting_value;
+            }
+
+            $this->response->data = $agreement;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.setting.getagreement.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.setting.getagreement.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.setting.getagreement.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.setting.getagreement.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.setting.getagreement.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+    /**
+     * POST - Create/update Agreement setting
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdateAgreement()
+    {
+        $activity = Activity::portal()
+                           ->setActivityType('update');
+
+        $user = NULL;
+        $updatedsetting = NULL;
+        try {
+            $httpCode=200;
+
+            Event::fire('orbit.setting.postupdateagreement.before.auth', array($this));
+
+            // Require authentication
+            // $this->checkAuth();
+
+            Event::fire('orbit.setting.postupdateagreement.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.setting.postupdateagreement.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('update_setting')) {
+                Event::fire('orbit.setting.postupdateagreement.authz.notallowed', array($this, $user));
+                $updateSettingLang = Lang::get('validation.orbit.actionlist.update_setting');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateSettingLang));
+                ACL::throwAccessForbidden($message);
+            }
+            Event::fire('orbit.setting.postupdateagreement.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $setting_name = OrbitInput::post('setting_name');
+            $setting_value = OrbitInput::post('setting_value');
+            $object_id = OrbitInput::post('object_id');
+            $object_type = OrbitInput::post('object_type');
+            $status = OrbitInput::post('status');
+
+            $validator = Validator::make(
+                array(
+                    'setting_name'     => $setting_name,
+                    'setting_value'    => $setting_value,
+                    'status'           => $status,
+                ),
+                array(
+                    'setting_name'     => 'required',
+                    'setting_value'    => 'required',
+                    'status'           => 'orbit.empty.setting_status',
+                )
+            );
+
+            Event::fire('orbit.setting.postupdateagreement.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.setting.postupdateagreement.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $updatedsetting = Setting::excludeDeleted()->where('setting_name', $setting_name)->first();
+
+            if (empty($updatedsetting)) {
+                // do insert
+                $updatedsetting = new Setting();
+                $updatedsetting->setting_name = $setting_name;
+                $updatedsetting->setting_value = $setting_value;
+                $updatedsetting->object_id = $object_id;
+                $updatedsetting->object_type = $object_type;
+                if (trim($status) !== '') {
+                    $updatedsetting->status = $status;
+                }
+
+                $updatedsetting->modified_by = $this->api->user->user_id;
+
+                Event::fire('orbit.setting.postupdateagreement.before.save', array($this, $updatedsetting));
+
+                $updatedsetting->save();
+
+                Event::fire('orbit.setting.postupdateagreement.after.save', array($this, $updatedsetting));
+            } else {
+                // do update
+                OrbitInput::post('setting_value', function($setting_value) use ($updatedsetting) {
+                    $updatedsetting->setting_value = $setting_value;
+                });
+
+                OrbitInput::post('object_id', function($object_id) use ($updatedsetting) {
+                    $updatedsetting->object_id = $object_id;
+                });
+
+                OrbitInput::post('object_type', function($object_type) use ($updatedsetting) {
+                    $updatedsetting->object_type = $object_type;
+                });
+
+                OrbitInput::post('status', function($status) use ($updatedsetting) {
+                    $updatedsetting->status = $status;
+                });
+
+                $updatedsetting->modified_by = $this->api->user->user_id;
+
+                Event::fire('orbit.setting.postupdateagreement.before.save', array($this, $updatedsetting));
+
+                $updatedsetting->save();
+
+                Event::fire('orbit.setting.postupdateagreement.after.save', array($this, $updatedsetting));
+            }
+
+            $this->response->data = $updatedsetting;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Update
+            $activityNotes = sprintf('Setting updated: %s', $updatedsetting->setting_name);
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting OK')
+                    ->setObject($updatedsetting)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.setting.postupdateagreement.after.commit', array($this, $updatedsetting));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.setting.postupdateagreement.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.setting.postupdateagreement.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.setting.postupdateagreement.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.setting.postupdateagreement.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save activity
+        $activity->save();
+
+        return $this->render($httpCode);
+
+    }
+
     protected function registerCustomValidation()
     {
         // Check the existence of the setting status
