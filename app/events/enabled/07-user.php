@@ -63,13 +63,13 @@ Event::listen('orbit.postlogininshop.login.done', function($controller, $user, $
  * @param LoginAPIController $controller - The instance of the LoginAPIController or its subclass
  * @param User $customer - Instance of object User
  */
-Event::listen('orbit.postlogininshop.login.done', function($controller, $customer)
+Event::listen('orbit.user.postupdatemembership.after.commit', function($controller, $customer)
 {
     // @Todo the Retailer object should comes from parameter
     $retailerId = App::make('orbitSetting')->getSetting('current_retailer', 0);
 
     // Notify the queueing system
-    Queue::push('Orbit\\Queue\\Notifier\\UserLoginNotifier', [
+    Queue::push('Orbit\\Queue\\Notifier\\UserUpdateNotifier', [
         'user_id' => $customer->user_id,
         'retailer_id' => $retailerId
     ]);

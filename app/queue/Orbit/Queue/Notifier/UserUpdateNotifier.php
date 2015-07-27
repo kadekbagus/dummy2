@@ -160,10 +160,7 @@ class UserUpdateNotifier
             // }
             $validationData = [
                 'user_id' => $response->data->user_id,
-                'external_user_id' => $response->data->external_user_id,
                 'user_email' => $response->data->user_email,
-                'user_firstname' => $response->data->user_firstname,
-                'user_lastname' => $response->data->user_lastname,
                 'membership_number' => $response->data->membership_number,
                 'membership_since' => $response->data->membership_since
             ];
