@@ -20,5 +20,8 @@ Artisan::add(new CompileOrbitRoutes);
 // Delete User based on email or ID
 Artisan::add(new DeleteUser);
 
+// Delete User based on email or ID
+Artisan::add(new ClearBeanstalkdQueueCommand);
+
 // diff configs vs sample and report differences.
 Artisan::add(new configDiffFromSample);
