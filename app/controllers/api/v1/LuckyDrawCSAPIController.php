@@ -33,21 +33,21 @@ class LuckyDrawCSAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.before.auth', array($this));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.after.auth', array($this));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.before.authz', array($this, $user));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.authz', array($this, $user));
 
 /*
             if (! ACL::create($user)->isAllowed('create_lucky_draw')) {
-                Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.authz.notallowed', array($this, $user));
+                Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.authz.notallowed', array($this, $user));
 
                 $errorMessage = Lang::get('validation.orbit.actionlist.a');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
@@ -63,7 +63,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.after.authz', array($this, $user));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -102,14 +102,14 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 )
             );
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.before.validation', array($this, $validator));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.after.validation', array($this, $validator));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.validation', array($this, $validator));
 
             $customer = App::make('orbit.empty.user');
             $userId = $customer->user_id;
@@ -201,7 +201,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // from the list.
             $hashNumber = $luckyDrawnumbers[0]->hash;
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.before.save', array($this, $widget));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this, $widget));
 
             // Save each receipt numbers
             // @Todo: remove query inside loop
@@ -257,7 +257,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 LuckyDrawNumberReceipt::syncUsingHashNumber($luckyDrawReceipt->lucky_draw_receipt_id, $hashNumber);
             }
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.after.save', array($this, $widget));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.save', array($this, $widget));
 
             // prevent memory exhausted
             $maxReturn = 150;
@@ -282,12 +282,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     ->setObject($luckyDraw)
                     ->responseOK();
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.after.commit', array($this, $widget));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.commit', array($this, $widget));
         } catch (ACLForbiddenException $e) {
             // Rollback the changes
             $this->rollBack();
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.access.forbidden', array($this, $e));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -305,7 +305,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.invalid.arguments', array($this, $e));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -323,7 +323,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.query.error', array($this, $e));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -347,7 +347,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Rollback the changes
             $this->rollBack();
 
-            Event::fire('orbit.luckydrawnumber.postnewluckydrawnumber.general.exception', array($this, $e));
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -372,6 +372,330 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
         return $this->render($httpCode);
     }
+
+    /**
+     * POST - Issue lucky draw number using external call.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postIssueLuckyDrawNumberExternal()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('create');
+
+        $user = NULL;
+        $widget = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)->isAllowed('create_lucky_draw')) {
+                Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.authz.notallowed', array($this, $user));
+
+                $errorMessage = Lang::get('validation.orbit.actionlist.a');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $errorMessage));
+
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this page.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $tenants = OrbitInput::post('tenants');
+            $amounts = OrbitInput::post('amounts');
+            $receipts = OrbitInput::post('receipts');
+            $receiptDates = OrbitInput::post('receipt_dates');
+            $paymentTypes = OrbitInput::post('payment_types');
+            $luckyDrawId = OrbitInput::post('lucky_draw_id');
+            $userId = OrbitInput::post('user_id');
+            $mode = OrbitInput::post('mode');
+            $userLuckyNumber = OrbitInput::post('lucky_number', NULL);
+
+            $validator = Validator::make(
+                array(
+                    'tenants'       => $tenants,
+                    'amounts'       => $amounts,
+                    'receipts'      => $receipts,
+                    'receipt_dates' => $receiptDates,
+                    'payment_types' => $paymentTypes,
+                    'user_id'       => $userId,
+                    'lucky_draw_id' => $luckyDrawId,
+                    'mode'          => $mode,
+                    'lucky_number'  => $userLuckyNumber
+                ),
+                array(
+                    'tenants'       => 'array|required',
+                    'amounts'       => 'array|required',
+                    'receipts'      => 'array|required',
+                    'receipt_dates' => 'array|required',
+                    'payment_types' => 'array|required',
+                    'user_id'       => 'required|numeric|orbit.empty.user',
+                    'lucky_draw_id' => 'required|numeric|orbit.empty.lucky_draw',
+                    'mode'          => 'required|in:sequence,number_driven,random',
+                    'lucky_number'  => 'numeric|min:0:max:9'
+                )
+            );
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.validation', array($this, $validator));
+
+            $customer = App::make('orbit.empty.user');
+            $userId = $customer->user_id;
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $luckyDraw = App::make('orbit.empty.lucky_draw');
+
+            // Minimum amount to get Lucky Draw
+            $minimumAmount = (double)$luckyDraw->minimumAmount;
+
+            // Loop through tenants to get the amounts
+            $totalAmount = 0.0;
+            foreach ($amounts as $amount) {
+                if (! is_numeric($amount)) {
+                    $errorMessage = 'Amount of spent must be numerical value only.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                if ($amount < 0) {
+                    $errorMessage = 'Amount of spent must be greater than zero.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $totalAmount += $amount;
+            }
+
+            if ((int)$totalAmount === 0) {
+                if ($amount < 0) {
+                    $errorMessage = 'Total amount of spent must be greater than zero.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+            // The total amount should be greater than the minimum amount of lucky draw
+            if ((double)$totalAmount < (double)$luckyDraw->minimum_amount) {
+                    $errorMessage = sprintf('The total spent is not enough to get Lucky Draw, minimum amount is %s.', number_format($luckyDraw->minimum_amount));
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $numberOfLuckyDraw = floor($totalAmount / $luckyDraw->minimum_amount);
+
+            foreach ($receiptDates as $i=>$receiptDate) {
+                $result = date_parse_from_format('Y-m-d', $receiptDate);
+
+                if (! empty($result['warnings'])) {
+                    $errorMessage = sprintf('Receipt date format is invalid on item number %s.', ++$i);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this, $luckyDraw, $customer));
+
+            // Save each receipt numbers
+            // @Todo: remove query inside loop
+            $mallId = Config::get('orbit.shop.id');
+
+            // hash for receipt group
+            $hash = LuckyDrawReceipt::genReceiptGroup($mallId);
+
+            foreach ($receipts as $i=>$receipt) {
+                $luckyDrawReceipt = new LuckyDrawReceipt();
+                $luckyDrawReceipt->mall_id = $mallId;
+                $luckyDrawReceipt->user_id = $userId;
+
+                if (! isset($tenants[$i])) {
+                    $errorMessage = sprintf('Tenant for receipt line %s is empty.', $i);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $luckyDrawReceipt->receipt_retailer_id = $tenants[$i];
+                $luckyDrawReceipt->receipt_number = $receipt;
+
+                // Check if the receipt is not exists yet on this mall and particular tenants
+                $prevLuckyDrawReceipt = LuckyDrawReceipt::active()
+                                                        ->where('receipt_retailer_id', $tenants[$i])
+                                                        ->where('mall_id', $mallId)
+                                                        ->where('receipt_number', $receipt)
+                                                        ->where(function($query) {
+                                                            $query->where('object_type', 'lucky_draw');
+                                                            $query->orwhereNull('object_type');
+                                                        })
+                                                        ->first();
+
+                if (is_object($prevLuckyDrawReceipt)) {
+                    // The customer wants to cheat us huh?
+                    $receiptIssueDate = date('l m/d/Y', strtotime($prevLuckyDrawReceipt->created_at));
+                    $message = sprintf('Receipt number %s was already used on %s.', $receipt, $receiptIssueDate);
+                    ACL::throwAccessForbidden(htmlentities($message));
+                }
+
+                if (! isset($receiptDates[$i])) {
+                    $errorMessage = sprintf('Receipt date for receipt line %s is empty.', $i);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $luckyDrawReceipt->receipt_date = $receiptDates[$i];
+
+                if (! isset($amounts[$i])) {
+                    $errorMessage = sprintf('Receipt date for receipt line %s is empty.', $i);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $luckyDrawReceipt->receipt_amount = $amounts[$i];
+                $luckyDrawReceipt->receipt_payment_type = $paymentTypes[$i];
+                $luckyDrawReceipt->status = 'active';
+                $luckyDrawReceipt->created_by = $user->user_id;
+                $luckyDrawReceipt->object_type = 'lucky_draw';
+                $luckyDrawReceipt->receipt_group = $hash;
+
+                $luckyDrawReceipt->save();
+            }
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.save', array($this, $hash, $luckyDraw, $customer, $mallId));
+
+            $receipts = LuckyDrawReceipt::excludeDeleted()
+                                        ->where('receipt_group', $hash)
+                                        ->where('user_id', $customer->user_id)
+                                        ->take(50)
+                                        ->get();
+
+            $data = new stdclass();
+            $data->total_records = (int)$receipts;
+            $data->returned_records = count($receipts);
+            $data->records = $receipts;
+
+            $this->response->data = $data;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activity->setUser($user)
+                    ->setActivityName('issue_lucky_draw')
+                    ->setActivityNameLong('Issue Lucky Draw')
+                    ->setObject($luckyDraw)
+                    ->responseOK();
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.commit', array($this, $hash, $luckyDraw, $customer, $mallId));
+        } catch (ACLForbiddenException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('issue_lucky_draw')
+                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 400;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('issue_lucky_draw')
+                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('issue_lucky_draw')
+                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            // Rollback the changes
+            $this->rollBack();
+
+            Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('issue_lucky_draw')
+                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
 
     /**
      * POST - Issue Coupon Number Number

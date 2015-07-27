@@ -39,6 +39,7 @@ class ConsumerPrinterController extends DataPrinterController
                         'user_details.country as country',
                         'user_details.phone as phone',
                         'user_details.last_visit_any_shop as last_visit_date',
+                        'user_details.merchant_acquired_date as merchant_acquired_date',
                         'user_details.last_spent_any_shop as last_spent_amount',
                         'user_details.relationship_status as relationship_status',
                         'user_details.number_of_children as number_of_children',
@@ -294,20 +295,20 @@ class ConsumerPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Consumer';
+        $pageTitle = 'Customer';
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Consumer List', '', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Consumer', $totalRec, '', '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customer', $totalRec, '', '', '', '','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'First Name', 'Last Name', 'Date of Birth', 'Gender', 'Join Date', 'Mobile Phone', 'Membership Number', 'Issued Coupon', 'Redeemed Coupon');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'First Name', 'Last Name', 'Date of Birth', 'Gender', 'Orbit Join Date', 'Membership Join Date', 'Mobile Phone', 'Membership Number', 'Issued Coupon', 'Redeemed Coupon');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','');
                 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
@@ -322,8 +323,8 @@ class ConsumerPrinterController extends DataPrinterController
                     $avg_annual_income = $this->printAverageAnnualIncome($row);
                     $avg_monthly_spent = $this->printAverageShopping($row);
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\", %s,\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\"\n", 
-                        '', $row->user_email, $this->printUtf8($row->user_firstname), $this->printUtf8($row->user_lastname), $row->birthdate, $gender, $row->created_at,
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\", %s,\"%s\", %s, %s,\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\"\n", 
+                        '', $row->user_email, $this->printUtf8($row->user_firstname), $this->printUtf8($row->user_lastname), $row->birthdate, $gender, $row->created_at, $row->merchant_acquired_date,
                         $row->phone, ($row->membership_number), $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon));
                 }
                 break;
@@ -457,7 +458,30 @@ class ConsumerPrinterController extends DataPrinterController
 
 
         return $result;
-    }    
+    }
+
+    /**
+     * Print date friendly name.
+     *
+     * @param $consumer $consumer
+     * @return string
+     */
+    public function printMemberSince($consumer)
+    {
+        if($consumer->merchant_acquired_date==NULL || empty($consumer->merchant_acquired_date) || $consumer->merchant_acquired_date=="0000-00-00 00:00:00"){
+            $result = "";
+        }
+        else {
+            $date = $consumer->merchant_acquired_date;
+            $date = explode(' ',$date);
+            $time = strtotime($date[0]);
+            $newformat = date('d F Y',$time);
+            $result = $newformat;
+        }
+
+
+        return $result;
+    }
 
 
     /**
