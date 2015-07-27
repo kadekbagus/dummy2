@@ -33,6 +33,6 @@ Route::group(['before' => 'orbit-settings'], function() {
      */
     Route::get('/api/v1/lucky-draw-number/{search}', function()
     {
-        return LuckyDrawAPIController::create()->getSearchLuckyDrawNumber();
+        return LuckyDrawNumberAPIController::create()->getSearchLuckyDrawNumber();
     })->where('search', '(list|search)');
 });
