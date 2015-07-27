@@ -707,6 +707,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
     {
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
+        $userId = $user->user_id;
         $subject = Lang::get('mobileci.inbox.lucky_draw.subject');
 
         $inbox = new Inbox();
