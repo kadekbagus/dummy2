@@ -250,9 +250,9 @@ class ConsumerPrinterController extends DataPrinterController
         $_users = clone $users;
 
         // Default sort by
-        $sortBy = 'users.user_email';
+        $sortBy = 'users.created_at';
         // Default sort mode
-        $sortMode = 'asc';
+        $sortMode = 'desc';
 
         OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
             // Map the sortby request to the real column name
@@ -279,8 +279,8 @@ class ConsumerPrinterController extends DataPrinterController
         });
 
         OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
-            if (strtolower($_sortMode) !== 'asc') {
-                $sortMode = 'desc';
+            if (strtolower($_sortMode) !== 'desc') {
+                $sortMode = 'asc';
             }
         });
         $users->orderBy($sortBy, $sortMode);
@@ -324,7 +324,7 @@ class ConsumerPrinterController extends DataPrinterController
                     $avg_monthly_spent = $this->printAverageShopping($row);
 
                     printf("\"%s\",\"%s\",\"%s\",\"%s\", %s,\"%s\", %s, %s,\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\"\n", 
-                        '', $row->user_email, $this->printUtf8($row->user_firstname), $this->printUtf8($row->user_lastname), $row->birthdate, $gender, $row->created_at, $row->merchant_acquired_date,
+                        '', $row->user_email, $this->printUtf8($row->user_firstname), $this->printUtf8($row->user_lastname), $row->birthdate, $gender, $row->created_at, $row->membership_since,
                         $row->phone, ($row->membership_number), $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon));
                 }
                 break;
@@ -468,11 +468,11 @@ class ConsumerPrinterController extends DataPrinterController
      */
     public function printMemberSince($consumer)
     {
-        if($consumer->merchant_acquired_date==NULL || empty($consumer->merchant_acquired_date) || $consumer->merchant_acquired_date=="0000-00-00 00:00:00"){
+        if($consumer->membership_since==NULL || empty($consumer->membership_since) || $consumer->membership_since=="0000-00-00 00:00:00"){
             $result = "";
         }
         else {
-            $date = $consumer->merchant_acquired_date;
+            $date = $consumer->membership_since;
             $date = explode(' ',$date);
             $time = strtotime($date[0]);
             $newformat = date('d F Y',$time);
