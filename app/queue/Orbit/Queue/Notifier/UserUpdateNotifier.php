@@ -91,8 +91,23 @@ class UserUpdateNotifier
         try {
             $postData = [
                 'user_id' => $user->user_id,
+                'external_user_id' => $user->external_user_id,
                 'user_email' => $user->user_email,
-                'created_at' => $user->created_at
+                'user_firstname' => $user->user_firstname,
+                'user_lastname' => $user->user_lastname,
+                'membership_number' => $user->membership_number,
+                'membership_since' => $user->membership_since,
+                'date_of_birth' => $user->userdetail->birthdate,
+                'gender' => $user->userdetail->gender,
+                'address_line1' => $user->userdetail->address_line1,
+                'city' => $user->userdetail->city,
+                'province' => $user->userdetail->province,
+                'postal_code' => $user->userdetail->postal_code,
+                'phone1' => $user->userdetail->phone,
+                'phone2' => $user->userdetail->phone2,
+                'phone3' => $user->userdetail->phone3,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
             ];
 
             if ($notifyData['auth_type'] === 'basic') {
