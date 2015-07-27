@@ -14,7 +14,11 @@
 // Merchant or Retailer activation
 Artisan::add(new merchantActivation);
 
+// Compile Orbit Routes into single file
 Artisan::add(new CompileOrbitRoutes);
+
+// Delete User based on email or ID
+Artisan::add(new DeleteUser);
 
 // diff configs vs sample and report differences.
 Artisan::add(new configDiffFromSample);
