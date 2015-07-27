@@ -662,7 +662,8 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             }
 
             $attributes = ['receipt_retailer_id', 'receipt_number', 'receipt_date', 'receipt_payment_type', 'receipt_card_number', 'receipt_amount', 'external_receipt_id', 'external_retailer_id'];
-            $validPayments = ['cash', 'credit_card', 'debit_card', 'other'];
+            $validPayments = ['cash', 'credit_card', 'debit_card', 'other', 'BCA', 'BNI', 'BRI', 'BTN', 'CIMB NIAGA', 'DANAMON', 'MANDIRI', 'MEGA', 'PANIN', 'PERMATA'];
+            $validPayments = array_map('strtolower', $validPayments);
             foreach ($result as $receipt) {
                 // Check attributes
                 foreach ($attributes as $attr) {
@@ -675,13 +676,13 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 // Check retailer ID
                 $retailer = Retailer::excludeDeleted()->find($receipt->receipt_retailer_id);
                 if (empty($retailer)) {
-                    $errorMessage = sprintf('Retailer ID %s on receipt is not found.', $receipt->receipt_retailer_id);
+                    $errorMessage = sprintf('Retailer ID %s on receipt is not found.', $receipt->receipt_payment_type);
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
                 // Check payment type
-                if (! in_array($receipt->receipt_payment_type, $validPayments)) {
-                    $errorMessage = sprintf('Payment type %s on receipt is not found.', $receipt->receipt_retailer_id);
+                if (! in_array(strtolower($receipt->receipt_payment_type), $validPayments)) {
+                    $errorMessage = sprintf('Payment type %s on receipt is not found.', $receipt->receipt_payment_type);
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }

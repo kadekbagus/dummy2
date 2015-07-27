@@ -57,10 +57,10 @@ class LuckyDrawNumberNotifier
      */
     public function fire($job, $data)
     {
-        $receiptGroup = $data['hash'];
+        $hash = $data['hash'];
         $luckyDrawId = $data['lucky_draw_id'];
         $userId = $data['user_id'];
-        $hash = $data['hash'];
+        $retailerId = $data['retailer_id'];
 
         $user = User::excludeDeleted()->find($userId);
         $retailer = Retailer::excludeDeleted()->find($retailerId);
@@ -169,7 +169,7 @@ class LuckyDrawNumberNotifier
                 'lucky_draw_number_end' => (property_exists($response->data, 'lucky_draw_number_end') ? $response->data->lucky_draw_number_end : NULL)
             ];
             $validationRule = [
-                'user_id' => 'required|orbit.notify.same_lucky_draw_id:' . $luckyDraw->lucky_draw_id,
+                'lucky_draw_id' => 'required|orbit.notify.same_lucky_draw_id:' . $luckyDraw->lucky_draw_id,
                 'receipt_group' => 'required|orbit.notify.same_receipt_group:' . $hash,
                 'lucky_draw_number_start' => 'required|numeric',
                 'lucky_draw_number_end' => 'required|numeric'
@@ -185,11 +185,19 @@ class LuckyDrawNumberNotifier
             // Update the user object based on the return value of external system
             DB::connection()->getPdo()->beginTransaction();
 
-            // Call our internal API to insert the lucky draw number range
-            $this->prepareAPIKey(User::find($retailer->user_id));
-
             // Make sure it popup on user mobile phone
             $_POST['popup'] = 'yes';
+
+            // Prepare another post data
+            $_POST['user_id'] = $userId;
+            $_POST['lucky_draw_id'] = $luckyDraw->lucky_draw_id;
+            $_POST['lucky_draw_number_start'] = $response->data->lucky_draw_number_start;
+            $_POST['lucky_draw_number_end'] = $response->data->lucky_draw_number_end;
+            $_POST['receipts'] = $jsonReceipts;
+            $_POST['mall_id'] = $receipts[0]->mall_id;
+
+            // Call our internal API to insert the lucky draw number range
+            $this->prepareAPIKey(User::find($retailer->user_id));
 
             $luckyDrawNumberAPI = LuckyDrawNumberAPIController::create('raw')->setUseTransaction(FALSE);
             $apiResponse = $luckyDrawNumberAPI->postNewLuckyDrawNumber();
@@ -321,6 +329,9 @@ class LuckyDrawNumberNotifier
         // Generate the signature
         $_GET['apikey'] = $apikey->api_key;
         $_GET['apitimestamp'] = time();
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/api/v1/foo';
+
         $signature = Generator::genSignature($apikey->api_secret_key);
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
     }
