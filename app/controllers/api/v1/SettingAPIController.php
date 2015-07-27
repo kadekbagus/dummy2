@@ -796,6 +796,7 @@ class SettingAPIController extends ControllerAPI
                                ->where('object_type', 'merchant')
                                ->where('object_id', $mallId)
                                ->where('setting_name', 'agreement')
+                               ->where('status', 'active')
                                ->first();
 
             if (empty($settings)) {
@@ -866,73 +867,32 @@ class SettingAPIController extends ControllerAPI
         try {
             $httpCode=200;
 
-            Event::fire('orbit.setting.postupdateagreement.before.auth', array($this));
+            // set mall id
+            $mallId = Config::get('orbit.shop.id');
 
-            // Require authentication
-            // $this->checkAuth();
-
-            Event::fire('orbit.setting.postupdateagreement.after.auth', array($this));
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            Event::fire('orbit.setting.postupdateagreement.before.authz', array($this, $user));
-
-            if (! ACL::create($user)->isAllowed('update_setting')) {
-                Event::fire('orbit.setting.postupdateagreement.authz.notallowed', array($this, $user));
-                $updateSettingLang = Lang::get('validation.orbit.actionlist.update_setting');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateSettingLang));
-                ACL::throwAccessForbidden($message);
-            }
-            Event::fire('orbit.setting.postupdateagreement.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
-
-            $setting_name = OrbitInput::post('setting_name');
-            $setting_value = OrbitInput::post('setting_value');
-            $object_id = OrbitInput::post('object_id');
-            $object_type = OrbitInput::post('object_type');
-            $status = OrbitInput::post('status');
-
-            $validator = Validator::make(
-                array(
-                    'setting_name'     => $setting_name,
-                    'setting_value'    => $setting_value,
-                    'status'           => $status,
-                ),
-                array(
-                    'setting_name'     => 'required',
-                    'setting_value'    => 'required',
-                    'status'           => 'orbit.empty.setting_status',
-                )
-            );
-
-            Event::fire('orbit.setting.postupdateagreement.before.validation', array($this, $validator));
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-            Event::fire('orbit.setting.postupdateagreement.after.validation', array($this, $validator));
+            $setting_name = 'agreement';
+            $setting_value = 'yes';
+            $object_type = 'merchant';
+            $status = 'active';
 
             // Begin database transaction
             $this->beginTransaction();
 
-            $updatedsetting = Setting::excludeDeleted()->where('setting_name', $setting_name)->first();
+            $updatedsetting = Setting::excludeDeleted()
+                                     ->where('object_type', $object_type)
+                                     ->where('object_id', $mallId)
+                                     ->where('setting_name', $setting_name)
+                                     ->where('status', $status)
+                                     ->first();
 
             if (empty($updatedsetting)) {
                 // do insert
                 $updatedsetting = new Setting();
                 $updatedsetting->setting_name = $setting_name;
                 $updatedsetting->setting_value = $setting_value;
-                $updatedsetting->object_id = $object_id;
+                $updatedsetting->object_id = $mallId;
                 $updatedsetting->object_type = $object_type;
-                if (trim($status) !== '') {
-                    $updatedsetting->status = $status;
-                }
-
-                $updatedsetting->modified_by = $this->api->user->user_id;
+                $updatedsetting->status = $status;
 
                 Event::fire('orbit.setting.postupdateagreement.before.save', array($this, $updatedsetting));
 
@@ -941,23 +901,7 @@ class SettingAPIController extends ControllerAPI
                 Event::fire('orbit.setting.postupdateagreement.after.save', array($this, $updatedsetting));
             } else {
                 // do update
-                OrbitInput::post('setting_value', function($setting_value) use ($updatedsetting) {
-                    $updatedsetting->setting_value = $setting_value;
-                });
-
-                OrbitInput::post('object_id', function($object_id) use ($updatedsetting) {
-                    $updatedsetting->object_id = $object_id;
-                });
-
-                OrbitInput::post('object_type', function($object_type) use ($updatedsetting) {
-                    $updatedsetting->object_type = $object_type;
-                });
-
-                OrbitInput::post('status', function($status) use ($updatedsetting) {
-                    $updatedsetting->status = $status;
-                });
-
-                $updatedsetting->modified_by = $this->api->user->user_id;
+                $updatedsetting->setting_value = $setting_value;
 
                 Event::fire('orbit.setting.postupdateagreement.before.save', array($this, $updatedsetting));
 
@@ -966,7 +910,7 @@ class SettingAPIController extends ControllerAPI
                 Event::fire('orbit.setting.postupdateagreement.after.save', array($this, $updatedsetting));
             }
 
-            $this->response->data = $updatedsetting;
+            $this->response->data = $setting_value;
 
             // Commit the changes
             $this->commit();
