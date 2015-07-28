@@ -52,14 +52,28 @@ class InternalIntegrationAPIController extends ControllerAPI
             $email = OrbitInput::post('user_email', 'email@example.com');
             $createdAt = OrbitInput::post('created_at', NULL);
 
+            $randomFirstName = 'John-' . substr(md5(microtime()), 0, 6);
+            $randomLastName = 'Doe-' . substr(md5(microtime()), 0, 6);
+
+            $user = User::excludeDeleted()->find($userId);
+            if (! empty($user)) {
+                if (! empty($user->user_firstname)) {
+                    $randomFirstName = $user->user_firstname;
+                }
+
+                if (! empty($user->user_lastname)) {
+                    $randomLastName = $user->user_lastname;
+                }
+            }
+
             // Build the response object
             // This was just actually dummy things
             $data = new stdClass();
             $data->user_id = $userId;
             $data->user_email = $email;
             $data->external_user_id = 'ORB-' . $userId;
-            $data->user_firstname = 'John-' . substr(md5(microtime()), 0, 6);
-            $data->user_lastname = 'Doe-' . substr(md5(microtime()), 0, 6);
+            $data->user_firstname = $randomFirstName;
+            $data->user_lastname = $randomLastName;
             $data->membership_number = 'M' . $userId;
             $data->membership_since = date('Y-m-d H:i:s', strtotime('last week'));
 
