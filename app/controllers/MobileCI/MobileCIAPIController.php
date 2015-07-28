@@ -7623,6 +7623,8 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
+            $floorList = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->groupBy('floor')->orderBy('floor')->lists('floor');
+
             $products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
 
             // Filter product by name pattern
@@ -7842,7 +7844,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories));
+            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories, 'floorList' => $floorList));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
