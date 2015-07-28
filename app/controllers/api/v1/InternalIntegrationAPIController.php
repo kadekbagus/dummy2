@@ -15,6 +15,7 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Net\MacAddr;
+use Log;
 
 class InternalIntegrationAPIController extends ControllerAPI
 {
@@ -43,8 +44,9 @@ class InternalIntegrationAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            // Only allow for IP 127.0.0.1
-            $this->checkIPs(['127.0.0.1']);
+            // Only allow for particular IPs
+            $allowedIPs = $this->getAllowedIPs('user-login');
+            $this->checkIPs($allowedIPs);
 
             // Assuming the data comes always correct
             $userId = OrbitInput::post('user_id', 0);
@@ -129,8 +131,9 @@ class InternalIntegrationAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            // Only allow for IP 127.0.0.1
-            $this->checkIPs(['127.0.0.1']);
+            // Only allow for particular IPs
+            $allowedIPs = $this->getAllowedIPs('user-update');
+            $this->checkIPs($allowedIPs);
 
             // Assuming the data comes always correct
             $userId = OrbitInput::post('user_id', 0);
@@ -224,8 +227,9 @@ class InternalIntegrationAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            // Only allow for IP 127.0.0.1
-            $this->checkIPs(['127.0.0.1']);
+            // Only allow for particular IPs
+            $allowedIPs = $this->getAllowedIPs('lucky-draw-number');
+            $this->checkIPs($allowedIPs);
 
             // Assuming the data comes always correct
             $userId = OrbitInput::post('user_id', 0);
@@ -325,16 +329,36 @@ class InternalIntegrationAPIController extends ControllerAPI
      * Request only allowed from some of IP address.
      *
      * @author Rio Astamal <me@rioastamal.net>
-     * @param array $ips List of ip address
+     * @param string|array $ips List of ip address
      * @return void
      * @throws ACLForbidden Exception
      */
-    protected function checkIPs(array $ips)
+    protected function checkIPs($ips)
     {
+        if (is_string($ips) && $ips === '*') {
+            return TRUE;
+        }
+
         $clientIP = $_SERVER['REMOTE_ADDR'];
         if (! in_array($clientIP, $ips)) {
             $message = 'Your IP address are not allowed to access this resource.';
             ACL::throwAccessForbidden($message);
         }
+    }
+
+    /**
+     * Get allowed IPs to access this resource.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string $configName
+     * @return mixed
+     */
+    protected function getAllowedIPs($configName)
+    {
+        $retailerId = Config::get('orbit.shop.id');
+        $config = sprintf('orbit-notifier.%s.%s.internal.allowed_ips', $configName, $retailerId);
+        $allowedIPs = Config::get($config);
+
+        return $allowedIPs;
     }
 }
