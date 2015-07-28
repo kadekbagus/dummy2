@@ -1180,7 +1180,8 @@ class TenantAPIController extends ControllerAPI
             }
 
             // Builder object
-            $retailers = Retailer::excludeDeleted('merchants')
+            $retailers = Retailer::select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
+                                 ->excludeDeleted('merchants')
                                  ->isMall('no');
 
             // Filter retailer by Ids
@@ -1405,6 +1406,32 @@ class TenantAPIController extends ControllerAPI
                 $retailers->whereIn('merchants.unit', $unit);
             });
 
+            // Filter retailer by location (floor - unit)
+            OrbitInput::get('location', function($data) use ($retailers)
+            {
+                $retailers->whereIn(DB::raw('CONCAT(floor, " - ", unit)'), $data);
+            });
+
+            // Filter retailer by location_like (floor - unit)
+            OrbitInput::get('location_like', function($data) use ($retailers) {
+                $retailers->where(DB::raw('CONCAT(floor, " - ", unit)'), 'like', "%$data%");
+            });
+
+            // Filter retailer by categories
+            OrbitInput::get('categories', function($data) use ($retailers)
+            {
+                $retailers->whereHas('categories', function($q) use ($data) {
+                    $q->whereIn('category_name', $data);
+                });
+            });
+
+            // Filter retailer by categories_like
+            OrbitInput::get('categories_like', function($data) use ($retailers) {
+                $retailers->whereHas('categories', function($q) use ($data) {
+                    $q->where('category_name', 'like', "%$data%");
+                });
+            });
+
             // Filter retailer by external_object_id
             OrbitInput::get('external_object_id', function($external_object_id) use ($retailers)
             {
@@ -1442,6 +1469,7 @@ class TenantAPIController extends ControllerAPI
                     $query->orWhereHas('categories', function($q) use ($keyword) {
                         $q->where('category_name', 'like', "%$keyword%");
                     });
+                    $query->orWhere(DB::raw('CONCAT(floor, " - ", unit)'), 'like', "%$keyword%");
                 });
 
             });
