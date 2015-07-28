@@ -74,3 +74,23 @@ Event::listen('orbit.user.postupdatemembership.after.commit', function($controll
         'retailer_id' => $retailerId
     ]);
 });
+
+/**
+ * Listen on:       `orbit.user.postnewmembership.after.commit`
+ *   Purpose:       Handle events after customer being created
+ *
+ * @author Rio Astamal <me@rioastamal.net>
+ * @param LoginAPIController $controller - The instance of the LoginAPIController or its subclass
+ * @param User $customer - Instance of object User
+ */
+Event::listen('orbit.user.postnewmembership.after.commit', function($controller, $customer)
+{
+    // @Todo the Retailer object should comes from parameter
+    $retailerId = App::make('orbitSetting')->getSetting('current_retailer', 0);
+
+    // Notify the queueing system
+    Queue::push('Orbit\\Queue\\Notifier\\UserUpdateNotifier', [
+        'user_id' => $customer->user_id,
+        'retailer_id' => $retailerId
+    ]);
+});
