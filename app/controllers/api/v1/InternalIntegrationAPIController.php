@@ -15,7 +15,6 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Net\MacAddr;
-use Log;
 
 class InternalIntegrationAPIController extends ControllerAPI
 {
