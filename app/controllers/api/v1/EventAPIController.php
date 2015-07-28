@@ -1229,7 +1229,8 @@ class EventAPIController extends ControllerAPI
             $events = DB::table('events')
                 ->join('merchants', 'events.merchant_id', '=', 'merchants.merchant_id')
                 ->select('merchants.name AS retailer_name', 'events.*')
-                ->where('events.status', '!=', 'deleted');
+                // ->where('events.status', '!=', 'deleted');
+                ->where('events.status', '=', 'active');
 
             // Filter event by Ids
             OrbitInput::get('event_id', function($eventIds) use ($events)

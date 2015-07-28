@@ -1195,7 +1195,8 @@ class NewsAPIController extends ControllerAPI
                 ->join('merchants', 'news.mall_id', '=', 'merchants.merchant_id')
                 ->select('merchants.name AS retailer_name', 'news.*', 'news.news_name as promotion_name')
                 // ->where('news.object_type', '=', 'promotion')
-                ->where('news.status', '!=', 'deleted');
+                // ->where('news.status', '!=', 'deleted');
+                ->where('news.status', '=', 'active');
 
             // Filter promotion by Ids
             OrbitInput::get('news_id', function($promotionIds) use ($promotions)
