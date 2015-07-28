@@ -729,6 +729,23 @@ class UserAPIController extends ControllerAPI
                 $updateduser->userdetail->idcard = $data;
             });
 
+            OrbitInput::post('idcard_number', function($data) use ($updateduser) {
+                $updateduser->userdetail->idcard = $data;
+            });
+
+            OrbitInput::post('phone', function($phone) use ($updateduser) {
+                $updateduser->userdetail->phone = $phone;
+            });
+
+            OrbitInput::post('phone2', function($phone2) use ($updateduser) {
+                $updateduser->userdetail->phone2 = $phone2;
+            });
+
+            OrbitInput::post('phone3', function($phone3) use ($updateduser) {
+                $updateduser->userdetail->phone3 = $phone3;
+            });
+
+
             // Flag for deleting all personal interests which belongs to this user
             OrbitInput::post('personal_interests_delete_all', function($delete) use ($updateduser) {
                 if ($delete === 'yes') {
