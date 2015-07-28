@@ -333,6 +333,12 @@ class MobileCIAPIController extends ControllerAPI
             $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
             $landing = Setting::getFromList($mall->settings, 'landing_page');
 
+            $agree = Setting::getFromList($mall->settings, 'agreement');
+            // dd($agree[0]);
+            if ($agree[0] == "no") {
+                return 'Access forbidden.';
+            }
+
             // Get the landing page URL based on settings
             $landing_url = '';
 
