@@ -93,4 +93,9 @@ Event::listen('orbit.user.postnewmembership.after.commit', function($controller,
         'user_id' => $customer->user_id,
         'retailer_id' => $retailerId
     ]);
+
+    // Send email process to the queue
+    Queue::push('Orbit\\Queue\\RegistrationMail', [
+        'user_id' => $customer->user_id
+    ]);
 });
