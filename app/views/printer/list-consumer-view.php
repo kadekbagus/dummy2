@@ -130,6 +130,7 @@
             <th style="text-align:left;">Membership Number</th>
             <th style="text-align:left;">Obtained Coupon</th>
             <th style="text-align:left;">Redeemed Coupon</th>
+            <th style="text-align:left;">Status</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
@@ -143,6 +144,7 @@
                 <td><?php echo ($row->membership_number); ?></td>
                 <td><?php echo ($row->total_usable_coupon); ?></td>
                 <td><?php echo ($row->total_redeemed_coupon); ?></td>
+                <td><?php echo ($row->status); ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>

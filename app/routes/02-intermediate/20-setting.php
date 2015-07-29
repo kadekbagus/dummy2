@@ -28,11 +28,11 @@ Route::group(['before' => 'orbit-settings'], function() {
     /**
      * Get agreement setting
      */
-    Route::get('/app/v1/agreement', 'IntermediateLoginController@Setting_getAgreement');
+    Route::get('/app/v1/agreement', ['as' => 'get-app-agreement', 'uses' => 'IntermediateLoginController@Setting_getAgreement']);
 
     /**
      * Create/update agreement setting
      */
-    Route::post('/app/v1/agreement', 'IntermediateLoginController@Setting_postUpdateAgreement');
+    Route::post('/app/v1/agreement', ['as' => 'post-app-agreement', 'uses' => 'IntermediateLoginController@Setting_postUpdateAgreement']);
 
 });
