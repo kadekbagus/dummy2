@@ -34,17 +34,26 @@ return [
             // Email address to send on job failed
             'email_addr' => [
                 'Admin' => 'backend@dominopos.com'
+            ],
+
+            // Only used if we handle the request by ourself
+            'internal' => [
+                // You can use string '*' instead of array to
+                // allow all IPs
+                'allowed_ips' => [
+                    '127.0.0.1'
+                ]
             ]
         ],
 
     ],
 
     // Notifiy when customer data has been updated
-    'update-member' => [
+    'user-update' => [
 
         // Retailer/Mall ID (string)
         '0' => [
-            'url' => 'http://dummy.url/orbit-notify/v1/check-member',
+            'url' => 'http://dummy.url/orbit-notify/v1/update-member',
             'auth_type' => '',
             'auth_user' => '',
             'auth_password' => '',
@@ -65,12 +74,21 @@ return [
             // Email address to send on job failed
             'email_addr' => [
                 'Admin' => 'backend@dominopos.com'
+            ],
+
+            // Only used if we handle the request by ourself
+            'internal' => [
+                // You can use string '*' instead of array to
+                // allow all IPs
+                'allowed_ips' => [
+                    '127.0.0.1'
+                ]
             ]
         ],
 
     ],
 
-    // Notifiy when receipt data has been submitted
+    // Notifiy when new receipt for lucky draw has been saved
     'lucky-draw-number' => [
 
         // Retailer/Mall ID (string)
@@ -96,6 +114,15 @@ return [
             // Email address to send on job failed
             'email_addr' => [
                 'Admin' => 'backend@dominopos.com'
+            ],
+
+            // Only used if we handle the request by ourself
+            'internal' => [
+                // You can use string '*' instead of array to
+                // allow all IPs
+                'allowed_ips' => [
+                    '127.0.0.1'
+                ]
             ]
         ],
 

@@ -160,10 +160,7 @@ class UserUpdateNotifier
             // }
             $validationData = [
                 'user_id' => $response->data->user_id,
-                'external_user_id' => $response->data->external_user_id,
                 'user_email' => $response->data->user_email,
-                'user_firstname' => $response->data->user_firstname,
-                'user_lastname' => $response->data->user_lastname,
                 'membership_number' => $response->data->membership_number,
                 'membership_since' => $response->data->membership_since
             ];
@@ -183,8 +180,16 @@ class UserUpdateNotifier
 
             // Update the user object based on the return value of external system
             DB::connection()->getPdo()->beginTransaction();
+
+            // Check for the previous membership number, if it was empty assuming this is the first time
+            // So activate the user
+            if (empty($user->membership_number) && $user->status === 'pending') {
+                $user->status = 'active';
+            }
+
             $user->membership_number = $response->data->membership_number;
             $user->membership_since = $response->data->membership_since;
+
             $user->save();
 
             // Everything seems fine lets delete the job

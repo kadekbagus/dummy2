@@ -172,6 +172,13 @@ class UserLoginNotifier
 
             // Update the user object based on the return value of external system
             DB::connection()->getPdo()->beginTransaction();
+
+            // Check for the previous membership number, if it was empty assuming this is the first time
+            // So activate the user
+            if (empty($user->membership_number) && $user->status === 'pending') {
+                $user->status = 'active';
+            }
+
             $user->external_user_id = $response->data->external_user_id;
             $user->user_firstname = $response->data->user_firstname;
             $user->user_lastname = $response->data->user_lastname;

@@ -504,12 +504,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 }
             }
 
-            // The total amount should be greater than the minimum amount of lucky draw
-            if ((double)$totalAmount < (double)$luckyDraw->minimum_amount) {
-                    $errorMessage = sprintf('The total spent is not enough to get Lucky Draw, minimum amount is %s.', number_format($luckyDraw->minimum_amount));
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
             $numberOfLuckyDraw = floor($totalAmount / $luckyDraw->minimum_amount);
 
             foreach ($receiptDates as $i=>$receiptDate) {
@@ -587,10 +581,14 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                         ->where('user_id', $customer->user_id)
                                         ->take(50)
                                         ->get();
+            $receiptsCount = LuckyDrawReceipt::excludeDeleted()
+                                        ->where('receipt_group', $hash)
+                                        ->where('user_id', $customer->user_id)
+                                        ->count();
 
             $data = new stdclass();
-            $data->total_records = (int)$receipts;
-            $data->returned_records = count($receipts);
+            $data->total_records = $receiptsCount;
+            $data->returned_records = $receipts->count();
             $data->records = $receipts;
 
             $this->response->data = $data;
