@@ -302,13 +302,13 @@ class ConsumerPrinterController extends DataPrinterController
                 @header('Content-Type: text/csv');
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customer', $totalRec, '', '', '', '','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customer', $totalRec, '', '', '', '','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'First Name', 'Last Name', 'Date of Birth', 'Gender', 'Orbit Join Date', 'Membership Join Date', 'Mobile Phone', 'Membership Number', 'Obtained Coupon', 'Redeemed Coupon');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'Orbit Join Date', 'Membership Join Date', 'Membership Number', 'Obtained Coupon', 'Redeemed Coupon', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
@@ -323,10 +323,10 @@ class ConsumerPrinterController extends DataPrinterController
                     $avg_annual_income = $this->printAverageAnnualIncome($row);
                     $avg_monthly_spent = $this->printAverageShopping($row);
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\", %s,\"%s\", %s, %s,\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\"\n", 
-                        '', $row->user_email, $this->printUtf8($row->user_firstname), $this->printUtf8($row->user_lastname), $row->birthdate, $gender, $row->created_at, $row->membership_since,
-                        $row->phone, ($row->membership_number), $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon));
-                }
+                    printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s, %s,\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\"\n", 
+                        '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $row->created_at, 
+                        $row->membership_since, ($row->membership_number), $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status));
+                }   
                 break;
 
             case 'print':
