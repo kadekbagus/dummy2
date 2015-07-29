@@ -1351,10 +1351,7 @@ class UserAPIController extends ControllerAPI
             });
 
             if ($user->isRoleName('consumer')) {
-                // Filter user by Ids
-                OrbitInput::get('user_id', function ($userIds) use ($users, $user) {
-                    $users->whereIn('users.user_id', $user->user_id);
-                });
+                $users->whereIn('users.user_id', (array)$user->user_id);
             } else {
                 // Filter user by Ids
                 OrbitInput::get('user_id', function ($userIds) use ($users) {
