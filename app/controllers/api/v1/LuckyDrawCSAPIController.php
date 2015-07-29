@@ -231,7 +231,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
                 if (is_object($prevLuckyDrawReceipt)) {
                     // The customer wants to cheat us huh?
-                    $receiptIssueDate = date('l m/d/Y', strtotime($prevLuckyDrawReceipt->created_at));
+                    $receiptIssueDate = date('d/m/Y', strtotime($prevLuckyDrawReceipt->created_at));
                     $message = sprintf('Receipt number %s was already used on %s.', $receipt, $receiptIssueDate);
                     ACL::throwAccessForbidden(htmlentities($message));
                 }
@@ -549,7 +549,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
                 if (is_object($prevLuckyDrawReceipt)) {
                     // The customer wants to cheat us huh?
-                    $receiptIssueDate = date('l m/d/Y', strtotime($prevLuckyDrawReceipt->created_at));
+                    $receiptIssueDate = date('d/m/Y', strtotime($prevLuckyDrawReceipt->created_at));
                     $message = sprintf('Receipt number %s was already used on %s.', $receipt, $receiptIssueDate);
                     ACL::throwAccessForbidden(htmlentities($message));
                 }
@@ -891,7 +891,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
                 if (is_object($prevLuckyDrawReceipt)) {
                     // The customer wants to cheat us huh?
-                    $receiptIssueDate = date('l m/d/Y', strtotime($prevLuckyDrawReceipt->created_at));
+                    $receiptIssueDate = date('d/m/Y', strtotime($prevLuckyDrawReceipt->created_at));
                     $message = sprintf('Receipt number %s was already used on %s.', $receipt, $receiptIssueDate);
                     ACL::throwAccessForbidden(htmlentities($message));
                 }
@@ -1294,7 +1294,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $luckyDrawDate = strtotime(date('Y-m-d', strtotime($luckyDraw->end_date)));
 
             if ($now > $luckyDrawDate) {
-                $errorMessage = sprintf('The lucky draw already expired on %s.', date('d-M-Y', strtotime($luckyDraw->end_date)));
+                $errorMessage = sprintf('The lucky draw already expired on %s.', date('d/m/Y', strtotime($luckyDraw->end_date)));
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
