@@ -1935,7 +1935,8 @@ class CouponAPIController extends ControllerAPI
                 ->select('merchants.name AS issue_retailer_name', 'promotions.*')
                 ->where('promotions.is_coupon', '=', 'Y')
                 ->where('promotions.promotion_type', 'mall')
-                ->where('promotions.status', '!=', 'deleted');
+                // ->where('promotions.status', '!=', 'deleted');
+                ->where('promotions.status', '=', 'active');
 
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($coupons)
