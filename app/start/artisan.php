@@ -25,3 +25,6 @@ Artisan::add(new ClearBeanstalkdQueueCommand);
 
 // diff configs vs sample and report differences.
 Artisan::add(new configDiffFromSample);
+
+// Insert or delete agreement on settings table
+Artisan::add(new ConfigAgreement);
