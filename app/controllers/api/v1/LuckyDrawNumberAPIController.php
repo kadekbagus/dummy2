@@ -424,6 +424,18 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 $luckydraws->where('lucky_draw_numbers.updated_at', '<=', $data);
             });
 
+            // groupBy
+            OrbitInput::get('group_by', function($data) use ($luckydraws)
+            {
+                $data = (array) $data;
+
+                foreach ($data as $groupBy) {
+                    if ($groupBy === 'lucky_draw_number_id') {
+                        $luckydraws->groupBy('lucky_draw_numbers.lucky_draw_number_id');
+                    }
+                }
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($luckydraws) {
                 $with = (array) $with;
