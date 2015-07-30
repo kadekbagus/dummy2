@@ -139,7 +139,8 @@
             <th style="text-align:left;">No</th>
             <th style="text-align:left;">Lucky Draw Number</th>
             <th style="text-align:left;">Issued Date</th>
-            <th style="text-align:left;">Customer</th>
+            <th style="text-align:left;">Full Name</th>
+            <th style="text-align:left;">Email</th>
             <th style="text-align:left;">Membership</th>
         </thead>
         <tbody>
@@ -148,7 +149,8 @@
                 <td><?php echo (++$rowCounter); ?></td>
                 <td><?php echo ($row->lucky_draw_number_code); ?></td>
                 <td><?php echo ($formatDate($row->issued_date)); ?></td>
-                <td><?php echo htmlentities($getFullName($row)); ?></td>
+                <td><?php echo htmlentities($getFullName($row, 'no_email')); ?></td>
+                <td><?php echo htmlentities($row->user_email); ?></td>
                 <td><?php echo ($row->membership_number); ?></td>
             </tr>
         <?php endwhile; ?>
