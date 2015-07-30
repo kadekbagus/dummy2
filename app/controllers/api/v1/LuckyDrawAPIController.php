@@ -118,7 +118,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'max_number'               => 'required|numeric',
                     'external_lucky_draw_id'   => 'required',
                     'grace_period_date'        => 'date_format:Y-m-d H:i:s',
-                    'status'                   => 'orbit.empty.lucky_draw_status',
+                    'status'                   => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active:' . $mall_id,
                 )
             );
 
@@ -354,13 +354,14 @@ class LuckyDrawAPIController extends ControllerAPI
                     'lucky_draw_id'        => 'required|numeric|orbit.empty.lucky_draw',
                     'mall_id'              => 'numeric|orbit.empty.mall',
                     'lucky_draw_name'      => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
-                    'status'               => 'orbit.empty.lucky_draw_status',
+                    'status'               => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active_but_me:' . $mall_id . ',' . $lucky_draw_id,
                     'start_date'           => 'date_format:Y-m-d H:i:s',
                     'end_date'             => 'date_format:Y-m-d H:i:s|end_date_greater_than_start_date_and_current_date:'.$start_date.','.$now,
                     'grace_period_date'    => 'date_format:Y-m-d H:i:s',
                 ),
                 array(
                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
+                   'orbit.exists.lucky_draw_active_but_me' => Lang::get('validation.orbit.exists.lucky_draw_active'),
                    'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.'
                 )
             );
@@ -1808,6 +1809,50 @@ class LuckyDrawAPIController extends ControllerAPI
             }
 
             return FALSE;
+        });
+
+        // Check status for only allowed one lucky draw to be active
+        Validator::extend('orbit.exists.lucky_draw_active', function ($attribute, $value, $parameters) {
+            // Check only if status is active
+            if ($value === 'active') {
+                $mallId = $parameters[0];
+
+                $data = LuckyDraw::excludeDeleted()
+                                 ->where('mall_id', $mallId)
+                                 ->active()
+                                 ->first();
+
+                if (! empty($data)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.exists.lucky_draw_active', $data);
+            }
+
+            return TRUE;
+        });
+
+        // Check status for only allowed one lucky draw to be active
+        Validator::extend('orbit.exists.lucky_draw_active_but_me', function ($attribute, $value, $parameters) {
+            // Check only if status is active
+            if ($value === 'active') {
+                $mallId = $parameters[0];
+                $luckyDrawId = $parameters[1];
+
+                $data = LuckyDraw::excludeDeleted()
+                                 ->where('mall_id', $mallId)
+                                 ->active()
+                                 ->where('lucky_draw_id', '!=', $luckyDrawId)
+                                 ->first();
+
+                if (! empty($data)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.exists.lucky_draw_active', $data);
+            }
+
+            return TRUE;
         });
 
     }

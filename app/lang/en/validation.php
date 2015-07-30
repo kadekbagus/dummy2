@@ -129,6 +129,7 @@ return array(
             'deleted_retailer_is_box_current_retailer' => 'The retailer cannot be deleted, because is set to box current retailer.',
             'inactive_retailer_is_box_current_retailer' => 'The retailer status cannot be set to inactive, because is set to box current retailer.',
             'lucky_draw_name'        => 'The lucky draw name has already been used.',
+            'lucky_draw_active'      => 'Only one lucky draw campaign can be active at the same time.',
             'news_name'              => 'The news name has already been used.',
         ),
         'access' => array(
