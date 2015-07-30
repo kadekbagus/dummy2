@@ -604,9 +604,12 @@ class UserAPIController extends ControllerAPI
                 $updateduser->user_lastname = $lastname;
             });
 
-            OrbitInput::post('status', function($status) use ($updateduser) {
-                $updateduser->status = $status;
-            });
+            // User with role consumer cannot update status
+            if (! $user->isRoleName('consumer')) {
+                OrbitInput::post('status', function($status) use ($updateduser) {
+                    $updateduser->status = $status;
+                });
+            }
 
             OrbitInput::post('role_id', function($role_id) use ($updateduser) {
                 $updateduser->user_role_id = $role_id;
@@ -2355,9 +2358,12 @@ class UserAPIController extends ControllerAPI
                 $updateduser->user_lastname = $lastname;
             });
 
-            OrbitInput::post('status', function($status) use ($updateduser) {
-                $updateduser->status = $status;
-            });
+            // User with role consumer cannot update status
+            if (! $user->isRoleName('consumer')) {
+                OrbitInput::post('status', function($status) use ($updateduser) {
+                    $updateduser->status = $status;
+                });
+            }
 
             OrbitInput::post('membership_number', function($number) use ($updateduser) {
                 $updateduser->membership_number = $number;
