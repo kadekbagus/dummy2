@@ -105,10 +105,10 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;"><?php echo ($currentRetailer->name); ?> - Issued Lucky Draw Number Report</h2>
+    <h2 style="margin-bottom:0.5em;"><?php echo htmlentities($luckyDraw->lucky_draw_name); ?> - Issued Lucky Draw Numbers Report</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
-            <td style="width:150px">Lucky Draw</td>
+            <td style="width:150px">Lucky Draw Name</td>
             <td style="width:10px;">:</td>
             <td><strong><?php echo htmlentities($luckyDraw->lucky_draw_name); ?></strong></td>
         </tr>
@@ -118,17 +118,17 @@
             <td><?php printf('<strong>%s</strong> - <strong>%s</strong>', $formatDate($luckyDraw->start_date), $formatDate($luckyDraw->end_date)); ?></td>
         </tr>
         <tr>
-            <td>Total Number</td>
+            <td>Total Numbers</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalLuckyDrawNumber, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Total Issued Number</td>
+            <td>Total Issued Numbers</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalIssuedLuckyDrawNumber, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Total Number Left</td>
+            <td>Total Unissued Numbers</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalLuckyDrawNumber - $totalIssuedLuckyDrawNumber, 0, '.', '.'); ?></strong></td>
         </tr>
