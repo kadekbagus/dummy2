@@ -256,8 +256,7 @@ class ActivityAPIController extends ControllerAPI
 
             // Filter by gender
             OrbitInput::get('genders', function($genders) use ($activities) {
-                // dd($genders[0]);
-                $activities->whereIn('activities.gender', $genders);
+                $activities->whereIn('user_details.gender', $genders);
             });
 
             // Filter by groups
