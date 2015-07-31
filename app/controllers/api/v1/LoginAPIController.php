@@ -585,7 +585,7 @@ class LoginAPIController extends ControllerAPI
                         ->first();
 
             if (! is_object($user)) {
-                $message = Lang::get('validation.orbit.access.loginfailed');
+                $message = Lang::get('validation.orbit.access.inactiveuser');
                 ACL::throwAccessForbidden($message);
             }
 
