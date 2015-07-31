@@ -708,9 +708,9 @@ class UserAPIController extends ControllerAPI
                 $updateduser->userdetail->company_name = $company;
             });
 
-            OrbitInput::post('personal_interests', function($interests) use ($updateduser) {
-                $updateduser->interests()->sync($interests);
-            });
+            // OrbitInput::post('personal_interests', function($interests) use ($updateduser) {
+            //     $updateduser->interests()->sync($interests);
+            // });
 
             // additions
             OrbitInput::post('mobile_phone', function($phone) use ($updateduser) {
@@ -746,11 +746,67 @@ class UserAPIController extends ControllerAPI
             });
 
 
-            // Flag for deleting all personal interests which belongs to this user
+            // // Flag for deleting all personal interests which belongs to this user
+            // OrbitInput::post('personal_interests_delete_all', function($delete) use ($updateduser) {
+            //     if ($delete === 'yes') {
+            //         $updateduser->interests()->detach();
+            //     }
+            // });
+
+            // save user categories
             OrbitInput::post('personal_interests_delete_all', function($delete) use ($updateduser) {
-                if ($delete === 'yes') {
-                    $updateduser->interests()->detach();
+                if ($delete == 'yes') {
+                    $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
+                                                                ->where('object_type', 'interest')
+                                                                ->get(array('personal_interest_id'))
+                                                                ->toArray();
+                    $updateduser->interests()->detach($deleted_category_ids);
+                    $updateduser->load('interests');
                 }
+            });
+
+            OrbitInput::post('personal_interests', function($category_ids) use ($updateduser) {
+                // validate category_ids
+                $category_ids = (array) $category_ids;
+                foreach ($category_ids as $category_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'category_id'   => $category_id_check,
+                        ),
+                        array(
+                            'category_id'   => 'numeric',
+                        )
+                    );
+
+                    Event::fire('orbit.user.postupdateuser.before.categoryvalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.user.postupdateuser.after.categoryvalidation', array($this, $validator));
+                }
+                // sync new set of category ids
+                $pivotData = array_fill(0, count($category_ids), ['object_type' => 'interest']);
+                $syncData = array_combine($category_ids, $pivotData);
+
+                $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
+                                                            ->where('object_type', 'interest')
+                                                            ->get(array('personal_interest_id'))
+                                                            ->toArray();
+
+                // detach old relation
+                if (sizeof($deleted_category_ids) > 0) {
+                    $updateduser->interests()->detach($deleted_category_ids);
+                }
+
+                // attach new relation
+                $updateduser->interests()->attach($syncData);
+
+                // reload interests relation
+                $updateduser->load('interests');
             });
 
             $updateduser->modified_by = $this->api->user->user_id;
@@ -2466,7 +2522,18 @@ class UserAPIController extends ControllerAPI
                 // sync new set of category ids
                 $pivotData = array_fill(0, count($category_ids), ['object_type' => 'category']);
                 $syncData = array_combine($category_ids, $pivotData);
-                $updateduser->categories()->sync($syncData);
+                
+                $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
+                                                                ->where('object_type', 'category')
+                                                                ->get(array('personal_interest_id'))
+                                                                ->toArray();
+                // detach old relation
+                if (sizeof($deleted_category_ids) > 0) {
+                    $updateduser->categories()->detach($deleted_category_ids);
+                }
+
+                // attach new relation
+                $updateduser->categories()->attach($syncData);
 
                 // reload categories relation
                 $updateduser->load('categories');

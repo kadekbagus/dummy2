@@ -63,7 +63,8 @@ class User extends Eloquent implements UserInterface
 
     public function interestsShop()
     {
-        return $this->belongsToMany('PersonalInterest', 'user_personal_interest', 'user_id', 'personal_interest_id');
+        return $this->belongsToMany('PersonalInterest', 'user_personal_interest', 'user_id', 'personal_interest_id')
+                    ->where('object_type', 'interest');
     }
 
     public function categories()
