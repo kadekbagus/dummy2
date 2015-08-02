@@ -21,6 +21,6 @@ class MacAddress extends Eloquent {
 
     public function user()
     {
-        return $this->belongsTo('User', 'user_email', 'user_email');
+        return $this->belongsTo('User', 'user_email', 'user_email')->excludeDeleted();
     }
 }
