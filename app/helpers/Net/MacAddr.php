@@ -78,12 +78,12 @@ class MacAddr
      */
     public function reformat($separator=':')
     {
-        // Remove the mac separator
-        $newMac = str_replace([':', '-'], '', $this->mac);
+        // Remove non hex chars
+        $nonHexRemoved = preg_replace('/[^[:xdigit:]]/', '', $this->mac);
 
         // Join in again
         $newMac = str_split($this->mac, 2);
-        $newMac = implode($separator, $newMac);
+        $this->mac = implode($separator, $newMac);
 
         return $this;
     }
@@ -97,5 +97,16 @@ class MacAddr
     public function getMac()
     {
         return $this->mac;
+    }
+
+    /**
+     * Convert the mac to string
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return string
+     */
+    public function __toString()
+    {
+        return (string)$this->mac;
     }
 }
