@@ -82,7 +82,8 @@ class MacAddr
         $nonHexRemoved = preg_replace('/[^[:xdigit:]]/', '', $this->mac);
 
         // Join in again
-        $newMac = str_split($this->mac, 2);
+        $this->mac = strtolower($this->mac);
+        $this->mac = str_split($this->mac, 2);
         $this->mac = implode($separator, $newMac);
 
         return $this;
