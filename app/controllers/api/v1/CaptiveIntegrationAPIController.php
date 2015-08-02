@@ -14,6 +14,7 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Net\MacAddr;
+use Helper\EloquentRecordCounter as RecordCounter;
 
 class CaptiveIntegrationAPIController extends ControllerAPI
 {
@@ -44,10 +45,11 @@ class CaptiveIntegrationAPIController extends ControllerAPI
 
             // Try to check access control list, does this user allowed to
             // perform this action
-            $user = $this->api->user;
+            // $user = $this->api->user;
             Event::fire('orbit.network.checkout.before.authz', array($this, $user));
 
-            $role = $user->role;
+            // $role = $user->role;
+            $role = new stdClass(); $role->role_name = 'super admin';
             $validRoles = ['super admin', 'mall admin', 'mall owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this page.';
@@ -65,23 +67,34 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             $payload = base64_decode($payload);
 
             parse_str($payload, $output);
-            if (! isset($output['email'])) {
-
-                $message = 'Email argument on payload is empty.';
-                throw new Exception ($message, 1);
-            }
 
             if (! isset($output['mac'])) {
                 $message = 'Mac address argument on payload is empty.';
                 throw new Exception ($message, 1);
             }
-            $email = $output['email'];
             $mac = $output['mac'];
 
-            if (empty($email)) {
-                $message = sprintf($format, $now, $captiveIP, $email, 'Failed: email is empty');
-                $httpCode = 400;
+            $macAddr = MacAddr::create($mac);
+            if (! $macAddr->isValid()) {
+                $message = 'Mac address format is not valid.';
                 throw new Exception ($message, 1);
+            }
+            $macAddr->reformat(':');
+
+            // Get the most recent user using this mac address
+            $macModel = MacAddress::excludeDeleted()
+                                  ->where('mac_address', $macAddr->getMac())
+                                  ->orderBy('created_at', 'desc')
+                                  ->first();
+
+            $_customer = User::Consumers()
+                            ->excludeDeleted()
+                            ->where('user_email', $macModel->user_email)
+                            ->first();
+
+            if (! empty($_customer)) {
+                // User not recognized log it as 'guest'
+                $customer = $_customer;
             }
 
             // Successfull
@@ -120,7 +133,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
     }
 
     /**
-     * PWU Lippo mall captive portal integration with ourbit. The Lippo Mall
+     * Lippo mall captive portal integration with Orbit. The Lippo Mall
      * captive portal will send email address and mac address from query string.
      *
      * i.e:
@@ -138,7 +151,6 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         $payload = trim(OrbitInput::get('payload', NULL));
 
         $captiveLogFile = storage_path() . '/logs/captive-call.log';
-        $captiveIPFile = storage_path() . '/logs/captive-ip.txt';
 
         $now = date('Y-m-d H:i:s');
         $format = "[%s] %s; checkin; Email %s do network checkin; %s";
@@ -148,30 +160,23 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         $user = 'guest';
         $customer = 'guest';
 
-        $activity->setUser($customer)
-                 ->setActivityName('network_checkin_ok')
-                 ->setActivityNameLong('Network Check In')
-                 ->setNotes($message)
-                 ->setModuleName('Network')
-                 ->responseOK()
-                 ->save();
-
         try {
             $this->beginTransaction();
 
             Event::fire('orbit.network.checkin.before.auth', array($this));
 
             // Require authentication
-            $this->checkAuth();
+            // $this->checkAuth();
 
             Event::fire('orbit.network.checkin.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
-            $user = $this->api->user;
+            // $user = $this->api->user;
             Event::fire('orbit.network.checkin.before.authz', array($this, $user));
 
-            $role = $user->role;
+            // $role = $user->role;
+            $role = new stdClass(); $role->role_name = 'super admin';
             $validRoles = ['super admin', 'mall admin', 'mall owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this page.';
@@ -189,16 +194,10 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             $payload = base64_decode($payload);
 
             parse_str($payload, $output);
-            if (! isset($output['email'])) {
-                $message = 'Email argument on payload is empty.';
-                throw new Exception ($message, 1);
-            }
-
             if (! isset($output['mac'])) {
                 $message = 'Mac address argument on payload is empty.';
                 throw new Exception ($message, 1);
             }
-            $email = $output['email'];
             $mac = $output['mac'];
 
             $macAddr = MacAddr::create($mac);
@@ -208,32 +207,20 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             }
             $macAddr->reformat(':');
 
-            // Get the most recent user
-            $macModel = MacAddress::firstOrCreate(['mac_address' => $macAddr->getMac(), 'user_email' => $email]);
+            // Get the most recent user using this mac address
+            $macModel = MacAddress::excludeDeleted()
+                                  ->where('mac_address', $macAddr->getMac())
+                                  ->orderBy('created_at', 'desc')
+                                  ->first();
 
-            if (empty($email)) {
-                $message = sprintf($format, $now, $captiveIP, $email, 'Failed: email is empty');
-                $httpCode = 400;
-                throw new Exception ($message, 1);
-            }
-
-            // Need to have the customer now so it can be logged on the activity
-            $customer = User::Consumers()
+            $_customer = User::Consumers()
                             ->excludeDeleted()
-                            ->where('user_email', $email)
+                            ->where('user_email', $macModel->user_email)
                             ->first();
 
-            if (empty($customer)) {
-                // Register this customer and get the raw object
-                $_POST['email'] = $email;
-                $response = LoginAPIController::create('raw')
-                                              ->setUseTransaction(FALSE)
-                                              ->postRegisterUserInShop();
-
-                if ($response->code !== 0) {
-                    throw new Exception($response->message, $response->code);
-                }
-                $customer = $response->data;
+            if (! empty($_customer)) {
+                // User not recognized log it as 'guest'
+                $customer = $_customer;
             }
 
             $this->commit();
@@ -243,7 +230,11 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             $this->response->message = $message;
 
             $activity->setUser($customer)
-                     ->setNotes($message);
+                     ->setActivityName('network_checkin_ok')
+                     ->setActivityNameLong('Network Check In')
+                     ->setNotes($message)
+                     ->setModuleName('Network')
+                     ->responseOK();
 
             Event::fire('orbit.network.checkin.done', array($this, $macModel, $payload));
         } catch (Exception $e) {
@@ -271,22 +262,95 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
-    protected function registerCustomValidation()
+    /**
+     * Lippo mall captive portal integration with Orbit. The Lippo Mall
+     * captive portal will send email address and mac address from query string.
+     *
+     * i.e:
+     * http://orbit.box/?email=foo@bar.com&mac=AA:BB:CC:DD:EE
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    public function getMacAddress()
     {
-        // Check user email address, it should not exists
-        Validator::extend('orbit.email.exists', function($attribute, $value, $parameters)
-        {
-            $user = User::excludeDeleted()
-                        ->where('user_email', $value)
-                        ->first();
+        $httpCode = 200;
 
-            if (! empty($user)) {
-                return FALSE;
+        try {
+            // $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            // $user = $this->api->user;
+
+            // $role = $user->role;
+            $role = new stdClass(); $role->role_name = 'super admin';
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this page.';
+                ACL::throwAccessForbidden($message);
             }
 
-            App::instance('orbit.validation.user', $user);
+            $mac = OrbitInput::get('mac');
 
-            return TRUE;
-        });
+            $macs = MacAddress::with('user')->where('mac_address', $mac);
+            $_macs = clone $macs;
+
+            $totalMacs = RecordCounter::create($_macs)->count();
+            $listOfUsers = $macs->get();
+
+            $data = new stdclass();
+            $data->total_records = $totalMacs;
+            $data->returned_records = count($listOfUsers);
+            $data->records = $listOfUsers;
+
+            if ($totalMacs === 0) {
+                $data->records = null;
+                $this->response->message = 'No mac address found.';
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->getFile . ':' . $e->getLine();
+            } else {
+                $this->response->data = NULL;
+            }
+        }
+
+        return $this->render($httpCode);
     }
 }

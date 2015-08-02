@@ -20,4 +20,12 @@ Route::group(['before' => 'orbit-settings'], function() {
         'as' => 'captive-portal-network-enter',
         'uses' => 'CaptiveIntegrationAPIController@getUserSignInNetwork'
     ]);
+
+    /**
+     * Get list of mac address and its associates user
+     */
+    Route::get('/api/v1/captive-portal/mac-address/list', [
+        'as' => 'captive-portal-mac-address-list',
+        'uses' => 'CaptiveIntegrationAPIController@getMacAddress'
+    ]);
 });
