@@ -17,6 +17,8 @@ class MacAddress extends Eloquent {
 
     protected $primaryKey = 'mac_address_id';
 
+    protected $fillable = ['mac_address', 'user_email', 'ip_address'];
+
     public function user()
     {
         return $this->belongsTo('User', 'user_email', 'user_email');
