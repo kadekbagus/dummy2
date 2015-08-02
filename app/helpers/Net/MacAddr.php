@@ -12,6 +12,14 @@ class MacAddr
     protected $mac = NULL;
 
     /**
+     * Fake mac address, if this was set then method getMacFromIP()
+     * will always return this value.
+     *
+     * @var string
+     */
+    protected $fakeMac = NULL;
+
+    /**
      * Constructor
      *
      * @param string $mac - The mac address
@@ -34,6 +42,20 @@ class MacAddr
     }
 
     /**
+     * Set the fake mac address, useful for testing and debugging.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string $mac
+     * @return MacAddr
+     */
+    public function setFakeMac($mac)
+    {
+        $this->fakeMac = $mac;
+
+        return $this;
+    }
+
+    /**
      * Method to get Mac based on IP address. It uses the linux utilities
      * ip-utils.
      *
@@ -43,6 +65,11 @@ class MacAddr
      */
     public function getMacFromIP($ip)
     {
+        if (! empty($this->fakeMac)) {
+            // Return the fake one instead
+            return $this->fakeMac;
+        }
+
         // Ping first to make sure we got arp table list,
         // we don't care about the ping result
         $pingCmdObject = Command::Factory('ping -w 1 -s 32 -c 1 ' . $ip)->run();
