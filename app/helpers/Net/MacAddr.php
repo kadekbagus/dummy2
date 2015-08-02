@@ -30,7 +30,7 @@ class MacAddr
      */
     public static function create($mac)
     {
-        return new static();
+        return new static($mac);
     }
 
     /**
@@ -82,9 +82,9 @@ class MacAddr
         $nonHexRemoved = preg_replace('/[^[:xdigit:]]/', '', $this->mac);
 
         // Join in again
-        $this->mac = strtolower($this->mac);
+        $this->mac = strtolower($nonHexRemoved);
         $this->mac = str_split($this->mac, 2);
-        $this->mac = implode($separator, $newMac);
+        $this->mac = implode($separator, $this->mac);
 
         return $this;
     }
