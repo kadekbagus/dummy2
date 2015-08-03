@@ -604,8 +604,8 @@ class UserAPIController extends ControllerAPI
                 $updateduser->user_lastname = $lastname;
             });
 
-            // User with role consumer cannot update status
-            if (! $user->isRoleName('consumer')) {
+            // User cannot update their own status
+            if ((string)$user->user_id !== (string)$updateduser->user_id) {
                 OrbitInput::post('status', function($status) use ($updateduser) {
                     $updateduser->status = $status;
                 });
@@ -2414,8 +2414,8 @@ class UserAPIController extends ControllerAPI
                 $updateduser->user_lastname = $lastname;
             });
 
-            // User with role consumer cannot update status
-            if (! $user->isRoleName('consumer')) {
+            // User cannot update their own status
+            if ((string)$user->user_id !== (string)$updateduser->user_id) {
                 OrbitInput::post('status', function($status) use ($updateduser) {
                     $updateduser->status = $status;
                 });
