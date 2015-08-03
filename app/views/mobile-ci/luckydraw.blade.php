@@ -23,7 +23,7 @@
 </div>
 <div class="row">
     <div class="col-xs-12 vertically-spaced text-center">
-        <p>Draw date &amp; time : {{ date('d/m/Y', strtotime($luckydraw->end_date)) }}</p>
+        <p>Draw date &amp; time : {{ date('d/m/Y H:i:s', strtotime($luckydraw->end_date)) }}</p>
     </div>
 </div>
 <div class="row">
