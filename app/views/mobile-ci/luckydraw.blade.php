@@ -22,6 +22,11 @@
     </div>
 </div>
 <div class="row">
+    <div class="col-xs-12 vertically-spaced text-center">
+        <p>Draw date &amp; time : {{ date('d/m/Y H:i:s', strtotime($luckydraw->end_date)) }}</p>
+    </div>
+</div>
+<div class="row">
     <div class="col-xs-12 text-center">
         <small>The Winner Number will appear here while you are in the Mall.</small>
     </div>
@@ -57,89 +62,86 @@
     <div class="row">
         <p>&nbsp;</p>
     </div>
+
     <div class="row">
-        <div class="col-xs-12 vertically-spaced">
-            <p id="datenow"></p>
-        </div>
-    </div>
-
-    <div class="col-xs-12">
-        @if ($total_pages > 1)
-        <div class="col-xs-6 col-sm-6 col-lg-6">
-            <div class="row">
-                <div class="col-xs-10 col-xs-offset-1">
-                    <a href="{{ $prev_url }}#ln-nav" class="btn btn-info btn-block {{ ($prev_url === '#' ? 'disabled' : ''); }}">Prev</a>
+        <div class="col-xs-12">
+            @if ($total_pages > 1)
+            <div class="col-xs-6 col-sm-6 col-lg-6">
+                <div class="row">
+                    <div class="col-xs-10 col-xs-offset-1">
+                        <a href="{{ $prev_url }}#ln-nav" class="btn btn-info btn-block {{ ($prev_url === '#' ? 'disabled' : ''); }}">Prev</a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-xs-6 col-sm-6 col-lg-6">
-            <div class="row">
-                <div class="col-xs-10 col-xs-offset-1 col-lg-10 col-lg-offset-1">
-                    <a href="{{ $next_url }}#ln-nav" class="btn btn-info btn-block {{ ($next_url === '#' ? 'disabled' : ''); }}">Next</a>
+            <div class="col-xs-6 col-sm-6 col-lg-6">
+                <div class="row">
+                    <div class="col-xs-10 col-xs-offset-1 col-lg-10 col-lg-offset-1">
+                        <a href="{{ $next_url }}#ln-nav" class="btn btn-info btn-block {{ ($next_url === '#' ? 'disabled' : ''); }}">Next</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="row">
-            <div class="col-xs-12 text-center">
-                <small>Page {{ $current_page }} of {{ $total_pages }}.</small>
-            </div>
-        </div>
-        @endif
-
-        @foreach($numbers as $i=>$number)
-        <div class="col-xs-6 col-sm-6 col-lg-6">
-            <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
-        </div>
-        @endforeach
-
-        @if ($total_number % 2 !== 0)
-        <div class="col-xs-12 col-sm-6 col-lg-6">
-            <div class="lucky-number-container" data-number=""></div>
-        </div>
-        @endif
-
-        @if ($total_pages > 1)
-        <div class="row ">
-        <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
             <div class="row">
-                <div class="col-xs-10 col-xs-offset-1">
-                    <a href="{{ $prev_url }}#ln-nav" class="btn btn-info btn-block {{ ($prev_url === '#' ? 'disabled' : ''); }}">Prev</a>
+                <div class="col-xs-12 text-center">
+                    <small>Page {{ $current_page }} of {{ $total_pages }}.</small>
                 </div>
             </div>
-        </div>
-        <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
-            <div class="row">
-                <div class="col-xs-10 col-xs-offset-1 col-lg-10 col-lg-offset-1">
-                    <a href="{{ $next_url }}#ln-nav" class="btn btn-info btn-block {{ ($next_url === '#' ? 'disabled' : ''); }}">Next</a>
+            @endif
+
+            @foreach($numbers as $i=>$number)
+            <div class="col-xs-6 col-sm-6 col-lg-6">
+                <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
+            </div>
+            @endforeach
+
+            @if ($total_number % 2 !== 0)
+            <div class="col-xs-12 col-sm-6 col-lg-6">
+                <div class="lucky-number-container" data-number=""></div>
+            </div>
+            @endif
+
+            @if ($total_pages > 1)
+            <div class="row ">
+            <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
+                <div class="row">
+                    <div class="col-xs-10 col-xs-offset-1">
+                        <a href="{{ $prev_url }}#ln-nav" class="btn btn-info btn-block {{ ($prev_url === '#' ? 'disabled' : ''); }}">Prev</a>
+                    </div>
                 </div>
             </div>
-        </div>
-        </div>
-        <div class="row">
-            <div class="col-xs-12 text-center">
-                <small>Page {{ $current_page }} of {{ $total_pages }}.</small>
+            <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
+                <div class="row">
+                    <div class="col-xs-10 col-xs-offset-1 col-lg-10 col-lg-offset-1">
+                        <a href="{{ $next_url }}#ln-nav" class="btn btn-info btn-block {{ ($next_url === '#' ? 'disabled' : ''); }}">Next</a>
+                    </div>
+                </div>
             </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <small>Page {{ $current_page }} of {{ $total_pages }}.</small>
+                </div>
+            </div>
+            @endif
         </div>
-        @endif
     </div>
 </div>
 
-    @if ($total_number > 0)
-    <div class="row">
-        <div class="row text-center save-btn">
-            <div class="col-xs-12">
-                <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info">Save Numbers</a>
-            </div>
+@if ($total_number > 0)
+<div class="row">
+    <div class="row text-center save-btn">
+        <div class="col-xs-12">
+            <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info">Save Numbers</a>
         </div>
     </div>
+</div>
 
-    <div class="row">
-        <div class="col-xs-12 text-center">
-            <span>To save the numbers as image on your mobile phone press the &quot;Save Numbers&quot;</span>
-        </div>
+<div class="row">
+    <div class="col-xs-12 text-center">
+        <span>To save the numbers as image on your mobile phone press the &quot;Save Numbers&quot;</span>
     </div>
-    @endif
+</div>
+@endif
 @stop
 
 @section('modals')
