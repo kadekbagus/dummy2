@@ -7973,6 +7973,10 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
             $luckydraw = LuckyDraw::active()->where('mall_id', $retailer->merchant_id)->first();
 
+            if (empty($luckydraw)) {
+                return \Redirect::to('customer/home');
+            }
+
             // Pass information to the API
             $_GET['user_id'] = $user->user_id;
             $_GET['apikey'] = $user->apikey->api_key;
