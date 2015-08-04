@@ -7974,7 +7974,20 @@ class MobileCIAPIController extends ControllerAPI
             $luckydraw = LuckyDraw::active()->where('mall_id', $retailer->merchant_id)->first();
 
             if (empty($luckydraw)) {
-                return \Redirect::to('customer/home');
+                return View::make('mobile-ci.luckydraw', [
+                                'page_title'    => 'LUCKY DRAW',
+                                'user'          => $user,
+                                'retailer'      => $retailer,
+                                'luckydraw'     => null,
+                                'numbers'       => [],
+                                'total_number'  => null,
+                                'prev_url'      => null,
+                                'next_url'      => null,
+                                'total_pages'   => null,
+                                'current_page'  => null,
+                                'per_page'      => null,
+                                'servertime'    => null,
+                ]);
             }
 
             // Pass information to the API
