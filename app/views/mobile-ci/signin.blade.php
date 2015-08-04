@@ -205,8 +205,10 @@
         $('.userName').show();
       }
       $('#notMe').click(function(){
-        $.removeCookie('orbit_email', { path: '/' });
-        $.removeCookie('orbit_firstname', { path: '/' });
+        var currentDomain = window.location.hostname;
+
+        $.removeCookie('orbit_email', { path: '/', domain: currentDomain });
+        $.removeCookie('orbit_firstname', { path: '/', domain: currentDomain });
         window.location.replace('/customer/logout');
       });
       $('form[name="loginForm"]').submit(function(event){
