@@ -7981,6 +7981,7 @@ class MobileCIAPIController extends ControllerAPI
             $_GET['user_id'] = $user->user_id;
             $_GET['apikey'] = $user->apikey->api_key;
             $_GET['apitimestamp'] = time();
+            $_GET['lucky_draw_id'] = $luckydraw->lucky_draw_id;
 
             $currentPage = (int)OrbitInput::get('page', 1);
             $take = 100;
