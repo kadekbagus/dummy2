@@ -369,10 +369,11 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             // Builder object
             $luckydraws = LuckyDrawNumber::excludeDeleted('lucky_draw_numbers')
                                           ->select('lucky_draw_numbers.*')
-                                          ->where('object_type', 'lucky_draw')
+                                          ->where('lucky_draw_receipts.object_type', 'lucky_draw')
                                           ->join('lucky_draw_number_receipt', 'lucky_draw_number_receipt.lucky_draw_number_id', '=', 'lucky_draw_numbers.lucky_draw_number_id')
                                           ->join('lucky_draw_receipts', 'lucky_draw_receipts.lucky_draw_receipt_id', '=', 'lucky_draw_number_receipt.lucky_draw_receipt_id')
                                           ->join('lucky_draws', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_numbers.lucky_draw_id')
+                                          ->groupBy('lucky_draw_numbers.lucky_draw_number_id')
                                           ;
 
              // Filter by lucky_draw_number
