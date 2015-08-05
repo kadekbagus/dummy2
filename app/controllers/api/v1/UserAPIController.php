@@ -2422,6 +2422,13 @@ class UserAPIController extends ControllerAPI
             }
 
             OrbitInput::post('membership_number', function($number) use ($updateduser) {
+
+                // Check for the previous membership number, if it was empty assuming this is the first time
+                // So activate the user
+                if (empty($updateduser->membership_number) && $updateduser->status === 'pending') {
+                    $updateduser->status = 'active';
+                }
+
                 $updateduser->membership_number = $number;
             });
 
