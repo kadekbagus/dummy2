@@ -395,6 +395,11 @@ class IntermediateLoginController extends IntermediateBaseController
         $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
         $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
 
+        if (isset($_GET['not_me'])) {
+            setcookie('orbit_email', 'foo', time() - 3600, '/');
+            setcookie('orbit_firstname', 'foo', time() - 3600, '/');
+        }
+
         $response = json_decode($this->getLogout()->getContent());
         $cookie = Cookie::make('event', '', 365*5);
         try {

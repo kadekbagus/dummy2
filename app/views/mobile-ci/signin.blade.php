@@ -209,7 +209,8 @@
 
         $.removeCookie('orbit_email', { path: '/', domain: currentDomain });
         $.removeCookie('orbit_firstname', { path: '/', domain: currentDomain });
-        window.location.replace('/customer/logout');
+
+        window.location.replace('/customer/logout?not_me=true');
       });
       $('form[name="loginForm"]').submit(function(event){
         event.preventDefault();
