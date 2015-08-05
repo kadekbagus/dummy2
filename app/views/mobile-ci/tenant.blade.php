@@ -98,7 +98,7 @@
                 @else
                     <div class="row padded">
                         <div class="col-xs-12">
-                            <p>Check for our news coming soon</p>
+                            <p>Check out our latest news coming soon</p>
                         </div>
                     </div>
                 @endif
@@ -134,7 +134,7 @@
                 @else
                     <div class="row padded">
                         <div class="col-xs-12">
-                            <p>Check for our New Promotion coming soon</p>
+                            <p>Check out our new promotions coming soon</p>
                         </div>
                     </div>
                 @endif
