@@ -7,6 +7,7 @@
 use OrbitShop\API\v1\ResponseProvider;
 use MobileCI\MobileCIAPIController;
 use Net\Security\Firewall;
+use Orbit\Helper\Security\Encrypter;
 use \Cookie;
 
 class IntermediateLoginController extends IntermediateBaseController
@@ -357,11 +358,15 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
+            // Get the payload which may sends from captive portal
+
             // Successfull login
             $activity->setUser($user)
                      ->setActivityName('login_ok')
                      ->setActivityNameLong('Sign In')
                      ->responseOK();
+
+            static::proceedPayload();
         } else {
             // Login Failed
             $activity->setUser('guest')
@@ -427,6 +432,92 @@ class IntermediateLoginController extends IntermediateBaseController
         return Redirect::to('/customer')->withCookie($cookie);
     }
 
+    public static function proceedPayload()
+    {
+        // The sign-in view put the payload from query string to post body on AJAX call
+        if (! isset($_POST['payload'])) {
+            return;
+        }
+
+        $payload = $_POST['payload'];
+        Log::info('[PAYLOAD] Payload found -- ' . serialize($payload));
+
+        // Decrypt the payload
+        $key = md5('--orbit-mall--');
+        $payload = (new Encrypter($key))->decrypt($payload);
+        Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload));
+
+        // The data is in url encoded
+        parse_str($payload, $data);
+
+        Log::info('[PAYLOAD] Payload extracted -- ' . serialize($data));
+
+        // email, fname, lname, gender, mac, ip, login_from
+        $email = isset($data['email']) ? $data['email'] : '';
+        $fname = isset($data['fname']) ? $data['fname'] : '';
+        $lname = isset($data['lname']) ? $data['lname'] : '';
+        $gender = isset($data['gender']) ? $data['gender'] : '';
+        $mac = isset($data['mac']) ? $data['mac'] : '';
+        $ip = isset($data['ip']) ? $data['ip'] : '';
+        $from = isset($data['ip']) ? $data['ip'] : '';
+
+        if (! $email) {
+            Log::error('Email from payload is not valid or empty.');
+
+            return;
+        }
+
+        // Try to get the email to update user data
+        $customer = User::consumers()->excludeDeleted()->where('user_email', $email)->first();
+        if (is_object($customer)) {
+            // Update first name if necessary
+            if (empty($customer->user_firstname)) {
+                $customer->user_firstname = $fname;
+            }
+
+            // Update last name if necessary
+            if (empty($customer->user_lastname)) {
+                $customer->user_lastname = $lname;
+            }
+
+            // Update gender if necessary
+            $gender = strtolower($gender);
+            $male = ['male', 'm', 'men', 'man'];
+            if (in_array($gender, $male)) {
+                $customer->userdetail->gender = 'm';
+            }
+
+            $female = ['female', 'f', 'women', 'woman'];
+            if (in_array($gender, $female)) {
+                $customer->userdetail->gender = 'f';
+            }
+
+            $customer->save();
+            $customer->userdetail->save();
+
+            Log::info('[PAYLOAD] Consumer data saved -- ' . serialize($customer));
+        }
+
+        // Try to update the mac address table
+        if (! empty($mac)) {
+            $macModel = MacAddress::where('mac_address', $mac)
+                                  ->where('user_email', $email)
+                                  ->orderBy('created_at', 'desc')
+                                  ->first();
+
+            if (! is_object($macModel)) {
+                $macModel = new MacAddress();
+                $macModel->mac_address = $mac;
+                $macModel->user_email = $email;
+            }
+
+            $macModel->ip_address = $ip;
+            $macModel->save();
+
+            Log::info('[PAYLOAD] Mac saved -- ' . serialize($macModel));
+        }
+    }
+
     /**
      * Captive Portal related tricks.
      *
@@ -481,7 +572,20 @@ class IntermediateLoginController extends IntermediateBaseController
             $newData = $this->session->getSession();
 
             $sessionName = $this->mobileCISessionName['query_string'];
-            $redirectTo = sprintf('/customer/?%s=%s', $sessionName, $sessionId);
+
+            $userId = $this->session->read('user_id');
+            $user = User::excludeDeleted()->find($userId);
+
+            $key = md5('--orbit-mall--');
+            $query = [
+                'time' => time(),
+                'email' => $user->email,
+                'fname' => $user->user_firstname
+            ];
+
+            $payload = (new Encrypter($key))->encrypt(http_build_query($query));
+            $redirectTo = sprintf('/customer/?%s=%s&payload_login=%s', $sessionName, $sessionId, $payload);
+
             return Redirect::to($redirectTo);
         }
 

@@ -50,6 +50,9 @@ use PDO;
 use Response;
 use LuckyDrawAPIController;
 use OrbitShop\API\v1\Helper\Generator;
+use Orbit\Helper\Security\Encrypter;
+use Redirect;
+use Cookie;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -326,11 +329,26 @@ class MobileCIAPIController extends ControllerAPI
                     break;
             }
 
-            $bg = Setting::getFromList($mall->settings, 'background_image');
+            try {
+                $bg = Setting::getFromList($mall->settings, 'background_image');
+            } catch (Exception $e) {
+            }
 
             // Get email from query string
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
+
+            // Captive Portal Apple CNA Window
+            // -------------------------------
+            // Payload login is set and the user is logged in, no need to ask user log in again
+            // assuming they was already asked on CNA captive
+            if (isset($_GET['payload_login'])) {
+                $payloadData = $this->proceedPayloadData();
+                Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
+                Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
+
+                return Redirect::to($landing_url);
+            }
 
             return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
         } catch (Exception $e) {
@@ -6007,6 +6025,7 @@ class MobileCIAPIController extends ControllerAPI
             $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
             $config->setConfig('session_origin.query_string.name', 'orbit_session');
             $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
+
             $this->session = new Session($config);
             $this->session->start();
         }
@@ -8746,5 +8765,34 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return false;
+    }
+
+    /**
+     * Proceed payload_login data
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return array
+     */
+    protected function proceedPayloadData()
+    {
+        // The sign-in view put the payload from query string to post body on AJAX call
+        if (! isset($_POST['payload_login'])) {
+            return;
+        }
+
+        $payload = $_POST['payload_login'];
+
+        // Decrypt the payload
+        $key = md5('--orbit-mall--');
+        $payload = (new Encrypter($key))->decrypt($payload);
+
+        // The data is in url encoded
+        parse_str($payload, $data);
+
+        // email, fname, lname, gender, mac, ip, login_from
+        $email = isset($data['email']) ? $data['email'] : '';
+        $fname = isset($data['fname']) ? $data['fname'] : '';
+
+        return ['email' => $email, 'fname' => $fname];
     }
 }

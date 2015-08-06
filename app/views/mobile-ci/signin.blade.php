@@ -230,7 +230,8 @@
               method:'POST',
               url:apiPath+'customer/login',
               data:{
-                email: $('#email').val().trim()
+                email: $('#email').val().trim(),
+                payload: "{{{ Input::get('payload', '') }}}"
               }
             }).done(function(data, status, xhr){
               if(data.status==='error'){

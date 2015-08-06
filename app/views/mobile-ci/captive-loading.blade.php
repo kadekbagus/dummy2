@@ -29,18 +29,6 @@
 @section('content')
 <div class="row top-space" id="signIn">
     <div class="col-xs-12">
-        <header>
-            <div class="row vertically-spaced">
-                <div class="col-xs-12 text-center">
-                    <span class="greetings">{{ Lang::get('mobileci.greetings.welcome') }}</span>
-                </div>
-            </div>
-            <div class="row vertically-spaced">
-                <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->parent->biglogo) }}" />
-                </div>
-            </div>
-        </header>
         <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
             <div class="form-group">
                 <button type="submit" class="btn btn-info btn-block" onclick="return false;">Loading Orbit, please wait...</button>
@@ -48,16 +36,6 @@
         </form>
     </div>
 </div>
-@stop
-@section('footer')
-<footer>
-    <div class="row">
-        <div class="col-xs-12 text-center">
-            <img class="img-responsive orbit-footer" style="width:120px;" src="{{ asset('mobile-ci/images/orbit_footer.png') }}">
-        </div>
-    </div>
-</footer>
-@stop
 
 <script>
 /**
