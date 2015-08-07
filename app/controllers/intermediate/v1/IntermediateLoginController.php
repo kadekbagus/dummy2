@@ -586,8 +586,14 @@ class IntermediateLoginController extends IntermediateBaseController
                 $retailer->parent->biglogo = '';
             }
 
+            $display_name = Input::get('fname', '');
+
+            if (empty($display_name)) {
+                $display_name = Input::get('email', '');
+            }
+
             // Display a view which showing that page is loading
-            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg]);
+            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg, 'display_name' => $display_name]);
         }
 
         if (isset($_GET['createsession'])) {

@@ -157,7 +157,8 @@
         console.log('Create session URL: ' + create_session_url);
 
         var fname = $('.userName')[0].innerHTML;
-        window.location = create_session_url + '?loadsession=' + session_id + '&fname=' + fname;
+        var email = $('#email').val();
+        window.location = create_session_url + '?loadsession=' + session_id + '&fname=' + fname + '&email=' + email;
 
         return;
     }
