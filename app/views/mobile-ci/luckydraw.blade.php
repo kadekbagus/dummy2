@@ -184,7 +184,7 @@
                         <b>{{ $luckydraw->lucky_draw_name }}</b>
                         <br>
                         <img src="{{ asset($luckydraw->image) }}" class="img-responsive">
-                        <p>{{ $luckydraw->description }}</p>
+                        <p>{{ nl2br($luckydraw->description) }}</p>
                         <p>Valid until: {{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}</p>
                     </div>
                 </div>
