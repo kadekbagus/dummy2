@@ -464,6 +464,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $ip = isset($data['ip']) ? $data['ip'] : '';
         $from = isset($data['login_from']) ? $data['login_from'] : '';
         $captive = isset($data['is_captive']) ? $data['is_captive'] : '';
+        $recognized = isset($data['recognized']) ? $data['recognized'] : '';
 
         if (! $email) {
             Log::error('Email from payload is not valid or empty.');
@@ -534,6 +535,19 @@ class IntermediateLoginController extends IntermediateBaseController
 
                 default:
                     $activityNameLong = 'Sign In';
+            }
+
+            switch ($recognized) {
+                case 'auto_mac':
+                    $activityNameLong = 'Sign In via Automatic MAC Recognition (Captive)';
+                    break;
+
+                case 'auto_email':
+                    $activityNameLong .= 'Sign In via Automatic Email Recognition (Captive)';
+                    break;
+
+                default:
+                    // do nothing
             }
 
             $activity->setActivityNameLong($activityNameLong);
