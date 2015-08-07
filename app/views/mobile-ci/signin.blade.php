@@ -69,7 +69,7 @@
                     <input type="hidden" class="form-control" name="email" id="emailSigned" value="{{{ $user_email }}}" />
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block">{{ Lang::get('mobileci.signin.start_button') }}</button>
+                    <button type="submit" class="btn btn-info btn-block">{{ Lang::get('mobileci.signin.start_button_mall') }}</button>
                 </div>
             </form>
         </div>
