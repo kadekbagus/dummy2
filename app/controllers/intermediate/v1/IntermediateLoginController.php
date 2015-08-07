@@ -358,7 +358,10 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-            // Get the payload which may sends from captive portal
+            // For login page
+            $expireTime = time() + 3600 * 24 * 365 * 5;
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);
 
             // Successfull login
             $activity->setUser($user)
@@ -538,12 +541,16 @@ class IntermediateLoginController extends IntermediateBaseController
                 $retailer_id = Config::get('orbit.shop.id');
                 $retailer = Retailer::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
 
-                $bg = Setting::getFromList($retailer->settings, 'background_image');
+                try {
+                    $bg = Setting::getFromList($retailer->settings, 'background_image');
+                } catch (Exception $e) {
+                }
             } catch (Exception $e) {
                 $retailer = new stdClass();
                 // Fake some properties
                 $retailer->parent = new stdClass();
                 $retailer->parent->logo = '';
+                $retailer->parent->biglogo = '';
             }
 
             // Display a view which showing that page is loading
@@ -557,7 +564,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionId = $_GET['createsession'];
 
             // Send cookie so our app have an idea about the session
-            setcookie($cookieName, $sessionId, time() + $expireTime, '/', NULL, FALSE, TRUE);
+            setcookie($cookieName, $sessionId, time() + $expireTime, '/', NULL, FALSE, FALSE);
 
             // Used for internal session object since sending cookie above
             // only affects on next request
@@ -585,6 +592,9 @@ class IntermediateLoginController extends IntermediateBaseController
 
             $payload = (new Encrypter($key))->encrypt(http_build_query($query));
             $redirectTo = sprintf('/customer/?%s=%s&payload_login=%s', $sessionName, $sessionId, $payload);
+
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);
 
             return Redirect::to($redirectTo);
         }

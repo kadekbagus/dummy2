@@ -296,12 +296,63 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             $_macs = clone $macs;
 
             $totalMacs = RecordCounter::create($_macs)->count();
-            $listOfUsers = $macs->get();
+
+            // Get the take args
+            $take = 5;
+            $maxRecord = 50;
+
+            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                if ($_take > $maxRecord) {
+                    $_take = $maxRecord;
+                }
+                $take = $_take;
+
+                if ((int)$take <= 0) {
+                    $take = $maxRecord;
+                }
+            });
+            $macs->take($take);
+
+            $skip = 0;
+            OrbitInput::get('skip', function ($_skip) use (&$skip, $macs) {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            });
+            $macs->skip($skip);
+
+            // Default sort by
+            $sortBy = 'mac_addresses.created_at';
+            // Default sort mode
+            $sortMode = 'desc';
+
+            OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'created_at'              => 'mac_addresses.created_at',
+                    'mac'                     => 'mac_addresses.mac_address',
+                    'email'                   => 'mac_addresses.email'
+                );
+
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
+            });
+            OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
+                if (strtolower($_sortMode) !== 'desc') {
+                    $sortMode = 'asc';
+                }
+            });
+            $macs->orderBy($sortBy, $sortMode);
+
+            $listOfMacs = $macs->get();
 
             $data = new stdclass();
             $data->total_records = $totalMacs;
-            $data->returned_records = count($listOfUsers);
-            $data->records = $listOfUsers;
+            $data->returned_records = count($listOfMacs);
+            $data->records = $listOfMacs;
 
             if ($totalMacs === 0) {
                 $data->records = null;
@@ -345,7 +396,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
 
             if (Config::get('app.debug')) {
-                $this->response->data = $e->getFile . ':' . $e->getLine();
+                $this->response->data = $e->getFile() . ':' . $e->getLine();
             } else {
                 $this->response->data = NULL;
             }

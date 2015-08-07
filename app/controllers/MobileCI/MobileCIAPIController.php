@@ -302,6 +302,19 @@ class MobileCIAPIController extends ControllerAPI
     {
         $bg = null;
         $landing_url = URL::route('ci-customer-home');
+        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : '';
+        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : '';
+        $display_name = '';
+
+        if (! empty($cookie_email)) {
+            $display_name = $cookie_email;
+        }
+
+        if (! empty($cookie_fname)) {
+            $display_name = $cookie_fname;
+        }
+        $display_name = OrbitInput::get('fname', $display_name);
+
         try {
             $retailer = $this->getRetailerInfo();
             $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
@@ -350,18 +363,28 @@ class MobileCIAPIController extends ControllerAPI
                 return Redirect::to($landing_url);
             }
 
-            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
+            $viewData = array(
+                'retailer' => $retailer,
+                'user_email' => htmlentities($user_email),
+                'bg' => $bg,
+                'landing_url' => $landing_url,
+                'display_name' => $display_name
+            );
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
 
-            $user_email = OrbitInput::get('email', '');
+            $user_email = OrbitInput::get('email', $cookie_email);
 
-            if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
-            } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
-            }
+            $viewData = array(
+                'retailer' => $retailer,
+                'user_email' => htmlentities($user_email),
+                'bg' => $bg,
+                'landing_url' => $landing_url,
+                'display_name' => $display_name
+            );
         }
+
+        return View::make('mobile-ci.signin', $viewData);
     }
 
     /**

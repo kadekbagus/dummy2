@@ -29,13 +29,48 @@
 @section('content')
 <div class="row top-space" id="signIn">
     <div class="col-xs-12">
-        <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
-            <div class="form-group">
-                <button type="submit" class="btn btn-info btn-block" onclick="return false;">Loading Orbit, please wait...</button>
+        <header>
+            <div class="row vertically-spaced">
+                <div class="col-xs-12 text-center">
+                    <img class="img-responsive" src="{{ asset($retailer->parent->biglogo) }}" />
+                </div>
             </div>
-        </form>
+        </header>
+
+        <div class="col-xs-12 text-center welcome-user">
+            <h3>{{ Lang::get('mobileci.greetings.welcome') }}, <br><span class="signedUser"></span><span class="userName">{{{ Input::get('fname', '') }}}</span>!</h3>
+        </div>
+
+        <div class="col-xs-12 text-center">
+            <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-info btn-block" onclick="return false;">Loading Orbit, please wait...</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+@section('footer')
+<footer>
+    <div class="row">
+        <div class="col-xs-12 text-center">
+            <img class="img-responsive orbit-footer"  src="{{ asset('mobile-ci/images/orbit_footer.png') }}">
+        </div>
+        <div class="text-center">
+            {{ 'Orbit v' . ORBIT_APP_VERSION }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 text-center">
+            <span class="fa-stack fa-lg offline">
+              <i class="fa fa-globe fa-stack-1x globe"></i>
+              <i id="offlinemark"></i>
+            </span>
+        </div>
+    </div>
+</footer>
+@stop
 
 <script>
 /**
@@ -86,7 +121,7 @@ window.onload = function() {
 
     // Submit the form, but wait for few seconds to make sure the Captive
     // portal knows that the internet connection ready
-    var delay = 2.5;  // seconds
+    var delay = 2;  // seconds
     setTimeout(function() {
         frm.submit();
     }, delay * 1000);
