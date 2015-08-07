@@ -369,7 +369,7 @@ class IntermediateLoginController extends IntermediateBaseController
                      ->setActivityNameLong('Sign In')
                      ->responseOK();
 
-            static::proceedPayload();
+            static::proceedPayload($activity);
         } else {
             // Login Failed
             $activity->setUser('guest')
@@ -435,7 +435,7 @@ class IntermediateLoginController extends IntermediateBaseController
         return Redirect::to('/customer')->withCookie($cookie);
     }
 
-    public static function proceedPayload()
+    public static function proceedPayload($activity)
     {
         // The sign-in view put the payload from query string to post body on AJAX call
         if (! isset($_POST['payload'])) {
@@ -462,7 +462,8 @@ class IntermediateLoginController extends IntermediateBaseController
         $gender = isset($data['gender']) ? $data['gender'] : '';
         $mac = isset($data['mac']) ? $data['mac'] : '';
         $ip = isset($data['ip']) ? $data['ip'] : '';
-        $from = isset($data['ip']) ? $data['ip'] : '';
+        $from = isset($data['login_from']) ? $data['login_from'] : '';
+        $captive = isset($data['is_captive']) ? $data['is_captive'] : '';
 
         if (! $email) {
             Log::error('Email from payload is not valid or empty.');
@@ -518,6 +519,24 @@ class IntermediateLoginController extends IntermediateBaseController
             $macModel->save();
 
             Log::info('[PAYLOAD] Mac saved -- ' . serialize($macModel));
+        }
+
+        // Try to update the activity
+        if ($captive === 'yes') {
+            switch ($from) {
+                case 'facebook':
+                    $activityNameLong = 'Sign In via Facebook (Captive)';
+                    break;
+
+                case 'form':
+                    $activityNameLong = 'Sign In via Email (Captive)';
+                    break;
+
+                default:
+                    $activityNameLong = 'Sign In';
+            }
+
+            $activity->setActivityNameLong($activityNameLong);
         }
     }
 
