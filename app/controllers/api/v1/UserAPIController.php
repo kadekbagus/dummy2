@@ -2371,7 +2371,7 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d',
+                    'membership_since'      => 'date_format:Y-m-d H:i:s',
                     'membership_number'     => 'orbit.membership.exists_but_me',
                     'status'                => 'in:active,inactive,pending',
                     'idcard_number'         => 'numeric',
@@ -2422,6 +2422,13 @@ class UserAPIController extends ControllerAPI
             }
 
             OrbitInput::post('membership_number', function($number) use ($updateduser) {
+
+                // Check for the previous membership number, if it was empty assuming this is the first time
+                // So activate the user
+                if (empty($updateduser->membership_number) && $updateduser->status === 'pending') {
+                    $updateduser->status = 'active';
+                }
+
                 $updateduser->membership_number = $number;
             });
 
@@ -2528,7 +2535,7 @@ class UserAPIController extends ControllerAPI
                 // sync new set of category ids
                 $pivotData = array_fill(0, count($category_ids), ['object_type' => 'category']);
                 $syncData = array_combine($category_ids, $pivotData);
-                
+
                 $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
                                                                 ->where('object_type', 'category')
                                                                 ->get(array('personal_interest_id'))

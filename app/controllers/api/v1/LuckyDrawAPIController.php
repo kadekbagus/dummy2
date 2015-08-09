@@ -151,7 +151,11 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $newluckydraw->save();
 
+            // Generate lucky draw numbers
+            DB::statement(DB::raw('call generate_lucky_draw_number(' . $min_number . ',' . $max_number . ',' . $newluckydraw->lucky_draw_id . ',' . $user->user_id . ');'));
+
             Event::fire('orbit.luckydraw.postnewluckydraw.after.save', array($this, $newluckydraw));
+
             $this->response->data = $newluckydraw;
 
             // Commit the changes
@@ -334,7 +338,6 @@ class LuckyDrawAPIController extends ControllerAPI
             $data = array(
                 'lucky_draw_id'        => $lucky_draw_id,
                 'mall_id'              => $mall_id,
-                'status'               => $status,
                 'start_date'           => $start_date,
                 'end_date'             => $end_date,
                 'grace_period_date'    => $grace_period_date,
@@ -343,6 +346,11 @@ class LuckyDrawAPIController extends ControllerAPI
             // Validate lucky_draw_name only if exists in POST.
             OrbitInput::post('lucky_draw_name', function($lucky_draw_name) use (&$data) {
                 $data['lucky_draw_name'] = $lucky_draw_name;
+            });
+
+            // Validate status only if exists in POST.
+            OrbitInput::post('status', function($status) use (&$data) {
+                $data['status'] = $status;
             });
 
             // Begin database transaction
@@ -354,7 +362,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'lucky_draw_id'        => 'required|numeric|orbit.empty.lucky_draw',
                     'mall_id'              => 'numeric|orbit.empty.mall',
                     'lucky_draw_name'      => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
-                    'status'               => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active_but_me:' . $mall_id . ',' . $lucky_draw_id,
+                    'status'               => 'sometimes|required|orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active_but_me:' . $mall_id . ',' . $lucky_draw_id,
                     'start_date'           => 'date_format:Y-m-d H:i:s',
                     'end_date'             => 'date_format:Y-m-d H:i:s|end_date_greater_than_start_date_and_current_date:'.$start_date.','.$now,
                     'grace_period_date'    => 'date_format:Y-m-d H:i:s',
@@ -432,6 +440,10 @@ class LuckyDrawAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
                 $updatedluckydraw->max_number = $max_number;
+            });
+
+            OrbitInput::post('external_lucky_draw_id', function($data) use ($updatedluckydraw) {
+                $updatedluckydraw->external_lucky_draw_id = $data;
             });
 
             OrbitInput::post('status', function($status) use ($updatedluckydraw) {

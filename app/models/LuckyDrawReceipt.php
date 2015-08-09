@@ -80,7 +80,7 @@ class LuckyDrawReceipt extends Eloquent
      * @param array $receipts Array of objects
      * @return string Receipt group
      */
-    public static function saveFromArrayObject($retailerId, $user, array $receipts)
+    public static function saveFromArrayObject($retailerId, $user, array $receipts, $customer)
     {
         $identifier = mt_rand(0, 100000) . serialize($receipts);
         $group = static::genReceiptGroup($identifier);
@@ -89,7 +89,7 @@ class LuckyDrawReceipt extends Eloquent
         foreach ($receipts as $receipt) {
             $numberReceipt = new static();
             $numberReceipt->mall_id = $retailerId;
-            $numberReceipt->user_id = $receipt->user_id;
+            $numberReceipt->user_id = $customer->user_id;
             $numberReceipt->receipt_retailer_id = $receipt->receipt_retailer_id;
             $numberReceipt->receipt_number = $receipt->receipt_number;
             $numberReceipt->receipt_date = $receipt->receipt_date;

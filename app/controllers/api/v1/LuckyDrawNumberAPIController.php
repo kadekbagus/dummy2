@@ -99,8 +99,8 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 array(
                     'user_id'                   => 'required|orbit.user.exists',
                     'lucky_draw_id'             => 'required|orbit.lucky_draw.exists',
-                    'lucky_draw_number_start'   => 'required|numeric|orbit.number_unused:' . $luckyDrawId,
-                    'lucky_draw_number_end'     => 'required|numeric|orbit.number_unused:' . $luckyDrawId,
+                    'lucky_draw_number_start'   => 'required|numeric|orbit.number_start_greater_than_or_equal_to_min_number:' . $luckyDrawId . '|orbit.number_unused:' . $luckyDrawId,
+                    'lucky_draw_number_end'     => 'required|numeric|orbit.number_end_less_than_or_equal_to_max_number:' . $luckyDrawId . '|orbit.number_unused:' . $luckyDrawId,
                     'receipts'                  => 'required|orbit.check_json'
                 )
             );
@@ -118,7 +118,15 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             // Save the receipt first
             $customer = $this->cachedValidationResult['orbit.user.exists'];
             $decodedReceipts = $this->cachedValidationResult['orbit.check_json'];
-            $savedReceipts = LuckyDrawReceipt::saveFromArrayObject($mallId, $customer, $decodedReceipts);
+            $savedReceipts = LuckyDrawReceipt::saveFromArrayObject($mallId, $user, $decodedReceipts, $customer);
+            $total_receipts = count($savedReceipts);
+
+            // calculate $total_receipts_amount
+            $total_receipts_amount = 0;
+            foreach($savedReceipts as $r) {
+                $total_receipts_amount += $r->receipt_amount;
+            };
+
             $group = $savedReceipts[0]->receipt_group;
 
             // Save the lucky draw numbers
@@ -154,9 +162,13 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             Event::fire('orbit.luckydraw.postnewluckydrawnumber.after.save', array($this, $savedReceipts, $luckyDrawnumbers));
 
             $data = new stdClass();
-            $data->returned_records = count($luckyDrawnumbers);
-            $data->total_records = (int)$luckyDrawnumbers[0]->total_issued_number;
-            $data->records = $luckyDrawnumbers;
+            $data->lucky_draw_id = $luckyDrawId;
+            $data->receipt_group = $group;
+            $data->lucky_draw_number_start = $luckyDrawNumberStart;
+            $data->lucky_draw_number_end = $luckyDrawNumberEnd;
+            $data->total_receipts = $total_receipts;
+            $data->total_amounts = $total_receipts_amount;
+            $data->total_generated_lucky_draw_number = count($luckyDrawnumbers);
 
             $this->response->data = $data;
 
@@ -357,10 +369,11 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             // Builder object
             $luckydraws = LuckyDrawNumber::excludeDeleted('lucky_draw_numbers')
                                           ->select('lucky_draw_numbers.*')
-                                          ->where('object_type', 'lucky_draw')
+                                          ->where('lucky_draw_receipts.object_type', 'lucky_draw')
                                           ->join('lucky_draw_number_receipt', 'lucky_draw_number_receipt.lucky_draw_number_id', '=', 'lucky_draw_numbers.lucky_draw_number_id')
                                           ->join('lucky_draw_receipts', 'lucky_draw_receipts.lucky_draw_receipt_id', '=', 'lucky_draw_number_receipt.lucky_draw_receipt_id')
                                           ->join('lucky_draws', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_numbers.lucky_draw_id')
+                                          ->groupBy('lucky_draw_numbers.lucky_draw_number_id')
                                           ;
 
              // Filter by lucky_draw_number
@@ -614,6 +627,40 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             }
 
             $this->cachedValidationResult['orbit.user.exists'] = $user;
+
+            return TRUE;
+        });
+
+        // Check the POST lucky_draw_number_start, it should be greater than or equal to lucky draw campaign min_number
+        Validator::extend('orbit.number_start_greater_than_or_equal_to_min_number', function ($attribute, $value, $parameters) {
+            $luckyDrawId = $parameters[0];
+            $number_start = $value;
+
+            $data = LuckyDraw::excludeDeleted()
+                             ->where('lucky_draw_id', $luckyDrawId)
+                             ->first();
+
+            if ($number_start < $data->min_number) {
+                $errorMessage = sprintf('Lucky draw number start should be greater than or equal to lucky draw campaign min number.', $value);
+                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            }
+
+            return TRUE;
+        });
+
+        // Check the POST lucky_draw_number_end, it should be less than or equal to lucky draw campaign max_number
+        Validator::extend('orbit.number_end_less_than_or_equal_to_max_number', function ($attribute, $value, $parameters) {
+            $luckyDrawId = $parameters[0];
+            $number_end = $value;
+
+            $data = LuckyDraw::excludeDeleted()
+                             ->where('lucky_draw_id', $luckyDrawId)
+                             ->first();
+
+            if ($number_end > $data->max_number) {
+                $errorMessage = sprintf('Lucky draw number end should be less than or equal to lucky draw campaign max number.', $value);
+                OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
+            }
 
             return TRUE;
         });

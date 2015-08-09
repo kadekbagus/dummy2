@@ -11,36 +11,47 @@
 @section('content')
 <div class="row">
     <div class="col-xs-12 text-center">
+        @if(!empty($luckydraw))
         <h4 id="ldtitle">{{ $luckydraw->lucky_draw_name }}</h4>
+        @else
+        <h4 id="ldtitle">There is no ongoing lucky draws at the moment.</h4>
+        @endif
     </div>
 </div>
 <div class="row counter">
     <div class="col-xs-12 text-center">
         <div class="countdown">
-            <span id="clock"></span>
+            <span id="clock" @if(empty($luckydraw)) class="no-luck" @endif></span>
        </div>
     </div>
 </div>
 <div class="row">
     <div class="col-xs-12 vertically-spaced text-center">
+        @if(!empty($luckydraw))
         <p>Draw date &amp; time : {{ date('d/m/Y H:i:s', strtotime($luckydraw->end_date)) }}</p>
+        @else
+        <p>Draw date &amp; time : -</p>
+        @endif
     </div>
 </div>
+@if(!empty($luckydraw))
 <div class="row">
     <div class="col-xs-12 text-center">
         <small>The Winner Number will appear here while you are in the Mall.</small>
     </div>
 </div>
+
 <div class="row text-center winning-number-wrapper">
     <div class="col-xs-12">
         <b>Winning Number</b>
     </div>
 </div>
+@endif
 <div class="row text-center lucky-number-wrapper">
     <div class="col-xs-12">
         <img src="{{ asset($retailer->parent->logo) }}" clas="img-responsive">
     </div>
-
+    @if(!empty($luckydraw))
     <div class="row">
         <p>&nbsp;</p>
     </div>
@@ -125,6 +136,7 @@
             @endif
         </div>
     </div>
+    @endif
 </div>
 
 @if ($total_number > 0)
@@ -142,6 +154,7 @@
     </div>
 </div>
 @endif
+
 @stop
 
 @section('modals')
@@ -157,6 +170,7 @@
 </div>
 
 <!-- Modal -->
+@if(!empty($luckydraw))
 <div class="modal fade" id="lddetail" tabindex="-1" role="dialog" aria-labelledby="lddetailLabel" aria-hidden="true">
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
@@ -178,6 +192,7 @@
         </div>
     </div>
 </div>
+@endif
 @stop
 
 @section('ext_script_bot')
@@ -197,7 +212,12 @@
 
             $('#clock').countdown({ 
                 start:new Date('{{$servertime}}'),
-                until:new Date('{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}')
+                @if(!empty($luckydraw))
+                until:new Date('{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}'),
+                layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">{dn}</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">{hn}</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">{mn}</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">{sn}</span><span class="countdown-period">{sl}</span></span></span>'
+                @else
+                layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{sl}</span></span></span>'
+                @endif
             }); 
 
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
