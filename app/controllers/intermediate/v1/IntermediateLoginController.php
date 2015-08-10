@@ -543,7 +543,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     break;
 
                 case 'auto_email':
-                    $activityNameLong .= 'Sign In via Automatic Email Recognition (Captive)';
+                    $activityNameLong = 'Sign In via Automatic Email Recognition (Captive)';
                     break;
 
                 default:
