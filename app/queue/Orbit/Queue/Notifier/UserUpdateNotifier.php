@@ -159,16 +159,16 @@ class UserUpdateNotifier
             //     }
             // }
             $validationData = [
-                'user_id' => $response->data->user_id,
-                'user_email' => $response->data->user_email,
-                'membership_number' => $response->data->membership_number,
-                'membership_since' => $response->data->membership_since
+                'user_id' => isset($response->data->user_id) ? $response->data->user_id : NULL,
+                'user_email' => isset($response->data->user_email) ? $response->data->user_email : NULL,
+                'membership_number' => isset($response->data->membership_number) ? $response->data->membership_number : NULL,
+                'membership_since' => isset($response->data->membership_since) ? $response->data->membership_since : NULL
             ];
             $validationRule = [
                 'user_id' => 'required|orbit.notify.same_id:' . $userId,
                 'user_email' => 'required|email|orbit.notify.same_email:' . $user->user_email,
-                'membership_number' => 'required',
-                'membership_since' => 'required'
+                'membership_number' => '',
+                'membership_since' => ''
             ];
 
             $this->registerCustomValidation();
@@ -181,16 +181,18 @@ class UserUpdateNotifier
             // Update the user object based on the return value of external system
             DB::connection()->getPdo()->beginTransaction();
 
-            // Check for the previous membership number, if it was empty assuming this is the first time
-            // So activate the user
-            if (empty($user->membership_number) && $user->status === 'pending') {
-                $user->status = 'active';
+            $doSave = FALSE;
+            if (! empty($response->data->membership_number)) {
+                // Check for the previous membership number, if it was empty assuming this is the first time
+                // So activate the user
+                if (empty($user->membership_number) && $user->status === 'pending') {
+                    $user->status = 'active';
+                }
+
+                $user->membership_number = $response->data->membership_number;
+                $user->membership_since = $response->data->membership_since;
+                $user->save();
             }
-
-            $user->membership_number = $response->data->membership_number;
-            $user->membership_since = $response->data->membership_since;
-
-            $user->save();
 
             // Everything seems fine lets delete the job
             $job->delete();
