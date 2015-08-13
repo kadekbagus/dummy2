@@ -7900,7 +7900,22 @@ class MobileCIAPIController extends ControllerAPI
             $promo_id = trim(OrbitInput::get('pid'));
             $news_id = trim(OrbitInput::get('nid'));
 
-            $product = Retailer::with('media', 'mediaLogoOrig', 'mediaMapOrig', 'mediaImageOrig', 'news', 'newsPromotions')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $product = Retailer::with(
+                'media',
+                'mediaLogoOrig',
+                'mediaMapOrig',
+                'mediaImageOrig',
+                'news',
+                'newsPromotions')
+                ->active('merchants')
+                ->where('is_mall', 'no')
+                ->where('parent_id', $retailer->merchant_id)
+                ->where('merchants.merchant_id', $product_id);
+            $product->select('merchants.*');
+            $this->maybeJoinWithTranslationsTable($product, $alternate_language);
+            $product = $product->first();
             // dd($product);
             if (empty($product)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
