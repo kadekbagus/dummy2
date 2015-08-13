@@ -7441,15 +7441,23 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
 
-            $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
+
+            $categories = Category::active('categories')
+                ->where('category_level', 1)
+                ->where('merchant_id', $retailer->merchant_id);
+
+            $categories->select('categories.*');
+            $this->maybeJoinWithCategoryTranslationsTable($categories, $alternate_language);
+
+            $categories = $categories->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
             if ($maxRecord <= 0) {
                 $maxRecord = 300;
             }
-
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $floorList = Retailer::with('mediaLogo', 'categories') // no translation needed
                 ->active()
@@ -7459,8 +7467,25 @@ class MobileCIAPIController extends ControllerAPI
                 ->orderBy('floor')
                 ->lists('floor');
 
-            $products = Retailer::with('mediaLogo', 'categories') // translated
-                ->active('merchants')
+            $products = Retailer::with('mediaLogo');
+            if (!empty($alternate_language)) {
+                $products = $products->with(['categories' => function ($q) use ($alternate_language) {
+                    $prefix = DB::getTablePrefix();
+                    $q->leftJoin('category_translations', function ($join) use ($alternate_language) {
+                        $join->on('categories.category_id', '=', 'category_translations.category_id');
+                        $join->where('category_translations.merchant_language_id', '=', $alternate_language->merchant_language_id);
+                    });
+                    $q->select('categories.*');
+                    $q->addSelect([
+                        DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
+                        DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
+                    ]);
+                }]);
+            }
+            else {
+                $products = $products->with('categories');
+            }
+            $products = $products->active('merchants')
                 ->where('is_mall', 'no')
                 ->where('parent_id', $retailer->merchant_id);
             $products->select('merchants.*');
@@ -8717,6 +8742,31 @@ class MobileCIAPIController extends ControllerAPI
             foreach (['name', 'description', 'ticket_header', 'ticket_footer'] as $field) {
                 $tenants->addSelect([
                     DB::raw("COALESCE(${prefix}merchant_translations.${field}, ${prefix}merchants.${field}) as ${field}")
+                ]);
+            }
+        }
+    }
+
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $categories
+     * @param \MerchantLanguage $alternate_language
+     */
+    private function maybeJoinWithCategoryTranslationsTable($categories, $alternate_language)
+    {
+        if (!empty($alternate_language)) {
+            // join to translations table so can use to search, sort, and overwrite fields
+            $prefix = DB::getTablePrefix();
+
+            $categories->leftJoin('category_translations', function ($join) use ($alternate_language) {
+                $join->on('categories.category_id', '=', 'category_translations.category_id');
+                $join->where('category_translations.merchant_language_id', '=',
+                    $alternate_language->merchant_language_id);
+            });
+
+            // and overwrite fields with alternate language fields if present
+            foreach (['category_name', 'description'] as $field) {
+                $categories->addSelect([
+                    DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
                 ]);
             }
         }
