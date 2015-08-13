@@ -7623,9 +7623,23 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $floorList = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->groupBy('floor')->orderBy('floor')->lists('floor');
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
+            $floorList = Retailer::with('mediaLogo', 'categories')
+                ->active()
+                ->where('is_mall', 'no')
+                ->where('parent_id', $retailer->merchant_id)
+                ->groupBy('floor')
+                ->orderBy('floor')
+                ->lists('floor');
+
+            $products = Retailer::with('mediaLogo', 'categories')
+                ->active('merchants')
+                ->where('is_mall', 'no')
+                ->where('parent_id', $retailer->merchant_id);
+            $products->select('merchants.*');
+
+            $this->maybeJoinWithTranslationsTable($products, $alternate_language);
 
             // Filter product by name pattern
             OrbitInput::get(
@@ -8799,5 +8813,58 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return false;
+    }
+
+
+    /**
+     * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
+     *
+     * @param \User $user
+     * @param \Retailer $mall the mall
+     * @return \MerchantLanguage the language or null if a matching one is not found.
+     */
+    private function getAlternateMerchantLanguage($user, $mall)
+    {
+        $details = $user->userdetail;
+        // if user has no preference use default
+        if (empty($details)) {
+            return null;
+        }
+        // if language not found nothing we can do
+        $language = \Language::where('name', '=', $details->preferred_language)->first();
+        // if user's preference is same as merchant's default use default
+        if ($mall->mobile_default_language === $details->preferred_language) {
+            return null;
+        }
+        $alternate_language = \MerchantLanguage::excludeDeleted()
+            ->where('merchant_id', '=', $mall->merchant_id)
+            ->where('language_id', '=', $language->language_id)
+            ->first();
+        return $alternate_language; // something or null
+    }
+
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $tenants
+     * @param \MerchantLanguage $alternate_language
+     */
+    private function maybeJoinWithTranslationsTable($tenants, $alternate_language)
+    {
+        if (!empty($alternate_language)) {
+            // join to translations table so can use to search, sort, and overwrite fields
+            $prefix = DB::getTablePrefix();
+
+            $tenants->leftJoin('merchant_translations', function ($join) use ($alternate_language) {
+                $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
+                $join->where('merchant_translations.merchant_language_id', '=',
+                    $alternate_language->merchant_language_id);
+            });
+
+            // and overwrite fields with alternate language fields if present
+            foreach (['name', 'description', 'ticket_header', 'ticket_footer'] as $field) {
+                $tenants->addSelect([
+                    DB::raw("COALESCE(${prefix}merchant_translations.${field}, ${prefix}merchants.${field}) as ${field}")
+                ]);
+            }
+        }
     }
 }
