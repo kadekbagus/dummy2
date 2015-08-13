@@ -11,27 +11,27 @@ class PermissionRoleTableSeeder extends Seeder
         // Super admin does not need any records it automatically always allowed
         // to do anything. So, we start from second role which is 'Administrator'
         $permissionRoleSource = [
-            'Administator'  =>  [
+            'Mall Owner'  =>  [
                 // 1
                 'role'  => [
-                    'create'    => 'yes',
-                    'view'      => 'yes',
-                    'update'    => 'yes',
-                    'delete'    => 'yes'
+                    'create'    => 'no',
+                    'view'      => 'no',
+                    'update'    => 'no',
+                    'delete'    => 'no'
                 ],
                 // 2
                 'user'  => [
-                    'create'    => 'yes',
+                    'create'    => 'no',
                     'view'      => 'yes',
-                    'update'    => 'yes',
-                    'delete'    => 'yes'
+                    'update'    => 'no',
+                    'delete'    => 'no'
                 ],
                 // 3
                 'merchant'  => [
                     'create'    => 'yes',
                     'view'      => 'yes',
                     'update'    => 'yes',
-                    'delete'    => 'yes'
+                    'delete'    => 'no'
                 ],
                 // 4
                 'retailer'  => [
@@ -91,10 +91,10 @@ class PermissionRoleTableSeeder extends Seeder
                 ],
                 // 12
                 'personal_interest'  => [
-                    'create'    => 'yes',
+                    'create'    => 'no',
                     'view'      => 'yes',
-                    'update'    => 'yes',
-                    'delete'    => 'yes'
+                    'update'    => 'no',
+                    'delete'    => 'no'
                 ],
                 // 13
                 'widget'  => [
@@ -127,11 +127,29 @@ class PermissionRoleTableSeeder extends Seeder
                 ],
                 // 18
                 'password'  => [
-                    'change'      => 'yes',
+                    'change'      => 'no',
                 ],
                 // 19
                 'tax'   => [
                     'view'  => 'yes',
+                ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
                 ],
             ],
 
@@ -256,6 +274,24 @@ class PermissionRoleTableSeeder extends Seeder
                 // 19
                 'tax'  => [
                     'view'  => 'yes',
+                ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
                 ],
             ],
 
@@ -385,6 +421,20 @@ class PermissionRoleTableSeeder extends Seeder
                 'setting'   => [
                     'view'  => 'yes',
                 ],
+                // 21
+                'news' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
             ],
 
             'Retailer Owner'  =>  [
@@ -508,6 +558,24 @@ class PermissionRoleTableSeeder extends Seeder
                 // 19
                 'tax'   => [
                     'view'  => 'yes',
+                ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
                 ],
             ],
 
@@ -633,6 +701,24 @@ class PermissionRoleTableSeeder extends Seeder
                 'tax'   => [
                     'view'  => 'yes',
                 ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
             ],
 
             'Supervisor'  =>  [
@@ -757,6 +843,24 @@ class PermissionRoleTableSeeder extends Seeder
                 'tax'   => [
                     'view'  => 'yes',
                 ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'no'
+                ],
             ],
 
             'Cashier'  =>  [
@@ -880,6 +984,450 @@ class PermissionRoleTableSeeder extends Seeder
                 // 19
                 'tax'   => [
                     'view'  => 'yes',
+                ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'no'
+                ],
+            ],
+
+            'Guest'  =>  [
+                // 1
+                'role'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 2
+                'user'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 3
+                'merchant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'retailer'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 5
+                'product'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 6
+                'category'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 7
+                'promotion'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 8
+                'coupon'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 9
+                'product_attribute'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 10
+                'employee'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 11
+                'event'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 12
+                'personal_interest'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 13
+                'widget'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 14
+                'pos_quick_product'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 15
+                'issued_coupon'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 16
+                'activity'  => [
+                    'view'      => 'yes',
+                ],
+                // 17
+                'transaction_history'  => [
+                    'view'      => 'yes',
+                ],
+                // 18
+                'password'  => [
+                    'change'      => 'no',
+                ],
+                // 19
+                'tax'  => [
+                    'view'  => 'yes',
+                ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+            ],
+
+            'Mall Admin'  => [
+                // 1
+                'role'  => [
+                    'create'    => 'no',
+                    'view'      => 'no',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 2
+                'user'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 3
+                'merchant'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'retailer'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 5
+                'product'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 6
+                'category'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 7
+                'promotion'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 8
+                'coupon'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 9
+                'product_attribute'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 10
+                'employee'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 11
+                'event'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 12
+                'personal_interest'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 13
+                'widget'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 14
+                'pos_quick_product'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 15
+                'issued_coupon'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 16
+                'activity'  => [
+                    'view'      => 'yes',
+                ],
+                // 17
+                'transaction_history'  => [
+                    'view'      => 'yes',
+                ],
+                // 18
+                'password'  => [
+                    'change'      => 'no',
+                ],
+                // 19
+                'tax'   => [
+                    'view'  => 'yes',
+                ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+            ],
+
+            'Mall Customer Service'  => [
+                // 1
+                'role'  => [
+                    'create'    => 'no',
+                    'view'      => 'no',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 2
+                'user'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 3
+                'merchant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'retailer'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 5
+                'product'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 6
+                'category'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 7
+                'promotion'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'no'
+                ],
+                // 8
+                'coupon'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'no'
+                ],
+                // 9
+                'product_attribute'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 10
+                'employee'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 11
+                'event'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 12
+                'personal_interest'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 13
+                'widget'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 14
+                'pos_quick_product'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 15
+                'issued_coupon'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 16
+                'activity'  => [
+                    'view'      => 'yes',
+                ],
+                // 17
+                'transaction_history'  => [
+                    'view'      => 'yes',
+                ],
+                // 18
+                'password'  => [
+                    'change'      => 'no',
+                ],
+                // 19
+                'tax'   => [
+                    'view'  => 'yes',
+                ],
+                // 20
+                'setting'   => [
+                    'view'  => 'yes',
+                ],
+                // 21
+                'news' => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 22
+                'lucky_draw' => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'no'
                 ],
             ],
         ];

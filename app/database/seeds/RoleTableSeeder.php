@@ -11,23 +11,24 @@ class RoleTableSeeder extends Seeder
         // Role for Orbit Application should be:
         // -------------------------------------
         // 1. Super Admin
-        // 2. Administrator
+        // 2. Mall Owner
         // 3. Consumer
         // 4. Merchant Owner
         // 5. Retailer Owner
         // 6. Manager
         // 8. Supervisor
         // 9. Cashier
-        // 10. Guest
+        // 10. Mall Admin
+        // 11. Mall CS
         $roles = [
             'Super Admin' => [
                 'role_id'       => 1,
                 'role_name'     => 'Super Admin',
                 'role_order'    => 1,
             ],
-            'Administrator' => [
+            'Mall Owner' => [
                 'role_id'       => 2,
-                'role_name'     => 'Administrator',
+                'role_name'     => 'Mall Owner',
                 'role_order'    => 2,
             ],
             'Consumer' => [
@@ -64,6 +65,16 @@ class RoleTableSeeder extends Seeder
                 'role_id'       => 9,
                 'role_name'     => 'Guest',
                 'role_order'    => 9,
+            ],
+            'Mall Admin'  => [
+                'role_id'       => 10,
+                'role_name'     => 'Mall Admin',
+                'role_order'    => 10
+            ],
+            'Mall Customer Service'  => [
+                'role_id'       => 11,
+                'role_name'     => 'Mall Customer Service',
+                'role_order'    => 11
             ],
         ];
 

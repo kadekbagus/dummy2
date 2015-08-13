@@ -51,7 +51,7 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.postnewuser.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('create_user')) {
+            if (! ACL::create($user)) {
                 Event::fire('orbit.user.postnewuser.authz.notallowed', array($this, $user));
                 $createUserLang = Lang::get('validation.orbit.actionlist.add_new_user');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createUserLang));
@@ -87,6 +87,7 @@ class UserAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
             Event::fire('orbit.user.postnewuser.after.validation', array($this, $validator));
 
             // Begin database transaction
@@ -255,7 +256,7 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.postdeleteuser.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('delete_user')) {
+            if (! ACL::create($user)) {
                 Event::fire('orbit.user.postdeleteuser.authz.notallowed', array($this, $user));
                 $deleteUserLang = Lang::get('validation.orbit.actionlist.delete_user');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteUserLang));
@@ -885,7 +886,7 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.getsearchuser.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_user')) {
+            if (! ACL::create($user)) {
                 $user_ids = OrbitInput::get('user_id');
                 $need_check = TRUE;
                 if (! empty($user_ids) && is_array($user_ids)) {
@@ -954,7 +955,12 @@ class UserAPIController extends ControllerAPI
             OrbitInput::get('with', function($_with) use (&$with) {
                 $with = array_merge($_with, $with);
             });
-            $users = User::with($with)->excludeDeleted();
+            $users = User::Consumers()
+                        ->select('users.*')
+                        ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
+                        ->with(array('userDetail', 'userDetail.lastVisitedShop'))
+                        ->excludeDeleted('users');
 
             // Filter user by Ids
             OrbitInput::get('user_id', function ($userIds) use ($users) {
@@ -1004,6 +1010,13 @@ class UserAPIController extends ControllerAPI
             // Filter user by their role id
             OrbitInput::get('role_id', function ($roleId) use ($users) {
                 $users->whereIn('users.user_role_id', $roleId);
+            });
+
+            // Filter user by their role id
+            OrbitInput::get('role_name', function ($roleId) use ($users) {
+                $users->whereHas('role', function($q) use ($roleId) {
+                    $q->where('roles.role_name', $roleId);
+                });
             });
 
             // Clone the query builder which still does not include the take,
@@ -1146,6 +1159,7 @@ class UserAPIController extends ControllerAPI
      * @param array|string  `retailer_id`       (optional) - Id of the retailer (Shop), could be array or string with comma separated value
      * @param integer       `take`              (optional) - limit
      * @param integer       `skip`              (optional) - limit offset
+     * @param integer       `details`           (optional) - Include detailed issued coupon and lucky draw number
      * @return Illuminate\Support\Facades\Response
      */
     public function getConsumerListing()
@@ -1165,7 +1179,7 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.getconsumer.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_user')) {
+            if (! ACL::create($user)) {
                 $user_ids = OrbitInput::get('user_id');
                 $need_check = TRUE;
                 if (! empty($user_ids) && is_array($user_ids)) {
@@ -1186,12 +1200,14 @@ class UserAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $details = OrbitInput::get('details');
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1233,12 +1249,33 @@ class UserAPIController extends ControllerAPI
             $listOfRetailerIds = [];
 
             // Builder object
+            $prefix = DB::getTablePrefix();
             $users = User::Consumers()
-                        ->select('users.*')
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                        ->with(array('userDetail', 'userDetail.lastVisitedShop'))
-                        ->excludeDeleted('users');
+                        ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
+                        ->excludeDeleted('users')
+                        ->groupBy('users.user_id');
+
+            if ($details === 'yes') {
+                $users->select('users.*', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
+                               DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
+                                        where status='active' and cp.user_id={$prefix}users.user_id and
+                                        current_date() <= date(cp.expired_date)) as total_usable_coupon,
+                                        (select count(cp2.user_id) from {$prefix}issued_coupons cp2
+                                        where status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
+                                  ->leftJoin(
+                                        // Table
+                                        DB::raw("(select ldn.user_id from `{$prefix}lucky_draw_numbers` ldn
+                                                 join {$prefix}lucky_draws ld on ld.lucky_draw_id=ldn.lucky_draw_id
+                                                 where ldn.status='active' and ld.status='active'
+                                                 and (ldn.user_id is not null and ldn.user_id != 0))
+                                                 {$prefix}tmp_lucky"),
+                                        // ON
+                                        'tmp_lucky.user_id', '=', 'users.user_id');
+            } else {
+                $users->select('users.*');
+            }
 
             // Filter by merchant ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
@@ -1246,66 +1283,23 @@ class UserAPIController extends ControllerAPI
                 $listOfMerchantIds = (array)$merchantIds;
             });
 
-            // @To do: Replace this stupid hacks
-            if (! $user->isSuperAdmin()) {
-                $listOfMerchantIds = $user->getMyMerchantIds();
-
-                if (empty($listOfMerchantIds)) {
-                    $listOfMerchantIds = [-1];
-                }
-
-                //$users->merchantIds($listOfMerchantIds);
-            } else {
-                // if (! empty($listOfMerchantIds)) {
-                //     $users->merchantIds($listOfMerchantIds);
-                // }
-            }
-
             // Filter by retailer (shop) ids
             OrbitInput::get('retailer_id', function($retailerIds) use ($users) {
                 // $users->retailerIds($retailerIds);
                 $listOfRetailerIds = (array)$retailerIds;
             });
 
-            // @To do: Repalce this stupid hacks
-            if (! $user->isSuperAdmin()) {
-                $listOfRetailerIds = $user->getMyRetailerIds();
-
-                if (empty($listOfRetailerIds)) {
-                    $listOfRetailerIds = [-1];
-                }
-
-                //$users->retailerIds($listOfRetailerIds);
+            if ($user->isRoleName('consumer')) {
+                // Filter user by Ids
+                OrbitInput::get('user_id', function ($userIds) use ($users, $user) {
+                    $users->whereIn('users.user_id', $user->user_id);
+                });
             } else {
-                // if (! empty($listOfRetailerIds)) {
-                //     $users->retailerIds($listOfRetailerIds);
-                // }
-            }
-
-            if (! $user->isSuperAdmin()) {
-                // filter only by merchant_id, not include retailer_id yet.
-                // @TODO: include retailer_id.
-                $users->where(function($query) use($listOfMerchantIds) {
-                    // get users registered in shop.
-                    $query->whereIn('users.user_id', function($query2) use($listOfMerchantIds) {
-                        $query2->select('user_details.user_id')
-                            ->from('user_details')
-                            ->whereIn('user_details.merchant_id', $listOfMerchantIds);
-                    })
-                    // get users have transactions in shop.
-                    ->orWhereIn('users.user_id', function($query3) use($listOfMerchantIds) {
-                        $query3->select('customer_id')
-                            ->from('transactions')
-                            ->whereIn('merchant_id', $listOfMerchantIds)
-                            ->groupBy('customer_id');
-                    });
+                // Filter user by Ids
+                OrbitInput::get('user_id', function ($userIds) use ($users) {
+                    $users->whereIn('users.user_id', $userIds);
                 });
             }
-
-            // Filter user by Ids
-            OrbitInput::get('user_id', function ($userIds) use ($users) {
-                $users->whereIn('users.user_id', $userIds);
-            });
 
             // Filter user by username
             OrbitInput::get('username', function ($username) use ($users) {
@@ -1340,6 +1334,11 @@ class UserAPIController extends ControllerAPI
             // Filter user by their email
             OrbitInput::get('email', function ($email) use ($users) {
                 $users->whereIn('users.user_email', $email);
+            });
+
+            // Filter user by their email
+            OrbitInput::get('membership_number_like', function ($membershipnumber) use ($users) {
+                $users->where('users.membership_number', 'like', "%$membershipnumber%");
             });
 
             // Filter user by their email pattern
@@ -1395,12 +1394,18 @@ class UserAPIController extends ControllerAPI
                     'firstname'               => 'users.user_firstname',
                     'gender'                  => 'user_details.gender',
                     'city'                    => 'user_details.city',
+                    'status'                  => 'users.status',
                     'last_visit_shop'         => 'merchants.name',
                     'last_visit_date'         => 'user_details.last_visit_any_shop',
-                    'last_spent_amount'       => 'user_details.last_spent_any_shop'
+                    'last_spent_amount'       => 'user_details.last_spent_any_shop',
+                    'total_usable_coupon'     => 'total_usable_coupon',
+                    'total_redeemed_coupon'   => 'total_redeemed_coupon',
+                    'total_lucky_draw_number' => 'total_lucky_draw_number'
                 );
 
-                $sortBy = $sortByMapping[$_sortBy];
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
             });
 
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
@@ -1408,6 +1413,13 @@ class UserAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
+
+            // If sortby not active means we should add active as second argument
+            // of sorting
+            if ($sortBy !== 'users.status') {
+                $users->orderBy('users.status', 'asc');
+            }
+
             $users->orderBy($sortBy, $sortMode);
 
             $totalUsers = RecordCounter::create($_users)->count();
@@ -1628,6 +1640,985 @@ class UserAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * POST - Create new membership
+     *
+     * @author me@rioastamal.net
+     *
+     * List of API Parameters
+     * @param array     `category_ids`          (optional) - Category IDs
+     * @param array     `bank_object_ids`       (optional) - Bank Object IDs
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postNewMembership()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('create');
+
+        $user = NULL;
+        $newuser = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.user.postnewmembership.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.user.postnewmembership.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.user.postnewmembership.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)) {
+                Event::fire('orbit.user.postnewmembership.authz.notallowed', array($this, $user));
+                $createUserLang = Lang::get('validation.orbit.actionlist.add_new_user');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createUserLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this page.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.user.postnewmembership.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $email = OrbitInput::post('email');
+            $firstname = OrbitInput::post('firstname');
+            $lastname = OrbitInput::post('lastname');
+            $gender = OrbitInput::post('gender');
+            $birthdate = OrbitInput::post('birthdate');
+            $phone = OrbitInput::post('phone');
+            $joindate = OrbitInput::post('joindate');
+            $membershipNumber = OrbitInput::post('membership_number');
+            $status = OrbitInput::post('status');
+            $categoryIds = OrbitInput::post('category_ids');
+            $idcard = OrbitInput::post('idcard_number');
+            $mobile = OrbitInput::post('mobile_phone');
+            $mobile2 = OrbitInput::post('mobile_phone2');
+            $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
+            $workphone = OrbitInput::post('work_phone');
+            $occupation = OrbitInput::post('occupation');
+            $dateofwork = OrbitInput::post('date_of_work');
+            $homeAddress = OrbitInput::post('home_address');
+            $workAddress = OrbitInput::post('work_address');
+            $category_ids = OrbitInput::post('category_ids');
+            $category_ids = (array) $category_ids;
+            $bank_object_ids = OrbitInput::post('bank_object_ids');
+            $bank_object_ids = (array) $bank_object_ids;
+
+            $validator = Validator::make(
+                array(
+                    'email'                 => $email,
+                    'firstname'             => $firstname,
+                    'lastname'              => $lastname,
+                    'gender'                => $gender,
+                    'birthdate'             => $birthdate,
+                    'joindate'              => $joindate,
+                    'membership_number'     => $membershipNumber,
+                    'status'                => $status,
+                    'category_ids'          => $categoryIds,
+                    'idcard_number'         => $idcard,
+                    'mobile_phone'          => $mobile,
+                    'work_phone'            => $workphone,
+                    'occupation'            => $occupation,
+                    'date_of_work'          => $dateofwork,
+                ),
+                array(
+                    'email'                 => 'required|email|orbit.email.exists',
+                    'firstname'             => 'required',
+                    'lastname'              => '',
+                    'gender'                => 'in:m,f',
+                    'birthdate'             => 'date_format:Y-m-d',
+                    'joindate'              => 'date_format:Y-m-d',
+                    'membership_number'     => 'required|orbit.membership.exists',
+                    'status'                => 'required|in:active,inactive,pending',
+                    'category_ids'          => 'array',
+                    'idcard_number'         => 'numeric',
+                    'mobile_phone'          => '',
+                    'work_phone'            => '',
+                    'occupation'            => '',
+                    'date_of_work'          => 'date_format:Y-m-d'
+                )
+            );
+
+            Event::fire('orbit.user.postnewmembership.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // validate category_ids
+            foreach ($category_ids as $category_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'category_id'   => $category_id_check,
+                    ),
+                    array(
+                        'category_id'   => 'numeric|orbit.empty.category',
+                    )
+                );
+
+                Event::fire('orbit.user.postnewuser.before.categoryvalidation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                Event::fire('orbit.user.postnewuser.after.categoryvalidation', array($this, $validator));
+            }
+
+            // validate bank_object_ids
+            foreach ($bank_object_ids as $bank_object_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'bank_object_id'  => $bank_object_id_check,
+                    ),
+                    array(
+                        'bank_object_id'  => 'numeric|orbit.empty.bank_object',
+                    )
+                );
+
+                Event::fire('orbit.user.postnewuser.before.bankobjectvalidation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                Event::fire('orbit.user.postnewuser.after.bankobjectvalidation', array($this, $validator));
+            }
+
+            Event::fire('orbit.user.postnewmembership.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $role = Role::where('role_name', 'consumer')->first();
+
+            $newuser = new User();
+            $newuser->username = $email;
+            $newuser->user_email = $email;
+            $newuser->status = $status;
+            $newuser->user_firstname = $firstname;
+            $newuser->user_lastname = $lastname;
+            $newuser->user_role_id = $role->role_id;
+            $newuser->membership_number = $membershipNumber;
+            $newuser->status = $status;
+            $newuser->modified_by = $this->api->user->user_id;
+
+            Event::fire('orbit.user.postnewmembership.before.save', array($this, $newuser));
+
+            $newuser->save();
+
+            $userdetail = new UserDetail();
+            $userdetail->gender = $gender;
+            $userdetail->birthdate = $birthdate;
+            $userdetail->phone = $mobile;
+            $userdetail->phone3 = $mobile2;
+            $userdetail->city = $city;
+            $userdetail->province = $province;
+            $userdetail->postal_code = $postal_code;
+            $userdetail->phone2 = $workphone;
+            $userdetail->merchant_acquired_date = $joindate;
+            $userdetail->idcard = $idcard;
+            $userdetail->occupation = $occupation;
+            $userdetail->date_of_work = $dateofwork;
+            $userdetail->address_line1 = $homeAddress;
+            $userdetail->address_line2 = $workAddress;
+            $userdetail = $newuser->userdetail()->save($userdetail);
+
+            $newuser->setRelation('userdetail', $userdetail);
+            $newuser->userdetail = $userdetail;
+
+            $apikey = new Apikey();
+            $apikey->api_key = Apikey::genApiKey($newuser);
+            $apikey->api_secret_key = Apikey::genSecretKey($newuser);
+            $apikey->status = 'active';
+            $apikey->user_id = $newuser->user_id;
+            $apikey = $newuser->apikey()->save($apikey);
+
+            $newuser->setRelation('apikey', $apikey);
+            $newuser->apikey = $apikey;
+            $newuser->setHidden(array('user_password'));
+
+            // save categories
+            $userCategories = array();
+            foreach ($category_ids as $category_id) {
+                $userPersonalInterest = new UserPersonalInterest();
+                $userPersonalInterest->user_id = $newuser->user_id;
+                $userPersonalInterest->personal_interest_id = $category_id;
+                $userPersonalInterest->object_type = 'category';
+                $userPersonalInterest->save();
+                $userCategories[] = $userPersonalInterest;
+            }
+            $newuser->categories = $userCategories;
+
+            // save bank_object_ids
+            $userBanks = array();
+            foreach ($bank_object_ids as $bank_object_id) {
+                $objectRelation = new ObjectRelation();
+                $objectRelation->main_object_id = $bank_object_id;
+                $objectRelation->main_object_type = 'bank';
+                $objectRelation->secondary_object_id = $newuser->user_id;
+                $objectRelation->secondary_object_type = 'user';
+                $objectRelation->save();
+                $userBanks[] = $objectRelation;
+            }
+            $newuser->banks = $userBanks;
+
+            Event::fire('orbit.user.postnewmembership.after.save', array($this, $newuser));
+            $this->response->data = $newuser;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('User Created: %s', $newuser->username);
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Membership')
+                    ->setObject($newuser)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.user.postnewmembership.after.commit', array($this, $newuser));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.user.postnewmembership.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.user.postnewmembership.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.user.postnewmembership.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.user.postnewmembership.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_membership')
+                    ->setActivityNameLong('Create Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * POST - Update membership
+     *
+     * @author me@rioastamal.net
+     *
+     * List of API Parameters
+     * @param string     `no_category`           (optional) - Flag to delete all category links. Valid value: Y.
+     * @param array      `category_ids`          (optional) - Category IDs
+     * @param string     `no_bank_object`        (optional) - Flag to delete all bank object links. Valid value: Y.
+     * @param array      `bank_object_ids`       (optional) - Bank Object IDs
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdateMembership()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('update');
+
+        $user = NULL;
+        $newuser = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.user.postupdatemembership.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.user.postupdatemembership.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.user.postupdatemembership.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)) {
+                Event::fire('orbit.user.postupdatemembership.authz.notallowed', array($this, $user));
+                $createUserLang = Lang::get('validation.orbit.actionlist.add_new_user');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createUserLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this page.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.user.postupdatemembership.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $email = OrbitInput::post('email');
+            $firstname = OrbitInput::post('firstname');
+            $lastname = OrbitInput::post('lastname');
+            $gender = OrbitInput::post('gender');
+            $birthdate = OrbitInput::post('birthdate');
+            $phone = OrbitInput::post('phone');
+            $joindate = OrbitInput::post('joindate');
+            $membershipNumber = OrbitInput::post('membership_number');
+            $status = OrbitInput::post('status');
+            $categoryIds = OrbitInput::post('category_ids');
+            $idcard = OrbitInput::post('idcard_number');
+            $mobile = OrbitInput::post('mobile_phone');
+            $mobile2 = OrbitInput::post('mobile_phone2');
+            $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
+            $workphone = OrbitInput::post('work_phone');
+            $occupation = OrbitInput::post('occupation');
+            $dateofwork = OrbitInput::post('date_of_work');
+            $homeAddress = OrbitInput::post('home_address');
+            $workAddress = OrbitInput::post('work_address');
+
+            $userId = OrbitInput::post('user_id');
+
+            $validator = Validator::make(
+                array(
+                    'email'                 => $email,
+                    'firstname'             => $firstname,
+                    'lastname'              => $lastname,
+                    'gender'                => $gender,
+                    'birthdate'             => $birthdate,
+                    'joindate'              => $joindate,
+                    'membership_number'     => $membershipNumber,
+                    'status'                => $status,
+                    'idcard_number'         => $idcard,
+                    'mobile_phone'          => $mobile,
+                    'work_phone'            => $workphone,
+                    'occupation'            => $occupation,
+                    'date_of_work'          => $dateofwork,
+                    'user_id'               => $userId,
+                ),
+                array(
+                    'email'                 => 'email|email_exists_but_me',
+                    'firstname'             => '',
+                    'lastname'              => '',
+                    'gender'                => 'in:m,f',
+                    'birthdate'             => 'date_format:Y-m-d',
+                    'joindate'              => 'date_format:Y-m-d',
+                    'membership_number'     => 'orbit.membership.exists_but_me',
+                    'status'                => 'in:active,inactive,pending',
+                    'category_ids'          => 'array',
+                    'idcard_number'         => 'numeric',
+                    'mobile_phone'          => '',
+                    'work_phone'            => '',
+                    'occupation'            => '',
+                    'date_of_work'          => 'date_format:Y-m-d',
+                    'user_id'               => 'required|numeric|orbit.empty.user'
+                ),
+                array('email_exists_but_me' => Lang::get('validation.orbit.email.exists'))
+            );
+
+            Event::fire('orbit.user.postupdatemembership.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.user.postupdatemembership.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $role = Role::where('role_name', 'consumer')->first();
+
+            $updateduser = App::make('orbit.empty.user');
+            $userdetail = $updateduser->userdetail;
+
+            OrbitInput::post('email', function($email) use ($updateduser) {
+                $updateduser->user_email = $email;
+            });
+
+            OrbitInput::post('firstname', function($firstname) use ($updateduser) {
+                $updateduser->user_firstname = $firstname;
+            });
+
+            OrbitInput::post('lastname', function($lastname) use ($updateduser) {
+                $updateduser->user_lastname = $lastname;
+            });
+
+            OrbitInput::post('status', function($status) use ($updateduser) {
+                $updateduser->status = $status;
+            });
+
+            OrbitInput::post('membership_number', function($number) use ($updateduser) {
+                $updateduser->membership_number = $number;
+            });
+
+            OrbitInput::post('joindate', function($date) use ($userdetail) {
+                $userdetail->merchant_acquired_date = $date;
+            });
+
+            OrbitInput::post('birthdate', function($date) use ($userdetail) {
+                $userdetail->birthdate = $date;
+            });
+
+            OrbitInput::post('gender', function($gender) use ($userdetail) {
+                $userdetail->gender = $gender;
+            });
+
+            OrbitInput::post('mobile_phone', function($phone) use ($userdetail) {
+                $userdetail->phone = $phone;
+            });
+
+            OrbitInput::post('mobile_phone2', function($phone3) use ($userdetail) {
+                $userdetail->phone3 = $phone3;
+            });
+
+            OrbitInput::post('city', function($city) use ($userdetail) {
+                $userdetail->city = $city;
+            });
+
+            OrbitInput::post('province', function($province) use ($userdetail) {
+                $userdetail->province = $province;
+            });
+
+            OrbitInput::post('postal_code', function($postal) use ($userdetail) {
+                $userdetail->postal_code = $postal;
+            });
+
+            OrbitInput::post('work_phone', function($phone) use ($userdetail) {
+                $userdetail->phone2 = $phone;
+            });
+
+            OrbitInput::post('home_address', function($data) use ($userdetail) {
+                $userdetail->address_line1 = $data;
+            });
+
+            OrbitInput::post('work_address', function($data) use ($userdetail) {
+                $userdetail->address_line2 = $data;
+            });
+
+            OrbitInput::post('idcard', function($data) use ($userdetail) {
+                $userdetail->idcard = $data;
+            });
+
+            OrbitInput::post('occupation', function($data) use ($userdetail) {
+                $userdetail->occupation = $data;
+            });
+
+            OrbitInput::post('date_of_work', function($data) use ($userdetail) {
+                $userdetail->date_of_work = $data;
+            });
+
+            Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
+
+            $updateduser->save();
+            $userdetail->save();
+
+            // save user categories
+            OrbitInput::post('no_category', function($no_category) use ($updateduser) {
+                if ($no_category == 'Y') {
+                    $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
+                                                                ->where('object_type', 'category')
+                                                                ->get(array('personal_interest_id'))
+                                                                ->toArray();
+                    $updateduser->categories()->detach($deleted_category_ids);
+                    $updateduser->load('categories');
+                }
+            });
+
+            OrbitInput::post('category_ids', function($category_ids) use ($updateduser) {
+                // validate category_ids
+                $category_ids = (array) $category_ids;
+                foreach ($category_ids as $category_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'category_id'   => $category_id_check,
+                        ),
+                        array(
+                            'category_id'   => 'orbit.empty.category',
+                        )
+                    );
+
+                    Event::fire('orbit.user.postupdatemembership.before.categoryvalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.user.postupdatemembership.after.categoryvalidation', array($this, $validator));
+                }
+                // sync new set of category ids
+                $pivotData = array_fill(0, count($category_ids), ['object_type' => 'category']);
+                $syncData = array_combine($category_ids, $pivotData);
+                $updateduser->categories()->sync($syncData);
+
+                // reload categories relation
+                $updateduser->load('categories');
+            });
+
+            // save user bank_object_ids
+            OrbitInput::post('no_bank_object', function($no_bank_object) use ($updateduser) {
+                if ($no_bank_object == 'Y') {
+                    $deleted_bank_object_ids = ObjectRelation::where('secondary_object_id', $updateduser->user_id)
+                                                             ->where('secondary_object_type', 'user')
+                                                             ->where('main_object_type', 'bank')
+                                                             ->get(array('main_object_id'))
+                                                             ->toArray();
+                    $updateduser->banks()->detach($deleted_bank_object_ids);
+                    $updateduser->load('banks');
+                }
+            });
+
+            OrbitInput::post('bank_object_ids', function($bank_object_ids) use ($updateduser) {
+                // validate bank_object_ids
+                $bank_object_ids = (array) $bank_object_ids;
+                foreach ($bank_object_ids as $bank_object_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'bank_object_id'  => $bank_object_id_check,
+                        ),
+                        array(
+                            'bank_object_id'  => 'numeric|orbit.empty.bank_object',
+                        )
+                    );
+
+                    Event::fire('orbit.user.postupdatemembership.before.bankobjectvalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.user.postupdatemembership.after.bankobjectvalidation', array($this, $validator));
+                }
+                // sync new set of bank_object_ids
+                $pivotData = array_fill(0, count($bank_object_ids), ['main_object_type' => 'bank', 'secondary_object_type' => 'user']);
+                $syncData = array_combine($bank_object_ids, $pivotData);
+                $updateduser->banks()->sync($syncData);
+
+                // reload banks relation
+                $updateduser->load('banks');
+            });
+
+            Event::fire('orbit.user.postupdatemembership.after.save', array($this, $updateduser));
+            $this->response->data = $updateduser;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('User Created: %s', $updateduser->username);
+            $activity->setUser($updateduser)
+                    ->setActivityName('update_membership')
+                    ->setActivityNameLong('Update Membership')
+                    ->setStaff($user)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.user.postupdatemembership.after.commit', array($this, $updateduser));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.user.postupdatemembership.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('update_membership')
+                    ->setActivityNameLong('Update Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.user.postupdatemembership.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('update_membership')
+                    ->setActivityNameLong('Update Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.user.postupdatemembership.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('update_membership')
+                    ->setActivityNameLong('Update Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.user.postupdatemembership.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('update_membership')
+                    ->setActivityNameLong('Update Member Failed')
+                    ->setModuleName('Membership')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * POST - Delete membership
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer   `user_id`                 (required) - ID of the user
+     * @param string    `password`                (required) - The mall master password
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteMembership()
+    {
+        $activity = Activity::portal()
+                          ->setActivityType('delete');
+
+        $user = NULL;
+        $deletedUser = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.user.postdeletemembership.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.user.postdeletemembership.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.user.postdeletemembership.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)) {
+                Event::fire('orbit.user.postdeletemembership.authz.notallowed', array($this, $user));
+                $deleteUserLang = Lang::get('validation.orbit.actionlist.delete_user');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteUserLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.user.postdeletemembership.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $user_id = OrbitInput::post('user_id');
+            $password = OrbitInput::post('password');
+
+            // Error message when access is forbidden
+            $deleteYourSelf = Lang::get('validation.orbit.actionlist.delete_your_self');
+            $message = Lang::get('validation.orbit.access.forbidden',
+                                 array('action' => $deleteYourSelf));
+
+            $validator = Validator::make(
+                array(
+                    'user_id'   => $user_id,
+                    'password'  => $password,
+                ),
+                array(
+                    'user_id'   => 'required|numeric|orbit.empty.membership|no_delete_themself',
+                    'password'  => 'required|orbit.masterpassword.delete',
+                ),
+                array(
+                    'no_delete_themself'            => $message,
+                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
+                )
+            );
+
+            Event::fire('orbit.user.postdeletemembership.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.user.postdeletemembership.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $deletedUser = App::make('orbit.empty.membership');
+            $deletedUser->status = 'deleted';
+            $deletedUser->modified_by = $this->api->user->user_id;
+
+            $deleteapikey = $deletedUser->apikey;
+            $deleteapikey->status = 'deleted';
+
+            Event::fire('orbit.user.postdeletemembership.before.save', array($this, $deletedUser));
+
+            $deletedUser->save();
+            $deleteapikey->save();
+
+            // hard delete user personal interest.
+            $deleteUserPersonalInterests = UserPersonalInterest::where('user_id', $deletedUser->user_id)->get();
+            foreach ($deleteUserPersonalInterests as $deleteUserPersonalInterest) {
+                $deleteUserPersonalInterest->delete();
+            }
+
+            // hard delete user bank_object_ids.
+            $deleteUserBankObjects = ObjectRelation::where('secondary_object_id', $deletedUser->user_id)
+                                                         ->where('secondary_object_type', 'user')
+                                                         ->where('main_object_type', 'bank')
+                                                         ->get();
+            foreach ($deleteUserBankObjects as $deleteUserBankObject) {
+                $deleteUserBankObject->delete();
+            }
+
+            Event::fire('orbit.user.postdeletemembership.after.save', array($this, $deletedUser));
+            $this->response->data = null;
+            $this->response->message = Lang::get('statuses.orbit.deleted.user');
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('User Deleted: %s', $deletedUser->username);
+            $activity->setUser($user)
+                    ->setActivityName('delete_membership')
+                    ->setActivityNameLong('Delete Membership OK')
+                    ->setObject($deletedUser)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.user.postdeletemembership.after.commit', array($this, $deletedUser));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.user.postdeletemembership.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_membership')
+                    ->setActivityNameLong('Delete Membership Failed')
+                    ->setObject($deletedUser)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.user.postdeletemembership.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_user')
+                    ->setActivityNameLong('Delete User Failed')
+                    ->setObject($deletedUser)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.user.postdeletemembership.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_user')
+                    ->setActivityNameLong('Delete User Failed')
+                    ->setObject($deletedUser)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.user.postdeletemembership.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_user')
+                    ->setActivityNameLong('Delete User Failed')
+                    ->setObject($deletedUser)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.user.postdeletemembership.before.render', array($this, $output));
+
+        // Save the activity
+        $activity->save();
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         // Check user email address, it should not exists
@@ -1638,6 +2629,40 @@ class UserAPIController extends ControllerAPI
 
             if (! empty($user)) {
                 return FALSE;
+            }
+
+            App::instance('orbit.validation.user', $user);
+
+            return TRUE;
+        });
+
+        // Check user membership, it should not exists
+        Validator::extend('orbit.membership.exists', function ($attribute, $value, $parameters) {
+            $user = User::excludeDeleted()
+                        ->where('membership_number', $value)
+                        ->first();
+
+            if (! empty($user)) {
+                $errorMessage = 'Membership number already exists.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.validation.user', $user);
+
+            return TRUE;
+        });
+
+        // Check user membership, it should not exists
+        Validator::extend('orbit.membership.exists_but_me', function ($attribute, $value, $parameters) {
+            $userId = OrbitInput::post('user_id');
+            $user = User::excludeDeleted()
+                        ->where('membership_number', $value)
+                        ->where('user_id', '!=', $userId)
+                        ->first();
+
+            if (! empty($user)) {
+                $errorMessage = 'Membership number already exists.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
             App::instance('orbit.validation.user', $user);
@@ -1670,7 +2695,37 @@ class UserAPIController extends ControllerAPI
                 return FALSE;
             }
 
+            if ($user->isSuperAdmin()) {
+                $errorMessage = 'You can not delete super admin account.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.empty.membership', $user);
+
             App::instance('orbit.empty.user', $user);
+
+            return TRUE;
+        });
+
+        // Check the existance of user id
+        Validator::extend('orbit.empty.membership', function ($attribute, $value, $parameters) {
+            $role = Role::where('role_name', 'consumer')->first();
+
+            $user = User::excludeDeleted()
+                        ->where('user_id', $value)
+                        ->where('user_role_id', $role->role_id)
+                        ->first();
+
+            if (empty($user)) {
+                return FALSE;
+            }
+
+            if ($user->isSuperAdmin()) {
+                $errorMessage = 'You can not delete super admin account.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.empty.membership', $user);
 
             return TRUE;
         });
@@ -1751,6 +2806,58 @@ class UserAPIController extends ControllerAPI
             if ((string)$real_number !== (string)$number) {
                 return FALSE;
             }
+
+            return TRUE;
+        });
+
+        // Membership deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
+
+        // Check the existance of category id
+        Validator::extend('orbit.empty.category', function ($attribute, $value, $parameters) {
+            $category = Category::excludeDeleted()
+                        ->where('category_id', $value)
+                        ->first();
+
+            if (empty($category)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.category', $category);
+
+            return TRUE;
+        });
+
+        // Check the existance of bank object id
+        Validator::extend('orbit.empty.bank_object', function ($attribute, $value, $parameters) {
+            $bankObject = Object::excludeDeleted()
+                        ->where('object_id', $value)
+                        ->first();
+
+            if (empty($bankObject)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.bank_object', $bankObject);
 
             return TRUE;
         });

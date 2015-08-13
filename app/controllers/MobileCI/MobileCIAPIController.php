@@ -39,6 +39,17 @@ use \TransactionDetail;
 use \TransactionDetailPromotion;
 use \TransactionDetailCoupon;
 use \TransactionDetailTax;
+use \LuckyDraw;
+use \LuckyDrawNumber;
+use \LuckyDrawNumberReceipt;
+use \LuckyDrawReceipt;
+use \LuckyDrawWinner;
+use \Setting;
+use URL;
+use PDO;
+use Response;
+use LuckyDrawAPIController;
+use OrbitShop\API\v1\Helper\Generator;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -64,6 +75,10 @@ class MobileCIAPIController extends ControllerAPI
             }
             $retailer = $this->getRetailerInfo();
 
+            $notAllowedStatus = ['inactive'];
+
+            $this->beginTransaction();
+
             $user = User::with('apikey', 'userdetail', 'role')
                         ->excludeDeleted()
                         ->where('user_email', $email)
@@ -72,15 +87,20 @@ class MobileCIAPIController extends ControllerAPI
                             function ($query) {
                                 $query->where('role_name', 'Consumer');
                             }
-                        )
+                        )->sharedLock()
                         ->first();
 
             if (! is_object($user)) {
-                $response = \LoginAPIController::create('raw')->postRegisterUserInShop();
+                $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
                 if ($response->code !== 0) {
                     throw new Exception($response->message, $response->code);
                 }
                 $user = $response->data;
+            }
+
+            $lowerCasedStatus = strtolower($user->status);
+            if (in_array($lowerCasedStatus, $notAllowedStatus)) {
+                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
             }
 
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
@@ -103,21 +123,29 @@ class MobileCIAPIController extends ControllerAPI
             $user->setHidden(array('user_password', 'apikey'));
             $this->response->data = $user;
 
+            $this->commit();
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            $this->rollback();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            $this->rollback();
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            $this->rollback();
         }
 
         return $this->render();
@@ -159,121 +187,16 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $random_products = Product::with('media')
-                ->whereHas(
-                    'retailers',
-                    function ($q) use ($retailer) {
-                        $q->where('product_retailer.retailer_id', $retailer->merchant_id);
-                    }
-                )
-                ->active()
-                ->orderByRaw("RAND()")
-                ->take(10)
-                ->get();
-
-            $new_products = Product::with('media')
-                ->whereHas(
-                    'retailers',
-                    function ($q) use ($retailer) {
-                        $q->where('product_retailer.retailer_id', $retailer->merchant_id);
-                    }
-                )
-                ->active()
-                ->where('new_from', '<=', Carbon::now())
-                ->where('new_until', '>=', Carbon::now())
-                ->get();
-
-            $promotion = Promotion::active()->where('is_coupon', 'N')->where('merchant_id', $retailer->parent_id)->whereHas(
-                'retailers',
-                function ($q) use ($retailer) {
-                    $q->where('promotion_retailer.retailer_id', $retailer->merchant_id);
-                }
-            )
-                ->where(
-                    function ($q) {
-                        $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now())->orWhere(
-                            function ($qr) {
-                                $qr->where('begin_date', '<=', Carbon::now())->where('is_permanent', '=', 'Y');
-                            }
-                        );
-                    }
-                )
-                ->orderBy(DB::raw('RAND()'))->first();
-
-            $promo_products = DB::select(
-                DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND (p.promotion_type = "product" OR p.promotion_type = "cart") and p.status = "active" and ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y")) and p.is_coupon = "N"
-                inner join ' . DB::getTablePrefix() . 'promotion_retailer prr on prr.promotion_id = p.promotion_id
-                left join ' . DB::getTablePrefix() . 'products prod on
-                (
-                    (pr.discount_object_type="product" AND pr.discount_object_id1 = prod.product_id)
-                    OR
-                    (
-                        (pr.discount_object_type="family") AND
-                        ((pr.discount_object_id1 IS NULL) OR (pr.discount_object_id1=prod.category_id1)) AND
-                        ((pr.discount_object_id2 IS NULL) OR (pr.discount_object_id2=prod.category_id2)) AND
-                        ((pr.discount_object_id3 IS NULL) OR (pr.discount_object_id3=prod.category_id3)) AND
-                        ((pr.discount_object_id4 IS NULL) OR (pr.discount_object_id4=prod.category_id4)) AND
-                        ((pr.discount_object_id5 IS NULL) OR (pr.discount_object_id5=prod.category_id5))
-                    )
-                )
-                WHERE p.merchant_id = :merchantid AND prr.retailer_id = :retailerid'
-                ),
-                array('merchantid' => $retailer->parent_id, 'retailerid' => $retailer->merchant_id)
-            );
-
-            $coupons = DB::select(
-                DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
-                inner join ' . DB::getTablePrefix() . 'promotion_retailer_redeem prr on prr.promotion_id = p.promotion_id
-                left join ' . DB::getTablePrefix() . 'products prod on
-                (
-                    (pr.discount_object_type="product" AND pr.discount_object_id1 = prod.product_id)
-                    OR
-                    (
-                        (pr.discount_object_type="family") AND
-                        ((pr.discount_object_id1 IS NULL) OR (pr.discount_object_id1=prod.category_id1)) AND
-                        ((pr.discount_object_id2 IS NULL) OR (pr.discount_object_id2=prod.category_id2)) AND
-                        ((pr.discount_object_id3 IS NULL) OR (pr.discount_object_id3=prod.category_id3)) AND
-                        ((pr.discount_object_id4 IS NULL) OR (pr.discount_object_id4=prod.category_id4)) AND
-                        ((pr.discount_object_id5 IS NULL) OR (pr.discount_object_id5=prod.category_id5))
-                    )
-                )
-                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND prr.retailer_id = :retailerid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '"
-                GROUP BY prod.product_id
-                '
-                ),
-                array('merchantid' => $retailer->parent_id, 'retailerid' => $retailer->merchant_id, 'userid' => $user->user_id)
-            );
-
             if (empty(\Cookie::get('event'))) {
                 $event_store = array();
             } else {
                 $event_store = \Cookie::get('event');
             }
 
-            $events = EventModel::active()->whereHas(
-                'retailers',
-                function ($q) use ($retailer) {
-                    $q->where('event_retailer.retailer_id', $retailer->merchant_id);
-                }
-            )
-                ->where('merchant_id', $retailer->parent->merchant_id)
+            $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
                     function ($q) {
-                        $q->where(
-                            function ($q2) {
-                                $q2->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
-                            }
-                        );
-                        $q->orWhere(
-                            function ($q2) {
-                                $q2->where('begin_date', '<=', Carbon::now())->where('is_permanent', 'Y');
-                            }
-                        );
+                        $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
                     }
                 );
 
@@ -284,7 +207,6 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $events = $events->orderBy('events.event_id', 'DESC')->first();
-
             $event_families = array();
             if (! empty($events)) {
                 if ($events->link_object_type == 'family') {
@@ -319,8 +241,6 @@ class MobileCIAPIController extends ControllerAPI
                 \Cookie::queue('event', $event_store, 1440);
             }
 
-            $cartitems = $this->getCartForToolbar();
-
             $widgets = Widget::with('media')
                 ->active()
                 ->where('merchant_id', $retailer->parent->merchant_id)
@@ -332,8 +252,14 @@ class MobileCIAPIController extends ControllerAPI
                 )
                 ->orderBy('widget_order', 'ASC')
                 ->groupBy('widget_type')
-                ->take(4)
+                ->take(5)
                 ->get();
+
+            $widget_flags = new stdclass();
+            $widget_flags->enable_coupon = $this->getObjFromArray($retailer->settings, 'enable_coupon');
+            $widget_flags->enable_coupon_widget = $this->getObjFromArray($retailer->settings, 'enable_coupon_widget');
+            $widget_flags->enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
+            $widget_flags->enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
@@ -345,7 +271,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'random_products' => $random_products, 'new_products' => $new_products, 'promo_products' => $promo_products, 'promotion' => $promotion, 'cartitems' => $cartitems, 'coupons' => $coupons, 'events' => $events, 'widgets' => $widgets, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title'=>Lang::get('mobileci.page_title.home'), 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -365,22 +291,60 @@ class MobileCIAPIController extends ControllerAPI
      * GET - Sign in page
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Rio Astamal <me@rioastamal.net>
      *
      * @return Illuminate\View\View
      */
     public function getSignInView()
     {
+        $bg = null;
+        $landing_url = URL::route('ci-customer-home');
         try {
-            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
+            $landing = Setting::getFromList($mall->settings, 'landing_page');
 
-            return \Redirect::to('/customer/welcome');
+            // Get the landing page URL based on settings
+            $landing_url = '';
+
+            switch ($landing[0]) {
+                case 'tenant':
+                    $landing_url = URL::route('ci-tenants');
+                    break;
+
+                case 'promotion':
+                    $landing_url = URL::route('ci-mall-promotions');
+                    break;
+
+                case 'news':
+                    $landing_url = URL::route('ci-mall-news');
+                    break;
+
+                case 'widget':
+                default:
+                    $landing_url = URL::route('ci-customer-home');
+                    break;
+            }
+
+            $bg = Setting::getFromList($mall->settings, 'background_image');
+
+            // Get email from query string
+            $loggedUser = $this->getLoggedInUser();
+            $user_email = $loggedUser->user_email;
+
+            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
-            $user_email = '';
+
+            $user_email = OrbitInput::get('email', '');
+            if (! empty($user_email)) {
+                \DummyAPIController::create()->getUserSignInNetwork();
+            }
+
             if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
             } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email));
+                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
             }
         }
     }
@@ -3487,7 +3451,7 @@ class MobileCIAPIController extends ControllerAPI
                 ),
                 array('merchantid' => $retailer->parent_id, 'retailerid' => $retailer->merchant_id, 'userid' => $user->user_id, 'productid' => $product_id)
             );
-            
+
             foreach ($coupons as $coupon) {
                 if (empty($coupon->promo_image)) {
                     $coupon->promo_image = 'mobile-ci/images/default_product.png';
@@ -3871,7 +3835,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         try {
             $retailer_id = Config::get('orbit.shop.id');
-            $retailer = Retailer::with('parent')->where('merchant_id', $retailer_id)->first();
+            $retailer = Retailer::with('parent', 'settings')->where('merchant_id', $retailer_id)->first();
 
             return $retailer;
         } catch (ACLForbiddenException $e) {
@@ -5566,10 +5530,10 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
         } catch (Exception $e) {
             $this->rollback();
-            $activityNotes = sprintf('Event Click Failed. Event Id : %s', $event_id);
+            $activityNotes = sprintf('Event View Failed. Event Id : %s', $event_id);
             $activity->setUser($user)
-                ->setActivityName('event_click')
-                ->setActivityNameLong('Event Click Failed')
+                ->setActivityName('event_view')
+                ->setActivityNameLong('Event View Failed')
                 ->setObject(null)
                 ->setModuleName('Event')
                 ->setEvent($event)
@@ -5996,6 +5960,10 @@ class MobileCIAPIController extends ControllerAPI
      */
     public function redirectIfNotLoggedIn($e)
     {
+        if (Config::get('app.debug')) {
+            return $e;
+        }
+
         if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'Session has ben expires.' || $e->getMessage() === 'User agent miss match.') {
             return \Redirect::to('/customer');
         } else {
@@ -6039,9 +6007,9 @@ class MobileCIAPIController extends ControllerAPI
         if (! is_object($this->session)) {
             // This user assumed are Consumer, which has been checked at login process
             $config = new SessionConfig(Config::get('orbit.session'));
-            $config->setConfig('session_origin.header.name', 'X-Orbit-Mobile-Session');
-            $config->setConfig('session_origin.query_string.name', 'orbit_mobile_session');
-            $config->setConfig('session_origin.cookie.name', 'orbit_mobile_session');
+            $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
+            $config->setConfig('session_origin.query_string.name', 'orbit_session');
+            $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
             $this->session = new Session($config);
             $this->session->start();
         }
@@ -7387,5 +7355,1399 @@ class MobileCIAPIController extends ControllerAPI
         $all .= $left . $spc . $right . " \n";
 
         return $all;
+    }
+
+    /**
+     * GET - Tenant list (this function is used when the family is clicked on catalogue page)
+     *
+     * @param string    `sort_by`        (optional)
+     * @param string    `sort_mode`      (optional)
+     * @param array     `families`       (optional)
+     * @param integer   `family_id`      (optional)
+     * @param integer   `family_level`   (optional)
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getTenantList()
+    {
+        $user = null;
+        $family_id = null;
+        $activityCategory = Activity::mobileci()
+                            ->setActivityType('view');
+        try {
+            $user = $this->getLoggedInUser();
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $family_id = OrbitInput::get('family_id');
+            $family_level = '0';
+            $families = OrbitInput::get('families');
+
+            if (count($families) == 1) {
+                \Session::put('f1', $family_id);
+            }
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                    'family_id' => $family_id,
+                ),
+                array(
+                    'sort_by' => 'in:product_name,price',
+                    'family_id' => 'orbit.exists.category',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 20;
+            }
+
+            $retailer = $this->getRetailerInfo();
+            $nextfamily = $family_level + 1;
+
+            // $subfamilies = Category::active();
+            $subfamilies = null;
+
+            // if ($nextfamily < 6) {
+            //     $subfamilies = Category::where('merchant_id', $retailer->parent_id)->whereHas(
+            //         'product' . $nextfamily,
+            //         function ($q) use ($family_id, $family_level, $families, $retailer) {
+            //             $nextfamily = $family_level + 1;
+            //             for ($i = 1; $i <= count($families); $i++) {
+            //                 $q->where('products.category_id' . $i, $families[$i-1]);
+            //                 $q->whereHas(
+            //                     'retailers',
+            //                     function ($q2) use ($retailer) {
+            //                         $q2->where('product_retailer.retailer_id', $retailer->merchant_id);
+            //                     }
+            //                 );
+            //             }
+
+            //             $q->where('products.category_id' . $family_level, $family_id)
+            //                 ->where(
+            //                     function ($query) use ($nextfamily) {
+            //                         $query->whereNotNull('products.category_id' . $nextfamily)->orWhere('products.category_id' . $nextfamily, '<>', 0);
+            //                     }
+            //                 )
+            //             ->where('products.status', 'active');
+            //         }
+            //     )->get();
+            // } else {
+            //     $subfamilies = null;
+            // }
+
+            // $products = Product::with('variants')->whereHas(
+            //     'retailers',
+            //     function ($query) use ($retailer) {
+            //         $query->where('retailer_id', $retailer->merchant_id);
+            //     }
+            // )->where('merchant_id', $retailer->parent_id)->active()->where(
+            //     function ($q) use ($family_level, $family_id, $families) {
+            //         for ($i = 1; $i < count($families); $i++) {
+            //             $q->where('category_id' . $i, $families[$i-1]);
+            //         }
+            //             $q->where('category_id' . $family_level, $family_id);
+            //         for ($i = $family_level + 1; $i <= 5; $i++) {
+            //             $q->where(
+            //                 function ($q2) use ($i) {
+            //                     $q2->whereNull('category_id' . $i)->orWhere('category_id' . $i, 0);
+            //                 }
+            //             );
+            //         }
+            //     }
+            // );
+
+            $products = Retailer::active();
+
+            $_products = clone $products;
+
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
+            $products->orderBy($sortBy, $sortMode);
+
+            $totalRec = $_products->count();
+            $listOfRec = $products->get();
+
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+
+            $cartitems = $this->getCartForToolbar();
+
+            $activityfamily = Category::where('category_id', $family_id)->first();
+
+            $activityCategoryNotes = sprintf('Category viewed: %s', $activityfamily->category_name);
+            $activityCategory->setUser($user)
+                ->setActivityName('view_catalogue')
+                ->setActivityNameLong('View Catalogue ' . $activityfamily->category_name)
+                ->setObject($activityfamily)
+                ->setModuleName('Catalogue')
+                ->setNotes($activityCategoryNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.tenant-list', array('retailer' => $retailer, 'data' => $data, 'subfamilies' => $subfamilies, 'cartitems' => $cartitems));
+
+        } catch (Exception $e) {
+            $activityCategoryNotes = sprintf('Category viewed: %s', $family_id);
+            $activityCategory->setUser($user)
+                ->setActivityName('view_catalogue')
+                ->setActivityNameLong('View Catalogue Failed')
+                ->setObject(null)
+                ->setModuleName('Catalogue')
+                ->setNotes($e->getMessage())
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
+        }
+
+    }
+
+    /**
+     * GET - catalogue tenant page
+     *
+     * @param string    `keyword`        (optional) - The keyword, could be: upc code, product name, short or long description
+     * @param string    `sort_by`        (optional)
+     * @param string    `new`            (optional) - Fill with 1 to filter for new product only (new product page)
+     * @param string    `take`           (optional)
+     * @param string    `skip`           (optional)
+     * @param string    `sort_mode`      (optional)
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getTenantsView()
+    {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor = trim(OrbitInput::get('floor'));
+
+            // $pagetitle = Lang::get('mobileci.page_title.searching');
+            $pagetitle = 'TENANT DIRECTORY';
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+            }
+
+            $retailer = $this->getRetailerInfo();
+
+            $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 300;
+            }
+
+            $products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
+
+            // Filter product by name pattern
+            OrbitInput::get(
+                'keyword',
+                function ($name) use ($products) {
+                    $products->where(
+                        function ($q) use ($name) {
+                            $q->where('merchants.name', 'like', "%$name%")
+                                ->orWhere('merchants.description', 'like', "%$name%")
+                                ->orWhere('merchants.floor', 'like', "%$name%");
+                            $q->orWhereHas('categories', function($q2) use ($name) {
+                                $q2->where('category_name', 'like', "%$name%");
+                            });
+                        }
+                    );
+                }
+            );
+
+            OrbitInput::get(
+                'cid',
+                function ($cid) use ($products) {
+                    if (! empty($cid)) {
+                        $products->where(
+                            function ($q) use ($cid) {
+                                $q->whereHas('categories', function ($q2) use ($cid) {
+                                    $q2->where('category_merchant.category_id', $cid);
+                                });
+                            }
+                        );
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'promotion_id',
+                function ($pid) use ($products) {
+                    if (! empty($pid)) {
+                        $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
+                            $q->where('news_id', $pid);
+                        })->whereHas('news', function($q2) {
+                            $q2->where('object_type', 'promotion');
+                        })->get()->lists('merchant_id');
+                        // <-- should add exception if retailers not found
+                        $products->whereIn('merchants.merchant_id', $retailers);
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'news_id',
+                function ($pid) use ($products) {
+                    if (! empty($pid)) {
+                        $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
+                            $q->where('news_id', $pid);
+                        })->whereHas('news', function($q2) {
+                            $q2->where('object_type', 'news');
+                        })->get()->lists('merchant_id');
+                        $products->whereIn('merchants.merchant_id', $retailers);
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'event_id',
+                function ($pid) use ($products) {
+                    if (! empty($pid)) {
+                        $retailers = \EventRetailer::whereHas('retailer', function($q) use($pid) {
+                            $q->where('event_id', $pid);
+                        })->get()->lists('retailer_id');
+                        $products->whereIn('merchants.merchant_id', $retailers);
+                    }
+                }
+            );
+
+            OrbitInput::get(
+                'fid',
+                function ($fid) use ($products) {
+                    if (! empty($fid)) {
+                        $products->where('merchants.floor', $fid);
+                    }
+                }
+            );
+
+            $_products = clone $products;
+
+            // Get the take args
+            $take = 1000;
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $products->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $products) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $products->skip($skip);
+
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get(
+                'sort_by',
+                function ($_sortBy) use (&$sortBy) {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'name'      => 'merchants.name',
+                    );
+
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
+            );
+
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
+            $products->orderBy($sortBy, $sortMode);
+
+            $cartitems = $this->getCartForToolbar();
+
+            $totalRec = $_products->count();
+            $listOfRec = $products->get();
+            foreach ($listOfRec as $tenant) {
+                if (empty($tenant->logo)) {
+                    $tenant->logo = 'mobile-ci/images/default_product.png';
+                }
+                if (!empty($tenant->phone)) {
+                    $phone = explode('|#|', $tenant->phone);
+                    $tenant->phone = implode(' ', $phone);
+                    // dd($tenant->phone);
+                }
+            }
+
+            // should not be limited for new products - limit only when searching
+            $search_limit = Config::get('orbit.shop.search_limit');
+            if ($totalRec>$search_limit) {
+                $data = new stdclass();
+                $data->status = 0;
+            } else {
+                $data = new stdclass();
+                $data->status = 1;
+                $data->total_records = $totalRec;
+                $data->returned_records = count($listOfRec);
+                $data->records = $listOfRec;
+            }
+
+            if (! empty(OrbitInput::get('promotion_id'))) {
+                $pagetitle = 'PROMOTIONS TENANTS';
+                $activityPageNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Promotion Tenant')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty(OrbitInput::get('news_id'))) {
+                $pagetitle = 'NEWS TENANTS';
+                $activityPageNotes = sprintf('Page viewed: News Tenants List Page, news ID: %s', OrbitInput::get('news_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View News Tenant')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty(OrbitInput::get('event_id'))) {
+                $pagetitle = 'EVENTS TENANTS';
+                $activityPageNotes = sprintf('Page viewed: Events Tenants List Page, event ID: %s', OrbitInput::get('event_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Events Tenant')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+            if (! empty(OrbitInput::get('event_id')) && ! empty(OrbitInput::get('promotion_id'))) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
+        }
+    }
+
+    /**
+     * GET - Tenant detail page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getTenantDetailView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        $product = null;
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+            $product_id = trim(OrbitInput::get('id'));
+            $promo_id = trim(OrbitInput::get('pid'));
+            $news_id = trim(OrbitInput::get('nid'));
+
+            $product = Retailer::with('media', 'mediaLogoOrig', 'mediaMapOrig', 'mediaImageOrig', 'news', 'newsPromotions')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
+            // dd($product);
+            if (empty($product)) {
+                // throw new Exception('Product id ' . $product_id . ' not found');
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
+
+            if (empty($product->logo)) {
+                $product->logo = 'mobile-ci/images/default_product.png';
+            }
+
+            if (! empty($promo_id)) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $product->merchant_id . ', promotion ID: '. $promo_id);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant')
+                    ->setObject($product)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty($news_id)) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from News, tenant ID: ' . $product->merchant_id . ', news ID: '. $news_id);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant')
+                    ->setObject($product)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (empty($promo_id) && empty($news_id)) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Detail Page, tenant ID: ' . $product->merchant_id);
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant')
+                    ->setObject($product)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'retailer' => $retailer, 'product' => $product));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_retailer')
+                ->setActivityNameLong('View Tenant')
+                ->setObject(null)
+                ->setModuleName('Tenant')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
+        }
+    }
+
+    /**
+     * GET - Lucky draw page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getLuckyDrawView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityProduct = Activity::mobileci()
+                                   ->setActivityType('view');
+        $product = null;
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+            $luckydraw = LuckyDraw::active()->where('mall_id', $retailer->merchant_id)->first();
+
+            // Pass information to the API
+            $_GET['user_id'] = $user->user_id;
+            $_GET['apikey'] = $user->apikey->api_key;
+            $_GET['apitimestamp'] = time();
+
+            $currentPage = (int)OrbitInput::get('page', 1);
+            $take = 100;
+            $start = ($currentPage - 1)  * $take;
+
+            $_GET['take'] = (int)OrbitInput::get('take', $take);
+            $_GET['skip'] = (int)OrbitInput::get('skip', $start);
+            $_GET['sortby'] = OrbitInput::get('sortby', 'lucky_draw_number');
+            $_GET['sortmode'] = OrbitInput::get('sortmode', 'desc');
+
+            $prevUrl = '';
+            $nextUrl = '';
+
+            $secretKey = $user->apikey->api_secret_key;
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $_SERVER['REQUEST_URI'] = '/api/v1/lucky-draw-number/list';
+            $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+            $apiResponse = LuckyDrawAPIController::create('raw')->getSearchLuckyDrawNumber();
+            if ($apiResponse->code !== 0) {
+                throw new Exception ($apiResponse->message, $apiResponse->code);
+            }
+
+            $totalPages = ceil($apiResponse->data->total_records / $take);
+
+            if ($totalPages > 1) {
+                $prevUrl = URL::route('ci-luckydraw') . '?page=' . ($currentPage - 1);
+                $nextUrl = URL::route('ci-luckydraw') . '?page=' . ($currentPage + 1);
+
+                if ($currentPage >= $totalPages) {
+                    $nextUrl = '#';
+                }
+
+                if ($currentPage === 1) {
+                    $prevUrl = '#';
+                }
+            }
+
+            $activityProductNotes = sprintf('Page viewed: Lucky Draw Page');
+            $activityProduct->setUser($user)
+                ->setActivityName('view_lucky_draw')
+                ->setActivityNameLong('View Lucky Draw')
+                ->setObject($luckydraw)
+                ->setModuleName('Lucky Draw')
+                ->setNotes($activityProductNotes)
+                ->responseOK()
+                ->save();
+
+            $numbers = empty($apiResponse->data->records) ? array() : $apiResponse->data->records;
+
+            $servertime = Carbon::now();
+
+            return View::make('mobile-ci.luckydraw', [
+                                'page_title'    => 'LUCKY DRAW',
+                                'retailer'      => $retailer,
+                                'luckydraw'     => $luckydraw,
+                                'numbers'       => $numbers,
+                                'total_number'  => $apiResponse->data->total_records,
+                                'prev_url'      => $prevUrl,
+                                'next_url'      => $nextUrl,
+                                'total_pages'   => $totalPages,
+                                'current_page'  => $currentPage,
+                                'per_page'      => $take,
+                                'servertime'    => $servertime,
+            ]);
+        } catch (Exception $e) {
+            $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
+            $activityProduct->setUser($user)
+                ->setActivityName('view_lucky_draw')
+                ->setActivityNameLong('View Lucky Draw')
+                ->setObject(null)
+                ->setModuleName('Lucky Draw')
+                ->setNotes($activityProductNotes)
+                ->responseOK()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * POST - Pop up for product on cart page
+     *
+     * @param integer    `detail`        (required) - THe product ID
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function postLuckyNumberPopup()
+    {
+        $user = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            $this->registerCustomValidation();
+            $luckyid = OrbitInput::post('lid');
+
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+
+            $receipts = LuckyDrawNumber::with('receipts.receiptRetailer')->where('lucky_draw_number_id', $luckyid)->first();
+
+            foreach ($receipts->receipts as $receipt) {
+                if(!empty($receipt->receipt_date)) {
+                    $receipt->receipt_date = date('d M Y', strtotime($receipt->receipt_date));
+                }
+            }
+
+            $this->response->message = 'success';
+            $this->response->data = $receipts;
+
+            return $this->render();
+        } catch (Exception $e) {
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Get coupon list in mall
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getMallCouponList() {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor = trim(OrbitInput::get('floor'));
+
+            // $pagetitle = Lang::get('mobileci.page_title.searching');
+            $pagetitle = 'COUPONS';
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+            }
+
+            $retailer = $this->getRetailerInfo();
+
+            // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 300;
+            }
+
+            $coupons = DB::select(
+                DB::raw(
+                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
+                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '"'
+                ),
+                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+            );
+
+            if (sizeof($coupons) < 1) {
+                $data = new stdclass();
+                $data->status = 0;
+            } else {
+                $data = new stdclass();
+                $data->status = 1;
+                $data->total_records = sizeof($coupons);
+                $data->returned_records = sizeof($coupons);
+                $data->records = $coupons;
+            }
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Coupon detail page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getMallCouponDetailView()
+    {
+        $user = null;
+        $issued_coupon_id = 0;
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+            $issued_coupon_id = trim(OrbitInput::get('id'));
+
+            // $coupons = Coupon::select(
+            //     DB::raw(
+            //         'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+            //     inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
+            //     inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+            //     WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '" AND ic.issued_coupon_id = :issuedid'
+            //     ),
+            //     array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id, 'issuedid' => $issued_coupon_id)
+            // );
+
+            $coupons = Coupon::with(array('couponRule', 'issuedCoupons' => function($q) use($issued_coupon_id, $user){
+                $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
+                $q->where('issued_coupons.user_id', $user->user_id);
+                $q->where('issued_coupons.expired_date', '>=', Carbon::now());
+                $q->where('issued_coupons.status', 'active');
+            }))->where('merchant_id', $retailer->merchant_id)->active()->where(function($q){
+                $q->where('begin_date', '<=', Carbon::now());
+                $q->where('end_date', '>=',  Carbon::now());
+                $q->orWhere(function($q2){
+                    $q2->where('begin_date', '<=', Carbon::now());
+                    $q2->where('is_permanent', 'Y');
+                });
+            })->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user) {
+                $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
+                $q->where('issued_coupons.user_id', $user->user_id);
+                $q->where('issued_coupons.expired_date', '>=', Carbon::now());
+                $q->where('issued_coupons.status', 'active');
+            })->first();
+
+            $coupon_id = $coupons->promotion_id;
+            $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
+
+            if (empty($coupons)) {
+                // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
+
+            if (empty($coupons->image)) {
+                $coupons->image = 'mobile-ci/images/default_product.png';
+            }
+
+            $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail')
+                ->setObject($coupons)
+                ->setCoupon($coupons)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+
+    /**
+     * GET - Get promotion list in mall
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getMallPromotionList() {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor = trim(OrbitInput::get('floor'));
+
+            // $pagetitle = Lang::get('mobileci.page_title.searching');
+            $pagetitle = 'PROMOTIONS';
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+            }
+
+            $retailer = $this->getRetailerInfo();
+
+            // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 300;
+            }
+
+            $coupons = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'promotion')
+                            ->whereRaw("NOW() between begin_date and end_date")
+                            ->orderBy('sticky_order', 'desc')
+                            ->orderBy('created_at', 'desc')
+                            ->get();
+
+            if ($coupons->isEmpty()) {
+                $data = new stdclass();
+                $data->status = 0;
+            } else {
+                $data = new stdclass();
+                $data->status = 1;
+                $data->total_records = sizeof($coupons);
+                $data->returned_records = sizeof($coupons);
+                $data->records = $coupons;
+            }
+
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion_list')
+                ->setActivityNameLong('View Promotion List Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Promotion detail page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getMallPromotionDetailView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        $product = null;
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+            $product_id = trim(OrbitInput::get('id'));
+
+            $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'promotion')->where('news_id', $product_id)->first();
+
+            if (empty($coupons)) {
+                // throw new Exception('Product id ' . $product_id . ' not found');
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
+
+            if (empty($coupons->image)) {
+                $coupons->image = 'mobile-ci/images/default_product.png';
+            }
+
+            $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion')
+                ->setObject($coupons)
+                ->setNews($coupons)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_promotion')
+                ->setActivityNameLong('View Promotion Failed')
+                ->setObject(null)
+                ->setModuleName('Promotion')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+                // return $e;
+        }
+    }
+
+    /**
+     * GET - Get news list in mall
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getMallNewsList() {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor = trim(OrbitInput::get('floor'));
+
+            // $pagetitle = Lang::get('mobileci.page_title.searching');
+            $pagetitle = 'NEWS';
+
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+            }
+
+            $retailer = $this->getRetailerInfo();
+
+            // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 250;
+            }
+
+            $coupons = \News::active()->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'news')
+                            ->whereRaw("NOW() between begin_date and end_date")
+                            ->orderBy('sticky_order', 'desc')
+                            ->orderBy('created_at', 'desc')
+                            ->get();
+
+            if ($coupons->isEmpty()) {
+                $data = new stdclass();
+                $data->status = 0;
+            } else {
+                $data = new stdclass();
+                $data->status = 1;
+                $data->total_records = sizeof($coupons);
+                $data->returned_records = sizeof($coupons);
+                $data->records = $coupons;
+            }
+
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'News List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_news_list')
+                ->setActivityNameLong('View News List')
+                ->setObject(null)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_news_list')
+                ->setActivityNameLong('View News List Failed')
+                ->setObject(null)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - News detail page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getMallNewsDetailView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        $product = null;
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+            $product_id = trim(OrbitInput::get('id'));
+
+            $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'news')->where('news_id', $product_id)->first();
+
+            if (empty($coupons)) {
+                // throw new Exception('Product id ' . $product_id . ' not found');
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
+
+            if (empty($coupons->image)) {
+                $coupons->image = 'mobile-ci/images/default_product.png';
+            }
+
+            $activityPageNotes = sprintf('Page viewed: News Detail, news Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_news')
+                ->setActivityNameLong('View News Detail')
+                ->setObject($coupons)
+                ->setNews($coupons)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_news')
+                ->setActivityNameLong('View News Detail Failed')
+                ->setObject(null)
+                ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * Get list of downloadable lucky draw number. There is possibilities that
+     * one user have hundred even thousands of luckydraw coupons. So, we could
+     * not fit all that number into one image. We need to split it into
+     * different image.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return Illuminate\View\View
+     */
+    public function getMallLuckyDrawDownloadList()
+    {
+        try {
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $luckyDraw = LuckyDraw::active()->first();
+
+            $mode = OrbitInput::get('mode', 'view');
+
+            switch ($mode) {
+                case 'download':
+                    return $this->getMallLuckyDrawDownloadNumber($user->user_id, $luckyDraw->lucky_draw_id);
+                    break;
+
+                case 'view':
+                default:
+                    $totalLuckyDrawNumber = LuckyDrawNumber::active()
+                                                           ->where('user_id', $user->user_id)
+                                                           ->where('lucky_draw_id', $luckyDraw->lucky_draw_id)
+                                                           ->count();
+                    $totalPerImage = 160;
+                    $totalImage = ceil($totalLuckyDrawNumber / $totalPerImage);
+
+                    return View::make('mobile-ci.lucky-draw-number-download', [
+                                     'page_title'   => 'Download Lucky Draw Number',
+                                     'luckydraw'    => $luckyDraw,
+                                     'retailer'     => $retailer,
+                                     'user'         => $user,
+                                     'total_number' => $totalLuckyDrawNumber,
+                                     'total_image'  => $totalImage,
+                                     'number_per_image'  => $totalPerImage,
+                    ]);
+            }
+        } catch (Exception $e) {
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * Method to ouput the download file to the user. Minimize the overhead
+     * by using raw queries and avoiding Eloquent.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param int $userId - The user ID
+     * @param int $luckyDrawId - The Lucky Draw ID
+     * @return string
+     */
+    protected function getMallLuckyDrawDownloadNumber($userId, $luckyDrawId)
+    {
+        $prefix = DB::getTablePrefix();
+        $default = Config::get('database.default');
+        $dbConfig = Config::get('database.connections.' . $default);
+
+        $pdo = new PDO("mysql:host=localhost;dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
+        $query = $pdo->query("SELECT * FROM {$prefix}lucky_draws
+                              where lucky_draw_id=$luckyDrawId and status='active' LIMIT 1");
+        $luckyDraw = $query->fetch(PDO::FETCH_ASSOC);
+
+        $countQuery = $pdo->query("SELECT count(*) as total FROM {$prefix}lucky_draw_numbers
+                                  where user_id=$userId");
+        $numberOfLuckyDraw = $countQuery->fetch(PDO::FETCH_ASSOC);
+        $numberOfLuckyDraw = (int)$numberOfLuckyDraw['total'];
+
+        // Pagination config
+        $currentPage = OrbitInput::get('page', 1);
+        $take = 160;
+        $start = ($currentPage - 1)  * $take;
+        $totalPages = ceil($numberOfLuckyDraw / $take);
+
+        // Image configuration
+        $fontSize = 16;
+        $xpos = 14;
+        $ypos = 5;
+
+        $heighPerLine = 20; // points
+        $imageWidth = 595;  // A4 Paper 72ppi
+
+        // Header height + total line + Footer height
+        $rowHeight = $take / 5;
+        $imageHeight = floor(100 + ($heighPerLine * $rowHeight) + 100);
+        $imageHeight = 842; // A4 Paper 72ppi
+
+        $im = imagecreatetruecolor($imageWidth, $imageHeight);
+        $black = imagecolorallocate($im, 0, 0, 0);
+        $white = imagecolorallocate($im, 255, 255, 255);
+        imagefill($im, 0, 0, $white);
+
+        $header = sprintf('%-12s: %s', 'Lucky Draw', $luckyDraw['lucky_draw_name']);
+        imagestring($im, $fontSize, $xpos, $ypos, $header, $black);
+
+        $periodHumanStart = date('d/m/Y H:i', strtotime($luckyDraw['start_date']));
+        $periodHumanEnd = date('d/m/Y H:i', strtotime($luckyDraw['end_date']));
+        $header = sprintf('%-12s: %s - %s', 'Periode', $periodHumanStart, $periodHumanEnd);
+
+        $ypos += $heighPerLine;
+        imagestring($im, $fontSize, $xpos, $ypos, $header, $black);
+
+        $totalSentences = 'Total nomor lucky draw yang anda peroleh per tanggal';
+        $ypos += $heighPerLine * 2;
+        imagestring($im, $fontSize, $xpos, $ypos, $totalSentences, $black);
+
+        $today = date('d/m/Y H:i');
+        $totalSentences = sprintf('%s adalah sebanyak %s nomor.', $today, $numberOfLuckyDraw);
+        $ypos += $heighPerLine;
+        imagestring($im, $fontSize, $xpos, $ypos, $totalSentences, $black);
+
+        $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+        $uresult = $pdo->query("SELECT * FROM {$prefix}lucky_draw_numbers
+                                where user_id=$userId order by issued_date desc,
+                                lucky_draw_number_code desc
+                                limit $start, $take");
+        if ($uresult) {
+            $i = 0;
+            $ypos += $heighPerLine * 2;
+            while ($row = $uresult->fetch(PDO::FETCH_ASSOC)) {
+                $string = sprintf('%10s', $row['lucky_draw_number_code']);
+
+                $yplus = 40;
+                if ($i++ % 5 === 0) {
+                    $string = sprintf('%-10s', $row['lucky_draw_number_code']);
+                    $ypos += $heighPerLine;
+                    $xpos = 14;
+                    $yplus = 0;
+                }
+                imagestring($im, $fontSize, $xpos, $ypos, $string, $black);
+                $xpos += 80 + $yplus;
+            }
+
+            $goodLuckString = 'Semoga Anda Beruntung!';;
+            $xpos = 14;
+            $ypos += $heighPerLine * 2;
+            imagestring($im, $fontSize, $xpos, $ypos, $goodLuckString, $black);
+
+            $pageInfoString = sprintf('Gambar %s dari %s', $currentPage, $totalPages, $take);
+            $ypos += $heighPerLine;
+            $xpos = $imageWidth - 150;
+            imagestring($im, 5, $xpos, $ypos, $pageInfoString, $black);
+
+            $file = sprintf('lucky-draw_image-%s_%s.png', $currentPage, date('d-m-Y'));
+            $file = storage_path() . '/views/' . $file;
+
+            imagepng($im, $file);
+            imagedestroy($im);
+
+            return Response::download($file);
+        }
+    }
+
+    /**
+     * get object from array
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * @return object
+     */
+    public function getObjFromArray($haystacks, $needle) {
+        foreach($haystacks as $haystack) {
+            if($needle == $haystack->setting_name) {
+                return $haystack;
+            }
+        }
+
+        return false;
     }
 }

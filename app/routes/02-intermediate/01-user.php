@@ -33,22 +33,40 @@ Route::post('/app/v1/user/changepassword', 'IntermediateAuthController@User_post
  */
 Route::post('/app/v1/user-profile-picture/delete', 'IntermediateAuthController@Upload_postDeleteUserImage');
 
-/**
- * Create New Employee
- */
-Route::post('/app/v1/employee/new', 'IntermediateAuthController@Employee_postNewEmployee');
+Route::group(['before' => 'orbit-settings'], function()
+{
+    /**
+     * Create New Employee
+     */
+    Route::post('/app/v1/employee/new', 'IntermediateAuthController@Employee_postNewMallEmployee');
 
-/**
- * Update an Employee
- */
-Route::post('/app/v1/employee/update', 'IntermediateAuthController@Employee_postUpdateEmployee');
+    /**
+     * Update an Employee
+     */
+    Route::post('/app/v1/employee/update', 'IntermediateAuthController@Employee_postUpdateMallEmployee');
 
-/**
- * Delete an Employee
- */
-Route::post('/app/v1/employee/delete', 'IntermediateAuthController@Employee_postDeleteEmployee');
+    /**
+     * Delete an Employee
+     */
+    Route::post('/app/v1/employee/delete', 'IntermediateAuthController@Employee_postDeleteMallEmployee');
 
-/**
- * Search Employees
- */
-Route::get('/app/v1/employee/list', 'IntermediateAuthController@Employee_getSearchEmployee');
+    /**
+     * Search Employees
+     */
+    Route::get('/app/v1/employee/list', 'IntermediateAuthController@Employee_getSearchMallEmployee');
+
+    /**
+     * Create New Membership
+     */
+    Route::post('/app/v1/membership/new', 'IntermediateAuthController@User_postNewMembership');
+
+    /**
+     * Update New Membership
+     */
+    Route::post('/app/v1/membership/update', 'IntermediateAuthController@User_postUpdateMembership');
+
+    /**
+     * Delete Membership
+     */
+    Route::post('/app/v1/membership/delete', 'IntermediateAuthController@User_postDeleteMembership');
+});

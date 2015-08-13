@@ -50,7 +50,7 @@ class UploadAPIController extends ControllerAPI
             $media->mime_type = $file['mime_type'];
             $media->path = $file['path'];
             $media->realpath = $file['realpath'];
-            $media->metadata = NULL;
+            $media->metadata = 'order-' . $i;
             $media->modified_by = $object['modified_by'];
             $media->save();
             $result[] = $media;
@@ -70,7 +70,7 @@ class UploadAPIController extends ControllerAPI
                     $media->mime_type = $file['mime_type'];
                     $media->path = $finfo['path'];
                     $media->realpath = $finfo['realpath'];
-                    $media->metadata = NULL;
+                    $media->metadata = 'order-' . $i;
                     $media->modified_by = $object['modified_by'];
                     $media->save();
                     $result[] = $media;
@@ -2482,12 +2482,21 @@ class UploadAPIController extends ControllerAPI
                 $user = $this->api->user;
                 Event::fire('orbit.upload.postdeleteeventimage.before.authz', array($this, $user));
 
+/*
                 if (! ACL::create($user)->isAllowed('update_event')) {
                     Event::fire('orbit.upload.postdeleteeventimage.authz.notallowed', array($this, $user));
                     $editEventLang = Lang::get('validation.orbit.actionlist.update_event');
                     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editEventLang));
                     ACL::throwAccessForbidden($message);
                 }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
                 Event::fire('orbit.upload.postdeleteeventimage.after.authz', array($this, $user));
             }
 
@@ -2625,6 +2634,2405 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload logo for Tenant.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                 (required) - ID of the merchant
+     * @param file|array `images`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadTenantLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadtenantlogo.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadtenantlogo.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadtenantlogo.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_retailer')) {
+                    Event::fire('orbit.upload.postuploadtenantlogo.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadtenantlogo.after.authz', array($this, $user));
+            } else {
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.retailer.logo');
+            $elementName = $uploadLogoConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchant_id,
+                    $elementName  => $images,
+                ),
+                array(
+                    'merchant_id'   => 'required|numeric|orbit.empty.tenant',
+                    $elementName    => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadtenantlogo.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadtenantlogo.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->beginTransaction();
+            }
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.tenant');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($merchant)
+            {
+                $merchant_id = $merchant->merchant_id;
+                $slug = Str::slug($merchant->name);
+                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadtenantlogo.before.save', array($this, $merchant, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $merchant->merchant_id,
+                'name'          => 'retailer',
+                'media_name_id' => 'retailer_logo',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $merchant->logo = $uploaded[0]['path'];
+                $merchant->save();
+            }
+
+            Event::fire('orbit.upload.postuploadtenantlogo.after.save', array($this, $merchant, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.logo');
+
+            // Commit the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadtenantlogo.after.commit', array($this, $merchant, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadtenantlogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadtenantlogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadtenantlogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadtenantlogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadtenantlogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete logo for a merchant.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                  (required) - ID of the merchant
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteTenantLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletetenantlogo.before.auth', array($this));
+
+            if (! $this->calledFrom('tenant.new, tenant.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletetenantlogo.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletetenantlogo.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_merchant')) {
+                    Event::fire('orbit.upload.postdeletetenantlogo.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postdeletetenantlogo.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $merchant_id,
+                ),
+                array(
+                    'merchant_id'   => 'required|numeric|orbit.empty.tenant',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletetenantlogo.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletetenantlogo.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had Product instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.tenant');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletetenantlogo.before.save', array($this, $merchant));
+
+            // Update the `logo` field which store the original path of the logo
+            // This is temporary since right now the business rules actually
+            // only allows one logo per merchant
+            $merchant->logo = NULL;
+            $merchant->save();
+
+            Event::fire('orbit.upload.postdeletetenantlogo.after.save', array($this, $merchant));
+
+            $this->response->data = $merchant;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.delete_logo');
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletetenantlogo.after.commit', array($this, $merchant));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletetenantlogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletetenantlogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletetenantlogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletetenantlogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletetenantlogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload images for Tenant.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                 (required) - ID of the merchant
+     * @param file|array `pictures`                    (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadTenantImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadtenantimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadtenantimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadtenantimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_retailer')) {
+                    Event::fire('orbit.upload.postuploadtenantimage.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadtenantimage.after.authz', array($this, $user));
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadImageConfig = Config::get('orbit.upload.retailer.picture');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.three' => Lang::get('validation.max.array', array(
+                    'max' => 3
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchant_id,
+                    $elementName  => $images,
+                ),
+                array(
+                    'merchant_id'   => 'required|numeric|orbit.empty.tenant',
+                    $elementName    => 'required|array|nomore.than.three',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadtenantimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadtenantimage.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->beginTransaction();
+            }
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.tenant');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_image');
+
+            // Get the index of the image to delete the right one
+            $increment = 0;
+            $imgOrder = array_keys($images['name']);
+
+            $pastMedia->where(function($q) use ($increment, $imgOrder) {
+                foreach ($imgOrder as $indexOrder) {
+                    $q->orWhere('metadata', 'order-' . $indexOrder);
+                }
+            });
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($merchant)
+            {
+                $merchant_id = $merchant->merchant_id;
+                $slug = Str::slug($merchant->name);
+                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadtenantimage.before.save', array($this, $merchant, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $merchant->merchant_id,
+                'name'          => 'retailer',
+                'media_name_id' => 'retailer_image',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $merchant->logo = $uploaded[0]['path'];
+                $merchant->save();
+            }
+
+            Event::fire('orbit.upload.postuploadtenantimage.after.save', array($this, $merchant, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = 'Tenant picture has been successfully uploaded.';
+
+            // Commit the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadtenantimage.after.commit', array($this, $merchant, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadtenantimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadtenantimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadtenantimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadtenantimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadtenantimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete images for a merchant.
+     *
+     * @author Tian <tian@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                  (required) - ID of the merchant/retailer
+     * @param integer    `picture_index`                (required) - Index of the picture
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteTenantImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletetenantimage.before.auth', array($this));
+
+            if (! $this->calledFrom('tenant.new, tenant.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletetenantimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletetenantimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_merchant')) {
+                    Event::fire('orbit.upload.postdeletetenantimage.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postdeletetenantimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+            $picture_index = OrbitInput::post('picture_index');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $merchant_id,
+                    'picture_index' => $picture_index,
+                ),
+                array(
+                    'merchant_id'    => 'required|numeric|orbit.empty.tenant',
+                    'picture_index'  => 'array',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletetenantimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletetenantimage.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had Product instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.tenant');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_image');
+
+            if (! empty($picture_index)) {
+                $pastMedia->where(function($q) use ($picture_index) {
+                    foreach ($picture_index as $indexOrder) {
+                        $q->orWhere('metadata', 'order-' . $indexOrder);
+                    }
+                });
+            }
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletetenantimage.before.save', array($this, $merchant));
+
+            // Update the `logo` field which store the original path of the logo
+            // This is temporary since right now the business rules actually
+            // only allows one logo per merchant
+            $merchant->logo = NULL;
+            $merchant->save();
+
+            Event::fire('orbit.upload.postdeletetenantimage.after.save', array($this, $merchant));
+
+            $this->response->data = $merchant;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.delete_image');
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletetenantimage.after.commit', array($this, $merchant));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletetenantimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletetenantimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletetenantimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletetenantimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletetenantimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload map for Tenant.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                 (required) - ID of the merchant
+     * @param file|array `maps`                        (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadTenantMap()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadtenantmap.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.uploadpostuploadtenantmap.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.uploadpostuploadtenantmap.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_retailer')) {
+                    Event::fire('orbit.uploadpostuploadtenantmap.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.uploadpostuploadtenantmap.after.authz', array($this, $user));
+            } else {
+                // Comes from the events trigger
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.retailer.map');
+            $elementName = $uploadLogoConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchant_id,
+                    $elementName  => $images,
+                ),
+                array(
+                    'merchant_id'   => 'required|numeric|orbit.empty.tenant',
+                    $elementName    => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.uploadpostuploadtenantmap.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.uploadpostuploadtenantmap.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->beginTransaction();
+            }
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.tenant');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_map');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($merchant)
+            {
+                $merchant_id = $merchant->merchant_id;
+                $slug = Str::slug($merchant->name);
+                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.uploadpostuploadtenantmap.before.save', array($this, $merchant, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $merchant->merchant_id,
+                'name'          => 'retailer',
+                'media_name_id' => 'retailer_map',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $merchant->logo = $uploaded[0]['path'];
+                $merchant->save();
+            }
+
+            Event::fire('orbit.uploadpostuploadtenantmap.after.save', array($this, $merchant, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.map');
+
+            // Commit the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.uploadpostuploadtenantmap.after.commit', array($this, $merchant, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.uploadpostuploadtenantmap.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.uploadpostuploadtenantmap.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.uploadpostuploadtenantmap.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.uploadpostuploadtenantmap.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.uploadpostuploadtenantmap.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete logo for a merchant.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                  (required) - ID of the merchant
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteTenantMap()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletetenantmap.before.auth', array($this));
+
+            if (! $this->calledFrom('tenant.new, tenant.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletetenantmap.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletetenantmap.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_merchant')) {
+                    Event::fire('orbit.upload.postdeletetenantmap.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postdeletetenantmap.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $merchant_id,
+                ),
+                array(
+                    'merchant_id'   => 'required|numeric|orbit.empty.tenant',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletetenantmap.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletetenantmap.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had Product instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.tenant');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_map');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletetenantmap.before.save', array($this, $merchant));
+
+            // Update the `logo` field which store the original path of the logo
+            // This is temporary since right now the business rules actually
+            // only allows one logo per merchant
+            $merchant->logo = NULL;
+            $merchant->save();
+
+            Event::fire('orbit.upload.postdeletetenantmap.after.save', array($this, $merchant));
+
+            $this->response->data = $merchant;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.delete_map');
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletetenantmap.after.commit', array($this, $merchant));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletetenantmap.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletetenantmap.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletetenantmap.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletetenantmap.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletetenantmap.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload background mobile page for Mall.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                 (required) - ID of the merchant
+     * @param file|array `backgrounds`                 (required) - Images of the background
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadMallBackground()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadmallbackground.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadmallbackground.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadmallbackground.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_retailer')) {
+                    Event::fire('orbit.upload.postuploadmallbackground.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadmallbackground.after.authz', array($this, $user));
+            } else {
+                // Comes from the events trigger
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.retailer.background');
+            $elementName = $uploadLogoConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchant_id,
+                    $elementName  => $images,
+                ),
+                array(
+                    'merchant_id'   => 'required|numeric|orbit.empty.mall',
+                    $elementName    => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadmallbackground.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadmallbackground.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                $this->beginTransaction();
+            }
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.tenant');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_background');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($merchant)
+            {
+                $merchant_id = $merchant->merchant_id;
+                $slug = Str::slug($merchant->name);
+                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadmallbackground.before.save', array($this, $merchant, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $merchant->merchant_id,
+                'name'          => 'retailer',
+                'media_name_id' => 'retailer_background',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $merchant->logo = $uploaded[0]['path'];
+                $merchant->save();
+            }
+
+            Event::fire('orbit.upload.postuploadmallbackground.after.save', array($this, $merchant, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.mall.background');
+
+            // Commit the changes
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadmallbackground.after.commit', array($this, $merchant, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadmallbackground.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadmallbackground.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadmallbackground.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadmallbackground.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadmallbackground.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete background image for Mall.
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                  (required) - ID of the merchant
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteMallBackground()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletemallbackground.before.auth', array($this));
+
+            if (! $this->calledFrom('mall.new, mall.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletemallbackground.after.auth', array($this));
+
+                // Try to check access control list, does this news allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletemallbackground.before.authz', array($this, $user));
+
+/*
+                if (! ACL::create($user)->isAllowed('update_news')) {
+                    Event::fire('orbit.upload.postdeletemallbackground.authz.notallowed', array($this, $user));
+                    $editNewsLang = Lang::get('validation.orbit.actionlist.update_news');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editNewsLang));
+                    ACL::throwAccessForbidden($message);
+                }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeletemallbackground.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $merchant_id,
+                ),
+                array(
+                    'merchant_id'   => 'required|numeric|orbit.empty.mall',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletemallbackground.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletemallbackground.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.tenant');
+
+            // Delete old merchant image
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_background');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletemallbackground.before.save', array($this, $merchant));
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per merchant
+            $merchant->logo = NULL;
+            $merchant->save();
+
+            // On table settings, update background_image to null
+            $updatedsetting = Setting::active()
+                         ->where('object_id', $merchant->merchant_id)
+                         ->where('object_type', 'merchant')
+                         ->where('setting_name', 'background_image')
+                         ->first();
+            if (! empty($updatedsetting)) {
+                $updatedsetting->setting_value = null;
+                $updatedsetting->save();
+            }
+
+            Event::fire('orbit.upload.postdeletemallbackground.after.save', array($this, $merchant));
+
+            $this->response->data = $merchant;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.mall.delete_background');
+
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletemallbackground.after.commit', array($this, $merchant));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletemallbackground.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletemallbackground.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletemallbackground.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletemallbackground.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletemallbackground.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload images for News.
+     *
+     * @author Tian <tian@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `news_id`                     (required) - ID of the news
+     * @param file|array `images`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadNewsImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadnewsimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadnewsimage.after.auth', array($this));
+
+                // Try to check access control list, does this news allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadnewsimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_news')) {
+                    Event::fire('orbit.upload.postuploadnewsimage.authz.notallowed', array($this, $user));
+                    $editNewsLang = Lang::get('validation.orbit.actionlist.update_news');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editNewsLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadnewsimage.after.authz', array($this, $user));
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for news upload image
+            $uploadImageConfig = Config::get('orbit.upload.news.main');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $news_id = OrbitInput::post('news_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.three' => Lang::get('validation.max.array', array(
+                    'max' => 3
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'news_id'       => $news_id,
+                    $elementName    => $images,
+                ),
+                array(
+                    'news_id'       => 'required|numeric|orbit.empty.news',
+                    $elementName    => 'required|array|nomore.than.three',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadnewsimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadnewsimage.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->beginTransaction();
+            }
+
+            // We already had News instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $news = App::make('orbit.empty.news');
+
+            // Delete old news image
+            $pastMedia = Media::where('object_id', $news->news_id)
+                              ->where('object_name', 'news')
+                              ->where('media_name_id', 'news_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($news)
+            {
+                $news_id = $news->news_id;
+                $slug = Str::slug($news->news_name);
+                $file['new']->name = sprintf('%s-%s-%s', $news_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadnewsimage.before.save', array($this, $news, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $news->news_id,
+                'name'          => 'news',
+                'media_name_id' => 'news_image',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $news->image = $uploaded[0]['path'];
+                $news->save();
+            }
+
+            Event::fire('orbit.upload.postuploadnewsimage.after.save', array($this, $news, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.news.main');
+
+            // Commit the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadnewsimage.after.commit', array($this, $news, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadnewsimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadnewsimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadnewsimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadnewsimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadnewsimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete images for news.
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `news_id`                  (required) - ID of the news
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteNewsImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletenewsimage.before.auth', array($this));
+
+            if (! $this->calledFrom('news.new, news.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletenewsimage.after.auth', array($this));
+
+                // Try to check access control list, does this news allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletenewsimage.before.authz', array($this, $user));
+
+/*
+                if (! ACL::create($user)->isAllowed('update_news')) {
+                    Event::fire('orbit.upload.postdeletenewsimage.authz.notallowed', array($this, $user));
+                    $editNewsLang = Lang::get('validation.orbit.actionlist.update_news');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editNewsLang));
+                    ACL::throwAccessForbidden($message);
+                }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeletenewsimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $news_id = OrbitInput::post('news_id');
+
+            $validator = Validator::make(
+                array(
+                    'news_id'   => $news_id,
+                ),
+                array(
+                    'news_id'   => 'required|numeric|orbit.empty.news',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletenewsimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletenewsimage.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('news.new, news.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had News instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $news = App::make('orbit.empty.news');
+
+            // Delete old news image
+            $pastMedia = Media::where('object_id', $news->news_id)
+                              ->where('object_name', 'news')
+                              ->where('media_name_id', 'news_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletenewsimage.before.save', array($this, $news));
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per news
+            $news->image = NULL;
+            $news->save();
+
+            Event::fire('orbit.upload.postdeletenewsimage.after.save', array($this, $news));
+
+            $this->response->data = $news;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.news.delete_image');
+
+            if (! $this->calledFrom('news.new, news.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletenewsimage.after.commit', array($this, $news));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletenewsimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('news.new, news.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletenewsimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('news.new, news.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletenewsimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('news.new, news.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletenewsimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('news.new, news.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletenewsimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload images for Lucky Draw.
+     *
+     * @author Tian <tian@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `lucky_draw_id`               (required) - ID of the lucky draw
+     * @param file|array `images`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadLuckyDrawImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadluckydrawimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadluckydrawimage.after.auth', array($this));
+
+                // Try to check access control list, does this lucky draw allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadluckydrawimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_lucky_draw')) {
+                    Event::fire('orbit.upload.postuploadluckydrawimage.authz.notallowed', array($this, $user));
+                    $editLuckyDrawLang = Lang::get('validation.orbit.actionlist.update_lucky_draw');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editLuckyDrawLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadluckydrawimage.after.authz', array($this, $user));
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for lucky draw upload image
+            $uploadImageConfig = Config::get('orbit.upload.lucky_draw.main');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.three' => Lang::get('validation.max.array', array(
+                    'max' => 3
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'lucky_draw_id' => $lucky_draw_id,
+                    $elementName    => $images,
+                ),
+                array(
+                    'lucky_draw_id' => 'required|numeric|orbit.empty.lucky_draw',
+                    $elementName    => 'required|array|nomore.than.three',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadluckydrawimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadluckydrawimage.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->beginTransaction();
+            }
+
+            // We already had LuckyDraw instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $luckydraw = App::make('orbit.empty.lucky_draw');
+
+            // Delete old lucky draw image
+            $pastMedia = Media::where('object_id', $luckydraw->lucky_draw_id)
+                              ->where('object_name', 'lucky_draw')
+                              ->where('media_name_id', 'lucky_draw_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($luckydraw)
+            {
+                $lucky_draw_id = $luckydraw->lucky_draw_id;
+                $slug = Str::slug($luckydraw->lucky_draw_name);
+                $file['new']->name = sprintf('%s-%s-%s', $lucky_draw_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadluckydrawimage.before.save', array($this, $luckydraw, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $luckydraw->lucky_draw_id,
+                'name'          => 'lucky_draw',
+                'media_name_id' => 'lucky_draw_image',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $luckydraw->image = $uploaded[0]['path'];
+                $luckydraw->save();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawimage.after.save', array($this, $luckydraw, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.lucky_draw.main');
+
+            // Commit the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawimage.after.commit', array($this, $luckydraw, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadluckydrawimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadluckydrawimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete images for Lucky Draw.
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `lucky_draw_id`                  (required) - ID of the lucky draw
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteLuckyDrawImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeleteluckydrawimage.before.auth', array($this));
+
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeleteluckydrawimage.after.auth', array($this));
+
+                // Try to check access control list, does this lucky draw allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeleteluckydrawimage.before.authz', array($this, $user));
+
+/*
+                if (! ACL::create($user)->isAllowed('update_lucky_draw')) {
+                    Event::fire('orbit.upload.postdeleteluckydrawimage.authz.notallowed', array($this, $user));
+                    $editLuckyDrawLang = Lang::get('validation.orbit.actionlist.update_lucky_draw');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editLuckyDrawLang));
+                    ACL::throwAccessForbidden($message);
+                }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeleteluckydrawimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
+
+            $validator = Validator::make(
+                array(
+                    'lucky_draw_id'   => $lucky_draw_id,
+                ),
+                array(
+                    'lucky_draw_id'   => 'required|numeric|orbit.empty.lucky_draw',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeleteluckydrawimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeleteluckydrawimage.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had LuckyDraw instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $luckydraw = App::make('orbit.empty.lucky_draw');
+
+            // Delete old lucky draw image
+            $pastMedia = Media::where('object_id', $luckydraw->lucky_draw_id)
+                              ->where('object_name', 'lucky_draw')
+                              ->where('media_name_id', 'lucky_draw_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeleteluckydrawimage.before.save', array($this, $luckydraw));
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per lucky draw
+            $luckydraw->image = NULL;
+            $luckydraw->save();
+
+            Event::fire('orbit.upload.postdeleteluckydrawimage.after.save', array($this, $luckydraw));
+
+            $this->response->data = $luckydraw;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.lucky_draw.delete_image');
+
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeleteluckydrawimage.after.commit', array($this, $luckydraw));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeleteluckydrawimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeleteluckydrawimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeleteluckydrawimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeleteluckydrawimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeleteluckydrawimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -2641,6 +5049,66 @@ class UploadAPIController extends ControllerAPI
                 }
 
                 App::instance('orbit.empty.merchant', $merchant);
+
+                return TRUE;
+            });
+
+            // @Todo: Refactor by adding allowedForUser for tenant
+            Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) use ($user) {
+                $merchant = Retailer::excludeDeleted()
+                            ->isMall('no')
+                            ->where('merchant_id', $value)
+                            ->first();
+
+                if (empty($merchant)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.tenant', $merchant);
+
+                return TRUE;
+            });
+
+            // @Todo: Refactor by adding allowedForUser for mall
+            Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
+                $merchant = Retailer::excludeDeleted()
+                            ->isMall('yes')
+                            ->where('merchant_id', $value)
+                            ->first();
+
+                if (empty($merchant)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.tenant', $merchant);
+
+                return TRUE;
+            });
+
+            Validator::extend('orbit.empty.news', function ($attribute, $value, $parameters) use ($user) {
+                $news = News::excludeDeleted()
+                            ->where('news_id', $value)
+                            ->first();
+
+                if (empty($news)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.news', $news);
+
+                return TRUE;
+            });
+
+            Validator::extend('orbit.empty.lucky_draw', function ($attribute, $value, $parameters) use ($user) {
+                $luckyDraw = LuckyDraw::excludeDeleted()
+                            ->where('lucky_draw_id', $value)
+                            ->first();
+
+                if (empty($luckyDraw)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.lucky_draw', $luckyDraw);
 
                 return TRUE;
             });
@@ -2751,6 +5219,15 @@ class UploadAPIController extends ControllerAPI
         // Check the images, we are allowed array of images but not more that one
         Validator::extend('nomore.than.one', function ($attribute, $value, $parameters) {
             if (is_array($value['name']) && count($value['name']) > 1) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Check the images, we are allowed array of images but not more that three
+        Validator::extend('nomore.than.three', function ($attribute, $value, $parameters) {
+            if (is_array($value['name']) && count($value['name']) > 3) {
                 return FALSE;
             }
 

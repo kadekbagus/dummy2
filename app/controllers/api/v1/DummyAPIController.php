@@ -9,12 +9,167 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
+use Net\MacAddr;
 
 class DummyAPIController extends ControllerAPI
 {
+    public function getUserOutOfNetwork()
+    {
+        $activity = Activity::unknown('captive')
+                            ->setActivityType('network_check_out');
+
+        // Get PWU Server IP address
+        $userIP = $_SERVER['REMOTE_ADDR'];
+        $email = trim(OrbitInput::get('email', NULL));
+
+        $logFile = storage_path() . '/logs/pwu-call.log';
+        $pwuIPFile = storage_path() . '/logs/pwu-ip.txt';
+
+        $now = date('Y-m-d H:i:s');
+        $format = "[%s] %s; checkout; Email %s do network checkout; %s";
+        $httpCode = 200;
+        $message = '';
+
+        try {
+            $ips = [];
+            if (file_exists($pwuIPFile)) {
+                $ips = explode("\n", file_get_contents($pwuIPFile));
+                $ips = array_map('trim', $ips);
+                $ips = array_filter($ips);
+            }
+            $ips[] = '127.0.0.1';
+
+            if (empty($email)) {
+                $message = sprintf($format, $now, $userIP, $email, 'Failed: email is empty');
+                $httpCode = 400;
+                throw new Exception ($message, 1);
+            }
+
+            if (! in_array($userIP, $ips)) {
+                $message = sprintf($format, $now, $userIP, $email, 'Failed: IP is not allowed to access this resource');
+                $httpCode = 403;
+                throw new Exception ($message, 1);
+            }
+
+            // Successfull
+            $message = sprintf($format, $now, $userIP, $email, 'OK');
+            $this->response->message = $message;
+            $activity->setUser(NULL)
+                     ->setActivityName('Network checkout ok')
+                     ->setActivityNameLong($message)
+                     ->setModuleName('Network')
+                     ->responseOK();
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            $activity->setUser('guest')
+                     ->setActivityName('Network checkout failed')
+                     ->setActivityNameLong($e->getMessage())
+                     ->setNotes($e->getMessage())
+                     ->setModuleName('Network')
+                     ->responseFailed();
+        }
+
+        $activity->user_email = $email;
+        $activity->save();
+        file_put_contents($logFile, $message . "\n", FILE_APPEND);
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * PWU Lippo mall captive portal integration with ourbit. The Lippo Mall
+     * captive portal will send email address and mac address from query string.
+     *
+     * i.e:
+     * http://orbit.box/?email=foo@bar.com&m=AA:BB:CC:DD:EE
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    public function getUserSignInNetwork()
+    {
+        $activity = Activity::unknown('captive')
+                            ->setActivityType('network_check_in');
+
+        // Get PWU Server IP address
+        $userIP = $_SERVER['REMOTE_ADDR'];
+        $email = trim(OrbitInput::get('email', NULL));
+        $mac = trim(OrbitInput::get('m', NULL));
+        $logFile = storage_path() . '/logs/pwu-call.log';
+        $now = date('Y-m-d H:i:s');
+        $format = "[%s] %s; checkin; Email %s do network checkin; %s";
+        $httpCode = 200;
+        $message = '';
+
+        try {
+            if (empty($email)) {
+                $message = sprintf($format, $now, $userIP, $email, 'Failed: email is empty');
+                $httpCode = 400;
+                throw new Exception ($message, 1);
+            }
+
+            // Successfull
+            $message = sprintf($format, $now, $userIP, $email, 'OK');
+            $this->response->message = $message;
+            $activity->setUser(NULL)
+                     ->setActivityName('Network check in')
+                     ->setActivityNameLong('Network Check In')
+                     ->setNotes($message)
+                     ->setModuleName('Network')
+                     ->responseOK();
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            $activity->setUser('guest')
+                     ->setActivityName('Network checkin failed')
+                     ->setActivityNameLong('Network checkin failed')
+                     ->setNotes($e->getMessage())
+                     ->setModuleName('Network')
+                     ->responseFailed();
+        }
+
+        $activity->user_email = $email;
+        $activity->save();
+        file_put_contents($logFile, $message . "\n", FILE_APPEND);
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * Return time of the server in unix timestamp.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param `string`      `$mode`     (optional)  Unix timestamp $mode
+     * @return int
+     */
+    public function getServerTime()
+    {
+        $format = OrbitInput::get('format', 'U');
+        $this->response->data = date($format);
+
+        return $this->render(200);
+    }
+
     public function IamOK()
     {
         return $this->render();
+    }
+
+    public function unsupported()
+    {
+        $this->response->code = Status::UNKNOWN_ERROR;
+        $this->response->status = 'error';
+        $this->response->message = 'Call to this URL is unsupported.';
+        $this->response->data = NULL;
+
+        return $this->render(410);
     }
 
     public function hisName()

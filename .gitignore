@@ -29,3 +29,12 @@ app/config/packages/laraeval/laraeval/config.php
 # Test vendor
 vendor/fzaninotto/
 vendor/laracasts/
+
+#node_module
+node_modules/
+
+# Orbit Storage Session
+app/storage/orbit-session/**
+
+# Orbit Compiled Routes
+app/routes/orbit-compiled-routes.php

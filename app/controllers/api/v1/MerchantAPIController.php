@@ -14,212 +14,6 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class MerchantAPIController extends ControllerAPI
 {
-    /**
-     * POST - Delete Merchant
-     *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     * @author Kadek <kadek@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param integer    `merchant_id`                 (required) - ID of the merchant
-     * @param string     `password`                    (required) - Password of the user for confirmation
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function postDeleteMerchant()
-    {
-        $activity = Activity::portal()
-                          ->setActivityType('delete');
-
-        $user = NULL;
-        $deletemerchant = NULL;
-        try {
-            $httpCode = 200;
-
-            Event::fire('orbit.merchant.postdeletemerchant.before.auth', array($this));
-
-            // Require authentication
-            $this->checkAuth();
-
-            Event::fire('orbit.merchant.postdeletemerchant.after.auth', array($this));
-
-            // Try to check access control list, does this merchant allowed to
-            // perform this action
-            $user = $this->api->user;
-            Event::fire('orbit.merchant.postdeletemerchant.before.authz', array($this, $user));
-
-            if (! ACL::create($user)->isAllowed('delete_merchant')) {
-                Event::fire('orbit.merchant.postdeletemerchant.authz.notallowed', array($this, $user));
-                $deleteMerchantLang = Lang::get('validation.orbit.actionlist.delete_merchant');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteMerchantLang));
-                ACL::throwAccessForbidden($message);
-            }
-            Event::fire('orbit.merchant.postdeletemerchant.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
-
-            $merchant_id = OrbitInput::post('merchant_id');
-            $password = OrbitInput::post('password');
-
-            $validator = Validator::make(
-                array(
-                    'merchant_id' => $merchant_id,
-                    'password'    => $password,
-                ),
-                array(
-                    'merchant_id' => 'required|numeric|orbit.empty.merchant|orbit.exists.merchant_have_retailer',
-                    'password'    => 'required|orbit.access.wrongpassword',
-                )
-            );
-
-            Event::fire('orbit.merchant.postdeletemerchant.before.validation', array($this, $validator));
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-            Event::fire('orbit.merchant.postdeletemerchant.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
-
-            // soft delete merchant.
-            $deletemerchant = Merchant::excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
-            $deletemerchant->status = 'deleted';
-            $deletemerchant->modified_by = $this->api->user->user_id;
-
-            Event::fire('orbit.merchant.postdeletemerchant.before.save', array($this, $deletemerchant));
-
-            $deletemerchant->save();
-
-            // soft delete user.
-            $deleteuser = User::with(array('apikey', 'role'))->excludeDeleted()->find($deletemerchant->user_id);
-            // don't delete linked user if linked user is super admin.
-            if (! $deleteuser->isSuperAdmin()) {
-                $deleteuser->status = 'deleted';
-                $deleteuser->modified_by = $this->api->user->user_id;
-
-                // soft delete api key.
-                if (! empty($deleteuser->apikey)) {
-                    $deleteapikey = Apikey::where('apikey_id', '=', $deleteuser->apikey->apikey_id)->first();
-                    $deleteapikey->status = 'deleted';
-                    $deleteapikey->save();
-                }
-
-                $deleteuser->save();
-            }
-
-            Event::fire('orbit.merchant.postdeletemerchant.after.save', array($this, $deletemerchant));
-            $this->response->data = null;
-            $this->response->message = Lang::get('statuses.orbit.deleted.merchant');
-
-            // Commit the changes
-            $this->commit();
-
-            // Successfull Creation
-            $activityNotes = sprintf('Merchant Deleted: %s', $deletemerchant->name);
-            $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
-                    ->setActivityNameLong('Delete Merchant OK')
-                    ->setObject($deletemerchant)
-                    ->setNotes($activityNotes)
-                    ->responseOK();
-
-            Event::fire('orbit.merchant.postdeletemerchant.after.commit', array($this, $deletemerchant));
-        } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.merchant.postdeletemerchant.access.forbidden', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
-                    ->setActivityNameLong('Delete Merchant Failed')
-                    ->setObject($deletemerchant)
-                    ->setNotes($e->getMessage())
-                    ->responseFailed();
-        } catch (InvalidArgsException $e) {
-            Event::fire('orbit.merchant.postdeletemerchant.invalid.arguments', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
-                    ->setActivityNameLong('Delete Merchant Failed')
-                    ->setObject($deletemerchant)
-                    ->setNotes($e->getMessage())
-                    ->responseFailed();
-        } catch (QueryException $e) {
-            Event::fire('orbit.merchant.postdeletemerchant.query.error', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
-                    ->setActivityNameLong('Delete Merchant Failed')
-                    ->setObject($deletemerchant)
-                    ->setNotes($e->getMessage())
-                    ->responseFailed();
-        } catch (Exception $e) {
-            Event::fire('orbit.merchant.postdeletemerchant.general.exception', array($this, $e));
-
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
-                    ->setActivityNameLong('Delete Merchant Failed')
-                    ->setObject($deletemerchant)
-                    ->setNotes($e->getMessage())
-                    ->responseFailed();
-        }
-
-        $output = $this->render($httpCode);
-        Event::fire('orbit.merchant.postdeletemerchant.before.render', array($this, $output));
-
-        // Save the activity
-        $activity->save();
-
-        return $output;
-    }
-
      /**
      * POST - Add new merchant
      *
@@ -1039,7 +833,7 @@ class MerchantAPIController extends ControllerAPI
     }
 
     /**
-     * POST - Update merchant
+     * POST - Update merchant (or mall)
      *
      * @author Kadek <kadek@dominopos.com>
      * @author Tian <tian@dominopos.com>
@@ -1538,6 +1332,212 @@ class MerchantAPIController extends ControllerAPI
         $activity->save();
 
         return $this->render($httpCode);
+    }
+
+    /**
+     * POST - Delete Merchant
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `merchant_id`                 (required) - ID of the merchant
+     * @param string     `password`                    (required) - Password of the user for confirmation
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteMerchant()
+    {
+        $activity = Activity::portal()
+                          ->setActivityType('delete');
+
+        $user = NULL;
+        $deletemerchant = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.merchant.postdeletemerchant.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.merchant.postdeletemerchant.after.auth', array($this));
+
+            // Try to check access control list, does this merchant allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.merchant.postdeletemerchant.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('delete_merchant')) {
+                Event::fire('orbit.merchant.postdeletemerchant.authz.notallowed', array($this, $user));
+                $deleteMerchantLang = Lang::get('validation.orbit.actionlist.delete_merchant');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteMerchantLang));
+                ACL::throwAccessForbidden($message);
+            }
+            Event::fire('orbit.merchant.postdeletemerchant.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $merchant_id = OrbitInput::post('merchant_id');
+            $password = OrbitInput::post('password');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchant_id,
+                    'password'    => $password,
+                ),
+                array(
+                    'merchant_id' => 'required|numeric|orbit.empty.merchant|orbit.exists.merchant_have_retailer',
+                    'password'    => 'required|orbit.access.wrongpassword',
+                )
+            );
+
+            Event::fire('orbit.merchant.postdeletemerchant.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.merchant.postdeletemerchant.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // soft delete merchant.
+            $deletemerchant = Merchant::excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
+            $deletemerchant->status = 'deleted';
+            $deletemerchant->modified_by = $this->api->user->user_id;
+
+            Event::fire('orbit.merchant.postdeletemerchant.before.save', array($this, $deletemerchant));
+
+            $deletemerchant->save();
+
+            // soft delete user.
+            $deleteuser = User::with(array('apikey', 'role'))->excludeDeleted()->find($deletemerchant->user_id);
+            // don't delete linked user if linked user is super admin.
+            if (! $deleteuser->isSuperAdmin()) {
+                $deleteuser->status = 'deleted';
+                $deleteuser->modified_by = $this->api->user->user_id;
+
+                // soft delete api key.
+                if (! empty($deleteuser->apikey)) {
+                    $deleteapikey = Apikey::where('apikey_id', '=', $deleteuser->apikey->apikey_id)->first();
+                    $deleteapikey->status = 'deleted';
+                    $deleteapikey->save();
+                }
+
+                $deleteuser->save();
+            }
+
+            Event::fire('orbit.merchant.postdeletemerchant.after.save', array($this, $deletemerchant));
+            $this->response->data = null;
+            $this->response->message = Lang::get('statuses.orbit.deleted.merchant');
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('Merchant Deleted: %s', $deletemerchant->name);
+            $activity->setUser($user)
+                    ->setActivityName('delete_merchant')
+                    ->setActivityNameLong('Delete Merchant OK')
+                    ->setObject($deletemerchant)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.merchant.postdeletemerchant.after.commit', array($this, $deletemerchant));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.merchant.postdeletemerchant.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_merchant')
+                    ->setActivityNameLong('Delete Merchant Failed')
+                    ->setObject($deletemerchant)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.merchant.postdeletemerchant.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_merchant')
+                    ->setActivityNameLong('Delete Merchant Failed')
+                    ->setObject($deletemerchant)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.merchant.postdeletemerchant.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_merchant')
+                    ->setActivityNameLong('Delete Merchant Failed')
+                    ->setObject($deletemerchant)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.merchant.postdeletemerchant.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_merchant')
+                    ->setActivityNameLong('Delete Merchant Failed')
+                    ->setObject($deletemerchant)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.merchant.postdeletemerchant.before.render', array($this, $output));
+
+        // Save the activity
+        $activity->save();
+
+        return $output;
     }
 
     protected function registerCustomValidation()

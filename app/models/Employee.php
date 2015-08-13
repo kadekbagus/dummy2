@@ -23,12 +23,39 @@ class Employee extends Eloquent
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
 
+    public function userdetail()
+    {
+        return $this->hasOne('UserDetail', 'user_id', 'user_id');
+    }
+
     /**
      * Employee could belongs to and has many retailers
      */
     public function retailers()
     {
         return $this->belongsToMany('Retailer', 'employee_retailer', 'employee_id', 'retailer_id');
+    }
+
+    /**
+     * Scope to join with user table.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    public function scopeJoinUser()
+    {
+        return $this->select('employees.*')
+                    ->join('users', 'users.user_id', '=', 'employees.user_id');
+    }
+
+    /**
+     * Scope to join with user table.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    public function scopeJoinUserRole($query)
+    {
+        return $query->join('users', 'users.user_id', '=', 'employees.user_id')
+                     ->join('roles', 'roles.role_id', '=', 'users.user_role_id');
     }
 
     /**

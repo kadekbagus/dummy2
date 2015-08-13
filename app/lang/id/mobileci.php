@@ -31,6 +31,9 @@ return array(
         'new_product'   => 'PRODUK TERBARU',
         'promotion'     => 'PROMOSI',
         'coupon'        => 'KUPON SAYA',
+        "tenant"        => "TENANT",
+        "lucky_draw"    => "LUCKY DRAW",
+        "news"          => "BERITA",
     ),
 
     'greetings'         => array(
@@ -44,7 +47,7 @@ return array(
         'event_title'           => 'Events',
         'info_title'            => 'Info',
         'coupon_title'          => 'Kupon Saya',
-        'search_title'          => 'Cari Produk',
+        'search_title'          => 'Cari Tenant',
         'checkout_title'        => 'Checkout',
         'tip_title'             => 'Tip',
         'delete_item_title'     => 'Hapus Item',
@@ -55,15 +58,16 @@ return array(
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',
         'message_no_new_product'=> 'Maaf, tidak ada produk baru untuk saat ini.',
         'message_no_promotion'  => 'Maaf, tidak ada promosi untuk saat ini.',
+        'message_no_lucky_draw' => "Daftar sekarang dan dapatkan kesempatan untuk memenangkan Mazda setiap 3 bulan! Tukarkan struk belanja Anda minimum Rp. 100,000 pada VIP Lounge L2. Dapatkan merchandise gratis jika mendaftar saat ini juga! <br><br> • Jika stok masih ada <br> • Syarat & ketentuan berlaku.",
         'message_delete_item'   => 'Apakah Anda yakin akan menghapus item ini dari keranjang belanja?',
         'message_delete_coupon' => 'Apakah Anda yakin akan menghapus kupon ini dari keranjang belanja? Kupon yang Anda hapus masih dapat digunakan lain kali.',
         'message_transfer_cart' => 'Tunjukkan smartphone Anda ke kasir untuk menyelesaikan checkout.',
         'message_close_cart'    => 'Keranjang Anda belum dipindahkan ke kasir. Silahkan perlihatkan barcode berikut ini kepada kasir.',
         'message_reset_cart'    => 'Apakah Anda yakin akan menghapus cart Anda?',
-        
+
         'coupon_use'            => 'Gunakan',
         'coupon_ignore'         => 'Lain Kali',
-        'search_label'          => 'Cari berdasarkan Nama Produk, Kode atau Deskripsi',
+        'search_label'          => 'Cari berdasarkan nama tenant, kategori, lantai atau deskripsi',
         'search_placeholder'    => 'Input kata kunci',
         'search_button'         => 'Cari',
         'cancel_button'         => 'Batal',
@@ -156,7 +160,7 @@ return array(
     ),
 
     'search'                => array(
-        'no_item'           => 'Tidak ada produk yang sesuai kriteria.',
+        'no_item'           => 'Tidak ada tenant yang sesuai kriteria.',
         'too_much_items'     => 'Hasil pencarian terlalu banyak, tolong persempit pencarian Anda.',
     ),
 
@@ -178,7 +182,7 @@ return array(
         'done_button'       => 'Selesai',
         'back_button'       => 'Kembali',
     ),
-    
+
     'payment'               => array(
         'total_to_pay_label'=> 'Total',
         'name_label'        => 'Nama',
@@ -199,5 +203,14 @@ return array(
 
     'recognize_me'  => array(
         'recognize_me_message' => 'Agar Anda dapat dikenali, perlihatkan barcode berikut ini kepada kasir.'
+    ),
+
+    'inbox'     => array(
+        'lucky_draw'        => array(
+            'subject'       => 'Anda Mendapatkan Nomor Lucky Draw Baru',
+        ),
+        'coupon'            => array(
+            'subject'       => 'Anda Mendapatkan Coupon Baru'
+        ),
     ),
 );

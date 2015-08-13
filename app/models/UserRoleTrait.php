@@ -230,6 +230,21 @@ trait UserRoleTrait
     }
 
     /**
+     * Filter employee based on their membership_number
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeMembershipOnly($query)
+    {
+        $prefix = DB::getTablePrefix();
+        return $query->where(function($query) use ($prefix) {
+                            $query->whereNotNull('users.membership_number');
+                            $query->orWhereRaw("LENGTH({$prefix}membership_number) > 0");
+        });
+    }
+
+    /**
      * Super admin check.
      *
      * @Todo: Prevent query.
@@ -242,6 +257,22 @@ trait UserRoleTrait
         $superAdmin = 'super admin';
 
         return strtolower($this->role->role_name) === $superAdmin;
+    }
+
+    /**
+     * Super admin check.
+     *
+     * @Todo: Prevent query.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @Param string $rolename
+     * @return boolean
+     */
+    public function isRoleName($rolename)
+    {
+        $rolename = strtolower($rolename);
+
+        return strtolower($this->role->role_name) === $rolename;
     }
 
     /**

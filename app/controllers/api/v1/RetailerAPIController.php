@@ -1010,12 +1010,22 @@ class RetailerAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.retailer.getsearchretailer.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_retailer')) {
                 Event::fire('orbit.retailer.getsearchretailer.authz.notallowed', array($this, $user));
                 $viewRetailerLang = Lang::get('validation.orbit.actionlist.view_retailer');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewRetailerLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.retailer.getsearchretailer.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1063,9 +1073,9 @@ class RetailerAPIController extends ControllerAPI
 
             // Builder object
             $retailers = Retailer::excludeDeleted('merchants')
-                                ->allowedForUser($user)
-                                ->select('merchants.*', DB::raw('m.name as merchant_name'))
-                                ->join('merchants AS m', DB::raw('m.merchant_id'), '=', 'merchants.parent_id');
+                                 ->isMall()
+                                 ->select('merchants.*', DB::raw('m.name as merchant_name'))
+                                 ->join('merchants AS m', DB::raw('m.merchant_id'), '=', 'merchants.parent_id');
 
             // Filter retailer by Ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($retailers)

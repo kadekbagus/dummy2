@@ -103,7 +103,7 @@ class SettingAPIController extends ControllerAPI
                 if (trim($status) !== '') {
                     $updatedsetting->status = $status;
                 }
-                
+
                 $updatedsetting->modified_by = $this->api->user->user_id;
 
                 Event::fire('orbit.setting.postupdatesetting.before.save', array($this, $updatedsetting));
@@ -232,6 +232,292 @@ class SettingAPIController extends ControllerAPI
                     ->setActivityName('update_setting')
                     ->setActivityNameLong('Update Setting Failed')
                     ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save activity
+        $activity->save();
+
+        return $this->render($httpCode);
+
+    }
+
+    /**
+     * POST - Update Setting
+     *
+     * @author <Tian> <tian@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string        `language`              (optional) - Mobile language in:en,id
+     * @param files array   `backgrounds`           (optional) - Image background for mobile ci
+     * @param string        `landing_page`          (optional) - in:widget,news,promotion,tenant
+     * @param string        `password`              (optional) - Master password for deletion
+     * @param string        `password_confirmation` (optional) - Master password confirmation
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdateMallSetting()
+    {
+        $activity = Activity::portal()
+                           ->setActivityType('update');
+
+        $user = NULL;
+        $updatedsetting = NULL;
+        try {
+            $httpCode=200;
+
+            Event::fire('orbit.setting.postupdatesetting.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.setting.postupdatesetting.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.setting.postupdatesetting.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)->isAllowed('update_setting')) {
+                Event::fire('orbit.setting.postupdatesetting.authz.notallowed', array($this, $user));
+                $updateSettingLang = Lang::get('validation.orbit.actionlist.update_setting');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateSettingLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            Event::fire('orbit.setting.postupdatesetting.after.authz', array($this, $user));
+
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->registerCustomValidation();
+
+            $language = OrbitInput::post('language', NULL);
+            $background = OrbitInput::files('backgrounds');
+            $landingPage = OrbitInput::post('landing_page');
+            $password = OrbitInput::post('password');
+            $password2 = OrbitInput::post('password_confirmation');
+
+            $validator = Validator::make(
+                array(
+                    'language'                  => $language,
+                    'landing_page'              => $landingPage,
+                    'password'                  => $password,
+                    'password_confirmation'     => $password2,
+                ),
+                array(
+                    'language'          => 'required|in:en,id',
+                    'landing_page'      => 'required|in:widget,news,promotion,tenant',
+                    'password'          => 'min:5|confirmed',
+                )
+            );
+
+            Event::fire('orbit.setting.postupdatesetting.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.setting.postupdatesetting.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $setting = Setting::active()->where('setting_name', 'current_retailer')->first();
+            if (empty($setting)) {
+                $errorMessage = 'Could not find current active mall from setting.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $mall = Retailer::find($setting->setting_value);
+
+            $backgroundSetting = NULL;
+            $masterPasswordSetting = NULL;
+            $landingPageSetting = NULL;
+
+            $updatedsetting = Setting::active()
+                                     ->where('object_id', $mall->merchant_id)
+                                     ->where('object_type', 'merchant')
+                                     ->get();
+
+            foreach ($updatedsetting as $currentSetting) {
+                if ($currentSetting->setting_name === 'master_password') {
+                    $masterPasswordSetting = $currentSetting;
+                }
+
+                if ($currentSetting->setting_name === 'landing_page') {
+                    $landingPageSetting = $currentSetting;
+                }
+
+                if ($currentSetting->setting_name === 'background_image') {
+                    $backgroundSetting = $currentSetting;
+                }
+            }
+
+            OrbitInput::post('password', function($passwd) use (&$masterPasswordSetting, $mall, $user) {
+                // Master password setting
+                if (is_null($masterPasswordSetting)) {
+                    $masterPasswordSetting = new Setting();
+                    $masterPasswordSetting->setting_name = 'master_password';
+                    $masterPasswordSetting->object_id = $mall->merchant_id;
+                    $masterPasswordSetting->object_type = 'merchant';
+                }
+
+                $masterPasswordSetting->setting_value = Hash::make($passwd);
+                $masterPasswordSetting->modified_by = $user->user_id;
+                $masterPasswordSetting->save();
+            });
+
+            OrbitInput::post('landing_page', function($page) use (&$landingPageSetting, $mall, $user) {
+                // Landing page setting
+                if (is_null($landingPageSetting)) {
+                    $landingPageSetting = new Setting();
+                    $landingPageSetting->setting_name = 'landing_page';
+                    $landingPageSetting->object_id = $mall->merchant_id;
+                    $landingPageSetting->object_type = 'merchant';
+                }
+
+                $landingPageSetting->setting_value = $page;
+                $landingPageSetting->modified_by = $user->user_id;
+                $landingPageSetting->save();
+            });
+
+            OrbitInput::post('language', function($lang) use ($mall) {
+                $mall->mobile_default_language = $lang;
+                $mall->save();
+            });
+
+            OrbitInput::files('backgrounds', function($files) use ($mall, $user, &$backgroundSetting) {
+                $_POST['merchant_id'] = $mall->merchant_id;
+
+                // This will be used on UploadAPIController
+                App::instance('orbit.upload.user', $user);
+
+                $response = UploadAPIController::create('raw')
+                                               ->setCalledFrom('mall.update')
+                                               ->postUploadMallBackground();
+
+                if ($response->code !== 0)
+                {
+                    throw new \Exception($response->message, $response->code);
+                }
+
+                if (is_null($backgroundSetting)) {
+                    $backgroundSetting = new Setting();
+                    $backgroundSetting->setting_name = 'background_image';
+                    $backgroundSetting->object_id = $mall->merchant_id;
+                    $backgroundSetting->object_type = 'merchant';
+                }
+                $backgroundSetting->setting_value = $response->data[0]->path;
+                $backgroundSetting->modified_by = $user->user_id;
+                $backgroundSetting->save();
+
+                $mall->setRelation('mediaBackground', $response->data);
+                $mall->media_background = $response->data;
+            });
+
+            $this->response->data = [
+                'landing_page'      => $landingPageSetting,
+                'background'        => $backgroundSetting,
+                'mall'              => $mall
+            ];
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Update
+            $activityNotes = sprintf('Setting updated for mall: %s', $mall->name);
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting OK')
+                    ->setObject($mall)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.setting.postupdatesetting.after.commit', array($this, $updatedsetting));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.setting.postupdatesetting.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.setting.postupdatesetting.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.setting.postupdatesetting.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.setting.postupdatesetting.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         }
@@ -505,5 +791,21 @@ class SettingAPIController extends ControllerAPI
             return $valid;
         });
 
+        // @Todo: Refactor by adding allowedForUser for mall
+        $user = $this->api->user;
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
+            $merchant = Retailer::excludeDeleted()
+                        ->isMall('yes')
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($merchant)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.tenant', $merchant);
+
+            return TRUE;
+        });
     }
 }

@@ -21,38 +21,40 @@ class CouponAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `merchant_id`                       (required) - Merchant ID
+     * @param integer    `merchant_id`                       (required) - Mall ID
      * @param string     `promotion_name`                    (required) - Coupon name
-     * @param string     `promotion_type`                    (required) - Coupon type. Valid value: product, cart.
+     * @param string     `promotion_type`                    (required) - Coupon type. Valid value: mall, tenant.
      * @param string     `status`                            (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param string     `description`                       (optional) - Description
+     * @param string     `long_description`                  (optional) - Long description
      * @param datetime   `begin_date`                        (optional) - Begin date. Example: 2014-12-30 00:00:00
      * @param datetime   `end_date`                          (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string     `is_permanent`                      (optional) - Is permanent. Valid value: Y, N.
-     * @param file       `images`                            (optional) - Coupon image
+     * @param file       `image`                             (optional) - Coupon image
+     * @param string     `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
      * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
      * @param integer    `coupon_validity_in_days`           (optional) - Coupon validity in days
+     * @param datetime   `coupon_validity_in_date`           (optional) - Coupon validity in date
      * @param string     `coupon_notification`               (optional) - Coupon notification. Valid value: Y, N.
      * @param string     `rule_type`                         (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
      * @param decimal    `rule_value`                        (optional) - Rule value
-     * @param string     `rule_object_type`                  (optional) - Rule object type. Valid value: product, family.
-     * @param integer    `rule_object_id1`                   (optional) - Rule object ID1 (product_id or category_id1).
-     * @param integer    `rule_object_id2`                   (optional) - Rule object ID2 (category_id2).
-     * @param integer    `rule_object_id3`                   (optional) - Rule object ID3 (category_id3).
-     * @param integer    `rule_object_id4`                   (optional) - Rule object ID4 (category_id4).
-     * @param integer    `rule_object_id5`                   (optional) - Rule object ID5 (category_id5).
-     * @param string     `discount_object_type`              (optional) - Discount object type. Valid value: product, family, cash_rebate.
-     * @param integer    `discount_object_id1`               (optional) - Discount object ID1 (product_id or category_id1).
-     * @param integer    `discount_object_id2`               (optional) - Discount object ID2 (category_id2).
-     * @param integer    `discount_object_id3`               (optional) - Discount object ID3 (category_id3).
-     * @param integer    `discount_object_id4`               (optional) - Discount object ID4 (category_id4).
-     * @param integer    `discount_object_id5`               (optional) - Discount object ID5 (category_id5).
+     * @param string     `rule_object_type`                  (optional) - Rule object type. Valid value: .
+     * @param integer    `rule_object_id1`                   (optional) - Rule object ID1 ( or ).
+     * @param integer    `rule_object_id2`                   (optional) - Rule object ID2 ().
+     * @param integer    `rule_object_id3`                   (optional) - Rule object ID3 ().
+     * @param integer    `rule_object_id4`                   (optional) - Rule object ID4 ().
+     * @param integer    `rule_object_id5`                   (optional) - Rule object ID5 ().
+     * @param string     `discount_object_type`              (optional) - Discount object type. Valid value: .
+     * @param integer    `discount_object_id1`               (optional) - Discount object ID1 ( or ).
+     * @param integer    `discount_object_id2`               (optional) - Discount object ID2 ().
+     * @param integer    `discount_object_id3`               (optional) - Discount object ID3 ().
+     * @param integer    `discount_object_id4`               (optional) - Discount object ID4 ().
+     * @param integer    `discount_object_id5`               (optional) - Discount object ID5 ().
      * @param decimal    `discount_value`                    (optional) - Discount value
      * @param string     `is_cumulative_with_coupons`        (optional) - Cumulative with other coupons. Valid value: Y, N.
      * @param string     `is_cumulative_with_promotions`     (optional) - Cumulative with other promotions. Valid value: Y, N.
      * @param decimal    `coupon_redeem_rule_value`          (optional) - Coupon redeem rule value
-     * @param array      `issue_retailer_ids`                (optional) - Issue Retailer IDs
-     * @param array      `redeem_retailer_ids`               (optional) - Redeem Retailer IDs
+     * @param array      `retailer_ids`                      (optional) - Tenant IDs
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -77,12 +79,22 @@ class CouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.coupon.postnewcoupon.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('create_coupon')) {
                 Event::fire('orbit.coupon.postnewcoupon.authz.notallowed', array($this, $user));
                 $createCouponLang = Lang::get('validation.orbit.actionlist.new_coupon');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createCouponLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.coupon.postnewcoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -92,11 +104,14 @@ class CouponAPIController extends ControllerAPI
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
             $description = OrbitInput::post('description');
+            $long_description = OrbitInput::post('long_description');
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
+            $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
+            $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $coupon_notification = OrbitInput::post('coupon_notification');
             $rule_type = OrbitInput::post('rule_type');
             $rule_value = OrbitInput::post('rule_value');
@@ -116,49 +131,39 @@ class CouponAPIController extends ControllerAPI
             $is_cumulative_with_coupons = OrbitInput::post('is_cumulative_with_coupons');
             $is_cumulative_with_promotions = OrbitInput::post('is_cumulative_with_promotions');
             $coupon_redeem_rule_value = OrbitInput::post('coupon_redeem_rule_value');
-            $issue_retailer_ids = OrbitInput::post('issue_retailer_ids');
-            $issue_retailer_ids = (array) $issue_retailer_ids;
-            $redeem_retailer_ids = OrbitInput::post('redeem_retailer_ids');
-            $redeem_retailer_ids = (array) $redeem_retailer_ids;
+            $retailer_ids = OrbitInput::post('retailer_ids');
+            $retailer_ids = (array) $retailer_ids;
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'          => $merchant_id,
-                    'promotion_name'       => $promotion_name,
-                    'promotion_type'       => $promotion_type,
-                    'status'               => $status,
-                    'rule_type'            => $rule_type,
-                    'rule_object_type'     => $rule_object_type,
-                    'rule_object_id1'      => $rule_object_id1,
-                    'rule_object_id2'      => $rule_object_id2,
-                    'rule_object_id3'      => $rule_object_id3,
-                    'rule_object_id4'      => $rule_object_id4,
-                    'rule_object_id5'      => $rule_object_id5,
-                    'discount_object_type' => $discount_object_type,
-                    'discount_object_id1'  => $discount_object_id1,
-                    'discount_object_id2'  => $discount_object_id2,
-                    'discount_object_id3'  => $discount_object_id3,
-                    'discount_object_id4'  => $discount_object_id4,
-                    'discount_object_id5'  => $discount_object_id5,
+                    'merchant_id'               => $merchant_id,
+                    'promotion_name'            => $promotion_name,
+                    'promotion_type'            => $promotion_type,
+                    'begin_date'                => $begin_date,
+                    'end_date'                  => $end_date,
+                    'status'                    => $status,
+                    'coupon_validity_in_date'   => $coupon_validity_in_date,
+                    'rule_value'                => $rule_value,
+                    'discount_value'            => $discount_value,
                 ),
                 array(
-                    'merchant_id'          => 'required|numeric|orbit.empty.merchant',
-                    'promotion_name'       => 'required|max:100|orbit.exists.coupon_name',
-                    'promotion_type'       => 'required|orbit.empty.coupon_type',
-                    'status'               => 'required|orbit.empty.coupon_status',
-                    'rule_type'            => 'orbit.empty.rule_type',
-                    'rule_object_type'     => 'orbit.empty.rule_object_type',
-                    'rule_object_id1'      => 'numeric|orbit.empty.rule_object_id1',
-                    'rule_object_id2'      => 'numeric|orbit.empty.rule_object_id2',
-                    'rule_object_id3'      => 'numeric|orbit.empty.rule_object_id3',
-                    'rule_object_id4'      => 'numeric|orbit.empty.rule_object_id4',
-                    'rule_object_id5'      => 'numeric|orbit.empty.rule_object_id5',
-                    'discount_object_type' => 'orbit.empty.discount_object_type',
-                    'discount_object_id1'  => 'numeric|orbit.empty.discount_object_id1',
-                    'discount_object_id2'  => 'numeric|orbit.empty.discount_object_id2',
-                    'discount_object_id3'  => 'numeric|orbit.empty.discount_object_id3',
-                    'discount_object_id4'  => 'numeric|orbit.empty.discount_object_id4',
-                    'discount_object_id5'  => 'numeric|orbit.empty.discount_object_id5',
+                    'merchant_id'               => 'required|numeric|orbit.empty.merchant',
+                    'promotion_name'            => 'required|max:255|orbit.exists.coupon_name',
+                    'promotion_type'            => 'required|orbit.empty.coupon_type',
+                    'begin_date'                => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'                  => 'required|date_format:Y-m-d H:i:s',
+                    'status'                    => 'required|orbit.empty.coupon_status',
+                    'coupon_validity_in_date'   => 'required|date_format:Y-m-d H:i:s',
+                    'rule_value'                => 'required|numeric|min:0',
+                    'discount_value'            => 'required|numeric|min:0',
+                ),
+                array(
+                    'rule_value.required'       => 'The amount to obtain is required',
+                    'rule_value.numeric'        => 'The amount to obtain must be a number',
+                    'rule_value.min'            => 'The amount to obtain must be greater than zero',
+                    'discount_value.required'       => 'The coupon value is required',
+                    'discount_value.numeric'        => 'The coupon value must be a number',
+                    'discount_value.min'            => 'The coupon value must be greater than zero',
                 )
             );
 
@@ -170,31 +175,16 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // validating issue_retailer_ids.
-            foreach ($issue_retailer_ids as $retailer_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'retailer_id'   => $retailer_id_check,
-
-                    ),
-                    array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
-                    )
-                );
-
-                Event::fire('orbit.coupon.postnewcoupon.before.issueretailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.coupon.postnewcoupon.after.issueretailervalidation', array($this, $validator));
+            // Check the end date should be less than validity in date
+            $int_before_end_date = strtotime(date('Y-m-d', strtotime($end_date)));
+            $int_validity_date = strtotime($coupon_validity_in_date);
+            if ($int_validity_date <= $int_before_end_date) {
+                $errorMessage = 'The validity redeem date should be greater than the end date.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // validating redeem_retailer_ids.
-            foreach ($redeem_retailer_ids as $retailer_id_check) {
+            // validating retailer_ids.
+            foreach ($retailer_ids as $retailer_id_check) {
                 $validator = Validator::make(
                     array(
                         'retailer_id'   => $retailer_id_check,
@@ -205,7 +195,7 @@ class CouponAPIController extends ControllerAPI
                     )
                 );
 
-                Event::fire('orbit.coupon.postnewcoupon.before.redeemretailervalidation', array($this, $validator));
+                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
 
                 // Run the validation
                 if ($validator->fails()) {
@@ -213,7 +203,7 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                Event::fire('orbit.coupon.postnewcoupon.after.redeemretailervalidation', array($this, $validator));
+                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
             }
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
@@ -228,11 +218,14 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->promotion_type = $promotion_type;
             $newcoupon->status = $status;
             $newcoupon->description = $description;
+            $newcoupon->long_description = $long_description;
             $newcoupon->begin_date = $begin_date;
             $newcoupon->end_date = $end_date;
             $newcoupon->is_permanent = $is_permanent;
+            $newcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
             $newcoupon->maximum_issued_coupon = $maximum_issued_coupon;
             $newcoupon->coupon_validity_in_days = $coupon_validity_in_days;
+            $newcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             $newcoupon->coupon_notification = $coupon_notification;
             $newcoupon->created_by = $this->api->user->user_id;
 
@@ -322,30 +315,19 @@ class CouponAPIController extends ControllerAPI
             $couponrule->is_cumulative_with_coupons = $is_cumulative_with_coupons;
             $couponrule->is_cumulative_with_promotions = $is_cumulative_with_promotions;
             $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
-            $couponrule = $newcoupon->couponrule()->save($couponrule);
-            $newcoupon->couponrule = $couponrule;
+            $couponrule = $newcoupon->couponRule()->save($couponrule);
+            $newcoupon->coupon_rule = $couponrule;
 
-            // save CouponRetailer (issue retailers).
-            $issueretailers = array();
-            foreach ($issue_retailer_ids as $retailer_id) {
-                $issueretailer = new CouponRetailer();
-                $issueretailer->retailer_id = $retailer_id;
-                $issueretailer->promotion_id = $newcoupon->promotion_id;
-                $issueretailer->save();
-                $issueretailers[] = $issueretailer;
+            // save CouponRetailer
+            $retailers = array();
+            foreach ($retailer_ids as $retailer_id) {
+                $retailer = new CouponRetailer();
+                $retailer->retailer_id = $retailer_id;
+                $retailer->promotion_id = $newcoupon->promotion_id;
+                $retailer->save();
+                $retailers[] = $retailer;
             }
-            $newcoupon->issueretailers = $issueretailers;
-
-            // save CouponRetailerRedeem (redeem retailers).
-            $redeemretailers = array();
-            foreach ($redeem_retailer_ids as $retailer_id) {
-                $redeemretailer = new CouponRetailerRedeem();
-                $redeemretailer->retailer_id = $retailer_id;
-                $redeemretailer->promotion_id = $newcoupon->promotion_id;
-                $redeemretailer->save();
-                $redeemretailers[] = $redeemretailer;
-            }
-            $newcoupon->redeemretailers = $redeemretailers;
+            $newcoupon->tenants = $retailers;
 
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
             $this->response->data = $newcoupon;
@@ -456,40 +438,41 @@ class CouponAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer    `promotion_id`                      (required) - Coupon ID
-     * @param integer    `merchant_id`                       (optional) - Merchant ID
+     * @param integer    `merchant_id`                       (optional) - Mall ID
      * @param string     `promotion_name`                    (optional) - Coupon name
-     * @param string     `promotion_type`                    (optional) - Coupon type. Valid value: product, cart.
+     * @param string     `promotion_type`                    (optional) - Coupon type. Valid value: mall, tenant.
      * @param string     `status`                            (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param string     `description`                       (optional) - Description
+     * @param string     `long_description`                  (optional) - Long description
      * @param datetime   `begin_date`                        (optional) - Begin date. Example: 2014-12-30 00:00:00
      * @param datetime   `end_date`                          (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string     `is_permanent`                      (optional) - Is permanent. Valid value: Y, N.
      * @param file       `images`                            (optional) - Coupon image
+     * @param integer    `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
      * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
      * @param integer    `coupon_validity_in_days`           (optional) - Coupon validity in days
+     * @param integer    `coupon_validity_in_date`           (optional) - Coupon validity in date
      * @param string     `coupon_notification`               (optional) - Coupon notification. Valid value: Y, N.
      * @param string     `rule_type`                         (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
      * @param decimal    `rule_value`                        (optional) - Rule value
-     * @param string     `rule_object_type`                  (optional) - Rule object type. Valid value: product, family.
-     * @param integer    `rule_object_id1`                   (optional) - Rule object ID1 (product_id or category_id1).
-     * @param integer    `rule_object_id2`                   (optional) - Rule object ID2 (category_id2).
-     * @param integer    `rule_object_id3`                   (optional) - Rule object ID3 (category_id3).
-     * @param integer    `rule_object_id4`                   (optional) - Rule object ID4 (category_id4).
-     * @param integer    `rule_object_id5`                   (optional) - Rule object ID5 (category_id5).
-     * @param string     `discount_object_type`              (optional) - Discount object type. Valid value: product, family.
-     * @param integer    `discount_object_id1`               (optional) - Discount object ID1 (product_id or category_id1).
-     * @param integer    `discount_object_id2`               (optional) - Discount object ID2 (category_id2).
-     * @param integer    `discount_object_id3`               (optional) - Discount object ID3 (category_id3).
-     * @param integer    `discount_object_id4`               (optional) - Discount object ID4 (category_id4).
-     * @param integer    `discount_object_id5`               (optional) - Discount object ID5 (category_id5).
+     * @param string     `rule_object_type`                  (optional) - Rule object type. Valid value: .
+     * @param integer    `rule_object_id1`                   (optional) - Rule object ID1 ( or ).
+     * @param integer    `rule_object_id2`                   (optional) - Rule object ID2 ().
+     * @param integer    `rule_object_id3`                   (optional) - Rule object ID3 ().
+     * @param integer    `rule_object_id4`                   (optional) - Rule object ID4 ().
+     * @param integer    `rule_object_id5`                   (optional) - Rule object ID5 ().
+     * @param string     `discount_object_type`              (optional) - Discount object type. Valid value: , .
+     * @param integer    `discount_object_id1`               (optional) - Discount object ID1 ( or ).
+     * @param integer    `discount_object_id2`               (optional) - Discount object ID2 ().
+     * @param integer    `discount_object_id3`               (optional) - Discount object ID3 ().
+     * @param integer    `discount_object_id4`               (optional) - Discount object ID4 ().
+     * @param integer    `discount_object_id5`               (optional) - Discount object ID5 ().
      * @param decimal    `discount_value`                    (optional) - Discount value
      * @param string     `is_cumulative_with_coupons`        (optional) - Cumulative with other coupons. Valid value: Y, N.
      * @param string     `is_cumulative_with_promotions`     (optional) - Cumulative with other promotions. Valid value: Y, N.
      * @param decimal    `coupon_redeem_rule_value`          (optional) - Coupon redeem rule value
-     * @param array      `issue_retailer_ids`                (optional) - Issue Retailer IDs
-     * @param array      `redeem_retailer_ids`               (optional) - Redeem Retailer IDs
-     * @param string     `no_issue_retailer`                 (optional) - Flag to delete all issue retailer links. Valid value: Y.
-     * @param string     `no_redeem_retailer`                (optional) - Flag to delete all redeem retailer links. Valid value: Y.
+     * @param array      `retailer_ids`                      (optional) - Retailer IDs
+     * @param string     `no_retailer`                       (optional) - Flag to delete all retailer links. Valid value: Y.
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -515,15 +498,26 @@ class CouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.coupon.postupdatecoupon.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('update_coupon')) {
                 Event::fire('orbit.coupon.postupdatecoupon.authz.notallowed', array($this, $user));
                 $updateCouponLang = Lang::get('validation.orbit.actionlist.update_coupon');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateCouponLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.coupon.postupdatecoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
+
 
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('merchant_id');
@@ -543,24 +537,26 @@ class CouponAPIController extends ControllerAPI
             $discount_object_id4 = OrbitInput::post('discount_object_id4');
             $discount_object_id5 = OrbitInput::post('discount_object_id5');
 
+            $begin_date = OrbitInput::post('begin_date');
+            $end_date = OrbitInput::post('end_date');
+            $is_permanent = OrbitInput::post('is_permanent');
+            $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
+            $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
+            $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
+            $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
+            $discount_value = OrbitInput::post('discount_value');
+            $rule_value = OrbitInput::post('rule_value');
+
             $data = array(
                 'promotion_id'         => $promotion_id,
                 'merchant_id'          => $merchant_id,
                 'promotion_type'       => $promotion_type,
                 'status'               => $status,
-                'rule_type'            => $rule_type,
-                'rule_object_type'     => $rule_object_type,
-                'rule_object_id1'      => $rule_object_id1,
-                'rule_object_id2'      => $rule_object_id2,
-                'rule_object_id3'      => $rule_object_id3,
-                'rule_object_id4'      => $rule_object_id4,
-                'rule_object_id5'      => $rule_object_id5,
-                'discount_object_type' => $discount_object_type,
-                'discount_object_id1'  => $discount_object_id1,
-                'discount_object_id2'  => $discount_object_id2,
-                'discount_object_id3'  => $discount_object_id3,
-                'discount_object_id4'  => $discount_object_id4,
-                'discount_object_id5'  => $discount_object_id5,
+                'begin_date'                => $begin_date,
+                'end_date'                  => $end_date,
+                'coupon_validity_in_date'   => $coupon_validity_in_date,
+                'rule_value'                => $rule_value,
+                'discount_value'            => $discount_value,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -573,25 +569,24 @@ class CouponAPIController extends ControllerAPI
                 array(
                     'promotion_id'         => 'required|numeric|orbit.empty.coupon',
                     'merchant_id'          => 'numeric|orbit.empty.merchant',
-                    'promotion_name'       => 'sometimes|required|min:5|max:100|coupon_name_exists_but_me',
+                    'promotion_name'       => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
                     'promotion_type'       => 'orbit.empty.coupon_type',
                     'status'               => 'orbit.empty.coupon_status',
-                    'rule_type'            => 'orbit.empty.rule_type',
-                    'rule_object_type'     => 'orbit.empty.rule_object_type',
-                    'rule_object_id1'      => 'numeric|orbit.empty.rule_object_id1',
-                    'rule_object_id2'      => 'numeric|orbit.empty.rule_object_id2',
-                    'rule_object_id3'      => 'numeric|orbit.empty.rule_object_id3',
-                    'rule_object_id4'      => 'numeric|orbit.empty.rule_object_id4',
-                    'rule_object_id5'      => 'numeric|orbit.empty.rule_object_id5',
-                    'discount_object_type' => 'orbit.empty.discount_object_type',
-                    'discount_object_id1'  => 'numeric|orbit.empty.discount_object_id1',
-                    'discount_object_id2'  => 'numeric|orbit.empty.discount_object_id2',
-                    'discount_object_id3'  => 'numeric|orbit.empty.discount_object_id3',
-                    'discount_object_id4'  => 'numeric|orbit.empty.discount_object_id4',
-                    'discount_object_id5'  => 'numeric|orbit.empty.discount_object_id5',
+                    'begin_date'                => 'date_format:Y-m-d H:i:s',
+                    'end_date'                  => 'date_format:Y-m-d H:i:s',
+                    'status'                    => 'orbit.empty.coupon_status',
+                    'coupon_validity_in_date'   => 'date_format:Y-m-d H:i:s',
+                    'rule_value'                => 'numeric|min:0',
+                    'discount_value'            => 'numeric|min:0',
                 ),
                 array(
                    'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
+                    'rule_value.required'       => 'The amount to obtain is required',
+                    'rule_value.numeric'        => 'The amount to obtain must be a number',
+                    'rule_value.min'            => 'The amount to obtain must be greater than zero',
+                    'discount_value.required'       => 'The coupon value is required',
+                    'discount_value.numeric'        => 'The coupon value must be a number',
+                    'discount_value.min'            => 'The coupon value must be greater than zero',
                 )
             );
 
@@ -607,9 +602,9 @@ class CouponAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            $updatedcoupon = Coupon::with('couponrule', 'issueretailers', 'redeemretailers')->excludeDeleted()->allowedForUser($user)->where('promotion_id', $promotion_id)->first();
+            $updatedcoupon = Coupon::with('couponRule', 'tenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
 
-            // save Coupon.
+            // save Coupon
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedcoupon) {
                 $updatedcoupon->merchant_id = $merchant_id;
             });
@@ -630,6 +625,10 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->description = $description;
             });
 
+            OrbitInput::post('long_description', function($long_description) use ($updatedcoupon) {
+                $updatedcoupon->long_description = $long_description;
+            });
+
             OrbitInput::post('begin_date', function($begin_date) use ($updatedcoupon) {
                 $updatedcoupon->begin_date = $begin_date;
             });
@@ -642,12 +641,28 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_permanent = $is_permanent;
             });
 
+            OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
+                $updatedcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
+            });
+
             OrbitInput::post('maximum_issued_coupon', function($maximum_issued_coupon) use ($updatedcoupon) {
                 $updatedcoupon->maximum_issued_coupon = $maximum_issued_coupon;
             });
 
             OrbitInput::post('coupon_validity_in_days', function($coupon_validity_in_days) use ($updatedcoupon) {
                 $updatedcoupon->coupon_validity_in_days = $coupon_validity_in_days;
+            });
+
+            OrbitInput::post('coupon_validity_in_date', function($coupon_validity_in_date) use ($updatedcoupon, $end_date) {
+                // Check the end date should be less than validity in date
+                $int_before_end_date = strtotime(date('Y-m-d', strtotime($end_date)));
+                $int_validity_date = strtotime($coupon_validity_in_date);
+                if ($int_validity_date <= $int_before_end_date) {
+                    $errorMessage = 'The validity redeem date should be greater than the end date.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
             OrbitInput::post('coupon_notification', function($coupon_notification) use ($updatedcoupon) {
@@ -775,31 +790,23 @@ class CouponAPIController extends ControllerAPI
             });
 
             $couponrule->save();
-            $updatedcoupon->setRelation('couponrule', $couponrule);
-            $updatedcoupon->couponrule = $couponrule;
+            $updatedcoupon->setRelation('couponRule', $couponrule);
+            $updatedcoupon->coupon_rule = $couponrule;
 
 
-            // save CouponRetailer (issue retailer) and CouponRetailerRedeem (redeem retailer).
-            OrbitInput::post('no_issue_retailer', function($no_issue_retailer) use ($updatedcoupon) {
-                if ($no_issue_retailer == 'Y') {
-                    $deleted_issue_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
-                    $updatedcoupon->issueretailers()->detach($deleted_issue_retailer_ids);
-                    $updatedcoupon->load('issueretailers');
+            // save CouponRetailer
+            OrbitInput::post('no_retailer', function($no_retailer) use ($updatedcoupon) {
+                if ($no_retailer == 'Y') {
+                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $updatedcoupon->tenants()->detach($deleted_retailer_ids);
+                    $updatedcoupon->load('tenants');
                 }
             });
 
-            OrbitInput::post('no_redeem_retailer', function($no_redeem_retailer) use ($updatedcoupon) {
-                if ($no_redeem_retailer == 'Y') {
-                    $deleted_redeem_retailer_ids = CouponRetailerRedeem::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
-                    $updatedcoupon->redeemretailers()->detach($deleted_redeem_retailer_ids);
-                    $updatedcoupon->load('redeemretailers');
-                }
-            });
-
-            OrbitInput::post('issue_retailer_ids', function($issue_retailer_ids) use ($updatedcoupon) {
-                // validate issue_retailer_ids
-                $issue_retailer_ids = (array) $issue_retailer_ids;
-                foreach ($issue_retailer_ids as $retailer_id_check) {
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatedcoupon) {
+                // validate retailer_ids
+                $retailer_ids = (array) $retailer_ids;
+                foreach ($retailer_ids as $retailer_id_check) {
                     $validator = Validator::make(
                         array(
                             'retailer_id'   => $retailer_id_check,
@@ -809,7 +816,7 @@ class CouponAPIController extends ControllerAPI
                         )
                     );
 
-                    Event::fire('orbit.coupon.postupdatecoupon.before.issueretailervalidation', array($this, $validator));
+                    Event::fire('orbit.coupon.postupdatecoupon.before.retailervalidation', array($this, $validator));
 
                     // Run the validation
                     if ($validator->fails()) {
@@ -817,43 +824,13 @@ class CouponAPIController extends ControllerAPI
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
-                    Event::fire('orbit.coupon.postupdatecoupon.after.issueretailervalidation', array($this, $validator));
+                    Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
                 }
                 // sync new set of retailer ids
-                $updatedcoupon->issueretailers()->sync($issue_retailer_ids);
+                $updatedcoupon->tenants()->sync($retailer_ids);
 
-                // reload issueretailers relation
-                $updatedcoupon->load('issueretailers');
-            });
-
-            OrbitInput::post('redeem_retailer_ids', function($redeem_retailer_ids) use ($updatedcoupon) {
-                // validate redeem_retailer_ids
-                $redeem_retailer_ids = (array) $redeem_retailer_ids;
-                foreach ($redeem_retailer_ids as $retailer_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'retailer_id'   => $retailer_id_check,
-                        ),
-                        array(
-                            'retailer_id'   => 'orbit.empty.retailer',
-                        )
-                    );
-
-                    Event::fire('orbit.coupon.postupdatecoupon.before.redeemretailervalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.coupon.postupdatecoupon.after.redeemretailervalidation', array($this, $validator));
-                }
-                // sync new set of retailer ids
-                $updatedcoupon->redeemretailers()->sync($redeem_retailer_ids);
-
-                // reload redeemretailers relation
-                $updatedcoupon->load('redeemretailers');
+                // reload tenants relation
+                $updatedcoupon->load('tenants');
             });
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
@@ -995,24 +972,37 @@ class CouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.coupon.postdeletecoupon.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('delete_coupon')) {
                 Event::fire('orbit.coupon.postdeletecoupon.authz.notallowed', array($this, $user));
                 $deleteCouponLang = Lang::get('validation.orbit.actionlist.delete_coupon');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteCouponLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.coupon.postdeletecoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
             $promotion_id = OrbitInput::post('promotion_id');
+            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $promotion_id,
+                    'promotion_id'  => $promotion_id,
+                    'password'      => $password
                 ),
                 array(
-                    'promotion_id' => 'required|numeric|orbit.empty.coupon',
+                    'promotion_id'  => 'required|numeric|orbit.empty.coupon|orbit.issuedcoupon.exists',
+                    'password'      => 'required|orbit.masterpassword.delete'
                 )
             );
 
@@ -1028,22 +1018,16 @@ class CouponAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            $deletecoupon = Coupon::excludeDeleted()->allowedForUser($user)->where('promotion_id', $promotion_id)->first();
+            $deletecoupon = Coupon::excludeDeleted()->where('promotion_id', $promotion_id)->first();
             $deletecoupon->status = 'deleted';
             $deletecoupon->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.coupon.postdeletecoupon.before.save', array($this, $deletecoupon));
 
-            // hard delete issueretailer.
-            $deleteissueretailers = CouponRetailer::where('promotion_id', $deletecoupon->promotion_id)->get();
-            foreach ($deleteissueretailers as $deleteissueretailer) {
-                $deleteissueretailer->delete();
-            }
-
-            // hard delete redeemretailer.
-            $deleteredeemretailers = CouponRetailerRedeem::where('promotion_id', $deletecoupon->promotion_id)->get();
-            foreach ($deleteredeemretailers as $deleteredeemretailer) {
-                $deleteredeemretailer->delete();
+            // hard delete retailer.
+            $deleteretailers = CouponRetailer::where('promotion_id', $deletecoupon->promotion_id)->get();
+            foreach ($deleteretailers as $deleteretailer) {
+                $deleteretailer->delete();
             }
 
             $deletecoupon->save();
@@ -1163,8 +1147,8 @@ class CouponAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `with`                  (optional) - Valid value: retailers, product, family.
-     * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, is_permanent, status, rule_type, display_discount_value.
+     * @param string   `with`                  (optional) - Valid value: mall, tenants.
+     * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status.
      * @param string   `sortmode`              (optional) - ASC or DESC
      * @param integer  `take`                  (optional) - Limit
      * @param integer  `skip`                  (optional) - Limit offset
@@ -1175,6 +1159,8 @@ class CouponAPIController extends ControllerAPI
      * @param string   `promotion_type`        (optional) - Coupon type. Valid value: product, cart.
      * @param string   `description`           (optional) - Description
      * @param string   `description_like`      (optional) - Description like
+     * @param string   `long_description`      (optional) - Long description
+     * @param string   `long_description_like` (optional) - Long description like
      * @param datetime `begin_date`            (optional) - Begin date. Example: 2014-12-30 00:00:00
      * @param datetime `end_date`              (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
@@ -1193,8 +1179,7 @@ class CouponAPIController extends ControllerAPI
      * @param integer  `discount_object_id3`   (optional) - Discount object ID3 (category_id3).
      * @param integer  `discount_object_id4`   (optional) - Discount object ID4 (category_id4).
      * @param integer  `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
-     * @param integer  `issue_retailer_id`     (optional) - Issue Retailer IDs
-     * @param integer  `redeem_retailer_id`    (optional) - Redeem Retailer IDs
+     * @param integer  `retailer_name`           (optional) - Retailer name
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1215,12 +1200,22 @@ class CouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.coupon.getsearchcoupon.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_coupon')) {
                 Event::fire('orbit.coupon.getsearchcoupon.authz.notallowed', array($this, $user));
                 $viewCouponLang = Lang::get('validation.orbit.actionlist.view_coupon');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.coupon.getsearchcoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1231,7 +1226,7 @@ class CouponAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status,rule_type,display_discount_value',
+                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.coupon_sortby'),
@@ -1269,9 +1264,7 @@ class CouponAPIController extends ControllerAPI
             $table_prefix = DB::getTablePrefix();
             // Builder object
             // Addition select case and join for sorting by discount_value.
-            $coupons = Coupon::with('couponrule')
-                ->excludeDeleted()
-                ->allowedForViewOnly($user)
+            $coupons = Coupon::with('couponRule')
                 ->select(DB::raw($table_prefix . "promotions.*,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
@@ -1284,10 +1277,27 @@ class CouponAPIController extends ControllerAPI
                         WHEN 'cart_discount_by_percentage' THEN discount_value * 100
                         WHEN 'product_discount_by_percentage' THEN discount_value * 100
                         ELSE discount_value
-                    END AS 'display_discount_value'
+                    END AS 'display_discount_value',
+                    {$table_prefix}merchants.name as retailer_name
                     ")
                 )
-                ->join('promotion_rules', 'promotions.promotion_id', '=', 'promotion_rules.promotion_id');
+                ->joinPromotionRules()
+                ->joinPromotionRetailer()
+                ->joinMerchant()
+                ->groupBy('promotions.promotion_id');
+
+            if (strtolower($user->role->role_name) === 'mall customer service') {
+                $now = date('Y-m-d');
+                $prefix = DB::getTablePrefix();
+                $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))");
+                $coupons->whereRaw("((select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
+                                        where {$prefix}issued_coupons.promotion_id={$prefix}promotions.promotion_id
+                                        and status!='deleted') < {$prefix}promotions.maximum_issued_coupon) or
+                                    ({$prefix}promotions.maximum_issued_coupon = 0 or {$prefix}promotions.maximum_issued_coupon is null)");
+                $coupons->active('promotions');
+            } else {
+                $coupons->excludeDeleted('promotions');
+            }
 
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($coupons)
@@ -1328,6 +1338,18 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::get('description_like', function($description) use ($coupons)
             {
                 $coupons->where('promotions.description', 'like', "%$description%");
+            });
+
+            // Filter coupon by long description
+            OrbitInput::get('long_description', function($long_description) use ($coupons)
+            {
+                $coupons->whereIn('promotions.long_description', $long_description);
+            });
+
+            // Filter coupon by matching long_description pattern
+            OrbitInput::get('long_description_like', function($long_description) use ($coupons)
+            {
+                $coupons->where('promotions.long_description', 'like', "%$long_description%");
             });
 
             // Filter coupon by begin date
@@ -1448,18 +1470,16 @@ class CouponAPIController extends ControllerAPI
                 });
             });
 
-            // Filter coupon by issue retailer id
-            OrbitInput::get('issue_retailer_id', function ($issueRetailerIds) use ($coupons) {
-                $coupons->whereHas('issueretailers', function($q) use ($issueRetailerIds) {
-                    $q->whereIn('retailer_id', $issueRetailerIds);
+            // Filter coupon by retailer id
+            OrbitInput::get('retailer_id', function ($retailerIds) use ($coupons) {
+                $coupons->whereHas('tenants', function($q) use ($retailerIds) {
+                    $q->whereIn('retailer_id', $retailerIds);
                 });
             });
 
-            // Filter coupon by redeem retailer id
-            OrbitInput::get('redeem_retailer_id', function ($redeemRetailerIds) use ($coupons) {
-                $coupons->whereHas('redeemretailers', function($q) use ($redeemRetailerIds) {
-                    $q->whereIn('retailer_id', $redeemRetailerIds);
-                });
+            // Filter
+            OrbitInput::get('retailer_name', function ($name) use ($coupons) {
+                $coupons->where('merchants.merchant_name', 'like', "%$name%");
             });
 
             // Add new relation based on request
@@ -1467,12 +1487,10 @@ class CouponAPIController extends ControllerAPI
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
-                    if ($relation === 'retailers') {
-                        $coupons->with('issueretailers', 'redeemretailers');
-                    } elseif ($relation === 'product') {
-                        $coupons->with('couponrule.ruleproduct', 'couponrule.discountproduct');
-                    } elseif ($relation === 'family') {
-                        $coupons->with('couponrule.rulecategory1', 'couponrule.rulecategory2', 'couponrule.rulecategory3', 'couponrule.rulecategory4', 'couponrule.rulecategory5', 'couponrule.discountcategory1', 'couponrule.discountcategory2', 'couponrule.discountcategory3', 'couponrule.discountcategory4', 'couponrule.discountcategory5');
+                    if ($relation === 'mall') {
+                        $coupons->with('mall');
+                    } elseif ($relation === 'tenants') {
+                        $coupons->with('tenants');
                     }
                 }
             });
@@ -1524,11 +1542,15 @@ class CouponAPIController extends ControllerAPI
                     'is_permanent'             => 'promotions.is_permanent',
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
-                    'display_discount_value'   => 'display_discount_value' // only to avoid error 'Undefined index'
+                    'tenant_name'              => 'tenant_name'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
+
+            if ($sortBy !== 'promotions.status') {
+                $coupons->orderBy('promotions.status', 'asc');
+            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
@@ -1537,12 +1559,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            if (trim(OrbitInput::get('sortby')) === 'display_discount_value') {
-                $coupons->orderBy('display_discount_type', $sortMode);
-                $coupons->orderBy('display_discount_value', $sortMode);
-            } else {
-                $coupons->orderBy($sortBy, $sortMode);
-            }
+            $coupons->orderBy($sortBy, $sortMode);
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
@@ -1608,282 +1625,171 @@ class CouponAPIController extends ControllerAPI
     }
 
     /**
-     * GET - Search Coupon - List By Issue Retailer
+     * POST - Redeem Coupon for retailer/tenant
      *
-     * @author Tian <tian@dominopos.com>
+     * @author Rio Astamal <me@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `sortby`                (optional) - column order by. Valid value: issue_retailer_name, registered_date, promotion_name, promotion_type, description, begin_date, end_date, is_permanent, status.
-     * @param string   `sortmode`              (optional) - asc or desc
-     * @param integer  `take`                  (optional) - limit
-     * @param integer  `skip`                  (optional) - limit offset
-     * @param integer  `promotion_id`          (optional) - Coupon ID
-     * @param integer  `merchant_id`           (optional) - Merchant ID
-     * @param string   `promotion_name`        (optional) - Coupon name
-     * @param string   `promotion_name_like`   (optional) - Coupon name like
-     * @param string   `promotion_type`        (optional) - Coupon type. Valid value: product, cart.
-     * @param string   `description`           (optional) - Description
-     * @param string   `description_like`      (optional) - Description like
-     * @param datetime `begin_date`            (optional) - Begin date. Example: 2014-12-30 00:00:00
-     * @param datetime `end_date`              (optional) - End date. Example: 2014-12-30 23:59:59
-     * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
-     * @param string   `coupon_notification`   (optional) - Coupon notification. Valid value: Y, N.
-     * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param string   `city`                  (optional) - City name
-     * @param string   `city_like`             (optional) - City name like
-     * @param integer  `issue_retailer_id`     (optional) - Issue retailer ID
+     * @param integer     `promotion_id`                    (required) - ID of the coupon
+     * @param string      `merchant_verification_number`    (required) - Merchant/Tenant verification number
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getSearchCouponByIssueRetailer()
+    public function postRedeemCoupon()
     {
+        $activity = Activity::mobileci()
+                          ->setActivityType('coupon');
+
+        $user = NULL;
+        $mall_id = NULL;
+        $issuedcoupon = NULL;
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.before.auth', array($this));
+            Event::fire('orbit.coupon.redeemcoupon.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.after.auth', array($this));
+            Event::fire('orbit.coupon.redeemcoupon.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.before.authz', array($this, $user));
+            Event::fire('orbit.coupon.redeemcoupon.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_coupon')) {
-                Event::fire('orbit.coupon.getsearchcouponbyissueretailer.authz.notallowed', array($this, $user));
-                $viewCouponLang = Lang::get('validation.orbit.actionlist.view_coupon');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+/*
+            if (! ACL::create($user)->isAllowed('delete_coupon')) {
+                Event::fire('orbit.coupon.redeemcoupon.authz.notallowed', array($this, $user));
+                $deleteCouponLang = Lang::get('validation.orbit.actionlist.delete_coupon');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteCouponLang));
                 ACL::throwAccessForbidden($message);
             }
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.after.authz', array($this, $user));
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.coupon.redeemcoupon.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
-            $sort_by = OrbitInput::get('sortby');
+            $mall_id = Config::get('orbit.shop.id');
+
+            $issuedCouponId = OrbitInput::post('issued_coupon_id');
+            $verificationNumber = OrbitInput::post('merchant_verification_number');
+
             $validator = Validator::make(
                 array(
-                    'sort_by' => $sort_by,
+                    'issued_coupon_id' => $issuedCouponId,
+                    'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
-                    'sort_by' => 'in:issue_retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.coupon_by_issue_retailer_sortby'),
+                    'issued_coupon_id'              => 'required|numeric|orbit.empty.issuedcoupon',
+                    'merchant_verification_number'  => 'required|numeric'
                 )
             );
 
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.before.validation', array($this, $validator));
+            Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.after.validation', array($this, $validator));
+            Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
-            // Get the maximum record
-            $maxRecord = (int)Config::get('orbit.pagination.max_record');
-            if ($maxRecord <= 0) {
-                $maxRecord = 20;
+            if ($user->status !== 'active') {
+                $errorMessage = 'Can not redeem coupon, your status is not active.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // Builder object
-            $coupons = DB::table('promotions')
-                ->join('promotion_retailer', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
-                ->join('merchants', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
-                ->select('promotion_retailer.retailer_id', 'merchants.name AS issue_retailer_name', 'promotions.*')
-                ->where('promotions.is_coupon', '=', 'Y')
-                ->where('promotions.status', '!=', 'deleted');
+            // Begin database transaction
+            $this->beginTransaction();
 
-            // Filter coupon by Ids
-            OrbitInput::get('promotion_id', function($promotionIds) use ($coupons)
-            {
-                $coupons->whereIn('promotions.promotion_id', $promotionIds);
-            });
+            $issuedcoupon = App::make('orbit.empty.issuedcoupon');
 
-            // Filter coupon by merchant Ids
-            OrbitInput::get('merchant_id', function ($merchantIds) use ($coupons) {
-                $coupons->whereIn('promotions.merchant_id', $merchantIds);
-            });
+            // The coupon information
+            $coupon = $issuedcoupon->coupon;
 
-            // Filter coupon by promotion name
-            OrbitInput::get('promotion_name', function($promotionName) use ($coupons)
-            {
-                $coupons->whereIn('promotions.promotion_name', $promotionName);
-            });
+            $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
+            $issuedcoupon->status = 'redeemed';
 
-            // Filter coupon by matching promotion name pattern
-            OrbitInput::get('promotion_name_like', function($promotionName) use ($coupons)
-            {
-                $coupons->where('promotions.promotion_name', 'like', "%$promotionName%");
-            });
+            Event::fire('orbit.coupon.postissuedcoupon.before.save', array($this, $issuedcoupon));
 
-            // Filter coupon by promotion type
-            OrbitInput::get('promotion_type', function($promotionTypes) use ($coupons)
-            {
-                $coupons->whereIn('promotions.promotion_type', $promotionTypes);
-            });
+            $issuedcoupon->save();
 
-            // Filter coupon by description
-            OrbitInput::get('description', function($description) use ($coupons)
-            {
-                $coupons->whereIn('promotions.description', $description);
-            });
+            Event::fire('orbit.coupon.postissuedcoupon.after.save', array($this, $issuedcoupon));
+            $this->response->data = null;
+            $this->response->message = Lang::get('statuses.orbit.deleted.coupon');
 
-            // Filter coupon by matching description pattern
-            OrbitInput::get('description_like', function($description) use ($coupons)
-            {
-                $coupons->where('promotions.description', 'like', "%$description%");
-            });
+            // Commit the changes
+            $this->commit();
 
-            // Filter coupon by begin date
-            OrbitInput::get('begin_date', function($beginDate) use ($coupons)
-            {
-                $coupons->where('promotions.begin_date', '<=', $beginDate);
-            });
+            $this->response->message = 'Coupon has been successfully redeemed.';
+            $this->response->data = $issuedcoupon;
 
-            // Filter coupon by end date
-            OrbitInput::get('end_date', function($endDate) use ($coupons)
-            {
-                $coupons->where('promotions.end_date', '>=', $endDate);
-            });
+            // Successfull Creation
+            $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->promotion_name);
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Redeem Coupon OK')
+                    ->setObject($issuedcoupon)
+                    ->setNotes($activityNotes)
+                    ->setLocation($mall_id)
+                    ->setModuleName('Coupon')
+                    ->responseOK();
 
-            // Filter coupon by is permanent
-            OrbitInput::get('is_permanent', function ($isPermanent) use ($coupons) {
-                $coupons->whereIn('promotions.is_permanent', $isPermanent);
-            });
-
-            // Filter coupon by coupon notification
-            OrbitInput::get('coupon_notification', function ($couponNotification) use ($coupons) {
-                $coupons->whereIn('promotions.coupon_notification', $couponNotification);
-            });
-
-            // Filter coupon by status
-            OrbitInput::get('status', function ($statuses) use ($coupons) {
-                $coupons->whereIn('promotions.status', $statuses);
-            });
-
-            // Filter coupon by city
-            OrbitInput::get('city', function($city) use ($coupons)
-            {
-                $coupons->whereIn('merchants.city', $city);
-            });
-
-            // Filter coupon by matching city pattern
-            OrbitInput::get('city_like', function($city) use ($coupons)
-            {
-                $coupons->where('merchants.city', 'like', "%$city%");
-            });
-
-            // Filter coupon by issue retailer Ids
-            OrbitInput::get('issue_retailer_id', function ($issueRetailerIds) use ($coupons) {
-                $coupons->whereIn('promotion_retailer.retailer_id', $issueRetailerIds);
-            });
-
-            // Clone the query builder which still does not include the take,
-            // skip, and order by
-            $_coupons = clone $coupons;
-
-            // Get the take args
-            if (trim(OrbitInput::get('take')) === '') {
-                $take = $maxRecord;
-            } else {
-                OrbitInput::get('take', function($_take) use (&$take, $maxRecord)
-                {
-                    if ($_take > $maxRecord) {
-                        $_take = $maxRecord;
-                    }
-                    $take = $_take;
-                });
-            }
-            if ($take > 0) {
-                $coupons->take($take);
-            }
-
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $coupons)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
-
-                $skip = $_skip;
-            });
-            if (($take > 0) && ($skip > 0)) {
-                $coupons->skip($skip);
-            }
-
-            // Default sort by
-            $sortBy = 'issue_retailer_name';
-            // Default sort mode
-            $sortMode = 'asc';
-
-            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
-            {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'issue_retailer_name'    => 'issue_retailer_name',
-                    'registered_date'        => 'promotions.created_at',
-                    'promotion_name'         => 'promotions.promotion_name',
-                    'promotion_type'         => 'promotions.promotion_type',
-                    'description'            => 'promotions.description',
-                    'begin_date'             => 'promotions.begin_date',
-                    'end_date'               => 'promotions.end_date',
-                    'is_permanent'           => 'promotions.is_permanent',
-                    'status'                 => 'promotions.status'
-                );
-
-                $sortBy = $sortByMapping[$_sortBy];
-            });
-
-            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
-            {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
-                }
-            });
-            $coupons->orderBy($sortBy, $sortMode);
-
-            $totalCoupons = $_coupons->count();
-            $listOfCoupons = $coupons->get();
-
-            $data = new stdclass();
-            $data->total_records = $totalCoupons;
-            $data->returned_records = count($listOfCoupons);
-            $data->records = $listOfCoupons;
-
-            if ($totalCoupons === 0) {
-                $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
-            }
-
-            $this->response->data = $data;
+            Event::fire('orbit.coupon.postissuedcoupon.after.commit', array($this, $issuedcoupon));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.access.forbidden', array($this, $e));
+            Event::fire('orbit.coupon.redeemcoupon.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setObject($issuedcoupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.invalid.arguments', array($this, $e));
+            Event::fire('orbit.coupon.redeemcoupon.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
+            $this->response->data = null;
             $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setObject($issuedcoupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
         } catch (QueryException $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.query.error', array($this, $e));
+            Event::fire('orbit.coupon.redeemcoupon.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1896,23 +1802,73 @@ class CouponAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('redeem_coupon')
+                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setObject($issuedcoupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
         } catch (Exception $e) {
-            Event::fire('orbit.coupon.getsearchcouponbyissueretailer.general.exception', array($this, $e));
+            Event::fire('orbit.coupon.redeemcoupon.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Deletion failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('delete_coupon')
+                    ->setActivityNameLong('Delete Coupon Failed')
+                    ->setObject($issuedcoupon)
+                    ->setNotes($e->getMessage())
+                    ->setLocation($mall_id)
+                    ->setModuleName('Coupon')
+                    ->responseFailed();
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.coupon.getsearchcouponbyissueretailer.before.render', array($this, &$output));
+
+        // Save the activity
+        $activity->save();
 
         return $output;
     }
 
     protected function registerCustomValidation()
     {
+        // Mall deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
+
         // Check the existance of coupon id
         Validator::extend('orbit.empty.coupon', function ($attribute, $value, $parameters) {
             $coupon = Coupon::excludeDeleted()
@@ -1928,9 +1884,47 @@ class CouponAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Check the existance of issued coupon id
+        $user = $this->api->user;
+        Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) use ($user) {
+            $now = date('Y-m-d');
+            $number = OrbitInput::post('merchant_verification_number');
+            $prefix = DB::getTablePrefix();
+
+            $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                        ->where('issued_coupons.issued_coupon_id', $value)
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->whereRaw("(date({$prefix}issued_coupons.expired_date) >= ? or date({$prefix}issued_coupons.expired_date) is null)", [$now])
+                        ->first();
+
+            if (empty($issuedCoupon)) {
+                $errorMessage = sprintf('Issued coupon ID %s is not found.', htmlentities($value));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // issued coupon with verification number check
+            $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
+                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                        ->where('issued_coupons.issued_coupon_id', $value)
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->whereRaw("(date({$prefix}issued_coupons.expired_date) >= ? or date({$prefix}issued_coupons.expired_date) is null)", [$now])
+                        ->where('merchants.masterbox_number', $number)
+                        ->first();
+
+            if (empty($issuedCoupon)) {
+                $errorMessage = 'Merchant verification number is incorrect.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
+
+            return TRUE;
+        });
+
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Merchant::excludeDeleted()
+            $merchant = Retailer::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1989,7 +1983,7 @@ class CouponAPIController extends ControllerAPI
         // Check the existence of the coupon type
         Validator::extend('orbit.empty.coupon_type', function ($attribute, $value, $parameters) {
             $valid = false;
-            $couponTypes = array('product', 'cart');
+            $couponTypes = array('mall', 'tenant');
             foreach ($couponTypes as $couponType) {
                 if($value === $couponType) $valid = $valid || TRUE;
             }
@@ -2196,9 +2190,9 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()->allowedForUser($this->api->user)
-                        ->where('merchant_id', $value)
-                        ->first();
+            $retailer = Retailer::excludeDeleted()
+                                ->where('merchant_id', $value)
+                                ->first();
 
             if (empty($retailer)) {
                 return FALSE;
@@ -2209,5 +2203,16 @@ class CouponAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Check the existance of retailer id
+        Validator::extend('orbit.issuedcoupon.exists', function ($attribute, $value, $parameters) {
+            $coupon = IssuedCoupon::active()->where('promotion_id', $value)->count();
+
+            if ($count > 0) {
+                $message = sprintf('Can not delete coupon since there is still %s issued coupon which not redeemed yet.', $coupon);
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
     }
 }

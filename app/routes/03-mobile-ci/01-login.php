@@ -3,11 +3,11 @@
 Route::group(
     array('before' => 'orbit-settings'),
     function () {
-    
+
         Route::get(
             '/customer',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getSignInView();
             }
         );
@@ -15,7 +15,7 @@ Route::group(
         Route::get(
             '/customer/signup',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getSignUpView();
             }
         );
@@ -23,23 +23,22 @@ Route::group(
         Route::post(
             '/customer/signup',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postSignUpView();
             }
         );
 
         Route::get(
-            '/customer/home',
+            '/customer/home', ['as' => 'ci-customer-home',
             function () {
-        
                 return MobileCI\MobileCIAPIController::create()->getHomeView();
-            }
+            }]
         );
 
         Route::get(
             '/customer/cart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getCartView();
             }
         );
@@ -47,7 +46,7 @@ Route::group(
         Route::get(
             '/customer/catalogue',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getCatalogueView();
             }
         );
@@ -55,7 +54,7 @@ Route::group(
         Route::get(
             '/customer/product',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getProductView();
             }
         );
@@ -63,7 +62,7 @@ Route::group(
         Route::get(
             '/customer/transfer',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getTransferCartView();
             }
         );
@@ -71,7 +70,7 @@ Route::group(
         Route::get(
             '/customer/payment',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getPaymentView();
             }
         );
@@ -79,7 +78,7 @@ Route::group(
         Route::get(
             '/customer/paypalpayment',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getPaypalPaymentView();
             }
         );
@@ -87,7 +86,7 @@ Route::group(
         Route::get(
             '/customer/thankyou',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getThankYouView();
             }
         );
@@ -95,7 +94,7 @@ Route::group(
         Route::get(
             '/customer/welcome',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getWelcomeView();
             }
         );
@@ -103,7 +102,7 @@ Route::group(
         Route::get(
             '/customer/search',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getSearchProduct();
             }
         );
@@ -111,7 +110,7 @@ Route::group(
         Route::get(
             '/customer/promotion',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getSearchPromotion();
             }
         );
@@ -119,7 +118,7 @@ Route::group(
         Route::get(
             '/customer/promotions',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getPromotionList();
             }
         );
@@ -127,7 +126,7 @@ Route::group(
         Route::get(
             '/customer/coupon',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getSearchCoupon();
             }
         );
@@ -135,7 +134,7 @@ Route::group(
         Route::get(
             '/customer/coupons',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getCouponList();
             }
         );
@@ -143,7 +142,7 @@ Route::group(
         Route::get(
             '/customer/activation',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getActivationView();
             }
         );
@@ -156,7 +155,7 @@ Route::group(
         Route::get(
             '/app/v1/customer/products',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getProductList();
             }
         );
@@ -165,7 +164,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/addtocart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postAddToCart();
             }
         );
@@ -174,7 +173,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/updatecart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postUpdateCart();
             }
         );
@@ -183,7 +182,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/deletecart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postDeleteFromCart();
             }
         );
@@ -192,7 +191,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/cartproductpopup',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postCartProductPopup();
             }
         );
@@ -201,7 +200,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/cartpromopopup',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postCartPromoPopup();
             }
         );
@@ -210,7 +209,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/cartcouponpopup',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postCartCouponPopup();
             }
         );
@@ -219,7 +218,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/productcouponpopup',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postProductCouponPopup();
             }
         );
@@ -228,7 +227,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/cartproductcouponpopup',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postCartProductCouponPopup();
             }
         );
@@ -237,7 +236,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/deletecouponcart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postDeleteCouponFromCart();
             }
         );
@@ -246,7 +245,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/addcouponcarttocart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postAddCouponCartToCart();
             }
         );
@@ -255,7 +254,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/closecart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postCloseCart();
             }
         );
@@ -264,7 +263,7 @@ Route::group(
         Route::get(
             '/customer/category',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getCategory();
             }
         );
@@ -273,7 +272,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/addcouponproducttocart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postAddProductCouponToCart();
             }
         );
@@ -282,7 +281,7 @@ Route::group(
         Route::post(
             '/customer/savetransaction',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postSaveTransaction();
             }
         );
@@ -291,7 +290,7 @@ Route::group(
         Route::post(
             '/app/v1/customer/eventpopupactivity',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postEventPopUpActivity();
             }
         );
@@ -302,7 +301,7 @@ Route::group(
             array(
             'as' => 'display-event-popup-activity',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postDisplayEventPopUpActivity();
             })
         );
@@ -313,7 +312,7 @@ Route::group(
             array(
             'as' => 'click-widget-activity',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postClickWidgetActivity();
             })
         );
@@ -324,7 +323,7 @@ Route::group(
             array(
             'as' => 'click-save-receipt-activity',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postClickSaveReceiptActivity();
             })
         );
@@ -335,7 +334,7 @@ Route::group(
             array(
             'as' => 'click-checkout-activity',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postClickCheckoutActivity();
             })
         );
@@ -346,7 +345,7 @@ Route::group(
             array(
             'as' => 'send-ticket',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postSendTicket();
             })
         );
@@ -355,7 +354,7 @@ Route::group(
         Route::get(
             '/customer/me',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->getMeView();
             }
         );
@@ -366,9 +365,96 @@ Route::group(
             array(
             'as' => 'reset-cart',
             function () {
-        
+
                 return MobileCI\MobileCIAPIController::create()->postResetCart();
             })
+        );
+
+        Route::get(
+            '/customer/tenants', ['as' => 'ci-tenants',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getTenantsView();
+            }]
+        );
+
+        Route::get(
+            '/customer/tenant',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getTenantDetailView();
+            }
+        );
+
+        Route::group(
+            array('before' => 'check-routes-luckydraw'),
+            function() {
+                Route::get(
+                    '/customer/luckydraw', ['as' => 'ci-luckydraw',
+                    function () {
+                        return MobileCI\MobileCIAPIController::create()->getLuckyDrawView();
+                    }]
+                );
+
+                Route::post(
+                    '/app/v1/customer/luckydrawnumberpopup',
+                    function () {
+
+                        return MobileCI\MobileCIAPIController::create()->postLuckyNumberPopup();
+                    }
+                );
+            }
+        );
+
+        Route::get(
+            '/customer/mallcoupons', ['as' => 'ci-mall-coupons',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getMallCouponList();
+            }]
+        );
+
+        Route::get(
+            '/customer/mallcoupon',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
+            }
+        );
+
+        Route::get(
+            '/customer/mallpromotions', ['as' => 'ci-mall-promotions',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getMallPromotionList();
+            }]
+        );
+
+        Route::get(
+            '/customer/mallpromotion',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallPromotionDetailView();
+            }
+        );
+
+        Route::get(
+            '/customer/mallnews', ['as' => 'ci-mall-news',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getMallNewsList();
+            }]
+        );
+
+        Route::get(
+            '/customer/mallnewsdetail',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
+            }
+        );
+
+        Route::get(
+            '/customer/luckydrawnumber/download', ['as' => 'ci-luckydrawnumber-download',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->getMallLuckyDrawDownloadList();
+            }]
         );
     }
 );

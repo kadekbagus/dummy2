@@ -13,7 +13,7 @@ class IssuedCoupon extends Eloquent
      */
     use ModelStatusTrait;
 
-    const ISSUE_COUPON_INCREMENT = 111111;
+    const ISSUE_COUPON_INCREMENT = 1111111;
 
     protected $table = 'issued_coupons';
 
@@ -34,4 +34,28 @@ class IssuedCoupon extends Eloquent
         return $this->belongsTo('Retailer', 'issuer_retailer_id', 'merchant_id');
     }
 
+    /**
+     * Save issued coupon based on promotion object.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param Promotion $promotion
+     * @param int User ID
+     * @param User $admin - The one who issue the coupon
+     * @return IssuedCoupon
+     */
+    public function issue($promotion, $userId, $admin)
+    {
+        $maxIssueId = DB::table('issued_coupons')->max('issued_coupon_id');
+
+        $issued = new static();
+        $issued->promotion_id = $promotion->promotion_id;
+        $issued->issued_coupon_code = static::ISSUE_COUPON_INCREMENT + $maxIssueId;
+        $issued->user_id = $userId;
+        $issued->expired_date = $promotion->coupon_validity_in_date;
+        $issued->issued_date = date('Y-m-d H:i:s');
+        $issued->status = 'active';
+        $issued->save();
+
+        return $issued;
+    }
 }

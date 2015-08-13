@@ -54,7 +54,7 @@ class OrbitShopLookupResponse implements LookupResponseInterface
                 // If the user's property is object, we can assume that
                 // The user is found
                 if (is_object($apiKeys->user)) {
-                    $denied = array('blocked', 'pending', 'deleted');
+                    $denied = array('blocked', 'deleted');
                     if (in_array($apiKeys->user->status, $denied)) {
                         $this->statusLookup = static::LOOKUP_STATUS_ACCESS_DENIED;
                     } else {

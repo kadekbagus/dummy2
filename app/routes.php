@@ -28,6 +28,7 @@ $recursiveIterator = RecursiveFileIterator::create($orbitEventDir)
 foreach ($recursiveIterator->get() as $file) {
     require $orbitEventDir . DS . $file;
 }
+
 /*
 |--------------------------------------------------------------------------
 | Orbit API Routes
@@ -36,8 +37,15 @@ foreach ($recursiveIterator->get() as $file) {
 | Search all php files inside the 'routes' the directory.
 |
 */
-$orbitRouteDir = __DIR__ . DS . 'routes';
-$recursiveIterator->setDirectory($orbitRouteDir);
-foreach ($recursiveIterator->get() as $file) {
-    require $orbitRouteDir . DS . $file;
+// Check for compiled routes first, if it exist no need to parse all the routes
+$compiledRoutesFile = app_path() . DS . 'routes' . DS . 'orbit-compiled-routes.php';
+
+if (file_exists($compiledRoutesFile)) {
+    require $compiledRoutesFile;
+} else {
+    $orbitRouteDir = __DIR__ . DS . 'routes';
+    $recursiveIterator->setDirectory($orbitRouteDir);
+    foreach ($recursiveIterator->get() as $file) {
+        require $orbitRouteDir . DS . $file;
+    }
 }

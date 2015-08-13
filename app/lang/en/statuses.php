@@ -22,6 +22,9 @@ return array(
             'coupon'         => 'Coupon has been successfully deleted.',
             'issued_coupon'  => 'Issued Coupon has been successfully deleted.',
             'event'          => 'Event has been successfully deleted.',
+            'lucky_draw'     => 'Lucky Draw has been successfully deleted.',
+            'news'           => 'News has been successfully deleted.',
+            'object'         => 'Object has been successfully deleted.',
         ),
         'updated'   => array(
             'user'           => 'User has been successfully updated.',
@@ -47,6 +50,10 @@ return array(
             'personalinterest' => 'There is no personal interest that matched your search criteria.',
             'role'          => 'There is no role that matched your search criteria.',
             'token'         => 'There is no token that matched your search criteria.',
+            'lucky_draw'    => 'There is no lucky draw that matched your search criteria.',
+            'news'          => 'There is no news that matched your search criteria.',
+            'object'        => 'There is no object that matched your search criteria.',
+            'activity'      => 'There is no activity that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
@@ -55,6 +62,10 @@ return array(
             ),
             'retailer' => array(
                 'logo'  => 'Retailer logo has been successfully uploaded.',
+            ),
+            'mall' => array(
+                'background'         => 'Background image has been successfully uploaded.',
+                'delete_background'  => 'Background image has been successfully deleted.'
             ),
             'product' => array(
                 'main'          => 'Product image has been successfully uploaded.',
@@ -79,6 +90,14 @@ return array(
             'widget' => array(
                 'main'           => 'Widget image has been successfully uploaded.',
                 'delete_image'   => 'Widget image has been successfully deleted.'
+            ),
+            'lucky_draw' => array(
+                'main'          => 'Lucky Draw image has been successfully uploaded.',
+                'delete_image'  => 'Lucky Draw image has been successfully deleted.'
+            ),
+            'news' => array(
+                'main'          => 'News image has been successfully uploaded.',
+                'delete_image'  => 'News image has been successfully deleted.'
             ),
         )
     )

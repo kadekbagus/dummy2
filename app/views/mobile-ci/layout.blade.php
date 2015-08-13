@@ -17,5 +17,6 @@
         @yield('modals')
         @yield('ext_script_bot')
         @include('mobile-ci.commonscripts')
+        @include('mobile-ci.push-notification-script')
     </body>
 </html>

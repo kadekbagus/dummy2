@@ -53,4 +53,50 @@ trait MerchantTypeTrait
 
         return parent::save( $options );
     }
+
+    /**
+     * Get particular settings for this object.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'merchant_id')
+                    ->where('object_type', 'merchant')
+                    ->where('setting_name', '!=', 'master_password');
+    }
+
+    /**
+     * Get particular news for merchants (retailers)
+     */
+    public function news()
+    {
+        $prefix = DB::getTablePrefix();
+
+        return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')
+            ->withPivot('object_type')
+            ->where('news.object_type', 'news')
+            ->where('news_merchant.object_type', 'retailer')
+            ->where('news.status', 'active')
+            ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
+            ->orderBy('news.sticky_order', 'desc')
+            ->orderBy('news.created_at', 'desc');
+    }
+
+    /**
+     * Get particular news for merchants (retailers)
+     */
+    public function newsPromotions()
+    {
+        $prefix = DB::getTablePrefix();
+
+        return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')
+            ->withPivot('object_type')
+            ->where('news.object_type', 'promotion')
+            ->where('news_merchant.object_type', 'retailer')
+            ->where('news.status', 'active')
+            ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
+            ->orderBy('news.sticky_order', 'desc')
+            ->orderBy('news.created_at', 'desc');
+    }
 }

@@ -11,210 +11,103 @@
 @section('content')
 <div class="container">
     <div class="mobile-ci home-widget widget-container">
-        @foreach($widgets as $i => $widget)
-        @if($i % 2 == 0)
         <div class="row">
-            @endif
-            @if($widget->widget_type == 'catalogue')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
+            <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.catalogue') }}</strong></div>
+                    <div><strong>Tenant Directory</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
+                    <div>Check our tenant list!</div>
                 </header>
                 <section class="widget-single">
-                    <ul class="rslides" @if($widget->animation == 'horizontal') id="slider1" @endif>
-                        @if($widget->animation == 'none')
+                    <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/catalogue') }}">
-                                @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                @else
-                                <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_catalogue.png') }}" />
-                                @endif
+                            <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_tenants.jpg') }}"/>
                             </a>
                         </li>
-                        @elseif($widget->animation == 'horizontal')
-                        @if(count($random_products) > 0)
-                        @foreach($random_products as $random_product)
-                        <li>
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/catalogue') }}">
-                                @if(!is_null($random_product->image))
-                                <img class="img-responsive vcenter" src="{{ asset($random_product->image) }}"/>
-                                @else
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                @endif
-                            </a>
-                        </li>
-                        @endforeach
-                        @else
-                        <li>
-                            <img id="emptyNew" class="img-responsive" src="{{ asset('mobile-ci/images/default_catalogue.png') }}"/>
-                        </li>
-                        @endif
-                        @endif
                     </ul>
                 </section>
             </div>
-            @endif
-            @if($widget->widget_type == 'new_product')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
+
+            <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.new_product') }}</strong></div>
+                    <div><strong>Promotions</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
+                    <div>Check our latest promotions!</div>
                 </header>
                 <section class="widget-single">
-                    <!-- Slideshow 4 -->
-                    <div class="callbacks_container">
-                        <ul class="rslides" @if($widget->animation == 'horizontal') id="slider2" @endif>
-                            @if($widget->animation == 'none')
-                            <li>
-                                <a data-widget="{{ $widget->widget_id }}" class="widget-link" href="{{ url('customer/search?new=1') }}">
-                                    @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                    <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                    @else
-                                    <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_new_product.png') }}" />
-                                    @endif
-                                </a>
-                            </li>
-                            @elseif($widget->animation == 'horizontal')
-                            @if(count($new_products) > 0)
-                            @foreach($new_products as $new_product)
-                            <li>
-                                <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/search?new=1#'.$new_product->product_id) }}">
-                                    @if(!is_null($new_product->image))
-                                    <img class="img-responsive vcenter" src="{{ asset($new_product->image) }}"/>
-                                    @else
-                                    <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_new_product.png') }}"/>
-                                    @endif
-                                </a>
-                            </li>
-                            @endforeach
-                            @else
-                            <li>
-                                <img id="emptyNew" class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_no_new_product.png') }}"/>
-                            </li>
-                            @endif
-                            @endif
-                        </ul>
-                    </div>
-                </section>
-            </div>
-            @endif
-            @if($widget->widget_type == 'promotion')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
-                <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.promotion') }}</strong></div>
-                </header>
-                <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
-                </header>
-                <section class="widget-single">
-                    <ul class="rslides" @if($widget->animation == 'horizontal') id="slider3" @endif>
-                        @if($widget->animation == 'none')
-                        @if(count($promo_products) > 0)
+                    <ul class="rslides" id="slider1">
                         <li>
-                            <a data-widget="{{ $widget->widget_id }}" class="widget-link" href="{{ url('customer/promotions') }}">
-                                @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                @else
-                                <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_promotion.png') }}" />
-                                @endif
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_promotion.jpg') }}"/>
                             </a>
                         </li>
-                        @else
-                        <li>
-                            @if(!empty($widget->media->path))
-                            <img class="img-responsive text-center vcenter" src="{{ asset($widget->media->path) }}" />
-                            @else
-                            <img id="emptyPromo" class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_no_promotion.png') }}"/>
-                            @endif
-                        </li>
-                        @endif
-                        @elseif($widget->animation == 'horizontal')
-                        @if(count($promo_products) > 0)
-                        @foreach($promo_products as $promo_product)
-                        <li>
-                            <a class="widget-link" data-widget="{{ $widget->widget_id }}" href="{{ url('customer/promotions#'.$promo_product->promotion_id) }}">
-                                @if(!is_null($promo_product->image))
-                                <img class="img-responsive vcenter" src="{{ asset($promo_product->image) }}"/>
-                                @else
-                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
-                                @endif
-                            </a>
-                        </li>
-                        @endforeach
-                        @else
-                        <li>
-                            <img id="emptyPromo" class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_no_promotion.png') }}"/>
-                        </li>
-                        @endif
-                        @endif
                     </ul>
                 </section>
             </div>
-            @endif
-            @if($widget->widget_type == 'coupon')
-            <div class="single-widget-container @if($i < count($widgets) - 1) col-xs-6 col-sm-6 @else  @if(count($widgets)%2 == 1) col-xs-12 col-sm-12 @else col-xs-6 col-sm-6 @endif @endif">
+
+            <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
-                    <div><strong>{{ Lang::get('mobileci.widgets.coupon') }}</strong></div>
+                    <div><strong>News</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>{{$widget->widget_slogan}}</div>
+                    <div>Our latest news</div>
                 </header>
                 <section class="widget-single">
-                    <ul class="rslides" @if($widget->animation == 'horizontal') id="slider4" @endif>
-                        @if($widget->animation == 'none')
-                        @if(count($coupons) > 0)
+                    <ul class="rslides" id="slider1">
                         <li>
-                            <a data-widget="{{ $widget->widget_id }}" class="widget-link" href="{{ url('customer/coupons') }}">
-                                @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                <img class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                                @else
-                                <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_coupon.png') }}" />
-                                @endif
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_news.jpg') }}"/>
                             </a>
                         </li>
-                        @else
-                        <li>
-                            @if(!empty($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                            <img id="emptyCoupon" class="img-responsive text-center vcenter" src="{{ asset($widget->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
-                            @else
-                            <img id="emptyCoupon" class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_no_coupon.png') }}"/>
-                            @endif
-                        </li>
-                        @endif
-                        @elseif($widget->animation == 'horizontal')
-                        @if(count($coupons) > 0)
-                        @foreach($coupons as $coupon)
-                        <li>
-                            <a data-widget="{{ $widget->widget_id }}" class="widget-link" href="{{ url('customer/coupons#'.$coupon->promotion_id) }}" >
-                                @if(!empty($coupon->image))
-                                <img class="img-responsive text-center vcenter" src="{{ asset($coupon->image) }}"/>
-                                @else
-                                <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_coupon.png') }}" />
-                                @endif
-                            </a>
-                        </li>
-                        @endforeach
-                        @else
-                        <li>
-                            <img id="emptyCoupon" class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_no_coupon.png') }}"/>
-                        </li>
-                        @endif
-                        @endif
                     </ul>
                 </section>
             </div>
-            @endif
             
-            @if($i % 2 == 1)
+            <div class="single-widget-container col-xs-6 col-sm-6">
+                <header class="widget-title">
+                    <div><strong>Coupons</strong></div>
+                </header>
+                <header class="widget-title widget-subtitle">
+                    <div>Check your coupons!</div>
+                </header>
+                <section class="widget-single">
+                    <ul class="rslides" id="slider1">
+                        <li>
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">    
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_coupon.jpg') }}"/>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+
+            @if(! empty($widget_flags->enable_lucky_draw_widget) && $widget_flags->enable_lucky_draw_widget->setting_value == 'true')
+            <div class="single-widget-container col-xs-12 col-sm-12">
+                <header class="widget-title">
+                    <div><strong>Lucky Draw</strong></div>
+                </header>
+                <header class="widget-title widget-subtitle">
+                    <div>Check your lucky numbers!</div>
+                </header>
+                <section class="widget-single">
+                    <ul class="rslides" id="slider1">
+                        <li>
+                            @if(! empty($widget_flags->enable_lucky_draw) && $widget_flags->enable_lucky_draw->setting_value == 'true')
+                            <a class="widget-link" data-widget="" href="{{ url('customer/luckydraw') }}">
+                            @else
+                            <a class="widget-link" data-widget="" id="emptyLuck">
+                            @endif
+                                <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_lucky_draw.jpg') }}"/>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+            @endif
         </div>
-        @endif
-        @endforeach
     </div>
     <div class="row">
         <div class="col-xs-12 text-center merchant-logo">
@@ -270,21 +163,37 @@
                     {{ nl2br($events->description) }}
                     @endif
                     @elseif($events->link_object_type == 'promotion')
-                    @if(! empty($events->image))
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
-                        <img class="img-responsive" src="{{ asset($events->image) }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @else
-                    <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
-                    </a>
-                    <br>
-                    <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
-                    {{ nl2br($events->description) }}
-                    @endif
+                        @if(! empty($events->image))
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
+                            <img class="img-responsive" src="{{ asset($events->image) }}">
+                        </a>
+                        <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @else
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">
+                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
+                        </a>
+                        <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/promotion?promoid='.$events->link_object_id1) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @endif
+                    @elseif($events->link_object_type == 'retailer')
+                        @if(! empty($events->image))
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">
+                            <img class="img-responsive" src="{{ asset($events->image) }}">
+                        </a>
+                        <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @else
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">
+                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
+                        </a>
+                        <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @endif
                     @elseif($events->link_object_type == 'widget')
                     @if($events->widget_object_type == 'promotion')
                     @if(! empty($events->image))
@@ -391,21 +300,76 @@
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
+                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> Info</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <p>
+                            You are about to enjoy free WiFi at Lippo Mall Puri!
+                            <br><br>
+                            Find our exciting deals and latest news here. Don't forget to exchange your transaction receipts and get a chance to win a car!
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="pull-right"><button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button></div>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/responsiveslides.min.js') }}
+{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
+        // $(document).on('show.bs.modal', '.modal', function (event) {
+        //     var zIndex = 1040 + (10 * $('.modal:visible').length);
+        //     $(this).css('z-index', zIndex);
+        //     setTimeout(function() {
+        //         $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
+        //     }, 0);
+        // });
+        
         @if(! is_null($events))
-          $('#promoModal').modal();
-          $.ajax({
-            url: '{{ route('display-event-popup-activity') }}',
-            data: {
-              eventdata: {{$events->event_id}}
-            },
-            method: 'POST'
-          });
+            if(!$.cookie('dismiss_verification_popup')) {
+                $.cookie('dismiss_verification_popup', 't', { expires: 1 });
+                $('#verifyModal').modal();
+            } else {
+                $('#promoModal').modal();
+                $.ajax({
+                    url: '{{ route('display-event-popup-activity') }}',
+                    data: {
+                        eventdata: {{$events->event_id}}
+                    },
+                    method: 'POST'
+                });
+            }
+            $('#verifyModal').on('hide.bs.modal', function(e){
+                $('#promoModal').modal();
+                $.ajax({
+                    url: '{{ route('display-event-popup-activity') }}',
+                    data: {
+                        eventdata: {{$events->event_id}}
+                    },
+                    method: 'POST'
+                });
+            })
+        @else
+            if(!$.cookie('dismiss_verification_popup')) {
+                $.cookie('dismiss_verification_popup', 't', { expires: 1 });
+                $('#verifyModal').modal();
+            }
         @endif
         $('#emptyCoupon').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
@@ -420,6 +384,11 @@
         $('#emptyPromo').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
           $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_promotion') }}');
+          $('#noModal').modal();
+        });
+        $('#emptyLuck').click(function(){
+          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
+          $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
         $('#promoModal a').click(function (event){ 
@@ -470,22 +439,7 @@
           nextText: '<i class="fa fa-chevron-right"></i>',
           speed: 500
         });
-        $('a.widget-link').click(function(){
-          var link = $(this).attr('href');
-          var widgetdata = $(this).data('widget');
-          event.preventDefault(); 
-
-          $.ajax({
-            url: '{{ route('click-widget-activity') }}',
-            data: {
-              widgetdata: widgetdata
-            },
-            method: 'POST'
-          }).always(function(){
-            window.location.assign(link);
-          });
-          return false; //for good measure
-        });
+        
         $.each($('.rslides li'), function(i, v){
            $(this).css('height', $(this).width());
         });

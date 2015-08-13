@@ -31,6 +31,9 @@ return array(
         "new_product"   => "NEW PRODUCTS",
         "promotion"     => "PROMOTIONS",
         "coupon"        => "MY COUPONS",
+        "tenant"        => "TENANTS",
+        "lucky_draw"    => "LUCKY DRAW",
+        "news"          => "NEWS",
     ),
 
     "greetings"         => array(
@@ -44,7 +47,7 @@ return array(
         'event_title'           => 'Events',
         'info_title'            => 'Info',
         'coupon_title'          => 'My Coupons',
-        'search_title'          => 'Search Product',
+        'search_title'          => 'Search Tenant',
         'checkout_title'        => 'Checkout',
         'tip_title'             => 'Tip',
         'delete_item_title'     => 'Delete Item',
@@ -55,6 +58,8 @@ return array(
         'message_no_coupon'     => 'Sorry, you do not have any coupons yet.',
         'message_no_new_product'=> 'Sorry, there are no new products for today.',
         'message_no_promotion'  => 'Sorry, there are no promotions for today.',
+        'message_no_lucky_draw' => "Sign up now and get a chance to win a Mazda car every three months! Exchange your transaction receipts minimum Rp. 100,000 at our VIP Lounge on L2. Get a FREE merchandise if you register now! <br><br> • While Stock Lasts <br> • Terms & Conditions Apply.",
+
         'message_delete_item'   => 'Are you sure to remove this item from your cart?',
         'message_delete_coupon' => 'Are you sure to remove this coupon from your cart? Removed coupon could be used next time.',
         'message_transfer_cart' => 'Show this screen to the cashier to complete your checkout.',
@@ -63,7 +68,7 @@ return array(
 
         'coupon_use'            => 'Use',
         'coupon_ignore'         => 'Later',
-        'search_label'          => 'Search by Product Name, Code or Description',
+        'search_label'          => 'Search by Tenant Name, Categories, FLoor or Description',
         'search_placeholder'    => 'Insert keyword(s)',
         'search_button'         => 'Search',
         'cancel_button'         => 'Cancel',
@@ -156,7 +161,7 @@ return array(
     ),
 
     'search'                => array(
-        'no_item'           => 'There is no product matching the criteria.',
+        'no_item'           => 'There is no tenant matching the criteria.',
         'too_much_items'     => 'Search result is too broad, please narrow it down.',
     ),
 
@@ -199,5 +204,22 @@ return array(
 
     'recognize_me'  => array(
         'recognize_me_message' => 'To be recognized, show the following barcode to the cashier.'
+    ),
+
+    'inbox'     => array(
+        'lucky_draw'        => array(
+            'subject'       => 'You Got New Lucky Draw Number(s)',
+        ),
+        'coupon'            => array(
+            'subject'       => 'You Got New Coupon(s)'
+        ),
+    ),
+    'inbox'     => array(
+        'lucky_draw'        => array(
+            'subject'       => 'You Got New Lucky Draw Number(s)',
+        ),
+        'coupon'            => array(
+            'subject'       => 'You Got New Coupon(s)'
+        ),
     ),
 );

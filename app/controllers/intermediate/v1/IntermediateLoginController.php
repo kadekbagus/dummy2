@@ -19,9 +19,9 @@ class IntermediateLoginController extends IntermediateBaseController
      * @var string
      */
     protected $mobileCISessionName = [
-        'query_string'  => 'orbit_mobile_session',
-        'header'        => 'X-Orbit-Mobile-Session',
-        'cookie'        => 'orbit_mobile_session'
+        'query_string'  => 'orbit_session',
+        'header'        => 'X-Orbit-Session',
+        'cookie'        => 'orbit_sessionx'
     ];
 
     /**
@@ -42,6 +42,102 @@ class IntermediateLoginController extends IntermediateBaseController
             $data = array(
                 'logged_in' => TRUE,
                 'user_id'   => $user->user_id,
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+        }
+
+        return $this->render($response);
+    }
+
+    /**
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param @see LoginAPIController::postLoginAdmin
+     * @return Response
+     */
+    public function postLoginAdmin()
+    {
+        $response = LoginAPIController::create('raw')->postLoginAdmin();
+        if ($response->code === 0)
+        {
+            $user = $response->data;
+            $user->setHidden(array('user_password', 'apikey'));
+            // Auth::login($user);
+
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+        }
+
+        return $this->render($response);
+    }
+
+    /**
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param @see LoginAPIController::postLoginMall
+     * @return Response
+     */
+    public function postLoginMall()
+    {
+        $response = LoginAPIController::create('raw')->postLoginMall();
+        if ($response->code === 0)
+        {
+            $user = $response->data;
+            $user->setHidden(array('user_password', 'apikey'));
+            // Auth::login($user);
+
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+        }
+
+        return $this->render($response);
+    }
+
+    /**
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param @see LoginAPIController::postLoginMall
+     * @return Response
+     */
+    public function postLoginMallCustomerService()
+    {
+        $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
+        if ($response->code === 0)
+        {
+            $user = $response->data;
+            $user->setHidden(array('user_password', 'apikey'));
+            // Auth::login($user);
+
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name
             );
             $this->session->enableForceNew()->start($data);
 
@@ -246,6 +342,11 @@ class IntermediateLoginController extends IntermediateBaseController
                 'logged_in' => TRUE,
                 'user_id'   => $user->user_id,
             );
+
+            /**
+             * The orbit mall does not have other application which reside at the same domain.
+             * So we can safely use standard session name 'orbit_sessionx' for cookie.
+             */
             $this->session->getSessionConfig()->setConfig('session_origin.header.name', $this->mobileCISessionName['header']);
             $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
             $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
@@ -335,9 +436,13 @@ class IntermediateLoginController extends IntermediateBaseController
          */
         if (isset($_GET['loadsession'])) {
             // Needed to show some information on the view
+            $bg = NULL;
+
             try {
                 $retailer_id = Config::get('orbit.shop.id');
-                $retailer = Retailer::with('parent')->where('merchant_id', $retailer_id)->first();
+                $retailer = Retailer::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
+
+                $bg = Setting::getFromList($retailer->settings, 'background_image');
             } catch (Exception $e) {
                 $retailer = new stdClass();
                 // Fake some properties
@@ -346,7 +451,7 @@ class IntermediateLoginController extends IntermediateBaseController
             }
 
             // Display a view which showing that page is loading
-            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer]);
+            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg]);
         }
 
         if (isset($_GET['createsession'])) {
@@ -370,7 +475,9 @@ class IntermediateLoginController extends IntermediateBaseController
             $this->session->rawUpdate($sessData);
             $newData = $this->session->getSession();
 
-            return Redirect::to('/customer');
+            $sessionName = $this->mobileCISessionName['query_string'];
+            $redirectTo = sprintf('/customer/?%s=%s', $sessionName, $sessionId);
+            return Redirect::to($redirectTo);
         }
 
         // Catch all

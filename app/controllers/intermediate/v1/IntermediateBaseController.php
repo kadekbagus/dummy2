@@ -9,7 +9,7 @@ use OrbitShop\API\v1\Helper\Generator;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
-use DominoPOS\OrbitSession\Session;
+use DominoPOS\OrbitSession\Session as OrbitSession;
 use DominoPOS\OrbitSession\SessionConfig;
 
 class IntermediateBaseController extends Controller
@@ -45,7 +45,7 @@ class IntermediateBaseController extends Controller
     {
         // Instantiate the OrbitSession object
         $sessConfig = new SessionConfig(Config::get('orbit.session'));
-        $this->session = new Session($sessConfig);
+        $this->session = new OrbitSession($sessConfig);
 
         // CSRF protection
         $csrfProtection = Config::get('orbit.security.csrf.protect');

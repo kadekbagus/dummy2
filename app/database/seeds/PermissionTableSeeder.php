@@ -19,122 +19,139 @@ class PermissionTableSeeder extends Seeder
         // ------------------------------------------------
         // 1. Role*
         // 2. User*
-        // 3. Merchant*
-        // 4. Retailer*
-        // 5. Product*
-        // 6. Category*
-        // 7. Promotion*
-        // 8. Coupon*
-        // 9. Product Attribute*
-        // 10. Employee*
-        // 11. Event*
-        // 12. Personal Interest*
-        // 13. Widget*
-        // 14. POS Quick Product*
-        // 15. Issued Coupon*
-        // 16. Activity*
-        // 17. Transaction History*
-        // 18. Password*
-        // 19. Tax
+        // 3. Mall*
+        // 4. Merchant*
+        // 5. Retailer*
+        // 6. Product*
+        // 7. Category*
+        // 8. Promotion*
+        // 9. Coupon*
+        // 10. Product Attribute*
+        // 11. Employee*
+        // 12. Event*
+        // 13. Personal Interest*
+        // 14. Widget*
+        // 15. POS Quick Product*
+        // 16. Issued Coupon*
+        // 17. Activity*
+        // 18. Transaction History*
+        // 19. Password*
+        // 20. Tax
+        $permSourceNumber = 0;
         $permissionsSource = [
             'Role'      => [
                 'name'  => 'role',
-                'order' => 1,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'User'      => [
                 'name'  => 'user',
-                'order' => 2,
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
+            'Mall'  => [
+                'name'  => 'mall',
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Merchant'  => [
                 'name'  => 'merchant',
-                'order' => 3,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Retailer'  => [
                 'name'  => 'retailer',
-                'order' => 4,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Product'  => [
                 'name'  => 'product',
-                'order' => 5,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Category'  => [
                 'name'  => 'category',
-                'order' => 6,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Promotion' => [
                 'name'  => 'promotion',
-                'order' => 7,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Coupon'    => [
                 'name'  => 'coupon',
-                'order' => 8,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Product Attribute' => [
                 'name'  => 'product_attribute',
-                'order' => 9,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Employee'  => [
                 'name'  => 'employee',
-                'order' => 10,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Event'     => [
                 'name'  => 'event',
-                'order' => 11,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Personal Interest'  => [
                 'name'  => 'personal_interest',
-                'order' => 12,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Widget'  => [
                 'name'  => 'widget',
-                'order' => 13,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Pos Quick Product'  => [
                 'name'  => 'pos_quick_product',
-                'order' => 14,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Issued Coupon'  => [
                 'name'  => 'issued_coupon',
-                'order' => 15,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
             'Activity'  => [
                 'name'  => 'activity',
-                'order' => 16,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['view']
             ],
             'Transaction History'  => [
                 'name'  => 'transaction_history',
-                'order' => 17,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['view']
             ],
             'Password'  => [
                 'name'  => 'password',
-                'order' => 18,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['change']
             ],
             'Tax'  => [
                 'name'  => 'tax',
-                'order' => 19,
+                'order' => ++$permSourceNumber,
                 'perm'  => ['view']
             ],
             'Setting'  => [
                 'name'  => 'setting',
-                'order' => 20,
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
+            'News'      => [
+                'name'  => 'news',
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
+            'Lucky Draw' => [
+                'name'  => 'lucky_draw',
+                'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
         ];

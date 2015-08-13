@@ -25,17 +25,11 @@ class EventAPIController extends ControllerAPI
      * @param string     `event_type`            (required) - Event type. Valid value: informative, link.
      * @param string     `status`                (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param string     `description`           (optional) - Description
-     * @param datetime   `begin_date`            (optional) - Begin date. Example: 2014-12-30 00:00:00
-     * @param datetime   `end_date`              (optional) - End date. Example: 2014-12-31 23:59:59
+     * @param datetime   `begin_date`            (optional) - Begin date. Example: 2015-04-15 00:00:00
+     * @param datetime   `end_date`              (optional) - End date. Example: 2015-04-18 23:59:59
      * @param string     `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
      * @param file       `images`                (optional) - Event image
-     * @param string     `link_object_type`      (optional) - Link object type. Valid value: product, family, promotion, widget.
-     * @param integer    `link_object_id1`       (optional) - Link object ID1 (product_id or category_id1 or promotion_id or widget_id).
-     * @param integer    `link_object_id2`       (optional) - Link object ID2 (category_id2).
-     * @param integer    `link_object_id3`       (optional) - Link object ID3 (category_id3).
-     * @param integer    `link_object_id4`       (optional) - Link object ID4 (category_id4).
-     * @param integer    `link_object_id5`       (optional) - Link object ID5 (category_id5).
-     * @param string     `widget_object_type`    (optional) - Widget object type.
+     * @param string     `link_object_type`      (optional) - Link object type. Valid value: retailer, retailer_category, promotion, news.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
      *
      * @return Illuminate\Support\Facades\Response
@@ -61,12 +55,22 @@ class EventAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.event.postnewevent.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('create_event')) {
                 Event::fire('orbit.event.postnewevent.authz.notallowed', array($this, $user));
                 $createEventLang = Lang::get('validation.orbit.actionlist.new_event');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createEventLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.event.postnewevent.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -80,12 +84,6 @@ class EventAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
             $link_object_type = OrbitInput::post('link_object_type');
-            $link_object_id1 = OrbitInput::post('link_object_id1');
-            $link_object_id2 = OrbitInput::post('link_object_id2');
-            $link_object_id3 = OrbitInput::post('link_object_id3');
-            $link_object_id4 = OrbitInput::post('link_object_id4');
-            $link_object_id5 = OrbitInput::post('link_object_id5');
-            $widget_object_type = OrbitInput::post('widget_object_type');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
 
@@ -96,23 +94,13 @@ class EventAPIController extends ControllerAPI
                     'event_type'         => $event_type,
                     'status'             => $status,
                     'link_object_type'   => $link_object_type,
-                    'link_object_id1'    => $link_object_id1,
-                    'link_object_id2'    => $link_object_id2,
-                    'link_object_id3'    => $link_object_id3,
-                    'link_object_id4'    => $link_object_id4,
-                    'link_object_id5'    => $link_object_id5,
                 ),
                 array(
                     'merchant_id'        => 'required|numeric|orbit.empty.merchant',
-                    'event_name'         => 'required|max:100|orbit.exists.event_name',
+                    'event_name'         => 'required|max:255|orbit.exists.event_name',
                     'event_type'         => 'required|orbit.empty.event_type',
                     'status'             => 'required|orbit.empty.event_status',
                     'link_object_type'   => 'orbit.empty.link_object_type',
-                    'link_object_id1'    => 'numeric|orbit.empty.link_object_id1',
-                    'link_object_id2'    => 'numeric|orbit.empty.link_object_id2',
-                    'link_object_id3'    => 'numeric|orbit.empty.link_object_id3',
-                    'link_object_id4'    => 'numeric|orbit.empty.link_object_id4',
-                    'link_object_id5'    => 'numeric|orbit.empty.link_object_id5',
                 )
             );
 
@@ -130,7 +118,7 @@ class EventAPIController extends ControllerAPI
                         'retailer_id'   => $retailer_id_check,
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
+                        'retailer_id'   => 'numeric|orbit.empty.link_object_id:'.$link_object_type,
                     )
                 );
 
@@ -150,7 +138,7 @@ class EventAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            // save Event.
+            // save Event
             $newevent = new EventModel();
             $newevent->merchant_id = $merchant_id;
             $newevent->event_name = $event_name;
@@ -161,55 +149,19 @@ class EventAPIController extends ControllerAPI
             $newevent->end_date = $end_date;
             $newevent->is_permanent = $is_permanent;
             $newevent->link_object_type = $link_object_type;
-
-            // link_object_id1
-            if (trim($link_object_id1) === '') {
-                $newevent->link_object_id1 = NULL;
-            } else {
-                $newevent->link_object_id1 = $link_object_id1;
-            }
-
-            // link_object_id2
-            if (trim($link_object_id2) === '') {
-                $newevent->link_object_id2 = NULL;
-            } else {
-                $newevent->link_object_id2 = $link_object_id2;
-            }
-
-            // link_object_id3
-            if (trim($link_object_id3) === '') {
-                $newevent->link_object_id3 = NULL;
-            } else {
-                $newevent->link_object_id3 = $link_object_id3;
-            }
-
-            // link_object_id4
-            if (trim($link_object_id4) === '') {
-                $newevent->link_object_id4 = NULL;
-            } else {
-                $newevent->link_object_id4 = $link_object_id4;
-            }
-
-            // link_object_id5
-            if (trim($link_object_id5) === '') {
-                $newevent->link_object_id5 = NULL;
-            } else {
-                $newevent->link_object_id5 = $link_object_id5;
-            }
-
-            $newevent->widget_object_type = $widget_object_type;
             $newevent->created_by = $this->api->user->user_id;
 
             Event::fire('orbit.event.postnewevent.before.save', array($this, $newevent));
 
             $newevent->save();
 
-            // save EventRetailer.
+            // save EventRetailer
             $eventretailers = array();
             foreach ($retailer_ids as $retailer_id) {
                 $eventretailer = new EventRetailer();
                 $eventretailer->retailer_id = $retailer_id;
                 $eventretailer->event_id = $newevent->event_id;
+                $eventretailer->object_type = $link_object_type;
                 $eventretailer->save();
                 $eventretailers[] = $eventretailer;
             }
@@ -333,14 +285,8 @@ class EventAPIController extends ControllerAPI
      * @param datetime   `end_date`              (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string     `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
      * @param file       `images`                (optional) - Event image
-     * @param string     `link_object_type`      (optional) - Link object type. Valid value: product, family, promotion, widget.
-     * @param integer    `link_object_id1`       (optional) - Link object ID1 (product_id or category_id1 or promotion_id or widget_id).
-     * @param integer    `link_object_id2`       (optional) - Link object ID2 (category_id2).
-     * @param integer    `link_object_id3`       (optional) - Link object ID3 (category_id3).
-     * @param integer    `link_object_id4`       (optional) - Link object ID4 (category_id4).
-     * @param integer    `link_object_id5`       (optional) - Link object ID5 (category_id5).
+     * @param string     `link_object_type`      (optional) - Link object type. Valid value: retailer, retailer_category, promotion, news.
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
-     * @param string     `widget_object_type`    (optional) - Widget object type.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
      *
      * @return Illuminate\Support\Facades\Response
@@ -367,12 +313,22 @@ class EventAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.event.postupdateevent.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('update_event')) {
                 Event::fire('orbit.event.postupdateevent.authz.notallowed', array($this, $user));
                 $updateEventLang = Lang::get('validation.orbit.actionlist.update_event');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateEventLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.event.postupdateevent.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -382,11 +338,6 @@ class EventAPIController extends ControllerAPI
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
-            $link_object_id1 = OrbitInput::post('link_object_id1');
-            $link_object_id2 = OrbitInput::post('link_object_id2');
-            $link_object_id3 = OrbitInput::post('link_object_id3');
-            $link_object_id4 = OrbitInput::post('link_object_id4');
-            $link_object_id5 = OrbitInput::post('link_object_id5');
 
             $data = array(
                 'event_id'         => $event_id,
@@ -394,11 +345,6 @@ class EventAPIController extends ControllerAPI
                 'event_type'       => $event_type,
                 'status'           => $status,
                 'link_object_type' => $link_object_type,
-                'link_object_id1'  => $link_object_id1,
-                'link_object_id2'  => $link_object_id2,
-                'link_object_id3'  => $link_object_id3,
-                'link_object_id4'  => $link_object_id4,
-                'link_object_id5'  => $link_object_id5,
             );
 
             // Validate event_name only if exists in POST.
@@ -411,15 +357,10 @@ class EventAPIController extends ControllerAPI
                 array(
                     'event_id'         => 'required|numeric|orbit.empty.event',
                     'merchant_id'      => 'numeric|orbit.empty.merchant',
-                    'event_name'       => 'sometimes|required|min:5|max:100|event_name_exists_but_me',
+                    'event_name'       => 'sometimes|required|min:5|max:255|event_name_exists_but_me',
                     'event_type'       => 'orbit.empty.event_type',
                     'status'           => 'orbit.empty.event_status',
                     'link_object_type' => 'orbit.empty.link_object_type',
-                    'link_object_id1'  => 'numeric|orbit.empty.link_object_id1',
-                    'link_object_id2'  => 'numeric|orbit.empty.link_object_id2',
-                    'link_object_id3'  => 'numeric|orbit.empty.link_object_id3',
-                    'link_object_id4'  => 'numeric|orbit.empty.link_object_id4',
-                    'link_object_id5'  => 'numeric|orbit.empty.link_object_id5',
                 ),
                 array(
                    'event_name_exists_but_me' => Lang::get('validation.orbit.exists.event_name'),
@@ -438,9 +379,9 @@ class EventAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            $updatedevent = EventModel::with('retailers')->excludeDeleted()->allowedForUser($user)->where('event_id', $event_id)->first();
+            $updatedevent = EventModel::with('retailers', 'retailerCategories', 'promotions', 'news')->excludeDeleted()->where('event_id', $event_id)->first();
 
-            // save Event.
+            // save Event
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedevent) {
                 $updatedevent->merchant_id = $merchant_id;
             });
@@ -480,64 +421,33 @@ class EventAPIController extends ControllerAPI
                 $updatedevent->link_object_type = $link_object_type;
             });
 
-            OrbitInput::post('link_object_id1', function($link_object_id1) use ($updatedevent) {
-                if (trim($link_object_id1) === '') {
-                    $link_object_id1 = NULL;
-                }
-                $updatedevent->link_object_id1 = $link_object_id1;
-            });
-
-            OrbitInput::post('link_object_id2', function($link_object_id2) use ($updatedevent) {
-                if (trim($link_object_id2) === '') {
-                    $link_object_id2 = NULL;
-                }
-                $updatedevent->link_object_id2 = $link_object_id2;
-            });
-
-            OrbitInput::post('link_object_id3', function($link_object_id3) use ($updatedevent) {
-                if (trim($link_object_id3) === '') {
-                    $link_object_id3 = NULL;
-                }
-                $updatedevent->link_object_id3 = $link_object_id3;
-            });
-
-            OrbitInput::post('link_object_id4', function($link_object_id4) use ($updatedevent) {
-                if (trim($link_object_id4) === '') {
-                    $link_object_id4 = NULL;
-                }
-                $updatedevent->link_object_id4 = $link_object_id4;
-            });
-
-            OrbitInput::post('link_object_id5', function($link_object_id5) use ($updatedevent) {
-                if (trim($link_object_id5) === '') {
-                    $link_object_id5 = NULL;
-                }
-                $updatedevent->link_object_id5 = $link_object_id5;
-            });
-
-            OrbitInput::post('widget_object_type', function($widget_object_type) use ($updatedevent) {
-                if (trim($widget_object_type) === '') {
-                    $widget_object_type = NULL;
-                }
-                $updatedevent->widget_object_type = $widget_object_type;
-            });
-
             $updatedevent->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.event.postupdateevent.before.save', array($this, $updatedevent));
 
             $updatedevent->save();
 
-            // save EventRetailer.
+            // save EventRetailer
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedevent) {
                 if ($no_retailer == 'Y') {
                     $deleted_retailer_ids = EventRetailer::where('event_id', $updatedevent->event_id)->get(array('retailer_id'))->toArray();
+
+                    // delete retailers
                     $updatedevent->retailers()->detach($deleted_retailer_ids);
                     $updatedevent->load('retailers');
+                    // delete retailer categories
+                    $updatedevent->retailerCategories()->detach($deleted_retailer_ids);
+                    $updatedevent->load('retailerCategories');
+                    // delete promotions
+                    $updatedevent->promotions()->detach($deleted_retailer_ids);
+                    $updatedevent->load('promotions');
+                    // delete news
+                    $updatedevent->news()->detach($deleted_retailer_ids);
+                    $updatedevent->load('news');
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatedevent) {
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatedevent, $link_object_type) {
                 // validate retailer_ids
                 $retailer_ids = (array) $retailer_ids;
                 foreach ($retailer_ids as $retailer_id_check) {
@@ -546,7 +456,7 @@ class EventAPIController extends ControllerAPI
                             'retailer_id'   => $retailer_id_check,
                         ),
                         array(
-                            'retailer_id'   => 'orbit.empty.retailer',
+                            'retailer_id'   => 'orbit.empty.link_object_id:'.$link_object_type,
                         )
                     );
 
@@ -561,10 +471,29 @@ class EventAPIController extends ControllerAPI
                     Event::fire('orbit.event.postupdateevent.after.retailervalidation', array($this, $validator));
                 }
                 // sync new set of retailer ids
-                $updatedevent->retailers()->sync($retailer_ids);
+                if ($link_object_type === 'retailer') {
+                    $pivotData = array_fill(0, count($retailer_ids), ['object_type' => 'retailer']);
+                    $syncData = array_combine($retailer_ids, $pivotData);
+                    $updatedevent->retailers()->sync($syncData);
+                } elseif ($link_object_type === 'retailer_category') {
+                    $pivotData = array_fill(0, count($retailer_ids), ['object_type' => 'retailer_category']);
+                    $syncData = array_combine($retailer_ids, $pivotData);
+                    $updatedevent->retailerCategories()->sync($syncData);
+                } elseif ($link_object_type === 'promotion') {
+                    $pivotData = array_fill(0, count($retailer_ids), ['object_type' => 'promotion']);
+                    $syncData = array_combine($retailer_ids, $pivotData);
+                    $updatedevent->promotions()->sync($syncData);
+                } elseif ($link_object_type === 'news') {
+                    $pivotData = array_fill(0, count($retailer_ids), ['object_type' => 'news']);
+                    $syncData = array_combine($retailer_ids, $pivotData);
+                    $updatedevent->news()->sync($syncData);
+                }
 
-                // reload retailers relation
                 $updatedevent->load('retailers');
+                $updatedevent->load('retailerCategories');
+                $updatedevent->load('promotions');
+                $updatedevent->load('news');
+
             });
 
             Event::fire('orbit.event.postupdateevent.after.save', array($this, $updatedevent));
@@ -681,6 +610,7 @@ class EventAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer    `event_id`                  (required) - ID of the event
+     * @param string     `password`                  (required) - master password
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -706,24 +636,41 @@ class EventAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.event.postdeleteevent.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('delete_event')) {
                 Event::fire('orbit.event.postdeleteevent.authz.notallowed', array($this, $user));
                 $deleteEventLang = Lang::get('validation.orbit.actionlist.delete_event');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteEventLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.event.postdeleteevent.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
             $event_id = OrbitInput::post('event_id');
+            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
                     'event_id' => $event_id,
+                    'password' => $password,
                 ),
                 array(
                     'event_id' => 'required|numeric|orbit.empty.event',
+                    'password' => 'required|orbit.masterpassword.delete',
+                ),
+                array(
+                    'required.password'             => 'The master is password is required.',
+                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
                 )
             );
 
@@ -739,7 +686,7 @@ class EventAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            $deleteevent = EventModel::excludeDeleted()->allowedForUser($user)->where('event_id', $event_id)->first();
+            $deleteevent = EventModel::excludeDeleted()->where('event_id', $event_id)->first();
             $deleteevent->status = 'deleted';
             $deleteevent->modified_by = $this->api->user->user_id;
 
@@ -868,8 +815,8 @@ class EventAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `with`                  (optional) - Valid value: retailers, product, family, promotion, widget.
-     * @param string   `sortby`                (optional) - column order by
+     * @param string   `with`                  (optional) - Valid value: retailers, retailer_categories, promotions, news.
+     * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, event_name, event_type, description, begin_date, end_date, is_permanent, status.
      * @param string   `sortmode`              (optional) - asc or desc
      * @param integer  `take`                  (optional) - limit
      * @param integer  `skip`                  (optional) - limit offset
@@ -884,13 +831,7 @@ class EventAPIController extends ControllerAPI
      * @param datetime `end_date`              (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
      * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param string   `link_object_type`      (optional) - Link object type. Valid value: product, family, promotion, widget.
-     * @param integer  `link_object_id1`       (optional) - Link object ID1 (product_id or category_id1 or promotion_id or widget_id).
-     * @param integer  `link_object_id2`       (optional) - Link object ID2 (category_id2).
-     * @param integer  `link_object_id3`       (optional) - Link object ID3 (category_id3).
-     * @param integer  `link_object_id4`       (optional) - Link object ID4 (category_id4).
-     * @param integer  `link_object_id5`       (optional) - Link object ID5 (category_id5).
-     * @param string   `widget_object_type`    (optional) - Widget object type.
+     * @param string   `link_object_type`      (optional) - Link object type. Valid value: retailer, retailer_category, promotion, news.
      * @param integer  `retailer_id`           (optional) - Retailer IDs
      *
      * @return Illuminate\Support\Facades\Response
@@ -912,12 +853,22 @@ class EventAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.event.getsearchevent.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_event')) {
                 Event::fire('orbit.event.getsearchevent.authz.notallowed', array($this, $user));
                 $viewEventLang = Lang::get('validation.orbit.actionlist.view_event');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewEventLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.event.getsearchevent.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -964,8 +915,7 @@ class EventAPIController extends ControllerAPI
             }
 
             // Builder object
-            $events = EventModel::excludeDeleted()
-                                ->allowedForViewOnly($user);
+            $events = EventModel::excludeDeleted();
 
             // Filter event by Ids
             OrbitInput::get('event_id', function($eventIds) use ($events)
@@ -1035,36 +985,6 @@ class EventAPIController extends ControllerAPI
                 $events->whereIn('events.link_object_type', $linkObjectTypes);
             });
 
-            // Filter event by link object id1
-            OrbitInput::get('link_object_id1', function ($linkObjectId1s) use ($events) {
-                $events->whereIn('events.link_object_id1', $linkObjectId1s);
-            });
-
-            // Filter event by link object id2
-            OrbitInput::get('link_object_id2', function ($linkObjectId2s) use ($events) {
-                $events->whereIn('events.link_object_id2', $linkObjectId2s);
-            });
-
-            // Filter event by link object id3
-            OrbitInput::get('link_object_id3', function ($linkObjectId3s) use ($events) {
-                $events->whereIn('events.link_object_id3', $linkObjectId3s);
-            });
-
-            // Filter event by link object id4
-            OrbitInput::get('link_object_id4', function ($linkObjectId4s) use ($events) {
-                $events->whereIn('events.link_object_id4', $linkObjectId4s);
-            });
-
-            // Filter event by link object id5
-            OrbitInput::get('link_object_id5', function ($linkObjectId5s) use ($events) {
-                $events->whereIn('events.link_object_id5', $linkObjectId5s);
-            });
-
-            // Filter event by widget object type
-            OrbitInput::get('widget_object_type', function ($widgetObjectTypes) use ($events) {
-                $events->whereIn('events.widget_object_type', $widgetObjectTypes);
-            });
-
             // Filter event retailer by retailer id
             OrbitInput::get('retailer_id', function ($retailerIds) use ($events) {
                 $events->whereHas('retailers', function($q) use ($retailerIds) {
@@ -1079,14 +999,12 @@ class EventAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'retailers') {
                         $events->with('retailers');
-                    } elseif ($relation === 'product') {
-                        $events->with('linkproduct');
-                    } elseif ($relation === 'family') {
-                        $events->with('linkcategory1', 'linkcategory2', 'linkcategory3', 'linkcategory4', 'linkcategory5');
+                    } elseif ($relation === 'retailer_categories') {
+                        $events->with('retailerCategories');
                     } elseif ($relation === 'promotion') {
-                        $events->with('linkpromotion');
-                    } elseif ($relation === 'widget') {
-                        $events->with('linkwidget');
+                        $events->with('promotion');
+                    } elseif ($relation === 'news') {
+                        $events->with('news');
                     }
                 }
             });
@@ -1141,6 +1059,10 @@ class EventAPIController extends ControllerAPI
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
+
+            if ($sortBy !== 'events.status') {
+                $events->orderBy('events.status', 'asc');
+            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
@@ -1213,345 +1135,6 @@ class EventAPIController extends ControllerAPI
         return $output;
     }
 
-    /**
-     * GET - Search Event - List By Retailer
-     *
-     * @author Tian <tian@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param string   `sortby`                (optional) - column order by. Valid value: retailer_name, registered_date, event_name, event_type, description, begin_date, end_date, is_permanent, status.
-     * @param string   `sortmode`              (optional) - asc or desc
-     * @param integer  `take`                  (optional) - limit
-     * @param integer  `skip`                  (optional) - limit offset
-     * @param integer  `event_id`              (optional) - Event ID
-     * @param integer  `merchant_id`           (optional) - Merchant ID
-     * @param string   `event_name`            (optional) - Event name
-     * @param string   `event_name_like`       (optional) - Event name like
-     * @param string   `event_type`            (optional) - Event type. Valid value: informative, link.
-     * @param string   `description`           (optional) - Description
-     * @param string   `description_like`      (optional) - Description like
-     * @param datetime `begin_date`            (optional) - Begin date. Example: 2015-1-31 13:00:00
-     * @param datetime `end_date`              (optional) - End date. Example: 2015-1-31 13:00:00
-     * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
-     * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param string   `link_object_type`      (optional) - Link object type. Valid value: product, family, promotion, widget.
-     * @param integer  `link_object_id1`       (optional) - Link object ID1 (product_id or category_id1 or promotion_id or widget_id).
-     * @param integer  `link_object_id2`       (optional) - Link object ID2 (category_id2).
-     * @param integer  `link_object_id3`       (optional) - Link object ID3 (category_id3).
-     * @param integer  `link_object_id4`       (optional) - Link object ID4 (category_id4).
-     * @param integer  `link_object_id5`       (optional) - Link object ID5 (category_id5).
-     * @param string   `widget_object_type`    (optional) - Widget object type.
-     * @param string   `city`                  (optional) - City name
-     * @param string   `city_like`             (optional) - City name like
-     * @param integer  `retailer_id`           (optional) - Retailer IDs
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function getSearchEventByRetailer()
-    {
-        try {
-            $httpCode = 200;
-
-            Event::fire('orbit.event.getsearcheventbyretailer.before.auth', array($this));
-
-            // Require authentication
-            $this->checkAuth();
-
-            Event::fire('orbit.event.getsearcheventbyretailer.after.auth', array($this));
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            Event::fire('orbit.event.getsearcheventbyretailer.before.authz', array($this, $user));
-
-            if (! ACL::create($user)->isAllowed('view_event')) {
-                Event::fire('orbit.event.getsearcheventbyretailer.authz.notallowed', array($this, $user));
-                $viewEventLang = Lang::get('validation.orbit.actionlist.view_event');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewEventLang));
-                ACL::throwAccessForbidden($message);
-            }
-            Event::fire('orbit.event.getsearcheventbyretailer.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
-
-            $sort_by = OrbitInput::get('sortby');
-            $validator = Validator::make(
-                array(
-                    'sort_by' => $sort_by,
-                ),
-                array(
-                    'sort_by' => 'in:retailer_name,registered_date,event_name,event_type,description,begin_date,end_date,is_permanent,status',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.event_by_retailer_sortby'),
-                )
-            );
-
-            Event::fire('orbit.event.getsearcheventbyretailer.before.validation', array($this, $validator));
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-            Event::fire('orbit.event.getsearcheventbyretailer.after.validation', array($this, $validator));
-
-            // Get the maximum record
-            $maxRecord = (int)Config::get('orbit.pagination.max_record');
-            if ($maxRecord <= 0) {
-                $maxRecord = 20;
-            }
-
-            // Builder object
-            $events = DB::table('events')
-                ->join('event_retailer', 'events.event_id', '=', 'event_retailer.event_id')
-                ->join('merchants', 'event_retailer.retailer_id', '=', 'merchants.merchant_id')
-                ->select('event_retailer.retailer_id', 'merchants.name AS retailer_name', 'events.*')
-                ->where('events.status', '!=', 'deleted');
-
-            // Filter event by Ids
-            OrbitInput::get('event_id', function($eventIds) use ($events)
-            {
-                $events->whereIn('events.event_id', $eventIds);
-            });
-
-            // Filter event by merchant Ids
-            OrbitInput::get('merchant_id', function ($merchantIds) use ($events) {
-                $events->whereIn('events.merchant_id', $merchantIds);
-            });
-
-            // Filter event by event name
-            OrbitInput::get('event_name', function($eventname) use ($events)
-            {
-                $events->whereIn('events.event_name', $eventname);
-            });
-
-            // Filter event by matching event name pattern
-            OrbitInput::get('event_name_like', function($eventname) use ($events)
-            {
-                $events->where('events.event_name', 'like', "%$eventname%");
-            });
-
-            // Filter event by event type
-            OrbitInput::get('event_type', function($eventTypes) use ($events)
-            {
-                $events->whereIn('events.event_type', $eventTypes);
-            });
-
-            // Filter event by description
-            OrbitInput::get('description', function($description) use ($events)
-            {
-                $events->whereIn('events.description', $description);
-            });
-
-            // Filter event by matching description pattern
-            OrbitInput::get('description_like', function($description) use ($events)
-            {
-                $events->where('events.description', 'like', "%$description%");
-            });
-
-            // Filter event by begin date
-            OrbitInput::get('begin_date', function($begindate) use ($events)
-            {
-                $events->where('events.begin_date', '<=', $begindate);
-            });
-
-            // Filter event by end date
-            OrbitInput::get('end_date', function($enddate) use ($events)
-            {
-                $events->where('events.end_date', '>=', $enddate);
-            });
-
-            // Filter event by is permanent
-            OrbitInput::get('is_permanent', function ($ispermanent) use ($events) {
-                $events->whereIn('events.is_permanent', $ispermanent);
-            });
-
-            // Filter event by status
-            OrbitInput::get('status', function ($statuses) use ($events) {
-                $events->whereIn('events.status', $statuses);
-            });
-
-            // Filter event by link object type
-            OrbitInput::get('link_object_type', function ($linkObjectTypes) use ($events) {
-                $events->whereIn('events.link_object_type', $linkObjectTypes);
-            });
-
-            // Filter event by link object id1
-            OrbitInput::get('link_object_id1', function ($linkObjectId1s) use ($events) {
-                $events->whereIn('events.link_object_id1', $linkObjectId1s);
-            });
-
-            // Filter event by link object id2
-            OrbitInput::get('link_object_id2', function ($linkObjectId2s) use ($events) {
-                $events->whereIn('events.link_object_id2', $linkObjectId2s);
-            });
-
-            // Filter event by link object id3
-            OrbitInput::get('link_object_id3', function ($linkObjectId3s) use ($events) {
-                $events->whereIn('events.link_object_id3', $linkObjectId3s);
-            });
-
-            // Filter event by link object id4
-            OrbitInput::get('link_object_id4', function ($linkObjectId4s) use ($events) {
-                $events->whereIn('events.link_object_id4', $linkObjectId4s);
-            });
-
-            // Filter event by link object id5
-            OrbitInput::get('link_object_id5', function ($linkObjectId5s) use ($events) {
-                $events->whereIn('events.link_object_id5', $linkObjectId5s);
-            });
-
-            // Filter event by widget object type
-            OrbitInput::get('widget_object_type', function ($widgetObjectTypes) use ($events) {
-                $events->whereIn('events.widget_object_type', $widgetObjectTypes);
-            });
-
-            // Filter event by city
-            OrbitInput::get('city', function($city) use ($events)
-            {
-                $events->whereIn('merchants.city', $city);
-            });
-
-            // Filter event by matching city pattern
-            OrbitInput::get('city_like', function($city) use ($events)
-            {
-                $events->where('merchants.city', 'like', "%$city%");
-            });
-
-            // Filter event by retailer Ids
-            OrbitInput::get('retailer_id', function ($retailerIds) use ($events) {
-                $events->whereIn('event_retailer.retailer_id', $retailerIds);
-            });
-
-            // Clone the query builder which still does not include the take,
-            // skip, and order by
-            $_events = clone $events;
-
-            // Get the take args
-            if (trim(OrbitInput::get('take')) === '') {
-                $take = $maxRecord;
-            } else {
-                OrbitInput::get('take', function($_take) use (&$take, $maxRecord)
-                {
-                    if ($_take > $maxRecord) {
-                        $_take = $maxRecord;
-                    }
-                    $take = $_take;
-                });
-            }
-            if ($take > 0) {
-                $events->take($take);
-            }
-
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $events)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
-
-                $skip = $_skip;
-            });
-            if (($take > 0) && ($skip > 0)) {
-                $events->skip($skip);
-            }
-
-            // Default sort by
-            $sortBy = 'retailer_name';
-            // Default sort mode
-            $sortMode = 'asc';
-
-            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
-            {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'retailer_name'     => 'retailer_name',
-                    'registered_date'   => 'events.created_at',
-                    'event_name'        => 'events.event_name',
-                    'event_type'        => 'events.event_type',
-                    'description'       => 'events.description',
-                    'begin_date'        => 'events.begin_date',
-                    'end_date'          => 'events.end_date',
-                    'is_permanent'      => 'events.is_permanent',
-                    'status'            => 'events.status'
-                );
-
-                $sortBy = $sortByMapping[$_sortBy];
-            });
-
-            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
-            {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
-                }
-            });
-            $events->orderBy($sortBy, $sortMode);
-
-            $totalEvents = $_events->count();
-            $listOfEvents = $events->get();
-
-            $data = new stdclass();
-            $data->total_records = $totalEvents;
-            $data->returned_records = count($listOfEvents);
-            $data->records = $listOfEvents;
-
-            if ($totalEvents === 0) {
-                $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.event');
-            }
-
-            $this->response->data = $data;
-        } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.event.getsearcheventbyretailer.access.forbidden', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-        } catch (InvalidArgsException $e) {
-            Event::fire('orbit.event.getsearcheventbyretailer.invalid.arguments', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
-            $httpCode = 403;
-        } catch (QueryException $e) {
-            Event::fire('orbit.event.getsearcheventbyretailer.query.error', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-        } catch (Exception $e) {
-            Event::fire('orbit.event.getsearcheventbyretailer.general.exception', array($this, $e));
-
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-        }
-
-        $output = $this->render($httpCode);
-        Event::fire('orbit.event.getsearcheventbyretailer.before.render', array($this, &$output));
-
-        return $output;
-    }
-
     protected function registerCustomValidation()
     {
         // Check the existance of event id
@@ -1571,8 +1154,9 @@ class EventAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Merchant::excludeDeleted()
+            $merchant = Retailer::excludeDeleted()
                         ->where('merchant_id', $value)
+                        ->where('is_mall', 'yes')
                         ->first();
 
             if (empty($merchant)) {
@@ -1640,8 +1224,8 @@ class EventAPIController extends ControllerAPI
 
         // Check the existence of the link object type
         Validator::extend('orbit.empty.link_object_type', function ($attribute, $value, $parameters) {
-            $valid = false;
-            $linkobjecttypes = array('product', 'family', 'promotion', 'widget');
+            $valid = false; 
+            $linkobjecttypes = array('retailer', 'retailer_category', 'promotion', 'news');
             foreach ($linkobjecttypes as $linkobjecttype) {
                 if($value === $linkobjecttype) $valid = $valid || TRUE;
             }
@@ -1649,107 +1233,58 @@ class EventAPIController extends ControllerAPI
             return $valid;
         });
 
-        // Check the existance of link_object_id1
-        Validator::extend('orbit.empty.link_object_id1', function ($attribute, $value, $parameters) {
-            $linkobjecttype = trim(OrbitInput::post('link_object_type'));
-            if ($linkobjecttype === 'product') {
-                $link_object_id1 = Product::excludeDeleted()
-                        ->where('product_id', $value)
-                        ->first();
-            } elseif ($linkobjecttype === 'family') {
-                $link_object_id1 = Category::excludeDeleted()
-                        ->where('category_id', $value)
-                        ->first();
-            } elseif ($linkobjecttype === 'promotion') {
-                $link_object_id1 = Promotion::excludeDeleted()
-                        ->where('promotion_id', $value)
-                        ->first();
-            } elseif ($linkobjecttype === 'widget') {
-                $link_object_id1 = Widget::excludeDeleted()
-                        ->where('widget_id', $value)
-                        ->first();
+        // Check the existance of link_object_id
+        Validator::extend('orbit.empty.link_object_id', function ($attribute, $value, $parameters) {
+            $link_object_type = trim($parameters[0]);
+
+            if ($link_object_type === 'retailer') {
+                $linkObject = Retailer::excludeDeleted()
+                            ->where('merchant_id', $value)
+                            ->where('is_mall', 'no')
+                            ->first();
+            } elseif ($link_object_type === 'retailer_category') {
+                $linkObject = Category::excludeDeleted()
+                            ->where('category_id', $value)
+                            ->first();
+            } elseif ($link_object_type === 'promotion') {
+                $linkObject = News::excludeDeleted()
+                            ->where('news_id', $value)
+                            ->where('object_type', 'promotion')
+                            ->first();
+            } elseif ($link_object_type === 'news') {
+                $linkObject = News::excludeDeleted()
+                            ->where('news_id', $value)
+                            ->where('object_type', 'news')
+                            ->first();
             }
 
-            if (empty($link_object_id1)) {
+            if (empty($linkObject)) {
                 return FALSE;
             }
 
-            App::instance('orbit.empty.link_object_id1', $link_object_id1);
+            App::instance('orbit.empty.link_object_id', $linkObject);
 
             return TRUE;
         });
 
-        // Check the existance of link_object_id2
-        Validator::extend('orbit.empty.link_object_id2', function ($attribute, $value, $parameters) {
-            $link_object_id2 = Category::excludeDeleted()
-                    ->where('category_id', $value)
-                    ->first();
+        // News deletion master password
+        Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
 
-            if (empty($link_object_id2)) {
-                return FALSE;
+            // Get the master password from settings table
+            $masterPassword = Setting::getMasterPasswordFor($currentMall);
+
+            if (! is_object($masterPassword)) {
+                // @Todo replace with language
+                $message = 'The master password is not set.';
+                ACL::throwAccessForbidden($message);
             }
 
-            App::instance('orbit.empty.link_object_id2', $link_object_id2);
-
-            return TRUE;
-        });
-
-        // Check the existance of link_object_id3
-        Validator::extend('orbit.empty.link_object_id3', function ($attribute, $value, $parameters) {
-            $link_object_id3 = Category::excludeDeleted()
-                    ->where('category_id', $value)
-                    ->first();
-
-            if (empty($link_object_id3)) {
-                return FALSE;
+            if (! Hash::check($value, $masterPassword->setting_value)) {
+                $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
             }
-
-            App::instance('orbit.empty.link_object_id3', $link_object_id3);
-
-            return TRUE;
-        });
-
-        // Check the existance of link_object_id4
-        Validator::extend('orbit.empty.link_object_id4', function ($attribute, $value, $parameters) {
-            $link_object_id4 = Category::excludeDeleted()
-                    ->where('category_id', $value)
-                    ->first();
-
-            if (empty($link_object_id4)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.link_object_id4', $link_object_id4);
-
-            return TRUE;
-        });
-
-        // Check the existance of link_object_id5
-        Validator::extend('orbit.empty.link_object_id5', function ($attribute, $value, $parameters) {
-            $link_object_id5 = Category::excludeDeleted()
-                    ->where('category_id', $value)
-                    ->first();
-
-            if (empty($link_object_id5)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.link_object_id5', $link_object_id5);
-
-            return TRUE;
-        });
-
-        // Check the existance of retailer id
-        Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()->allowedForUser($this->api->user)
-                        ->where('merchant_id', $value)
-                        ->first();
-
-            if (empty($retailer)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.retailer', $retailer);
 
             return TRUE;
         });
