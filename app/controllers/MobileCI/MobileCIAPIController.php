@@ -191,13 +191,15 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
             if (empty(\Cookie::get('event'))) {
                 $event_store = array();
             } else {
                 $event_store = \Cookie::get('event');
             }
 
-            $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
+            $event = EventModel::active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
                     function ($q) {
                         $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
@@ -206,28 +208,28 @@ class MobileCIAPIController extends ControllerAPI
 
             if (! empty($event_store)) {
                 foreach ($event_store as $event_idx) {
-                    $events->where('event_id', '!=', $event_idx);
+                    $event->where('event_id', '!=', $event_idx);
                 }
             }
 
-            $events = $events->orderBy('events.event_id', 'DESC')->first();
+            $event = $event->orderBy('events.event_id', 'DESC')->first();
             $event_families = array();
-            if (! empty($events)) {
-                if ($events->link_object_type == 'family') {
-                    if (! empty($events->link_object_id1)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id1)->active()->first();
+            if (! empty($event)) {
+                if ($event->link_object_type == 'family') {
+                    if (! empty($event->link_object_id1)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id1)->active()->first();
                     }
-                    if (! empty($events->link_object_id2)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id2)->active()->first();
+                    if (! empty($event->link_object_id2)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id2)->active()->first();
                     }
-                    if (! empty($events->link_object_id3)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id3)->active()->first();
+                    if (! empty($event->link_object_id3)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id3)->active()->first();
                     }
-                    if (! empty($events->link_object_id4)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id4)->active()->first();
+                    if (! empty($event->link_object_id4)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id4)->active()->first();
                     }
-                    if (! empty($events->link_object_id5)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id5)->active()->first();
+                    if (! empty($event->link_object_id5)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id5)->active()->first();
                     }
                 }
             }
@@ -240,9 +242,23 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if (! empty($events)) {
-                $event_store[] = $events->event_id;
+            if (! empty($event)) {
+                $event_store[] = $event->event_id;
                 \Cookie::queue('event', $event_store, 1440);
+
+                if (!empty($alternate_language)) {
+                    $event_translation = \EventTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('event_id', $event->event_id)->first();
+
+                    if (!empty($event_translation)) {
+                        foreach (['event_name', 'description'] as $field) {
+                            if (isset($event_translation->{$field})) {
+                                $event->{$field} = $event_translation->{$field};
+                            }
+                        }
+                    }
+                }
             }
 
             $widgets = Widget::with('media')
@@ -300,7 +316,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $event, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -3861,7 +3877,7 @@ class MobileCIAPIController extends ControllerAPI
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      *
-     * @return Illuminate\Database\Eloquent\Collection
+     * @return \Retailer
      */
     public function getRetailerInfo()
     {
