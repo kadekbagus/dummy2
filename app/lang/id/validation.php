@@ -227,6 +227,8 @@ return array(
                     'sortby'       => 'Argument \'sort by\' Anda tidak valid, nilai yang valid adalah: name, last_transaction.',
                 ),
             ),
+            'language' => 'Language ID tidak ditemukan',
+            'merchant_language' => 'Merchant Language ID tidak ditemukan',
         ),
         'queryerror' => 'Error pada database query, nyalakan mode debug untuk melihat seluruh query.',
         'jsonerror'  => array(
@@ -264,6 +266,10 @@ return array(
                     'max_length' => 'Panjang karakter untuk Merchant ticket footer adalah 40 karakter untuk setiap barisnya.'
                 ),
             ),
+            'translation' => array(
+                'key' => 'Terdapat key yang invalid untuk terjemahan.',
+                'value' => 'Terdapat value yang invalid untuk terjemahan.',
+            )
         ),
         'actionlist' => array(
             'change_password'           => 'update password',

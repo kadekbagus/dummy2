@@ -55,6 +55,14 @@ class Category extends Eloquent
     }
 
     /**
+     * A category may have many translations.
+     */
+    public function translations()
+    {
+        return $this->hasMany('CategoryTranslation', 'category_id', 'category_id')->excludeDeleted();
+    }
+
+    /**
      * Add Filter category based on user who request it.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $builder

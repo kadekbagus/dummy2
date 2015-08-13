@@ -111,6 +111,10 @@ class CategoryAPIController extends ControllerAPI
             Event::fire('orbit.category.postnewcategory.after.save', array($this, $newcategory));
             $this->response->data = $newcategory;
 
+            OrbitInput::post('translations', function($translation_json_string) use ($newcategory) {
+                $this->validateAndSaveTranslations($newcategory, $translation_json_string, 'create');
+            });
+
             // Commit the changes
             $this->commit();
 
@@ -327,6 +331,10 @@ class CategoryAPIController extends ControllerAPI
                 $updatedcategory->status = $status;
             });
 
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedcategory) {
+                $this->validateAndSaveTranslations($updatedcategory, $translation_json_string, 'update');
+            });
+
             $updatedcategory->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.category.postupdatecategory.before.save', array($this, $updatedcategory));
@@ -518,6 +526,11 @@ class CategoryAPIController extends ControllerAPI
             $deletecategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
             $deletecategory->status = 'deleted';
             $deletecategory->modified_by = $this->api->user->user_id;
+
+            foreach ($deletecategory->translations as $translation) {
+                $translation->modified_by = $this->api->user->user_id;
+                $translation->delete();
+            }
 
             Event::fire('orbit.category.postdeletecategory.before.save', array($this, $deletecategory));
 
@@ -779,6 +792,17 @@ class CategoryAPIController extends ControllerAPI
                 $categories->whereIn('categories.status', $status);
             });
 
+            OrbitInput::get('with', function ($with) use ($categories) {
+                if (!is_array($with)) {
+                    $with = [$with];
+                }
+                foreach ($with as $rel) {
+                    if (in_array($rel, ['translations'])) {
+                        $categories->with($rel);
+                    }
+                }
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_categories = clone $categories;
@@ -992,5 +1016,101 @@ class CategoryAPIController extends ControllerAPI
             return $valid;
         });
 
+    }
+
+    /**
+     * @param Category $category
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslations($category, $translations_json_string, $scenario = 'create')
+    {
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where CategoryTranslation object is object with keys:
+         *   category_name, description
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['category_name', 'description'];
+        $user = $this->api->user;
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+        foreach ($data as $merchant_language_id => $translations) {
+            $language = MerchantLanguage::excludeDeleted()
+                ->allowedForUser($user)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            }
+            $existing_translation = CategoryTranslation::excludeDeleted()
+                ->where('category_id', '=', $category->category_id)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $merchant_language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+                $new_translation = new CategoryTranslation();
+                $new_translation->category_id = $category->category_id;
+                $new_translation->merchant_language_id = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $new_translation->{$field} = $value;
+                }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
+                $new_translation->save();
+            }
+            elseif ($op === 'update') {
+                /** @var CategoryTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->save();
+            }
+            elseif ($op === 'delete') {
+                /** @var CategoryTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->delete();
+            }
+        }
     }
 }

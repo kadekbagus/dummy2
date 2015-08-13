@@ -191,13 +191,15 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
             if (empty(\Cookie::get('event'))) {
                 $event_store = array();
             } else {
                 $event_store = \Cookie::get('event');
             }
 
-            $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
+            $event = EventModel::active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
                     function ($q) {
                         $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
@@ -206,28 +208,28 @@ class MobileCIAPIController extends ControllerAPI
 
             if (! empty($event_store)) {
                 foreach ($event_store as $event_idx) {
-                    $events->where('event_id', '!=', $event_idx);
+                    $event->where('event_id', '!=', $event_idx);
                 }
             }
 
-            $events = $events->orderBy('events.event_id', 'DESC')->first();
+            $event = $event->orderBy('events.event_id', 'DESC')->first();
             $event_families = array();
-            if (! empty($events)) {
-                if ($events->link_object_type == 'family') {
-                    if (! empty($events->link_object_id1)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id1)->active()->first();
+            if (! empty($event)) {
+                if ($event->link_object_type == 'family') {
+                    if (! empty($event->link_object_id1)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id1)->active()->first();
                     }
-                    if (! empty($events->link_object_id2)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id2)->active()->first();
+                    if (! empty($event->link_object_id2)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id2)->active()->first();
                     }
-                    if (! empty($events->link_object_id3)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id3)->active()->first();
+                    if (! empty($event->link_object_id3)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id3)->active()->first();
                     }
-                    if (! empty($events->link_object_id4)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id4)->active()->first();
+                    if (! empty($event->link_object_id4)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id4)->active()->first();
                     }
-                    if (! empty($events->link_object_id5)) {
-                        $event_families[] = Category::where('category_id', $events->link_object_id5)->active()->first();
+                    if (! empty($event->link_object_id5)) {
+                        $event_families[] = Category::where('category_id', $event->link_object_id5)->active()->first();
                     }
                 }
             }
@@ -240,9 +242,23 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if (! empty($events)) {
-                $event_store[] = $events->event_id;
+            if (! empty($event)) {
+                $event_store[] = $event->event_id;
                 \Cookie::queue('event', $event_store, 1440);
+
+                if (!empty($alternate_language)) {
+                    $event_translation = \EventTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('event_id', $event->event_id)->first();
+
+                    if (!empty($event_translation)) {
+                        foreach (['event_name', 'description'] as $field) {
+                            if (isset($event_translation->{$field})) {
+                                $event->{$field} = $event_translation->{$field};
+                            }
+                        }
+                    }
+                }
             }
 
             $widgets = Widget::with('media')
@@ -300,7 +316,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $event, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -330,7 +346,10 @@ class MobileCIAPIController extends ControllerAPI
         $landing_url = URL::route('ci-customer-home');
         try {
             $retailer = $this->getRetailerInfo();
-            $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
+            $mall = Retailer::with('settings')  // no translation needed
+                ->isMall('yes')
+                ->where('merchant_id', $retailer->merchant_id)
+                ->first();
             $landing = Setting::getFromList($mall->settings, 'landing_page');
 
             // Get the landing page URL based on settings
@@ -3858,7 +3877,7 @@ class MobileCIAPIController extends ControllerAPI
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      *
-     * @return Illuminate\Database\Eloquent\Collection
+     * @return \Retailer
      */
     public function getRetailerInfo()
     {
@@ -7387,183 +7406,6 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
-     * GET - Tenant list (this function is used when the family is clicked on catalogue page)
-     *
-     * @param string    `sort_by`        (optional)
-     * @param string    `sort_mode`      (optional)
-     * @param array     `families`       (optional)
-     * @param integer   `family_id`      (optional)
-     * @param integer   `family_level`   (optional)
-     *
-     * @return Illuminate\View\View
-     *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     */
-    public function getTenantList()
-    {
-        $user = null;
-        $family_id = null;
-        $activityCategory = Activity::mobileci()
-                            ->setActivityType('view');
-        try {
-            $user = $this->getLoggedInUser();
-
-            $this->registerCustomValidation();
-
-            $sort_by = OrbitInput::get('sort_by');
-            $family_id = OrbitInput::get('family_id');
-            $family_level = '0';
-            $families = OrbitInput::get('families');
-
-            if (count($families) == 1) {
-                \Session::put('f1', $family_id);
-            }
-
-            $validator = Validator::make(
-                array(
-                    'sort_by' => $sort_by,
-                    'family_id' => $family_id,
-                ),
-                array(
-                    'sort_by' => 'in:product_name,price',
-                    'family_id' => 'orbit.exists.category',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
-                )
-            );
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.max_record');
-            if ($maxRecord <= 0) {
-                $maxRecord = 20;
-            }
-
-            $retailer = $this->getRetailerInfo();
-            $nextfamily = $family_level + 1;
-
-            // $subfamilies = Category::active();
-            $subfamilies = null;
-
-            // if ($nextfamily < 6) {
-            //     $subfamilies = Category::where('merchant_id', $retailer->parent_id)->whereHas(
-            //         'product' . $nextfamily,
-            //         function ($q) use ($family_id, $family_level, $families, $retailer) {
-            //             $nextfamily = $family_level + 1;
-            //             for ($i = 1; $i <= count($families); $i++) {
-            //                 $q->where('products.category_id' . $i, $families[$i-1]);
-            //                 $q->whereHas(
-            //                     'retailers',
-            //                     function ($q2) use ($retailer) {
-            //                         $q2->where('product_retailer.retailer_id', $retailer->merchant_id);
-            //                     }
-            //                 );
-            //             }
-
-            //             $q->where('products.category_id' . $family_level, $family_id)
-            //                 ->where(
-            //                     function ($query) use ($nextfamily) {
-            //                         $query->whereNotNull('products.category_id' . $nextfamily)->orWhere('products.category_id' . $nextfamily, '<>', 0);
-            //                     }
-            //                 )
-            //             ->where('products.status', 'active');
-            //         }
-            //     )->get();
-            // } else {
-            //     $subfamilies = null;
-            // }
-
-            // $products = Product::with('variants')->whereHas(
-            //     'retailers',
-            //     function ($query) use ($retailer) {
-            //         $query->where('retailer_id', $retailer->merchant_id);
-            //     }
-            // )->where('merchant_id', $retailer->parent_id)->active()->where(
-            //     function ($q) use ($family_level, $family_id, $families) {
-            //         for ($i = 1; $i < count($families); $i++) {
-            //             $q->where('category_id' . $i, $families[$i-1]);
-            //         }
-            //             $q->where('category_id' . $family_level, $family_id);
-            //         for ($i = $family_level + 1; $i <= 5; $i++) {
-            //             $q->where(
-            //                 function ($q2) use ($i) {
-            //                     $q2->whereNull('category_id' . $i)->orWhere('category_id' . $i, 0);
-            //                 }
-            //             );
-            //         }
-            //     }
-            // );
-
-            $products = Retailer::active();
-
-            $_products = clone $products;
-
-            // Default sort by
-            $sortBy = 'merchants.name';
-            // Default sort mode
-            $sortMode = 'asc';
-
-            OrbitInput::get(
-                'sort_mode',
-                function ($_sortMode) use (&$sortMode) {
-                    if (strtolower($_sortMode) !== 'desc') {
-                        $sortMode = 'asc';
-                    } else {
-                        $sortMode = 'desc';
-                    }
-                }
-            );
-            $products->orderBy($sortBy, $sortMode);
-
-            $totalRec = $_products->count();
-            $listOfRec = $products->get();
-
-            $data = new stdclass();
-            $data->status = 1;
-            $data->total_records = $totalRec;
-            $data->returned_records = count($listOfRec);
-            $data->records = $listOfRec;
-
-            $cartitems = $this->getCartForToolbar();
-
-            $activityfamily = Category::where('category_id', $family_id)->first();
-
-            $activityCategoryNotes = sprintf('Category viewed: %s', $activityfamily->category_name);
-            $activityCategory->setUser($user)
-                ->setActivityName('view_catalogue')
-                ->setActivityNameLong('View Catalogue ' . $activityfamily->category_name)
-                ->setObject($activityfamily)
-                ->setModuleName('Catalogue')
-                ->setNotes($activityCategoryNotes)
-                ->responseOK()
-                ->save();
-
-            return View::make('mobile-ci.tenant-list', array('user' => $user, 'retailer' => $retailer, 'data' => $data, 'subfamilies' => $subfamilies, 'cartitems' => $cartitems));
-
-        } catch (Exception $e) {
-            $activityCategoryNotes = sprintf('Category viewed: %s', $family_id);
-            $activityCategory->setUser($user)
-                ->setActivityName('view_catalogue')
-                ->setActivityNameLong('View Catalogue Failed')
-                ->setObject(null)
-                ->setModuleName('Catalogue')
-                ->setNotes($e->getMessage())
-                ->responseFailed()
-                ->save();
-
-            return $this->redirectIfNotLoggedIn($e);
-                // return $e;
-        }
-
-    }
-
-    /**
      * GET - catalogue tenant page
      *
      * @param string    `keyword`        (optional) - The keyword, could be: upc code, product name, short or long description
@@ -7615,7 +7457,17 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
 
-            $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
+
+            $categories = Category::active('categories')
+                ->where('category_level', 1)
+                ->where('merchant_id', $retailer->merchant_id);
+
+            $categories->select('categories.*');
+            $this->maybeJoinWithCategoryTranslationsTable($categories, $alternate_language);
+
+            $categories = $categories->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
@@ -7623,22 +7475,56 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $floorList = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->groupBy('floor')->orderBy('floor')->lists('floor');
+            $floorList = Retailer::with('mediaLogo', 'categories') // no translation needed
+                ->active()
+                ->where('is_mall', 'no')
+                ->where('parent_id', $retailer->merchant_id)
+                ->groupBy('floor')
+                ->orderBy('floor')
+                ->lists('floor');
 
-            $products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
+            $products = Retailer::with('mediaLogo');
+            if (!empty($alternate_language)) {
+                $products = $products->with(['categories' => function ($q) use ($alternate_language) {
+                    $prefix = DB::getTablePrefix();
+                    $q->leftJoin('category_translations', function ($join) use ($alternate_language) {
+                        $join->on('categories.category_id', '=', 'category_translations.category_id');
+                        $join->where('category_translations.merchant_language_id', '=', $alternate_language->merchant_language_id);
+                    });
+                    $q->select('categories.*');
+                    $q->addSelect([
+                        DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
+                        DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
+                    ]);
+                }]);
+            }
+            else {
+                $products = $products->with('categories');
+            }
+            $products = $products->active('merchants')
+                ->where('is_mall', 'no')
+                ->where('parent_id', $retailer->merchant_id);
+            $products->select('merchants.*');
+
+            $this->maybeJoinWithTranslationsTable($products, $alternate_language);
 
             // Filter product by name pattern
             OrbitInput::get(
                 'keyword',
-                function ($name) use ($products) {
+                function ($name) use ($products, $alternate_language) {
+                    $name_like = "%$name%";
                     $products->where(
-                        function ($q) use ($name) {
-                            $q->where('merchants.name', 'like', "%$name%")
-                                ->orWhere('merchants.description', 'like', "%$name%")
-                                ->orWhere('merchants.floor', 'like', "%$name%");
-                            $q->orWhereHas('categories', function($q2) use ($name) {
-                                $q2->where('category_name', 'like', "%$name%");
+                        function ($q) use ($name_like, $alternate_language) {
+                            $q->where('merchants.name', 'like', $name_like)
+                                ->orWhere('merchants.description', 'like', $name_like)
+                                ->orWhere('merchants.floor', 'like', $name_like);
+                            $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                $q2->where('category_name', 'like', $name_like);
                             });
+                            if (!empty($alternate_language)) {
+                                $q->orWhere('merchant_translations.name', 'like', $name_like)
+                                    ->orWhere('merchant_translations.description', 'like', $name_like);
+                            }
                         }
                     );
                 }
@@ -7749,8 +7635,9 @@ class MobileCIAPIController extends ControllerAPI
                     $sortByMapping = array(
                         'name'      => 'merchants.name',
                     );
-
-                    $sortBy = $sortByMapping[$_sortBy];
+                    if (array_key_exists($_sortBy, $sortByMapping)) {
+                        $sortBy = $sortByMapping[$_sortBy];
+                    }
                 }
             );
 
@@ -7764,7 +7651,14 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
             );
-            $products->orderBy($sortBy, $sortMode);
+
+            if (!empty($alternate_language) && $sortBy === 'merchants.name') {
+                $prefix = DB::getTablePrefix();
+                $products->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
+            }
+            else {
+                $products->orderBy($sortBy, $sortMode);
+            }
 
             $cartitems = $this->getCartForToolbar();
 
@@ -7886,7 +7780,22 @@ class MobileCIAPIController extends ControllerAPI
             $promo_id = trim(OrbitInput::get('pid'));
             $news_id = trim(OrbitInput::get('nid'));
 
-            $product = Retailer::with('media', 'mediaLogoOrig', 'mediaMapOrig', 'mediaImageOrig', 'news', 'newsPromotions')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->where('merchant_id', $product_id)->first();
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $product = Retailer::with( // translated
+                'media',
+                'mediaLogoOrig',
+                'mediaMapOrig',
+                'mediaImageOrig',
+                'news',
+                'newsPromotions')
+                ->active('merchants')
+                ->where('is_mall', 'no')
+                ->where('parent_id', $retailer->merchant_id)
+                ->where('merchants.merchant_id', $product_id);
+            $product->select('merchants.*');
+            $this->maybeJoinWithTranslationsTable($product, $alternate_language);
+            $product = $product->first();
             // dd($product);
             if (empty($product)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
@@ -8799,5 +8708,126 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return false;
+    }
+
+
+    /**
+     * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
+     *
+     * @param \User $user
+     * @param \Retailer $mall the mall
+     * @return \MerchantLanguage the language or null if a matching one is not found.
+     */
+    private function getAlternateMerchantLanguage($user, $mall)
+    {
+        $priority = ['cookie', 'user_preference', 'browser'];
+        $getters = [
+            'cookie' => function ($user) {
+                // cannot use Cookie:: or Request::cookie, those insist on signed cookies.
+                if (!array_key_exists('orbit_preferred_language', $_COOKIE)) {
+                    return null;
+                }
+                return $_COOKIE['orbit_preferred_language'];
+            },
+            'user_preference' => function ($user) {
+                $details = $user->userdetail;
+                // if user has no preference use default
+                if (empty($details)) {
+                    return null;
+                }
+                return $details->preferred_language;
+            },
+            'browser' => function ($user) {
+                $lang = \Request::server('HTTP_ACCEPT_LANGUAGE', null);
+                if ($lang === null) {
+                    return null;
+                }
+                return substr($lang, 0, 2);
+            }
+        ];
+        $language = [];
+        $selected_language = null;
+        foreach ($priority as $method) {
+            $getter = $getters[$method];
+            $name = $getter($user);
+            if ($name === null) {
+                // method does not return language, try next one
+                continue;
+            }
+            if ($mall->mobile_default_language === $name) {
+                // returned language same as mall language, do not translate
+                return null;
+            }
+            $selected_language = null;
+            if (array_key_exists($name, $language)) {
+                $selected_language = $language[$name];
+            } else {
+                $language[$name] = \Language::where('name', '=', $name)->first();
+                $selected_language = $language[$name];
+            }
+            if ($selected_language === null) {
+                // language returned by method not found
+                continue;
+            }
+            $alternate_language = \MerchantLanguage::excludeDeleted()
+                ->where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $selected_language->language_id)
+                ->first();
+            if ($alternate_language !== null) {
+                return $alternate_language;
+            }
+        }
+        // above methods did not result in any selected language, use mall default
+        return null;
+    }
+
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $tenants
+     * @param \MerchantLanguage $alternate_language
+     */
+    private function maybeJoinWithTranslationsTable($tenants, $alternate_language)
+    {
+        if (!empty($alternate_language)) {
+            // join to translations table so can use to search, sort, and overwrite fields
+            $prefix = DB::getTablePrefix();
+
+            $tenants->leftJoin('merchant_translations', function ($join) use ($alternate_language) {
+                $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
+                $join->where('merchant_translations.merchant_language_id', '=',
+                    $alternate_language->merchant_language_id);
+            });
+
+            // and overwrite fields with alternate language fields if present
+            foreach (['name', 'description', 'ticket_header', 'ticket_footer'] as $field) {
+                $tenants->addSelect([
+                    DB::raw("COALESCE(${prefix}merchant_translations.${field}, ${prefix}merchants.${field}) as ${field}")
+                ]);
+            }
+        }
+    }
+
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $categories
+     * @param \MerchantLanguage $alternate_language
+     */
+    private function maybeJoinWithCategoryTranslationsTable($categories, $alternate_language)
+    {
+        if (!empty($alternate_language)) {
+            // join to translations table so can use to search, sort, and overwrite fields
+            $prefix = DB::getTablePrefix();
+
+            $categories->leftJoin('category_translations', function ($join) use ($alternate_language) {
+                $join->on('categories.category_id', '=', 'category_translations.category_id');
+                $join->where('category_translations.merchant_language_id', '=',
+                    $alternate_language->merchant_language_id);
+            });
+
+            // and overwrite fields with alternate language fields if present
+            foreach (['category_name', 'description'] as $field) {
+                $categories->addSelect([
+                    DB::raw("COALESCE(${prefix}category_translations.${field}, ${prefix}categories.${field}) as ${field}")
+                ]);
+            }
+        }
     }
 }
