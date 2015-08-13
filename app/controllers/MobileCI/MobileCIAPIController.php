@@ -7467,15 +7467,20 @@ class MobileCIAPIController extends ControllerAPI
             // Filter product by name pattern
             OrbitInput::get(
                 'keyword',
-                function ($name) use ($products) {
+                function ($name) use ($products, $alternate_language) {
+                    $name_like = "%$name%";
                     $products->where(
-                        function ($q) use ($name) {
-                            $q->where('merchants.name', 'like', "%$name%")
-                                ->orWhere('merchants.description', 'like', "%$name%")
-                                ->orWhere('merchants.floor', 'like', "%$name%");
-                            $q->orWhereHas('categories', function($q2) use ($name) {
-                                $q2->where('category_name', 'like', "%$name%");
+                        function ($q) use ($name_like, $alternate_language) {
+                            $q->where('merchants.name', 'like', $name_like)
+                                ->orWhere('merchants.description', 'like', $name_like)
+                                ->orWhere('merchants.floor', 'like', $name_like);
+                            $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                $q2->where('category_name', 'like', $name_like);
                             });
+                            if (!empty($alternate_language)) {
+                                $q->orWhere('merchant_translations.name', 'like', $name_like)
+                                    ->orWhere('merchant_translations.description', 'like', $name_like);
+                            }
                         }
                     );
                 }
@@ -7586,8 +7591,9 @@ class MobileCIAPIController extends ControllerAPI
                     $sortByMapping = array(
                         'name'      => 'merchants.name',
                     );
-
-                    $sortBy = $sortByMapping[$_sortBy];
+                    if (array_key_exists($_sortBy, $sortByMapping)) {
+                        $sortBy = $sortByMapping[$_sortBy];
+                    }
                 }
             );
 
@@ -7601,7 +7607,14 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
             );
-            $products->orderBy($sortBy, $sortMode);
+
+            if (!empty($alternate_language) && $sortBy === 'merchants.name') {
+                $prefix = DB::getTablePrefix();
+                $products->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
+            }
+            else {
+                $products->orderBy($sortBy, $sortMode);
+            }
 
             $cartitems = $this->getCartForToolbar();
 
