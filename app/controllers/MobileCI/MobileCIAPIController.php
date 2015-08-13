@@ -330,7 +330,10 @@ class MobileCIAPIController extends ControllerAPI
         $landing_url = URL::route('ci-customer-home');
         try {
             $retailer = $this->getRetailerInfo();
-            $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
+            $mall = Retailer::with('settings')  // no translation needed
+                ->isMall('yes')
+                ->where('merchant_id', $retailer->merchant_id)
+                ->first();
             $landing = Setting::getFromList($mall->settings, 'landing_page');
 
             // Get the landing page URL based on settings
@@ -7448,7 +7451,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $floorList = Retailer::with('mediaLogo', 'categories')
+            $floorList = Retailer::with('mediaLogo', 'categories') // no translation needed
                 ->active()
                 ->where('is_mall', 'no')
                 ->where('parent_id', $retailer->merchant_id)
@@ -7456,7 +7459,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->orderBy('floor')
                 ->lists('floor');
 
-            $products = Retailer::with('mediaLogo', 'categories')
+            $products = Retailer::with('mediaLogo', 'categories') // translated
                 ->active('merchants')
                 ->where('is_mall', 'no')
                 ->where('parent_id', $retailer->merchant_id);
@@ -7738,7 +7741,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $product = Retailer::with(
+            $product = Retailer::with( // translated
                 'media',
                 'mediaLogoOrig',
                 'mediaMapOrig',
