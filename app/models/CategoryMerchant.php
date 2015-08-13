@@ -11,9 +11,9 @@ class CategoryMerchant extends Eloquent
 
     protected $primaryKey = 'category_merchant_id';
 
-    public function mall()
+    public function retailer()
     {
-        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall();
+        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall('no');
     }
 
     public function category()
