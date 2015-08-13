@@ -64,6 +64,14 @@ class EventModel extends Eloquent
     }
 
     /**
+     * Event strings can be translated to many languages.
+     */
+    public function translations()
+    {
+        return $this->hasMany('EventTranslation', 'event_id', 'event_id')->excludeDeleted();
+    }
+
+    /**
      * Add Filter events based on user who request it.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $builder
