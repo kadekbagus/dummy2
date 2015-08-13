@@ -23,9 +23,9 @@ if (! defined('ORBIT_APP_BUILD_NUMBER')) {
  */
 if (! defined('ORBIT_APP_VERSION')) {
     if (Config::get('app.debug')) {
-        define('ORBIT_APP_VERSION', '1.0.3-dev b' . ORBIT_APP_BUILD_NUMBER);
+        define('ORBIT_APP_VERSION', '1.0.3.1-dev b' . ORBIT_APP_BUILD_NUMBER);
     } else {
-        define('ORBIT_APP_VERSION', '1.0.3-M');
+        define('ORBIT_APP_VERSION', '1.0.3.1-M');
     }
 }
 
@@ -47,5 +47,5 @@ if (! defined('ORBIT_APP_RELEASE_DATE')) {
  * Constanct storing the build date, ISO 8601
  */
 if (! defined('ORBIT_APP_BUILD_DATE')) {
-    define('ORBIT_APP_BUILD_DATE', '2015-04-11_12-59-35');
+    define('ORBIT_APP_BUILD_DATE', '');
 }
