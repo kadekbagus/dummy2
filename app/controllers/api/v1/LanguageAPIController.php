@@ -455,8 +455,9 @@ class LanguageAPIController extends ControllerAPI
     private function registerCustomValidation()
     {
         Validator::extend('orbit.empty.merchant.public', function ($attribute, $value, $parameters) {
-            $merchant = Merchant::excludeDeleted()
+            $merchant = Retailer::excludeDeleted()
                 ->where('merchant_id', $value)
+                ->where('is_mall', 'yes')
                 ->first();
 
             if (empty($merchant)) {
@@ -470,9 +471,10 @@ class LanguageAPIController extends ControllerAPI
 
         $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
-            $merchant = Merchant::excludeDeleted()
+            $merchant = Retailer::excludeDeleted()
                 ->allowedForUser($user)
                 ->where('merchant_id', $value)
+                ->where('is_mall', 'yes')
                 ->first();
 
             if (empty($merchant)) {
