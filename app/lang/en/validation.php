@@ -259,6 +259,8 @@ return array(
             'link_object_id'       => 'The Link Object ID you specified is not found.',
             'bank_object'          => 'The Bank Object ID you specified is not found.',
             'mall'                 => 'The Mall ID you specified is not found.',
+            'language' => 'The Language ID you specified is not found.',
+            'merchant_language' => 'The Merchant Language ID you specified is not found.',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
@@ -298,6 +300,10 @@ return array(
             ),
             'url'   => array(
                 'web'   => 'The URL is not valid. Examples of valid URL are www.example.com or www.example.com/sub/page. No need to include the http:// or https://.'
+            ),
+            'translation' => array(
+                'key' => 'An invalid key for translation was specified.',
+                'value' => 'An invalid value for translation was specified.',
             )
         ),
         'actionlist' => array(
