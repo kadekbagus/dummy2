@@ -7,7 +7,7 @@ Route::get('/app/v1/language/list', 'IntermediateAuthController@Language_getSear
 Route::get('/app/v1/language/list-merchant', 'IntermediateAuthController@Language_getSearchMerchantLanguage');
 
 // Add merchant language
-Route::get('/app/v1/language/add-merchant', 'IntermediateAuthController@Language_postAddMerchantLanguage');
+Route::post('/app/v1/language/add-merchant', 'IntermediateAuthController@Language_postAddMerchantLanguage');
 
 // Delete merchant language
-Route::get('/app/v1/language/delete-merchant', 'IntermediateAuthController@Language_postDeleteMerchantLanguage');
+Route::post('/app/v1/language/delete-merchant', 'IntermediateAuthController@Language_postDeleteMerchantLanguage');
