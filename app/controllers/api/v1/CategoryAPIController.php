@@ -43,7 +43,7 @@ class CategoryAPIController extends ControllerAPI
             Event::fire('orbit.category.postnewcategory.before.auth', array($this));
 
             $this->checkAuth();
-            
+
             Event::fire('orbit.category.postnewcategory.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
@@ -318,7 +318,7 @@ class CategoryAPIController extends ControllerAPI
             OrbitInput::post('category_order', function($category_order) use ($updatedcategory) {
                 $updatedcategory->category_order = $category_order;
             });
-            
+
             OrbitInput::post('description', function($description) use ($updatedcategory) {
                 $updatedcategory->description = $description;
             });
@@ -491,7 +491,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_id' => $category_id,
                 ),
                 array(
-                    'category_id' => 'required|numeric|orbit.empty.category|orbit.exists.have_product_category',
+                    'category_id' => 'required|numeric|orbit.empty.category',
                 )
             );
 
@@ -976,92 +976,6 @@ class CategoryAPIController extends ControllerAPI
             }
 
             App::instance('orbit.validation.category', $category);
-
-            return TRUE;
-        });
-
-        // Check if category have linked to product / promotion / coupon.
-        Validator::extend('orbit.exists.have_product_category', function ($attribute, $value, $parameters) {
-
-            // check category if exists in products.
-            $productcategory = Product::excludeDeleted()
-                ->where(function ($query) use ($value) {
-                    $query->where('category_id1', $value)
-                        ->orWhere('category_id2', $value)
-                        ->orWhere('category_id3', $value)
-                        ->orWhere('category_id4', $value)
-                        ->orWhere('category_id5', $value);
-                })
-                ->first();
-            if (! empty($productcategory)) {
-                return FALSE;
-            }
-
-            // check category if exists in promotions.
-            $promotioncategory = Promotion::excludeDeleted()
-                ->whereHas('promotionrule', function($query) use ($value) {
-                    $query->where('discount_object_type', 'family')
-                        ->where(function ($q) use ($value) {
-                            $q->where('discount_object_id1', $value)
-                                ->orWhere('discount_object_id2', $value)
-                                ->orWhere('discount_object_id3', $value)
-                                ->orWhere('discount_object_id4', $value)
-                                ->orWhere('discount_object_id5', $value);
-                    });
-                })
-                ->first();
-            if (! empty($promotioncategory)) {
-                return FALSE;
-            }
-
-            // check category if exists in coupons.
-            $couponcategory = Coupon::excludeDeleted()
-                ->whereHas('couponrule', function($query) use ($value) {
-                    $query->where(function ($query) use ($value) {
-                        $query
-                        ->where(function ($query) use ($value) {
-                            $query->where('discount_object_type', 'family')
-                                  ->where(function ($query) use ($value) {
-                                    $query->where('discount_object_id1', $value)
-                                        ->orWhere('discount_object_id2', $value)
-                                        ->orWhere('discount_object_id3', $value)
-                                        ->orWhere('discount_object_id4', $value)
-                                        ->orWhere('discount_object_id5', $value);
-                            });
-                        })
-                        ->orWhere(function ($query) use ($value) {
-                            $query->where('rule_object_type', 'family')
-                                  ->where(function ($query) use ($value) {
-                                    $query->where('rule_object_id1', $value)
-                                        ->orWhere('rule_object_id2', $value)
-                                        ->orWhere('rule_object_id3', $value)
-                                        ->orWhere('rule_object_id4', $value)
-                                        ->orWhere('rule_object_id5', $value);
-                            });
-                        });
-                    });
-                })
-                ->first();
-            if (! empty($couponcategory)) {
-                return FALSE;
-            }
-
-            // check category if exists in events.
-            $eventcategory = EventModel::excludeDeleted()
-                ->where('link_object_type', 'family')
-                ->where(function ($query) use ($value) {
-                    $query->where('link_object_id1', $value)
-                        ->orWhere('link_object_id2', $value)
-                        ->orWhere('link_object_id3', $value)
-                        ->orWhere('link_object_id4', $value)
-                        ->orWhere('link_object_id5', $value);
-                })
-                ->first();
-            if (! empty($eventcategory)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.exists.have_product_category', $productcategory);
 
             return TRUE;
         });
