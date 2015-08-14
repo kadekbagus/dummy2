@@ -23,7 +23,7 @@ class CategoryAPIController extends ControllerAPI
      * ----------------------
      * @param integer    `merchant_id`           (required) - Merchant ID
      * @param string     `category_name`         (required) - Category name
-     * @param integer    `category_level`        (required) - Category Level. Valid value: 1 to 5.
+     * @param integer    `category_level`        (optional) - Category level.
      * @param string     `status`                (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param integer    `category_order`        (optional) - Category order
      * @param string     `description`           (optional) - Description
@@ -78,7 +78,7 @@ class CategoryAPIController extends ControllerAPI
                 array(
                     'merchant_id'    => 'required|numeric|orbit.empty.merchant',
                     'category_name'  => 'required|orbit.exists.category_name:'.$merchant_id,
-                    'category_level' => 'required|numeric|between:1,5',
+                    'category_level' => 'numeric',
                     'status'         => 'required|orbit.empty.category_status',
                 )
             );
@@ -220,7 +220,7 @@ class CategoryAPIController extends ControllerAPI
      * @param integer    `category_id`           (required) - Category ID
      * @param integer    `merchant_id`           (optional) - Merchant ID
      * @param string     `category_name`         (optional) - Category name
-     * @param integer    `category_level`        (optional) - Category level. Valid value: 1 to 5.
+     * @param integer    `category_level`        (optional) - Category level.
      * @param integer    `category_order`        (optional) - Category order
      * @param string     `description`           (optional) - Description
      * @param string     `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
@@ -279,7 +279,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_id'       => 'required|numeric|orbit.empty.category',
                     'merchant_id'       => 'numeric|orbit.empty.merchant',
                     'category_name'     => 'category_name_exists_but_me:'.$category_id.','.$merchant_id,
-                    'category_level'    => 'numeric|between:1,5',
+                    'category_level'    => 'numeric',
                     'status'            => 'orbit.empty.category_status',
                 ),
                 array(
@@ -924,7 +924,8 @@ class CategoryAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Merchant::excludeDeleted()
+            $merchant = Retailer::excludeDeleted()
+                        ->isMall()
                         ->where('merchant_id', $value)
                         ->first();
 
