@@ -1030,8 +1030,8 @@ class CategoryAPIController extends ControllerAPI
          *
          * Having a value of null means deleting the translation
          *
-         * where ProductTranslation object is object with keys:
-         *   product_name, short_description, long_description, in_store_localization.
+         * where CategoryTranslation object is object with keys:
+         *   category_name, description
          *
          * No requirement for including fields. If field not included it means not updated. If field included with
          * value null it means set to null (use main language content instead).

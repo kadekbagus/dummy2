@@ -2019,8 +2019,8 @@ class TenantAPIController extends ControllerAPI
          *
          * Having a value of null means deleting the translation
          *
-         * where ProductTranslation object is object with keys:
-         *   product_name, short_description, long_description, in_store_localization.
+         * where MerchantTranslation object is object with keys:
+         *   name, description, ticket_header, ticket_footer.
          *
          * No requirement for including fields. If field not included it means not updated. If field included with
          * value null it means set to null (use main language content instead).
