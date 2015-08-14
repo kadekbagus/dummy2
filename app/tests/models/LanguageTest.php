@@ -58,4 +58,33 @@ class LanguageTest extends TestCase
         $this->assertSame(1, MerchantLanguage::allowedForUser($merchant->user)->count());
         $this->assertSame(0, MerchantLanguage::allowedForUser($other_merchant->user)->count());
     }
+
+    public function testMerchantLanguageScopeAllowedForRetailerUser()
+    {
+        $language = Factory::create('Language');
+        $retailer = Factory::create('Retailer');
+        $merchant_language = new MerchantLanguage();
+        $merchant_language->merchant_id = $retailer->merchant_id;
+        $merchant_language->language_id = $language->language_id;
+        $merchant_language->save();
+
+        $other_merchant = Factory::create('Merchant');
+        $this->assertSame(1, MerchantLanguage::allowedForUser($retailer->user)->count());
+        $this->assertSame(0, MerchantLanguage::allowedForUser($other_merchant->user)->count());
+    }
+
+    public function testMerchantLanguageMallRelation()
+    {
+        $language = Factory::create('Language');
+        $retailer = Factory::create('Retailer');
+        $merchant_language = new MerchantLanguage();
+        $merchant_language->merchant_id = $retailer->merchant_id;
+        $merchant_language->language_id = $language->language_id;
+        $merchant_language->save();
+
+        $merchant_language = MerchantLanguage::find($merchant_language->merchant_language_id);
+        $this->assertNotNull($merchant_language->mall);
+        $this->assertSame((string)$retailer->merchant_id, (string)$merchant_language->mall->merchant_id);
+
+    }
 }

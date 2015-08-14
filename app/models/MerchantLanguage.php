@@ -22,6 +22,11 @@ class MerchantLanguage extends Eloquent
         return $this->hasOne('Merchant', 'merchant_id', 'merchant_id');
     }
 
+    public function mall()
+    {
+        return $this->hasOne('Retailer', 'merchant_id', 'merchant_id');
+    }
+
     public function language()
     {
         return $this->hasOne('Language', 'language_id', 'language_id');
@@ -55,8 +60,12 @@ class MerchantLanguage extends Eloquent
             return $builder;
         }
 
-        $builder = $builder->whereHas('merchant', function ($q) use ($user) {
-            $q->where('user_id', '=', $user->user_id);
+        $builder = $builder->where(function ($q) use ($user) {
+            $q->whereHas('merchant', function ($q) use ($user) {
+                $q->where('user_id', '=', $user->user_id);
+            })->orWhereHas('mall', function ($q) use ($user) {
+                $q->where('user_id', '=', $user->user_id);
+            });
         });
 
         return $builder;
