@@ -11,8 +11,11 @@ use Laracasts\TestDummy\Factory;
  * @property Language thai
  * @property Merchant asianMerchant
  * @property Merchant europeanMerchant
- * @property Apikey authDataAsianMerchant
- * @property Apikey authDataEuropeanMerchant
+ * @property Retailer asianMall
+ * @property Retailer asianTenant
+ * @property Retailer europeanMall
+ * @property Apikey $authDataAsianMall
+ * @property Apikey $authDataEuropeanMall
  */
 class postDeleteMerchantLanguageTest extends TestCase
 {
@@ -26,21 +29,28 @@ class postDeleteMerchantLanguageTest extends TestCase
         $this->balinese = $balinese = Factory::create('Language', ['name' => 'Balinese']);
         $this->thai = $thai = Factory::create('Language', ['name' => 'Thai']);
         $this->europeanMerchant = $european = Factory::create('Merchant');
+        $this->europeanMall = Factory::create('Retailer', ['parent_id' => $european->merchant_id, 'is_mall' => 'yes']);
         $this->asianMerchant = $asian = Factory::create('Merchant');
+        $this->asianMall = Factory::create('Retailer', ['parent_id' => $asian->merchant_id, 'is_mall' => 'yes']);
+        $this->asianTenant = Factory::create('Retailer', ['parent_id' => $this->asianMall->merchant_id]);
         $permission = Factory::create('Permission', ['permission_name' => 'update_merchant']);
         Factory::create('PermissionRole',
             ['role_id' => $european->user->user_role_id, 'permission_id' => $permission->permission_id]);
         Factory::create('PermissionRole',
             ['role_id' => $asian->user->user_role_id, 'permission_id' => $permission->permission_id]);
-        $this->authDataAsianMerchant = Factory::create('Apikey', ['user_id' => $asian->user_id]);
-        $this->authDataEuropeanMerchant = Factory::create('Apikey', ['user_id' => $european->user_id]);
+        Factory::create('PermissionRole',
+            ['role_id' => $this->europeanMall->user->user_role_id, 'permission_id' => $permission->permission_id]);
+        Factory::create('PermissionRole',
+            ['role_id' => $this->asianMall->user->user_role_id, 'permission_id' => $permission->permission_id]);
+        $this->authDataAsianMall = Factory::create('Apikey', ['user_id' => $this->asianMall->user_id]);
+        $this->authDataEuropeanMall = Factory::create('Apikey', ['user_id' => $this->europeanMall->user_id]);
 
         $combinations = [
-            [$asian, $english],
-            [$asian, $japanese],
-            [$asian, $balinese],
-            [$european, $french],
-            [$european, $english]
+            [$this->asianMall, $english],
+            [$this->asianMall, $japanese],
+            [$this->asianMall, $balinese],
+            [$this->europeanMall, $french],
+            [$this->europeanMall, $english]
         ];
         foreach ($combinations as $merchant_and_language) {
             list($merchant, $language) = $merchant_and_language;
@@ -80,66 +90,66 @@ class postDeleteMerchantLanguageTest extends TestCase
 
     public function testDeletingLanguage()
     {
-        $initial_count = count(Merchant::find($this->asianMerchant->merchant_id)->languages);
+        $initial_count = count(Retailer::find($this->asianMall->merchant_id)->languages);
         $merchant_language = MerchantLanguage::excludeDeleted()
-            ->where('merchant_id', '=', $this->asianMerchant->merchant_id)
+            ->where('merchant_id', '=', $this->asianMall->merchant_id)
             ->where('language_id', '=', $this->english->language_id)
             ->first();
         $response = $this->makeRequest([
-            'merchant_id' => $this->asianMerchant->merchant_id,
+            'merchant_id' => $this->asianMall->merchant_id,
             'merchant_language_id' => $merchant_language->merchant_language_id
-        ], $this->authDataAsianMerchant);
+        ], $this->authDataAsianMall);
         $this->assertResponseOk();
         $this->assertResponseStatus(200);
-        $final_count = count(Merchant::find($this->asianMerchant->merchant_id)->languages);
+        $final_count = count(Retailer::find($this->asianMall->merchant_id)->languages);
         $this->assertSame($initial_count - 1, $final_count);
     }
 
     public function testDeletingNonExistentLanguage()
     {
-        $initial_count = count(Merchant::find($this->asianMerchant->merchant_id)->languages);
+        $initial_count = count(Retailer::find($this->asianMall->merchant_id)->languages);
         $response = $this->makeRequest([
-            'merchant_id' => $this->asianMerchant->merchant_id,
+            'merchant_id' => $this->asianMall->merchant_id,
             'merchant_language_id' => 99999
-        ], $this->authDataAsianMerchant);
+        ], $this->authDataAsianMall);
         $this->assertResponseStatus(403);
         $this->assertSame('error', $response->status);
         $this->assertRegExp('/merchant language.*not found/i', $response->message);
         $this->assertSame(null, $response->data);
-        $final_count = count(Merchant::find($this->asianMerchant->merchant_id)->languages);
+        $final_count = count(Retailer::find($this->asianMall->merchant_id)->languages);
         $this->assertSame($initial_count, $final_count);
     }
 
     public function testDeletingDeletedLanguage()
     {
-        $initial_count = count(Merchant::find($this->asianMerchant->merchant_id)->languages);
+        $initial_count = count(Retailer::find($this->asianMall->merchant_id)->languages);
         $merchant_language = MerchantLanguage::withDeleted()
-            ->where('merchant_id', '=', $this->asianMerchant->merchant_id)
+            ->where('merchant_id', '=', $this->asianMall->merchant_id)
             ->where('language_id', '=', $this->balinese->language_id)
             ->first();
         $response = $this->makeRequest([
-            'merchant_id' => $this->asianMerchant->merchant_id,
+            'merchant_id' => $this->asianMall->merchant_id,
             'merchant_language_id' => $merchant_language->merchant_language_id
-        ], $this->authDataAsianMerchant);
+        ], $this->authDataAsianMall);
         $this->assertResponseStatus(403);
         $this->assertSame('error', $response->status);
         $this->assertRegExp('/merchant language.*not found/i', $response->message);
         $this->assertSame(null, $response->data);
-        $final_count = count(Merchant::find($this->asianMerchant->merchant_id)->languages);
+        $final_count = count(Retailer::find($this->asianMall->merchant_id)->languages);
         $this->assertSame($initial_count, $final_count);
     }
 
     public function testDeletingOtherMerchantLanguage()
     {
-        $languages = Merchant::find($this->asianMerchant->merchant_id)->languages;
+        $languages = Retailer::find($this->asianMall->merchant_id)->languages;
         $initial_count = count($languages);
         $merchant_language = $languages[0];
 
         // m.id E ml.id A ad E
         $response = $this->makeRequest([
-            'merchant_id' => $this->europeanMerchant->merchant_id,
+            'merchant_id' => $this->europeanMall->merchant_id,
             'merchant_language_id' => $merchant_language->merchant_language_id
-        ], $this->authDataEuropeanMerchant);
+        ], $this->authDataEuropeanMall);
 
         $this->assertResponseStatus(403);
         $this->assertSame('error', $response->status);
@@ -148,9 +158,9 @@ class postDeleteMerchantLanguageTest extends TestCase
 
         // m.id A ml.id A ad E
         $response = $this->makeRequest([
-            'merchant_id' => $this->asianMerchant->merchant_id,
+            'merchant_id' => $this->asianMall->merchant_id,
             'merchant_language_id' => $merchant_language->merchant_language_id
-        ], $this->authDataEuropeanMerchant);
+        ], $this->authDataEuropeanMall);
 
         $this->assertResponseStatus(403);
         $this->assertSame('error', $response->status);
@@ -159,16 +169,16 @@ class postDeleteMerchantLanguageTest extends TestCase
 
         // m.id E ml.id A ad A
         $response = $this->makeRequest([
-            'merchant_id' => $this->asianMerchant->merchant_id,
+            'merchant_id' => $this->asianMall->merchant_id,
             'merchant_language_id' => $merchant_language->merchant_language_id
-        ], $this->authDataEuropeanMerchant);
+        ], $this->authDataEuropeanMall);
 
         $this->assertResponseStatus(403);
         $this->assertSame('error', $response->status);
         $this->assertRegExp('/merchant id.*not found/i', $response->message);
         $this->assertSame(null, $response->data);
 
-        $final_count = count(Merchant::find($this->asianMerchant->merchant_id)->languages);
+        $final_count = count(Retailer::find($this->asianMall->merchant_id)->languages);
         $this->assertSame($initial_count, $final_count);
     }
 

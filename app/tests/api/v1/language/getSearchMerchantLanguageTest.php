@@ -15,9 +15,17 @@ class getSearchMerchantLanguageTest extends TestCase
         $this->japanese = $japanese = Factory::create('Language', ['name' => 'Japanese']);
         $this->balinese = $balinese = Factory::create('Language', ['name' => 'Balinese']);
         $this->europeanMerchant = $european = Factory::create('Merchant');
+        $this->europeanMall = Factory::create('Retailer', ['parent_id' => $european->merchant_id, 'is_mall' => 'yes']);
         $this->asianMerchant = $asian = Factory::create('Merchant');
+        $this->asianMall = Factory::create('Retailer', ['parent_id' => $asian->merchant_id, 'is_mall' => 'yes']);
 
-        $combinations = [[$asian, $english], [$asian, $japanese], [$asian, $balinese], [$european, $french], [$european, $english]];
+        $combinations = [
+            [$this->asianMall, $english],
+            [$this->asianMall, $japanese],
+            [$this->asianMall, $balinese],
+            [$this->europeanMall, $french],
+            [$this->europeanMall, $english]
+        ];
         foreach ($combinations as $merchant_and_language) {
             list($merchant, $language) = $merchant_and_language;
             $merchant_language = new MerchantLanguage();
@@ -70,7 +78,7 @@ class getSearchMerchantLanguageTest extends TestCase
 
     public function testSearchWithValidMerchantId()
     {
-        $response = $this->makeRequest(['merchant_id' => $this->asianMerchant->merchant_id]);
+        $response = $this->makeRequest(['merchant_id' => $this->asianMall->merchant_id]);
 
         $this->assertResponseStatus(200);
         $this->assertSame(Status::OK, $response->code);
@@ -89,7 +97,7 @@ class getSearchMerchantLanguageTest extends TestCase
         }
         $this->assertCount(count($expected), $found);
 
-        $response = $this->makeRequest(['merchant_id' => $this->europeanMerchant->merchant_id]);
+        $response = $this->makeRequest(['merchant_id' => $this->europeanMall->merchant_id]);
 
         $this->assertResponseStatus(200);
         $this->assertSame(Status::OK, $response->code);

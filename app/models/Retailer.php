@@ -105,6 +105,14 @@ class Retailer extends Eloquent
     }
 
     /**
+     * Retailer has many languages for translations.
+     */
+    public function languages()
+    {
+        return $this->hasMany('MerchantLanguage', 'merchant_id', 'merchant_id')->excludeDeleted();
+    }
+
+    /**
      * Retailer strings can be translated to many languages. (table shared with Merchant).
      */
     public function translations()
