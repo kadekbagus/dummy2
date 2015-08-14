@@ -225,65 +225,65 @@ class postUpdateTenant_TranslationsTest extends TestCase
     // with a translation, delete translation
     public function testDeletingTranslation()
     {
-        list($product, $translation) = $this->createTenantWithTranslation('english');
+        list($tenant, $translation) = $this->createTenantWithTranslation('english');
         $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_before);
 
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => null
         ];
 
-        $response = $this->makeRequest($product, $translations);
+        $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseOk($response);
 
         $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(0, $translation_count_after);
     }
 
     // ... for a nonexistent language
     public function testDeletingNonexistentTranslation()
     {
-        list($product, $translation) = $this->createTenantWithTranslation('english');
+        list($tenant, $translation) = $this->createTenantWithTranslation('english');
         $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_before);
         $translations = [
             $this->merchantLanguages['french']->merchant_language_id => null
         ];
-        $response = $this->makeRequest($product, $translations);
+        $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
         $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_after);
     }
 
     // ... for a language belonging to another merchant
     public function testDeletingOtherMerchantLanguage()
     {
-        list($product, $translation) = $this->createTenantWithTranslation('english');
+        list($tenant, $translation) = $this->createTenantWithTranslation('english');
         $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_before);
         $translations = [
             $this->merchantLanguages['chinese']->merchant_language_id => null
         ];
-        $response = $this->makeRequest($product, $translations);
+        $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
         $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_after);
     }
 
     // with a translation, update translation
     public function testUpdatingTranslation()
     {
-        list($product, $translation) = $this->createTenantWithTranslation('english');
+        list($tenant, $translation) = $this->createTenantWithTranslation('english');
         $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_before);
 
         $updated_english = [
@@ -299,15 +299,15 @@ class postUpdateTenant_TranslationsTest extends TestCase
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => $updated_english
         ];
-        $response = $this->makeRequest($product, $translations);
+        $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseOk($response);
 
         $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_after);
 
         $updated_translation = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->first();
+            $tenant->merchant_id)->first();
 
         foreach ($updated_english as $k => $v) {
             $this->assertSame($v, $updated_translation->{$k});
@@ -327,9 +327,9 @@ class postUpdateTenant_TranslationsTest extends TestCase
         foreach ($updated_english as $field => $value) {
             $minimal_update = [$field => $value];
 
-            list($product, $original_translation) = $this->createTenantWithTranslation('english');
+            list($tenant, $original_translation) = $this->createTenantWithTranslation('english');
             $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-                $product->merchant_id)->count();
+                $tenant->merchant_id)->count();
             $this->assertSame(1, $translation_count_before);
 
             foreach ($minimal_update as $k => $v) {
@@ -339,15 +339,15 @@ class postUpdateTenant_TranslationsTest extends TestCase
             $translations = [
                 $this->merchantLanguages['english']->merchant_language_id => $minimal_update
             ];
-            $response = $this->makeRequest($product, $translations);
+            $response = $this->makeRequest($tenant, $translations);
             $this->assertJsonResponseOk($response);
 
             $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-                $product->merchant_id)->count();
+                $tenant->merchant_id)->count();
             $this->assertSame(1, $translation_count_after);
 
             $updated_translation = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-                $product->merchant_id)->first();
+                $tenant->merchant_id)->first();
 
             // the one sent is updated
             foreach ($minimal_update as $k => $v) {
@@ -366,9 +366,9 @@ class postUpdateTenant_TranslationsTest extends TestCase
     // ... with null values
     public function testUpdatingTranslationWithNullValue()
     {
-        list($product, $translation) = $this->createTenantWithTranslation('english');
+        list($tenant, $translation) = $this->createTenantWithTranslation('english');
         $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_before);
 
         $translations = [
@@ -379,17 +379,17 @@ class postUpdateTenant_TranslationsTest extends TestCase
                 'ticket_footer' => null,
             ]
         ];
-        $response = $this->makeRequest($product, $translations);
+        $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseOk($response);
 
         $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_after);
 
         $updated_translation = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->first();
+            $tenant->merchant_id)->first();
 
-        foreach (['product_name', 'short_description', 'long_description', 'in_store_localization'] as $k) {
+        foreach (['name', 'description', 'ticket_header', 'ticket_footer'] as $k) {
             $this->assertNull($updated_translation->{$k});
         }
     }
@@ -397,28 +397,28 @@ class postUpdateTenant_TranslationsTest extends TestCase
     // ... with some illegal fields
     public function testUpdatingTranslationWithIllegalFields()
     {
-        list($product, $translation) = $this->createTenantWithTranslation('english');
+        list($tenant, $translation) = $this->createTenantWithTranslation('english');
         $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_before);
 
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => [
                 'this' => 'should not be here',
-                'product_name' => 'should not be updated'
+                'name' => 'should not be updated'
             ]
         ];
-        $response = $this->makeRequest($product, $translations);
+        $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/invalid key/i', $response);
 
         $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->count();
+            $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_after);
 
         $updated_translation = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-            $product->merchant_id)->first();
+            $tenant->merchant_id)->first();
 
-        foreach (['product_name', 'short_description', 'long_description', 'in_store_localization'] as $k) {
+        foreach (['name', 'description', 'ticket_header', 'ticket_footer'] as $k) {
             $this->assertSame($translation->{$k}, $updated_translation->{$k});
         }
     }
@@ -434,9 +434,9 @@ class postUpdateTenant_TranslationsTest extends TestCase
             1234.56, // and numbers
         ];
         foreach ($illegal_values as $illegal_value) {
-            list($product, $translation) = $this->createTenantWithTranslation('english');
+            list($tenant, $translation) = $this->createTenantWithTranslation('english');
             $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-                $product->merchant_id)->count();
+                $tenant->merchant_id)->count();
             $this->assertSame(1, $translation_count_before);
 
             $translations = [
@@ -445,17 +445,17 @@ class postUpdateTenant_TranslationsTest extends TestCase
                     'name' => 'should not be updated'
                 ]
             ];
-            $response = $this->makeRequest($product, $translations);
+            $response = $this->makeRequest($tenant, $translations);
             $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/invalid value/i', $response);
 
             $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-                $product->merchant_id)->count();
+                $tenant->merchant_id)->count();
             $this->assertSame(1, $translation_count_after);
 
             $updated_translation = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
-                $product->merchant_id)->first();
+                $tenant->merchant_id)->first();
 
-            foreach (['product_name', 'short_description', 'long_description', 'in_store_localization'] as $k) {
+            foreach (['name', 'description', 'ticket_header', 'ticket_footer'] as $k) {
                 $this->assertSame($translation->{$k}, $updated_translation->{$k});
             }
         }
