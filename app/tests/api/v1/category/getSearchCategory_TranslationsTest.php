@@ -154,11 +154,11 @@ class getSearchCategory_TranslationsTest extends TestCase
     // with no translation, no with, return nothing
     public function testNoTranslationNoWithDoesNotReturnTranslations()
     {
-        $tenant = $this->createCategory();
+        $category = $this->createCategory();
         $response = $this->makeRequest([]);
         $this->assertJsonResponseOk($response);
         $this->assertResponseDataCount(1, 1, $response);
-        $this->assertResponseDataRecordsContains($response, [$tenant]);
+        $this->assertResponseDataRecordsContains($response, [$category]);
 
         $this->assertObjectNotHasAttribute('translations', $response->data->records[0]);
     }
@@ -166,11 +166,11 @@ class getSearchCategory_TranslationsTest extends TestCase
     // with no translation, specify with, return empty
     public function testNoTranslationWithTranslationReturnsNoTranslations()
     {
-        $tenant = $this->createCategory();
+        $category = $this->createCategory();
         $response = $this->makeRequest(['with' => ['translations']]);
         $this->assertJsonResponseOk($response);
         $this->assertResponseDataCount(1, 1, $response);
-        $this->assertResponseDataRecordsContains($response, [$tenant]);
+        $this->assertResponseDataRecordsContains($response, [$category]);
 
         $this->assertObjectHasAttribute('translations', $response->data->records[0]);
         $this->assertCount(0, $response->data->records[0]->translations);
@@ -179,11 +179,11 @@ class getSearchCategory_TranslationsTest extends TestCase
     // with translations, no with, return nothing
     public function testHasTranslationNoWithDoesNotReturnTranslations()
     {
-        list($tenant, $translations) = $this->createCategoryWithTranslation(['english', 'french']);
+        list($category, $translations) = $this->createCategoryWithTranslation(['english', 'french']);
         $response = $this->makeRequest([]);
         $this->assertJsonResponseOk($response);
         $this->assertResponseDataCount(1, 1, $response);
-        $this->assertResponseDataRecordsContains($response, [$tenant]);
+        $this->assertResponseDataRecordsContains($response, [$category]);
 
         $this->assertObjectNotHasAttribute('translations', $response->data->records[0]);
     }
@@ -191,11 +191,11 @@ class getSearchCategory_TranslationsTest extends TestCase
     // with translations, specify with, return translations
     public function testHasTranslationWithTranslationReturnsTranslations()
     {
-        list($tenant, $translations) = $this->createCategoryWithTranslation(['english', 'french']);
+        list($category, $translations) = $this->createCategoryWithTranslation(['english', 'french']);
         $response = $this->makeRequest(['with' => ['translations']]);
         $this->assertJsonResponseOk($response);
         $this->assertResponseDataCount(1, 1, $response);
-        $this->assertResponseDataRecordsContains($response, [$tenant]);
+        $this->assertResponseDataRecordsContains($response, [$category]);
 
         $this->assertObjectHasAttribute('translations', $response->data->records[0]);
         $returned_translations = $response->data->records[0]->translations;

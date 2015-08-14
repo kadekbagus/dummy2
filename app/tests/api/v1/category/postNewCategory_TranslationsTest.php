@@ -57,9 +57,6 @@ class postNewCategory_TranslationsTest extends TestCase
 
         $this->merchantLanguages = $merchant_languages;
 
-        Factory::create('Role', ['role_name' => 'retailer owner']); // must exist to create a tenant
-
-        $_SERVER['REMOTE_ADDR'] = '127.0.0.1'; // must exist to populate user_ip
     }
 
     private function makeRequest($category_data, $translations)

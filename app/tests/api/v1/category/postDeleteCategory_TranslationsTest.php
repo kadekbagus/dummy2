@@ -3,12 +3,11 @@ use Laracasts\TestDummy\Factory;
 use OrbitShop\API\v1\Helper\Generator;
 
 /**
- * Tests translations are deleted when tenants are.
+ * Tests translations are deleted when categories are.
  *
  * @property MerchantLanguage[] $merchantLanguages
  * @property Merchant $group
  * @property Retailer $mall
- * @property string $masterPassword
  */
 class postDeleteCategory_TranslationsTest extends TestCase
 {
@@ -92,11 +91,11 @@ class postDeleteCategory_TranslationsTest extends TestCase
     }
 
     function testDeletingCategoryDeletesTranslations() {
-        list($tenant, $translation) = $this->createCategoryWithTranslation('english');
+        list($category, $translation) = $this->createCategoryWithTranslation('english');
         $count_category_before = Category::excludeDeleted()->count();
         $count_translation_before = CategoryTranslation::excludeDeleted()->count();
 
-        $response = $this->makeRequest($tenant);
+        $response = $this->makeRequest($category);
         $this->assertJsonResponseOk($response);
 
         $count_category_after = Category::excludeDeleted()->count();
