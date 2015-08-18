@@ -10,6 +10,9 @@
  * @property string $category_name
  * @property string $description
  *
+ * @property int $created_by
+ * @property int $modified_by
+ *
  * @method static \Illuminate\Database\Eloquent\Builder excludeDeleted()
  */
 class CategoryTranslation extends Eloquent

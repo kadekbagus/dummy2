@@ -11,6 +11,9 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Merchant $unrelatedGroup
  * @property Retailer $mall
  * @property Retailer $unrelatedMall
+ *
+ * @property int $userId
+ * @property Apikey $authData
  */
 class postUpdateCategory_TranslationsTest extends TestCase
 {
@@ -38,6 +41,7 @@ class postUpdateCategory_TranslationsTest extends TestCase
         Factory::create('PermissionRole',
             ['role_id' => $this->mall->user->user_role_id, 'permission_id' => $permission->permission_id]);
         $this->authData = Factory::create('Apikey', ['user_id' => $this->mall->user->user_id]);
+        $this->userId = $this->mall->user->user_id;
 
         $combos = [
             [$this->mall, $english, 'english'],
@@ -151,6 +155,8 @@ class postUpdateCategory_TranslationsTest extends TestCase
         foreach ($english_translations as $key => $value) {
             $this->assertSame($value, $saved_translation->{$key});
         }
+        $this->assertSame($this->userId, $saved_translation->created_by);
+        $this->assertSame($this->userId, $saved_translation->modified_by);
     }
 
     // ... for a nonexistent language
@@ -211,6 +217,9 @@ class postUpdateCategory_TranslationsTest extends TestCase
     public function testDeletingTranslation()
     {
         list($category, $translation) = $this->createCategoryWithTranslation('english');
+        $this->assertNull(
+            CategoryTranslation::find($translation->category_translation_id)->modified_by
+        );
         $translation_count_before = CategoryTranslation::excludeDeleted()->where('category_id', '=',
             $category->category_id)->count();
         $this->assertSame(1, $translation_count_before);
@@ -225,6 +234,10 @@ class postUpdateCategory_TranslationsTest extends TestCase
         $translation_count_after = CategoryTranslation::excludeDeleted()->where('category_id', '=',
             $category->category_id)->count();
         $this->assertSame(0, $translation_count_after);
+        $this->assertSame(
+            $this->userId,
+            CategoryTranslation::find($translation->category_translation_id)->modified_by
+        );
     }
 
     // ... for a nonexistent language
@@ -267,6 +280,9 @@ class postUpdateCategory_TranslationsTest extends TestCase
     public function testUpdatingTranslation()
     {
         list($category, $translation) = $this->createCategoryWithTranslation('english');
+        $this->assertNull(
+            CategoryTranslation::find($translation->category_translation_id)->modified_by
+        );
         $translation_count_before = CategoryTranslation::excludeDeleted()->where('category_id', '=',
             $category->category_id)->count();
         $this->assertSame(1, $translation_count_before);
@@ -289,12 +305,14 @@ class postUpdateCategory_TranslationsTest extends TestCase
             $category->category_id)->count();
         $this->assertSame(1, $translation_count_after);
 
+        /** @var CategoryTranslation $updated_translation */
         $updated_translation = CategoryTranslation::excludeDeleted()->where('category_id', '=',
             $category->category_id)->first();
 
         foreach ($updated_english as $k => $v) {
             $this->assertSame($v, $updated_translation->{$k});
         }
+        $this->assertSame($this->userId, $updated_translation->modified_by);
     }
 
     // ... with some fields left unspecified

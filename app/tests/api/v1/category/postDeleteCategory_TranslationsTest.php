@@ -8,6 +8,9 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property MerchantLanguage[] $merchantLanguages
  * @property Merchant $group
  * @property Retailer $mall
+ *
+ * @property Apikey $authData
+ * @property int $userId
  */
 class postDeleteCategory_TranslationsTest extends TestCase
 {
@@ -30,6 +33,7 @@ class postDeleteCategory_TranslationsTest extends TestCase
         Factory::create('PermissionRole',
             ['role_id' => $this->mall->user->user_role_id, 'permission_id' => $permission->permission_id]);
         $this->authData = Factory::create('Apikey', ['user_id' => $this->mall->user->user_id]);
+        $this->userId = $this->mall->user->user_id;
 
         $english_merchant_language = new MerchantLanguage();
         $english_merchant_language->language_id = $english;
@@ -92,6 +96,9 @@ class postDeleteCategory_TranslationsTest extends TestCase
 
     function testDeletingCategoryDeletesTranslations() {
         list($category, $translation) = $this->createCategoryWithTranslation('english');
+        $this->assertNull(
+            CategoryTranslation::find($translation->category_translation_id)->modified_by
+        );
         $count_category_before = Category::excludeDeleted()->count();
         $count_translation_before = CategoryTranslation::excludeDeleted()->count();
 
@@ -102,6 +109,10 @@ class postDeleteCategory_TranslationsTest extends TestCase
         $count_translation_after = CategoryTranslation::excludeDeleted()->count();
         $this->assertSame($count_category_before - 1, $count_category_after);
         $this->assertSame($count_translation_before - 1, $count_translation_after);
+        $this->assertSame(
+            $this->userId,
+            CategoryTranslation::find($translation->category_translation_id)->modified_by
+        );
     }
 
 }
