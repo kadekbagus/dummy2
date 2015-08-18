@@ -9,6 +9,9 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Merchant $group
  * @property Retailer $mall
  * @property string $masterPassword
+ *
+ * @property Apikey $authData
+ * @property int $userId
  */
 class postDeleteEvent_TranslationsTest extends TestCase
 {
@@ -41,6 +44,7 @@ class postDeleteEvent_TranslationsTest extends TestCase
         Factory::create('PermissionRole',
             ['role_id' => $this->mall->user->user_role_id, 'permission_id' => $permission->permission_id]);
         $this->authData = Factory::create('Apikey', ['user_id' => $this->mall->user->user_id]);
+        $this->userId = $this->mall->user->user_id;
 
         $english_merchant_language = new MerchantLanguage();
         $english_merchant_language->language_id = $english;
@@ -104,6 +108,9 @@ class postDeleteEvent_TranslationsTest extends TestCase
 
     function testDeletingEventDeletesTranslations() {
         list($event, $translation) = $this->createEventWithTranslation('english');
+        $this->assertNull(
+            EventTranslation::find($translation->event_translation_id)->modified_by
+        );
         $count_event_before = EventModel::excludeDeleted()->count();
         $count_translation_before = EventTranslation::excludeDeleted()->count();
 
@@ -114,6 +121,10 @@ class postDeleteEvent_TranslationsTest extends TestCase
         $count_translation_after = EventTranslation::excludeDeleted()->count();
         $this->assertSame($count_event_before - 1, $count_event_after);
         $this->assertSame($count_translation_before - 1, $count_translation_after);
+        $this->assertSame(
+            $this->userId,
+            EventTranslation::find($translation->event_translation_id)->modified_by
+        );
     }
 
 }

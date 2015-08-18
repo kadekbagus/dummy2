@@ -708,6 +708,7 @@ class EventAPIController extends ControllerAPI
             }
 
             foreach ($deleteevent->translations as $translation) {
+                $translation->modified_by = $this->api->user->user_id;
                 $translation->delete();
             }
 
@@ -1718,6 +1719,8 @@ class EventAPIController extends ControllerAPI
                 foreach ($data as $field => $value) {
                     $new_translation->{$field} = $value;
                 }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
             }
             elseif ($op === 'update') {
@@ -1727,11 +1730,13 @@ class EventAPIController extends ControllerAPI
                 foreach ($data as $field => $value) {
                     $existing_translation->{$field} = $value;
                 }
+                $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
             }
             elseif ($op === 'delete') {
                 /** @var EventTranslation $existing_translation */
                 $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->delete();
             }
         }

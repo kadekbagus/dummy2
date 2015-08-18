@@ -11,6 +11,9 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Merchant $unrelatedGroup
  * @property Retailer $mall
  * @property Retailer $unrelatedMall
+ *
+ * @property Apikey $authData
+ * @property int $userId
  */
 class postUpdateEvent_TranslationsTest extends TestCase
 {
@@ -42,6 +45,7 @@ class postUpdateEvent_TranslationsTest extends TestCase
         Factory::create('PermissionRole',
             ['role_id' => $this->mall->user->user_role_id, 'permission_id' => $permission->permission_id]);
         $this->authData = Factory::create('Apikey', ['user_id' => $owner_user->user_id]);
+        $this->userId = $owner_user->user_id;
 
         $combos = [
             [$this->mall, $english, 'english'],
@@ -155,6 +159,8 @@ class postUpdateEvent_TranslationsTest extends TestCase
         foreach ($english_translations as $key => $value) {
             $this->assertSame($value, $saved_translation->{$key});
         }
+        $this->assertSame((string)$this->userId, (string)$saved_translation->created_by);
+        $this->assertSame((string)$this->userId, (string)$saved_translation->modified_by);
     }
 
     // ... for a nonexistent language
@@ -215,6 +221,9 @@ class postUpdateEvent_TranslationsTest extends TestCase
     public function testDeletingTranslation()
     {
         list($event, $translation) = $this->createEventWithTranslation('english');
+        $this->assertNull(
+            EventTranslation::find($translation->event_translation_id)->modified_by
+        );
         $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
             $event->event_id)->count();
         $this->assertSame(1, $translation_count_before);
@@ -229,6 +238,10 @@ class postUpdateEvent_TranslationsTest extends TestCase
         $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
             $event->event_id)->count();
         $this->assertSame(0, $translation_count_after);
+        $this->assertSame(
+            (string)$this->userId,
+            (string)EventTranslation::find($translation->event_translation_id)->modified_by
+        );
     }
 
     // ... for a nonexistent language
@@ -271,6 +284,9 @@ class postUpdateEvent_TranslationsTest extends TestCase
     public function testUpdatingTranslation()
     {
         list($event, $translation) = $this->createEventWithTranslation('english');
+        $this->assertNull(
+            EventTranslation::find($translation->event_translation_id)->modified_by
+        );
         $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
             $event->event_id)->count();
         $this->assertSame(1, $translation_count_before);
@@ -293,12 +309,14 @@ class postUpdateEvent_TranslationsTest extends TestCase
             $event->event_id)->count();
         $this->assertSame(1, $translation_count_after);
 
+        /** @var EventTranslation $updated_translation */
         $updated_translation = EventTranslation::excludeDeleted()->where('event_id', '=',
             $event->event_id)->first();
 
         foreach ($updated_english as $k => $v) {
             $this->assertSame($v, $updated_translation->{$k});
         }
+        $this->assertSame((string)$this->userId, (string)$updated_translation->modified_by);
     }
 
     // ... with some fields left unspecified

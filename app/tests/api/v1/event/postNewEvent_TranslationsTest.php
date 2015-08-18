@@ -12,6 +12,9 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Merchant $unrelatedGroup
  * @property Retailer $mall
  * @property Retailer $unrelatedMall
+ *
+ * @property Apikey $authData
+ * @property int $userId
  */
 class postNewEvent_TranslationsTest extends TestCase
 {
@@ -43,6 +46,7 @@ class postNewEvent_TranslationsTest extends TestCase
         Factory::create('PermissionRole',
             ['role_id' => $merchant->user->user_role_id, 'permission_id' => $permission->permission_id]);
         $this->authData = Factory::create('Apikey', ['user_id' => $owner_user->user_id]);
+        $this->userId = $owner_user->user_id;
 
         $combos = [
             [$this->mall, $english, 'english'],
@@ -139,6 +143,8 @@ class postNewEvent_TranslationsTest extends TestCase
         foreach ($english_translations as $key => $value) {
             $this->assertSame($value, $saved_translation->{$key});
         }
+        $this->assertSame((string)$this->userId, (string)$saved_translation->created_by);
+        $this->assertSame((string)$this->userId, (string)$saved_translation->modified_by);
     }
 
     // ... for a nonexistent language
