@@ -12,6 +12,9 @@
  * @property string $ticket_header
  * @property string $ticket_footer
  *
+ * @property int $created_by
+ * @property int $modified_by
+ *
  * @method static \Illuminate\Database\Eloquent\Builder excludeDeleted()
  */
 class MerchantTranslation extends Eloquent

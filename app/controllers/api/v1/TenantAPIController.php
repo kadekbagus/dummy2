@@ -98,8 +98,8 @@ class TenantAPIController extends ControllerAPI
             Event::fire('orbit.tenant.postdeletetenant.after.save', array($this, $deleteretailer));
 
             // delete associated translations
-            $tln = $deleteretailer->translations;
-            foreach ($tln as $translation) {
+            foreach ($deleteretailer->translations as $translation) {
+                $translation->modified_by = $this->api->user->user_id;
                 $translation->delete();
             }
 
@@ -2079,6 +2079,8 @@ class TenantAPIController extends ControllerAPI
                 foreach ($data as $field => $value) {
                     $new_translation->{$field} = $value;
                 }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
             }
             elseif ($op === 'update') {
@@ -2088,11 +2090,13 @@ class TenantAPIController extends ControllerAPI
                 foreach ($data as $field => $value) {
                     $existing_translation->{$field} = $value;
                 }
+                $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
             }
             elseif ($op === 'delete') {
                 /** @var MerchantTranslation $existing_translation */
                 $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->delete();
             }
         }

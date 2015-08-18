@@ -9,6 +9,9 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Merchant $group
  * @property Retailer $mall
  * @property string $masterPassword
+ *
+ * @property Apikey $authData
+ * @property int $userId
  */
 class postDeleteTenant_TranslationsTest extends TestCase
 {
@@ -38,6 +41,7 @@ class postDeleteTenant_TranslationsTest extends TestCase
         Factory::create('PermissionRole',
             ['role_id' => $merchant->user->user_role_id, 'permission_id' => $permission->permission_id]);
         $this->authData = Factory::create('Apikey', ['user_id' => $merchant->user->user_id]);
+        $this->userId = $merchant->user->user_id;
 
         $english_merchant_language = new MerchantLanguage();
         $english_merchant_language->language_id = $english;
@@ -104,6 +108,9 @@ class postDeleteTenant_TranslationsTest extends TestCase
 
     function testDeletingTenantDeletesTranslations() {
         list($tenant, $translation) = $this->createTenantWithTranslation('english');
+        $this->assertNull(
+            MerchantTranslation::find($translation->merchant_translation_id)->modified_by
+        );
         $count_retailer_before = Retailer::excludeDeleted()->count();
         $count_translation_before = MerchantTranslation::excludeDeleted()->count();
 
@@ -114,6 +121,10 @@ class postDeleteTenant_TranslationsTest extends TestCase
         $count_translation_after = MerchantTranslation::excludeDeleted()->count();
         $this->assertSame($count_retailer_before - 1, $count_retailer_after);
         $this->assertSame($count_translation_before - 1, $count_translation_after);
+        $this->assertSame(
+            $this->userId,
+            MerchantTranslation::find($translation->merchant_translation_id)->modified_by
+        );
     }
 
 }

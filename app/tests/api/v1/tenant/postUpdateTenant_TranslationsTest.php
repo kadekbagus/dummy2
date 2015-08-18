@@ -10,6 +10,9 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Merchant $group
  * @property Merchant $unrelatedGroup
  * @property Merchant $mall
+ *
+ * @property Apikey $authData
+ * @property int $userId
  */
 class postUpdateTenant_TranslationsTest extends TestCase
 {
@@ -36,6 +39,7 @@ class postUpdateTenant_TranslationsTest extends TestCase
         Factory::create('PermissionRole',
             ['role_id' => $merchant->user->user_role_id, 'permission_id' => $permission->permission_id]);
         $this->authData = Factory::create('Apikey', ['user_id' => $merchant->user->user_id]);
+        $this->userId = $merchant->user->user_id;
 
         $combos = [
             [$merchant, $english, 'english'],
@@ -160,6 +164,8 @@ class postUpdateTenant_TranslationsTest extends TestCase
         foreach ($english_translations as $key => $value) {
             $this->assertSame($value, $saved_translation->{$key});
         }
+        $this->assertSame((string)$this->userId, (string)$saved_translation->created_by);
+        $this->assertSame((string)$this->userId, (string)$saved_translation->modified_by);
     }
 
     // ... for a nonexistent language
@@ -226,6 +232,9 @@ class postUpdateTenant_TranslationsTest extends TestCase
     public function testDeletingTranslation()
     {
         list($tenant, $translation) = $this->createTenantWithTranslation('english');
+        $this->assertNull(
+            MerchantTranslation::find($translation->merchant_translation_id)->modified_by
+        );
         $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
             $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_before);
@@ -240,6 +249,10 @@ class postUpdateTenant_TranslationsTest extends TestCase
         $translation_count_after = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
             $tenant->merchant_id)->count();
         $this->assertSame(0, $translation_count_after);
+        $this->assertSame(
+            $this->userId,
+            MerchantTranslation::find($translation->merchant_translation_id)->modified_by
+        );
     }
 
     // ... for a nonexistent language
@@ -282,6 +295,9 @@ class postUpdateTenant_TranslationsTest extends TestCase
     public function testUpdatingTranslation()
     {
         list($tenant, $translation) = $this->createTenantWithTranslation('english');
+        $this->assertNull(
+            MerchantTranslation::find($translation->merchant_translation_id)->modified_by
+        );
         $translation_count_before = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
             $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_before);
@@ -306,12 +322,14 @@ class postUpdateTenant_TranslationsTest extends TestCase
             $tenant->merchant_id)->count();
         $this->assertSame(1, $translation_count_after);
 
+        /** @var MerchantTranslation $updated_translation */
         $updated_translation = MerchantTranslation::excludeDeleted()->where('merchant_id', '=',
             $tenant->merchant_id)->first();
 
         foreach ($updated_english as $k => $v) {
             $this->assertSame($v, $updated_translation->{$k});
         }
+        $this->assertSame($this->userId, $updated_translation->modified_by);
     }
 
     // ... with some fields left unspecified
