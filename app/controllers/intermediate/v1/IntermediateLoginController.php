@@ -7,6 +7,7 @@
 use OrbitShop\API\v1\ResponseProvider;
 use MobileCI\MobileCIAPIController;
 use Net\Security\Firewall;
+use Orbit\Helper\Security\Encrypter;
 use \Cookie;
 
 class IntermediateLoginController extends IntermediateBaseController
@@ -357,11 +358,18 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
+            // For login page
+            $expireTime = time() + 3600 * 24 * 365 * 5;
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);
+
             // Successfull login
             $activity->setUser($user)
                      ->setActivityName('login_ok')
                      ->setActivityNameLong('Sign In')
                      ->responseOK();
+
+            static::proceedPayload($activity);
         } else {
             // Login Failed
             $activity->setUser('guest')
@@ -395,6 +403,11 @@ class IntermediateLoginController extends IntermediateBaseController
         $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
         $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
 
+        if (isset($_GET['not_me'])) {
+            setcookie('orbit_email', 'foo', time() - 3600, '/');
+            setcookie('orbit_firstname', 'foo', time() - 3600, '/');
+        }
+
         $response = json_decode($this->getLogout()->getContent());
         $cookie = Cookie::make('event', '', 365*5);
         try {
@@ -422,6 +435,125 @@ class IntermediateLoginController extends IntermediateBaseController
         return Redirect::to('/customer')->withCookie($cookie);
     }
 
+    public static function proceedPayload($activity)
+    {
+        // The sign-in view put the payload from query string to post body on AJAX call
+        if (! isset($_POST['payload'])) {
+            return;
+        }
+
+        $payload = $_POST['payload'];
+        Log::info('[PAYLOAD] Payload found -- ' . serialize($payload));
+
+        // Decrypt the payload
+        $key = md5('--orbit-mall--');
+        $payload = (new Encrypter($key))->decrypt($payload);
+        Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload));
+
+        // The data is in url encoded
+        parse_str($payload, $data);
+
+        Log::info('[PAYLOAD] Payload extracted -- ' . serialize($data));
+
+        // email, fname, lname, gender, mac, ip, login_from
+        $email = isset($data['email']) ? $data['email'] : '';
+        $fname = isset($data['fname']) ? $data['fname'] : '';
+        $lname = isset($data['lname']) ? $data['lname'] : '';
+        $gender = isset($data['gender']) ? $data['gender'] : '';
+        $mac = isset($data['mac']) ? $data['mac'] : '';
+        $ip = isset($data['ip']) ? $data['ip'] : '';
+        $from = isset($data['login_from']) ? $data['login_from'] : '';
+        $captive = isset($data['is_captive']) ? $data['is_captive'] : '';
+        $recognized = isset($data['recognized']) ? $data['recognized'] : '';
+
+        if (! $email) {
+            Log::error('Email from payload is not valid or empty.');
+
+            return;
+        }
+
+        // Try to get the email to update user data
+        $customer = User::consumers()->excludeDeleted()->where('user_email', $email)->first();
+        if (is_object($customer)) {
+            // Update first name if necessary
+            if (empty($customer->user_firstname)) {
+                $customer->user_firstname = $fname;
+            }
+
+            // Update last name if necessary
+            if (empty($customer->user_lastname)) {
+                $customer->user_lastname = $lname;
+            }
+
+            // Update gender if necessary
+            $gender = strtolower($gender);
+            $male = ['male', 'm', 'men', 'man'];
+            if (in_array($gender, $male)) {
+                $customer->userdetail->gender = 'm';
+            }
+
+            $female = ['female', 'f', 'women', 'woman'];
+            if (in_array($gender, $female)) {
+                $customer->userdetail->gender = 'f';
+            }
+
+            $customer->save();
+            $customer->userdetail->save();
+
+            Log::info('[PAYLOAD] Consumer data saved -- ' . serialize($customer));
+        }
+
+        // Try to update the mac address table
+        if (! empty($mac)) {
+            $macModel = MacAddress::where('mac_address', $mac)
+                                  ->where('user_email', $email)
+                                  ->orderBy('created_at', 'desc')
+                                  ->first();
+
+            if (! is_object($macModel)) {
+                $macModel = new MacAddress();
+                $macModel->mac_address = $mac;
+                $macModel->user_email = $email;
+            }
+
+            $macModel->ip_address = $ip;
+            $macModel->save();
+
+            Log::info('[PAYLOAD] Mac saved -- ' . serialize($macModel));
+        }
+
+        // Try to update the activity
+        if ($captive === 'yes') {
+            switch ($from) {
+                case 'facebook':
+                    $activityNameLong = 'Sign In via Facebook (Captive)';
+                    break;
+
+                case 'form':
+                    $activityNameLong = 'Sign In via Email (Captive)';
+                    break;
+
+                default:
+                    $activityNameLong = 'Sign In';
+            }
+
+            switch ($recognized) {
+                case 'auto_mac':
+                    $activityNameLong = 'Sign In via Automatic MAC Recognition (Captive)';
+                    break;
+
+                case 'auto_email':
+                    $activityNameLong = 'Sign In via Automatic Email Recognition (Captive)';
+                    break;
+
+                default:
+                    // do nothing
+            }
+
+            $activity->setActivityNameLong($activityNameLong);
+        }
+    }
+
     /**
      * Captive Portal related tricks.
      *
@@ -442,16 +574,26 @@ class IntermediateLoginController extends IntermediateBaseController
                 $retailer_id = Config::get('orbit.shop.id');
                 $retailer = Retailer::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
 
-                $bg = Setting::getFromList($retailer->settings, 'background_image');
+                try {
+                    $bg = Setting::getFromList($retailer->settings, 'background_image');
+                } catch (Exception $e) {
+                }
             } catch (Exception $e) {
                 $retailer = new stdClass();
                 // Fake some properties
                 $retailer->parent = new stdClass();
                 $retailer->parent->logo = '';
+                $retailer->parent->biglogo = '';
+            }
+
+            $display_name = Input::get('fname', '');
+
+            if (empty($display_name)) {
+                $display_name = Input::get('email', '');
             }
 
             // Display a view which showing that page is loading
-            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg]);
+            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg, 'display_name' => $display_name]);
         }
 
         if (isset($_GET['createsession'])) {
@@ -461,7 +603,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionId = $_GET['createsession'];
 
             // Send cookie so our app have an idea about the session
-            setcookie($cookieName, $sessionId, time() + $expireTime, '/', NULL, FALSE, TRUE);
+            setcookie($cookieName, $sessionId, time() + $expireTime, '/', NULL, FALSE, FALSE);
 
             // Used for internal session object since sending cookie above
             // only affects on next request
@@ -476,7 +618,23 @@ class IntermediateLoginController extends IntermediateBaseController
             $newData = $this->session->getSession();
 
             $sessionName = $this->mobileCISessionName['query_string'];
-            $redirectTo = sprintf('/customer/?%s=%s', $sessionName, $sessionId);
+
+            $userId = $this->session->read('user_id');
+            $user = User::excludeDeleted()->find($userId);
+
+            $key = md5('--orbit-mall--');
+            $query = [
+                'time' => time(),
+                'email' => $user->email,
+                'fname' => $user->user_firstname
+            ];
+
+            $payload = (new Encrypter($key))->encrypt(http_build_query($query));
+            $redirectTo = sprintf('/customer/?%s=%s&payload_login=%s', $sessionName, $sessionId, $payload);
+
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);
+
             return Redirect::to($redirectTo);
         }
 

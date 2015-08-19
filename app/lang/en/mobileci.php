@@ -89,6 +89,7 @@ return array(
         'not'               => 'Not',
         'click_here'        => 'click here',
         'email_not_valid'   => 'Email address is not valid',
+        'start_button_mall' => 'Enter Mall'
     ),
 
     'catalogue'         => array(
