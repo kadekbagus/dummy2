@@ -8720,22 +8720,65 @@ class MobileCIAPIController extends ControllerAPI
      */
     private function getAlternateMerchantLanguage($user, $mall)
     {
-        $details = $user->userdetail;
-        // if user has no preference use default
-        if (empty($details)) {
-            return null;
+        $priority = ['cookie', 'user_preference', 'browser'];
+        $getters = [
+            'cookie' => function ($user) {
+                // cannot use Cookie:: or Request::cookie, those insist on signed cookies.
+                if (!array_key_exists('orbit_preferred_language', $_COOKIE)) {
+                    return null;
+                }
+                return $_COOKIE['orbit_preferred_language'];
+            },
+            'user_preference' => function ($user) {
+                $details = $user->userdetail;
+                // if user has no preference use default
+                if (empty($details)) {
+                    return null;
+                }
+                return $details->preferred_language;
+            },
+            'browser' => function ($user) {
+                $lang = \Request::server('HTTP_ACCEPT_LANGUAGE', null);
+                if ($lang === null) {
+                    return null;
+                }
+                return substr($lang, 0, 2);
+            }
+        ];
+        $language = [];
+        $selected_language = null;
+        foreach ($priority as $method) {
+            $getter = $getters[$method];
+            $name = $getter($user);
+            if ($name === null) {
+                // method does not return language, try next one
+                continue;
+            }
+            if ($mall->mobile_default_language === $name) {
+                // returned language same as mall language, do not translate
+                return null;
+            }
+            $selected_language = null;
+            if (array_key_exists($name, $language)) {
+                $selected_language = $language[$name];
+            } else {
+                $language[$name] = \Language::where('name', '=', $name)->first();
+                $selected_language = $language[$name];
+            }
+            if ($selected_language === null) {
+                // language returned by method not found
+                continue;
+            }
+            $alternate_language = \MerchantLanguage::excludeDeleted()
+                ->where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $selected_language->language_id)
+                ->first();
+            if ($alternate_language !== null) {
+                return $alternate_language;
+            }
         }
-        // if language not found nothing we can do
-        $language = \Language::where('name', '=', $details->preferred_language)->first();
-        // if user's preference is same as merchant's default use default
-        if ($mall->mobile_default_language === $details->preferred_language) {
-            return null;
-        }
-        $alternate_language = \MerchantLanguage::excludeDeleted()
-            ->where('merchant_id', '=', $mall->merchant_id)
-            ->where('language_id', '=', $language->language_id)
-            ->first();
-        return $alternate_language; // something or null
+        // above methods did not result in any selected language, use mall default
+        return null;
     }
 
     /**
