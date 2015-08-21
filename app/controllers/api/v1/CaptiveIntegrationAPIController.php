@@ -33,6 +33,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         $format = "[%s] %s; checkout; Email %s do network checkout; %s";
         $httpCode = 200;
         $message = '';
+        $user = 'guest';
         $email = 'unknown';
 
         try {
