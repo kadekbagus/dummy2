@@ -64,13 +64,16 @@
             </div>
         </div>
     </div>
+    
     <div class="col-xs-12 main-theme-mall product-detail where">
+        @if($product->couponRule->discount_value)
         <div class="row">
             <div class="col-xs-12 text-center">
                 <h4>Coupon Value</h4>
                 <p>IDR <span class="formatted-numx">{{ $product->couponRule->discount_value }}</span></p>
             </div>
         </div>
+        @endif
         <div class="row">
             <div class="col-xs-12 text-center">
                 <button class="btn btn-info btn-block" id="useBtn">Use</button>
