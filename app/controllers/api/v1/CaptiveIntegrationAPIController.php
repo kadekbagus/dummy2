@@ -88,6 +88,10 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                                   ->orderBy('created_at', 'desc')
                                   ->first();
 
+            if ($macModel === null) {
+                throw new Exception ("Mac address not found", 1);
+            }
+
             $_customer = User::Consumers()
                             ->excludeDeleted()
                             ->where('user_email', $macModel->user_email)
@@ -213,6 +217,10 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                                   ->where('mac_address', $macAddr->getMac())
                                   ->orderBy('created_at', 'desc')
                                   ->first();
+
+            if ($macModel === null) {
+                throw new Exception ("Mac address not found", 1);
+            }
 
             $_customer = User::Consumers()
                             ->excludeDeleted()
