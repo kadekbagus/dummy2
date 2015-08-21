@@ -5,19 +5,96 @@
  *
  * @author Rio Astamal <me@rioastamal.net>
  */
+use Illuminate\Http\Response;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Net\MacAddr;
 use Helper\EloquentRecordCounter as RecordCounter;
+use OrbitShop\API\v1\ResponseProvider;
 
 class CaptiveIntegrationAPIController extends ControllerAPI
 {
+    public function postBatchUserEnterLeave()
+    {
+        try {
+            // todo encrypt? auth?
+            $in = OrbitInput::post('in_macs', []);
+            $out = OrbitInput::post('out_macs', []);
+            if (!is_array($in)) {
+                $in = [$in];
+            }
+            if (!is_array($out)) {
+                $out = [$out];
+            }
+
+            $results = [
+                'in' => [],
+                'out' => [],
+            ];
+            foreach ($in as $newly_seen_mac) {
+                /** @var Response $response */
+                $response = $this->doLogIn($newly_seen_mac);
+                $results['in'][$newly_seen_mac] = [$response->getStatusCode(), $response->getContent()];
+            }
+
+            foreach ($out as $leaving_mac) {
+                /** @var Response $response */
+                $response = $this->doLogOut($leaving_mac);
+                $results['out'][$leaving_mac] = [$response->getStatusCode(), $response->getContent()];
+            }
+
+            // the in/out result keyed with a string results in JSON object, but if
+            // there are no elements it results in JSON array, so we "fix" that.
+            if (empty($results['in'])) {
+                $results['in'] = new stdClass();
+            }
+            if (empty($results['out'])) {
+                $results['out'] = new stdClass();
+            }
+
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request OK';
+            $this->response->data = $results;
+            return $this->render(200);
+        }
+        catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+            return $this->render(403); // todo code?
+        }
+    }
+
+    private function doLogIn($mac_address)
+    {
+        // clean the response between internal requests
+        $this->response = new ResponseProvider();
+        $_GET['payload'] = base64_encode(http_build_query(['mac' => $mac_address]));
+        $response = $this->getUserSignInNetwork(); // XXX
+        unset($_GET['payload']);
+        return $response;
+    }
+
+    private function doLogOut($mac_address)
+    {
+        // clean the response between internal requests
+        $this->response = new ResponseProvider();
+        $_GET['payload'] = base64_encode(http_build_query(['mac' => $mac_address]));
+        $response = $this->getUserOutOfNetwork(); // XXX
+        unset($_GET['payload']);
+        return $response;
+    }
+
+
     public function getUserOutOfNetwork()
     {
         $activity = Activity::unknown('captive')

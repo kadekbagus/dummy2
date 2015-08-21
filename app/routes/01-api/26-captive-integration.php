@@ -28,4 +28,9 @@ Route::group(['before' => 'orbit-settings'], function() {
         'as' => 'captive-portal-mac-address-list',
         'uses' => 'CaptiveIntegrationAPIController@getMacAddress'
     ]);
+
+    Route::post('/api/v1/captive-portal/network/batch-enter-leave', [
+        'as' => 'captive-portal-network-batch-enter-leave',
+        'uses' => 'CaptiveIntegrationAPIController@postBatchUserEnterLeave'
+    ]);
 });
