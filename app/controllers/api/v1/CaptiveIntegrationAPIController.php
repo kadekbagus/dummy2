@@ -230,6 +230,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             if (! empty($_customer)) {
                 // User not recognized log it as 'guest'
                 $customer = $_customer;
+                $email = $_customer->user_email;
             }
 
             $this->commit();
