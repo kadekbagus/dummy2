@@ -143,6 +143,7 @@ class CouponAPIController extends ControllerAPI
                     'end_date'                  => $end_date,
                     'status'                    => $status,
                     'coupon_validity_in_date'   => $coupon_validity_in_date,
+                    'rule_type'                 => $rule_type,
                     'rule_value'                => $rule_value,
                     'discount_value'            => $discount_value,
                 ),
@@ -150,12 +151,12 @@ class CouponAPIController extends ControllerAPI
                     'merchant_id'               => 'required|numeric|orbit.empty.merchant',
                     'promotion_name'            => 'required|max:255|orbit.exists.coupon_name',
                     'promotion_type'            => 'required|orbit.empty.coupon_type',
-                    'begin_date'                => 'required|date_format:Y-m-d H:i:s',
-                    'end_date'                  => 'required|date_format:Y-m-d H:i:s',
+                    'begin_date'                => 'date_format:Y-m-d H:i:s',
+                    'end_date'                  => 'date_format:Y-m-d H:i:s',
                     'status'                    => 'required|orbit.empty.coupon_status',
                     'coupon_validity_in_date'   => 'required|date_format:Y-m-d H:i:s',
-                    'rule_value'                => 'required|numeric|min:0',
-                    'discount_value'            => 'required|numeric|min:0',
+                    'rule_value'                => 'numeric|min:0',
+                    'discount_value'            => 'numeric|min:0',
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -166,8 +167,26 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.min'            => 'The coupon value must be greater than zero',
                 )
             );
+            
+            // conditional begin_date, end_date, rule_value & discount_value depending on rule_type
+            $validator->sometimes('begin_date', 'required', function($input) {
+                return ($input->rule_type !== 'auto_issue_on_signup' || ($input->rule_type === 'auto_issue_on_signup' && empty($input->end_date)));
+            });
+
+            $validator->sometimes('end_date', 'required', function($input) {
+                return ($input->rule_type !== 'auto_issue_on_signup' || ($input->rule_type === 'auto_issue_on_signup' && empty($input->begin_date)));
+            });
+
+            $validator->sometimes('rule_value', 'required', function($input) {
+                return ($input->rule_type !== 'auto_issue_on_signup');
+            });
+
+            $validator->sometimes('discount_value', 'required', function($input) {
+                return ($input->rule_type !== 'auto_issue_on_signup');
+            });
 
             Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
+
 
             // Run the validation
             if ($validator->fails()) {
