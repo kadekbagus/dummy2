@@ -184,7 +184,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             // Successfull
             $message = sprintf($format, $now, $captiveIP, $email, 'OK');
             $this->response->message = $message;
-            $activity->setUser(NULL)
+            $activity->setUser($_customer)
                      ->setActivityName('network_checkout_ok')
                      ->setActivityNameLong('Network Check Out')
                      ->setModuleName('Network')
