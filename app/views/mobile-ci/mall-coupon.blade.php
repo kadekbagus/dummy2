@@ -99,6 +99,19 @@
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced text-center">
+                        <h4>Select Tenant</h4>
+                        <div class="form-data">
+                            <select id="tenantid" class="form-control">
+                                <option value="">--- Select Tenant ---</option>
+                                @foreach($tenants as $tenant)
+                                <option value="{{ $tenant->retailer->merchant_id }}">{{ $tenant->retailer->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row ">
+                    <div class="col-xs-12 vertically-spaced text-center">
                         <h4>Enter Tenant's Verification Number</h4>
                         <small>(Ask our tenant employee)</small>
                         <div class="form-data">
@@ -215,7 +228,8 @@
                     method: 'POST',
                     data: {
                         issued_coupon_id: {{$product->issuedCoupons[0]->issued_coupon_id}},
-                        merchant_verification_number: $('#tenantverify').val()
+                        merchant_verification_number: $('#tenantverify').val(),
+                        tenant_id: $('#tenantid').val()
                     }
                 }).done(function(data){
                     if(data.status == 'success'){
