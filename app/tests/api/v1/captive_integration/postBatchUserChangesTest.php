@@ -40,10 +40,10 @@ class postBatchUserChangesTest extends TestCase
         ];
         $_POST = [];
         if ($in !== null) {
-            $_POST['in_macs'] = $in;
+            $_POST['in_macs'] = json_encode($in);
         }
         if ($out !== null) {
-            $_POST['out_macs'] = $out;
+            $_POST['out_macs'] = json_encode($out);
         }
         $url = '/api/v1/captive-portal/network/batch-enter-leave?' . http_build_query($_GET);
         $secretKey = $this->authData->api_secret_key;

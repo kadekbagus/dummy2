@@ -20,14 +20,38 @@ use OrbitShop\API\v1\ResponseProvider;
 
 class CaptiveIntegrationAPIController extends ControllerAPI
 {
+    private $inInternalRequest = false;
+
     public function postBatchUserEnterLeave()
     {
         try {
-            // todo encrypt? auth?
-            $in = OrbitInput::post('in_macs', []);
-            $out = OrbitInput::post('out_macs', []);
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this page.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            // todo encrypt?
+            $in = OrbitInput::post('in_macs', '[]');
+            $in = @json_decode($in);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument('Invalid in_macs: not JSON');
+            }
             if (!is_array($in)) {
                 $in = [$in];
+            }
+
+            $out = OrbitInput::post('out_macs', '[]');
+            $out = @json_decode($out);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument('Invalid out_macs: not JSON');
             }
             if (!is_array($out)) {
                 $out = [$out];
@@ -79,7 +103,10 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         // clean the response between internal requests
         $this->response = new ResponseProvider();
         $_GET['payload'] = base64_encode(http_build_query(['mac' => $mac_address]));
+        $old_internal_request = $this->inInternalRequest;
+        $this->inInternalRequest = true;
         $response = $this->getUserSignInNetwork(); // XXX
+        $this->inInternalRequest = $old_internal_request;
         unset($_GET['payload']);
         return $response;
     }
@@ -89,7 +116,10 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         // clean the response between internal requests
         $this->response = new ResponseProvider();
         $_GET['payload'] = base64_encode(http_build_query(['mac' => $mac_address]));
+        $old_internal_request = $this->inInternalRequest;
+        $this->inInternalRequest = true;
         $response = $this->getUserOutOfNetwork(); // XXX
+        $this->inInternalRequest = $old_internal_request;
         unset($_GET['payload']);
         return $response;
     }
@@ -117,17 +147,18 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             Event::fire('orbit.network.checkout.before.auth', array($this));
 
             // Require authentication
-            // $this->checkAuth();
+            if (!$this->inInternalRequest) {
+                $this->checkAuth();
+            }
 
             Event::fire('orbit.network.checkout.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
-            // $user = $this->api->user;
+            $user = $this->api->user;
             Event::fire('orbit.network.checkout.before.authz', array($this, $user));
 
-            // $role = $user->role;
-            $role = new stdClass(); $role->role_name = 'super admin';
+            $role = $user->role;
             $validRoles = ['super admin', 'mall admin', 'mall owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this page.';
@@ -250,17 +281,18 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             Event::fire('orbit.network.checkin.before.auth', array($this));
 
             // Require authentication
-            // $this->checkAuth();
+            if (!$this->inInternalRequest) {
+                $this->checkAuth();
+            }
 
             Event::fire('orbit.network.checkin.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
-            // $user = $this->api->user;
+            $user = $this->api->user;
             Event::fire('orbit.network.checkin.before.authz', array($this, $user));
 
-            // $role = $user->role;
-            $role = new stdClass(); $role->role_name = 'super admin';
+            $role = $user->role;
             $validRoles = ['super admin', 'mall admin', 'mall owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this page.';
