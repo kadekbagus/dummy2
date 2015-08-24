@@ -501,6 +501,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
     {
         // get most recent mobileCI logout of customer
         $most_recent_logout = Activity::active()
+            ->where('group', '=', 'mobile-ci')
             ->where('activity_type', '=', 'logout')
             ->where('activity_name', '=', 'logout_ok')
             ->where('user_id', '=', $customer->user_id)
@@ -508,6 +509,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             ->first();
         // get most recent mobileCI login of customer
         $most_recent_login = Activity::active()
+            ->where('group', '=', 'mobile-ci')
             ->where('activity_type', '=', 'login')
             ->where('activity_name', '=', 'login_ok')
             ->where('user_id', '=', $customer->user_id)
