@@ -91,20 +91,28 @@ class postBatchUserChangesTest extends TestCase
 
     public function testBatchSendSingleString()
     {
-        $response = $this->makeRequest($this->macAddresses[0]->mac_address, $this->macAddresses[1]->mac_address);
-        $this->assertJsonResponseOk($response);
-        $count = 0;
-        foreach ($response->data->in as $mac => $in_response) {
-            $this->assertSingleResponseOk($in_response);
-            $count++;
-        }
-        $this->assertSame(1, $count);
-        $count = 0;
-        foreach ($response->data->out as $mac => $out_response) {
-            $this->assertSingleResponseOk($out_response);
-            $count++;
-        }
-        $this->assertSame(1, $count);
+        $this->withActivitiesSaved(function() {
+            $checkin_count_before = $this->countNetCheckInActivitiesForUser($this->users[0]->user_id);
+            $checkout_count_before = $this->countNetCheckOutActivitiesForUser($this->users[1]->user_id);
+            $response = $this->makeRequest($this->macAddresses[0]->mac_address, $this->macAddresses[1]->mac_address);
+            $this->assertJsonResponseOk($response);
+            $count = 0;
+            foreach ($response->data->in as $mac => $in_response) {
+                $this->assertSingleResponseOk($in_response);
+                $count++;
+            }
+            $this->assertSame(1, $count);
+            $count = 0;
+            foreach ($response->data->out as $mac => $out_response) {
+                $this->assertSingleResponseOk($out_response);
+                $count++;
+            }
+            $this->assertSame(1, $count);
+            $checkin_count_after = $this->countNetCheckInActivitiesForUser($this->users[0]->user_id);
+            $checkout_count_after = $this->countNetCheckOutActivitiesForUser($this->users[1]->user_id);
+            $this->assertSame($checkin_count_before + 1, $checkin_count_after);
+            $this->assertSame($checkout_count_before + 1, $checkout_count_after);
+        });
     }
 
     public function testBatchSendMultipleString()
@@ -216,158 +224,170 @@ class postBatchUserChangesTest extends TestCase
 
     public function testLogsUsersOutIfNotLoggedOutYet()
     {
-        $event_fired = false;
-        $event_activity = null;
-        Event::listen('orbit.network.checkout.force_mobileci_checkout', function($controller, $activity) use (&$event_fired, &$event_activity) {
-            $event_activity = $activity;
-            $event_fired = true;
+        $this->withActivitiesSaved(function() {
+            $event_fired = false;
+            $event_activity = null;
+            Event::listen('orbit.network.checkout.force_mobileci_checkout', function($controller, $activity) use (&$event_fired, &$event_activity) {
+                $event_activity = $activity;
+                $event_fired = true;
+            });
+
+            // log user in first
+            $activity = Activity::mobileci()
+                ->setActivityType('login')
+                ->setUser($this->users[0])
+                ->setActivityName('login_ok')
+                ->setActivityNameLong('Sign In')
+                ->responseOK();
+            $activity->save();
+
+            $response = $this->makeRequest(
+                [],
+                [$this->macAddresses[0]->mac_address]
+            );
+            $this->assertJsonResponseOk($response);
+            $count = 0;
+            foreach ($response->data->out as $mac => $out_response) {
+                $this->assertSingleResponseOk($out_response);
+                $count++;
+            }
+
+            $this->assertTrue($event_fired);
+            $this->assertNotNull($event_activity);
+            $this->assertSame('logout', $event_activity->activity_type);
+            $this->assertSame('logout_ok', $event_activity->activity_name);
+            $this->assertSame('mobile-ci', $event_activity->group);
+            $this->assertSame((string)$this->users[0]->user_id, (string)$event_activity->user_id);
         });
-
-        // log user in first
-        $activity = Activity::mobileci()
-            ->setActivityType('login')
-            ->setUser($this->users[0])
-            ->setActivityName('login_ok')
-            ->setActivityNameLong('Sign In')
-            ->responseOK();
-
-        // cannot save, in testing mode so just expand save() here...
-        $query = $activity->newQueryWithoutScopes();
-        $time = $activity->freshTimestamp();
-        $activity->created_at = $time;
-        $activity->updated_at = $time;
-        $query->insert($activity->getAttributes());
-
-        $response = $this->makeRequest(
-            [],
-            [$this->macAddresses[0]->mac_address]
-        );
-        $this->assertJsonResponseOk($response);
-        $count = 0;
-        foreach ($response->data->out as $mac => $out_response) {
-            $this->assertSingleResponseOk($out_response);
-            $count++;
-        }
-
-        $this->assertTrue($event_fired);
-        $this->assertNotNull($event_activity);
-        $this->assertSame('logout', $event_activity->activity_type);
-        $this->assertSame('logout_ok', $event_activity->activity_name);
-        $this->assertSame('mobile-ci', $event_activity->group);
-        $this->assertSame((string)$this->users[0]->user_id, (string)$event_activity->user_id);
     }
 
     public function testDoesNotLogUserOutIfAlreadyLoggedOut()
     {
-        $event_fired = false;
-        $event_activity = null;
-        Event::listen('orbit.network.checkout.force_mobileci_checkout', function($controller, $activity) use (&$event_fired, &$event_activity) {
-            $event_activity = $activity;
-            $event_fired = true;
+        $this->withActivitiesSaved(function() {
+            $event_fired = false;
+            $event_activity = null;
+            Event::listen('orbit.network.checkout.force_mobileci_checkout', function($controller, $activity) use (&$event_fired, &$event_activity) {
+                $event_activity = $activity;
+                $event_fired = true;
+            });
+
+            // log user in first
+            $activity = Activity::mobileci()
+                ->setActivityType('login')
+                ->setUser($this->users[0])
+                ->setActivityName('login_ok')
+                ->setActivityNameLong('Sign In')
+                ->responseOK();
+            $activity->save();
+            sleep(1);
+
+            // then log out
+            $activity = Activity::mobileci()
+                ->setActivityType('logout')
+                ->setUser($this->users[0])
+                ->setActivityName('logout_ok')
+                ->setActivityNameLong('Sign Out')
+                ->responseOK();
+            $activity->save();
+
+            $response = $this->makeRequest(
+                [],
+                [$this->macAddresses[0]->mac_address]
+            );
+            $this->assertJsonResponseOk($response);
+            $count = 0;
+            foreach ($response->data->out as $mac => $out_response) {
+                $this->assertSingleResponseOk($out_response);
+                $count++;
+            }
+
+            $this->assertFalse($event_fired);
+            $this->assertNull($event_activity);
         });
-
-        // log user in first
-        $activity = Activity::mobileci()
-            ->setActivityType('login')
-            ->setUser($this->users[0])
-            ->setActivityName('login_ok')
-            ->setActivityNameLong('Sign In')
-            ->responseOK();
-
-        // cannot save, in testing mode so just expand save() here...
-        $query = $activity->newQueryWithoutScopes();
-        $time = $activity->freshTimestamp();
-        $activity->created_at = $time;
-        $activity->updated_at = $time;
-        $query->insert($activity->getAttributes());
-
-        sleep(1);
-
-        // then log out
-        $activity = Activity::mobileci()
-            ->setActivityType('logout')
-            ->setUser($this->users[0])
-            ->setActivityName('logout_ok')
-            ->setActivityNameLong('Sign Out')
-            ->responseOK();
-
-        // cannot save, in testing mode so just expand save() here...
-        $query = $activity->newQueryWithoutScopes();
-        $time = $activity->freshTimestamp();
-        $activity->created_at = $time;
-        $activity->updated_at = $time;
-        $query->insert($activity->getAttributes());
-
-        $response = $this->makeRequest(
-            [],
-            [$this->macAddresses[0]->mac_address]
-        );
-        $this->assertJsonResponseOk($response);
-        $count = 0;
-        foreach ($response->data->out as $mac => $out_response) {
-            $this->assertSingleResponseOk($out_response);
-            $count++;
-        }
-
-        $this->assertFalse($event_fired);
-        $this->assertNull($event_activity);
     }
 
     public function testLogsUsersOutIfLogoutBeforeLogin()
     {
-        $event_fired = false;
-        $event_activity = null;
-        Event::listen('orbit.network.checkout.force_mobileci_checkout', function($controller, $activity) use (&$event_fired, &$event_activity) {
-            $event_activity = $activity;
-            $event_fired = true;
+        $this->withActivitiesSaved(function() {
+            $event_fired = false;
+            $event_activity = null;
+            Event::listen('orbit.network.checkout.force_mobileci_checkout', function($controller, $activity) use (&$event_fired, &$event_activity) {
+                $event_activity = $activity;
+                $event_fired = true;
+            });
+
+            // log user in first
+            $activity = Activity::mobileci()
+                ->setActivityType('login')
+                ->setUser($this->users[0])
+                ->setActivityName('login_ok')
+                ->setActivityNameLong('Sign In')
+                ->responseOK();
+            $activity->save();
+
+            // log out is in the past
+            $activity = Activity::mobileci()
+                ->setActivityType('logout')
+                ->setUser($this->users[0])
+                ->setActivityName('logout_ok')
+                ->setActivityNameLong('Sign Out')
+                ->responseOK();
+            $activity->created_at = $activity->updated_at = Carbon::yesterday();
+            $activity->save();
+
+            $response = $this->makeRequest(
+                [],
+                [$this->macAddresses[0]->mac_address]
+            );
+            $this->assertJsonResponseOk($response);
+            $count = 0;
+            foreach ($response->data->out as $mac => $out_response) {
+                $this->assertSingleResponseOk($out_response);
+                $count++;
+            }
+
+            $this->assertTrue($event_fired);
+            $this->assertNotNull($event_activity);
+            $this->assertSame('logout', $event_activity->activity_type);
+            $this->assertSame('logout_ok', $event_activity->activity_name);
+            $this->assertSame('mobile-ci', $event_activity->group);
+            $this->assertSame((string)$this->users[0]->user_id, (string)$event_activity->user_id);
         });
+    }
 
-        // log user in first
-        $activity = Activity::mobileci()
-            ->setActivityType('login')
-            ->setUser($this->users[0])
-            ->setActivityName('login_ok')
-            ->setActivityNameLong('Sign In')
-            ->responseOK();
-
-        // cannot save, in testing mode so just expand save() here...
-        $query = $activity->newQueryWithoutScopes();
-        $time = $activity->freshTimestamp();
-        $activity->created_at = $time;
-        $activity->updated_at = $time;
-        $query->insert($activity->getAttributes());
-
-        // log out is in the past
-        $activity = Activity::mobileci()
-            ->setActivityType('logout')
-            ->setUser($this->users[0])
-            ->setActivityName('logout_ok')
-            ->setActivityNameLong('Sign Out')
-            ->responseOK();
-
-        // cannot save, in testing mode so just expand save() here...
-        $query = $activity->newQueryWithoutScopes();
-        $time = Carbon::yesterday();
-        $activity->created_at = $time;
-        $activity->updated_at = $time;
-        $query->insert($activity->getAttributes());
-
-        $response = $this->makeRequest(
-            [],
-            [$this->macAddresses[0]->mac_address]
-        );
-        $this->assertJsonResponseOk($response);
-        $count = 0;
-        foreach ($response->data->out as $mac => $out_response) {
-            $this->assertSingleResponseOk($out_response);
-            $count++;
+    private function withActivitiesSaved(Closure $c)
+    {
+        $key = 'orbit.activity.force.save';
+        $old_force = Config::get($key, FALSE);
+        try {
+            Config::set($key, TRUE);
+            $c();
+            // assume "finally" not supported (PHP 5.5).
+            Config::set($key, $old_force);
+        } catch (Exception $e)
+        {
+            Config::set($key, $old_force);
+            throw $e;
         }
+    }
 
-        $this->assertTrue($event_fired);
-        $this->assertNotNull($event_activity);
-        $this->assertSame('logout', $event_activity->activity_type);
-        $this->assertSame('logout_ok', $event_activity->activity_name);
-        $this->assertSame('mobile-ci', $event_activity->group);
-        $this->assertSame((string)$this->users[0]->user_id, (string)$event_activity->user_id);
+    private function countNetCheckInActivitiesForUser($user_id)
+    {
+        return Activity::active()
+            ->where('activity_type', '=', 'network')
+            ->where('activity_name', '=', 'network_checkin_ok')
+            ->where('user_id', '=', $user_id)
+            ->orderBy('created_at', 'desc')
+            ->count();
+    }
+
+    private function countNetCheckOutActivitiesForUser($user_id)
+    {
+        return Activity::active()
+            ->where('activity_type', '=', 'network')
+            ->where('activity_name', '=', 'network_checkout_ok')
+            ->where('user_id', '=', $user_id)
+            ->orderBy('created_at', 'desc')
+            ->count();
     }
 }
