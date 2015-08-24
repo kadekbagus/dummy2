@@ -1745,6 +1745,8 @@ class CouponAPIController extends ControllerAPI
             $coupon = $issuedcoupon->coupon;
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
+            $issuedcoupon->redeem_retailer_id = $tenant_id;
+            $issuedcoupon->redeem_verification_code = $verificationNumber;
             $issuedcoupon->status = 'redeemed';
 
             Event::fire('orbit.coupon.postissuedcoupon.before.save', array($this, $issuedcoupon));
