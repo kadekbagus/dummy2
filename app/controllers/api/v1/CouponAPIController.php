@@ -1702,13 +1702,16 @@ class CouponAPIController extends ControllerAPI
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
+            $tenant_id = OrbitInput::post('tenant_id');
 
             $validator = Validator::make(
                 array(
+                    'tenant_id'        => $tenant_id,
                     'issued_coupon_id' => $issuedCouponId,
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
+                    'tenant_id'         => 'required|orbit.empty.retailer',
                     'issued_coupon_id'              => 'required|numeric|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required|numeric'
                 )
@@ -1722,6 +1725,11 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
+
+            if ($user->status !== 'active') {
+                $errorMessage = 'Can not redeem coupon, your status is not active.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             if ($user->status !== 'active') {
                 $errorMessage = 'Can not redeem coupon, your status is not active.';
@@ -1908,7 +1916,23 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) use ($user) {
             $now = date('Y-m-d');
             $number = OrbitInput::post('merchant_verification_number');
+            $tenant_id = OrbitInput::post('tenant_id');
+
             $prefix = DB::getTablePrefix();
+
+            $tenant = Retailer::excludeDeleted()
+                            ->where('merchant_id', $tenant_id)
+                            ->first();
+
+            if(empty($tenant)) {
+                $errorMessage = sprintf('Retailer not found.');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if($tenant->masterbox_number !== $number) {
+                $errorMessage = sprintf('Wrong verification number.');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);   
+            }
 
             $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
                         ->where('issued_coupons.issued_coupon_id', $value)
