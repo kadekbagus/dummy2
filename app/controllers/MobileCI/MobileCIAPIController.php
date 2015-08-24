@@ -8419,7 +8419,6 @@ class MobileCIAPIController extends ControllerAPI
             })->first();
 
             $coupon_id = $coupons->promotion_id;
-            $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
@@ -8429,6 +8428,8 @@ class MobileCIAPIController extends ControllerAPI
             if (empty($coupons->image)) {
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
+
+            $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
 
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
