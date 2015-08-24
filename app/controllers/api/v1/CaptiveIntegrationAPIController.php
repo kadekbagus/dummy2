@@ -177,6 +177,8 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             if (! empty($_customer)) {
                 // User not recognized log it as 'guest'
                 $customer = $_customer;
+
+                $this->logCustomerOutIfStillLoggedIn($_customer);
             }
 
             // Successfull
@@ -490,5 +492,44 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    /**
+     * @param User $customer
+     */
+    private function logCustomerOutIfStillLoggedIn($customer)
+    {
+        // get most recent mobileCI logout of customer
+        $most_recent_logout = Activity::active()
+            ->where('activity_type', '=', 'logout')
+            ->where('activity_name', '=', 'logout_ok')
+            ->where('user_id', '=', $customer->user_id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+        // get most recent mobileCI login of customer
+        $most_recent_login = Activity::active()
+            ->where('activity_type', '=', 'login')
+            ->where('activity_name', '=', 'login_ok')
+            ->where('user_id', '=', $customer->user_id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+        // if no logout or login later than logout insert logout record
+        if ($most_recent_login === null) {
+            // ???
+            return;
+        }
+
+        // compare using carbon gt() method
+        if ($most_recent_logout === null || $most_recent_login->created_at->gt($most_recent_logout->created_at)) {
+            $logout_activity = Activity::mobileci()
+                ->setActivityType('logout')
+                ->setUser($customer)
+                ->setActivityName('logout_ok')
+                ->setActivityNameLong('Sign out')
+                ->setModuleName('Application')
+                ->responseOK();
+            $logout_activity->save();
+            Event::fire('orbit.network.checkout.force_mobileci_checkout', array($this, $logout_activity));
+        }
     }
 }
