@@ -97,7 +97,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
 
     public function getUserOutOfNetwork()
     {
-        $activity = Activity::unknown('captive')
+        $activity = Activity::mobileCI()
                             ->setActivityType('network');
 
         // Get captive Server IP address
