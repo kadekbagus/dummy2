@@ -14,6 +14,13 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class CouponReportAPIController extends ControllerAPI
 {
     /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
+    /**
      * GET - Coupon Report List
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -291,6 +298,11 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             $coupons->orderBy($sortBy, $sortMode);
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $coupons, 'count' => RecordCounter::create($_coupons)->count()];
+            }
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
@@ -591,6 +603,11 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $coupons, 'count' => RecordCounter::create($_coupons)->count()];
+            }
+
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
 
@@ -654,6 +671,12 @@ class CouponReportAPIController extends ControllerAPI
         return $output;
     }
 
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
+    }
 
     protected function registerCustomValidation()
     {
