@@ -161,7 +161,7 @@ class MobileCIAPIController extends ControllerAPI
                         OR
                         (p.begin_date IS NULL and p.end_date >= "' . $user->created_at . '")
                     )
-                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
                 WHERE pr.rule_type = "auto_issue_on_signup"
                     AND p.merchant_id = :merchantid
                     AND ic.user_id = :userid'
