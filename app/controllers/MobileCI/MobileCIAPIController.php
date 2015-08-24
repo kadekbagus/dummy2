@@ -132,14 +132,8 @@ class MobileCIAPIController extends ControllerAPI
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id 
                     AND p.is_coupon = "Y" AND p.status = "active" 
-                    AND 
-                    (
-                        (p.begin_date <= "' . $user->created_at . '"  and p.end_date >= "' . $user->created_at . '") 
-                        OR
-                        (p.begin_date <= "' . $user->created_at . '"  and p.end_date IS NULL)
-                        OR
-                        (p.begin_date IS NULL and p.end_date >= "' . $user->created_at . '")
-                    )
+                    AND p.begin_date <= "' . $user->created_at . '" 
+                    AND p.end_date >= "' . $user->created_at . '"
                 WHERE pr.rule_type = "auto_issue_on_signup"
                     AND p.merchant_id = :merchantid
                     '
@@ -153,14 +147,8 @@ class MobileCIAPIController extends ControllerAPI
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
                     AND p.is_coupon = "Y" AND p.status = "active" 
-                    AND 
-                    (
-                        (p.begin_date <= "' . $user->created_at . '"  and p.end_date >= "' . $user->created_at . '") 
-                        OR
-                        (p.begin_date <= "' . $user->created_at . '"  and p.end_date IS NULL)
-                        OR
-                        (p.begin_date IS NULL and p.end_date >= "' . $user->created_at . '")
-                    )
+                    AND p.begin_date <= "' . $user->created_at . '" 
+                    AND p.end_date >= "' . $user->created_at . '"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
                 WHERE pr.rule_type = "auto_issue_on_signup"
                     AND p.merchant_id = :merchantid
