@@ -107,10 +107,10 @@ class CouponReportAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:promotion_id,mall_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,retailer_name,coupon_status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,retailer_name,total_redeemed,total_issued,coupon_status,status',
                 ),
                 array(
-                    'in' => Lang::get('validation.orbit.empty.coupon_sortby'),
+                    'in' => Lang::get('validation.orbit.empty.couponreportgeneral_sortby'),
                 )
             );
 
@@ -162,7 +162,7 @@ class CouponReportAPIController extends ControllerAPI
                                                     END
                                                 ELSE
                                                     {$prefix}promotions.status
-                                                END as 'coupon_status'"))
+                                                END as 'coupon_status'"), 'promotions.status')
                             ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
                                               from {$prefix}issued_coupons ic
@@ -214,7 +214,7 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->whereIn(DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END"), $auto);
             });
 
-            // Filter by auto issue on sign up
+            // Filter by coupon status with expired
             OrbitInput::get('coupon_status', function($status) use ($coupons, $prefix, $now) {
                 $status = (array)$status;
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
@@ -228,6 +228,12 @@ class CouponReportAPIController extends ControllerAPI
                                                 ELSE
                                                     {$prefix}promotions.status
                                                 END"), $status);
+            });
+
+            // Filter by coupon campaign status
+            OrbitInput::get('status', function($status) use ($coupons) {
+                $status = (array)$status;
+                $coupons->whereIn('promotions.status', $status);
             });
 
             // Filter by date
@@ -282,7 +288,7 @@ class CouponReportAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'coupon_status';
+            $sortBy = 'promotions.status';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -302,15 +308,12 @@ class CouponReportAPIController extends ControllerAPI
                     'redeem_retailer_id'        => 'redeem_retailer_id',
                     'retailer_name'             => 'retailer_name',
                     'total_redeemed'            => 'total_redeemed',
-                    'coupon_status'             => 'coupon_status'
+                    'coupon_status'             => 'coupon_status',
+                    'status'                    => 'promotions.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
-
-            if ($sortBy !== 'coupon_status') {
-                $coupons->orderBy('coupon_status', 'asc');
-            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
@@ -320,6 +323,10 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             $coupons->orderBy($sortBy, $sortMode);
+
+            if ($sortBy !== 'promotions.status') {
+                $coupons->orderBy('promotions.status', 'asc');
+            }
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
@@ -1090,7 +1097,7 @@ class CouponReportAPIController extends ControllerAPI
                     'sort_by' => $sort_by
                 ),
                 array(
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,user_email,issued_coupon_code,issued_date,total_issued,maximum_issued_coupon',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,user_email,issued_coupon_code,issued_date,total_issued,maximum_issued_coupon,coupon_status,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.issuedcouponreport_sortby'),
@@ -1253,7 +1260,7 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->whereIn(DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END"), $auto);
             });
 
-            // Filter by auto issue on sign up
+            // Filter by coupon status with expired
             OrbitInput::get('coupon_status', function($status) use ($coupons, $prefix, $now) {
                 $status = (array)$status;
                 $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
@@ -1267,6 +1274,12 @@ class CouponReportAPIController extends ControllerAPI
                                                 ELSE
                                                     {$prefix}promotions.status
                                                 END"), $status);
+            });
+
+            // Filter by coupon campaign status
+            OrbitInput::get('status', function($status) use ($coupons) {
+                $status = (array)$status;
+                $coupons->whereIn('promotions.status', $status);
             });
 
             // Clone the query builder which still does not include the take,
@@ -1321,7 +1334,9 @@ class CouponReportAPIController extends ControllerAPI
                     'issued_coupon_code'        => 'issued_coupons.issued_coupon_code',
                     'user_email'                => 'users.user_email',
                     'total_issued'              => 'total_issued',
-                    'total_redeemed'            => 'total_redeemed'
+                    'total_redeemed'            => 'total_redeemed',
+                    'coupon_status'             => 'coupon_status',
+                    'status'                    => 'promotions.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

@@ -218,7 +218,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->user_email,
                             $row->redeemed_date,
                             $row->total_issued . '/' . $row->maximum_issued_coupon,
-                            $row->coupon_status
+                            $row->status
                     );
                     $count++;
                 }

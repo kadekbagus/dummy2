@@ -104,7 +104,7 @@
                 <td><?php echo htmlentities($row->user_email); ?></td>
                 <td><?php echo $me->printDateTime($row->issued_date, 'd M Y H:i'); ?></td>
                 <td><?php printf('%s/%s', $row->total_issued, $row->maximum_issued_coupon); ?></td>
-                <td><?php echo htmlentities($row->coupon_status); ?></td>
+                <td><?php echo htmlentities($row->status); ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>
