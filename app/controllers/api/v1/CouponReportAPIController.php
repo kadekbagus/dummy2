@@ -194,7 +194,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
-                $coupons->where('promotions.name', 'like', "%$name%");
+                $coupons->where('promotions.promotion_name', 'like', "%$name%");
             });
 
             // Filter by Retailer name
@@ -206,6 +206,22 @@ class CouponReportAPIController extends ControllerAPI
             OrbitInput::get('is_auto_issue_on_signup', function($auto) use ($coupons, $prefix) {
                 $auto = (array)$auto;
                 $coupons->whereIn(DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END"), $auto);
+            });
+
+            // Filter by auto issue on sign up
+            OrbitInput::get('coupon_status', function($status) use ($coupons, $prefix, $now) {
+                $status = (array)$status;
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
+                                                    CASE WHEN
+                                                        DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
+                                                    WHEN
+                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
+                                                    ELSE
+                                                        {$prefix}promotions.status
+                                                    END
+                                                ELSE
+                                                    {$prefix}promotions.status
+                                                END"), $status);
             });
 
             // Filter by date
