@@ -198,7 +198,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
-                $coupons->where('promotions.name', 'like', "%$name%");
+                $coupons->where('promotions.promotion_name', 'like', "%$name%");
             });
 
             // Filter by Retailer name
@@ -516,7 +516,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
-                $coupons->where('promotions.name', 'like', "%$name%");
+                $coupons->where('promotions.promotion_name', 'like', "%$name%");
             });
 
             // Filter by Retailer name
@@ -820,7 +820,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
-                $coupons->where('promotions.name', 'like', "%$name%");
+                $coupons->where('promotions.promotion_name', 'like', "%$name%");
             });
 
             // Filter by redeem_retailer_id

@@ -80,14 +80,14 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Coupon Report By <?php echo ($couponName); ?></h2>
+    <h2 style="margin-bottom:0.5em;">Coupon Report By <?php echo ($tenantName); ?></h2>
     <table style="width:100%">
         <thead>
             <th style="text-align:left;">No</th>
-            <th style="text-align:left;">Tenant(s)</th>
+            <th style="text-align:left;">Coupon Name</th>
             <th style="text-align:left;">Redeemed/Issued</th>
-            <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer</th>
+            <th style="text-align:left;">Issued Coupon Code</th>
             <th style="text-align:left;">Redeemed Date</th>
             <th style="text-align:left;">Tenant Verification Number</th>
         </thead>
@@ -95,10 +95,10 @@
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
-                <td><?php echo htmlentities(($row->redeem_retailer_name)); ?></td>
+                <td><?php echo htmlentities(($row->promotion_name)); ?></td>
                 <td><?php printf('%s/%s', $row->total_redeemed, $row->total_issued); ?></td>
-                <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
                 <td><?php echo htmlentities($row->user_email); ?></td>
+                <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
                 <td><?php echo $me->printDateTime($row->redeemed_date, 'd M Y H:i'); ?></td>
                 <td><?php echo htmlentities($row->redeem_verification_code); ?></td>
             </tr>
