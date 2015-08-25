@@ -62,9 +62,9 @@
                 <div class="row">
                     <div class="col-xs-12">
                         <p>
-                            Mau browsing sepuasnya?<br>
-                            Atau mau ikutan undian berhadiah?<br>
-                            Buka email Anda untuk verifikasi sekarang juga!!<br>
+                            You are about to enjoy free WiFi at Lippo Mall Puri!
+                            <br><br>
+                            Find our exciting deals and latest news here. Don't forget to exchange your transaction receipts and get a chance to win a car!
                         </p>
                     </div>
                 </div>
