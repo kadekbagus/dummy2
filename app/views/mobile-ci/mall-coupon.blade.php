@@ -97,7 +97,7 @@
                 <h4 class="modal-title" id="hasCouponLabel">Use Coupon</h4>
             </div>
             <div class="modal-body">
-                <div class="row ">
+                <div class="row select-tenant">
                     <div class="col-xs-12 vertically-spaced text-center">
                         <h4>Select Tenant</h4>
                         <div class="form-data">
@@ -110,7 +110,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="row ">
+                <div class="row select-tenant">
                     <div class="col-xs-12 vertically-spaced text-center">
                         <h4>Enter Tenant's Verification Number</h4>
                         <small>(Ask our tenant employee)</small>
@@ -119,12 +119,18 @@
                         </div>
                     </div>
                 </div>
+                <div class="row select-tenant-error" style="display:none;">
+                    <div class="col-xs-12 vertically-spaced text-center">
+                        <h4></h4>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <div class="row">
                     <input type="hidden" name="detail" id="detail" value="">
                     <div class="col-xs-12">
                         <button type="button" id="applyCoupon" class="btn btn-info btn-block">Validate</button>
+                        <button type="button" id="errorOK" class="btn btn-info btn-block" style="display:none;">OK</button>
                     </div>
                 </div>
             </div>
@@ -220,50 +226,74 @@
             $('#useBtn').click(function(){
                 $('#hasCouponModal').modal();
             });
+            $('#errorOK').click(function(){
+                $('.select-tenant').show();
+                $('.select-tenant-error').hide();
+                $('#applyCoupon').show();
+                $('#errorOK').hide();
+            });
             $('#applyCoupon').click(function(){
-                $('#hasCouponModal .modal-content').css('display', 'none');
-                $('#hasCouponModal .modal-spinner').css('display', 'block');
-                $.ajax({
-                    url: apiPath+'issued-coupon/redeem',
-                    method: 'POST',
-                    data: {
-                        issued_coupon_id: {{$product->issuedCoupons[0]->issued_coupon_id}},
-                        merchant_verification_number: $('#tenantverify').val(),
-                        tenant_id: $('#tenantid').val()
-                    }
-                }).done(function(data){
-                    if(data.status == 'success'){
-                        $('#successCouponModal').modal({
-                            backdrop: 'static',
-                            keyboard: false
-                        });
-                        $('#successCouponModal').on('shown.bs.modal', function($event){
-                            $('#issuecouponno').val(data.data.issued_coupon_code);
-                            $('#denyCoupon').html('<i class="fa fa-circle-o-notch fa-spin"></i>');
-                            var y = 5000;
-                            var wait = setInterval(function(){
-                                if(y == 0) {
-                                    clearInterval(wait);
-                                }
-                                $('#denyCoupon').prop("disabled", false);
-                                $('#denyCoupon').html("Ok");
-                                y--;
-                            }, 1000);
-                        });
-                        $('#successCouponModal').on('hide.bs.modal', function($event){
-                            window.location.replace('mallcoupons');
-                        });
-                    }else{
+                if(!$('#tenantid').val()) {
+                    $('.select-tenant').hide();
+                    $('.select-tenant-error').show();
+                    $('.select-tenant-error h4').text('Please select the tenant.');
+                    $('#applyCoupon').hide();
+                    $('#errorOK').show();
+                } 
+
+                if(!$('#tenantverify').val()) {
+                    $('.select-tenant').hide();
+                    $('.select-tenant-error').show();
+                    $('.select-tenant-error h4').text('Please fill tenant verification code.');
+                    $('#applyCoupon').hide();
+                    $('#errorOK').show();
+                }
+
+                if($('#tenantid').val() && $('#tenantverify').val()) {
+                    $('#hasCouponModal .modal-content').css('display', 'none');
+                    $('#hasCouponModal .modal-spinner').css('display', 'block');
+                    $.ajax({
+                        url: apiPath+'issued-coupon/redeem',
+                        method: 'POST',
+                        data: {
+                            issued_coupon_id: {{$product->issuedCoupons[0]->issued_coupon_id}},
+                            merchant_verification_number: $('#tenantverify').val(),
+                            tenant_id: $('#tenantid').val()
+                        }
+                    }).done(function(data){
+                        if(data.status == 'success'){
+                            $('#successCouponModal').modal({
+                                backdrop: 'static',
+                                keyboard: false
+                            });
+                            $('#successCouponModal').on('shown.bs.modal', function($event){
+                                $('#issuecouponno').val(data.data.issued_coupon_code);
+                                $('#denyCoupon').html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+                                var y = 5000;
+                                var wait = setInterval(function(){
+                                    if(y == 0) {
+                                        clearInterval(wait);
+                                    }
+                                    $('#denyCoupon').prop("disabled", false);
+                                    $('#denyCoupon').html("Ok");
+                                    y--;
+                                }, 1000);
+                            });
+                            $('#successCouponModal').on('hide.bs.modal', function($event){
+                                window.location.replace('mallcoupons');
+                            });
+                        }else{
+                            $('#wrongCouponModal').modal();
+                        }
+                    }).fail(function() {
                         $('#wrongCouponModal').modal();
-                    }
-                }).fail(function() {
-                    $('#wrongCouponModal').modal();
-                }).always(function(data){
-                    $('#hasCouponModal .modal-content').css('display', 'block');
-                    $('#hasCouponModal .modal-spinner').css('display', 'none');
-                    $('#tenantverify').val('');
-                    $('#hasCouponModal').modal('hide');
-                });
+                    }).always(function(data){
+                        $('#hasCouponModal .modal-content').css('display', 'block');
+                        $('#hasCouponModal .modal-spinner').css('display', 'none');
+                        $('#tenantverify').val('');
+                        $('#hasCouponModal').modal('hide');
+                    });
+                }
             });
         });
     </script>
