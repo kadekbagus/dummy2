@@ -76,7 +76,7 @@
         @endif
         <div class="row">
             <div class="col-xs-12 text-center">
-                <button class="btn btn-info btn-block" id="useBtn">Use</button>
+                <button class="btn btn-info btn-block" id="useBtn">Redeem</button>
             </div>
         </div>
     </div>
@@ -94,7 +94,7 @@
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="hasCouponLabel">Use Coupon</h4>
+                <h4 class="modal-title" id="hasCouponLabel">Redeem Coupon</h4>
             </div>
             <div class="modal-body">
                 <div class="row select-tenant">
@@ -143,7 +143,7 @@
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="hasCouponLabel">Use Coupon</h4>
+                <h4 class="modal-title" id="hasCouponLabel">Redeem Coupon</h4>
             </div>
             <div class="modal-body">
                 <div class="row ">
@@ -169,7 +169,7 @@
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="hasCouponLabel">Use Coupon</h4>
+                <h4 class="modal-title" id="hasCouponLabel">Redeem Coupon</h4>
             </div>
             <div class="modal-body">
                 <div class="row ">
@@ -233,13 +233,6 @@
                 $('#errorOK').hide();
             });
             $('#applyCoupon').click(function(){
-                if(!$('#tenantid').val()) {
-                    $('.select-tenant').hide();
-                    $('.select-tenant-error').show();
-                    $('.select-tenant-error h4').text('Please select the tenant.');
-                    $('#applyCoupon').hide();
-                    $('#errorOK').show();
-                } 
 
                 if(!$('#tenantverify').val()) {
                     $('.select-tenant').hide();
@@ -249,6 +242,14 @@
                     $('#errorOK').show();
                 }
 
+                if(!$('#tenantid').val()) {
+                    $('.select-tenant').hide();
+                    $('.select-tenant-error').show();
+                    $('.select-tenant-error h4').text('Please select the tenant.');
+                    $('#applyCoupon').hide();
+                    $('#errorOK').show();
+                } 
+                
                 if($('#tenantid').val() && $('#tenantverify').val()) {
                     $('#hasCouponModal .modal-content').css('display', 'none');
                     $('#hasCouponModal .modal-spinner').css('display', 'block');
