@@ -27,6 +27,10 @@ class CouponReportPrinterController extends DataPrinterController
                 return $this->getPrintCouponByTenant();
                 break;
 
+            case 'issued-coupon':
+                return $this->getPrintIssuedCoupon();
+                break;
+
             default:
                 return Response::make('Page Not Found');
                 break;
@@ -161,6 +165,73 @@ class CouponReportPrinterController extends DataPrinterController
         }
     }
 
+    public function getPrintIssuedCoupon()
+    {
+        $this->preparePDO();
+        $prefix = DB::getTablePrefix();
+
+        $mode = OrbitInput::get('export', 'print');
+        $user = $this->loggedUser;
+
+        // Instantiate the CouponReportAPIController to get the query builder of Coupons
+        $response = CouponReportAPIController::create('raw')
+                                            ->setReturnBuilder(TRUE)
+                                            ->getIssuedCouponReport();
+
+
+        $coupons = $response['builder'];
+        $totalCoupons = $response['count'];
+
+        $this->prepareUnbufferedQuery();
+
+        $sql = $coupons->toSql();
+        $binds = $coupons->getBindings();
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($binds);
+
+        $pageTitle = 'Issued Coupon Report';
+
+        switch ($mode) {
+            case 'csv':
+                @header('Content-Description: File Transfer');
+                @header('Content-Type: text/csv');
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
+
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Coupon Report', '', '', '', '', '', '', '');
+
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Coupon Dates', 'Auto-Issuance Status', 'Coupon Code', 'Customer', 'Issued Date', 'Issued/Available', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
+
+                $count = 1;
+                while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
+                    $beginDate = $this->printDateTime($row->begin_date);
+                    $endDate = $this->printDateTime($row->end_date);
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                            $count,
+                            $row->promotion_name,
+                            $beginDate . ' - ' . $endDate,
+                            $this->printYesNoFormatter($row->is_auto_issue_on_signup),
+                            $row->issued_coupon_code,
+                            $row->user_email,
+                            $row->redeemed_date,
+                            $row->total_issued . '/' . $row->maximum_issued_coupon,
+                            $row->coupon_status
+                    );
+                    $count++;
+                }
+                break;
+
+            case 'print':
+            default:
+                $me = $this;
+                $rowCounter = 0;
+                require app_path() . '/views/printer/list-issued-coupon-report.php';
+        }
+    }
+
     /**
      * Print date and time friendly name.
      *
@@ -178,5 +249,20 @@ class CouponReportPrinterController extends DataPrinterController
         $result = date($format, $time);
 
         return $result;
+    }
+
+    /**
+     * Yes no formatter.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printYesNoFormatter($input)
+    {
+        if (strtolower($input) === 'y') {
+            return 'YES';
+        }
+
+        return 'NO';
     }
 }

@@ -247,7 +247,7 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // Greater Than Equals
-            OrbitInput::get('end_date_lte', function($date) use ($coupons) {
+            OrbitInput::get('end_date_gte', function($date) use ($coupons) {
                 $coupons->where('promotions.end_date', '>=', $date);
             });
 
@@ -638,7 +638,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // include sorting user_email if redeem_retailer_name is being sorted
             if ($sortBy === 'redeem_retailer_name') {
-                $coupons->orderBy('users.user_email', $sortMode);
+                $coupons->orderBy('users.user_email', 'asc');
             }
 
             // Return the instance of Query Builder
@@ -963,7 +963,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // include sorting user_email if promotion_name is being sorted
             if ($sortBy === 'promotions.promotion_name') {
-                $coupons->orderBy('users.user_email', $sortMode);
+                $coupons->orderBy('users.user_email', 'asc');
             }
 
             // Return the instance of Query Builder
@@ -1180,6 +1180,27 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->where('promotions.promotion_name', 'like', "%$name%");
             });
 
+            // Filter by promotion begin date and end date
+            // Greater Than Equals
+            OrbitInput::get('begin_date_gte', function($date) use ($coupons) {
+                $coupons->where('promotions.begin_date', '>=', $date);
+            });
+
+            // Less Than Equals
+            OrbitInput::get('begin_date_lte', function($date) use ($coupons) {
+                $coupons->where('promotions.begin_date', '<=', $date);
+            });
+
+            // Greater Than Equals
+            OrbitInput::get('end_date_gte', function($date) use ($coupons) {
+                $coupons->where('promotions.end_date', '>=', $date);
+            });
+
+            // Less Than Equals
+            OrbitInput::get('end_date_lte', function($date) use ($coupons) {
+                $coupons->where('promotions.end_date', '<=', $date);
+            });
+
             // Filter by redeem_retailer_id
             OrbitInput::get('redeem_retailer_id', function($data) use ($coupons) {
                 $data = (array)$data;
@@ -1317,7 +1338,7 @@ class CouponReportAPIController extends ControllerAPI
 
             // include sorting user_email if promotion_name is being sorted
             if ($sortBy === 'promotions.promotion_name') {
-                $coupons->orderBy('users.user_email', $sortMode);
+                $coupons->orderBy('users.user_email', 'asc');
             }
 
             // Return the instance of Query Builder
