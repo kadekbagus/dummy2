@@ -76,14 +76,13 @@ class CouponReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    $redeemedDate = $this->printDateTime($row->redeemed_date);
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->redeem_retailer_name,
                             $row->total_redeemed . '/' . $row->total_issued,
                             $row->issued_coupon_code,
                             $row->user_email,
-                            $redeemedDate,
+                            $row->redeemed_date,
                             $row->redeem_verification_code
                     );
                     $count++;
@@ -141,14 +140,13 @@ class CouponReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    $redeemedDate = $this->printDateTime($row->redeemed_date);
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->promotion_name,
                             $row->total_redeemed . '/' . $row->total_issued,
                             $row->user_email,
                             $row->issued_coupon_code,
-                            $redeemedDate,
+                            $row->redeemed_date,
                             $row->redeem_verification_code
                     );
                     $count++;
