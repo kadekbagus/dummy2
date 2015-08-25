@@ -64,6 +64,26 @@
     </div>
 </div>
 
+<div class="modal fade bs-example-modal-sm" id="multi-language-popup" tabindex="-1" role="dialog" aria-labelledby="multi-language" aria-hidden="true">
+    <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
+                <h4 class="modal-title">{{ Lang::get('mobileci.modals.language_title') }}</h4>
+            </div>
+            <div class="modal-body">
+
+                <input type="radio" name="lang" value="ch"> Chinnese</input><br>
+                <input type="radio" name="lang" value="en"> English (US)</input>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" data-dismiss="modal">{{ Lang::get('mobileci.modals.ok') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
@@ -115,6 +135,9 @@
         }
         $('#membership-card').click(function(){
             $('#membership-card-popup').modal();
+        });
+        $('#multi-language').click(function(){
+            $('#multi-language-popup').modal();
         });
     });
 </script>

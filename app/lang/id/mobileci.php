@@ -15,6 +15,7 @@ return array(
         'transfercart'  => 'TRANSFER CART',
         'customer_id'   => 'CUSTOMER ID',
         'logout'        => 'KELUAR',
+        "language"      => "BAHASA",
         'payment'       => 'PEMBAYARAN',
         'searching'     => 'PENCARIAN',
         'new_products'  => 'PRODUK BARU',
@@ -44,6 +45,7 @@ return array(
     // modal specific lang
     'modals'                    => array(
         'close'                 => 'Tutup',
+        'ok'                    => 'Ok',
         'email_error'           => 'Harap isi email terlebih dahulu.',
         'event_title'           => 'Events',
         'info_title'            => 'Info',
@@ -56,6 +58,7 @@ return array(
         'close_cart_title'      => 'Tutup Keranjang',
         'reset_cart_title'      => 'Hapus Keranjang',
         'membership_title'      => 'Informasi Membership',
+        'language_title'        => 'Pilih Bahasa',
 
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',
         'message_no_new_product'=> 'Maaf, tidak ada produk baru untuk saat ini.',

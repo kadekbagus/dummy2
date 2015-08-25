@@ -15,6 +15,7 @@ return array(
         "transfercart"  => "TRANSFER CART",
         "customer_id"   => "CUSTOMER ID",
         "logout"        => "LOGOUT",
+        "language"      => "LANGUAGE",
         "payment"       => "PAYMENT",
         "searching"     => "SEARCH",
         'new_products'  => 'NEW PRODUCTS',
@@ -44,6 +45,7 @@ return array(
     // modal specific lang
     'modals'                    => array(
         'close'                 => 'Close',
+        'ok'                    => 'Ok',
         'email_error'           => 'Please enter your email first.',
         'event_title'           => 'Events',
         'info_title'            => 'Info',
@@ -56,6 +58,7 @@ return array(
         'close_cart_title'      => 'Close Cart',
         'reset_cart_title'      => 'Reset Cart',
         'membership_title'      => 'Membership Information',
+        'language_title'        => 'Select Language',
 
         'message_no_coupon'     => 'Sorry, you do not have any coupons yet.',
         'message_no_new_product'=> 'Sorry, there are no new products for today.',
