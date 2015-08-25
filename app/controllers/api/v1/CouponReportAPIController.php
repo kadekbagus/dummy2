@@ -448,10 +448,10 @@ class CouponReportAPIController extends ControllerAPI
                     'sort_by' => $sort_by
                 ),
                 array(
-                    'sort_by' => 'in:promotion_id,mall_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,retailer_name,coupon_status',
+                    'sort_by' => 'in:redeem_retailer_name,total_redeemed,issued_coupon_code,user_email,redeemed_date,redeem_verification_code',
                 ),
                 array(
-                    'in' => Lang::get('validation.orbit.empty.coupon_sortby'),
+                    'in' => Lang::get('validation.orbit.empty.couponreportbycouponname_sortby'),
                 )
             );
 
@@ -635,6 +635,11 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             $coupons->orderBy($sortBy, $sortMode);
+
+            // include sorting user_email if redeem_retailer_name is being sorted
+            if ($sortBy === 'redeem_retailer_name') {
+                $coupons->orderBy('users.user_email', $sortMode);
+            }
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
@@ -956,7 +961,7 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            // include sorting user_email
+            // include sorting user_email if promotion_name is being sorted
             if ($sortBy === 'promotions.promotion_name') {
                 $coupons->orderBy('users.user_email', $sortMode);
             }
@@ -1221,6 +1226,28 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->where('total_issued', $data);
             });
 
+            // Filter by auto issue on sign up
+            OrbitInput::get('is_auto_issue_on_signup', function($auto) use ($coupons, $prefix) {
+                $auto = (array)$auto;
+                $coupons->whereIn(DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END"), $auto);
+            });
+
+            // Filter by auto issue on sign up
+            OrbitInput::get('coupon_status', function($status) use ($coupons, $prefix, $now) {
+                $status = (array)$status;
+                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
+                                                    CASE WHEN
+                                                        DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
+                                                    WHEN
+                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
+                                                    ELSE
+                                                        {$prefix}promotions.status
+                                                    END
+                                                ELSE
+                                                    {$prefix}promotions.status
+                                                END"), $status);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_coupons = clone $coupons;
@@ -1263,7 +1290,11 @@ class CouponReportAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'promotion_id'              => 'promotions.promotion_id',
                     'promotion_name'            => 'promotions.promotion_name',
-                    'redeem_retailer_name'      => 'merchants.name',
+                    'begin_date'                => 'promotions.begin_date',
+                    'end_date'                  => 'promotions.end_date',
+                    'maximum_issued_coupon'     => 'promotions.maximum_issued_coupon',
+                    'is_auto_issue_on_signup'   => 'is_auto_issue_on_signup',
+                    'issued_date'               => 'issued_coupons.issued_date',
                     'redeemed_date'             => 'issued_coupons.redeemed_date',
                     'redeem_verification_code'  => 'issued_coupons.redeem_verification_code',
                     'issued_coupon_code'        => 'issued_coupons.issued_coupon_code',
@@ -1284,7 +1315,7 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            // include sorting user_email
+            // include sorting user_email if promotion_name is being sorted
             if ($sortBy === 'promotions.promotion_name') {
                 $coupons->orderBy('users.user_email', $sortMode);
             }
