@@ -649,8 +649,8 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            // include sorting user_email if redeem_retailer_name is being sorted
-            if ($sortBy === 'redeem_retailer_name') {
+            // include sorting user_email if merchants.name is being sorted
+            if ($sortBy === 'merchants.name') {
                 $coupons->orderBy('users.user_email', 'asc');
             }
 
