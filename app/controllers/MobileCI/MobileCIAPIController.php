@@ -8856,28 +8856,28 @@ class MobileCIAPIController extends ControllerAPI
     /**
     * POST - Set language choice by customer
     *
-    * @return Illuminate\View\View
+    * @param string     `lang`          name of language
     *
     * @author Firmansyah <firmansyah@dominopos.com>
     * @author Irianto Pratama <irianto@dominopos.com>
     */
     public function postLanguagebySelected($lang_name = null)
     {
-        $page_title = '';
-
         $lang_name = OrbitInput::post('lang');
 
         if($lang_name != null) {
-            //check db if exist
+
+            //check exist lang in db
             $checkdb = Language::where('name', $lang_name)->count();
 
             //set cookies
             if($checkdb > 0) {
-                $date_of_expiry = time() + 60 ;
-                setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );    
+                $date_of_expiry = time()+31556926 ; // where 31556926 is total seconds for a year.
+                setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );
             }
-        }
 
+            return \Redirect::to('/customer/home');
+        }
    }
 
 }
