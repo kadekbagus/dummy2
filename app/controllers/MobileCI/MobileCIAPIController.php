@@ -8865,14 +8865,14 @@ class MobileCIAPIController extends ControllerAPI
     {
         $lang_name = OrbitInput::post('lang');
 
-        if($lang_name != null) {
+        if ($lang_name != null) {
 
             //check exist lang in db
             $checkdb = Language::where('name', $lang_name)->count();
 
             //set cookies
-            if($checkdb > 0) {
-                $date_of_expiry = time()+31556926 ; // where 31556926 is total seconds for a year.
+            if ($checkdb > 0) {
+                $date_of_expiry = time() + (31556926 * 5) ; // where 31556926 is total seconds for a year.
                 setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );
             }
 
