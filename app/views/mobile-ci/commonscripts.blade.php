@@ -29,7 +29,7 @@
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.membership_title') }}</h4>
             </div>
             <div class="modal-body">
-                @if(! empty($user->membership_number))
+                @if (! empty($user->membership_number))
                 <div class="member-card">
                     <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
                     <h2>
@@ -72,16 +72,20 @@
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.language_title') }}</h4>
             </div>
-            <div class="modal-body">
-            @if(isset($languages))
-                @foreach($languages as $lang)
-                      <input type="radio" name="lang" id="{{{ $lang->name }}}"> {{{ $lang->name_long }}}<br>
-                @endforeach
-            @endif
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-info" data-dismiss="modal">{{ Lang::get('mobileci.modals.ok') }}</button>
-            </div>
+
+            <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
+                <div class="modal-body">
+                @if (isset($languages))
+                    @foreach ($languages as $lang)
+                        <input type="radio" name="lang" value="{{{ $lang->name }}}"> {{{ $lang->name_long }}}<br>
+                    @endforeach
+                @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info" value="{{ Lang::get('mobileci.modals.ok') }}">{{ Lang::get('mobileci.modals.ok') }}</button>
+                </div>
+            </form>
+
         </div>
     </div>
 </div>

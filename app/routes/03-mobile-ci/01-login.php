@@ -445,7 +445,6 @@ Route::group(
         Route::get(
             '/customer/mallnewsdetail',
             function () {
-
                 return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
             }
         );
@@ -455,6 +454,14 @@ Route::group(
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallLuckyDrawDownloadList();
             }]
+        );
+
+        // set language from pop up selected language to cookies
+        Route::post(
+            '/customer/setlanguage', 
+            function () {
+                return MobileCI\MobileCIAPIController::create()->postLanguagebySelected();
+            }
         );
     }
 );

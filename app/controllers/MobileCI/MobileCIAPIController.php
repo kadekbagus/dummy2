@@ -8854,63 +8854,30 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
-     * POST - Set language for popupdata
-     *
-     * @return Illuminate\View\View
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     * @author Irianto Pratama <irianto@dominopos.com>
-     */
-
-    public function postLanguagebySelected() 
+    * POST - Set language choice by customer
+    *
+    * @return Illuminate\View\View
+    *
+    * @author Firmansyah <firmansyah@dominopos.com>
+    * @author Irianto Pratama <irianto@dominopos.com>
+    */
+    public function postLanguagebySelected($lang_name = null)
     {
+        $page_title = '';
 
-        $user = null;
-        $keyword = null;
-        $activity = Activity::mobileci()
-                        ->setActivityType('view');
+        $lang_name = OrbitInput::post('lang');
 
-        try {
-            // Require authentication
-            $this->registerCustomValidation();
-            $user = $this->getLoggedInUser();
+        if($lang_name != null) {
+            //check db if exist
+            $checkdb = Language::where('name', $lang_name)->count();
 
-            $languages = Language::get();
-
-            $pagetitle = 'Ini Title Bahasa';
-
-            $activityNotes = sprintf('List Languages: %s', 'Languages');
-            $activity->setUser($user)
-                ->setActivityName('list_languages')
-                ->setActivityNameLong('List Languages')
-                ->setObject(null)
-                ->setModuleName('Languages')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
-
-            return View::make('mobile-ci.commonscripts', array('page_title'=>$pagetitle, 'user' => $user, 'languages' => $languages));
-
-        } catch (Exception $e) {
-            $activityNotes = sprintf('Failed List: %s', 'Languages');
-            $activity->setUser($user)
-                ->setActivityName('list_languages')
-                ->setActivityNameLong('List Languages Failed')
-                ->setObject(null)
-                ->setModuleName('Languages')
-                ->setNotes($activityNotes)
-                ->responseFailed()
-                ->save();
-
-            return $this->redirectIfNotLoggedIn($e);
+            //set cookies
+            if($checkdb > 0) {
+                $date_of_expiry = time() + 60 ;
+                setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );    
+            }
         }
-    }
 
-
-
-
-
-
-
+   }
 
 }
