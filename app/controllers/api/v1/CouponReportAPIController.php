@@ -315,6 +315,11 @@ class CouponReportAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
+            // sort by status first
+            if ($sortBy !== 'promotions.status') {
+                $coupons->orderBy('promotions.status', 'asc');
+            }
+
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -324,8 +329,9 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
+            // also to sort tenant name
+            if ($sortBy !== 'retailer_name') {
+                $coupons->orderBy('retailer_name', 'asc');
             }
 
             // Return the instance of Query Builder
@@ -1342,6 +1348,11 @@ class CouponReportAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
+            // sort by status first
+            if ($sortBy !== 'promotions.status') {
+                $coupons->orderBy('promotions.status', 'asc');
+            }
+
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
@@ -1351,8 +1362,8 @@ class CouponReportAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            // include sorting user_email if promotion_name is being sorted
-            if ($sortBy === 'promotions.promotion_name') {
+            // include sorting user_email
+            if ($sortBy !== 'users.user_email') {
                 $coupons->orderBy('users.user_email', 'asc');
             }
 
