@@ -13,6 +13,7 @@ use \User;
 use \UserDetail;
 use \Role;
 use \Lang;
+use \Language;
 use \Apikey;
 use \Validator;
 use \Config;
@@ -306,6 +307,8 @@ class MobileCIAPIController extends ControllerAPI
             $widget_flags->enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
             $widget_flags->enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
 
+            $languages = Language::get();
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
                 ->setActivityName('view_page_home')
@@ -316,7 +319,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $event, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $event, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles, 'languages' => $languages))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -380,7 +383,9 @@ class MobileCIAPIController extends ControllerAPI
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
-            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
+            $languages = Language::get();
+
+            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url, 'languages' => $languages));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
 
@@ -3678,6 +3683,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $cartdata = $this->getCartData();
 
+            $languages = Language::get();
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Recognize Me');
             $activityPage->setUser($user)
                 ->setActivityName('view_recognize_me')
@@ -3688,7 +3695,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.recognizeme', array('page_title'=>Lang::get('mobileci.page_title.recognize_me'), 'user' => $user, 'retailer'=>$retailer, 'cartitems' => $cartitems, 'cartdata' => $cartdata));
+            return View::make('mobile-ci.recognizeme', array('page_title'=>Lang::get('mobileci.page_title.recognize_me'), 'user' => $user, 'retailer'=>$retailer, 'cartitems' => $cartitems, 'cartdata' => $cartdata, 'languages' => $languages));
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: %s', 'Recognize Me');
             $activityPage->setUser($user)
@@ -7738,7 +7745,9 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories, 'floorList' => $floorList));
+            $languages = Language::get();
+
+            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories, 'floorList' => $floorList, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
@@ -7806,6 +7815,8 @@ class MobileCIAPIController extends ControllerAPI
                 $product->logo = 'mobile-ci/images/default_product.png';
             }
 
+            $languages = Language::get();
+
             if (! empty($promo_id)) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $product->merchant_id . ', promotion ID: '. $promo_id);
                 $activityPage->setUser($user)
@@ -7842,7 +7853,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product));
+            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
@@ -8098,6 +8109,8 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
+            $languages = Language::get();
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon_list')
@@ -8108,7 +8121,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
@@ -8187,6 +8200,8 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
+            $languages = Language::get();
+
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon')
@@ -8198,7 +8213,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -8287,6 +8302,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
+            $languages = Language::get();
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
             $activityPage->setUser($user)
@@ -8298,7 +8314,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
@@ -8447,6 +8463,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
+            $languages = Language::get();
 
             $activityPageNotes = sprintf('Page viewed: %s', 'News List Page');
             $activityPage->setUser($user)
@@ -8458,7 +8475,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
@@ -8508,6 +8525,8 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
+            $languages = Language::get();
+
             $activityPageNotes = sprintf('Page viewed: News Detail, news Id: %s', $product_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_news')
@@ -8519,7 +8538,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
@@ -8568,6 +8587,8 @@ class MobileCIAPIController extends ControllerAPI
                     $totalPerImage = 160;
                     $totalImage = ceil($totalLuckyDrawNumber / $totalPerImage);
 
+                    $languages = Language::get();
+
                     return View::make('mobile-ci.lucky-draw-number-download', [
                                      'page_title'   => 'Download Lucky Draw Number',
                                      'luckydraw'    => $luckyDraw,
@@ -8576,6 +8597,7 @@ class MobileCIAPIController extends ControllerAPI
                                      'total_number' => $totalLuckyDrawNumber,
                                      'total_image'  => $totalImage,
                                      'number_per_image'  => $totalPerImage,
+                                     'languages' => $languages,
                     ]);
             }
         } catch (Exception $e) {
@@ -8830,4 +8852,65 @@ class MobileCIAPIController extends ControllerAPI
             }
         }
     }
+
+    /**
+     * POST - Set language for popupdata
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Irianto Pratama <irianto@dominopos.com>
+     */
+
+    public function postLanguagebySelected() 
+    {
+
+        $user = null;
+        $keyword = null;
+        $activity = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+
+            $languages = Language::get();
+
+            $pagetitle = 'Ini Title Bahasa';
+
+            $activityNotes = sprintf('List Languages: %s', 'Languages');
+            $activity->setUser($user)
+                ->setActivityName('list_languages')
+                ->setActivityNameLong('List Languages')
+                ->setObject(null)
+                ->setModuleName('Languages')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.commonscripts', array('page_title'=>$pagetitle, 'user' => $user, 'languages' => $languages));
+
+        } catch (Exception $e) {
+            $activityNotes = sprintf('Failed List: %s', 'Languages');
+            $activity->setUser($user)
+                ->setActivityName('list_languages')
+                ->setActivityNameLong('List Languages Failed')
+                ->setObject(null)
+                ->setModuleName('Languages')
+                ->setNotes($activityNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+
+
+
+
+
+
+
 }

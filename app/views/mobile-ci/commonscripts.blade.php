@@ -64,6 +64,7 @@
     </div>
 </div>
 
+<!-- Language Modal -->
 <div class="modal fade bs-example-modal-sm" id="multi-language-popup" tabindex="-1" role="dialog" aria-labelledby="multi-language" aria-hidden="true">
     <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
         <div class="modal-content">
@@ -72,10 +73,11 @@
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.language_title') }}</h4>
             </div>
             <div class="modal-body">
-
-                <input type="radio" name="lang" value="ch"> Chinnese</input><br>
-                <input type="radio" name="lang" value="en"> English (US)</input>
-
+            @if(isset($languages))
+                @foreach($languages as $lang)
+                      <input type="radio" name="lang" id="{{{ $lang->name }}}"> {{{ $lang->name_long }}}<br>
+                @endforeach
+            @endif
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-info" data-dismiss="modal">{{ Lang::get('mobileci.modals.ok') }}</button>
