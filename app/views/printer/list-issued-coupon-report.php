@@ -89,7 +89,7 @@
             <th style="text-align:left;">Auto-Issuance Status</th>
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer</th>
-            <th style="text-align:left;">Issued Date</th>
+            <th style="text-align:left;">Issued Date & Time</th>
             <th style="text-align:left;">Issued/Available</th>
             <th style="text-align:left;">Status</th>
         </thead>

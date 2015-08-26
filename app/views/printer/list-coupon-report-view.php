@@ -80,7 +80,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Coupon Report By <?php echo ($couponName); ?></h2>
+    <h2 style="margin-bottom:0.5em;">Redeemed Coupon Report By <?php echo ($couponName); ?></h2>
     <table style="width:100%">
         <thead>
             <th style="text-align:left;">No</th>
@@ -88,7 +88,7 @@
             <th style="text-align:left;">Redeemed/Issued</th>
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer</th>
-            <th style="text-align:left;">Redeemed Date</th>
+            <th style="text-align:left;">Redeemed Date & Time</th>
             <th style="text-align:left;">Tenant Verification Number</th>
         </thead>
         <tbody>

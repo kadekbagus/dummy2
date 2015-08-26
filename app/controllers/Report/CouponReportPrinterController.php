@@ -51,6 +51,9 @@ class CouponReportPrinterController extends DataPrinterController
                                             ->setReturnBuilder(TRUE)
                                             ->getCouponReportByCouponName();
 
+        if (! is_array($response)) {
+            return Response::make($response->message);
+        }
 
         $coupons = $response['builder'];
         $totalCoupons = $response['count'];
@@ -63,7 +66,7 @@ class CouponReportPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Coupon Report';
+        $pageTitle = 'Redeemed Coupon Report By ' . $couponName;
 
         switch ($mode) {
             case 'csv':
@@ -72,10 +75,10 @@ class CouponReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon Report By ' . $couponName, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report By ' . $couponName, '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Tenant', 'Redeemed/Issued', 'Coupon Code', 'Customer', 'Redeemed Date', 'Tenant Verification Number');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Tenant(s)', 'Redeemed/Issued', 'Coupon Code', 'Customer', 'Redeemed Date & Time', 'Tenant Verification Number');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -115,6 +118,9 @@ class CouponReportPrinterController extends DataPrinterController
                                             ->setReturnBuilder(TRUE)
                                             ->getCouponReportByTenant();
 
+        if (! is_array($response)) {
+            return Response::make($response->message);
+        }
 
         $coupons = $response['builder'];
         $totalCoupons = $response['count'];
@@ -127,7 +133,7 @@ class CouponReportPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Coupon Report By Tenant';
+        $pageTitle = 'Redeemed Coupon Report By ' . $tenantName;
 
         switch ($mode) {
             case 'csv':
@@ -136,10 +142,10 @@ class CouponReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Coupon Report By ' . $tenantName, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report By ' . $tenantName, '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Redeemed/Issued', 'Customer', 'Issued Coupon Code', 'Redeemed Date', 'Tenant Verification Number');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Redeemed/Issued', 'Customer', 'Coupon Code', 'Redeemed Date & Time', 'Tenant Verification Number');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
@@ -178,6 +184,9 @@ class CouponReportPrinterController extends DataPrinterController
                                             ->setReturnBuilder(TRUE)
                                             ->getIssuedCouponReport();
 
+        if (! is_array($response)) {
+            return Response::make($response->message);
+        }
 
         $coupons = $response['builder'];
         $totalCoupons = $response['count'];
@@ -202,7 +211,7 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Coupon Report', '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Coupon Dates', 'Auto-Issuance Status', 'Coupon Code', 'Customer', 'Issued Date', 'Issued/Available', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Coupon Dates', 'Auto-Issuance Status', 'Coupon Code', 'Customer', 'Issued Date & Time', 'Issued/Available', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
