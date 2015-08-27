@@ -8,7 +8,7 @@ return array(
     */
 
     'page_title'        => array(
-        'home'          => 'HOME',
+        'home'          => 'は「ホーム」',
         'catalogue'     => 'CATALOGUE',
         'cart'          => 'CART',
         'my_account'    => 'MY ACCOUNT',
@@ -22,10 +22,10 @@ return array(
         'promotions'    => 'PROMOTIONS',
         'coupons'       => 'MY COUPONS',
         'coupon_single' => 'COUPON',
-        'promotion'     => 'PROMOTION',
-        'not_found'     => 'ERROR',
-        'recognize_me'  => 'RECOGNIZE ME',
-        'membership'    => 'MEMBERSHIP'
+        'promotion'     => 'はプロモーション」',
+        'not_found'     => 'エラー ',
+        'recognize_me'  => '私を認識」',
+        'membership'    => 'メンバーシップ'
     ),
 
     'widgets'           => array(
