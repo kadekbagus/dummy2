@@ -29,13 +29,13 @@ return array(
     ),
 
     'widgets'           => array(
-        'catalogue'     => 'CATALOGUE',
-        'new_product'   => 'NEW PRODUCTS',
-        'promotion'     => 'PROMOTIONS',
-        'coupon'        => 'MY COUPONS',
-        'tenant'        => 'TENANTS',
-        'lucky_draw'    => 'LUCKY DRAW',
-        'news'          => 'NEWS',
+        'catalogue'     => '目录',
+        'new_product'   => '新产品',
+        'promotion'     => '促销',
+        'coupon'        => 'MY券',
+        'tenant'        => '租户',
+        'lucky_draw'    => '幸运抽奖',
+        'news'          => '新闻中心',
     ),
 
     'greetings'         => array(
