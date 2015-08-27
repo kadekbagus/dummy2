@@ -46,7 +46,10 @@ return array(
     ),
 
     'greetings'         => array(
-        'welcome'       => 'Welcome'
+        'welcome'       => 'Welcome',
+        'latest_news_coming_soon' => 'Check out our latest news coming soon.',
+        'new_promotions_coming_soon' => 'Check out our new promotions coming soon.',
+        'how_to_get_coupons' => 'Please check with customer service how to get coupons.',
     ),
 
     // modal specific lang
@@ -91,8 +94,13 @@ return array(
         'yes_button'            => 'Yes',
         'do_not_show_label'     => 'Do not show this message again',
         'new_product_price'     => 'New price',
+    ),
+
+    //tenant catalogue
+    'tenant'         => array(
         'floor'                 => 'Floor',
         'category'              => 'Category',
+        'all'                   => 'All',
     ),
 
     // page specific lang

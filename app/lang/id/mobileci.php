@@ -46,7 +46,10 @@ return array(
     ),
 
     'greetings'         => array(
-        'welcome'       => 'Selamat Datang'
+        'welcome'       => 'Selamat Datang',
+        'latest_news_coming_soon' => 'Periksa berita terbaru kami akan segera hadir.',
+        'new_promotions_coming_soon' => 'Periksa promosi baru kami akan segera hadir.',
+        'how_to_get_coupons' => 'Silahkan periksa dengan layanan pelanggan bagaimana untuk mendapatkan kupon.',
     ),
 
     // modal specific lang
@@ -90,8 +93,13 @@ return array(
         'yes_button'            => 'Ya',
         'do_not_show_label'     => 'Jangan tunjukkan pesan ini lagi',
         'new_product_price'     => 'Harga baru',
+    ),
+
+    //tenant catalogue
+    'tenant'         => array(
         'floor'                 => 'Lantai',
         'category'              => 'Kategori',
+        'all'                   => 'All',
     ),
 
     // page specific lang

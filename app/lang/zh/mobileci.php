@@ -39,14 +39,17 @@ return array(
         'catalogue'     => '目录',
         'new_product'   => '新产品',
         'promotion'     => '促销',
-        'coupon'        => 'MY券',
+        'coupon'        => '我的 券',
         'tenant'        => '租户',
         'lucky_draw'    => '幸运抽奖',
         'news'          => '新闻中心',
     ),
 
     'greetings'         => array(
-        'welcome'       => 'Welcome'
+        'welcome'       => '欢迎',
+        'latest_news_coming_soon' => '看看我们的最新消息即将推出.',
+        'new_promotions_coming_soon' => '看看我们的新促销活动即将登场.',
+        'how_to_get_coupons' => '请与客户服务如何获得优惠券查询.',
     ),
 
     // modal specific lang
@@ -91,8 +94,13 @@ return array(
         'yes_button'            => '对',
         'do_not_show_label'     => '不要再显示此消息',
         'new_product_price'     => '新价格',
+    ),
+
+    //tenant catalogue
+    'tenant'         => array(
         'floor'                 => '地板',
         'category'              => '分类',
+        'all'                   => '都',
     ),
 
     // page specific lang

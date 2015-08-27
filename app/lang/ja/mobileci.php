@@ -46,13 +46,16 @@ return array(
     ),
 
     'greetings'         => array(
-        'welcome'       => 'Welcome'
+        'welcome'       => 'ようこそ',
+        'latest_news_coming_soon' => 'もうすぐ私たちの最新ニュースをチェック.',
+        'new_promotions_coming_soon' => 'すぐに来て私たちの新しいプロモーションをチェックしてください.',
+        'how_to_get_coupons' => 'クーポンを取得する方法を顧客サービスにお問い合わせください.',
     ),
 
     // modal specific lang
     'modals'                    => array(
         'close'                 => 'クローズ',
-        'ok'                    => 'OK',
+        'ok'                    => 'よし',
         'email_error'           => '最初のメールアドレスを入力してください',
         'event_title'           => 'イベント',
         'info_title'            => '情報',
@@ -81,7 +84,7 @@ return array(
         'coupon_use'            => '使用',
         'coupon_ignore'         => 'その後',
         'search_label'          => 'テナント名、カテゴリー、床や説明で検索',
-        'search_placeholder'    => 'INSERTキーワード（複数可）',
+        'search_placeholder'    => 'インサート キーワード（複数可）',
         'search_button'         => '検索',
         'cancel_button'         => 'キャンセル',
         'cash_button'           => 'キャッシュ',
@@ -91,8 +94,13 @@ return array(
         'yes_button'            => 'はい',
         'do_not_show_label'     => '今後このメッセージを表示しません',
         'new_product_price'     => '新価格',
+    ),
+
+    //tenant catalogue
+    'tenant'         => array(
         'floor'                 => 'フロア',
         'category'              => 'カテゴリー',
+        'all'                   => 'オール',
     ),
 
     // page specific lang
@@ -124,7 +132,7 @@ return array(
     ),
 
     'cart'         => array(
-        'promo'                             => 'PROMO',
+        'promo'                             => '宣伝広告',
         'coupon'                            => 'クーポン',
         'no_item'                           => 'カートに商品が入っていません。',
         'item_label'                        => '項目（複数可）',

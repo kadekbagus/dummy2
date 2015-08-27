@@ -21,13 +21,13 @@
                                             echo $namex;
                                         ?>
                                     @else
-                                        {{ Lang::get('mobileci.modals.category') }}
+                                        {{ Lang::get('mobileci.tenant.category') }}
                                     @endif
                                 </span>
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="category">
-                                <li data-category=""><span>All</span></li>
+                                <li data-category=""><span>{{ Lang::get('mobileci.tenant.all') }}</span></li>
                                 @foreach($categories as $category)
                                 <li data-category="{{ $category->category_id }}"><span>{{ $category->category_name }}</span></li>
                                 @endforeach
@@ -41,7 +41,7 @@
                                     @if(!empty(Input::get('fid')))
                                         {{ Input::get('fid') }}
                                     @else
-                                        {{ Lang::get('mobileci.modals.floor') }}
+                                        {{ Lang::get('mobileci.tenant.floor') }}
                                     @endif
                                 </span>
                                 <span class="caret"></span>
