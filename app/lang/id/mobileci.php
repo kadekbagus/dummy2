@@ -20,11 +20,18 @@ return array(
         'searching'     => 'PENCARIAN',
         'new_products'  => 'PRODUK BARU',
         'promotions'    => 'PROMOSI',
-        'coupons'       => 'KUPON SAYA',
+        'my_coupons'    => 'KUPON SAYA',
         'coupon_single' => 'KUPON',
         'promotion'     => 'PROMOSI',
         'not_found'     => 'ERROR',
         'recognize_me'  => 'KENALI SAYA',
+        'tenant_directory'  => 'DIREKTORI PENYEWA',
+        'promotions_tenants'=> 'PROMOSI DARI PELANGGAN',
+        'news_tenants'      => 'BERITA DARI PELANGGAN',
+        'events_tenants'    => 'ACARA DARI PELANGGAN',
+        'coupons'           => 'KUPON',
+        'promotions'        => 'PROMOSI',
+        'news'              => 'BERITA',
         'membership'    => 'MEMBERSHIP'
     ),
 
@@ -45,7 +52,7 @@ return array(
     // modal specific lang
     'modals'                    => array(
         'close'                 => 'Tutup',
-        'ok'                    => 'Ok',
+        'ok'                    => 'OK',
         'email_error'           => 'Harap isi email terlebih dahulu.',
         'event_title'           => 'Events',
         'info_title'            => 'Info',
@@ -83,6 +90,8 @@ return array(
         'yes_button'            => 'Ya',
         'do_not_show_label'     => 'Jangan tunjukkan pesan ini lagi',
         'new_product_price'     => 'Harga baru',
+        'floor'                 => 'Lantai',
+        'category'              => 'Kategori',
     ),
 
     // page specific lang

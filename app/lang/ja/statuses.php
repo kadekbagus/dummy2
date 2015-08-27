@@ -13,93 +13,93 @@ return array(
 
     'orbit' => array(
         'deleted'   => array(
-            'user'           => 'User has been successfully deleted.',
-            'merchant'       => 'Merchant has been successfully deleted.',
-            'retailer'       => 'Retailer has been successfully deleted.',
-            'product'        => 'Product has been successfully deleted.',
-            'category'       => 'Category has been successfully deleted.',
-            'promotion'      => 'Promotion has been successfully deleted.',
-            'coupon'         => 'Coupon has been successfully deleted.',
-            'issued_coupon'  => 'Issued Coupon has been successfully deleted.',
-            'event'          => 'Event has been successfully deleted.',
-            'lucky_draw'     => 'Lucky Draw has been successfully deleted.',
-            'news'           => 'News has been successfully deleted.',
-            'object'         => 'Object has been successfully deleted.',
+            'user'           => 'ユーザーが正常に削除されました.',
+            'merchant'       => 'マーチャントは正常に削除されました.',
+            'retailer'       => '小売業者は、正常に削除されました.',
+            'product'        => '製品が正常に削除されました.',
+            'category'       => 'カテゴリーは、正常に削除されました.',
+            'promotion'      => '推進が正常に削除されました.',
+            'coupon'         => 'クーポンは正常に削除されました.',
+            'issued_coupon'  => '発行クーポンが正常に削除されました.',
+            'event'          => 'イベントが正常に削除されました.',
+            'lucky_draw'     => 'ラッキードローが正常に削除されました.',
+            'news'           => 'ニュースは正常に削除されました.',
+            'object'         => 'オブジェクトが正常に削除されました.',
         ),
         'updated'   => array(
-            'user'           => 'User has been successfully updated.',
-            'your_password'  => 'Your password has been successfully updated.'
+            'user'           => 'ユーザーが正常に更新されました',
+            'your_password'  => 'あなたのパスワードは更新に成功してきました.'
         ),
         'nodata'    => array(
-            'user'          => 'There is no user that matched your search criteria.',
-            'merchant'      => 'There is no merchant that matched your search criteria.',
-            'retailer'      => 'There is no retailer that matched your search criteria.',
-            'product'       => 'There is no product that matched your search criteria.',
-            'tax'           => 'There is no tax that matched your search criteria.',
-            'categories'    => 'There is no category that matched your search criteria.',
-            'promotion'     => 'There is no promotion that matched your search criteria.',
-            'coupon'        => 'There is no coupon that matched your search criteria.',
-            'issued_coupon' => 'There is no issued coupon that matched your search criteria.',
-            'event'         => 'There is no event that matched your search criteria.',
-            'attribute'     => 'There is no product attribute that matched your search criteria.',
-            'widget'        => 'There is no widget that matched your search criteria.',
-            'city'          => 'There is no city that matched your search criteria.',
-            'setting'       => 'There is no setting that matched your search criteria.',
-            'country'       => 'There is no country that matched your search criteria.',
-            'pos_quick_product' => 'There is no POS quick product that matched your search criteria.',
-            'personalinterest' => 'There is no personal interest that matched your search criteria.',
-            'role'          => 'There is no role that matched your search criteria.',
-            'token'         => 'There is no token that matched your search criteria.',
-            'lucky_draw'    => 'There is no lucky draw that matched your search criteria.',
-            'lucky_draw_number_receipt' => 'There is no lucky draw number receipt that matched your search criteria.',
-            'lucky_draw_number' => 'There is no lucky draw number that matched your search criteria.',
-            'news'          => 'There is no news that matched your search criteria.',
-            'object'        => 'There is no object that matched your search criteria.',
-            'activity'      => 'There is no activity that matched your search criteria.',
+            'user'          => '検索条件に一致するユーザはいません.',
+            'merchant'      => '検索条件に一致した何商人はありません.',
+            'retailer'      => '検索条件に一致した何小売業者はありません.',
+            'product'       => '検索条件に一致する何の製品がありません.',
+            'tax'           => '検索条件に一致した租税はありません.',
+            'categories'    => '検索条件に一致した全くカテゴリはありません.',
+            'promotion'     => '検索条件に一致した全く昇進はありません.',
+            'coupon'        => '検索条件に一致した何クーポンはありません.',
+            'issued_coupon' => '検索条件に一致した全く発行されたクーポンはありません.',
+            'event'         => '検索条件に一致するイベントなしはありません.',
+            'attribute'     => '検索条件にマッチした商品の属性がありません.',
+            'widget'        => '検索条件に一致した全くウィジェットはありません.',
+            'city'          => '検索条件に一致した全く都市はありません.',
+            'setting'       => '検索条件に一致する設定はここにはありません.',
+            'country'       => '検索条件に一致したどの国はありません.',
+            'pos_quick_product' => '検索条件に一致した全くPOS迅速な製品がありません.',
+            'personalinterest' => '検索条件に一致しない個人的な利害関係はありません.',
+            'role'          => '検索条件に一致した何の役割はありません.',
+            'token'         => '検索条件に一致した全くトークンはありません.',
+            'lucky_draw'    => '検索条件に一致した何抽選はありません.',
+            'lucky_draw_number_receipt' => '検索条件に一致した全く抽選番号の領収書はありません.',
+            'lucky_draw_number' => '検索条件に一致した全く抽選番号はありません.',
+            'news'          => '検索条件に一致ないニュースはありません.',
+            'object'        => '検索条件に一致した全くオブジェクトはありません.',
+            'activity'      => '検索条件に一致するアクティビティはありません.',
         ),
         'uploaded'  => array(
             'merchant' => array(
-                'logo'          => 'Merchant logo has been successfully uploaded.',
-                'delete_logo'   => 'Merchant logo has been successfully deleted.'
+                'logo'          => 'マーチャントのロゴが正常にアップロードされました',
+                'delete_logo'   => 'マーチャントのロゴが正常に削除されました.'
             ),
             'retailer' => array(
-                'logo'  => 'Retailer logo has been successfully uploaded.',
+                'logo'  => '小売業者のロゴが正常にアップロードされました.',
             ),
             'mall' => array(
-                'background'         => 'Background image has been successfully uploaded.',
-                'delete_background'  => 'Background image has been successfully deleted.'
+                'background'         => '背景画像が正常にアップロードされました.',
+                'delete_background'  => '背景画像が正常に削除されました.'
             ),
             'product' => array(
-                'main'          => 'Product image has been successfully uploaded.',
-                'delete_image'  => 'Product images has been successfully deleted.'
+                'main'          => '商品画像は正常にアップロードされました.',
+                'delete_image'  => '商品画像は正常に削除されました.'
             ),
             'promotion' => array(
-                'main'          => 'Promotion image has been successfully uploaded.',
-                'delete_image'  => 'Promotion image has been successfully deleted.'
+                'main'          => 'プロモーション画像が正常にアップロードされました.',
+                'delete_image'  => 'プロモーション画像が正常に削除されました.'
             ),
             'coupon' => array(
-                'main'          => 'Coupon image has been successfully uploaded.',
-                'delete_image'  => 'Coupon image has been successfully deleted.'
+                'main'          => 'クーポン画像が正常にアップロードされました.',
+                'delete_image'  => 'クーポン画像が正常に削除されました.'
             ),
             'event' => array(
-                'main'          => 'Event image has been successfully uploaded.',
-                'delete_image'  => 'Event image has been successfully deleted.'
+                'main'          => 'イベントイメージが正常にアップロードされました.',
+                'delete_image'  => 'イベントイメージが正常に削除されました.'
             ),
             'user' => array(
-                'profile_picture'           => 'Profile image has been successfully uploaded.',
-                'profile_picture_deleted'   => 'Profile image has been successfully deleted.'
+                'profile_picture'           => 'プロフィール画像が正常にアップロードされました.',
+                'profile_picture_deleted'   => 'プロフィール画像が正常に削除されました.'
             ),
             'widget' => array(
-                'main'           => 'Widget image has been successfully uploaded.',
-                'delete_image'   => 'Widget image has been successfully deleted.'
+                'main'           => 'ウィジェットイメージが正常にアップロードされました.',
+                'delete_image'   => 'ウィジェットイメージが正常に削除されました.'
             ),
             'lucky_draw' => array(
-                'main'          => 'Lucky Draw image has been successfully uploaded.',
-                'delete_image'  => 'Lucky Draw image has been successfully deleted.'
+                'main'          => 'ラッキードローイメージが正常にアップロードされました.',
+                'delete_image'  => 'ラッキードローイメージが正常に削除されました.'
             ),
             'news' => array(
-                'main'          => 'News image has been successfully uploaded.',
-                'delete_image'  => 'News image has been successfully deleted.'
+                'main'          => 'ニュース画像が正常にアップロードされました.',
+                'delete_image'  => 'ニュース画像が正常に削除されました.'
             ),
         )
     )

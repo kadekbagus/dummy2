@@ -20,11 +20,18 @@ return array(
         'searching'     => '搜索',
         'new_products'  => '新产品',
         'promotions'    => '促销',
-        'coupons'       => '我的优惠券',
+        'my_coupons'    => '我的优惠券',
         'coupon_single' => '优惠券',
         'promotion'     => '促销',
         'not_found'     => '错误',
         'recognize_me'  => '认识我',
+        'tenant_directory'  => '租户名录',
+        'promotions_tenants'=> '促销租户',
+        'news_tenants'      => '新闻租户',
+        'events_tenants'    => '活动租户',
+        'coupons'           => '券',
+        'promotions'        => '促销',
+        'news'              => '新闻中心',
         'membership'    => '会员',
     ),
 
@@ -84,6 +91,8 @@ return array(
         'yes_button'            => '对',
         'do_not_show_label'     => '不要再显示此消息',
         'new_product_price'     => '新价格',
+        'floor'                 => '地板',
+        'category'              => '分类',
     ),
 
     // page specific lang

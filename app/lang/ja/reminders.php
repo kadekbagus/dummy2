@@ -13,14 +13,14 @@ return array(
 	|
 	*/
 
-	"password" => "Passwords must be at least six characters and match the confirmation.",
+	"password" => "パスワードは少なくとも6文字で、確認と一致する必要があります.",
 
-	"user" => "We can't find a user with that e-mail address.",
+	"user" => "我々は、電子メールアドレスを持つユーザーを見つけることができません.",
 
-	"token" => "This password reset token is invalid.",
+	"token" => "このパスワードリセットトークンが無効です.",
 
-	"sent" => "Password reminder sent!",
+	"sent" => "パスワードリマインダを送信します!",
 
-	"reset" => "Password has been reset!",
+	"reset" => "パスワードがリセットされました!",
 
 );

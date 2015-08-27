@@ -7443,8 +7443,7 @@ class MobileCIAPIController extends ControllerAPI
             $category_id = trim(OrbitInput::get('cid'));
             $floor = trim(OrbitInput::get('floor'));
 
-            // $pagetitle = Lang::get('mobileci.page_title.searching');
-            $pagetitle = 'TENANT DIRECTORY';
+            $pagetitle = Lang::get('mobileci.page_title.tenant_directory');
 
             $validator = Validator::make(
                 array(
@@ -7696,7 +7695,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (! empty(OrbitInput::get('promotion_id'))) {
-                $pagetitle = 'PROMOTIONS TENANTS';
+                $pagetitle = Lang::get('mobileci.page_title.promotions_tenants');
+
                 $activityPageNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -7709,7 +7709,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (! empty(OrbitInput::get('news_id'))) {
-                $pagetitle = 'NEWS TENANTS';
+                $pagetitle = Lang::get('mobileci.page_title.news_tenants');
+
                 $activityPageNotes = sprintf('Page viewed: News Tenants List Page, news ID: %s', OrbitInput::get('news_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -7722,7 +7723,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (! empty(OrbitInput::get('event_id'))) {
-                $pagetitle = 'EVENTS TENANTS';
+                $pagetitle = Lang::get('mobileci.page_title.events_tenants');
+
                 $activityPageNotes = sprintf('Page viewed: Events Tenants List Page, event ID: %s', OrbitInput::get('event_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -8059,8 +8061,7 @@ class MobileCIAPIController extends ControllerAPI
             $category_id = trim(OrbitInput::get('cid'));
             $floor = trim(OrbitInput::get('floor'));
 
-            // $pagetitle = Lang::get('mobileci.page_title.searching');
-            $pagetitle = 'COUPONS';
+            $pagetitle = Lang::get('mobileci.page_title.coupons');
 
             $validator = Validator::make(
                 array(
@@ -8254,8 +8255,7 @@ class MobileCIAPIController extends ControllerAPI
             $category_id = trim(OrbitInput::get('cid'));
             $floor = trim(OrbitInput::get('floor'));
 
-            // $pagetitle = Lang::get('mobileci.page_title.searching');
-            $pagetitle = 'PROMOTIONS';
+            $pagetitle = Lang::get('mobileci.page_title.promotions');
 
             $validator = Validator::make(
                 array(
@@ -8416,8 +8416,7 @@ class MobileCIAPIController extends ControllerAPI
             $category_id = trim(OrbitInput::get('cid'));
             $floor = trim(OrbitInput::get('floor'));
 
-            // $pagetitle = Lang::get('mobileci.page_title.searching');
-            $pagetitle = 'NEWS';
+            $pagetitle = Lang::get('mobileci.page_title.news');
 
             $validator = Validator::make(
                 array(

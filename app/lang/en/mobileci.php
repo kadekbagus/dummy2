@@ -7,25 +7,32 @@ return array(
     |--------------------------------------------------------------------------
     */
 
-    'page_title'        => array(
-        'home'          => 'HOME',
-        'catalogue'     => 'CATALOGUE',
-        'cart'          => 'CART',
-        'my_account'    => 'MY ACCOUNT',
-        'transfercart'  => 'TRANSFER CART',
-        'customer_id'   => 'CUSTOMER ID',
-        'logout'        => 'LOGOUT',
-        'language'      => 'LANGUAGE',
-        'payment'       => 'PAYMENT',
-        'searching'     => 'SEARCH',
-        'new_products'  => 'NEW PRODUCTS',
-        'promotions'    => 'PROMOTIONS',
-        'coupons'       => 'MY COUPONS',
-        'coupon_single' => 'COUPON',
-        'promotion'     => 'PROMOTION',
-        'not_found'     => 'ERROR',
-        'recognize_me'  => 'RECOGNIZE ME',
-        'membership'    => 'MEMBERSHIP'
+    'page_title'            => array(
+        'home'              => 'HOME',
+        'catalogue'         => 'CATALOGUE',
+        'cart'              => 'CART',
+        'my_account'        => 'MY ACCOUNT',
+        'transfercart'      => 'TRANSFER CART',
+        'customer_id'       => 'CUSTOMER ID',
+        'logout'            => 'LOGOUT',
+        'language'          => 'LANGUAGE',
+        'payment'           => 'PAYMENT',
+        'searching'         => 'SEARCH',
+        'new_products'      => 'NEW PRODUCTS',
+        'promotions'        => 'PROMOTIONS',
+        'my_coupons'        => 'MY COUPONS',
+        'coupon_single'     => 'COUPON',
+        'promotion'         => 'PROMOTION',
+        'not_found'         => 'ERROR',
+        'recognize_me'      => 'RECOGNIZE ME',
+        'tenant_directory'  => 'TENANT DIRECTORY',
+        'promotions_tenants'=> 'PROMOTIONS TENANTS',
+        'news_tenants'      => 'NEWS TENANTS',
+        'events_tenants'    => 'EVENTS TENANTS',
+        'coupons'           => 'COUPONS',
+        'promotions'        => 'PROMOTIONS',
+        'news'              => 'NEWS',
+        'membership'        => 'MEMBERSHIP'
     ),
 
     'widgets'           => array(
@@ -45,7 +52,7 @@ return array(
     // modal specific lang
     'modals'                    => array(
         'close'                 => 'Close',
-        'ok'                    => 'Ok',
+        'ok'                    => 'OK',
         'email_error'           => 'Please enter your email first.',
         'event_title'           => 'Events',
         'info_title'            => 'Info',
@@ -84,6 +91,8 @@ return array(
         'yes_button'            => 'Yes',
         'do_not_show_label'     => 'Do not show this message again',
         'new_product_price'     => 'New price',
+        'floor'                 => 'Floor',
+        'category'              => 'Category',
     ),
 
     // page specific lang

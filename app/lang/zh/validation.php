@@ -113,7 +113,7 @@ return array(
                 ),
                 'variant'           => array(
                 ),
-                    'transaction'   => '产品组合 ID :id 具有一个或链接到它的更多的事务，因此它不能被编辑或删除'
+                'transaction'   => '产品组合 ID :id 具有一个或链接到它的更多的事务，因此它不能被编辑或删除',
                 'upc_code'          => 'UPC :upc 已被使用的其它产品的',
                 'sku_code'          => 'SKU :sku 已被使用的其它产品的',
                 'transaction'       => '积 \':名字\' 具有一个或链接到它的更多的事务，因此它不能被编辑或删除'

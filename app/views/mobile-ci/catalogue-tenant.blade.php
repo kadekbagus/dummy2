@@ -21,7 +21,7 @@
                                             echo $namex;
                                         ?>
                                     @else
-                                        Category
+                                        {{ Lang::get('mobileci.modals.category') }}
                                     @endif
                                 </span>
                                 <span class="caret"></span>
@@ -41,7 +41,7 @@
                                     @if(!empty(Input::get('fid')))
                                         {{ Input::get('fid') }}
                                     @else
-                                        Floor
+                                        {{ Lang::get('mobileci.modals.floor') }}
                                     @endif
                                 </span>
                                 <span class="caret"></span>
