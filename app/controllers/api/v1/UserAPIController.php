@@ -163,6 +163,18 @@ class UserAPIController extends ControllerAPI
                     ->responseOK();
 
             Event::fire('orbit.user.postnewuser.after.commit', array($this, $newuser));
+
+            if ($is_new_consumer_from_captive) {
+                $registration_activity = Activity::mobileci()
+                    ->setActivityType('registration')
+                    ->setUser($newuser)
+                    ->setActivityName('registration_ok')
+                    ->setActivityNameLong('Email Sign Up')  // todo make this configurable?
+                    ->setModuleName('Application')
+                    ->responseOK();
+                $registration_activity->save();
+            }
+
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.user.postnewuser.access.forbidden', array($this, $e));
 
