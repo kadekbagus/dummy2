@@ -301,6 +301,11 @@ class MobileCIAPIController extends ControllerAPI
     public function getSignInView()
     {
         $bg = null;
+        if (\Input::get('payload')) {
+            // has payload, clear out prev cookies
+            $_COOKIE['orbit_firstname'] = '';
+            $_COOKIE['orbit_email'] = '';
+        }
         $landing_url = URL::route('ci-customer-home');
         $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : '';
         $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : '';
