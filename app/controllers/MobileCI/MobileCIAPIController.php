@@ -8732,6 +8732,16 @@ class MobileCIAPIController extends ControllerAPI
         return false;
     }
 
+    /**
+    * Get list language from current merchant or mall
+    *
+    * @param retailer     `mall`    retailer object
+    *
+    * @author Firmansyah <firmansyah@dominopos.com>
+    * @author Irianto Pratama <irianto@dominopos.com>
+    * 
+    * @return array or collection
+    */
     protected function getListLanguages($mall)
     {
         $languages = MerchantLanguage::with('language')
