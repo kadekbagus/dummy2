@@ -14,6 +14,7 @@ use \UserDetail;
 use \Role;
 use \Lang;
 use \Language;
+use \MerchantLanguage;
 use \Apikey;
 use \Validator;
 use \Config;
@@ -307,7 +308,7 @@ class MobileCIAPIController extends ControllerAPI
             $widget_flags->enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
             $widget_flags->enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
@@ -383,7 +384,7 @@ class MobileCIAPIController extends ControllerAPI
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url, 'languages' => $languages));
         } catch (Exception $e) {
@@ -3683,7 +3684,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $cartdata = $this->getCartData();
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Recognize Me');
             $activityPage->setUser($user)
@@ -7747,7 +7748,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories, 'floorList' => $floorList, 'languages' => $languages));
 
@@ -7817,7 +7818,7 @@ class MobileCIAPIController extends ControllerAPI
                 $product->logo = 'mobile-ci/images/default_product.png';
             }
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             if (! empty($promo_id)) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $product->merchant_id . ', promotion ID: '. $promo_id);
@@ -8110,7 +8111,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
             $activityPage->setUser($user)
@@ -8201,7 +8202,7 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
@@ -8302,7 +8303,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
             $activityPage->setUser($user)
@@ -8462,7 +8463,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: %s', 'News List Page');
             $activityPage->setUser($user)
@@ -8524,7 +8525,7 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
-            $languages = Language::get();
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: News Detail, news Id: %s', $product_id);
             $activityPage->setUser($user)
@@ -8586,7 +8587,7 @@ class MobileCIAPIController extends ControllerAPI
                     $totalPerImage = 160;
                     $totalImage = ceil($totalLuckyDrawNumber / $totalPerImage);
 
-                    $languages = Language::get();
+                    $languages = $this->getListLanguages($retailer);
 
                     return View::make('mobile-ci.lucky-draw-number-download', [
                                      'page_title'   => 'Download Lucky Draw Number',
@@ -8731,6 +8732,14 @@ class MobileCIAPIController extends ControllerAPI
         return false;
     }
 
+    protected function getListLanguages($mall)
+    {
+        $languages = MerchantLanguage::with('language')
+                                    ->where('merchant_id', $mall->merchant_id)
+                                    ->get();
+
+        return $languages;
+    }
 
     /**
      * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
@@ -8864,13 +8873,20 @@ class MobileCIAPIController extends ControllerAPI
     {
         $lang_name = OrbitInput::post('lang');
 
+        // Get current retailer/mall object
+        $current_mall = $this->getRetailerInfo();
+
         if ($lang_name != null) {
 
             //check exist lang in db
-            $checkdb = Language::where('name', $lang_name)->count();
+            $lang_count = MerchantLanguage::where('merchant_id', $current_mall->merchant_id)
+                                        ->wherehas('language', function($q) use ($lang_name)
+                                        {
+                                            $q->where('name', '=' , $lang_name);
+                                        })->count();
 
             //set cookies
-            if ($checkdb > 0) {
+            if ($lang_count > 0) {
                 $date_of_expiry = time() + (31556926 * 5) ; // where 31556926 is total seconds for a year.
                 setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );
             }
