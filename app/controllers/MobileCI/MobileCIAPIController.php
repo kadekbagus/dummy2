@@ -226,7 +226,7 @@ class MobileCIAPIController extends ControllerAPI
                 $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
 
                 $name = $user->getFullName();
-                $name = $name ? $name : $user->email;
+                $name = trim($name) ? trim($name) : $user->user_email;
                 $subject = Lang::get('mobileci.inbox.coupon.subject');
 
                 $inbox = new Inbox();
