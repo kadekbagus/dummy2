@@ -11,3 +11,4 @@ Route::get('/app/v1/activity/sign-up-statistics', 'IntermediateAuthController@Ac
 Route::get('/app/v1/activity/device-os-statistics', 'IntermediateAuthController@Activity_getDeviceOsStatistics');
 Route::get('/app/v1/activity/gender-statistics', 'IntermediateAuthController@Activity_getUserGenderStatistics');
 Route::get('/app/v1/activity/active-user-statistics', 'IntermediateAuthController@Activity_getActiveUserStatistics');
+Route::get('/app/v1/activity/new-returning-statistics', 'IntermediateAuthController@Activity_getNewAndReturningUserStatistics');

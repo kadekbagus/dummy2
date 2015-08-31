@@ -42,3 +42,11 @@ Route::get('/api/v1/activity/active-user-statistics', function()
 {
     return ActivityAPIController::create()->getActiveUserStatistics();
 });
+
+/**
+ * Get new (signups) vs returning (signins - signups) user statistics for several period
+ */
+Route::get('/api/v1/activity/new-returning-statistics', function()
+{
+    return ActivityAPIController::create()->getNewAndReturningUserStatistics();
+});
