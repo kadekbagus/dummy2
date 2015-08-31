@@ -144,6 +144,8 @@ return array(
             'coupon'               => 'Coupon ID tidak ditemukan.',
             'issued_coupon'        => 'Issued Coupon ID tidak ditemukan.',
             'event'                => 'Event ID tidak ditemukan.',
+            'event_translations'   => 'The Event Translation ID tidak ditemukan.',
+            'merchant_language'    => 'The Merchant_Language ID tidak ditemukan.',
             'user_status'          => 'User status tidak ditemukan.',
             'user_sortby'          => 'Argument \'sort by\' Anda tidak valid, nilai yang valid adalah: username, email, firstname, lastname, and registered_date.',
             'merchant_status'      => 'Merchant status tidak ditemukan.',
