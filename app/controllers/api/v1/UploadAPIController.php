@@ -2642,10 +2642,7 @@ class UploadAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `event_id`                     (required) - ID of the event
      * @param integer    `event_translation_id`         (required) - ID of the event tranlation
-     * @param integer    `merchant_id`                   (required) - ID of the merchan
-     * @param integer    `merchant_language_id`         (required) - ID of the merchan language
      * @param file|array `images`                       (required) - Event images
      *
      * @return Illuminate\Support\Facades\Response
@@ -2682,7 +2679,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $event_id = OrbitInput::post('event_id');
+            $event_translation_id = OrbitInput::post('event_translation_id');
             $images = OrbitInput::files('images');
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -2692,12 +2689,12 @@ class UploadAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'event_id'      => $event_id,
-                    'images'        => $images,
+                    'event_translation_id'      => $event_translation_id,
+                    'images'                    => $images,
                 ),
                 array(
-                    'event_id'      => 'required|numeric|orbit.empty.event',
-                    'images'        => 'required|nomore.than.one',
+                    'event_translation_id'      => 'required|numeric|orbit.empty.event',
+                    'images'                    => 'required|nomore.than.one',
                 ),
                 $messages
             );
@@ -2718,7 +2715,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Event instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $event = App::make('orbit.empty.event');
+            $event_translation_id = App::make('orbit.empty.event');
 
             // Delete old event image
             $pastMedia = Media::where('object_id', $event->event_id)

@@ -86,7 +86,7 @@ Event::listen('orbit.event.after.translation.save', function($controller, $trans
     $_POST['event_id'] = $event->event_id;
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('event.transalation')
-                                   ->postUploadEventTranslationImage();
+                                   ->postUploadEventImage();
 
     if ($response->code !== 0)
     {
