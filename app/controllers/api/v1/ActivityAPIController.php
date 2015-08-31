@@ -658,12 +658,7 @@ class ActivityAPIController extends ControllerAPI
 
             // Only shows activities which belongs to this merchant
             if ($user->isSuperAdmin() !== TRUE) {
-                $locationIds = $user->getMyRetailerIds();
-
-                if (empty($locationIds)) {
-                    // Just to make sure it query the wrong one.
-                    $locationIds = [-1];
-                }
+                $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
                 $activities->whereIn('activities.location_id', $locationIds);
@@ -816,12 +811,11 @@ class ActivityAPIController extends ControllerAPI
 
             // Only shows activities which belongs to this merchant
             if ($user->isSuperAdmin() !== TRUE) {
-                $locationIds = $user->getMyRetailerIds();
-
-                if (empty($locationIds)) {
-                    // Just to make sure it query the wrong one.
-                    $locationIds = [-1];
-                }
+                // mall group, not specified: all malls in group
+                // mall group, specified: this mall only
+                // mall, not specified: this mall only
+                // mall, specified: must equal self
+                $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
                 $activities->whereIn('activities.location_id', $locationIds);
@@ -976,27 +970,23 @@ class ActivityAPIController extends ControllerAPI
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
             $activities = DB::table('activities')
+                ->join('user_details', 'activities.user_id', '=', 'user_details.user_id')
                 ->select(
-                    'gender',
+                    'user_details.gender',
                     DB::raw('COUNT(*) as count')
                 )
-                ->where('module_name', '=', 'Application')
-                ->where('group', '=', 'mobile-ci')
-                ->where('activity_type', '=', 'login')
-                ->where('activity_name', '=', 'login_ok')
-                ->where('created_at', '>=', $start_date)
-                ->where('created_at', '<=', $end_date)
+                ->where('activities.module_name', '=', 'Application')
+                ->where('activities.group', '=', 'mobile-ci')
+                ->where('activities.activity_type', '=', 'login')
+                ->where('activities.activity_name', '=', 'login_ok')
+                ->where('activities.created_at', '>=', $start_date)
+                ->where('activities.created_at', '<=', $end_date)
                 ->groupBy(DB::raw('1'))
                 ->orderByRaw('1');
 
             // Only shows activities which belongs to this merchant
             if ($user->isSuperAdmin() !== TRUE) {
-                $locationIds = $user->getMyRetailerIds();
-
-                if (empty($locationIds)) {
-                    // Just to make sure it query the wrong one.
-                    $locationIds = [-1];
-                }
+                $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
                 $activities->whereIn('activities.location_id', $locationIds);
@@ -1174,12 +1164,7 @@ class ActivityAPIController extends ControllerAPI
 
                     // Only shows activities which belongs to this merchant
                     if ($user->isSuperAdmin() !== TRUE) {
-                        $locationIds = $user->getMyRetailerIds();
-
-                        if (empty($locationIds)) {
-                            // Just to make sure it query the wrong one.
-                            $locationIds = [-1];
-                        }
+                        $locationIds = $this->getLocationIdsForUser($user);
 
                         // Filter by user location id
                         $activities->whereIn('activities.location_id', $locationIds);
@@ -1275,5 +1260,37 @@ class ActivityAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    /**
+     * Get location IDs for user.
+     *
+     * If user is mall group then if not specified: all malls in group.
+     * If specified then must be mall in group.
+     * If user is mall then return self.
+     * @param User $user
+     * @return mixed[] list of IDs
+     */
+    private function getLocationIdsForUser($user)
+    {
+        $mall_group = Merchant::excludeDeleted()->where('user_id', '=', $user->user_id)->first(); // todo get() ?
+        if (isset($mall_group)) {
+            $malls = Retailer::excludeDeleted()
+                ->where('parent_id', '=', $mall_group->merchant_id)
+                ->where('is_mall', '=', 'yes');
+            OrbitInput::get('location_ids', function($locationIds) use ($malls) {
+                $malls->whereIn('merchant_id', $locationIds);
+            });
+            return $malls->lists('merchant_id');
+        }
+        else {
+            $mall = Retailer::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
+            if (isset($mall)) {
+                return [$mall->merchant_id];
+            }
+            else {
+                return [-1]; // ensure no results
+            }
+        }
     }
 }
