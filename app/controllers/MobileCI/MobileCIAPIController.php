@@ -248,16 +248,24 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store[] = $event->event_id;
                 \Cookie::queue('event', $event_store, 1440);
 
-                if (!empty($alternate_language)) {
+                if (! empty($alternate_language)) {
                     $event_translation = \EventTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
                         ->where('event_id', $event->event_id)->first();
 
-                    if (!empty($event_translation)) {
+                    if (! empty($event_translation)) {
                         foreach (['event_name', 'description'] as $field) {
                             if (isset($event_translation->{$field})) {
                                 $event->{$field} = $event_translation->{$field};
                             }
+                        }
+
+                        $media = $event_translation->find($event_translation->event_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $event->image = $media->path;
                         }
                     }
                 }
@@ -8739,7 +8747,7 @@ class MobileCIAPIController extends ControllerAPI
     *
     * @author Firmansyah <firmansyah@dominopos.com>
     * @author Irianto Pratama <irianto@dominopos.com>
-    * 
+    *
     * @return array or collection
     */
     protected function getListLanguages($mall)

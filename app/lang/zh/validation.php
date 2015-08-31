@@ -159,6 +159,8 @@ return array(
             'coupon'               => ' Coupon ID 您指定未找到.',
             'issued_coupon'        => ' Issued Coupon ID 您指定未找到.',
             'event'                => ' Event ID 您指定未找到.',
+            'event_translations'   => 'The Event Translation ID 未找到.',
+            'merchant_language'    => 'The Merchant_Language ID 未找到.',
             'user_status'          => ' user status 您指定未找到.',
             'user_sortby'          => ' 排序您指定的参数无效，则有效值为: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, membership_since, created_at, updated_at.',
             'merchant_status'      => ' merchant status 您指定未找到.',
