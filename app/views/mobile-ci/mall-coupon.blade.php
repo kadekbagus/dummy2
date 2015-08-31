@@ -148,7 +148,7 @@
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced text-center">
-                        <h4 style="color:#d9534f">Wrong Verification Number</h4>
+                        <h4 style="color:#d9534f" id="errMsg"></h4>
                         <small>"Please check the tenant employee or mall customer service"</small>
                     </div>
                 </div>
@@ -262,6 +262,7 @@
                             tenant_id: $('#tenantid').val()
                         }
                     }).done(function(data){
+                        console.log(data);
                         if(data.status == 'success'){
                             $('#successCouponModal').modal({
                                 backdrop: 'static',
@@ -285,9 +286,11 @@
                             });
                         }else{
                             $('#wrongCouponModal').modal();
+                            $('#errMsg').text(data.responseJSON.message);
                         }
-                    }).fail(function() {
+                    }).fail(function(data) {
                         $('#wrongCouponModal').modal();
+                        $('#errMsg').text(data.responseJSON.message);
                     }).always(function(data){
                         $('#hasCouponModal .modal-content').css('display', 'block');
                         $('#hasCouponModal .modal-spinner').css('display', 'none');
