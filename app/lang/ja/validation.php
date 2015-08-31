@@ -159,6 +159,8 @@ return array(
             'coupon'               => 'Coupon ID あなたが見つかりません指定され.',
             'issued_coupon'        => 'Issued Coupon ID あなたが見つかりません指定され.',
             'event'                => 'Event ID あなたが見つかりません指定され.',
+            'event_translations'   => 'The Event Translation ID 見つかりません.',
+            'merchant_language'    => 'The Merchant_Language ID 見つかりません.',
             'user_status'          => 'user status あなたが見つかりません指定され.',
             'user_sortby'          => 'sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, membership_since, created_at, updated_at.',
             'merchant_status'      => 'merchant status あなたが見つかりません指定され.',

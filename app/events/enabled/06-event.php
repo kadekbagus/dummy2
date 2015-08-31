@@ -74,27 +74,33 @@ Event::listen('orbit.event.postupdateevent.after.save', function($controller, $e
  * @author irianto <irianto@dominopos.com>
  *
  * @param EventAPIController $controller
- * @param EventTranslation $transalation
+ * @param EventTranslations $event_translations
  */
-Event::listen('orbit.event.after.translation.save', function($controller, $transalation)
+Event::listen('orbit.event.after.translation.save', function($controller, $event_translations)
 {
-    $files = OrbitInput::files('images');
+
+    $files = OrbitInput::files('image_translation');
     if (! $files) {
         return;
     }
 
-    $_POST['event_id'] = $event->event_id;
+    $_POST['event_translation_id'] = $event_translations->event_translation_id;
+    $_POST['event_id'] = $event_translations->event_id;
+    $_POST['merchant_language_id'] = $event_translations->merchant_language_id;
     $response = UploadAPIController::create('raw')
-                                   ->setCalledFrom('event.transalation')
+                                   ->setCalledFrom('event.translations')
                                    ->postUploadEventTranslationImage();
 
     if ($response->code !== 0)
     {
         throw new \Exception($response->message, $response->code);
     }
-    unset($_POST['event_id']);
 
-    $event->setRelation('media', $response->data);
-    $event->media = $response->data;
-    $event->image = $response->data[0]->path;
+    unset($_POST['event_translation_id']);
+    unset($_POST['event_id']);
+    unset($_POST['merchant_language_id']);
+
+    $event_translations->setRelation('media_translation', $response->data);
+    $event_translations->media = $response->data;
+    $event_translations->image_translation = $response->data[0]->path;
 });

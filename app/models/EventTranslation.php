@@ -33,4 +33,11 @@ class EventTranslation extends Eloquent
         return $this->belongsTo('MerchantLanguage', 'merchant_language_id', 'merchant_language_id');
     }
 
+    public function media_translation()
+    {
+        return $this->hasMany('Media', 'object_id', 'event_translation_id')
+                    ->where('object_name', 'event_translations');
+    }
+
+
 }
