@@ -2635,6 +2635,226 @@ class UploadAPIController extends ControllerAPI
     }
 
     /**
+     * Upload image for a event tranlation (selected language).
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `event_id`                     (required) - ID of the event
+     * @param integer    `event_translation_id`         (required) - ID of the event tranlation
+     * @param integer    `merchant_id`                   (required) - ID of the merchan
+     * @param integer    `merchant_language_id`         (required) - ID of the merchan language
+     * @param file|array `images`                       (required) - Event images
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadEventTranslationImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadeventimage.before.auth', array($this));
+
+            if (! $this->calledFrom('event.tranlation'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadeventimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadeventimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_event')) {
+                    Event::fire('orbit.upload.postuploadeventimage.authz.notallowed', array($this, $user));
+                    $editEventLang = Lang::get('validation.orbit.actionlist.update_event');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editEventLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadeventimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $event_id = OrbitInput::post('event_id');
+            $images = OrbitInput::files('images');
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'event_id'      => $event_id,
+                    'images'        => $images,
+                ),
+                array(
+                    'event_id'      => 'required|numeric|orbit.empty.event',
+                    'images'        => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadeventimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadeventimage.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('event.new,event.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had Event instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $event = App::make('orbit.empty.event');
+
+            // Delete old event image
+            $pastMedia = Media::where('object_id', $event->event_id)
+                              ->where('object_name', 'event')
+                              ->where('media_name_id', 'event_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($event)
+            {
+                $event_id = $event->event_id;
+                $slug = Str::slug($event->event_name);
+                $file['new']->name = sprintf('%s-%s-%s', $event_id, $slug, time());
+            };
+
+            // Load the orbit configuration for event upload
+            $uploadEventConfig = Config::get('orbit.upload.event.main');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadEventConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadeventimage.before.save', array($this, $event, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $event->event_id,
+                'name'          => 'event',
+                'media_name_id' => 'event_image',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per event
+            if (isset($uploaded[0])) {
+                $event->image = $uploaded[0]['path'];
+                $event->save();
+            }
+
+            Event::fire('orbit.upload.postuploadeventimage.after.save', array($this, $event, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.event.main');
+
+            if (! $this->calledFrom('event.new,event.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadeventimage.after.commit', array($this, $event, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadeventimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('event.new,event.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadeventimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('event.new,event.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadeventimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('event.new,event.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadeventimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('event.new,event.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadeventimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
      * Upload logo for Tenant.
      *
      * @author Rio Astamal <me@rioastamal.net>

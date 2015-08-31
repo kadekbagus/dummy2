@@ -65,3 +65,36 @@ Event::listen('orbit.event.postupdateevent.after.save', function($controller, $e
     $event->load('media');
     $event->image = $response->data[0]->path;
 });
+
+/**
+ * Listen on:    `orbit.event.after.translation.save`
+ * Purpose:      Handle file upload on event cause selected language translation
+ *
+ * @author Firmansyah <firmansyah@dominopos.com>
+ * @author irianto <irianto@dominopos.com>
+ *
+ * @param EventAPIController $controller
+ * @param EventTranslation $transalation
+ */
+Event::listen('orbit.event.after.translation.save', function($controller, $transalation)
+{
+    $files = OrbitInput::files('images');
+    if (! $files) {
+        return;
+    }
+
+    $_POST['event_id'] = $event->event_id;
+    $response = UploadAPIController::create('raw')
+                                   ->setCalledFrom('event.transalation')
+                                   ->postUploadEventTranslationImage();
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+    unset($_POST['event_id']);
+
+    $event->setRelation('media', $response->data);
+    $event->media = $response->data;
+    $event->image = $response->data[0]->path;
+});
