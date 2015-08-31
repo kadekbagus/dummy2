@@ -1711,7 +1711,7 @@ class CouponAPIController extends ControllerAPI
                 ),
                 array(
                     'tenant_id'         => 'required|orbit.empty.retailer',
-                    'issued_coupon_id'              => 'required|numeric|orbit.empty.issuedcoupon',
+                    'issued_coupon_id'              => 'required|numeric|orbit.empty.issuedcoupon|orbit.empty.status_check_coupon_type',
                     'merchant_verification_number'  => 'required|numeric'
                 )
             );
@@ -1725,10 +1725,10 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
-            if ($user->status !== 'active') {
-                $errorMessage = 'Can not redeem coupon, your status is not active.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
+            // if ($user->status !== 'active') {
+            //     $errorMessage = 'Can not redeem coupon, your status is not active.';
+            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // }
 
             // Begin database transaction
             $this->beginTransaction();
@@ -1957,6 +1957,38 @@ class CouponAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
+
+            return TRUE;
+        });
+        
+        // Check the status of user depending on coupon type
+        Validator::extend('orbit.empty.status_check_coupon_type', function ($attribute, $value, $parameters) use ($user) {
+            $prefix = DB::getTablePrefix();
+            $now = date('Y-m-d');
+
+            $issuedCoupon = IssuedCoupon::with('coupon')
+                        ->whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                        ->where('issued_coupons.issued_coupon_id', $value)
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->whereRaw("(date({$prefix}issued_coupons.expired_date) >= ? or date({$prefix}issued_coupons.expired_date) is null)", [$now])
+                        ->first();
+
+            if (empty($issuedCoupon)) {
+                $errorMessage = sprintf('Issued coupon ID %s is not found.', htmlentities($value));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // if rule_type = auto_issue_on_signup, bypass user status
+            if ($issuedCoupon->coupon->couponRule()->first()->rule_type !== 'auto_issue_on_signup') {
+                if ($user->status !== 'active') {
+                    $errorMessage = 'Can not redeem coupon, your status is not active.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+
+                    return FALSE;
+                }
+            }
+
+            App::instance('orbit.empty.status_check_coupon_type', $issuedCoupon);
 
             return TRUE;
         });
