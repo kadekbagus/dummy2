@@ -27,7 +27,7 @@
                                         <p class="promo-item">{{ Lang::get('mobileci.promotion_list.product_label') }}: {{ $promo->promotionrule->discountproduct->product_name }}</p>
                                     @elseif($promo->promotionrule->discount_object_type == 'family')
                                         <p class="promo-item">
-                                            {{ Lang::get('mobileci.promotion_list.category_label') }}: 
+                                            {{ Lang::get('mobileci.promotion_list.category_label') }}:
                                             @if(!is_null($promo->promotionrule->discountcategory1))
                                             <span>{{ $promo->promotionrule->discountcategory1->category_name }}</span>
                                             @endif
@@ -109,7 +109,7 @@
 <script type="text/javascript">
     $(window).bind("pageshow", function(event) {
         if (event.originalEvent.persisted) {
-            window.location.reload() 
+            window.location.reload()
         }
     });
     $(document).ready(function(){

@@ -187,7 +187,6 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
 
-
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -1725,11 +1724,6 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
-
-            if ($user->status !== 'active') {
-                $errorMessage = 'Can not redeem coupon, your status is not active.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
 
             if ($user->status !== 'active') {
                 $errorMessage = 'Can not redeem coupon, your status is not active.';

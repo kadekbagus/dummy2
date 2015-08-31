@@ -6136,10 +6136,17 @@ class MobileCIAPIController extends ControllerAPI
             return $e;
         }
 
-        if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'Session has ben expires.' || $e->getMessage() === 'User agent miss match.') {
-            return \Redirect::to('/customer');
-        } else {
-            return \Redirect::to('/customer/logout');
+        switch ($e->getCode()) {
+            case Session::ERR_UNKNOWN;
+            case Session::ERR_IP_MISS_MATCH;
+            case Session::ERR_UA_MISS_MATCH;
+            case Session::ERR_SESS_NOT_FOUND;
+            case Session::ERR_SESS_EXPIRE;
+                return \Redirect::to('/customer/logout');
+                break;
+
+            default:
+                return \Redirect::to('/customer');
         }
     }
 
