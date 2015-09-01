@@ -2785,7 +2785,7 @@ class UploadAPIController extends ControllerAPI
             Event::fire('orbit.upload.postuploadeventtranslationimage.after.save', array($this, $event_translations, $uploader));
 
             $this->response->data = $mediaList;
-            $this->response->message = Lang::get('statuses.orbit.uploaded.event.translation');
+            $this->response->message = Lang::get('statuses.orbit.uploaded.event_translation.main');
 
             if (! $this->calledFrom('event.translations')) {
                 // Commit the changes

@@ -85,6 +85,10 @@ return array(
                 'main'          => 'Event image has been successfully uploaded.',
                 'delete_image'  => 'Event image has been successfully deleted.'
             ),
+            'event_translation' => array(
+                'main'          => 'Event Translation image has been successfully uploaded.',
+                'delete_image'  => 'Event Translation image has been successfully deleted.'
+            ),
             'user' => array(
                 'profile_picture'           => 'Profile image has been successfully uploaded.',
                 'profile_picture_deleted'   => 'Profile image has been successfully deleted.'
