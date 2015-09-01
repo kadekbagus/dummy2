@@ -1162,23 +1162,38 @@ class ActivityAPIController extends ControllerAPI
                         ->where('created_at', '>=', $start_limit)
                         ->where('created_at', '<=', $end_limit);
 
+                    $duplicate_activities = DB::table('activities')
+                        ->select(
+                            DB::raw('COUNT(*) as count')
+                        )
+                        ->where('module_name', '=', 'Application')
+                        ->where('group', '=', 'mobile-ci')
+                        ->where('activity_type', '=', 'login')
+                        ->where('activity_name', '=', 'login_ok')
+                        ->where('created_at', '>=', $start_limit)
+                        ->where('created_at', '<=', $end_limit);
+
+
                     // Only shows activities which belongs to this merchant
                     if ($user->isSuperAdmin() !== TRUE) {
                         $locationIds = $this->getLocationIdsForUser($user);
 
                         // Filter by user location id
                         $activities->whereIn('activities.location_id', $locationIds);
+                        $duplicate_activities->whereIn('activities.location_id', $locationIds);
                     } else {
                         // Filter by user location id
-                        OrbitInput::get('location_ids', function($locationIds) use ($activities) {
+                        OrbitInput::get('location_ids', function($locationIds) use ($activities, $duplicate_activities) {
                             $activities->whereIn('activities.location_id', $locationIds);
+                            $duplicate_activities->whereIn('activities.location_id', $locationIds);
                         });
                     }
 
                     $result[$period][$period_name] = [
                         'start_date' => $start_limit,
                         'end_date' => $end_limit,
-                        'count' => $activities->get()
+                        'count' => $activities->get(),
+                        'count_with_duplicates' => $duplicate_activities->get()
                     ];
                 }
 
