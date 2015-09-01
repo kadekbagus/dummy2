@@ -2779,7 +2779,6 @@ class UploadAPIController extends ControllerAPI
             // This is temporary since right now the business rules actually
             // only allows one image per event
             if (isset($uploaded[0])) {
-                $event_translations->image_translation = $uploaded[0]['path'];
                 $event_translations->save();
             }
 
