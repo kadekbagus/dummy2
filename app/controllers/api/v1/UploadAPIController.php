@@ -2645,7 +2645,7 @@ class UploadAPIController extends ControllerAPI
      * @param integer    `event_id`                     (required) - ID of the event
      * @param integer    `event_translation_id`         (required) - ID of the event tranlation
      * @param integer    `merchant_language_id`         (required) - ID of the merchan language
-     * @param file|array `images`                       (required) - Event images
+     * @param file|array `image_translation`            (required) - Event translation images
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -2684,7 +2684,7 @@ class UploadAPIController extends ControllerAPI
             $event_translation_id = OrbitInput::post('event_translation_id');
             $event_id = OrbitInput::post('event_id');
             $merchant_language_id = OrbitInput::post('merchant_language_id');
-            $image_translation = OrbitInput::files('image_translation');
+            $image_translation = OrbitInput::files('image_translation_' . $merchant_language_id);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
                     'max' => 1
@@ -2727,7 +2727,7 @@ class UploadAPIController extends ControllerAPI
 
             // Delete old event translation image
             $pastMedia = Media::where('object_id', $event_translations->event_translation_id)
-                              ->where('object_name', 'event_translations')
+                              ->where('object_name', 'event_translation')
                               ->where('media_name_id', 'event_translation_image');
 
             // Delete each files
@@ -2769,7 +2769,7 @@ class UploadAPIController extends ControllerAPI
             // Save the files metadata
             $object = array(
                 'id'            => $event_translations->event_translation_id,
-                'name'          => 'event_translations',
+                'name'          => 'event_translation',
                 'media_name_id' => 'event_translation_image',
                 'modified_by'   => 1
             );
