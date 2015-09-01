@@ -1192,8 +1192,8 @@ class ActivityAPIController extends ControllerAPI
                     $result[$period][$period_name] = [
                         'start_date' => $start_limit,
                         'end_date' => $end_limit,
-                        'count' => $activities->get(),
-                        'count_with_duplicates' => $duplicate_activities->get()
+                        'count' => $activities->first()->count,
+                        'count_with_duplicates' => $duplicate_activities->first()->count
                     ];
                 }
 
