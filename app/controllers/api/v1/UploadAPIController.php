@@ -2642,9 +2642,11 @@ class UploadAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `event_id`                     (required) - ID of the event
      * @param integer    `event_translation_id`         (required) - ID of the event tranlation
+<<<<<<< HEAD
      * @param integer    `merchant_language_id`         (required) - ID of the merchan language
+=======
+>>>>>>> 270f2564aee242ed8ee4788fa8ec905b133d7659
      * @param file|array `images`                       (required) - Event images
      *
      * @return Illuminate\Support\Facades\Response
@@ -2682,9 +2684,13 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $event_translation_id = OrbitInput::post('event_translation_id');
+<<<<<<< HEAD
             $event_id = OrbitInput::post('event_id');
             $merchant_language_id = OrbitInput::post('merchant_language_id');
             $image_translation = OrbitInput::files('image_translation');
+=======
+            $images = OrbitInput::files('images');
+>>>>>>> 270f2564aee242ed8ee4788fa8ec905b133d7659
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
                     'max' => 1
@@ -2694,6 +2700,7 @@ class UploadAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'event_translation_id'      => $event_translation_id,
+<<<<<<< HEAD
                     'event_id'                  => $event_id,
                     'merchant_language_id'      => $merchant_language_id,
                     'image_translation'         => $image_translation,
@@ -2703,6 +2710,13 @@ class UploadAPIController extends ControllerAPI
                     'event_id'                  => 'required|numeric|orbit.empty.event',
                     'merchant_language_id'      => 'required|numeric|orbit.empty.merchant_language',
                     'image_translation'         => 'required|nomore.than.one',
+=======
+                    'images'                    => $images,
+                ),
+                array(
+                    'event_translation_id'      => 'required|numeric|orbit.empty.event',
+                    'images'                    => 'required|nomore.than.one',
+>>>>>>> 270f2564aee242ed8ee4788fa8ec905b133d7659
                 ),
                 $messages
             );
@@ -2723,7 +2737,11 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Event Translation instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
+<<<<<<< HEAD
             $event_translations = App::make('orbit.empty.event_translation');
+=======
+            $event_translation_id = App::make('orbit.empty.event');
+>>>>>>> 270f2564aee242ed8ee4788fa8ec905b133d7659
 
             // Delete old event translation image
             $pastMedia = Media::where('object_id', $event_translations->event_translation_id)

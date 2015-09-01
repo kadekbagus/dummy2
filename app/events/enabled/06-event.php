@@ -88,8 +88,13 @@ Event::listen('orbit.event.after.translation.save', function($controller, $event
     $_POST['event_id'] = $event_translations->event_id;
     $_POST['merchant_language_id'] = $event_translations->merchant_language_id;
     $response = UploadAPIController::create('raw')
+<<<<<<< HEAD
                                    ->setCalledFrom('event.translations')
                                    ->postUploadEventTranslationImage();
+=======
+                                   ->setCalledFrom('event.transalation')
+                                   ->postUploadEventImage();
+>>>>>>> 270f2564aee242ed8ee4788fa8ec905b133d7659
 
     if ($response->code !== 0)
     {
