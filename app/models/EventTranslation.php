@@ -36,7 +36,7 @@ class EventTranslation extends Eloquent
     public function media_translation()
     {
         return $this->hasMany('Media', 'object_id', 'event_translation_id')
-                    ->where('object_name', 'event_translations');
+                    ->where('object_name', 'event_translation');
     }
 
 
