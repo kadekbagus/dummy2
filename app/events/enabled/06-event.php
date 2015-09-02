@@ -101,7 +101,7 @@ Event::listen('orbit.event.after.translation.save', function($controller, $event
     unset($_POST['event_id']);
     unset($_POST['merchant_language_id']);
 
-    $event_translations->setRelation('media_translation', $response->data);
+    $event_translations->setRelation('media', $response->data);
     $event_translations->media = $response->data;
     $event_translations->image_translation = $response->data[0]->path;
 });
