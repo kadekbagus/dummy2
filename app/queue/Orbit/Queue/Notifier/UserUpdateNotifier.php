@@ -48,6 +48,7 @@ class UserUpdateNotifier
      * @param array $data [
      *                      user_id => NUM,
      *                      retailer_id => NUM,
+     *                      human_error => FALSE
      * ]
      * @return void
      * @todo Make this testable
@@ -99,6 +100,7 @@ class UserUpdateNotifier
                 'membership_since' => $user->membership_since,
                 'date_of_birth' => $user->userdetail->birthdate,
                 'gender' => $user->userdetail->gender,
+                'idcard' => $user->userdetail->idcard,
                 'address_line1' => $user->userdetail->address_line1,
                 'city' => $user->userdetail->city,
                 'province' => $user->userdetail->province,
@@ -132,6 +134,7 @@ class UserUpdateNotifier
             // Non-Zero code means an error
             if ((string)$response->code !== '0') {
                 $errorMessage = sprintf('Unexpected response code %s, expected 0 (zero).', $response->code);
+                $errorMessage = ! empty($response->message) ? $response->message : $errorMessage;
                 throw new Exception($errorMessage);
             }
 
@@ -179,7 +182,12 @@ class UserUpdateNotifier
             }
 
             // Update the user object based on the return value of external system
-            DB::connection()->getPdo()->beginTransaction();
+            $insideTransactionFromNotifier = FALSE;
+
+            if (! DB::connection()->getPdo()->inTransaction()) {
+                DB::connection()->getPdo()->beginTransaction();
+                $insideTransactionFromNotifier = TRUE;                
+            }
 
             $doSave = FALSE;
             if (! empty($response->data->membership_number)) {
@@ -197,7 +205,9 @@ class UserUpdateNotifier
             // Everything seems fine lets delete the job
             $job->delete();
 
-            DB::connection()->getPdo()->commit();
+            if (DB::connection()->getPdo()->inTransaction() && $insideTransactionFromNotifier === TRUE) {
+                DB::connection()->getPdo()->commit();
+            }
 
             Log::info($message);
             return [
@@ -228,6 +238,10 @@ class UserUpdateNotifier
             $job->release((int)$notifyData['release_time']);
 
             Log::error($message);
+
+            if ($data['human_error']) {
+                $message = $e->getMessage();
+            }
         }
 
         return [
