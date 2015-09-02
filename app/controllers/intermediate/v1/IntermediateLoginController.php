@@ -369,7 +369,7 @@ class IntermediateLoginController extends IntermediateBaseController
                      ->setActivityNameLong('Sign In')
                      ->responseOK();
 
-            static::proceedPayload($activity);
+            static::proceedPayload($activity, $user->registration_activity_id);
         } else {
             // Login Failed
             $activity->setUser('guest')
@@ -435,7 +435,7 @@ class IntermediateLoginController extends IntermediateBaseController
         return Redirect::to('/customer')->withCookie($cookie);
     }
 
-    public static function proceedPayload($activity)
+    public static function proceedPayload($activity, $registration_activity_id = null)
     {
         // The sign-in view put the payload from query string to post body on AJAX call
         if (! isset($_POST['payload'])) {
@@ -551,6 +551,27 @@ class IntermediateLoginController extends IntermediateBaseController
             }
 
             $activity->setActivityNameLong($activityNameLong);
+        }
+
+        // this is passed up from LoginAPIController::postRegisterUserInShop, to MobileCIAPIController::postLoginInShop
+        // to here, so if this login automatically registered the user, we can update this based on where
+        // the registration is coming from.
+        if (isset($registration_activity_id)) {
+            $registration_activity = Activity::where('activity_id', '=', $registration_activity_id)
+                ->where('activity_name', '=', 'registration_ok')
+                ->where('user_id', '=', $activity->user_id)
+                ->first();
+            if (isset($registration_activity)) {
+                if (isset($from)) {
+                    if ($from === 'facebook') {
+                        $registration_activity->activity_name_long = 'Facebook Sign Up';
+                        $registration_activity->save();
+                    } else if ($from === 'form') {
+                        $registration_activity->activity_name_long = 'Email Sign Up';
+                        $registration_activity->save();
+                    }
+                }
+            }
         }
     }
 

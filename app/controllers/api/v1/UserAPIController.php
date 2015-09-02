@@ -102,6 +102,15 @@ class UserAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // we need this for the registration activity.
+            $captive_location = null;
+            if ($is_new_consumer_from_captive) {
+                $captive_location = Retailer::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
+                if (!isset($captive_location)) {
+                    OrbitShopAPI::throwInvalidArgument('cannot find captive portal location');
+                }
+            }
+
             Event::fire('orbit.user.postnewuser.after.validation', array($this, $validator));
 
             // Begin database transaction
@@ -163,6 +172,19 @@ class UserAPIController extends ControllerAPI
                     ->responseOK();
 
             Event::fire('orbit.user.postnewuser.after.commit', array($this, $newuser));
+
+            if ($is_new_consumer_from_captive) {
+                $registration_activity = Activity::mobileci()
+                    ->setActivityType('registration')
+                    ->setLocation($captive_location)
+                    ->setUser($newuser)
+                    ->setActivityName('registration_ok')
+                    ->setActivityNameLong('Email Sign Up')  // todo make this configurable?
+                    ->setModuleName('Application')
+                    ->responseOK();
+                $registration_activity->save();
+            }
+
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.user.postnewuser.access.forbidden', array($this, $e));
 
