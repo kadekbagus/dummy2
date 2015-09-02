@@ -74,7 +74,7 @@ Event::listen('orbit.user.postupdatemembership.after.save', function($controller
 
     // So the form need to send some flag that it wants to trigger notify
     // as an example from query string $_GET['do_notify']
-    $doNotify = OrbitInput::get('orbit_api_do_notify', NULL);
+    $doNotify = OrbitInput::post('orbit_api_do_notify', NULL);
 
     if ($doNotify !== 'yes') {
         return NULL;
@@ -96,18 +96,19 @@ Event::listen('orbit.user.postupdatemembership.after.save', function($controller
     }
 
     if (trim($setting->setting_value) !== 'yes') {
-        Log::info(sprintf('[INFO] - Setting value of `realtime_notify_update_member` retailer id %s is not yes.', $retailerId);
+        Log::info(sprintf('[INFO] - Setting value of `realtime_notify_update_member` retailer id %s is not yes.', $retailerId));
         return NULL;
     }
 
     $job = new FakeJob();
     $data = [
         'user_id' => $customer->user_id,
-        'retailer_id' => $retailerId
+        'retailer_id' => $retailerId,
+        'human_error' => TRUE
     ];
 
     // Notify the queueing system
-    $notifier = new QUserLoginNotifier();
+    $notifier = new QUserUpdateNotifier();
     $response = $notifier->fire($job, $data);
 
     if ($response['status'] !== 'ok') {
@@ -131,7 +132,7 @@ Event::listen('orbit.user.postupdatemembership.after.commit', function($controll
 
     // So the form need to send some flag that it wants to trigger notify
     // as an example from query string $_GET['do_notify']
-    $doNotify = OrbitInput::get('orbit_api_do_notify', NULL);
+    $doNotify = OrbitInput::post('orbit_api_do_notify', NULL);
 
     if ($doNotify !== 'yes') {
         return NULL;
@@ -153,7 +154,7 @@ Event::listen('orbit.user.postupdatemembership.after.commit', function($controll
     }
 
     if (trim($setting->setting_value) !== 'yes') {
-        Log::info(sprintf('[INFO] - Setting value of `notify_update_member` retailer id %s is not yes.', $retailerId);
+        Log::info(sprintf('[INFO] - Setting value of `notify_update_member` retailer id %s is not yes.', $retailerId));
         return NULL;
     }
 
@@ -185,7 +186,7 @@ Event::listen('orbit.user.postnewmembership.after.commit', function($controller,
 
     // So the form need to send some flag that it wants to trigger notify
     // as an example from query string $_GET['do_notify']
-    $doNotify = OrbitInput::get('orbit_api_do_notify', NULL);
+    $doNotify = OrbitInput::post('orbit_api_do_notify', NULL);
 
     if ($doNotify !== 'yes') {
         return NULL;
@@ -207,7 +208,7 @@ Event::listen('orbit.user.postnewmembership.after.commit', function($controller,
     }
 
     if (trim($setting->setting_value) !== 'yes') {
-        Log::info(sprintf('[INFO] - Setting value of `notify_new_member` retailer id %s is not yes.', $retailerId);
+        Log::info(sprintf('[INFO] - Setting value of `notify_new_member` retailer id %s is not yes.', $retailerId));
         return NULL;
     }
 
