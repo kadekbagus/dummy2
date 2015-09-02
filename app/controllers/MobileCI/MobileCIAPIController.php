@@ -247,21 +247,25 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store[] = $event->event_id;
                 \Cookie::queue('event', $event_store, 1440);
 
-                if (!empty($alternate_language)) {
+                if (! empty($alternate_language)) {
                     $event_translation = \EventTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
                         ->where('event_id', $event->event_id)->first();
 
-                    if (!empty($event_translation)) {
+                    if (! empty($event_translation)) {
                         foreach (['event_name', 'description'] as $field) {
                             if (isset($event_translation->{$field})) {
                                 $event->{$field} = $event_translation->{$field};
                             }
                         }
-                        $media = $event_translation->with('media_orig')
-                                    ->where('event_translation_id', $event_translation->event_translation_id)
-                                    ->get();
-                        $event->image = $media[0]->media_orig[0]->path;
+
+                        $media = $event_translation->find($event_translation->event_translation_id)
+                            ->media_orig()
+                            ->first();
+                            
+                        if (isset($media->path)) {
+                            $event->image = $media->path;
+                        }
                     }
                 }
             }
@@ -8878,9 +8882,7 @@ class MobileCIAPIController extends ControllerAPI
                 $date_of_expiry = time() + (31556926 * 5) ; // where 31556926 is total seconds for a year.
                 setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );
             }
-
-            return \Redirect::to('/customer/home');
         }
+        return \Redirect::to('/customer/home');
    }
-
 }
