@@ -258,6 +258,10 @@ class MobileCIAPIController extends ControllerAPI
                                 $event->{$field} = $event_translation->{$field};
                             }
                         }
+                        $media = $event_translation->with('media_orig')
+                                    ->where('event_translation_id', $event_translation->event_translation_id)
+                                    ->get();
+                        $event->image = $media[0]->media_orig[0]->path;
                     }
                 }
             }
