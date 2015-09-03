@@ -1381,9 +1381,18 @@ class CouponAPIController extends ControllerAPI
 
             // Filter coupon rule by rule type
             OrbitInput::get('rule_type', function ($ruleTypes) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($ruleTypes) {
-                    $q->whereIn('rule_type', $ruleTypes);
-                });
+                if (is_array($ruleTypes)) {
+                    $coupons->whereHas('couponrule', function($q) use ($ruleTypes) {
+                        $q->whereIn('rule_type', $ruleTypes);
+                    });
+                } else {
+                    $coupons->whereHas('couponrule', function($q) use ($ruleTypes) {
+                        $q->where(function($q) use ($ruleTypes) {
+                            $q->where('rule_type', $ruleTypes);
+                            $q->orWhereNull('rule_type');
+                        });
+                    });
+                }
             });
 
              // Filter coupon rule by rule object type
