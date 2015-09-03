@@ -671,11 +671,64 @@ class ActivityAPIController extends ControllerAPI
                 });
             }
 
+
+            $signups = $activities->get();
+            // basically what we want to calculate is
+            // SELECT all_seen_dates.date, all_seen_activities.activity, COALESCE(activity_counts.count, 0)
+            // FROM all_seen_dates
+            // JOIN all_seen_activities
+            // LEFT JOIN activity_counts ON
+            //   (all_seen_dates.date = activity_counts.date) AND
+            //   (all_seen_activities.activity = activity_counts.activity)
+            //
+            // ensure for every date in period there exists data.
+            // first we gather up activity names
+            $names_seen = [];
+            foreach ($signups as $sign_up) {
+                $names_seen[$sign_up->activity] = true;
+            }
+            // then we take advantage of the sorted nature of the result set.
+            // if we are done with a date, we create the missing records for the activities we did not see
+            // on that date
+            $sign_ups_result = [];
+            $prev_date = null;
+            $sign_up_accumulator = [];
+            foreach ($signups as $sign_up) {
+                $this_date = $sign_up->date;
+                if (($this_date !== $prev_date) && ($prev_date !== null)) {
+                    // flush
+                    $prev_date_seen_names = [];
+                    foreach ($sign_up_accumulator as $prev_date_sign_up) {
+                        $prev_date_seen_names[$prev_date_sign_up->activity] = true;
+                        $sign_ups_result[] = $prev_date_sign_up;
+                    }
+                    foreach ($names_seen as $name => $seen) {
+                        if (!isset($prev_date_seen_names[$name])) {
+                            $sign_ups_result[] = (object)['date' => $prev_date, 'activity' => $name, 'count' => 0];
+                        }
+                    }
+                    $sign_up_accumulator = [];
+                }
+                $sign_up_accumulator[] = $sign_up;
+                $prev_date = $this_date;
+            }
+            // flush
+            $prev_date_seen_names = [];
+            foreach ($sign_up_accumulator as $prev_date_sign_up) {
+                $prev_date_seen_names[$prev_date_sign_up->activity] = true;
+                $sign_ups_result[] = $prev_date_sign_up;
+            }
+            foreach ($names_seen as $name => $seen) {
+                if (!isset($prev_date_seen_names[$name])) {
+                    $sign_ups_result[] = (object)['date' => $prev_date, 'activity' => $name, 'count' => 0];
+                }
+            }
+
             $this->response->data = [
                 'this_period' => [
                     'start_date' => $start_date,
                     'end_date' => $end_date,
-                    'signups' => $activities->get()
+                    'signups' => $sign_ups_result,
                 ],
                 'previous_period' => [
                     'start_date' => $previous_start_date,
