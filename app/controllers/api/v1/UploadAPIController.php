@@ -15,7 +15,6 @@ use DominoPOS\OrbitUploader\UploaderConfig;
 use DominoPOS\OrbitUploader\UploaderMessage;
 use DominoPOS\OrbitUploader\Uploader;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
-use \Exception;
 
 class UploadAPIController extends ControllerAPI
 {
