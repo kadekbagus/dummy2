@@ -134,7 +134,9 @@ class UserUpdateNotifier
             // Non-Zero code means an error
             if ((string)$response->code !== '0') {
                 $errorMessage = sprintf('Unexpected response code %s, expected 0 (zero).', $response->code);
-                $errorMessage = ! empty($response->message) ? $response->message : $errorMessage;
+                if ($data['human_error']) {
+                    $errorMessage = ! empty($response->message) ? $response->message : $errorMessage;
+                }
                 throw new Exception($errorMessage);
             }
 
