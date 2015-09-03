@@ -76,7 +76,7 @@
                 <div class="modal-body">
                     @if (isset($languages))
                         @foreach ($languages as $lang)
-                            <input type="radio" name="lang" value="{{{ $lang->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->name === $_COOKIE['orbit_preferred_language']) checked @endif @endif> {{{ $lang->name_long }}}<br>
+                            <input type="radio" name="lang" value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) checked @endif @endif> {{{ $lang->language->name_long }}}<br>
                         @endforeach
                     @endif
                 </div>
