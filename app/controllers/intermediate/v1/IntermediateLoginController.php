@@ -505,7 +505,8 @@ class IntermediateLoginController extends IntermediateBaseController
 
         // Try to update the mac address table
         if (! empty($mac)) {
-            $macModel = MacAddress::where('mac_address', $mac)
+            $macModel = MacAddress::excludeDeleted()
+                                  ->where('mac_address', $mac)
                                   ->where('user_email', $email)
                                   ->orderBy('created_at', 'desc')
                                   ->first();
@@ -514,6 +515,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 $macModel = new MacAddress();
                 $macModel->mac_address = $mac;
                 $macModel->user_email = $email;
+                $macModel->status = 'active';
             }
 
             $macModel->ip_address = $ip;
