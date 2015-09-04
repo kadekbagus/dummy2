@@ -1374,7 +1374,7 @@ class ActivityAPIController extends ControllerAPI
                     ->where('created_at', '>=', $start_date)
                     ->where('created_at', '<=', $end_date);
 
-                $sign_ins = DB::table('activities')
+                $returning_sign_ins = DB::table('activities')
                     ->select(
                         DB::raw('COUNT(DISTINCT user_id) as count')
                     )
@@ -1401,23 +1401,23 @@ class ActivityAPIController extends ControllerAPI
 
                     // Filter by user location id
                     $sign_ups->whereIn('activities.location_id', $locationIds);
-                    $sign_ins->whereIn('activities.location_id', $locationIds);
+                    $returning_sign_ins->whereIn('activities.location_id', $locationIds);
                 } else {
                     // Filter by user location id
-                    OrbitInput::get('location_ids', function($locationIds) use ($sign_ups, $sign_ins) {
+                    OrbitInput::get('location_ids', function($locationIds) use ($sign_ups, $returning_sign_ins) {
                         $sign_ups->whereIn('activities.location_id', $locationIds);
-                        $sign_ins->whereIn('activities.location_id', $locationIds);
+                        $returning_sign_ins->whereIn('activities.location_id', $locationIds);
                     });
                 }
 
                 $sign_up_count = (int)$sign_ups->first()->count;
-                $sign_in_count = (int)$sign_ins->first()->count;
+                $returning_sign_in_count = (int)$returning_sign_ins->first()->count;
 
                 $this->response->data = [
                     'start_date' => $start_date,
                     'end_date' => $end_date,
                     'new' => $sign_up_count,
-                    'returning' => $sign_in_count - $sign_up_count
+                    'returning' => $returning_sign_in_count
                 ];
             } catch (ACLForbiddenException $e) {
                 Event::fire('orbit.activity.getactivity.access.forbidden', array($this, $e));
