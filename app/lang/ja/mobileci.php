@@ -39,7 +39,7 @@ return array(
         'catalogue'     => 'カタログ',
         'new_product'   => '新製品',
         'promotion'     => 'プロモーション',
-        'coupon'        => 'MYクーポン',
+        'coupon'        => '私の クーポン',
         'tenant'        => 'テナント',
         'lucky_draw'    => '抽選',
         'news'          => 'ニュース',
