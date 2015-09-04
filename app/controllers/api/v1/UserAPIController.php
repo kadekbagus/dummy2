@@ -2371,7 +2371,7 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d H:i:s',
+                    'membership_since'      => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists_but_me',
                     'status'                => 'in:active,inactive,pending',
                     'idcard_number'         => 'numeric',
