@@ -1363,9 +1363,6 @@ class ActivityAPIController extends ControllerAPI
                 }
                 Event::fire('orbit.activity.getactivity.after.validation', array($this, $validator));
 
-                // registrations from start to end grouped by date part and activity name long.
-                // activity name long should include source.
-                $tablePrefix = DB::getTablePrefix();
                 $sign_ups = DB::table('activities')
                     ->select(
                         DB::raw('COUNT(*) as count')
@@ -1386,7 +1383,17 @@ class ActivityAPIController extends ControllerAPI
                     ->where('activity_type', '=', 'login')
                     ->where('activity_name', '=', 'login_ok')
                     ->where('created_at', '>=', $start_date)
-                    ->where('created_at', '<=', $end_date);
+                    ->where('created_at', '<=', $end_date)
+                    ->whereIn('user_id', function ($q) use ($start_date, $end_date) {
+                        $q->select('user_id')
+                            ->from('activities')
+                            ->where('module_name', '=', 'Application')
+                            ->where('group', '=', 'mobile-ci')
+                            ->where('activity_type', '=', 'registration')
+                            ->where('activity_name', '=', 'registration_ok')
+                            ->where('created_at', '>=', $start_date)
+                            ->where('created_at', '<=', $end_date);
+                    });
 
                 // Only shows activities which belongs to this merchant
                 if ($user->isSuperAdmin() !== TRUE) {
