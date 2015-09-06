@@ -1727,6 +1727,8 @@ class EventAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.event.after.translation.save', array($this, $new_translation));
+
+                $event->translation = $new_translation;
             }
             elseif ($op === 'update') {
                 /** @var EventTranslation $existing_translation */
@@ -1742,6 +1744,8 @@ class EventAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $existing_transalation
                 Event::fire('orbit.event.after.translation.save', array($this, $existing_translation));
+
+                $event->translation = $existing_translation;
             }
             elseif ($op === 'delete') {
                 /** @var EventTranslation $existing_translation */
