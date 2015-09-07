@@ -74,17 +74,13 @@
             </div>
             <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
                 <div class="modal-body">
-                    <select class="form-control" name="lang">
-                        <option value="">== Select Language==</option>
+                    <select class="form-control" name="lang" id="selected-lang">
                         @if (isset($languages))
                             @foreach ($languages as $lang)
                                 <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @endif>{{{ $lang->language->name_long }}}</option>
                             @endforeach
                         @endif
                     </select>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-info" value="{{ Lang::get('mobileci.modals.ok') }}">{{ Lang::get('mobileci.modals.ok') }}</button>
                 </div>
             </form>
         </div>
@@ -114,6 +110,10 @@
         };
         run();
         setInterval(run, 5000);
+
+        $('#selected-lang').change(function (){
+            $(this).closest('form').submit();
+        });
 
         $('#barcodeBtn').click(function(){
             $('#get_camera').click();
