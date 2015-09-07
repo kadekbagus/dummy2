@@ -74,11 +74,14 @@
             </div>
             <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
                 <div class="modal-body">
-                    @if (isset($languages))
-                        @foreach ($languages as $lang)
-                            <input type="radio" name="lang" value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) checked @endif @endif> {{{ $lang->language->name_long }}}<br>
-                        @endforeach
-                    @endif
+                    <select class="form-control" name="lang">
+                        <option value="">== Select Language==</option>
+                        @if (isset($languages))
+                            @foreach ($languages as $lang)
+                                <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @endif>{{{ $lang->language->name_long }}}</option>
+                            @endforeach
+                        @endif
+                    </select>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-info" value="{{ Lang::get('mobileci.modals.ok') }}">{{ Lang::get('mobileci.modals.ok') }}</button>
