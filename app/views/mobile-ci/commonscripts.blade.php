@@ -72,37 +72,17 @@
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.language_title') }}</h4>
             </div>
-            <div class="dropdown">
-                <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="buttonLabel">
-                        @if (isset($_COOKIE['orbit_preferred_language']))
-                            @if (isset($languages))
-                                @foreach ($languages as $lang)
-                                    @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) 
-                                        {{{ $lang->language->name_long }}}
-                                    @endif
-                                @endforeach
-                            @endif
-                        @else
-                            {{{ 'Language' }}}
+            <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
+                <div class="modal-body">
+                    <select class="form-control" name="lang" id="selected-lang">
+                        @if (isset($languages))
+                            @foreach ($languages as $lang)
+                                <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @endif>{{{ $lang->language->name_long }}}</option>
+                            @endforeach
                         @endif
-                    </span>
-                    <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="lang">
-                    @if (isset($languages))
-                        @foreach ($languages as $lang)
-                            @if (isset($_COOKIE['orbit_preferred_language']))
-                                @if ($lang->language->name !== $_COOKIE['orbit_preferred_language']) 
-                                    <li data-lang="{{{ $lang->language->name }}}"><span>{{{ $lang->language->name_long }}}</span></li>
-                                @endif
-                            @else
-                                <li data-lang="{{{ $lang->language->name }}}"><span>{{{ $lang->language->name_long }}}</span></li>
-                            @endif
-                        @endforeach
-                    @endif
-                </ul>
-            </div>
+                    </select>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -162,15 +142,10 @@
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();
         });
-        
-        var path = '{{{ url('/customer/setlanguage') }}}';
-        var home = '{{{ url('/customer/home') }}}';
-
-        $('#lang>li').click(function(){
-            $.post(path, {lang: $(this).data('lang')}, function() {
-                console.log(home);
-                window.location.replace(home);
-            });
+        $('#selected-lang').change(function(){
+            this.form.submit();
         });
+
+
     });
 </script>
