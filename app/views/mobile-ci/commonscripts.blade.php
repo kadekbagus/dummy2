@@ -88,6 +88,8 @@
                                 @else
                                     <li data-lang="{{{ $lang->language->name }}}"><span>{{{ $lang->language->name_long }}}</span></li>
                                 @endif
+                            @else
+                                <li data-lang="{{{ $lang->language->name }}}"><span>{{{ $lang->language->name_long }}}</span></li>
                             @endif
                         @endforeach
                     @endif
