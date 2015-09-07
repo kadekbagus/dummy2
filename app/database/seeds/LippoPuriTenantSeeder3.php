@@ -34,7 +34,7 @@ INSERT INTO `{$prefix}merchants` (`merchant_id`, `omid`, `orid`, `user_id`, `ema
 ;
 
 -- Update Master Box Number (The Merchant Verification Number)
-UPDATE `{$prefix}merchants` SET masterbox_number=merchant_id;
+UPDATE `{$prefix}merchants` SET masterbox_number=merchant_id where merchant_id >= 131;
 TENANT;
 
         $this->command->info('Seeding merchants table with lippo puri tenants...');
@@ -62,7 +62,7 @@ INSERT INTO `{$prefix}category_merchant` (`category_id`, `merchant_id`, `created
 ;
 CAT;
 
-        $this->command->info('Seeding category_merchant table with lippo puri tenants...');
+        $this->command->info('Seeding category_merchant table with lippo puri tenants id 131 to 144...');
         DB::unprepared($categories);
         $this->command->info('table category_merchant seeded.');
 
