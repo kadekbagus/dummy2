@@ -735,7 +735,7 @@ class TenantAPIController extends ControllerAPI
             });
 
             OrbitInput::post('name', function($name) use ($updatedretailer) {
-                // do nothing
+                $updatedretailer->name = $name;
             });
 
             OrbitInput::post('description', function($description) use ($updatedretailer) {
