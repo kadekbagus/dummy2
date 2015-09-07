@@ -162,13 +162,14 @@
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();
         });
+        
         var path = '{{{ url('/customer/setlanguage') }}}';
-        $('#dLabel').dropdown();
+        var home = '{{{ url('/customer/home') }}}';
 
         $('#lang>li').click(function(){
-            $.post('/customer/setlanguage', {lang: $(this).data('lang')}, function() {
-                console.log('/customer/home');
-                window.location.replace('/customer/home');
+            $.post(path, {lang: $(this).data('lang')}, function() {
+                console.log(home);
+                window.location.replace(home);
             });
         });
     });
