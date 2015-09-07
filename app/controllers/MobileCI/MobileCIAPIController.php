@@ -8901,6 +8901,8 @@ class MobileCIAPIController extends ControllerAPI
                 setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );
             }
         }
+
+        return \Redirect::to('/customer/home');
    }
 
 }

@@ -72,6 +72,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.language_title') }}</h4>
             </div>
+<<<<<<< HEAD
             <div class="dropdown">
                 <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="buttonLabel">
@@ -95,6 +96,22 @@
                     @endif
                 </ul>
             </div>
+=======
+            <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
+                <div class="modal-body">
+                    <select class="form-control" name="lang" id="selected-lang">
+                        @if (isset($languages))
+                            @foreach ($languages as $lang)
+                                <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @endif>{{{ $lang->language->name_long }}}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info" value="{{ Lang::get('mobileci.modals.ok') }}">{{ Lang::get('mobileci.modals.ok') }}</button>
+                </div>
+            </form>
+>>>>>>> origin/feature/multi-language-OM-110-drop-down-language-menu
         </div>
     </div>
 </div>
@@ -154,6 +171,7 @@
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();
         });
+<<<<<<< HEAD
         var path = '{{{ url('/customer/setlanguage') }}}';
         var home = '{{{ url('/customer/home') }}}';
 
@@ -163,5 +181,8 @@
                 window.location.replace('/customer/home');
             });
         });
+=======
+
+>>>>>>> origin/feature/multi-language-OM-110-drop-down-language-menu
     });
 </script>
