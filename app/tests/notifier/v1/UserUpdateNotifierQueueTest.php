@@ -174,7 +174,7 @@ class UserUpdateNotifierQueueTest extends TestCase
 
         Config::set($this->configPrefix . $retailer->merchant_id, $this->configSample);
 
-        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id];
+        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id, 'human_error' => FALSE];
         $response = $qNotifier->fire($this->job, $data);
 
         $this->assertSame('fail', $response['status']);
@@ -208,7 +208,7 @@ class UserUpdateNotifierQueueTest extends TestCase
 
         Config::set($this->configPrefix . $retailer->merchant_id, $this->configSample);
 
-        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id];
+        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id, 'human_error' => FALSE];
         $response = $qNotifier->fire($this->job, $data);
 
         $this->assertSame('fail', $response['status']);
@@ -239,7 +239,7 @@ class UserUpdateNotifierQueueTest extends TestCase
 
         Config::set($this->configPrefix . $retailer->merchant_id, $this->configSample);
 
-        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id];
+        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id, 'human_error' => FALSE];
         $response = $qNotifier->fire($this->job, $data);
 
         $this->assertSame('fail', $response['status']);
@@ -272,7 +272,7 @@ class UserUpdateNotifierQueueTest extends TestCase
 
         Config::set($this->configPrefix . $retailer->merchant_id, $this->configSample);
 
-        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id];
+        $data = ['user_id' => $user->user_id, 'retailer_id' => $retailer->merchant_id, 'human_error' => FALSE];
         $response = $qNotifier->fire($this->job, $data);
 
         $this->assertSame('fail', $response['status']);
