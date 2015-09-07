@@ -2480,7 +2480,7 @@ class UserAPIController extends ControllerAPI
                 $userdetail->address_line2 = $data;
             });
 
-            OrbitInput::post('idcard', function($data) use ($userdetail) {
+            OrbitInput::post('idcard_number', function($data) use ($userdetail) {
                 $userdetail->idcard = $data;
             });
 
