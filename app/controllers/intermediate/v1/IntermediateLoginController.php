@@ -497,6 +497,11 @@ class IntermediateLoginController extends IntermediateBaseController
                 $customer->userdetail->gender = 'f';
             }
 
+            if ($from === 'facebook' && $customer->status === 'pending') {
+                // Only set if the previous status is pending
+                $customer->status = 'active';   // make it active
+            }
+
             $customer->save();
             $customer->userdetail->save();
 
