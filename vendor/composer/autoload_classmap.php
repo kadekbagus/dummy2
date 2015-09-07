@@ -35,6 +35,7 @@ return array(
     'AlterTableUsersAddColumnMembershipNumber' => $baseDir . '/app/database/migrations/2015_04_15_080956_alter_table_users_add_column_membership_number.php',
     'AlterUserDetailAddDateOfWork' => $baseDir . '/app/database/migrations/2015_04_16_171310_alter_user_detail_add_date_of_work.php',
     'AlterUserDetailAddIdcard' => $baseDir . '/app/database/migrations/2015_04_16_162320_alter_user_detail_add_idcard.php',
+    'AlterAllKeyColumnsUseUuid' => $baseDir . '/app/database/migrations/2015_09_07_085608_alter_all_key_columns_use_uuid.php',
     'Apikey' => $baseDir . '/app/models/Apikey.php',
     'Arrays\\Util\\DuplicateChecker' => $baseDir . '/app/helpers/Arrays/Util/DuplicateChecker.php',
     'Barryvdh\\Debugbar\\Console\\ClearCommand' => $vendorDir . '/barryvdh/laravel-debugbar/src/Console/ClearCommand.php',
