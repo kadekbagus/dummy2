@@ -82,6 +82,9 @@
                         @endif
                     </select>
                 </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info" value="{{ Lang::get('mobileci.modals.ok') }}">{{ Lang::get('mobileci.modals.ok') }}</button>
+                </div>
             </form>
         </div>
     </div>
@@ -142,10 +145,6 @@
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();
         });
-        $('#selected-lang').change(function(){
-            this.form.submit();
-        });
-
 
     });
 </script>
