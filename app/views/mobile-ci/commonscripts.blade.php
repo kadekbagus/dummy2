@@ -75,17 +75,7 @@
             <div class="dropdown">
                 <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="buttonLabel">
-                        @if (isset($_COOKIE['orbit_preferred_language']))
-                            @if (isset($languages))
-                                @foreach ($languages as $lang)
-                                    @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) 
-                                        {{{ $lang->language->name_long }}}
-                                    @endif
-                                @endforeach
-                            @endif
-                        @else
-                            {{{ 'Language' }}}
-                        @endif
+                        {{{ 'Language' }}}
                     </span>
                     <span class="caret"></span>
                 </button>
@@ -93,11 +83,11 @@
                     @if (isset($languages))
                         @foreach ($languages as $lang)
                             @if (isset($_COOKIE['orbit_preferred_language']))
-                                @if ($lang->language->name !== $_COOKIE['orbit_preferred_language']) 
+                                @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) 
+                                    <li class="bg-primary" data-lang="{{{ $lang->language->name }}}"><span>{{{ $lang->language->name_long }}}</span></li>
+                                @else
                                     <li data-lang="{{{ $lang->language->name }}}"><span>{{{ $lang->language->name_long }}}</span></li>
                                 @endif
-                            @else
-                                <li data-lang="{{{ $lang->language->name }}}"><span>{{{ $lang->language->name_long }}}</span></li>
                             @endif
                         @endforeach
                     @endif
@@ -162,14 +152,13 @@
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();
         });
-        
         var path = '{{{ url('/customer/setlanguage') }}}';
         var home = '{{{ url('/customer/home') }}}';
 
         $('#lang>li').click(function(){
             $.post(path, {lang: $(this).data('lang')}, function() {
-                console.log(home);
-                window.location.replace(home);
+                console.log('/customer/home');
+                window.location.replace('/customer/home');
             });
         });
     });
