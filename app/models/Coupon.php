@@ -59,6 +59,14 @@ class Coupon extends Eloquent
     }
 
     /**
+     * Coupon strings can be translated to many languages.
+     */
+    public function translations()
+    {
+        return $this->hasMany('CouponTranslation', 'promotion_id', 'promotion_id')->excludeDeleted();
+    }
+
+    /**
      * Add Filter coupons based on user who request it.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $builder
