@@ -66,7 +66,7 @@
 
 <!-- Language Modal -->
 <div class="modal fade bs-example-modal-sm" id="multi-language-popup" tabindex="-1" role="dialog" aria-labelledby="multi-language" aria-hidden="true">
-    <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto; height:1000px;">
+    <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
