@@ -845,13 +845,12 @@ class ActivityAPIController extends ControllerAPI
             }
             Event::fire('orbit.activity.getactivity.after.validation', array($this, $validator));
 
-            // registrations from start to end grouped by date part and activity name long.
-            // activity name long should include source.
-            $tablePrefix = DB::getTablePrefix();
+            // group by UA then count distinct users.
+            // users may be counted twice if the UA is not an exact match
             $activities = DB::table('activities')
                 ->select(
                     'user_agent',
-                    DB::raw('COUNT(*) as count')
+                    DB::raw('COUNT(DISTINCT user_id) as count')
                 )
                 ->where('module_name', '=', 'Application')
                 ->where('group', '=', 'mobile-ci')
