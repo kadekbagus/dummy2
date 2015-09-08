@@ -123,6 +123,7 @@ return array(
         'click_here'        => 'ここをクリック',
         'email_not_valid'   => 'メールアドレスが有効ではありません',
         'logging_in_button' => 'ログインしています.しばらくお待ちください...',
+        'loading_orbit'     => 'オービットをロードすると、待機してください...',        
     ),
 
     'catalogue' => array(

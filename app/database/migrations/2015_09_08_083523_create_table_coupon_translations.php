@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateTableCouponTranslations extends Migration 
+class CreateTableCouponTranslations extends Migration
 {
 
 	/**
@@ -15,7 +15,7 @@ class CreateTableCouponTranslations extends Migration
 	{
 		Schema::create('coupon_translations', function(Blueprint $table)
 		{
-			$table->increments('coupon_translation_id');
+            $table->increments('coupon_translation_id');
             $table->integer('promotion_id')->unsigned();
             $table->integer('merchant_language_id')->unsigned();
             $table->string('promotion_name', 255)->nullable();
