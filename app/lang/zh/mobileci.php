@@ -50,6 +50,7 @@ return array(
         'latest_news_coming_soon' => '看看我们的最新消息即将推出.',
         'new_promotions_coming_soon' => '看看我们的新促销活动即将登场.',
         'how_to_get_coupons' => '请与客户服务如何获得优惠券查询.',
+        'find_our_exciting'          => 'Find our exciting deals and latest news here. Dont forget to exchange your transaction receipts and get a chance to win a car!',
     ),
 
     // modal specific lang
@@ -94,6 +95,12 @@ return array(
         'yes_button'            => '对',
         'do_not_show_label'     => '不要再显示此消息',
         'new_product_price'     => '新价格',
+
+        'membership_notfound'    => '会员未找到',
+        'membership_want_member' => '想成为会员?',
+        'membership_great_deal'  => '为了得到我们特别的优惠',
+        'membership_contact_our' => '请, 联系我们的客户服务，让您的会员号码',
+
     ),
 
     //tenant catalogue
@@ -101,6 +108,11 @@ return array(
         'floor'                 => '地板',
         'category'              => '分类',
         'all'                   => '都',
+        'check_our_new_promo'   => 'Check out our new promotions coming soon',
+        'check_our_latest_news' => 'Check out our latest news coming soon',
+        'news'                  => 'News',
+        'promotions'            => 'Promotions',
+        'see_tenants'           => 'See Tenants',
     ),
 
     // page specific lang
@@ -123,6 +135,7 @@ return array(
         'from'              => '离',
         'to'                => '至',
         'in_store_location' => '在存储位置',
+        'all'               => 'All',
     ),
 
     'product_detail'         => array(
@@ -159,6 +172,13 @@ return array(
         'reset_button'       => '复位车',
     ),
 
+    'promotion'         => array(
+        'info'                             => 'Info',
+        'want_unlimited_browsing'          => 'Want unlimited browsing?',
+        'or_want_to_follow_the_lucky_draw' => 'Or want to follow the lucky draw?',
+        'open_your_email_and_verify_now'   => 'Open your email and verify now!!',
+    ), 
+
     'promotion_list'         => array(
         'no_promo'           => '有没有促销活动今天',
         'product_label'      => '积',
@@ -168,6 +188,27 @@ return array(
     'promotion_detail'         => array(
         'exp_promo'           => '促进不存在或已经过期',
         'back_label'          => '背部',
+    ),
+
+    'coupon'         => array(
+        'tenant_based'                     => 'Tenant Based',
+        'mall_based'                       => 'Mall Based',
+        'tenant_redeem'                    => 'Tenant Redeem',
+        'coupon_value'                     => 'Coupon Value',
+        'use_coupon'                       => 'Use Coupon',
+        'close'                            => 'Close',
+        'enter_tenant_verification_number' => 'Enter Tenant Verification Number',
+        'ask_our_tenant_employee'          => '(Ask our tenant employee)',
+        'validate'                         => 'Validate',
+        'wrong_verification_number'        => 'Wrong Verification Number',
+        'please_check_tenant'              => 'Please check the tenant employee or mall customer service',
+        'ok'                               => 'Ok',
+        'successful'                       => 'Successful',
+        'please_communicate'               => 'Please communicate the following number to tenant employee',
+        'congratulations_you_get'          => 'Congratulations you get',
+        'coupon_here_is_coupon_you'        => 'coupon. Here is a coupon you',
+        'happy_shopping'                   => 'Happy shopping!',
+        'close'                            => 'Close',
     ),
 
     'coupon_list'         => array(
@@ -245,4 +286,48 @@ return array(
             'subject'       => '你有了新的优惠券'
         ),
     ),
+    'activation'  => array(
+        'activate' => 'Activate',
+        'close'    => 'Close',
+        'error'    => 'Error',
+    ),  
+    'lucky_draw'  => array(
+        'hello'                     => 'Hello',
+        'goodluck'                  => 'Semoga Beruntung!',
+        'congratulation'            => 'Selamat anda mendapatkan',
+        'no_lucky_draw'             => 'nomor lucky draw',
+        'lucky_draw_info_1'         => 'Berikut ini adalah nomor lucky draw yang anda dapat pada',
+        'lucky_draw_info_2'         => 'Catatan: Nomor yang ditampilkan di sini hanya',
+        'lucky_draw_info_3'         => 'nomor pertama yang anda dapat',
+        'lucky_draw_info_4'         => 'Total Saat ini anda memiliki',
+        'lucky_draw_info_5'         => 'nomor lucky draw, anda dapat melihat seluruh nomor anda di halaman',
+        'lucky_draw'                => 'Lucky Draw.',
+        'close'                     => 'Close.',
+        
+        'no_ongoing_lucky_draws'    => 'There is no ongoing lucky draws at the moment.',
+        'winner_number_will_appear' => 'The Winner Number will appear here while you are in the Mall.',
+        'winning_number'            => 'Winning Number',
+        'lucky_draw_got_info_1'     => 'You got no Lucky Draw Number yet.',
+        'lucky_draw_got_info_2'     => 'Here are your lucky draw numbers, you have ',
+        'lucky_draw_got_info_3'     => 'lucky draw number. We wish you luck!.',
+        'lucky_draw_got_info_4'     => 'This list showing ',
+        'lucky_draw_got_info_5'     => 'lucky draw numbers per page.',
+        'save_numbers'              => 'Save Numbers',
+        'to_save_the_numbers'       => 'To save the numbers as image on your mobile phone press the',
+        'save_numbers'              => 'Save Numbers',
+        'lucky_draw_info'           => 'Lucky Draw Info',
+        'page'                      => 'Page',
+        'of'                        => 'Of',
+        'prev'                      => 'Prev',
+        'next'                      => 'Next',
+
+        'lucky_draw_total_info_1' => 'You have total',
+        'lucky_draw_total_info_2' => 'lucky draw numbers. You have total ',
+        'lucky_draw_total_info_3' => 'image to download,',
+        'lucky_draw_total_info_4' => 'each image contain maximum ',
+        'lucky_draw_total_info_5' => 'lucky draw number. It sorted by highest to lowest number.',
+        'lucky_draw_total_info_6' => 'Your download should be started automatically. If it doesnt try to click button below.',
+        'download_image'          => 'Download Image',
+    ),
+
 );

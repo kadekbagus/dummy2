@@ -81,15 +81,15 @@
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> Info</h4>
+                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.promotion.info') }}</h4>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-xs-12">
                         <p>
-                            Mau browsing sepuasnya?<br>
-                            Atau mau ikutan undian berhadiah?<br>
-                            Buka email Anda untuk verifikasi sekarang juga!!<br>
+                            {{ Lang::get('mobileci.promotion.want_unlimited_browsing') }}<br>
+                            {{ Lang::get('mobileci.promotion.or_want_to_follow_the_lucky_draw') }}<br>
+                            {{ Lang::get('mobileci.promotion.open_your_email_and_verify_now') }}<br>
                         </p>
                     </div>
                 </div>

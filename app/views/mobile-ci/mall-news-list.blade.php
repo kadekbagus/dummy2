@@ -62,9 +62,9 @@
                 <div class="row">
                     <div class="col-xs-12">
                         <p>
-                            Mau browsing sepuasnya?<br>
-                            Atau mau ikutan undian berhadiah?<br>
-                            Buka email Anda untuk verifikasi sekarang juga!!<br>
+                            {{ Lang::get('mobileci.promotion.want_unlimited_browsing') }}<br>
+                            {{ Lang::get('mobileci.promotion.or_want_to_follow_the_lucky_draw') }}<br>
+                            {{ Lang::get('mobileci.promotion.open_your_email_and_verify_now') }}<br>
                         </p>
                     </div>
                 </div>
