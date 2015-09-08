@@ -50,6 +50,9 @@ use PDO;
 use Response;
 use LuckyDrawAPIController;
 use OrbitShop\API\v1\Helper\Generator;
+use Orbit\Helper\Security\Encrypter;
+use Redirect;
+use Cookie;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -298,7 +301,25 @@ class MobileCIAPIController extends ControllerAPI
     public function getSignInView()
     {
         $bg = null;
+        if (\Input::get('payload')) {
+            // has payload, clear out prev cookies
+            $_COOKIE['orbit_firstname'] = '';
+            $_COOKIE['orbit_email'] = '';
+        }
         $landing_url = URL::route('ci-customer-home');
+        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : '';
+        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : '';
+        $display_name = '';
+
+        if (! empty($cookie_email)) {
+            $display_name = $cookie_email;
+        }
+
+        if (! empty($cookie_fname)) {
+            $display_name = $cookie_fname;
+        }
+        $display_name = OrbitInput::get('fname', $display_name);
+
         try {
             $retailer = $this->getRetailerInfo();
             $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
@@ -326,27 +347,49 @@ class MobileCIAPIController extends ControllerAPI
                     break;
             }
 
-            $bg = Setting::getFromList($mall->settings, 'background_image');
+            try {
+                $bg = Setting::getFromList($mall->settings, 'background_image');
+            } catch (Exception $e) {
+            }
 
             // Get email from query string
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
-            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
+            // Captive Portal Apple CNA Window
+            // -------------------------------
+            // Payload login is set and the user is logged in, no need to ask user log in again
+            // assuming they was already asked on CNA captive
+            if (isset($_GET['payload_login'])) {
+                $payloadData = $this->proceedPayloadData();
+                Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
+                Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
+
+                return Redirect::to($landing_url);
+            }
+
+            $viewData = array(
+                'retailer' => $retailer,
+                'user_email' => htmlentities($user_email),
+                'bg' => $bg,
+                'landing_url' => $landing_url,
+                'display_name' => $display_name
+            );
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
 
-            $user_email = OrbitInput::get('email', '');
-            if (! empty($user_email)) {
-                \DummyAPIController::create()->getUserSignInNetwork();
-            }
+            $user_email = OrbitInput::get('email', $cookie_email);
 
-            if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
-            } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
-            }
+            $viewData = array(
+                'retailer' => $retailer,
+                'user_email' => htmlentities($user_email),
+                'bg' => $bg,
+                'landing_url' => $landing_url,
+                'display_name' => $display_name
+            );
         }
+
+        return View::make('mobile-ci.signin', $viewData);
     }
 
     /**
@@ -5964,10 +6007,17 @@ class MobileCIAPIController extends ControllerAPI
             return $e;
         }
 
-        if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'Session has ben expires.' || $e->getMessage() === 'User agent miss match.') {
-            return \Redirect::to('/customer');
-        } else {
-            return \Redirect::to('/customer/logout');
+        switch ($e->getCode()) {
+            case Session::ERR_UNKNOWN;
+            case Session::ERR_IP_MISS_MATCH;
+            case Session::ERR_UA_MISS_MATCH;
+            case Session::ERR_SESS_NOT_FOUND;
+            case Session::ERR_SESS_EXPIRE;
+                return \Redirect::to('/customer/logout');
+                break;
+
+            default:
+                return \Redirect::to('/customer');
         }
     }
 
@@ -6010,6 +6060,7 @@ class MobileCIAPIController extends ControllerAPI
             $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
             $config->setConfig('session_origin.query_string.name', 'orbit_session');
             $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
+
             $this->session = new Session($config);
             $this->session->start();
         }
@@ -8749,5 +8800,34 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return false;
+    }
+
+    /**
+     * Proceed payload_login data
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return array
+     */
+    protected function proceedPayloadData()
+    {
+        // The sign-in view put the payload from query string to post body on AJAX call
+        if (! isset($_POST['payload_login'])) {
+            return;
+        }
+
+        $payload = $_POST['payload_login'];
+
+        // Decrypt the payload
+        $key = md5('--orbit-mall--');
+        $payload = (new Encrypter($key))->decrypt($payload);
+
+        // The data is in url encoded
+        parse_str($payload, $data);
+
+        // email, fname, lname, gender, mac, ip, login_from
+        $email = isset($data['email']) ? $data['email'] : '';
+        $fname = isset($data['fname']) ? $data['fname'] : '';
+
+        return ['email' => $email, 'fname' => $fname];
     }
 }

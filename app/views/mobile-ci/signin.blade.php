@@ -43,7 +43,7 @@
         </header>
         <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
             <div class="form-group">
-                <input type="text" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
+                <input type="text" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
             </div>
             <div class="form-group">
                 <button type="submit" class="btn btn-info btn-block">{{ Lang::get('mobileci.signin.login_button') }}</button>
@@ -61,21 +61,21 @@
             </div>
         </header>
         <div class="col-xs-12 text-center welcome-user">
-            <h3>{{ Lang::get('mobileci.greetings.welcome') }}, <br><span class="signedUser"></span><span class="userName"></span> !</h3>
+            <h3>{{ Lang::get('mobileci.greetings.welcome') }}, <br><span class="signedUser">{{{ $user_email or '' }}}</span><span class="userName">{{{ $display_name or '' }}}</span>!</h3>
         </div>
         <div class="col-xs-12 text-center">
             <form name="loginForm" id="loginSignedForm" action="{{ url('customer/login') }}" method="post">
                 <div class="form-group">
-                    <input type="hidden" class="form-control" name="email" id="emailSigned" />
+                    <input type="hidden" class="form-control" name="email" id="emailSigned" value="{{{ $user_email }}}" />
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block">{{ Lang::get('mobileci.signin.start_button') }}</button>
+                    <button type="submit" class="btn btn-info btn-block">{{ Lang::get('mobileci.signin.start_button_mall') }}</button>
                 </div>
             </form>
         </div>
     </div>
     <div class="col-xs-12 text-center vertically-spaced">
-        <a id="notMe">{{ Lang::get('mobileci.signin.not') }} <span class="signedUser"></span><span class="userName"></span>, {{ Lang::get('mobileci.signin.click_here') }}.</a>
+        <a id="notMe">{{ Lang::get('mobileci.signin.not') }} <span class="signedUser">{{{ $user_email or '' }}}</span><span class="userName">{{{ $display_name or '' }}}</span>, {{ Lang::get('mobileci.signin.click_here') }}.</a>
     </div>
 </div>
 @stop
@@ -156,12 +156,14 @@
         var create_session_url = '{{ URL::Route("captive-portal") }}';
         console.log('Create session URL: ' + create_session_url);
 
-        window.location = create_session_url + '?loadsession=' + session_id;
+        var fname = $('.userName')[0].innerHTML;
+        var email = $('#email').val();
+        window.location = create_session_url + '?loadsession=' + session_id + '&fname=' + fname + '&email=' + email;
 
         return;
     }
 
-    $(document).ready(function(){
+    $(document).ready(function() {
 
       var em;
       var user_em = '{{ strtolower($user_email) }}';
@@ -170,44 +172,7 @@
         return pattern.test(emailAddress);
       };
 
-      if(get('email')){
-        if(isValidEmailAddress(get('email').trim())){
-          //console.log('asd');
-          $.ajax({
-            method:'POST',
-            url:apiPath+'customer/login',
-            data:{
-              email: get('email').trim()
-            }
-          }).done(function(data, status, xhr){
-            if(data.status==='error'){
-              console.log(data);
-                $('#errorModalText').text(data.message);
-                $('#errorModal').modal();
-            }
-            if(data.data){
-              // console.log(data.data);
-              $.cookie('orbit_email', data.data.user_email, { expires: 5 * 365, path: '/' });
-              if(data.data.user_firstname) {
-                $.cookie('orbit_firstname', data.data.user_firstname, { expires: 5 * 365, path: '/' });
-              }
-
-              // Check if we are redirected from captive portal
-              // The query string 'from_captive' are from apache configuration
-              if (get('from_captive') == 'yes') {
-                  afterLogin(xhr);
-              } else {
-                  window.location.replace('{{ $landing_url }}');
-              }
-            }
-          }).fail(function(data){
-            $('#errorModalText').text(data.responseJSON.message);
-            $('#errorModal').modal();
-          });
-        }
-      }
-
-      if(user_em != ''){
+      if (user_em != '') {
         $('#signedIn').show();
         $('#signIn').hide();
         em = user_em.toLowerCase();
@@ -215,36 +180,20 @@
         $('.emailSigned').val(em.toLowerCase());
         $('#email').val(em.toLowerCase());
         // console.log(user_em);
-      } else {
-        if(typeof $.cookie('orbit_email') === 'undefined') {
-          // $.cookie('orbit_email', '-', { expires: 5 * 365, path: '/' });
-          $('#signedIn').hide();
-          $('#signIn').show();
-
-        } else {
-          if($.cookie('orbit_email')){
-            $('#signedIn').show();
-            $('#signIn').hide();
-            em = $.cookie('orbit_email');
-            $('.emailSigned').val(em.toLowerCase());
-            $('.signedUser').text(em.toLowerCase());
-            $('#email').val(em.toLowerCase());
-          } else {
-            $('#signedIn').hide();
-            $('#signIn').show();
-
-          }
-        }
       }
-      if($.cookie('orbit_firstname')){
+
+      if ($('.userName')[0].innerHTML.length > 0) {
         $('.signedUser').hide();
-        $('.userName').text($.cookie('orbit_firstname'));
         $('.userName').show();
       }
+
       $('#notMe').click(function(){
-        $.removeCookie('orbit_email', { path: '/' });
-        $.removeCookie('orbit_firstname', { path: '/' });
-        window.location.replace('/customer/logout');
+        var currentDomain = window.location.hostname;
+
+        $.removeCookie('orbit_email', { path: '/', domain: currentDomain });
+        $.removeCookie('orbit_firstname', { path: '/', domain: currentDomain });
+
+        window.location.replace('/customer/logout?not_me=true');
       });
       $('form[name="loginForm"]').submit(function(event){
         event.preventDefault();
@@ -264,7 +213,8 @@
               method:'POST',
               url:apiPath+'customer/login',
               data:{
-                email: $('#email').val().trim()
+                email: $('#email').val().trim(),
+                payload: "{{{ Input::get('payload', '') }}}"
               }
             }).done(function(data, status, xhr){
               if(data.status==='error'){
@@ -274,10 +224,10 @@
               }
               if(data.data){
                 // console.log(data.data);
-                $.cookie('orbit_email', data.data.user_email, { expires: 5 * 365, path: '/' });
-                if(data.data.user_firstname) {
-                  $.cookie('orbit_firstname', data.data.user_firstname, { expires: 5 * 365, path: '/' });
-                }
+                // $.cookie('orbit_email', data.data.user_email, { expires: 5 * 365, path: '/' });
+                // if(data.data.user_firstname) {
+                  // $.cookie('orbit_firstname', data.data.user_firstname, { expires: 5 * 365, path: '/' });
+                // }
 
                 // Check if we are redirected from captive portal
                 // The query string 'from_captive' are from apache configuration
