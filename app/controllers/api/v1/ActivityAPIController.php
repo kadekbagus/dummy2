@@ -608,9 +608,9 @@ class ActivityAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_ids'  => 'orbit.check.merchants',
-                    'start_date'    => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
-                    'end_date'      => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
-                    'previous_start_date'    => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
+                    'start_date'    => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'      => 'required|date_format:Y-m-d H:i:s',
+                    'previous_start_date'    => 'required|date_format:Y-m-d H:i:s',
                 )
             );
 
@@ -831,8 +831,8 @@ class ActivityAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_ids'  => 'orbit.check.merchants',
-                    'start_date'    => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
-                    'end_date'      => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
+                    'start_date'    => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'      => 'required|date_format:Y-m-d H:i:s'
                 )
             );
 
@@ -1004,8 +1004,8 @@ class ActivityAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_ids'  => 'orbit.check.merchants',
-                    'start_date'    => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
-                    'end_date'      => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
+                    'start_date'    => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'      => 'required|date_format:Y-m-d H:i:s'
                 )
             );
 
@@ -1163,7 +1163,7 @@ class ActivityAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('invalid json for periods');
             }
             foreach ($periods as $period => $dates) {
-                $rules = 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow;
+                $rules = 'required|date_format:Y-m-d H:i:s';
                 $validator = Validator::make(
                     array(
                         'previous_start'  => $dates['previous_start'],
@@ -1348,8 +1348,8 @@ class ActivityAPIController extends ControllerAPI
                     ),
                     array(
                         'merchant_ids'  => 'orbit.check.merchants',
-                        'start_date'    => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
-                        'end_date'      => 'required|date_format:Y-m-d H:i:s|before:' . $tomorrow,
+                        'start_date'    => 'required|date_format:Y-m-d H:i:s',
+                        'end_date'      => 'required|date_format:Y-m-d H:i:s'
                     )
                 );
 
