@@ -129,13 +129,21 @@ class MobileCIAPIController extends ControllerAPI
             // check available auto-issuance coupon
             $coupons = DB::select(
                 DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                    'SELECT *, p.image AS promo_image, 
+                    (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
+                          where ic.promotion_id = p.promotion_id
+                          and ic.status!="deleted") as total_issued_coupon
+                FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id 
+                WHERE pr.rule_type = "auto_issue_on_signup"
+                    AND p.merchant_id = :merchantid
                     AND p.is_coupon = "Y" AND p.status = "active" 
                     AND p.begin_date <= "' . $user->created_at . '" 
                     AND p.end_date >= "' . $user->created_at . '"
-                WHERE pr.rule_type = "auto_issue_on_signup"
-                    AND p.merchant_id = :merchantid
+                HAVING
+                    (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
+                    OR
+                    (p.maximum_issued_coupon = 0)
                     '
                 ),
                 array('merchantid' => $retailer->merchant_id)
@@ -146,17 +154,18 @@ class MobileCIAPIController extends ControllerAPI
                 DB::raw(
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
-                    AND p.is_coupon = "Y" AND p.status = "active" 
-                    AND p.begin_date <= "' . $user->created_at . '" 
-                    AND p.end_date >= "' . $user->created_at . '"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
                 WHERE pr.rule_type = "auto_issue_on_signup"
                     AND p.merchant_id = :merchantid
-                    AND ic.user_id = :userid'
+                    AND ic.user_id = :userid
+                    AND p.is_coupon = "Y" AND p.status = "active" 
+                    AND p.begin_date <= "' . $user->created_at . '" 
+                    AND p.end_date >= "' . $user->created_at . '"
+                    '
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );            
-            
+
             // get obtained auto-issuance coupon ids
             $obtained_coupon_ids = array();
             foreach ($obtained_coupons as $obtained_coupon) {
