@@ -1375,7 +1375,7 @@ class ActivityAPIController extends ControllerAPI
 
                 $returning_sign_ins = DB::table('activities')
                     ->select(
-                        DB::raw('COUNT(DISTINCT user_id) as count')
+                        DB::raw('COUNT(user_id) as count')
                     )
                     ->where('module_name', '=', 'Application')
                     ->where('group', '=', 'mobile-ci')
@@ -1383,7 +1383,7 @@ class ActivityAPIController extends ControllerAPI
                     ->where('activity_name', '=', 'login_ok')
                     ->where('created_at', '>=', $start_date)
                     ->where('created_at', '<=', $end_date)
-                    ->whereIn('user_id', function ($q) use ($start_date, $end_date) {
+                    ->whereNotIn('user_id', function ($q) use ($start_date, $end_date) {
                         $q->select('user_id')
                             ->from('activities')
                             ->where('module_name', '=', 'Application')
@@ -1392,7 +1392,9 @@ class ActivityAPIController extends ControllerAPI
                             ->where('activity_name', '=', 'registration_ok')
                             ->where('created_at', '>=', $start_date)
                             ->where('created_at', '<=', $end_date);
-                    });
+                    })
+                    ->groupBy('user_id')
+                    ->having('count', '>=', 2);
 
                 // Only shows activities which belongs to this merchant
                 if ($user->isSuperAdmin() !== TRUE) {
@@ -1410,7 +1412,11 @@ class ActivityAPIController extends ControllerAPI
                 }
 
                 $sign_up_count = (int)$sign_ups->first()->count;
-                $returning_sign_in_count = (int)$returning_sign_ins->first()->count;
+
+                // Need to wrap the result of the query into subquery to get list of
+                // user which has login more than 2 times
+                $returning_sign_in_count = DB::table( DB::raw("({$returning_sign_ins->toSql()}) as subquery"))
+                                              ->mergeBindings($returning_sign_ins)->count();
 
                 $this->response->data = [
                     'start_date' => $start_date,
