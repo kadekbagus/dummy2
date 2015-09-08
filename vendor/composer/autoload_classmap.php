@@ -126,6 +126,7 @@ return array(
     'CreateTableNewsMerchant' => $baseDir . '/app/database/migrations/2015_04_15_092417_create_table_news_merchant.php',
     'CreateTableObjectRelation' => $baseDir . '/app/database/migrations/2015_04_27_110337_create_table_object_relation.php',
     'CreateTableObjects' => $baseDir . '/app/database/migrations/2015_04_27_102237_create_table_objects.php',
+    'CreateTablePromotionTranslations' => $baseDir . '/app/database/migrations/2015_09_08_080114_create_table_promotion_translations.php',
     'Crypt_AES' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/AES.php',
     'Crypt_Base' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Base.php',
     'Crypt_Blowfish' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Blowfish.php',
