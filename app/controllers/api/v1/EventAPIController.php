@@ -173,8 +173,6 @@ class EventAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newevent, $translation_json_string, 'create');
             });
 
-            $newevent->load('translations');
-
             $this->response->data = $newevent;
 
             // Commit the changes
@@ -431,8 +429,6 @@ class EventAPIController extends ControllerAPI
             OrbitInput::post('translations', function($translation_json_string) use ($updatedevent) {
                 $this->validateAndSaveTranslations($updatedevent, $translation_json_string, 'update');
             });
-
-            $updatedevent->load('translations');
 
             $updatedevent->modified_by = $this->api->user->user_id;
 
@@ -1731,6 +1727,8 @@ class EventAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.event.after.translation.save', array($this, $new_translation));
+
+                $event->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
                 /** @var EventTranslation $existing_translation */
@@ -1746,6 +1744,8 @@ class EventAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $existing_transalation
                 Event::fire('orbit.event.after.translation.save', array($this, $existing_translation));
+
+                $event->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
             }
             elseif ($op === 'delete') {
                 /** @var EventTranslation $existing_translation */
