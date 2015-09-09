@@ -19,7 +19,6 @@ Route::post('/api/v1/mall/delete', function()
     return MallAPIController::create()->postDeleteMall();
 });
 
-
 /**
  * Update mall
  */
@@ -27,5 +26,13 @@ Route::post('/api/v1/mall/update', function()
 {
     return MallAPIController::create()->postUpdateMall();
 });
+
+/**
+ * List/Search tenant
+ */
+Route::get('/api/v1/mall/{search}', function()
+{
+    return MallAPIController::create()->getSearchMall();
+})->where('search', '(list|search)');
 
 ?>

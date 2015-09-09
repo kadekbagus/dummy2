@@ -343,7 +343,7 @@ class MallAPIController extends ControllerAPI
     }
 
     /**
-     * GET - Search merchant
+     * GET - Search mall
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
@@ -399,30 +399,30 @@ class MallAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getSearchMerchant()
+    public function getSearchMall()
     {
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.merchant.getsearchmerchant.before.auth', array($this));
+            Event::fire('orbit.mall.getsearchmall.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.merchant.getsearchmerchant.after.auth', array($this));
+            Event::fire('orbit.mall.getsearchmall.after.auth', array($this));
 
-            // Try to check access control list, does this merchant allowed to
+            // Try to check access control list, does this mall allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.merchant.getsearchmerchant.before.authz', array($this, $user));
+            Event::fire('orbit.mall.getsearchmall.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_merchant')) {
-                Event::fire('orbit.merchant.getsearchmerchant.authz.notallowed', array($this, $user));
-                $viewUserLang = Lang::get('validation.orbit.actionlist.view_merchant');
+            if (! ACL::create($user)->isAllowed('view_mall')) {
+                Event::fire('orbit.mall.getsearchmall.authz.notallowed', array($this, $user));
+                $viewUserLang = Lang::get('validation.orbit.actionlist.view_mall');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewUserLang));
                 ACL::throwAccessForbidden($message);
             }
-            Event::fire('orbit.merchant.getsearchmerchant.after.authz', array($this, $user));
+            Event::fire('orbit.mall.getsearchmall.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -439,7 +439,7 @@ class MallAPIController extends ControllerAPI
                 )
             );
 
-            Event::fire('orbit.merchant.getsearchmerchant.before.validation', array($this, $validator));
+            Event::fire('orbit.mall.getsearchmall.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
@@ -447,10 +447,10 @@ class MallAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            Event::fire('orbit.merchant.getsearchmerchant.after.validation', array($this, $validator));
+            Event::fire('orbit.mall.getsearchmall.after.validation', array($this, $validator));
 
             // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.merchant.max_record');
+            $maxRecord = (int) Config::get('orbit.pagination.mall.max_record');
             if ($maxRecord <= 0) {
                 // Fallback
                 $maxRecord = (int) Config::get('orbit.pagination.max_record');
@@ -459,7 +459,7 @@ class MallAPIController extends ControllerAPI
                 }
             }
             // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.merchant.per_page');
+            $perPage = (int) Config::get('orbit.pagination.mall.per_page');
             if ($perPage <= 0) {
                 // Fallback
                 $perPage = (int) Config::get('orbit.pagination.per_page');
@@ -468,7 +468,7 @@ class MallAPIController extends ControllerAPI
                 }
             }
 
-            $merchants = Merchant::excludeDeleted('merchants')
+            $malls = Mall::excludeDeleted('merchants')
                                 ->allowedForUser($user)
                                 ->select('merchants.*', DB::raw('count(retailer.merchant_id) AS total_retailer'))
                                 ->leftJoin('merchants AS retailer', function($join) {
@@ -477,213 +477,213 @@ class MallAPIController extends ControllerAPI
                                     })
                                 ->groupBy('merchants.merchant_id');
 
-            // Filter merchant by Ids
-            OrbitInput::get('merchant_id', function ($merchantIds) use ($merchants) {
-                $merchants->whereIn('merchants.merchant_id', $merchantIds);
+            // Filter mall by Ids
+            OrbitInput::get('merchant_id', function ($merchantIds) use ($malls) {
+                $malls->whereIn('merchants.merchant_id', $merchantIds);
             });
 
-            // Filter merchant by omid
-            OrbitInput::get('omid', function ($omid) use ($merchants) {
-                $merchants->whereIn('merchants.omid', $omid);
+            // Filter mall by omid
+            OrbitInput::get('omid', function ($omid) use ($malls) {
+                $malls->whereIn('merchants.omid', $omid);
             });
 
-            // Filter merchant by user Ids
-            OrbitInput::get('user_id', function ($userIds) use ($merchants) {
-                $merchants->whereIn('merchants.user_id', $userIds);
+            // Filter mall by user Ids
+            OrbitInput::get('user_id', function ($userIds) use ($malls) {
+                $malls->whereIn('merchants.user_id', $userIds);
             });
 
-            // Filter merchant by name
-            OrbitInput::get('name', function ($name) use ($merchants) {
-                $merchants->whereIn('merchants.name', $name);
+            // Filter mall by name
+            OrbitInput::get('name', function ($name) use ($malls) {
+                $malls->whereIn('merchants.name', $name);
             });
 
-            // Filter merchant by name pattern
-            OrbitInput::get('name_like', function ($name) use ($merchants) {
-                $merchants->where('merchants.name', 'like', "%$name%");
+            // Filter mall by name pattern
+            OrbitInput::get('name_like', function ($name) use ($malls) {
+                $malls->where('merchants.name', 'like', "%$name%");
             });
 
-            // Filter merchant by description
-            OrbitInput::get('description', function ($description) use ($merchants) {
-                $merchants->whereIn('merchants.description', $description);
+            // Filter mall by description
+            OrbitInput::get('description', function ($description) use ($malls) {
+                $malls->whereIn('merchants.description', $description);
             });
 
-            // Filter merchant by description pattern
-            OrbitInput::get('description_like', function ($description) use ($merchants) {
-                $merchants->where('merchants.description', 'like', "%$description%");
+            // Filter mall by description pattern
+            OrbitInput::get('description_like', function ($description) use ($malls) {
+                $malls->where('merchants.description', 'like', "%$description%");
             });
 
-            // Filter merchant by email
-            OrbitInput::get('email', function ($email) use ($merchants) {
-                $merchants->whereIn('merchants.email', $email);
+            // Filter mall by email
+            OrbitInput::get('email', function ($email) use ($malls) {
+                $malls->whereIn('merchants.email', $email);
             });
 
-            // Filter merchant by email pattern
-            OrbitInput::get('email_like', function ($email) use ($merchants) {
-                $merchants->where('merchants.email', 'like', "%$email%");
+            // Filter mall by email pattern
+            OrbitInput::get('email_like', function ($email) use ($malls) {
+                $malls->where('merchants.email', 'like', "%$email%");
             });
 
-            // Filter merchant by address1
-            OrbitInput::get('address1', function ($address1) use ($merchants) {
-                $merchants->whereIn('merchants.address_line1', $address1);
+            // Filter mall by address1
+            OrbitInput::get('address1', function ($address1) use ($malls) {
+                $malls->whereIn('merchants.address_line1', $address1);
             });
 
-            // Filter merchant by address1 pattern
-            OrbitInput::get('address1_like', function ($address1) use ($merchants) {
-                $merchants->where('merchants.address_line1', 'like', "%$address1%");
+            // Filter mall by address1 pattern
+            OrbitInput::get('address1_like', function ($address1) use ($malls) {
+                $malls->where('merchants.address_line1', 'like', "%$address1%");
             });
 
-            // Filter merchant by address2
-            OrbitInput::get('address2', function ($address2) use ($merchants) {
-                $merchants->whereIn('merchants.address_line2', $address2);
+            // Filter mall by address2
+            OrbitInput::get('address2', function ($address2) use ($malls) {
+                $malls->whereIn('merchants.address_line2', $address2);
             });
 
-            // Filter merchant by address2 pattern
-            OrbitInput::get('address2_like', function ($address2) use ($merchants) {
-                $merchants->where('merchants.address_line2', 'like', "%$address2%");
+            // Filter mall by address2 pattern
+            OrbitInput::get('address2_like', function ($address2) use ($malls) {
+                $malls->where('merchants.address_line2', 'like', "%$address2%");
             });
 
-            // Filter merchant by address3
-            OrbitInput::get('address3', function ($address3) use ($merchants) {
-                $merchants->whereIn('merchants.address_line3', $address3);
+            // Filter mall by address3
+            OrbitInput::get('address3', function ($address3) use ($malls) {
+                $malls->whereIn('merchants.address_line3', $address3);
             });
 
-            // Filter merchant by address3 pattern
-            OrbitInput::get('address3_like', function ($address3) use ($merchants) {
-                $merchants->where('merchants.address_line3', 'like', "%$address3%");
+            // Filter mall by address3 pattern
+            OrbitInput::get('address3_like', function ($address3) use ($malls) {
+                $malls->where('merchants.address_line3', 'like', "%$address3%");
             });
 
-            // Filter merchant by postal code
-            OrbitInput::get('postal_code', function ($postalcode) use ($merchants) {
-                $merchants->whereIn('merchants.postal_code', $postalcode);
+            // Filter mall by postal code
+            OrbitInput::get('postal_code', function ($postalcode) use ($malls) {
+                $malls->whereIn('merchants.postal_code', $postalcode);
             });
 
-            // Filter merchant by cityID
-            OrbitInput::get('city_id', function ($cityIds) use ($merchants) {
-                $merchants->whereIn('merchants.city_id', $cityIds);
+            // Filter mall by cityID
+            OrbitInput::get('city_id', function ($cityIds) use ($malls) {
+                $malls->whereIn('merchants.city_id', $cityIds);
             });
 
-            // Filter merchant by city
-            OrbitInput::get('city', function ($city) use ($merchants) {
-                $merchants->whereIn('merchants.city', $city);
+            // Filter mall by city
+            OrbitInput::get('city', function ($city) use ($malls) {
+                $malls->whereIn('merchants.city', $city);
             });
 
-            // Filter merchant by city pattern
-            OrbitInput::get('city_like', function ($city) use ($merchants) {
-                $merchants->where('merchants.city', 'like', "%$city%");
+            // Filter mall by city pattern
+            OrbitInput::get('city_like', function ($city) use ($malls) {
+                $malls->where('merchants.city', 'like', "%$city%");
             });
 
-            // Filter merchant by countryID
-            OrbitInput::get('country_id', function ($countryId) use ($merchants) {
-                $merchants->whereIn('merchants.country_id', $countryId);
+            // Filter mall by countryID
+            OrbitInput::get('country_id', function ($countryId) use ($malls) {
+                $malls->whereIn('merchants.country_id', $countryId);
             });
 
-            // Filter merchant by country
-            OrbitInput::get('country', function ($country) use ($merchants) {
-                $merchants->whereIn('merchants.country', $country);
+            // Filter mall by country
+            OrbitInput::get('country', function ($country) use ($malls) {
+                $malls->whereIn('merchants.country', $country);
             });
 
-            // Filter merchant by country pattern
-            OrbitInput::get('country_like', function ($country) use ($merchants) {
-                $merchants->where('merchants.country', 'like', "%$country%");
+            // Filter mall by country pattern
+            OrbitInput::get('country_like', function ($country) use ($malls) {
+                $malls->where('merchants.country', 'like', "%$country%");
             });
 
-            // Filter merchant by phone
-            OrbitInput::get('phone', function ($phone) use ($merchants) {
-                $merchants->whereIn('merchants.phone', $phone);
+            // Filter mall by phone
+            OrbitInput::get('phone', function ($phone) use ($malls) {
+                $malls->whereIn('merchants.phone', $phone);
             });
 
-            // Filter merchant by fax
-            OrbitInput::get('fax', function ($fax) use ($merchants) {
-                $merchants->whereIn('merchants.fax', $fax);
+            // Filter mall by fax
+            OrbitInput::get('fax', function ($fax) use ($malls) {
+                $malls->whereIn('merchants.fax', $fax);
             });
 
-            // Filter merchant by status
-            OrbitInput::get('status', function ($status) use ($merchants) {
-                $merchants->whereIn('merchants.status', $status);
+            // Filter mall by status
+            OrbitInput::get('status', function ($status) use ($malls) {
+                $malls->whereIn('merchants.status', $status);
             });
 
-            // Filter merchant by currency
-            OrbitInput::get('currency', function ($currency) use ($merchants) {
-                $merchants->whereIn('merchants.currency', $currency);
+            // Filter mall by currency
+            OrbitInput::get('currency', function ($currency) use ($malls) {
+                $malls->whereIn('merchants.currency', $currency);
             });
 
-            // Filter merchant by contact person firstname
-            OrbitInput::get('contact_person_firstname', function ($contact_person_firstname) use ($merchants) {
-                $merchants->whereIn('merchants.contact_person_firstname', $contact_person_firstname);
+            // Filter mall by contact person firstname
+            OrbitInput::get('contact_person_firstname', function ($contact_person_firstname) use ($malls) {
+                $malls->whereIn('merchants.contact_person_firstname', $contact_person_firstname);
             });
 
-            // Filter merchant by contact person firstname like
-            OrbitInput::get('contact_person_firstname_like', function ($contact_person_firstname) use ($merchants) {
-                $merchants->where('merchants.contact_person_firstname', 'like', "%$contact_person_firstname%");
+            // Filter mall by contact person firstname like
+            OrbitInput::get('contact_person_firstname_like', function ($contact_person_firstname) use ($malls) {
+                $malls->where('merchants.contact_person_firstname', 'like', "%$contact_person_firstname%");
             });
 
-            // Filter merchant by contact person lastname
-            OrbitInput::get('contact_person_lastname', function ($contact_person_lastname) use ($merchants) {
-                $merchants->whereIn('merchants.contact_person_lastname', $contact_person_lastname);
+            // Filter mall by contact person lastname
+            OrbitInput::get('contact_person_lastname', function ($contact_person_lastname) use ($malls) {
+                $malls->whereIn('merchants.contact_person_lastname', $contact_person_lastname);
             });
 
-            // Filter merchant by contact person lastname like
-            OrbitInput::get('contact_person_lastname_like', function ($contact_person_lastname) use ($merchants) {
-                $merchants->where('merchants.contact_person_lastname', 'like', "%$contact_person_lastname%");
+            // Filter mall by contact person lastname like
+            OrbitInput::get('contact_person_lastname_like', function ($contact_person_lastname) use ($malls) {
+                $malls->where('merchants.contact_person_lastname', 'like', "%$contact_person_lastname%");
             });
 
-            // Filter merchant by contact person position
-            OrbitInput::get('contact_person_position', function ($contact_person_position) use ($merchants) {
-                $merchants->whereIn('merchants.contact_person_position', $contact_person_position);
+            // Filter mall by contact person position
+            OrbitInput::get('contact_person_position', function ($contact_person_position) use ($malls) {
+                $malls->whereIn('merchants.contact_person_position', $contact_person_position);
             });
 
-            // Filter merchant by contact person position like
-            OrbitInput::get('contact_person_position_like', function ($contact_person_position) use ($merchants) {
-                $merchants->where('merchants.contact_person_position', 'like', "%$contact_person_position%");
+            // Filter mall by contact person position like
+            OrbitInput::get('contact_person_position_like', function ($contact_person_position) use ($malls) {
+                $malls->where('merchants.contact_person_position', 'like', "%$contact_person_position%");
             });
 
-            // Filter merchant by contact person phone
-            OrbitInput::get('contact_person_phone', function ($contact_person_phone) use ($merchants) {
-                $merchants->whereIn('merchants.contact_person_phone', $contact_person_phone);
+            // Filter mall by contact person phone
+            OrbitInput::get('contact_person_phone', function ($contact_person_phone) use ($malls) {
+                $malls->whereIn('merchants.contact_person_phone', $contact_person_phone);
             });
 
-            // Filter merchant by contact person phone2
-            OrbitInput::get('contact_person_phone2', function ($contact_person_phone2) use ($merchants) {
-                $merchants->whereIn('merchants.contact_person_phone2', $contact_person_phone2);
+            // Filter mall by contact person phone2
+            OrbitInput::get('contact_person_phone2', function ($contact_person_phone2) use ($malls) {
+                $malls->whereIn('merchants.contact_person_phone2', $contact_person_phone2);
             });
 
-            // Filter merchant by contact person email
-            OrbitInput::get('contact_person_email', function ($contact_person_email) use ($merchants) {
-                $merchants->whereIn('merchants.contact_person_email', $contact_person_email);
+            // Filter mall by contact person email
+            OrbitInput::get('contact_person_email', function ($contact_person_email) use ($malls) {
+                $malls->whereIn('merchants.contact_person_email', $contact_person_email);
             });
 
-            // Filter merchant by sector of activity
-            OrbitInput::get('sector_of_activity', function ($sector_of_activity) use ($merchants) {
-                $merchants->whereIn('merchants.sector_of_activity', $sector_of_activity);
+            // Filter mall by sector of activity
+            OrbitInput::get('sector_of_activity', function ($sector_of_activity) use ($malls) {
+                $malls->whereIn('merchants.sector_of_activity', $sector_of_activity);
             });
 
-            // Filter merchant by url
-            OrbitInput::get('url', function ($url) use ($merchants) {
-                $merchants->whereIn('merchants.url', $url);
+            // Filter mall by url
+            OrbitInput::get('url', function ($url) use ($malls) {
+                $malls->whereIn('merchants.url', $url);
             });
 
-            // Filter merchant by masterbox_number
-            OrbitInput::get('masterbox_number', function ($masterbox_number) use ($merchants) {
-                $merchants->whereIn('merchants.masterbox_number', $masterbox_number);
+            // Filter mall by masterbox_number
+            OrbitInput::get('masterbox_number', function ($masterbox_number) use ($malls) {
+                $malls->whereIn('merchants.masterbox_number', $masterbox_number);
             });
 
-            // Filter merchant by slavebox_number
-            OrbitInput::get('slavebox_number', function ($slavebox_number) use ($merchants) {
-                $merchants->whereIn('merchants.slavebox_number', $slavebox_number);
+            // Filter mall by slavebox_number
+            OrbitInput::get('slavebox_number', function ($slavebox_number) use ($malls) {
+                $malls->whereIn('merchants.slavebox_number', $slavebox_number);
             });
 
-            // Filter merchant by mobile_default_language
-            OrbitInput::get('mobile_default_language', function ($mobile_default_language) use ($merchants) {
-                $merchants->whereIn('merchants.mobile_default_language', $mobile_default_language);
+            // Filter mall by mobile_default_language
+            OrbitInput::get('mobile_default_language', function ($mobile_default_language) use ($malls) {
+                $malls->whereIn('merchants.mobile_default_language', $mobile_default_language);
             });
 
-            // Filter merchant by pos_language
-            OrbitInput::get('pos_language', function ($pos_language) use ($merchants) {
-                $merchants->whereIn('merchants.pos_language', $pos_language);
+            // Filter mall by pos_language
+            OrbitInput::get('pos_language', function ($pos_language) use ($malls) {
+                $malls->whereIn('merchants.pos_language', $pos_language);
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($merchants) {
+            OrbitInput::get('with', function ($with) use ($malls) {
                 $with = (array) $with;
 
                 // Make sure the with_count also in array format
@@ -693,17 +693,17 @@ class MallAPIController extends ControllerAPI
                 });
 
                 foreach ($with as $relation) {
-                    $merchants->with($relation);
+                    $malls->with($relation);
 
                     // Also include number of count if consumer ask it
                     if (in_array($relation, $withCount)) {
                         $countRelation = $relation . 'Number';
-                        $merchants->with($countRelation);
+                        $malls->with($countRelation);
                     }
                 }
             });
 
-            $_merchants = clone $merchants;
+            $_malls = clone $malls;
 
             // Get the take args
             $take = $perPage;
@@ -717,17 +717,17 @@ class MallAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $merchants->take($take);
+            $malls->take($take);
 
             $skip = 0;
-            OrbitInput::get('skip', function ($_skip) use (&$skip, $merchants) {
+            OrbitInput::get('skip', function ($_skip) use (&$skip, $malls) {
                 if ($_skip < 0) {
                     $_skip = 0;
                 }
 
                 $skip = $_skip;
             });
-            $merchants->skip($skip);
+            $malls->skip($skip);
 
             // Default sort by
             $sortBy = 'merchants.name';
@@ -767,10 +767,10 @@ class MallAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $merchants->orderBy($sortBy, $sortMode);
+            $malls->orderBy($sortBy, $sortMode);
 
-            $totalRec = RecordCounter::create($_merchants)->count();
-            $listOfRec = $merchants->get();
+            $totalRec = RecordCounter::create($_malls)->count();
+            $listOfRec = $malls->get();
 
             $data = new stdclass();
             $data->total_records = $totalRec;
@@ -785,7 +785,7 @@ class MallAPIController extends ControllerAPI
             $this->response->data = $data;
 
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.merchant.getsearchmerchant.access.forbidden', array($this, $e));
+            Event::fire('orbit.mall.getsearchmall.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -793,7 +793,7 @@ class MallAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.merchant.getsearchmerchant.invalid.arguments', array($this, $e));
+            Event::fire('orbit.mall.getsearchmall.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -805,7 +805,7 @@ class MallAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.merchant.getsearchmerchant.query.error', array($this, $e));
+            Event::fire('orbit.mall.getsearchmall.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -819,7 +819,7 @@ class MallAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.merchant.getsearchmerchant.general.exception', array($this, $e));
+            Event::fire('orbit.mall.getsearchmall.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -827,7 +827,7 @@ class MallAPIController extends ControllerAPI
             $this->response->data = null;
         }
         $output = $this->render($httpCode);
-        Event::fire('orbit.merchant.getsearchmerchant.before.render', array($this, &$output));
+        Event::fire('orbit.mall.getsearchmall.before.render', array($this, &$output));
 
         return $output;
     }

@@ -19,4 +19,9 @@ Route::post('/app/v1/mall/delete', ['before' => 'orbit-settings', 'uses' => 'Int
  */
 Route::post('/app/v1/mall/update', 'IntermediateAuthController@Mall_postUpdateMall');
 
+/**
+ * List and/or Search tenant
+ */
+Route::get('/app/v1/mall/{search}', 'IntermediateAuthController@Mall_getSearchMall')->where('search', '(list|search)');
+
 ?>
