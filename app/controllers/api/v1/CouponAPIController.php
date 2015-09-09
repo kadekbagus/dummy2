@@ -1704,10 +1704,11 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
-            if ($user->status !== 'active') {
-                $errorMessage = 'Can not redeem coupon, your status is not active.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
+            // removed, as the auto issuance coupon doesn't need to be active user, and manual is already check when issuing
+            // if ($user->status !== 'active') {
+            //     $errorMessage = 'Can not redeem coupon, your status is not active.';
+            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // }
 
             // Begin database transaction
             $this->beginTransaction();
