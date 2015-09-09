@@ -889,35 +889,35 @@ class MallAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postUpdateMerchant()
+    public function postUpdateMall()
     {
         $activity = Activity::portal()
                            ->setActivityType('update');
 
         $user = NULL;
-        $updatedmerchant = NULL;
+        $updatedmall = NULL;
         try {
             $httpCode=200;
 
-            Event::fire('orbit.merchant.postupdatemerchant.before.auth', array($this));
+            Event::fire('orbit.mall.postupdatemall.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.merchant.postupdatemerchant.after.auth', array($this));
+            Event::fire('orbit.mall.postupdatemall.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.merchant.postupdatemerchant.before.authz', array($this, $user));
+            Event::fire('orbit.mall.postupdatemall.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('update_merchant')) {
-                Event::fire('orbit.merchant.postupdatemerchant.authz.notallowed', array($this, $user));
-                $updateMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMerchantLang));
+            if (! ACL::create($user)->isAllowed('update_mall')) {
+                Event::fire('orbit.mall.postupdatemall.authz.notallowed', array($this, $user));
+                $updateMallLang = Lang::get('validation.orbit.actionlist.update_mall');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMallLang));
                 ACL::throwAccessForbidden($message);
             }
-            Event::fire('orbit.merchant.postupdatemerchant.after.authz', array($this, $user));
+            Event::fire('orbit.mall.postupdatemall.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -959,201 +959,201 @@ class MallAPIController extends ControllerAPI
                )
             );
 
-            Event::fire('orbit.merchant.postupdatemerchant.before.validation', array($this, $validator));
+            Event::fire('orbit.mall.postupdatemall.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.merchant.postupdatemerchant.after.validation', array($this, $validator));
+            Event::fire('orbit.mall.postupdatemall.after.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
 
-            $updatedmerchant = Merchant::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
+            $updatedmall = Mall::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
 
-            OrbitInput::post('omid', function($omid) use ($updatedmerchant) {
-                $updatedmerchant->omid = $omid;
+            OrbitInput::post('omid', function($omid) use ($updatedmall) {
+                $updatedmall->omid = $omid;
             });
 
-            OrbitInput::post('user_id', function($user_id) use ($updatedmerchant) {
+            OrbitInput::post('user_id', function($user_id) use ($updatedmall) {
                 // Right know the interface does not provide a way to change
                 // the user so it's better to skip it.
-                // $updatedmerchant->user_id = $user_id;
+                // $updatedmall->user_id = $user_id;
             });
 
-            OrbitInput::post('email', function($email) use ($updatedmerchant) {
-                $updatedmerchant->email = $email;
+            OrbitInput::post('email', function($email) use ($updatedmall) {
+                $updatedmall->email = $email;
             });
 
-            OrbitInput::post('name', function($name) use ($updatedmerchant) {
-                $updatedmerchant->name = $name;
+            OrbitInput::post('name', function($name) use ($updatedmall) {
+                $updatedmall->name = $name;
             });
 
-            OrbitInput::post('description', function($description) use ($updatedmerchant) {
-                $updatedmerchant->description = $description;
+            OrbitInput::post('description', function($description) use ($updatedmall) {
+                $updatedmall->description = $description;
             });
 
-            OrbitInput::post('address_line1', function($address_line1) use ($updatedmerchant) {
-                $updatedmerchant->address_line1 = $address_line1;
+            OrbitInput::post('address_line1', function($address_line1) use ($updatedmall) {
+                $updatedmall->address_line1 = $address_line1;
             });
 
-            OrbitInput::post('address_line2', function($address_line2) use ($updatedmerchant) {
-                $updatedmerchant->address_line2 = $address_line2;
+            OrbitInput::post('address_line2', function($address_line2) use ($updatedmall) {
+                $updatedmall->address_line2 = $address_line2;
             });
 
-            OrbitInput::post('address_line3', function($address_line3) use ($updatedmerchant) {
-                $updatedmerchant->address_line3 = $address_line3;
+            OrbitInput::post('address_line3', function($address_line3) use ($updatedmall) {
+                $updatedmall->address_line3 = $address_line3;
             });
 
-            OrbitInput::post('postal_code', function($postal_code) use ($updatedmerchant) {
-                $updatedmerchant->postal_code = $postal_code;
+            OrbitInput::post('postal_code', function($postal_code) use ($updatedmall) {
+                $updatedmall->postal_code = $postal_code;
             });
 
-            OrbitInput::post('city_id', function($city_id) use ($updatedmerchant) {
-                $updatedmerchant->city_id = $city_id;
+            OrbitInput::post('city_id', function($city_id) use ($updatedmall) {
+                $updatedmall->city_id = $city_id;
             });
 
-            OrbitInput::post('city', function($city) use ($updatedmerchant) {
-                $updatedmerchant->city = $city;
+            OrbitInput::post('city', function($city) use ($updatedmall) {
+                $updatedmall->city = $city;
             });
 
-            OrbitInput::post('country', function($country_id) use ($updatedmerchant) {
+            OrbitInput::post('country', function($country_id) use ($updatedmall) {
                 $countryName = '';
                 $countryObject = Country::find($country_id);
                 if (is_object($countryObject)) {
                     $countryName = $countryObject->name;
                 }
 
-                $updatedmerchant->country_id = $country_id;
-                $updatedmerchant->country = $countryName;
+                $updatedmall->country_id = $country_id;
+                $updatedmall->country = $countryName;
             });
 
-            OrbitInput::post('phone', function($phone) use ($updatedmerchant) {
-                $updatedmerchant->phone = $phone;
+            OrbitInput::post('phone', function($phone) use ($updatedmall) {
+                $updatedmall->phone = $phone;
             });
 
-            OrbitInput::post('fax', function($fax) use ($updatedmerchant) {
-                $updatedmerchant->fax = $fax;
+            OrbitInput::post('fax', function($fax) use ($updatedmall) {
+                $updatedmall->fax = $fax;
             });
 
-            OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmerchant) {
-                $updatedmerchant->start_date_activity = $start_date_activity;
+            OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmall) {
+                $updatedmall->start_date_activity = $start_date_activity;
             });
 
-            OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmerchant) {
-                $updatedmerchant->end_date_activity = $end_date_activity;
+            OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmall) {
+                $updatedmall->end_date_activity = $end_date_activity;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedmerchant) {
-                $updatedmerchant->status = $status;
+            OrbitInput::post('status', function($status) use ($updatedmall) {
+                $updatedmall->status = $status;
             });
 
-            OrbitInput::post('logo', function($logo) use ($updatedmerchant) {
-                $updatedmerchant->logo = $logo;
+            OrbitInput::post('logo', function($logo) use ($updatedmall) {
+                $updatedmall->logo = $logo;
             });
 
-            OrbitInput::post('currency', function($currency) use ($updatedmerchant) {
-                $updatedmerchant->currency = $currency;
+            OrbitInput::post('currency', function($currency) use ($updatedmall) {
+                $updatedmall->currency = $currency;
             });
 
-            OrbitInput::post('currency_symbol', function($currency_symbol) use ($updatedmerchant) {
-                $updatedmerchant->currency_symbol = $currency_symbol;
+            OrbitInput::post('currency_symbol', function($currency_symbol) use ($updatedmall) {
+                $updatedmall->currency_symbol = $currency_symbol;
             });
 
-            OrbitInput::post('tax_code1', function($tax_code1) use ($updatedmerchant) {
-                $updatedmerchant->tax_code1 = $tax_code1;
+            OrbitInput::post('tax_code1', function($tax_code1) use ($updatedmall) {
+                $updatedmall->tax_code1 = $tax_code1;
             });
 
-            OrbitInput::post('tax_code2', function($tax_code2) use ($updatedmerchant) {
-                $updatedmerchant->tax_code2 = $tax_code2;
+            OrbitInput::post('tax_code2', function($tax_code2) use ($updatedmall) {
+                $updatedmall->tax_code2 = $tax_code2;
             });
 
-            OrbitInput::post('tax_code3', function($tax_code3) use ($updatedmerchant) {
-                $updatedmerchant->tax_code3 = $tax_code3;
+            OrbitInput::post('tax_code3', function($tax_code3) use ($updatedmall) {
+                $updatedmall->tax_code3 = $tax_code3;
             });
 
-            OrbitInput::post('slogan', function($slogan) use ($updatedmerchant) {
-                $updatedmerchant->slogan = $slogan;
+            OrbitInput::post('slogan', function($slogan) use ($updatedmall) {
+                $updatedmall->slogan = $slogan;
             });
 
-            OrbitInput::post('vat_included', function($vat_included) use ($updatedmerchant) {
-                $updatedmerchant->vat_included = $vat_included;
+            OrbitInput::post('vat_included', function($vat_included) use ($updatedmall) {
+                $updatedmall->vat_included = $vat_included;
             });
 
-            OrbitInput::post('contact_person_firstname', function($contact_person_firstname) use ($updatedmerchant) {
-                $updatedmerchant->contact_person_firstname = $contact_person_firstname;
+            OrbitInput::post('contact_person_firstname', function($contact_person_firstname) use ($updatedmall) {
+                $updatedmall->contact_person_firstname = $contact_person_firstname;
             });
 
-            OrbitInput::post('contact_person_lastname', function($contact_person_lastname) use ($updatedmerchant) {
-                $updatedmerchant->contact_person_lastname = $contact_person_lastname;
+            OrbitInput::post('contact_person_lastname', function($contact_person_lastname) use ($updatedmall) {
+                $updatedmall->contact_person_lastname = $contact_person_lastname;
             });
 
-            OrbitInput::post('contact_person_position', function($contact_person_position) use ($updatedmerchant) {
-                $updatedmerchant->contact_person_position = $contact_person_position;
+            OrbitInput::post('contact_person_position', function($contact_person_position) use ($updatedmall) {
+                $updatedmall->contact_person_position = $contact_person_position;
             });
 
-            OrbitInput::post('contact_person_phone', function($contact_person_phone) use ($updatedmerchant) {
-                $updatedmerchant->contact_person_phone = $contact_person_phone;
+            OrbitInput::post('contact_person_phone', function($contact_person_phone) use ($updatedmall) {
+                $updatedmall->contact_person_phone = $contact_person_phone;
             });
 
-            OrbitInput::post('contact_person_phone2', function($contact_person_phone2) use ($updatedmerchant) {
-                $updatedmerchant->contact_person_phone2 = $contact_person_phone2;
+            OrbitInput::post('contact_person_phone2', function($contact_person_phone2) use ($updatedmall) {
+                $updatedmall->contact_person_phone2 = $contact_person_phone2;
             });
 
-            OrbitInput::post('contact_person_email', function($contact_person_email) use ($updatedmerchant) {
-                $updatedmerchant->contact_person_email = $contact_person_email;
+            OrbitInput::post('contact_person_email', function($contact_person_email) use ($updatedmall) {
+                $updatedmall->contact_person_email = $contact_person_email;
             });
 
-            OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmerchant) {
-                $updatedmerchant->sector_of_activity = $sector_of_activity;
+            OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmall) {
+                $updatedmall->sector_of_activity = $sector_of_activity;
             });
 
-            OrbitInput::post('parent_id', function($parent_id) use ($updatedmerchant) {
-                $updatedmerchant->parent_id = $parent_id;
+            OrbitInput::post('parent_id', function($parent_id) use ($updatedmall) {
+                $updatedmall->parent_id = $parent_id;
             });
 
-            OrbitInput::post('url', function($url) use ($updatedmerchant) {
-                $updatedmerchant->url = $url;
+            OrbitInput::post('url', function($url) use ($updatedmall) {
+                $updatedmall->url = $url;
             });
 
-            OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedmerchant) {
-                $updatedmerchant->masterbox_number = $masterbox_number;
+            OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedmall) {
+                $updatedmall->masterbox_number = $masterbox_number;
             });
 
-            OrbitInput::post('slavebox_number', function($slavebox_number) use ($updatedmerchant) {
-                $updatedmerchant->slavebox_number = $slavebox_number;
+            OrbitInput::post('slavebox_number', function($slavebox_number) use ($updatedmall) {
+                $updatedmall->slavebox_number = $slavebox_number;
             });
 
-            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmerchant) {
-                $updatedmerchant->mobile_default_language = $mobile_default_language;
+            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall) {
+                $updatedmall->mobile_default_language = $mobile_default_language;
             });
 
-            OrbitInput::post('pos_language', function($pos_language) use ($updatedmerchant) {
+            OrbitInput::post('pos_language', function($pos_language) use ($updatedmall) {
                 if (trim($pos_language) === '') {
                     $pos_language = NULL;
                 }
-                $updatedmerchant->pos_language = $pos_language;
+                $updatedmall->pos_language = $pos_language;
             });
 
-            OrbitInput::post('ticket_header', function($ticket_header) use ($updatedmerchant) {
-                $updatedmerchant->ticket_header = $ticket_header;
+            OrbitInput::post('ticket_header', function($ticket_header) use ($updatedmall) {
+                $updatedmall->ticket_header = $ticket_header;
             });
 
-            OrbitInput::post('ticket_footer', function($ticket_footer) use ($updatedmerchant) {
-                $updatedmerchant->ticket_footer = $ticket_footer;
+            OrbitInput::post('ticket_footer', function($ticket_footer) use ($updatedmall) {
+                $updatedmall->ticket_footer = $ticket_footer;
             });
 
-            $updatedmerchant->modified_by = $this->api->user->user_id;
+            $updatedmall->modified_by = $this->api->user->user_id;
 
-            Event::fire('orbit.merchant.postupdatemerchant.before.save', array($this, $updatedmerchant));
+            Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
 
-            $updatedmerchant->save();
+            $updatedmall->save();
 
             // update user status
-            OrbitInput::post('status', function($status) use ($updatedmerchant) {
-                $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedmerchant->user_id);
+            OrbitInput::post('status', function($status) use ($updatedmall) {
+                $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedmall->user_id);
                 if (! $updateuser->isSuperAdmin()) {
                     $updateuser->status = $status;
                     $updateuser->modified_by = $this->api->user->user_id;
@@ -1163,7 +1163,7 @@ class MallAPIController extends ControllerAPI
             });
 
             // do insert/update/delete merchant_taxes
-            OrbitInput::post('merchant_taxes', function($merchant_taxes) use ($updatedmerchant) {
+            OrbitInput::post('merchant_taxes', function($merchant_taxes) use ($updatedmall) {
                 $merchant_taxes = (array) $merchant_taxes;
                 foreach ($merchant_taxes as $merchant_tax) {
                     // validate merchant_taxes
@@ -1176,7 +1176,7 @@ class MallAPIController extends ControllerAPI
                         ),
                         array(
                             'merchant_tax_id'        => 'orbit.empty.tax',
-                            'tax_name'               => 'required|max:50|tax_name_exists_but_me:'.$merchant_tax['merchant_tax_id'].','.$updatedmerchant->merchant_id,
+                            'tax_name'               => 'required|max:50|tax_name_exists_but_me:'.$merchant_tax['merchant_tax_id'].','.$updatedmall->merchant_id,
                             'tax_type'               => 'orbit.empty.tax_type',
                             'is_delete'              => 'orbit.exists.tax_link_to_product:'.$merchant_tax['merchant_tax_id'],
                         ),
@@ -1185,7 +1185,7 @@ class MallAPIController extends ControllerAPI
                         )
                     );
 
-                    Event::fire('orbit.merchant.postupdatemerchant.before.merchanttaxesvalidation', array($this, $validator));
+                    Event::fire('orbit.mall.postupdatemall.before.merchanttaxesvalidation', array($this, $validator));
 
                     // Run the validation
                     if ($validator->fails()) {
@@ -1193,13 +1193,13 @@ class MallAPIController extends ControllerAPI
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
-                    Event::fire('orbit.merchant.postupdatemerchant.after.merchanttaxesvalidation', array($this, $validator));
+                    Event::fire('orbit.mall.postupdatemall.after.merchanttaxesvalidation', array($this, $validator));
 
                     //save merchant_taxes
                     if (trim($merchant_tax['merchant_tax_id']) === '') {
                         // do insert
                         $merchanttax = new MerchantTax();
-                        $merchanttax->merchant_id = $updatedmerchant->merchant_id;
+                        $merchanttax->merchant_id = $updatedmall->merchant_id;
                         $merchanttax->tax_name = $merchant_tax['tax_name'];
                         $merchanttax->tax_type = $merchant_tax['tax_type'];
                         $merchanttax->tax_value = $merchant_tax['tax_value'];
@@ -1226,27 +1226,27 @@ class MallAPIController extends ControllerAPI
                 }
 
                 // reload taxes relation
-                $updatedmerchant->load('taxes');
+                $updatedmall->load('taxes');
             });
 
-            Event::fire('orbit.merchant.postupdatemerchant.after.save', array($this, $updatedmerchant));
-            $this->response->data = $updatedmerchant;
+            Event::fire('orbit.mall.postupdatemall.after.save', array($this, $updatedmall));
+            $this->response->data = $updatedmall;
 
             // Commit the changes
             $this->commit();
 
             // Successfull Update
-            $activityNotes = sprintf('Merchant updated: %s', $updatedmerchant->name);
+            $activityNotes = sprintf('Mall updated: %s', $updatedmall->name);
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
-                    ->setActivityNameLong('Update Merchant OK')
-                    ->setObject($updatedmerchant)
+                    ->setActivityName('update_mall')
+                    ->setActivityNameLong('Update Mall OK')
+                    ->setObject($updatedmall)
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.merchant.postupdatemerchant.after.commit', array($this, $updatedmerchant));
+            Event::fire('orbit.mall.postupdatemall.after.commit', array($this, $updatedmall));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.merchant.postupdatemerchant.access.forbidden', array($this, $e));
+            Event::fire('orbit.mall.postupdatemall.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1259,13 +1259,13 @@ class MallAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
-                    ->setActivityNameLong('Update Merchant Failed')
-                    ->setObject($updatedmerchant)
+                    ->setActivityName('update_mall')
+                    ->setActivityNameLong('Update Mall Failed')
+                    ->setObject($updatedmall)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.merchant.postupdatemerchant.invalid.arguments', array($this, $e));
+            Event::fire('orbit.mall.postupdatemall.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1278,13 +1278,13 @@ class MallAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
-                    ->setActivityNameLong('Update Merchant Failed')
-                    ->setObject($updatedmerchant)
+                    ->setActivityName('update_mall')
+                    ->setActivityNameLong('Update Mall Failed')
+                    ->setObject($updatedmall)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
-            Event::fire('orbit.merchant.postupdatemerchant.query.error', array($this, $e));
+            Event::fire('orbit.mall.postupdatemall.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1303,13 +1303,13 @@ class MallAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
-                    ->setActivityNameLong('Update Merchant Failed')
-                    ->setObject($updatedmerchant)
+                    ->setActivityName('update_mall')
+                    ->setActivityNameLong('Update Mall Failed')
+                    ->setObject($updatedmall)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
-            Event::fire('orbit.merchant.postupdatemerchant.general.exception', array($this, $e));
+            Event::fire('orbit.mall.postupdatemall.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -1321,9 +1321,9 @@ class MallAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
-                    ->setActivityNameLong('Update Merchant Failed')
-                    ->setObject($updatedmerchant)
+                    ->setActivityName('update_mall')
+                    ->setActivityNameLong('Update Mall Failed')
+                    ->setObject($updatedmall)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         }

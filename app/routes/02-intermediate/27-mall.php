@@ -13,4 +13,10 @@ Route::post('/app/v1/mall/new', ['before' => 'orbit-settings', 'uses' => 'Interm
  */
 Route::post('/app/v1/mall/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@Mall_postDeleteMall']);
 
+
+/**
+ * Update mall
+ */
+Route::post('/app/v1/mall/update', 'IntermediateAuthController@Mall_postUpdateMall');
+
 ?>
