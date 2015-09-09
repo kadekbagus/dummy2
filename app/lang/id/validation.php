@@ -118,6 +118,7 @@ return array(
             ),
             'employeeid'            => 'Employee ID tidak tersedia.',
             'widget_type'           => 'Terdapat widget lain yang memiliki tipe yang sama.',
+            'mall_have_tenant'      => 'Mall mempunyai satu atau lebih tenant terhubung, sehingga tidak bisa dihapus.',
         ),
         'access' => array(
             'forbidden'              => 'Anda tidak memiliki akses untuk :action.',

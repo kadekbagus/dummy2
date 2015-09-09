@@ -470,7 +470,7 @@ class MallAPIController extends ControllerAPI
 
             $malls = Mall::excludeDeleted('merchants')
                                 ->allowedForUser($user)
-                                ->select('merchants.*', DB::raw('count(retailer.merchant_id) AS total_retailer'))
+                                ->select('merchants.*', DB::raw('count(retailer.merchant_id) AS total_tenant'))
                                 ->leftJoin('merchants AS retailer', function($join) {
                                         $join->on(DB::raw('retailer.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('retailer.status'), '!=', 'deleted');
@@ -1388,7 +1388,7 @@ class MallAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'merchant_id' => 'required|numeric|orbit.empty.mall|orbit.exists.merchant_have_retailer',
+                    'merchant_id' => 'required|numeric|orbit.empty.mall|orbit.exists.mall_have_tenant',
                     'password'    => 'required|orbit.access.wrongpassword',
                 )
             );
@@ -1774,16 +1774,16 @@ class MallAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // Check if merchant have retailer.
-        Validator::extend('orbit.exists.merchant_have_retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()
+        // Check if mall have tenant.
+        Validator::extend('orbit.exists.mall_have_tenant', function ($attribute, $value, $parameters) {
+            $retailer = Tenant::excludeDeleted()
                             ->where('parent_id', $value)
                             ->first();
             if (! empty($retailer)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exists.merchant_have_retailer', $retailer);
+            App::instance('orbit.exists.mall_have_tenant', $retailer);
 
             return TRUE;
         });
@@ -1793,7 +1793,7 @@ class MallAPIController extends ControllerAPI
             if ($value === 'inactive') {
                 $merchant_id = $parameters[0];
                 $retailer_id = Setting::where('setting_name', 'current_retailer')->first()->setting_value;
-                $currentRetailer = Retailer::excludeDeleted()
+                $currentRetailer = Tenant::excludeDeleted()
                                     ->where('parent_id', $merchant_id)
                                     ->where('merchant_id', $retailer_id)
                                     ->first();
