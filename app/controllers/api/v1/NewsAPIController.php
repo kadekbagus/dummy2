@@ -171,6 +171,12 @@ class NewsAPIController extends ControllerAPI
             $newnews->tenants = $newsretailers;
 
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
+
+            // translation for mallnews
+            OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
+                $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
+            });
+
             $this->response->data = $newnews;
 
             // Commit the changes
@@ -427,6 +433,10 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->link_object_type = $link_object_type;
             });
 
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedeventupdatednews) {
+                $this->validateAndSaveTranslations($updatednews, $translation_json_string, 'update');
+            });
+
             $updatednews->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.news.postupdatenews.before.save', array($this, $updatednews));
@@ -674,6 +684,11 @@ class NewsAPIController extends ControllerAPI
             $deletenewsretailers = NewsMerchant::where('news_id', $deletenews->news_id)->get();
             foreach ($deletenewsretailers as $deletenewsretailer) {
                 $deletenewsretailer->delete();
+            }
+
+            foreach ($deletenews->translations as $translation) {
+                $translation->modified_by = $this->api->user->user_id;
+                $translation->delete();
             }
 
             $deletenews->save();
@@ -977,6 +992,10 @@ class NewsAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'tenants') {
                         $news->with('tenants');
+                    } elseif ($relation === 'translations') {
+                        $coupons->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $coupons->with('translations.media');
                     }
                 }
             });
@@ -1533,6 +1552,154 @@ class NewsAPIController extends ControllerAPI
             return TRUE;
         });
 
+    }
+
+    /**
+     * @param NewsModel $news
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslations($news, $translations_json_string, $scenario = 'create')
+    {
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where NewsTranslation object is object with keys:
+         *   news_name, description
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['news_name', 'description'];
+        $user = $this->api->user;
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+
+        // translate for mall
+        foreach ($data as $merchant_language_id => $translations) {
+            $language = MerchantLanguage::excludeDeleted()
+                ->allowedForUser($user)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            }
+            $existing_translation = NewsTranslation::excludeDeleted()
+                ->where('news_id', '=', $news->news_id)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $merchant_language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+
+                // for translation per mall
+                $new_translation = new NewsTranslation();
+                $new_translation->news_id = $news->news_id;
+                $new_translation->merchant_id = $news->mall_id;
+                $new_translation->merchant_language_id = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $new_translation->{$field} = $value;
+                }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
+                $new_translation->save();
+
+                // translation per merchant if any
+                if (!empty($news->tenants)) {
+                    foreach ($news->tenants as $key => $merchant) {
+                        
+                        $new_translation_merchant = new NewsTranslation();
+                        $new_translation_merchant->news_id = $news->news_id;
+                        $new_translation_merchant->merchant_id = $merchant->merchant_id;
+                        $new_translation_merchant->merchant_language_id = $operation[1];
+                        foreach ($data as $field => $value) {
+                            $new_translation_merchant->{$field} = $value;
+                        }
+
+                        $new_translation_merchant->created_by = $this->api->user->user_id;
+                        $new_translation_merchant->modified_by = $this->api->user->user_id;
+
+                        $new_translation_merchant->save();
+                    }
+                }
+
+                // Fire an news which listen on orbit.news.after.translation.save
+                // @param ControllerAPI $this
+                // @param EventTranslation $new_transalation
+                Event::fire('orbit.news.after.translation.save', array($this, $new_translation));
+
+                $news->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
+            }
+            elseif ($op === 'update') {
+                /** @var NewsTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->save();
+
+                // for translation per merchant
+                if (!empty($news->tenants)) {
+                    foreach ($news->tenants as $key => $merchant) {
+                        
+                        $new_translation_merchant = new NewsTranslation();
+                        $new_translation_merchant->news_id = $news->news_id;
+                        $new_translation->merchant_id = $news->mall_id;
+                        $new_translation_merchant->merchant_id = $merchant->merchant_id;
+                        $new_translation_merchant->merchant_language_id = $operation[1];
+                        foreach ($data as $field => $value) {
+                            $new_translation_merchant->{$field} = $value;
+                        }
+
+                        $new_translation_merchant->created_by = $this->api->user->user_id;
+                        $new_translation_merchant->modified_by = $this->api->user->user_id;
+
+                        $new_translation_merchant->save();
+                    }
+                }
+
+            }
+            elseif ($op === 'delete') {
+                /** @var NewsTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->delete();
+            }
+        }
     }
 
 }
