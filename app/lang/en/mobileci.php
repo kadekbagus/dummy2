@@ -298,9 +298,9 @@ return array(
         'goodluck'                  => 'Goodluck!',
         'congratulation'            => 'Congratulations you get ',
         'no_lucky_draw'             => 'lucky number draw ',
-        'lucky_draw_info_1'         => 'Here is a lucky number that you can draw on '
+        'lucky_draw_info_1'         => 'Here is a lucky number that you can draw on ',
         'lucky_draw_info_2'         => 'Note: The numbers shown here are only ',
-        'lucky_draw_info_3'         => 'The first number that you can '
+        'lucky_draw_info_3'         => 'The first number that you can ',
         'lucky_draw_info_4'         => 'Total Currently you have ',
         'lucky_draw_info_5'         => 'lucky numbers draw, you can see your entire page numbers',
         'lucky_draw'                => 'Lucky Draw.',
