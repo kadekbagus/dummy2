@@ -225,7 +225,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $this->printYesNoFormatter($row->is_auto_issue_on_signup),
                             $row->issued_coupon_code,
                             $row->user_email,
-                            $row->redeemed_date,
+                            $this->printDateTime($row->issued_date, 'd M Y H:i'),
                             $row->total_issued . ' / ' . $this->printUnlimitedFormatter($row->maximum_issued_coupon),
                             $row->status
                     );
