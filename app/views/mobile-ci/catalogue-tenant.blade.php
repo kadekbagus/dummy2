@@ -226,7 +226,7 @@
         });
         if(!$.cookie('dismiss_verification_popup')) {
             $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-            $('#verifyModal').modal();
+            // $('#verifyModal').modal();
         }
 
         var promo = '';

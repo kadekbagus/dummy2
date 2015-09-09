@@ -101,7 +101,7 @@
         });
         if(!$.cookie('dismiss_verification_popup')) {
             $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-            $('#verifyModal').modal();
+            // $('#verifyModal').modal();
         }
         
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}';
