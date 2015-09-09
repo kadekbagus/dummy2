@@ -90,7 +90,7 @@
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer</th>
             <th style="text-align:left;">Issued Date & Time</th>
-            <th style="text-align:left;">Issued/Available</th>
+            <th style="text-align:left;">Issued/Maximum</th>
             <th style="text-align:left;">Status</th>
         </thead>
         <tbody>
