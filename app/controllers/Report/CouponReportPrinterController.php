@@ -226,7 +226,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->issued_coupon_code,
                             $row->user_email,
                             $row->redeemed_date,
-                            $row->total_issued . ' / ' . $row->maximum_issued_coupon,
+                            $row->total_issued . ' / ' . $this->printUnlimitedFormatter($row->maximum_issued_coupon),
                             $row->status
                     );
                     $count++;
@@ -273,5 +273,20 @@ class CouponReportPrinterController extends DataPrinterController
         }
 
         return 'NO';
+    }
+
+    /**
+     * Unlimited/infinity formatter.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printUnlimitedFormatter($input)
+    {
+        if ($input === '0') {
+            return '∞';
+        }
+
+        return $input;
     }
 }
