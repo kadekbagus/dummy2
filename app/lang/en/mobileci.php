@@ -7,7 +7,7 @@ return array(
     |--------------------------------------------------------------------------
     */
 
-    'page_title'            => array(
+    'page_title' => array(
         'home'              => 'HOME',
         'catalogue'         => 'CATALOGUE',
         'cart'              => 'CART',
@@ -35,7 +35,7 @@ return array(
         'membership'        => 'MEMBERSHIP'
     ),
 
-    'widgets'           => array(
+    'widgets' => array(
         'catalogue'     => 'CATALOGUE',
         'new_product'   => 'NEW PRODUCTS',
         'promotion'     => 'PROMOTIONS',
@@ -45,7 +45,7 @@ return array(
         'news'          => 'NEWS',
     ),
 
-    'greetings'         => array(
+    'greetings' => array(
         'welcome'                    => 'Welcome',
         'latest_news_coming_soon'    => 'Check out our latest news coming soon.',
         'new_promotions_coming_soon' => 'Check out our new promotions coming soon.',
@@ -54,7 +54,7 @@ return array(
     ),
 
     // modal specific lang
-    'modals'                    => array(
+    'modals' => array(
         'close'                  => 'Close',
         'ok'                     => 'OK',
         'email_error'            => 'Please enter your email first.',
@@ -100,11 +100,10 @@ return array(
         'membership_want_member' => 'Want to be a member?',
         'membership_great_deal'  => 'To get special great deals from us',
         'membership_contact_our' => 'Please, contact our customer service to get your membership number',
-
     ),
 
     //tenant catalogue
-    'tenant'         => array(
+    'tenant' => array(
         'floor'                 => 'Floor',
         'category'              => 'Category',
         'all'                   => 'All',
@@ -116,7 +115,7 @@ return array(
     ),
 
     // page specific lang
-    'signin'         => array(
+    'signin' => array(
         'email_placeholder' => 'Insert your email address',
         'login_button'      => 'Enter',
         'start_button'      => 'Start Shopping',
@@ -126,7 +125,7 @@ return array(
         'logging_in_button' => 'Logging in. Please wait...',
     ),
 
-    'catalogue'         => array(
+    'catalogue' => array(
         'starting_from'     => 'Starting from',
         'promo_ribbon'      => 'Promo',
         'coupon_ribbon'     => 'Coupon',
@@ -138,59 +137,59 @@ return array(
         'all'               => 'All',
     ),
 
-    'product_detail'         => array(
+    'product_detail' => array(
         'get_coupon'         => 'Get Coupon',
         'promo_discount'     => 'Promotion Discount',
         'to'                 => 'to',
     ),
 
-    'cart'         => array(
-        'promo'              => 'PROMO',
-        'coupon'             => 'COUPON',
-        'no_item'            => 'No items in cart.',
-        'item_label'         => 'Item(s)',
-        'items_label'         => 'Items',
-        'qty_label'          => 'Qty',
-        'price_label'        => 'Unit Price',
-        'subtotal_label'     => 'Subtotal',
-        'total_label'        => 'Total',
-        'use_product_coupon' => 'Use coupon for this item',
-        'cart_based_promotion_label' => 'Cart Based Promotions',
-        'cart_based_coupon_label' => 'Cart Based Coupons',
+    'cart' => array(
+        'promo'                             => 'PROMO',
+        'coupon'                            => 'COUPON',
+        'no_item'                           => 'No items in cart.',
+        'item_label'                        => 'Item(s)',
+        'items_label'                       => 'Items',
+        'qty_label'                         => 'Qty',
+        'price_label'                       => 'Unit Price',
+        'subtotal_label'                    => 'Subtotal',
+        'total_label'                       => 'Total',
+        'use_product_coupon'                => 'Use coupon for this item',
+        'cart_based_promotion_label'        => 'Cart Based Promotions',
+        'cart_based_coupon_label'           => 'Cart Based Coupons',
         'available_cart_based_coupon_label' => 'Available Cart Based Coupons',
-        'promotion_label'    => 'Promotion',
-        'coupon_label'       => 'Coupon',
-        'value_label'        => 'Value',
-        'discount_label'     => 'Discount',
-        'use'                => 'Use',
-        'taxes_label'        => 'Taxes',
-        'checkout_button'    => 'Checkout',
-        'continue_button'    => 'Continue Shopping',
-        'transaction_id_label' => 'Transaction ID',
-        'date_label'         => 'Date',
-        'acquired_coupons_label'         => 'Acquired Coupons',
-        'reset_button'       => 'Reset Cart',
+        'promotion_label'                   => 'Promotion',
+        'coupon_label'                      => 'Coupon',
+        'value_label'                       => 'Value',
+        'discount_label'                    => 'Discount',
+        'use'                               => 'Use',
+        'taxes_label'                       => 'Taxes',
+        'checkout_button'                   => 'Checkout',
+        'continue_button'                   => 'Continue Shopping',
+        'transaction_id_label'              => 'Transaction ID',
+        'date_label'                        => 'Date',
+        'acquired_coupons_label'            => 'Acquired Coupons',
+        'reset_button'                      => 'Reset Cart',
     ),
 
-    'promotion'         => array(
+    'promotion' => array(
         'info'                             => 'Info',
         'want_unlimited_browsing'          => 'Want unlimited browsing?',
         'or_want_to_follow_the_lucky_draw' => 'Or want to follow the lucky draw?',
         'open_your_email_and_verify_now'   => 'Open your email and verify now!!',
     ),    
 
-    'promotion_list'         => array(
-        'no_promo'           => 'There are no promotions for today.',
-        'product_label'      => 'Product',
-        'category_label'     => 'Category',
+    'promotion_list' => array(
+        'no_promo'       => 'There are no promotions for today.',
+        'product_label'  => 'Product',
+        'category_label' => 'Category',
     ),
 
-    'promotion_detail'         => array(
-        'exp_promo'           => 'Promotion does not exist or is already expired.',
-        'back_label'          => 'Back',
+    'promotion_detail' => array(
+        'exp_promo'  => 'Promotion does not exist or is already expired.',
+        'back_label' => 'Back',
     ),
 
-    'coupon'         => array(
+    'coupon' => array(
         'tenant_based'                     => 'Tenant Based',
         'mall_based'                       => 'Mall Based',
         'tenant_redeem'                    => 'Tenant Redeem',
@@ -211,35 +210,35 @@ return array(
         'close'                            => 'Close',
     ),
 
-    'coupon_list'         => array(
+    'coupon_list' => array(
         'no_coupon'          => 'You do not have any coupons.',
         'product_label'      => 'Product',
         'category_label'     => 'Category',
     ),
 
-    'coupon_detail'         => array(
-        'exp_coupon'           => 'You do not have this coupon.',
-        'back_label'          => 'Back',
-        'coupon_code_label'   => 'Coupon code',
-        'validity_label'      => 'Valid until',
+    'coupon_detail' => array(
+        'exp_coupon'        => 'You do not have this coupon.',
+        'back_label'        => 'Back',
+        'coupon_code_label' => 'Coupon code',
+        'validity_label'    => 'Valid until',
     ),
 
-    'search'                => array(
-        'no_item'           => 'There is no tenant matching the criteria.',
-        'too_much_items'     => 'Search result is too broad, please narrow it down.',
+    'search' => array(
+        'no_item'        => 'There is no tenant matching the criteria.',
+        'too_much_items' => 'Search result is too broad, please narrow it down.',
     ),
 
-    'thank_you'             => array(
-        'thank_you'         => 'Thank You',
-        'save_ticket_button'=> 'Save Ticket',
-        'thank_you_message' => 'Thank you for shopping',
-        'dont_forget_message' => "Don't forget to visit",
-        'promo_message' => 'for great deals',
-        'shop_again_button' => 'Shop Again',
+    'thank_you' => array(
+        'thank_you'                => 'Thank You',
+        'save_ticket_button'       => 'Save Ticket',
+        'thank_you_message'        => 'Thank you for shopping',
+        'dont_forget_message'      => "Don't forget to visit",
+        'promo_message'            => 'for great deals',
+        'shop_again_button'        => 'Shop Again',
         'transfer_cart_successful' => 'Transfer Cart Successful!',
-        'transfer_cart_message' => 'your transaction will be completed by the cashier',
-        'thank_you_for_shopping' => 'Thank you for shopping with us',
-        'retailer'          => 'Retailer',
+        'transfer_cart_message'    => 'your transaction will be completed by the cashier',
+        'thank_you_for_shopping'   => 'Thank you for shopping with us',
+        'retailer'                 => 'Retailer',
     ),
 
     'transfer_cart'         => array(
@@ -249,20 +248,20 @@ return array(
     ),
 
     'payment'               => array(
-        'total_to_pay_label'=> 'Total',
-        'name_label'        => 'Name',
-        'name_placeholder'  => 'Enter your name',
-        'card_type_label'   => 'Card Type',
-        'card_number_label' => 'Card Number',
+        'total_to_pay_label'      => 'Total',
+        'name_label'              => 'Name',
+        'name_placeholder'        => 'Enter your name',
+        'card_type_label'         => 'Card Type',
+        'card_number_label'       => 'Card Number',
         'card_number_placeholder' => 'Enter your card number',
-        'expire_label'      => 'Expired on',
-        'ccv_label'         => 'CVV',
-        'ccv_placeholder'   => 'Enter CVV',
-        'submit_button'     => 'Submit',
-        'cancel_button'     => 'Back',
+        'expire_label'            => 'Expired on',
+        'ccv_label'               => 'CVV',
+        'ccv_placeholder'         => 'Enter CVV',
+        'submit_button'           => 'Submit',
+        'cancel_button'           => 'Back',
     ),
 
-    '404'                   => array(
+    '404' => array(
         'not_found'         => 'Page not found.',
     ),
 
@@ -270,7 +269,7 @@ return array(
         'recognize_me_message' => 'To be recognized, show the following barcode to the cashier.'
     ),
 
-    'inbox'     => array(
+    'inbox' => array(
         'lucky_draw'        => array(
             'subject'       => 'You Got New Lucky Draw Number(s)',
         ),
@@ -278,7 +277,8 @@ return array(
             'subject'       => 'You Got New Coupon(s)'
         ),
     ),
-    'inbox'     => array(
+
+    'inbox' => array(
         'lucky_draw'        => array(
             'subject'       => 'You Got New Lucky Draw Number(s)',
         ),
@@ -286,21 +286,23 @@ return array(
             'subject'       => 'You Got New Coupon(s)'
         ),
     ),
+
     'activation'  => array(
         'activate' => 'Activate',
         'close'    => 'Close',
         'error'    => 'Error',
-    ),    
+    ), 
+    
     'lucky_draw'  => array(
         'hello'                     => 'Hello',
-        'goodluck'                  => 'Semoga Beruntung!',
-        'congratulation'            => 'Selamat anda mendapatkan',
-        'no_lucky_draw'             => 'nomor lucky draw',
-        'lucky_draw_info_1'         => 'Berikut ini adalah nomor lucky draw yang anda dapat pada',
-        'lucky_draw_info_2'         => 'Catatan: Nomor yang ditampilkan di sini hanya',
-        'lucky_draw_info_3'         => 'nomor pertama yang anda dapat',
-        'lucky_draw_info_4'         => 'Total Saat ini anda memiliki',
-        'lucky_draw_info_5'         => 'nomor lucky draw, anda dapat melihat seluruh nomor anda di halaman',
+        'goodluck'                  => 'Goodluck!',
+        'congratulation'            => 'Congratulations you get ',
+        'no_lucky_draw'             => 'lucky number draw ',
+        'lucky_draw_info_1'         => 'Here is a lucky number that you can draw on '
+        'lucky_draw_info_2'         => 'Note: The numbers shown here are only ',
+        'lucky_draw_info_3'         => 'The first number that you can '
+        'lucky_draw_info_4'         => 'Total Currently you have ',
+        'lucky_draw_info_5'         => 'lucky numbers draw, you can see your entire page numbers',
         'lucky_draw'                => 'Lucky Draw.',
         'close'                     => 'Close.',
         
@@ -320,16 +322,14 @@ return array(
         'of'                        => 'Of',
         'prev'                      => 'Prev',
         'next'                      => 'Next',
-
-        'lucky_draw_total_info_1' => 'You have total',
-        'lucky_draw_total_info_2' => 'lucky draw numbers. You have total ',
-        'lucky_draw_total_info_3' => 'image to download,',
-        'lucky_draw_total_info_4' => 'each image contain maximum ',
-        'lucky_draw_total_info_5' => 'lucky draw number. It sorted by highest to lowest number.',
-        'lucky_draw_total_info_6' => 'Your download should be started automatically. If it doesnt try to click button below.',
-        'download_image'          => 'Download Image',
+        
+        'lucky_draw_total_info_1'   => 'You have total',
+        'lucky_draw_total_info_2'   => 'lucky draw numbers. You have total ',
+        'lucky_draw_total_info_3'   => 'image to download,',
+        'lucky_draw_total_info_4'   => 'each image contain maximum ',
+        'lucky_draw_total_info_5'   => 'lucky draw number. It sorted by highest to lowest number.',
+        'lucky_draw_total_info_6'   => 'Your download should be started automatically. If it doesnt try to click button below.',
+        'download_image'            => 'Download Image',
     ),
-
-
 
 );
