@@ -25,6 +25,8 @@ return array(
             'lucky_draw'     => 'Lucky Draw has been successfully deleted.',
             'news'           => 'News has been successfully deleted.',
             'object'         => 'Object has been successfully deleted.',
+            'mall'           => 'Mall has been successfully deleted.',
+            'tenant'         => 'Tenant has been successfully deleted.',
         ),
         'updated'   => array(
             'user'           => 'User has been successfully updated.',
@@ -56,6 +58,8 @@ return array(
             'news'          => 'There is no news that matched your search criteria.',
             'object'        => 'There is no object that matched your search criteria.',
             'activity'      => 'There is no activity that matched your search criteria.',
+            'mall'          => 'There is no mall that matched your search criteria.',
+            'tenant'        => 'There is no tenant that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
