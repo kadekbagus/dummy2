@@ -22,9 +22,13 @@ class CreateTableCouponTranslations extends Migration
             $table->string('description', 2000)->nullable();
             $table->text('long_description')->nullable();
             $table->string('status', 15)->default('active');
+            $table->bigInteger('created_by')->unsigned()->nullable();
+            $table->bigInteger('modified_by')->unsigned()->nullable();
             $table->timestamps();
             $table->index(['promotion_id', 'merchant_language_id'], 'coupon_language_idx');
             $table->index(['status'], 'status_idx');
+            $table->index(['created_by'], 'created_by_idx');
+            $table->index(['modified_by'], 'modified_by_idx');
 		});
 	}
 
