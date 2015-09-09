@@ -263,7 +263,7 @@ class MobileCIAPIController extends ControllerAPI
                         $media = $event_translation->find($event_translation->event_translation_id)
                             ->media_orig()
                             ->first();
-                            
+
                         if (isset($media->path)) {
                             $event->image = $media->path;
                         }
@@ -8747,7 +8747,7 @@ class MobileCIAPIController extends ControllerAPI
     *
     * @author Firmansyah <firmansyah@dominopos.com>
     * @author Irianto Pratama <irianto@dominopos.com>
-    * 
+    *
     * @return array or collection
     */
     protected function getListLanguages($mall)
@@ -8893,9 +8893,7 @@ class MobileCIAPIController extends ControllerAPI
 
         // Get current retailer/mall object
         $current_mall = $this->getRetailerInfo();
-
-        if ($lang_name != null) {
-
+        if ($lang_name !== null) {
             //check exist lang in db
             $lang_count = MerchantLanguage::where('merchant_id', $current_mall->merchant_id)
                                         ->wherehas('language', function($q) use ($lang_name)
@@ -8907,11 +8905,12 @@ class MobileCIAPIController extends ControllerAPI
             if ($lang_count > 0) {
                 $date_of_expiry = time() + (31556926 * 5) ; // where 31556926 is total seconds for a year.
                 setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );
+            } else {
+                setcookie( "orbit_preferred_language", null, -3600 );
             }
         }
 
         return \Redirect::to('/customer/home');
-
    }
 
 }

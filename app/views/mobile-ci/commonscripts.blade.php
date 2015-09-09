@@ -48,10 +48,10 @@
                 </div>
                 @else
                 <div class="no-member-card text-center">
-                    <h3><strong><i>Membership Not Found</i></strong></h3>
-                    <h4><strong>Want to be a member?</strong></h4>
-                    <p>To get special great deals from us</p>
-                    <p><i>Please, contact our customer service to get your membership number.</i></p>
+                    <h3><strong><i>{{ Lang::get('mobileci.modals.membership_notfound') }}</i></strong></h3>
+                    <h4><strong>{{ Lang::get('mobileci.modals.membership_want_member') }}</strong></h4>
+                    <p>{{ Lang::get('mobileci.modals.membership_great_deal') }}</p>
+                    <p><i>{{ Lang::get('mobileci.modals.membership_contact_our') }}</i></p>
                     <br>
                     <p><small>Lippo Mall Management</small></p>
                 </div>
@@ -74,11 +74,14 @@
             </div>
             <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
                 <div class="modal-body">
-                    @if (isset($languages))
-                        @foreach ($languages as $lang)
-                            <input type="radio" name="lang" value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) checked @endif @endif> {{{ $lang->language->name_long }}}<br>
-                        @endforeach
-                    @endif
+                    <select class="form-control" name="lang" id="selected-lang">
+                        <option value="{{ 'syslang' }}" @if (! isset($_COOKIE['orbit_preferred_language'])) selected @endif>{{ 'System Language' }}</option>
+                        @if (isset($languages))
+                                @foreach ($languages as $lang)
+                                    <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @endif>{{{ $lang->language->name_long }}}</option>
+                                @endforeach
+                        @endif
+                    </select>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-info" value="{{ Lang::get('mobileci.modals.ok') }}">{{ Lang::get('mobileci.modals.ok') }}</button>

@@ -62,8 +62,8 @@
         <div role="tabpanel" class="">
         <!-- Nav tabs -->
         <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active"><a href="#news" aria-controls="news" role="tab" data-toggle="tab">News</a></li>
-            <li role="presentation"><a href="#promotions" aria-controls="promotions" role="tab" data-toggle="tab">Promotions</a></li>
+            <li role="presentation" class="active"><a href="#news" aria-controls="news" role="tab" data-toggle="tab">{{ Lang::get('mobileci.tenant.news') }}</a></li>
+            <li role="presentation"><a href="#promotions" aria-controls="promotions" role="tab" data-toggle="tab">{{ Lang::get('mobileci.tenant.promotions') }}</a></li>
         </ul>
         <!-- Tab panes -->
         <div class="tab-content">
@@ -98,7 +98,7 @@
                 @else
                     <div class="row padded">
                         <div class="col-xs-12">
-                            <p>Check out our latest news coming soon</p>
+                            <p>{{ Lang::get('mobileci.tenant.check_our_latest_news') }}</p>
                         </div>
                     </div>
                 @endif
@@ -134,7 +134,7 @@
                 @else
                     <div class="row padded">
                         <div class="col-xs-12">
-                            <p>Check out our new promotions coming soon</p>
+                            <p>{{ Lang::get('mobileci.tenant.check_our_new_promo') }}</p>
                         </div>
                     </div>
                 @endif

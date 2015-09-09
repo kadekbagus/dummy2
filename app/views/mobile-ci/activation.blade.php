@@ -36,12 +36,13 @@
                 <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="Konfirmasi Password" required title="Harap isi password (5-20 karakter)"/>
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-success btn-block">Aktifkan</button>
+                <button type="submit" class="btn btn-success btn-block">{{ Lang::get('mobileci.activation.activate') }}</button>
             </div>
         </form>
     </div>
 </div>
 @stop
+
 @section('modals')
 <!-- Modal -->
 <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -49,13 +50,13 @@
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="myModalLabel">Error</h4>
+                <h4 class="modal-title" id="myModalLabel">{{ Lang::get('mobileci.activation.error') }}</h4>
             </div>
             <div class="modal-body">
                 <p id="errorModalText"></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.activation.close') }}</button>
             </div>
         </div>
     </div>
