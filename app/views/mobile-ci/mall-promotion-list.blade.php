@@ -32,14 +32,14 @@
         @else
             <div class="row padded">
                 <div class="col-xs-12">
-                    <h4>Check out our new promotions coming soon.</h4>
+                    <h4>{{ Lang::get('mobileci.greetings.new_promotions_coming_soon') }}</h4>
                 </div>
             </div>
         @endif
     @else
         <div class="row padded">
             <div class="col-xs-12">
-                <h4>Check out our new promotions coming soon.</h4>
+                <h4>{{ Lang::get('mobileci.greetings.new_promotions_coming_soon') }}</h4>
             </div>
         </div>
     @endif

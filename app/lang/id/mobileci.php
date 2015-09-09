@@ -15,15 +15,23 @@ return array(
         'transfercart'  => 'TRANSFER CART',
         'customer_id'   => 'CUSTOMER ID',
         'logout'        => 'KELUAR',
+        "language"      => "BAHASA",
         'payment'       => 'PEMBAYARAN',
         'searching'     => 'PENCARIAN',
         'new_products'  => 'PRODUK BARU',
         'promotions'    => 'PROMOSI',
-        'coupons'       => 'KUPON SAYA',
+        'my_coupons'    => 'KUPON SAYA',
         'coupon_single' => 'KUPON',
         'promotion'     => 'PROMOSI',
         'not_found'     => 'ERROR',
         'recognize_me'  => 'KENALI SAYA',
+        'tenant_directory'  => 'DIREKTORI PENYEWA',
+        'promotions_tenants'=> 'PROMOSI DARI PELANGGAN',
+        'news_tenants'      => 'BERITA DARI PELANGGAN',
+        'events_tenants'    => 'ACARA DARI PELANGGAN',
+        'coupons'           => 'KUPON',
+        'promotions'        => 'PROMOSI',
+        'news'              => 'BERITA',
         'membership'    => 'MEMBERSHIP'
     ),
 
@@ -38,12 +46,16 @@ return array(
     ),
 
     'greetings'         => array(
-        'welcome'       => 'Selamat Datang'
+        'welcome'       => 'Selamat Datang',
+        'latest_news_coming_soon' => 'Periksa berita terbaru kami akan segera hadir.',
+        'new_promotions_coming_soon' => 'Periksa promosi baru kami akan segera hadir.',
+        'how_to_get_coupons' => 'Silahkan periksa dengan layanan pelanggan bagaimana untuk mendapatkan kupon.',
     ),
 
     // modal specific lang
     'modals'                    => array(
         'close'                 => 'Tutup',
+        'ok'                    => 'OK',
         'email_error'           => 'Harap isi email terlebih dahulu.',
         'event_title'           => 'Events',
         'info_title'            => 'Info',
@@ -56,6 +68,7 @@ return array(
         'close_cart_title'      => 'Tutup Keranjang',
         'reset_cart_title'      => 'Hapus Keranjang',
         'membership_title'      => 'Informasi Membership',
+        'language_title'        => 'Pilih Bahasa',
 
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',
         'message_no_new_product'=> 'Maaf, tidak ada produk baru untuk saat ini.',
@@ -80,6 +93,13 @@ return array(
         'yes_button'            => 'Ya',
         'do_not_show_label'     => 'Jangan tunjukkan pesan ini lagi',
         'new_product_price'     => 'Harga baru',
+    ),
+
+    //tenant catalogue
+    'tenant'         => array(
+        'floor'                 => 'Lantai',
+        'category'              => 'Kategori',
+        'all'                   => 'All',
     ),
 
     // page specific lang

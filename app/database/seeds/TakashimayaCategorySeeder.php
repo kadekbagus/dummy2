@@ -73,12 +73,13 @@ CATEGORIES;
         $categories = explode("\n", $sources);
         $category_translations = [];
         $category_translations['zh'] = explode("\n", $sources_zh);
-        $category_translations['ja'] = explode("\n", $sources_zh);
+        $category_translations['ja'] = explode("\n", $sources_ja);
 
         $this->command->info('Seeding categories table...');
 
         try {
             DB::table('categories')->truncate();
+            DB::table('category_translations')->truncate();
         } catch (Illuminate\Database\QueryException $e) {
         }
 

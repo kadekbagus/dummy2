@@ -13,6 +13,8 @@ use \User;
 use \UserDetail;
 use \Role;
 use \Lang;
+use \Language;
+use \MerchantLanguage;
 use \Apikey;
 use \Validator;
 use \Config;
@@ -246,16 +248,24 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store[] = $event->event_id;
                 \Cookie::queue('event', $event_store, 1440);
 
-                if (!empty($alternate_language)) {
+                if (! empty($alternate_language)) {
                     $event_translation = \EventTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
                         ->where('event_id', $event->event_id)->first();
 
-                    if (!empty($event_translation)) {
+                    if (! empty($event_translation)) {
                         foreach (['event_name', 'description'] as $field) {
                             if (isset($event_translation->{$field})) {
                                 $event->{$field} = $event_translation->{$field};
                             }
+                        }
+
+                        $media = $event_translation->find($event_translation->event_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $event->image = $media->path;
                         }
                     }
                 }
@@ -306,6 +316,8 @@ class MobileCIAPIController extends ControllerAPI
             $widget_flags->enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
             $widget_flags->enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
 
+            $languages = $this->getListLanguages($retailer);
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Home');
             $activityPage->setUser($user)
                 ->setActivityName('view_page_home')
@@ -316,7 +328,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $event, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
+            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $event, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles, 'languages' => $languages))->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -380,7 +392,9 @@ class MobileCIAPIController extends ControllerAPI
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
-            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
+            $languages = $this->getListLanguages($retailer);
+
+            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url, 'languages' => $languages));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
 
@@ -3678,6 +3692,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $cartdata = $this->getCartData();
 
+            $languages = $this->getListLanguages($retailer);
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Recognize Me');
             $activityPage->setUser($user)
                 ->setActivityName('view_recognize_me')
@@ -3688,7 +3704,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.recognizeme', array('page_title'=>Lang::get('mobileci.page_title.recognize_me'), 'user' => $user, 'retailer'=>$retailer, 'cartitems' => $cartitems, 'cartdata' => $cartdata));
+            return View::make('mobile-ci.recognizeme', array('page_title'=>Lang::get('mobileci.page_title.recognize_me'), 'user' => $user, 'retailer'=>$retailer, 'cartitems' => $cartitems, 'cartdata' => $cartdata, 'languages' => $languages));
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: %s', 'Recognize Me');
             $activityPage->setUser($user)
@@ -7436,8 +7452,7 @@ class MobileCIAPIController extends ControllerAPI
             $category_id = trim(OrbitInput::get('cid'));
             $floor = trim(OrbitInput::get('floor'));
 
-            // $pagetitle = Lang::get('mobileci.page_title.searching');
-            $pagetitle = 'TENANT DIRECTORY';
+            $pagetitle = Lang::get('mobileci.page_title.tenant_directory');
 
             $validator = Validator::make(
                 array(
@@ -7689,7 +7704,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (! empty(OrbitInput::get('promotion_id'))) {
-                $pagetitle = 'PROMOTIONS TENANTS';
+                $pagetitle = Lang::get('mobileci.page_title.promotions_tenants');
+
                 $activityPageNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -7702,7 +7718,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (! empty(OrbitInput::get('news_id'))) {
-                $pagetitle = 'NEWS TENANTS';
+                $pagetitle = Lang::get('mobileci.page_title.news_tenants');
+
                 $activityPageNotes = sprintf('Page viewed: News Tenants List Page, news ID: %s', OrbitInput::get('news_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -7715,7 +7732,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (! empty(OrbitInput::get('event_id'))) {
-                $pagetitle = 'EVENTS TENANTS';
+                $pagetitle = Lang::get('mobileci.page_title.events_tenants');
+
                 $activityPageNotes = sprintf('Page viewed: Events Tenants List Page, event ID: %s', OrbitInput::get('event_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -7738,7 +7756,9 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories, 'floorList' => $floorList));
+            $languages = $this->getListLanguages($retailer);
+
+            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories, 'floorList' => $floorList, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
@@ -7806,6 +7826,8 @@ class MobileCIAPIController extends ControllerAPI
                 $product->logo = 'mobile-ci/images/default_product.png';
             }
 
+            $languages = $this->getListLanguages($retailer);
+
             if (! empty($promo_id)) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $product->merchant_id . ', promotion ID: '. $promo_id);
                 $activityPage->setUser($user)
@@ -7842,7 +7864,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product));
+            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
@@ -8048,8 +8070,7 @@ class MobileCIAPIController extends ControllerAPI
             $category_id = trim(OrbitInput::get('cid'));
             $floor = trim(OrbitInput::get('floor'));
 
-            // $pagetitle = Lang::get('mobileci.page_title.searching');
-            $pagetitle = 'COUPONS';
+            $pagetitle = Lang::get('mobileci.page_title.coupons');
 
             $validator = Validator::make(
                 array(
@@ -8098,6 +8119,8 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
+            $languages = $this->getListLanguages($retailer);
+
             $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon_list')
@@ -8108,7 +8131,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
@@ -8187,6 +8210,8 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
+            $languages = $this->getListLanguages($retailer);
+
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon')
@@ -8198,7 +8223,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -8239,8 +8264,7 @@ class MobileCIAPIController extends ControllerAPI
             $category_id = trim(OrbitInput::get('cid'));
             $floor = trim(OrbitInput::get('floor'));
 
-            // $pagetitle = Lang::get('mobileci.page_title.searching');
-            $pagetitle = 'PROMOTIONS';
+            $pagetitle = Lang::get('mobileci.page_title.promotions');
 
             $validator = Validator::make(
                 array(
@@ -8287,6 +8311,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: %s', 'Promotion List Page');
             $activityPage->setUser($user)
@@ -8298,7 +8323,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
@@ -8400,8 +8425,7 @@ class MobileCIAPIController extends ControllerAPI
             $category_id = trim(OrbitInput::get('cid'));
             $floor = trim(OrbitInput::get('floor'));
 
-            // $pagetitle = Lang::get('mobileci.page_title.searching');
-            $pagetitle = 'NEWS';
+            $pagetitle = Lang::get('mobileci.page_title.news');
 
             $validator = Validator::make(
                 array(
@@ -8447,6 +8471,7 @@ class MobileCIAPIController extends ControllerAPI
                 $data->records = $coupons;
             }
 
+            $languages = $this->getListLanguages($retailer);
 
             $activityPageNotes = sprintf('Page viewed: %s', 'News List Page');
             $activityPage->setUser($user)
@@ -8458,7 +8483,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
@@ -8508,6 +8533,8 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
+            $languages = $this->getListLanguages($retailer);
+
             $activityPageNotes = sprintf('Page viewed: News Detail, news Id: %s', $product_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_news')
@@ -8519,7 +8546,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
@@ -8568,6 +8595,8 @@ class MobileCIAPIController extends ControllerAPI
                     $totalPerImage = 160;
                     $totalImage = ceil($totalLuckyDrawNumber / $totalPerImage);
 
+                    $languages = $this->getListLanguages($retailer);
+
                     return View::make('mobile-ci.lucky-draw-number-download', [
                                      'page_title'   => 'Download Lucky Draw Number',
                                      'luckydraw'    => $luckyDraw,
@@ -8576,6 +8605,7 @@ class MobileCIAPIController extends ControllerAPI
                                      'total_number' => $totalLuckyDrawNumber,
                                      'total_image'  => $totalImage,
                                      'number_per_image'  => $totalPerImage,
+                                     'languages' => $languages,
                     ]);
             }
         } catch (Exception $e) {
@@ -8710,6 +8740,24 @@ class MobileCIAPIController extends ControllerAPI
         return false;
     }
 
+    /**
+    * Get list language from current merchant or mall
+    *
+    * @param retailer     `mall`    retailer object
+    *
+    * @author Firmansyah <firmansyah@dominopos.com>
+    * @author Irianto Pratama <irianto@dominopos.com>
+    *
+    * @return array or collection
+    */
+    protected function getListLanguages($mall)
+    {
+        $languages = MerchantLanguage::with('language')
+                                    ->where('merchant_id', $mall->merchant_id)
+                                    ->get();
+
+        return $languages;
+    }
 
     /**
      * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
@@ -8830,4 +8878,39 @@ class MobileCIAPIController extends ControllerAPI
             }
         }
     }
+
+    /**
+    * POST - Set language choice by customer
+    *
+    * @param string     `lang`          name of language
+    *
+    * @author Firmansyah <firmansyah@dominopos.com>
+    * @author Irianto Pratama <irianto@dominopos.com>
+    */
+    public function postLanguagebySelected($lang_name = null)
+    {
+        $lang_name = OrbitInput::post('lang');
+
+        // Get current retailer/mall object
+        $current_mall = $this->getRetailerInfo();
+        if ($lang_name !== null) {
+            //check exist lang in db
+            $lang_count = MerchantLanguage::where('merchant_id', $current_mall->merchant_id)
+                                        ->wherehas('language', function($q) use ($lang_name)
+                                        {
+                                            $q->where('name', '=' , $lang_name);
+                                        })->count();
+
+            //set cookies
+            if ($lang_count > 0) {
+                $date_of_expiry = time() + (31556926 * 5) ; // where 31556926 is total seconds for a year.
+                setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );
+            } else {
+                setcookie( "orbit_preferred_language", null, -3600 );
+            }
+        }
+
+        return \Redirect::to('/customer/home');
+   }
+
 }

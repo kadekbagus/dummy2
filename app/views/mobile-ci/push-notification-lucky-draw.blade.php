@@ -3,15 +3,15 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.lucky_draw.close') }}</span></button>
                 <h4 class="modal-title" id="orbit-push-modal-title">{{{ $subject }}}</h4>
             </div>
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced">
-                        <h4 style="color:#d9534f">Halo {{ $fullName }},</h4>
-                        <p>Selamat anda mendapatkan {{ $numberOfLuckyDraw }} nomor lucky draw <strong>{{ $luckyDrawCampaign }}</strong>.
-                        Berikut ini adalah nomor lucky draw yang anda dapat pada {{ $dateIssued }}.
+                        <h4 style="color:#d9534f">{{ Lang::get('mobileci.lucky_draw.hello') }} {{ $fullName }},</h4>
+                        <p>{{ Lang::get('mobileci.lucky_draw.congratulation') }} {{ $numberOfLuckyDraw }} {{ Lang::get('mobileci.lucky_draw.no_lucky_draw') }} <strong>{{ $luckyDrawCampaign }}</strong>.
+                        {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_1') }} {{ $dateIssued }}.
                         </p>
 
                         <ol>
@@ -22,17 +22,17 @@
 
                         @if ($numberOfLuckyDraw > $maxShown)
                         <p>
-                        Catatan: Nomor yang ditampilkan di sini hanya {{ $maxShown }} nomor pertama yang anda dapat.
+                        {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_2') }} {{ $maxShown }} {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_3') }}.
                         </p>
                         @endif
 
                         <p>
-                        Total Saat ini anda memiliki <strong>{{ $totalLuckyDrawNumber }}</strong> nomor lucky draw, anda dapat melihat seluruh nomor anda di halaman
-                        Lucky Draw.
+                        {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_4') }} <strong>{{ $totalLuckyDrawNumber }}</strong> {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_5') }}
+                        {{ Lang::get('mobileci.lucky_draw.lucky_draw') }}.
                         </p>
 
                         <p style="margin-top:1em">
-                            Semoga Beruntung!</br>
+                            {{ Lang::get('mobileci.lucky_draw.goodluck') }}!</br>
                             <strong>{{ $mallName }}</strong>
                         </p>
                     </div>
@@ -41,7 +41,7 @@
             <div class="modal-footer">
                 <div class="row">
                     <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.lucky_draw.close') }}</button>
                     </div>
                 </div>
             </div>

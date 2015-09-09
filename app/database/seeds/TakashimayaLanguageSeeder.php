@@ -8,9 +8,11 @@ class TakashimayaLanguageSeeder extends Seeder
      */
     public function run()
     {
+        DB::table('merchant_languages')->truncate();
+
         $mall_id = 2;
 
-        $languages = ['zh', 'ja'];
+        $languages = ['en', 'zh', 'ja'];
         foreach ($languages as $language_name) {
             $merchant_language = new MerchantLanguage();
             $merchant_language->merchant_id = $mall_id;
