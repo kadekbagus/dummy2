@@ -779,7 +779,7 @@ class MallAPIController extends ControllerAPI
 
             if ($totalRec === 0) {
                 $data->records = null;
-                $this->response->message = Lang::get('statuses.orbit.nodata.merchant');
+                $this->response->message = Lang::get('statuses.orbit.nodata.mall');
             }
 
             $this->response->data = $data;
@@ -1561,15 +1561,15 @@ class MallAPIController extends ControllerAPI
 
         // Check user email address, it should not exists
         Validator::extend('orbit.exists.email', function ($attribute, $value, $parameters) {
-            $merchant = Merchant::excludeDeleted()
+            $mall = Mall::excludeDeleted()
                         ->where('email', $value)
                         ->first();
 
-            if (! empty($merchant)) {
+            if (! empty($mall)) {
                 return FALSE;
             }
 
-            App::instance('orbit.validation.merchant', $merchant);
+            App::instance('orbit.validation.mall', $mall);
 
             return TRUE;
         });
@@ -1577,48 +1577,48 @@ class MallAPIController extends ControllerAPI
         // Check user email address, it should not exists (for update)
         Validator::extend('email_exists_but_me', function ($attribute, $value, $parameters) {
             $merchant_id = OrbitInput::post('merchant_id');
-            $merchant = Merchant::excludeDeleted()
+            $mall = Mall::excludeDeleted()
                         ->where('email', $value)
                         ->where('merchant_id', '!=', $merchant_id)
                         ->first();
 
-            if (! empty($merchant)) {
+            if (! empty($mall)) {
                 return FALSE;
             }
 
-            App::instance('orbit.validation.merchant', $merchant);
+            App::instance('orbit.validation.mall', $mall);
 
             return TRUE;
         });
 
         // Check OMID, it should not exists (for update)
         Validator::extend('omid_exists_but_me', function ($attribute, $value, $parameters) {
-            $merchant_id = OrbitInput::post('merchant_id');
-            $merchant = Merchant::excludeDeleted()
+            $mall_id = OrbitInput::post('merchant_id');
+            $mall = Mall::excludeDeleted()
                         ->where('omid', $value)
-                        ->where('merchant_id', '!=', $merchant_id)
+                        ->where('merchant_id', '!=', $mall_id)
                         ->first();
 
-            if (! empty($merchant)) {
+            if (! empty($mall)) {
                 return FALSE;
             }
 
-            App::instance('orbit.validation.merchant', $merchant);
+            App::instance('orbit.validation.mall', $mall);
 
             return TRUE;
         });
 
         // Check omid, it should not exists
         Validator::extend('orbit.exists.omid', function ($attribute, $value, $parameters) {
-            $merchant = Merchant::excludeDeleted()
+            $mall = Mall::excludeDeleted()
                         ->where('omid', $value)
                         ->first();
 
-            if (! empty($merchant)) {
+            if (! empty($mall)) {
                 return FALSE;
             }
 
-            App::instance('orbit.validation.merchant', $merchant);
+            App::instance('orbit.validation.mall', $mall);
 
             return TRUE;
         });
@@ -1742,7 +1742,7 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.formaterror.merchant.ticket_header.max_length', $ticketHeader);
+            App::instance('orbit.formaterror.mall.ticket_header.max_length', $ticketHeader);
 
             return TRUE;
         });
@@ -1755,7 +1755,7 @@ class MallAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.formaterror.merchant.ticket_footer.max_length', $ticketFooter);
+            App::instance('orbit.formaterror.mall.ticket_footer.max_length', $ticketFooter);
 
             return TRUE;
         });
