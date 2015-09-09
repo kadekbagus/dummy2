@@ -1575,6 +1575,14 @@ class UserAPIController extends ControllerAPI
                 });
             });
 
+            // Filter user by idcard
+            OrbitInput::get('idcard', function($data) use ($users)
+            {
+                $users->whereHas('userdetail', function ($q) use ($data) {
+                    $q->whereIn('idcard', $data);
+                });
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_users = clone $users;
@@ -1949,7 +1957,11 @@ class UserAPIController extends ControllerAPI
                 }
             }
 
-            $idcard = OrbitInput::post('idcard_number');
+            $idcard = OrbitInput::post('idcard');
+            if (trim($idcard) === '') {
+                $idcard = OrbitInput::post('idcard_number');
+            }
+
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
             $city = OrbitInput::post('city');
@@ -1982,7 +1994,7 @@ class UserAPIController extends ControllerAPI
                     'status'                => $status,
                     'category_ids'          => $category_ids,
                     'bank_object_ids'       => $bank_object_ids,
-                    'idcard_number'         => $idcard,
+                    'idcard'                => $idcard,
                     'mobile_phone'          => $mobile,
                     'work_phone'            => $workphone,
                     'occupation'            => $occupation,
@@ -2000,7 +2012,7 @@ class UserAPIController extends ControllerAPI
                     'status'                => 'in:active,inactive,pending',
                     'category_ids'          => 'array',
                     'bank_object_ids'       => 'array',
-                    'idcard_number'         => 'numeric',
+                    'idcard'                => 'numeric',
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
@@ -2076,7 +2088,7 @@ class UserAPIController extends ControllerAPI
             $newuser->user_lastname = $lastname;
             $newuser->user_role_id = $roleConsumer->role_id;
             $newuser->membership_number = $membershipNumber;
-            $newuser->membership_since = $membership_since;
+            $newuser->membership_since = $membership_since . ' 00:00:00';
 
             $newuser->modified_by = $this->api->user->user_id;
 
@@ -2334,7 +2346,12 @@ class UserAPIController extends ControllerAPI
             $category_ids = (array) $category_ids;
             $bank_object_ids = OrbitInput::post('bank_object_ids');
             $bank_object_ids = (array) $bank_object_ids;
-            $idcard = OrbitInput::post('idcard_number');
+
+            $idcard = OrbitInput::post('idcard');
+            if (trim($idcard) === '') {
+                $idcard = OrbitInput::post('idcard_number');
+            }
+
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
             $city = OrbitInput::post('city');
@@ -2358,7 +2375,7 @@ class UserAPIController extends ControllerAPI
                     'membership_since'      => $membership_since,
                     'membership_number'     => $membershipNumber,
                     'status'                => $status,
-                    'idcard_number'         => $idcard,
+                    'idcard'                => $idcard,
                     'mobile_phone'          => $mobile,
                     'work_phone'            => $workphone,
                     'occupation'            => $occupation,
@@ -2371,10 +2388,10 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d H:i:s',
+                    'membership_since'      => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists_but_me',
                     'status'                => 'in:active,inactive,pending',
-                    'idcard_number'         => 'numeric',
+                    'idcard'                => 'numeric',
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
@@ -2433,7 +2450,7 @@ class UserAPIController extends ControllerAPI
             });
 
             OrbitInput::post('membership_since', function($date) use ($updateduser) {
-                $updateduser->membership_since = $date;
+                $updateduser->membership_since = $date . ' 00:00:00';
             });
 
             OrbitInput::post('external_user_id', function($data) use ($updateduser) {
@@ -2481,6 +2498,10 @@ class UserAPIController extends ControllerAPI
             });
 
             OrbitInput::post('idcard', function($data) use ($userdetail) {
+                $userdetail->idcard = $data;
+            });
+
+            OrbitInput::post('idcard_number', function($data) use ($userdetail) {
                 $userdetail->idcard = $data;
             });
 

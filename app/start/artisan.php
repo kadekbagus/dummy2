@@ -28,3 +28,6 @@ Artisan::add(new configDiffFromSample);
 
 // Insert or delete agreement on settings table
 Artisan::add(new ConfigAgreement);
+
+// Insert or update data on settings table
+Artisan::add(new MerchantSetting);

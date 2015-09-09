@@ -259,6 +259,7 @@ return array(
             'link_object_id'       => 'The Link Object ID you specified is not found.',
             'bank_object'          => 'The Bank Object ID you specified is not found.',
             'mall'                 => 'The Mall ID you specified is not found.',
+            'membership'           => 'The Membership ID you specified is not found.',
             'language' => 'The Language ID you specified is not found.',
             'merchant_language' => 'The Merchant Language ID you specified is not found.',
         ),
