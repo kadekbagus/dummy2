@@ -14,24 +14,16 @@ trait MallTrait
      * @param string $flag - Flag for mall status 'yes' or 'no'
      * @return Illuminate\Database\Query\Builder
      */
-    // public function scopeIsMall($query, $flag='yes')
-    // {
-    //     if ($flag === 'yes') {
-    //         return $query->where('merchants.is_mall', $flag);
-    //     }
-
-    //     return $query->where(function($query) use ($flag) {
-    //                 $query->where('merchants.is_mall', $flag);
-    //                 $query->orWhereNull('merchants.is_mall');
-    //     });
-    // }
-
     public function scopeIsMall($query, $flag='yes')
     {
         if ($flag === 'yes') {
-            return $query->where('merchants.object_type', 'mall');
+            return $query->where('merchants.is_mall', $flag);
         }
 
-        return $query->where('merchants.object_type', 'tenant');
+        return $query->where(function($query) use ($flag) {
+                    $query->where('merchants.is_mall', $flag);
+                    $query->orWhereNull('merchants.is_mall');
+        });
     }
+
 }

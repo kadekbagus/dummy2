@@ -22,12 +22,6 @@ class Tenant extends Eloquent
     use MallTypeTrait;
 
     /**
-     * Use Trait MallTrait so we only displaying records with value related
-     * to Mall.
-     */
-    use MallTrait;
-
-    /**
      * Column name which determine the type of Mall or Tenant.
      */
     const OBJECT_TYPE = 'object_type';
