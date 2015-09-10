@@ -15,7 +15,7 @@ class Encrypter
     public function __construct($key)
     {
         $this->securekey = $key;
-        $this->iv = mcrypt_create_iv(16);
+        $this->iv = mcrypt_create_iv(16, MCRYPT_DEV_URANDOM);
     }
 
     /**
