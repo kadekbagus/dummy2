@@ -22,4 +22,15 @@ class CouponTranslation extends Eloquent
     {
         return $this->belongsTo('MerchantLanguage', 'merchant_language_id', 'merchant_language_id');
     }
+
+    public function media()
+    {
+        return $this->hasMany('Media', 'object_id', 'coupon_translation_id')
+                    ->where('object_name', 'coupon_translation');
+    }
+
+    public function media_orig()
+    {
+        return $this->media()->where('media_name_long', '=', 'coupon_translation_image_orig');
+    }
 }
