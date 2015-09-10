@@ -2614,6 +2614,13 @@ class CouponAPIController extends ControllerAPI
                 $new_translation->created_by = $this->api->user->user_id;
                 $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
+
+                // Fire an event which listen on orbit.coupon.after.translation.save
+                // @param ControllerAPI $this
+                // @param EventTranslation $new_transalation
+                Event::fire('orbit.coupon.after.translation.save', array($this, $new_translation));
+
+                $coupon->setRelation('translation_' . $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
                 /** @var CouponTranslation $existing_translation */
@@ -2624,6 +2631,13 @@ class CouponAPIController extends ControllerAPI
                 }
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
+
+                // Fire an event which listen on orbit.coupon.after.translation.save
+                // @param ControllerAPI $this
+                // @param EventTranslation $new_transalation
+                Event::fire('orbit.coupon.after.translation.save', array($this, $existing_translation));
+
+                $coupon->setRelation('translation_' . $existing_translation->merchant_language_id, $existing_translation);
             }
             elseif ($op === 'delete') {
                 /** @var CouponTranslation $existing_translation */
