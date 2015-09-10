@@ -473,7 +473,8 @@ class MallAPIController extends ControllerAPI
                                 ->select('merchants.*', DB::raw('count(retailer.merchant_id) AS total_tenant'))
                                 ->leftJoin('merchants AS retailer', function($join) {
                                         $join->on(DB::raw('retailer.parent_id'), '=', 'merchants.merchant_id')
-                                            ->where(DB::raw('retailer.status'), '!=', 'deleted');
+                                            ->where(DB::raw('retailer.status'), '!=', 'deleted')
+                                            ->where(DB::raw('retailer.object_type'), '=', 'tenant');
                                     })
                                 ->groupBy('merchants.merchant_id');
 
