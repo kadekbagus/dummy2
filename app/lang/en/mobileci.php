@@ -123,6 +123,7 @@ return array(
         'click_here'        => 'click here',
         'email_not_valid'   => 'Email address is not valid',
         'logging_in_button' => 'Logging in. Please wait...',
+        'loading_orbit'     => 'Loading Orbit, please wait...',
     ),
 
     'catalogue' => array(
