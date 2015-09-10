@@ -8090,6 +8090,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
 
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
             // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
 
             // Get the maximum record
@@ -8107,6 +8109,30 @@ class MobileCIAPIController extends ControllerAPI
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );
+
+            if (! empty($alternate_language)) {
+                foreach ($coupons as $coupon) {
+                    $coupon_translation = \CouponTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('promotion_id', $coupon->promotion_id)->first();
+
+                    if (! empty($coupon_translation)) {
+                        foreach (['promotion_name', 'description'] as $field) {
+                            if (isset($coupon_translation->{$field})) {
+                                $coupon->{$field} = $coupon_translation->{$field};
+                            }
+                        }
+
+                        $media = $coupon_translation->find($coupon_translation->coupon_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $coupon->promo_image = $media->path;
+                        }
+                    }
+                }
+            }
 
             if (sizeof($coupons) < 1) {
                 $data = new stdclass();
