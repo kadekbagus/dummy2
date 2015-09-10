@@ -172,9 +172,18 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
 
-            OrbitInput::post('translations', function($translation_json_string) use ($neweventnewnews) {
+            // translation for mallnews
+            OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
             });
+
+            // translation per merchant if any
+            // if (!empty($newnews->tenants)) {
+            //     OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
+            //         $this->validateAndSaveTranslationsRetailer($newnews, $translation_json_string, 'create');
+            //     });
+            // }
+            // die();
 
             $this->response->data = $newnews;
 
@@ -1552,6 +1561,12 @@ class NewsAPIController extends ControllerAPI
      */
     private function validateAndSaveTranslations($news, $translations_json_string, $scenario = 'create')
     {
+
+echo "<pre>";
+print_r($save);
+die();
+
+
         /*
          * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
          *
@@ -1572,6 +1587,8 @@ class NewsAPIController extends ControllerAPI
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
+
+        // translate for mall
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
                 ->allowedForUser($user)
@@ -1607,9 +1624,17 @@ class NewsAPIController extends ControllerAPI
             }
         }
 
+        // echo "operation";
+        // print_r($operations);
+        // echo "data";
+        // print_r($data);
+        // die();
+        // translate for merchant
+
         foreach ($operations as $operation) {
             $op = $operation[0];
             if ($op === 'create') {
+                // for translation per mall
                 $new_translation = new NewsTranslation();
                 $new_translation->news_id = $news->news_id;
                 $new_translation->merchant_language_id = $operation[1];
@@ -1620,6 +1645,15 @@ class NewsAPIController extends ControllerAPI
                 $new_translation->created_by = $this->api->user->user_id;
                 $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
+
+                // for translation per merchant
+                if (!empty($news->merchant)) {
+                    foreach ($news->merch as $key => $value) {
+                        # code...
+                    }
+                    # code...
+                }
+
             }
             elseif ($op === 'update') {
                 /** @var NewsTranslation $existing_translation */
