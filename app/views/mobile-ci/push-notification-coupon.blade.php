@@ -10,7 +10,7 @@
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced">
                         <h4 style="color:#d9534f">Halo {{ $fullName }},</h4>
-                        <p>Selamat anda mendapatkan {{ $numberOfCoupon }} coupon. Berikut ini adalah coupon anda:
+                        <p>{{ Lang::get('mobileci.coupon.congratulations_you_get') }} {{ $numberOfCoupon }} {{ Lang::get('mobileci.coupon.coupon_here_is_coupon_you') }}:
                         </p>
 
                         <ol>
@@ -20,7 +20,7 @@
                         </ol>
 
                         <p style="margin-top:1em">
-                            Selamat Berbelanja!</br>
+                            {{ Lang::get('mobileci.coupon.happy_shopping') }}</br>
                             <strong>{{ $mallName }}</strong>
                         </p>
                     </div>
@@ -29,7 +29,7 @@
             <div class="modal-footer">
                 <div class="row">
                     <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.coupon.close') }}</button>
                     </div>
                 </div>
             </div>

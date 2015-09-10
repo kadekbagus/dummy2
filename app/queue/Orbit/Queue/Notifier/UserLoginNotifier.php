@@ -171,7 +171,12 @@ class UserLoginNotifier
             }
 
             // Update the user object based on the return value of external system
-            DB::connection()->getPdo()->beginTransaction();
+            $insideTransactionFromNotifier = FALSE;
+
+            if (! DB::connection()->getPdo()->inTransaction()) {
+                DB::connection()->getPdo()->beginTransaction();
+                $insideTransactionFromNotifier = TRUE;                
+            }
 
             // Check for the previous membership number, if it was empty assuming this is the first time
             // So activate the user
@@ -189,7 +194,9 @@ class UserLoginNotifier
             // Everything seems fine lets delete the job
             $job->delete();
 
-            DB::connection()->getPdo()->commit();
+            if (DB::connection()->getPdo()->inTransaction() && $insideTransactionFromNotifier === TRUE) {
+                DB::connection()->getPdo()->commit();
+            }
 
             Log::info($message);
             return [

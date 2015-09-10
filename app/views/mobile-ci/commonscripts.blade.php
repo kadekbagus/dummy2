@@ -48,10 +48,10 @@
                 </div>
                 @else
                 <div class="no-member-card text-center">
-                    <h3><strong><i>Membership Not Found</i></strong></h3>
-                    <h4><strong>Want to be a member?</strong></h4>
-                    <p>To get special great deals from us</p>
-                    <p><i>Please, contact our customer service to get your membership number.</i></p>
+                    <h3><strong><i>{{ Lang::get('mobileci.modals.membership_notfound') }}</i></strong></h3>
+                    <h4><strong>{{ Lang::get('mobileci.modals.membership_want_member') }}</strong></h4>
+                    <p>{{ Lang::get('mobileci.modals.membership_great_deal') }}</p>
+                    <p><i>{{ Lang::get('mobileci.modals.membership_contact_our') }}</i></p>
                     <br>
                     <p><small>Lippo Mall Management</small></p>
                 </div>

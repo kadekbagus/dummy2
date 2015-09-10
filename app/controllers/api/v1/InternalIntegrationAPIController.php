@@ -174,6 +174,17 @@ class InternalIntegrationAPIController extends ControllerAPI
             $data->membership_since = $membershipSince;
             $this->response->data = $data;
 
+            // Error dummy
+            if (Config::get('app.debug')) {
+                $errorMessage = Cookie::get('error_message');
+                if (! empty($errorMessage)) {
+                    $this->response->code = '1';
+                    $this->response->status = 'error';
+                    $this->response->message = $errorMessage;
+                    $this->response->data = null;
+                    $httpCode = 200;
+                }
+            }
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';

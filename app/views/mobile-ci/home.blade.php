@@ -12,6 +12,7 @@
 <div class="container">
     <div class="mobile-ci home-widget widget-container">
         <div class="row">
+
             @if(!is_null($widget_singles->tenant))
             <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
@@ -448,7 +449,7 @@
                         <p>
                             You are about to enjoy free WiFi at Lippo Mall Puri!
                             <br><br>
-                            Find our exciting deals and latest news here. Don't forget to exchange your transaction receipts and get a chance to win a car!
+                            {{ Lang::get('mobileci.greetings.find_our_exciting') }}
                         </p>
                     </div>
                 </div>

@@ -15,7 +15,6 @@ use DominoPOS\OrbitUploader\UploaderConfig;
 use DominoPOS\OrbitUploader\UploaderMessage;
 use DominoPOS\OrbitUploader\Uploader;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
-use \Exception;
 
 class UploadAPIController extends ControllerAPI
 {
@@ -2635,6 +2634,230 @@ class UploadAPIController extends ControllerAPI
     }
 
     /**
+     * Upload image for a event tranlation (selected language).
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `event_id`                     (required) - ID of the event
+     * @param integer    `event_translation_id`         (required) - ID of the event tranlation
+     * @param integer    `merchant_language_id`         (required) - ID of the merchan language
+     * @param file|array `image_translation`            (required) - Event translation images
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadEventTranslationImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadeventtranslationimage.before.auth', array($this));
+
+            if (! $this->calledFrom('event.translations'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadeventtranslationimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadeventtranslationimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_event')) {
+                    Event::fire('orbit.upload.postuploadeventtranslationimage.authz.notallowed', array($this, $user));
+                    $editEventLang = Lang::get('validation.orbit.actionlist.update_event');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editEventLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadeventtranslationimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $event_translation_id = OrbitInput::post('event_translation_id');
+            $event_id = OrbitInput::post('event_id');
+            $merchant_language_id = OrbitInput::post('merchant_language_id');
+            $image_translation = OrbitInput::files('image_translation_' . $merchant_language_id);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'event_translation_id'      => $event_translation_id,
+                    'event_id'                  => $event_id,
+                    'merchant_language_id'      => $merchant_language_id,
+                    'image_translation'         => $image_translation,
+                ),
+                array(
+                    'event_translation_id'      => 'required|numeric|orbit.empty.event_translation',
+                    'event_id'                  => 'required|numeric|orbit.empty.event',
+                    'merchant_language_id'      => 'required|numeric|orbit.empty.merchant_language',
+                    'image_translation'         => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadeventtranslationimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadeventtranslationimage.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('event.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had Event Translation instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $event_translations = App::make('orbit.empty.event_translation');
+
+            // Delete old event translation image
+            $pastMedia = Media::where('object_id', $event_translations->event_translation_id)
+                              ->where('object_name', 'event_translation')
+                              ->where('media_name_id', 'event_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($event_translations)
+            {
+                $event_translation_id = $event_translations->event_translation_id;
+                $slug = Str::slug($event_translations->event_name);
+                $file['new']->name = sprintf('%s-%s-%s', $event_translation_id, $slug, time());
+            };
+
+            // Load the orbit configuration for event upload
+            $uploadEventConfig = Config::get('orbit.upload.event.translation');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadEventConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadeventtranslationimage.before.save', array($this, $event_translations, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($image_translation);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $event_translations->event_translation_id,
+                'name'          => 'event_translation',
+                'media_name_id' => 'event_translation_image',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image_translation` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per event
+            if (isset($uploaded[0])) {
+                $event_translations->save();
+            }
+
+            Event::fire('orbit.upload.postuploadeventtranslationimage.after.save', array($this, $event_translations, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.event_translation.main');
+
+            if (! $this->calledFrom('event.translations')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadeventtranslationimage.after.commit', array($this, $event_translations, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadeventtranslationimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('event.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadeventtranslationimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('event.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadeventtranslationimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('event.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadeventtranslationimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('event.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadeventtranslationimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
      * Upload logo for Tenant.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -5215,6 +5438,34 @@ class UploadAPIController extends ControllerAPI
                 return TRUE;
             });
         }
+
+        Validator::extend('orbit.empty.event_translation', function ($attribute, $value, $parameters) {
+            $event_translation = EventTranslation::excludeDeleted()
+                        ->where('event_translation_id', $value)
+                        ->first();
+
+            if (empty($event_translation)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.event_translation', $event_translation);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.merchant_language', function ($attribute, $value, $parameters) {
+            $merchant_language = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+
+            if (empty($merchant_language)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.merchant_language', $merchant_language);
+
+            return TRUE;
+        });
 
         // Check the images, we are allowed array of images but not more that one
         Validator::extend('nomore.than.one', function ($attribute, $value, $parameters) {
