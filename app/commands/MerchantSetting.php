@@ -99,9 +99,9 @@ class MerchantSetting extends Command
     protected function getOptions()
     {
         return array(
-            array('merchant_id', InputArgument::REQUIRED, 'Mall or Merchant ID.'),
-            array('setting_name', InputArgument::REQUIRED, 'Name of the setting.'),
-            array('setting_value', InputArgument::REQUIRED, 'Value of the setting.'),
+            array('merchant_id', null,  InputArgument::REQUIRED, 'Mall or Merchant ID.'),
+            array('setting_name', null,  InputArgument::REQUIRED, 'Name of the setting.'),
+            array('setting_value', null,  InputArgument::REQUIRED, 'Value of the setting.'),
         );
     }
 
