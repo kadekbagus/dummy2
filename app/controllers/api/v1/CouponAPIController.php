@@ -1700,7 +1700,7 @@ class CouponAPIController extends ControllerAPI
                 ),
                 array(
                     'issued_coupon_id'              => 'required|numeric|orbit.empty.issuedcoupon',
-                    'merchant_verification_number'  => 'required|numeric'
+                    'merchant_verification_number'  => 'required|numeric',
                 )
             );
 
