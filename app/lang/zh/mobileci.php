@@ -123,6 +123,7 @@ return array(
         'click_here'        => '点击这里',
         'email_not_valid'   => '电子邮件地址无效',
         'logging_in_button' => '登录，请稍候',
+        'loading_orbit'     => '轨道加载中，请稍候...',        
     ),
 
     'catalogue' => array(

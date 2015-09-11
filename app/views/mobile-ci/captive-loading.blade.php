@@ -43,7 +43,7 @@
         </header>
         <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
             <div class="form-group">
-                <button type="submit" class="btn btn-info btn-block" onclick="return false;">Loading Orbit, please wait...</button>
+                <button type="submit" class="btn btn-info btn-block" onclick="return false;">{{ Lang::get('mobileci.signin.loading_orbit') }}</button>
             </div>
         </form>
     </div>
