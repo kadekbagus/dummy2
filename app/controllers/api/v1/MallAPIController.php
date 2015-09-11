@@ -470,11 +470,11 @@ class MallAPIController extends ControllerAPI
 
             $malls = Mall::excludeDeleted('merchants')
                                 ->allowedForUser($user)
-                                ->select('merchants.*', DB::raw('count(retailer.merchant_id) AS total_tenant'))
-                                ->leftJoin('merchants AS retailer', function($join) {
-                                        $join->on(DB::raw('retailer.parent_id'), '=', 'merchants.merchant_id')
-                                            ->where(DB::raw('retailer.status'), '!=', 'deleted')
-                                            ->where(DB::raw('retailer.object_type'), '=', 'tenant');
+                                ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'))
+                                ->leftJoin('merchants AS tenant', function($join) {
+                                        $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
+                                            ->where(DB::raw('tenant.status'), '!=', 'deleted')
+                                            ->where(DB::raw('tenant.object_type'), '=', 'tenant');
                                     })
                                 ->groupBy('merchants.merchant_id');
 
@@ -1777,14 +1777,14 @@ class MallAPIController extends ControllerAPI
 
         // Check if mall have tenant.
         Validator::extend('orbit.exists.mall_have_tenant', function ($attribute, $value, $parameters) {
-            $retailer = Tenant::excludeDeleted()
+            $tenant = Tenant::excludeDeleted()
                             ->where('parent_id', $value)
                             ->first();
-            if (! empty($retailer)) {
+            if (! empty($tenant)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exists.mall_have_tenant', $retailer);
+            App::instance('orbit.exists.mall_have_tenant', $tenant);
 
             return TRUE;
         });

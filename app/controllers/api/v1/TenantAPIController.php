@@ -14,7 +14,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class TenantAPIController extends ControllerAPI
 {
     /**
-     * POST - Delete Tenant/Retailer
+     * POST - Delete Tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
      *
@@ -41,14 +41,14 @@ class TenantAPIController extends ControllerAPI
 
             Event::fire('orbit.tenant.postdeletetenant.after.auth', array($this));
 
-            // Try to check access control list, does this retailer allowed to
+            // Try to check access control list, does this tenant allowed to
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.tenant.postdeletetenant.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('delete_retailer')) {
+            if (! ACL::create($user)->isAllowed('delete_tenant')) {
                 Event::fire('orbit.tenant.postdeletetenant.authz.notallowed', array($this, $user));
-                $deleteTenantLang = Lang::get('validation.orbit.actionlist.delete_retailer');
+                $deleteTenantLang = Lang::get('validation.orbit.actionlist.delete_tenant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteTenantLang));
                 ACL::throwAccessForbidden($message);
             }
@@ -86,7 +86,7 @@ class TenantAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            // soft delete retailer.
+            // soft delete tenant.
             $deletetenant = App::make('orbit.empty.tenant');
             $deletetenant->status = 'deleted';
             $deletetenant->modified_by = $this->api->user->user_id;
@@ -664,10 +664,10 @@ class TenantAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.tenant.postupdatetenant.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('update_retailer')) {
+            if (! ACL::create($user)->isAllowed('update_tenant')) {
                 Event::fire('orbit.tenant.postupdatetenant.authz.notallowed', array($this, $user));
-                $updateRetailerLang = Lang::get('validation.orbit.actionlist.update_retailer');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateRetailerLang));
+                $updateTenantLang = Lang::get('validation.orbit.actionlist.update_tenant');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateTenantLang));
                 ACL::throwAccessForbidden($message);
             }
             Event::fire('orbit.tenant.postupdatetenant.after.authz', array($this, $user));
@@ -699,7 +699,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|numeric|orbit.empty.tenant',
                     'user_id'           => 'numeric|orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status|orbit.exists.inactive_retailer_is_box_current_retailer:'.$retailer_id,
+                    'status'            => 'orbit.empty.tenant_status|orbit.exists.inactive_tenant_is_box_current_retailer:'.$retailer_id,
                     'orid'              => 'orid_exists_but_me',
                     'parent_id'         => 'numeric|orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
@@ -1182,240 +1182,240 @@ class TenantAPIController extends ControllerAPI
             $tenants = Tenant::select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
                                  ->excludeDeleted('merchants');
 
-            // Filter retailer by Ids
+            // Filter tenant by Ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($tenants)
             {
                 $tenants->whereIn('merchants.merchant_id', $merchantIds);
             });
 
-            // Filter retailer by Ids
+            // Filter tenant by Ids
             OrbitInput::get('user_id', function($userIds) use ($tenants)
             {
                 $tenants->whereIn('merchants.user_id', $userIds);
             });
 
-            // Filter retailer by name
+            // Filter tenant by name
             OrbitInput::get('name', function($name) use ($tenants)
             {
                 $tenants->whereIn('merchants.name', $name);
             });
 
-            // Filter retailer by matching name pattern
+            // Filter tenant by matching name pattern
             OrbitInput::get('name_like', function($name) use ($tenants)
             {
                 $tenants->where('merchants.name', 'like', "%$name%");
             });
 
-            // Filter retailer by description
+            // Filter tenant by description
             OrbitInput::get('description', function($description) use ($tenants)
             {
                 $tenants->whereIn('merchants.description', $description);
             });
 
-            // Filter retailer by description pattern
+            // Filter tenant by description pattern
             OrbitInput::get('description_like', function($description) use ($tenants)
             {
                 $tenants->where('merchants.description', 'like', "%$description%");
             });
 
-            // Filter retailer by their email
+            // Filter tenant by their email
             OrbitInput::get('email', function($email) use ($tenants)
             {
                 $tenants->whereIn('merchants.email', $email);
             });
 
-            // Filter retailer by address1
+            // Filter tenant by address1
             OrbitInput::get('address1', function($address1) use ($tenants)
             {
                 $tenants->where('merchants.address_line1', "%$address1%");
             });
 
-            // Filter retailer by address1 pattern
+            // Filter tenant by address1 pattern
             OrbitInput::get('address1', function($address1) use ($tenants)
             {
                 $tenants->where('merchants.address_line1', 'like', "%$address1%");
             });
 
-            // Filter retailer by address2
+            // Filter tenant by address2
             OrbitInput::get('address2', function($address2) use ($tenants)
             {
                 $tenants->where('merchants.address_line2', "%$address2%");
             });
 
-            // Filter retailer by address2 pattern
+            // Filter tenant by address2 pattern
             OrbitInput::get('address2', function($address2) use ($tenants)
             {
                 $tenants->where('merchants.address_line2', 'like', "%$address2%");
             });
 
-             // Filter retailer by address3
+             // Filter tenant by address3
             OrbitInput::get('address3', function($address3) use ($tenants)
             {
                 $tenants->where('merchants.address_line3', "%$address3%");
             });
 
-             // Filter retailer by address3 pattern
+             // Filter tenant by address3 pattern
             OrbitInput::get('address3', function($address3) use ($tenants)
             {
                 $tenants->where('merchants.address_line3', 'like', "%$address3%");
             });
 
-            // Filter retailer by postal code
+            // Filter tenant by postal code
             OrbitInput::get('postal_code', function ($postalcode) use ($tenants) {
                 $tenants->whereIn('merchants.postal_code', $postalcode);
             });
 
-             // Filter retailer by cityID
+             // Filter tenant by cityID
             OrbitInput::get('city_id', function($cityIds) use ($tenants)
             {
                 $tenants->whereIn('merchants.city_id', $cityIds);
             });
 
-             // Filter retailer by city
+             // Filter tenant by city
             OrbitInput::get('city', function($city) use ($tenants)
             {
                 $tenants->whereIn('merchants.city', $city);
             });
 
-             // Filter retailer by city pattern
+             // Filter tenant by city pattern
             OrbitInput::get('city_like', function($city) use ($tenants)
             {
                 $tenants->where('merchants.city', 'like', "%$city%");
             });
 
-             // Filter retailer by countryID
+             // Filter tenant by countryID
             OrbitInput::get('country_id', function($countryId) use ($tenants)
             {
                 $tenants->whereIn('merchants.country_id', $countryId);
             });
 
-             // Filter retailer by country
+             // Filter tenant by country
             OrbitInput::get('country', function($country) use ($tenants)
             {
                 $tenants->whereIn('merchants.country', $country);
             });
 
-             // Filter retailer by country pattern
+             // Filter tenant by country pattern
             OrbitInput::get('country_like', function($country) use ($tenants)
             {
                 $tenants->where('merchants.country', 'like', "%$country%");
             });
 
-             // Filter retailer by phone
+             // Filter tenant by phone
             OrbitInput::get('phone', function($phone) use ($tenants)
             {
                 $tenants->whereIn('merchants.phone', $phone);
             });
 
-             // Filter retailer by fax
+             // Filter tenant by fax
             OrbitInput::get('fax', function($fax) use ($tenants)
             {
                 $tenants->whereIn('merchants.fax', $fax);
             });
 
-             // Filter retailer by phone
+             // Filter tenant by phone
             OrbitInput::get('phone', function($phone) use ($tenants)
             {
                 $tenants->whereIn('merchants.phone', $phone);
             });
 
-             // Filter retailer by status
+             // Filter tenant by status
             OrbitInput::get('status', function($status) use ($tenants)
             {
                 $tenants->whereIn('merchants.status', $status);
             });
 
-            // Filter retailer by currency
+            // Filter tenant by currency
             OrbitInput::get('currency', function($currency) use ($tenants)
             {
                 $tenants->whereIn('merchants.currency', $currency);
             });
 
-            // Filter retailer by contact person firstname
+            // Filter tenant by contact person firstname
             OrbitInput::get('contact_person_firstname', function ($contact_person_firstname) use ($tenants) {
                 $tenants->whereIn('merchants.contact_person_firstname', $contact_person_firstname);
             });
 
-            // Filter retailer by contact person firstname like
+            // Filter tenant by contact person firstname like
             OrbitInput::get('contact_person_firstname_like', function ($contact_person_firstname) use ($tenants) {
                 $tenants->where('merchants.contact_person_firstname', 'like', "%$contact_person_firstname%");
             });
 
-            // Filter retailer by contact person lastname
+            // Filter tenant by contact person lastname
             OrbitInput::get('contact_person_lastname', function ($contact_person_lastname) use ($tenants) {
                 $tenants->whereIn('merchants.contact_person_lastname', $contact_person_lastname);
             });
 
-            // Filter retailer by contact person lastname like
+            // Filter tenant by contact person lastname like
             OrbitInput::get('contact_person_lastname_like', function ($contact_person_lastname) use ($tenants) {
                 $tenants->where('merchants.contact_person_lastname', 'like', "%$contact_person_lastname%");
             });
 
-            // Filter retailer by contact person position
+            // Filter tenant by contact person position
             OrbitInput::get('contact_person_position', function ($contact_person_position) use ($tenants) {
                 $tenants->whereIn('merchants.contact_person_position', $contact_person_position);
             });
 
-            // Filter retailer by contact person position like
+            // Filter tenant by contact person position like
             OrbitInput::get('contact_person_position_like', function ($contact_person_position) use ($tenants) {
                 $tenants->where('merchants.contact_person_position', 'like', "%$contact_person_position%");
             });
 
-            // Filter retailer by contact person phone
+            // Filter tenant by contact person phone
             OrbitInput::get('contact_person_phone', function ($contact_person_phone) use ($tenants) {
                 $tenants->whereIn('merchants.contact_person_phone', $contact_person_phone);
             });
 
-            // Filter retailer by contact person phone2
+            // Filter tenant by contact person phone2
             OrbitInput::get('contact_person_phone2', function ($contact_person_phone2) use ($tenants) {
                 $tenants->whereIn('merchants.contact_person_phone2', $contact_person_phone2);
             });
 
-            // Filter retailer by contact person email
+            // Filter tenant by contact person email
             OrbitInput::get('contact_person_email', function ($contact_person_email) use ($tenants) {
                 $tenants->whereIn('merchants.contact_person_email', $contact_person_email);
             });
 
-            // Filter retailer by sector of activity
+            // Filter tenant by sector of activity
             OrbitInput::get('sector_of_activity', function ($sector_of_activity) use ($tenants) {
                 $tenants->whereIn('merchants.sector_of_activity', $sector_of_activity);
             });
 
-            // Filter retailer by url
+            // Filter tenant by url
             OrbitInput::get('url', function ($url) use ($tenants) {
                 $tenants->whereIn('merchants.url', $url);
             });
 
-            // Filter retailer by parent_id
+            // Filter tenant by parent_id
             OrbitInput::get('parent_id', function($parentIds) use ($tenants)
             {
                 $tenants->whereIn('merchants.parent_id', $parentIds);
             });
 
-            // Filter retailer by floor
+            // Filter tenant by floor
             OrbitInput::get('floor', function($floor) use ($tenants)
             {
                 $tenants->whereIn('merchants.floor', $floor);
             });
 
-            // Filter retailer by unit
+            // Filter tenant by unit
             OrbitInput::get('unit', function($unit) use ($tenants)
             {
                 $tenants->whereIn('merchants.unit', $unit);
             });
 
-            // Filter retailer by location (floor - unit)
+            // Filter tenant by location (floor - unit)
             OrbitInput::get('location', function($data) use ($tenants)
             {
                 $tenants->whereIn(DB::raw('CONCAT(floor, " - ", unit)'), $data);
             });
 
-            // Filter retailer by location_like (floor - unit)
+            // Filter tenant by location_like (floor - unit)
             OrbitInput::get('location_like', function($data) use ($tenants) {
                 $tenants->where(DB::raw('CONCAT(floor, " - ", unit)'), 'like', "%$data%");
             });
 
-            // Filter retailer by categories
+            // Filter tenant by categories
             OrbitInput::get('categories', function($data) use ($tenants)
             {
                 $tenants->whereHas('categories', function($q) use ($data) {
@@ -1423,14 +1423,14 @@ class TenantAPIController extends ControllerAPI
                 });
             });
 
-            // Filter retailer by categories_like
+            // Filter tenant by categories_like
             OrbitInput::get('categories_like', function($data) use ($tenants) {
                 $tenants->whereHas('categories', function($q) use ($data) {
                     $q->where('category_name', 'like', "%$data%");
                 });
             });
 
-            // Filter retailer by external_object_id
+            // Filter tenant by external_object_id
             OrbitInput::get('external_object_id', function($external_object_id) use ($tenants)
             {
                 $tenants->whereIn('merchants.external_object_id', $external_object_id);
@@ -1458,7 +1458,7 @@ class TenantAPIController extends ControllerAPI
 
             $tenants->where(function ($query) use ($tenants) {
 
-                // Filter retailer by keyword pattern
+                // Filter tenant by keyword pattern
                 OrbitInput::get('keyword', function($keyword) use ($tenants, $query)
                 {
                     $query->orWhere('merchants.name', 'like', "%$keyword%");
@@ -1472,7 +1472,7 @@ class TenantAPIController extends ControllerAPI
 
             });
 
-            // Add new relation based on request
+            // Add new tenant based on request
             OrbitInput::get('with', function($with) use ($tenants) {
                 $with = (array)$with;
 
@@ -1841,7 +1841,7 @@ class TenantAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // Retailer cannot be deleted if is box current retailer.
+        // tenant cannot be deleted if is box current tenant.
         Validator::extend('orbit.exists.deleted_tenant_is_box_current_retailer', function ($attribute, $value, $parameters) {
             $retailer_id = $value;
             $box_retailer_id = Setting::where('setting_name', 'current_retailer')->first()->setting_value;
@@ -1853,8 +1853,8 @@ class TenantAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // if retailer status is updated to inactive, then reject if is box current retailer.
-        Validator::extend('orbit.exists.inactive_retailer_is_box_current_retailer', function ($attribute, $value, $parameters) {
+        // if tenant status is updated to inactive, then reject if is box current tenant.
+        Validator::extend('orbit.exists.inactive_tenant_is_box_current_retailer', function ($attribute, $value, $parameters) {
             if ($value === 'inactive') {
                 $retailer_id = $parameters[0];
                 $box_retailer_id = Setting::where('setting_name', 'current_retailer')->first()->setting_value;
@@ -1891,7 +1891,7 @@ class TenantAPIController extends ControllerAPI
     }
 
     /**
-     * GET - Retailer City List
+     * GET - Tenant City List
      *
      * @author Tian <tian@dominopos.com>
      *
@@ -1903,43 +1903,44 @@ class TenantAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.retailer.getcitylist.before.auth', array($this));
+            Event::fire('orbit.tenant.getcitylist.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.retailer.getcitylist.after.auth', array($this));
+            Event::fire('orbit.tenant.getcitylist.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.retailer.getcitylist.before.authz', array($this, $user));
+            Event::fire('orbit.tenant.getcitylist.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_retailer')) {
-                Event::fire('orbit.retailer.getcitylist.authz.notallowed', array($this, $user));
-                $viewRetailerLang = Lang::get('validation.orbit.actionlist.view_retailer');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewRetailerLang));
+            if (! ACL::create($user)->isAllowed('view_tenant')) {
+                Event::fire('orbit.tenant.getcitylist.authz.notallowed', array($this, $user));
+                $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
                 ACL::throwAccessForbidden($message);
             }
             Event::fire('orbit.retailer.getcitylist.after.authz', array($this, $user));
 
-            $retailers = Retailer::excludeDeleted()
+            $tenants = Tenant::excludeDeleted()
                 ->select('city')
+                ->whereNotNull('city')
                 ->orderBy('city', 'asc')
                 ->groupBy('city')
                 ->get();
 
             $data = new stdclass();
-            $data->records = $retailers;
+            $data->records = $tenants;
 
-            if ($retailers->count() === 0) {
+            if ($tenants->count() === 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.city');
             }
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.retailer.getcitylist.access.forbidden', array($this, $e));
+            Event::fire('orbit.tenant.getcitylist.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1947,7 +1948,7 @@ class TenantAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.retailer.getcitylist.invalid.arguments', array($this, $e));
+            Event::fire('orbit.tenant.getcitylist.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1959,7 +1960,7 @@ class TenantAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.retailer.getcitylist.query.error', array($this, $e));
+            Event::fire('orbit.tenant.getcitylist.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1973,7 +1974,7 @@ class TenantAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.retailer.getcitylist.general.exception', array($this, $e));
+            Event::fire('orbit.tenant.getcitylist.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -1982,7 +1983,7 @@ class TenantAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.retailer.getcitylist.before.render', array($this, &$output));
+        Event::fire('orbit.tenant.getcitylist.before.render', array($this, &$output));
 
         return $output;
     }
