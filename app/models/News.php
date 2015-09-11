@@ -59,4 +59,10 @@ class News extends Eloquent
                     ->where('object_name', 'news');
     }
 
+    // public function language()
+    // {
+    //     // return $this->hasMany('NewsTranslation', 'news_id', 'news_id')->excludeDeleted();
+    //     return $this->hasMany('hasOne', 'news_id', 'news_id')->excludeDeleted();
+    // }
+
 }

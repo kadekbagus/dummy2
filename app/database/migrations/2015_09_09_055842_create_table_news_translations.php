@@ -16,6 +16,7 @@ class CreateTableNewsTranslations extends Migration {
 		{
             $table->increments('news_translation_id');
             $table->integer('news_id')->unsigned();
+            $table->integer('merchant_id')->unsigned();
             $table->integer('merchant_language_id')->unsigned();
             $table->string('news_name', 255)->nullable();
             $table->string('description', 2000)->nullable();

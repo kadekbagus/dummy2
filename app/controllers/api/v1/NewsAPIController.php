@@ -177,14 +177,6 @@ class NewsAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
             });
 
-            // translation per merchant if any
-            // if (!empty($newnews->tenants)) {
-            //     OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
-            //         $this->validateAndSaveTranslationsRetailer($newnews, $translation_json_string, 'create');
-            //     });
-            // }
-            // die();
-
             $this->response->data = $newnews;
 
             // Commit the changes
@@ -1561,12 +1553,6 @@ class NewsAPIController extends ControllerAPI
      */
     private function validateAndSaveTranslations($news, $translations_json_string, $scenario = 'create')
     {
-
-echo "<pre>";
-print_r($save);
-die();
-
-
         /*
          * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
          *
@@ -1624,19 +1610,14 @@ die();
             }
         }
 
-        // echo "operation";
-        // print_r($operations);
-        // echo "data";
-        // print_r($data);
-        // die();
-        // translate for merchant
-
         foreach ($operations as $operation) {
             $op = $operation[0];
             if ($op === 'create') {
+
                 // for translation per mall
                 $new_translation = new NewsTranslation();
                 $new_translation->news_id = $news->news_id;
+                $new_translation->merchant_id = $news->mall_id;
                 $new_translation->merchant_language_id = $operation[1];
                 $data = $operation[2];
                 foreach ($data as $field => $value) {
@@ -1646,14 +1627,24 @@ die();
                 $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
 
-                // for translation per merchant
-                if (!empty($news->merchant)) {
-                    foreach ($news->merch as $key => $value) {
-                        # code...
-                    }
-                    # code...
-                }
+                // translation per merchant if any
+                if (!empty($news->tenants)) {
+                    foreach ($news->tenants as $key => $merchant) {
+                        
+                        $new_translation_merchant = new NewsTranslation();
+                        $new_translation_merchant->news_id = $news->news_id;
+                        $new_translation_merchant->merchant_id = $merchant->merchant_id;
+                        $new_translation_merchant->merchant_language_id = $operation[1];
+                        foreach ($data as $field => $value) {
+                            $new_translation_merchant->{$field} = $value;
+                        }
 
+                        $new_translation_merchant->created_by = $this->api->user->user_id;
+                        $new_translation_merchant->modified_by = $this->api->user->user_id;
+
+                        $new_translation_merchant->save();
+                    }
+                }
             }
             elseif ($op === 'update') {
                 /** @var NewsTranslation $existing_translation */
@@ -1664,6 +1655,27 @@ die();
                 }
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
+
+                // for translation per merchant
+                if (!empty($news->tenants)) {
+                    foreach ($news->tenants as $key => $merchant) {
+                        
+                        $new_translation_merchant = new NewsTranslation();
+                        $new_translation_merchant->news_id = $news->news_id;
+                        $new_translation->merchant_id = $news->mall_id;
+                        $new_translation_merchant->merchant_id = $merchant->merchant_id;
+                        $new_translation_merchant->merchant_language_id = $operation[1];
+                        foreach ($data as $field => $value) {
+                            $new_translation_merchant->{$field} = $value;
+                        }
+
+                        $new_translation_merchant->created_by = $this->api->user->user_id;
+                        $new_translation_merchant->modified_by = $this->api->user->user_id;
+
+                        $new_translation_merchant->save();
+                    }
+                }
+
             }
             elseif ($op === 'delete') {
                 /** @var NewsTranslation $existing_translation */

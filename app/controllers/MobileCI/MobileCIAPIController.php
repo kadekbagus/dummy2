@@ -7746,8 +7746,8 @@ class MobileCIAPIController extends ControllerAPI
                     ->setNotes($activityPageNotes)
                     ->responseOK()
                     ->save();
-            }
-
+            
+}
             $languages = $this->getListLanguages($retailer);
 
             return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories, 'floorList' => $floorList, 'languages' => $languages));
@@ -8411,6 +8411,9 @@ class MobileCIAPIController extends ControllerAPI
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -8430,12 +8433,11 @@ class MobileCIAPIController extends ControllerAPI
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
                 )
             );
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
             }
-
-            $retailer = $this->getRetailerInfo();
 
             // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
 
@@ -8443,24 +8445,27 @@ class MobileCIAPIController extends ControllerAPI
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
             if ($maxRecord <= 0) {
                 $maxRecord = 250;
-            }
+            }          
 
-            $coupons = \News::active()->where('mall_id', $retailer->merchant_id)
+            $news = \News::with('translations')->active()->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'news')
                             ->whereRaw("NOW() between begin_date and end_date")
                             ->orderBy('sticky_order', 'desc')
                             ->orderBy('created_at', 'desc')
                             ->get();
+// echo "<pre>";
+// print_r($news);
+// die();
 
-            if ($coupons->isEmpty()) {
+            if ($news->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = sizeof($coupons);
-                $data->returned_records = sizeof($coupons);
-                $data->records = $coupons;
+                $data->total_records = sizeof($news);
+                $data->returned_records = sizeof($news);
+                $data->records = $news;
             }
 
             $languages = $this->getListLanguages($retailer);
