@@ -1299,7 +1299,7 @@ class CouponReportAPIController extends ControllerAPI
             $_coupons = clone $coupons;
             $_coupons->select('issued_coupons.issued_coupon_id');
 
-            // if not printing / exporting data then do pagination.
+            // if not printing / exporting data then do pagination
             if (! $this->returnBuilder) {
                 // Get the take args
                 $take = $perPage;
