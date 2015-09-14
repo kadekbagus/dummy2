@@ -66,7 +66,7 @@ class CouponReportPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Redeemed Coupon Report By ' . $couponName;
+        $pageTitle = 'Redeemed Coupon Report for ' . $couponName;
 
         switch ($mode) {
             case 'csv':
@@ -75,7 +75,7 @@ class CouponReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report By ' . $couponName, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report for ' . $couponName, '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Tenant(s)', 'Redeemed/Issued', 'Coupon Code', 'Customer', 'Redeemed Date & Time', 'Tenant Verification Number');
@@ -83,13 +83,13 @@ class CouponReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->redeem_retailer_name,
                             $row->total_redeemed . ' / ' . $row->total_issued,
                             $row->issued_coupon_code,
                             $row->user_email,
-                            $row->redeemed_date,
+                            $this->printDateTime($row->redeemed_date, 'd M Y H:i'),
                             $row->redeem_verification_code
                     );
                     $count++;
@@ -133,7 +133,7 @@ class CouponReportPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Redeemed Coupon Report By ' . $tenantName;
+        $pageTitle = 'Redeemed Coupon Report for ' . $tenantName;
 
         switch ($mode) {
             case 'csv':
@@ -142,7 +142,7 @@ class CouponReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report By ' . $tenantName, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report for ' . $tenantName, '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Redeemed/Issued', 'Customer', 'Coupon Code', 'Redeemed Date & Time', 'Tenant Verification Number');
@@ -150,13 +150,13 @@ class CouponReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->promotion_name,
                             $row->total_redeemed . ' / ' . $row->total_issued,
                             $row->user_email,
                             $row->issued_coupon_code,
-                            $row->redeemed_date,
+                            $this->printDateTime($row->redeemed_date, 'd M Y H:i'),
                             $row->redeem_verification_code
                     );
                     $count++;
@@ -211,22 +211,22 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Coupon Report', '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Coupon Dates', 'Auto-Issuance Status', 'Coupon Code', 'Customer', 'Issued Date & Time', 'Issued/Available', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Coupon Dates', 'Auto-Issuance Status', 'Coupon Code', 'Customer', 'Issued Date & Time', 'Issued/Maximum', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                     $beginDate = $this->printDateTime($row->begin_date);
                     $endDate = $this->printDateTime($row->end_date);
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\"\n",
                             $count,
                             $row->promotion_name,
                             $beginDate . ' - ' . $endDate,
                             $this->printYesNoFormatter($row->is_auto_issue_on_signup),
                             $row->issued_coupon_code,
                             $row->user_email,
-                            $row->redeemed_date,
-                            $row->total_issued . ' / ' . $row->maximum_issued_coupon,
+                            $this->printDateTime($row->issued_date, 'd M Y H:i'),
+                            $row->total_issued . ' / ' . $this->printUnlimitedFormatter($row->maximum_issued_coupon),
                             $row->status
                     );
                     $count++;
@@ -273,5 +273,20 @@ class CouponReportPrinterController extends DataPrinterController
         }
 
         return 'NO';
+    }
+
+    /**
+     * Unlimited/infinity formatter.
+     *
+     * @param string $input
+     * @return string
+     */
+    public function printUnlimitedFormatter($input)
+    {
+        if ($input === '0') {
+            return '∞';
+        }
+
+        return $input;
     }
 }
