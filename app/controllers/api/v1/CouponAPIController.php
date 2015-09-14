@@ -1508,6 +1508,8 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('tenants');
                     } elseif ($relation === 'translations') {
                         $coupons->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $coupons->with('translations.media');
                     }
                 }
             });
