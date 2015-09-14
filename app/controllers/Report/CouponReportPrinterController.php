@@ -86,7 +86,7 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->redeem_retailer_name,
-                            $row->total_redeemed . ' / ' . $row->total_issued,
+                            '1 / ' . $row->total_issued,
                             $row->issued_coupon_code,
                             $row->user_email,
                             $this->printDateTime($row->redeemed_date, 'd M Y H:i'),
@@ -153,7 +153,7 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->promotion_name,
-                            $row->total_redeemed . ' / ' . $row->total_issued,
+                            '1 / ' . $row->total_issued,
                             $row->user_email,
                             $row->issued_coupon_code,
                             $this->printDateTime($row->redeemed_date, 'd M Y H:i'),
@@ -226,7 +226,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->issued_coupon_code,
                             $row->user_email,
                             $this->printDateTime($row->issued_date, 'd M Y H:i'),
-                            $row->total_issued . ' / ' . $this->printUnlimitedFormatter($row->maximum_issued_coupon),
+                            '1 / ' . $this->printUnlimitedFormatter($row->maximum_issued_coupon),
                             $row->status
                     );
                     $count++;

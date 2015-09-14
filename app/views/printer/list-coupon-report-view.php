@@ -96,7 +96,7 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
                 <td><?php echo htmlentities(($row->redeem_retailer_name)); ?></td>
-                <td><?php printf('%s / %s', $row->total_redeemed, $row->total_issued); ?></td>
+                <td><?php printf('%s / %s', '1', $row->total_issued); ?></td>
                 <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
                 <td><?php echo htmlentities($row->user_email); ?></td>
                 <td><?php echo $me->printDateTime($row->redeemed_date, 'd M Y H:i'); ?></td>
