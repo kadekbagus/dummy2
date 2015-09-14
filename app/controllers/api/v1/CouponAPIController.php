@@ -1749,7 +1749,7 @@ class CouponAPIController extends ControllerAPI
             $this->response->data = $issuedcoupon;
 
             // Successfull Creation
-            $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->promotion_name);
+            $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Redeem Coupon OK')
@@ -1758,6 +1758,9 @@ class CouponAPIController extends ControllerAPI
                     ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseOK();
+
+            $activity->coupon_id = $issuedcoupon->promotion_id;
+            $activity->coupon_name = $issuedcoupon->coupon->promotion_name;
 
             Event::fire('orbit.coupon.postissuedcoupon.after.commit', array($this, $issuedcoupon));
         } catch (ACLForbiddenException $e) {
