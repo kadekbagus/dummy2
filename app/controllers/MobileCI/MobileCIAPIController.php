@@ -248,16 +248,24 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store[] = $event->event_id;
                 \Cookie::queue('event', $event_store, 1440);
 
-                if (!empty($alternate_language)) {
+                if (! empty($alternate_language)) {
                     $event_translation = \EventTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
                         ->where('event_id', $event->event_id)->first();
 
-                    if (!empty($event_translation)) {
+                    if (! empty($event_translation)) {
                         foreach (['event_name', 'description'] as $field) {
                             if (isset($event_translation->{$field})) {
                                 $event->{$field} = $event_translation->{$field};
                             }
+                        }
+
+                        $media = $event_translation->find($event_translation->event_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $event->image = $media->path;
                         }
                     }
                 }
@@ -8082,6 +8090,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
 
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
             // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
 
             // Get the maximum record
@@ -8099,6 +8109,30 @@ class MobileCIAPIController extends ControllerAPI
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );
+
+            if (! empty($alternate_language)) {
+                foreach ($coupons as $coupon) {
+                    $coupon_translation = \CouponTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('promotion_id', $coupon->promotion_id)->first();
+
+                    if (! empty($coupon_translation)) {
+                        foreach (['promotion_name', 'description'] as $field) {
+                            if (isset($coupon_translation->{$field})) {
+                                $coupon->{$field} = $coupon_translation->{$field};
+                            }
+                        }
+
+                        $media = $coupon_translation->find($coupon_translation->coupon_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $coupon->promo_image = $media->path;
+                        }
+                    }
+                }
+            }
 
             if (sizeof($coupons) < 1) {
                 $data = new stdclass();
@@ -8191,6 +8225,31 @@ class MobileCIAPIController extends ControllerAPI
             })->first();
 
             $coupon_id = $coupons->promotion_id;
+
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            
+            if (! empty($alternate_language)) {
+                $coupon_translation = \CouponTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                    ->where('promotion_id', $coupons->promotion_id)->first();
+
+                if (! empty($coupon_translation)) {
+                    foreach (['promotion_name', 'description'] as $field) {
+                        if (isset($coupon_translation->{$field})) {
+                            $coupons->{$field} = $coupon_translation->{$field};
+                        }
+                    }
+
+                    $media = $coupon_translation->find($coupon_translation->coupon_translation_id)
+                        ->media_orig()
+                        ->first();
+
+                    if (isset($media->path)) {
+                        $coupons->image = $media->path;
+                    }
+                }
+            }
+
             $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
 
             if (empty($coupons)) {
@@ -8794,7 +8853,7 @@ class MobileCIAPIController extends ControllerAPI
     *
     * @author Firmansyah <firmansyah@dominopos.com>
     * @author Irianto Pratama <irianto@dominopos.com>
-    * 
+    *
     * @return array or collection
     */
     protected function getListLanguages($mall)
