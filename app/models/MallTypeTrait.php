@@ -16,6 +16,10 @@ trait MallTypeTrait
             case 'Tenant':
                 static::addGlobalScope(new MallTenantScope('tenant'));
                 break;
+                
+            case 'MallGroup':
+                static::addGlobalScope(new MallTenantScope('mall_group'));
+                break;
 
             default:
                 static::addGlobalScope(new MallTenantScope);
@@ -45,6 +49,10 @@ trait MallTypeTrait
         {
             case 'Tenant':
                 $this->setAttribute(static::OBJECT_TYPE, 'tenant');
+                break;
+
+            case 'MallGroup':
+                $this->setAttribute(static::OBJECT_TYPE, 'mall_group');
                 break;
 
             default:
