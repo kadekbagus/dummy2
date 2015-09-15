@@ -1279,7 +1279,8 @@ class CouponAPIController extends ControllerAPI
                         ELSE discount_value
                     END AS 'display_discount_value',
                     {$table_prefix}merchants.name as retailer_name
-                    ")
+                    "),
+                    DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'")
                 )
                 ->joinPromotionRules()
                 ->joinPromotionRetailer()
@@ -1551,7 +1552,8 @@ class CouponAPIController extends ControllerAPI
                     'is_permanent'             => 'promotions.is_permanent',
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
-                    'tenant_name'              => 'tenant_name'
+                    'tenant_name'              => 'tenant_name',
+                    'is_auto_issuance'         => 'is_auto_issue_on_signup'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
