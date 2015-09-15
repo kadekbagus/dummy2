@@ -288,7 +288,7 @@ class CouponReportAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotions.status';
+            $sortBy = 'coupon_status';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -316,8 +316,8 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // sort by status first
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
+            if ($sortBy !== 'coupon_status') {
+                $coupons->orderBy('coupon_status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
@@ -1358,8 +1358,8 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // sort by status first
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
+            if ($sortBy !== 'coupon_status') {
+                $coupons->orderBy('coupon_status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
