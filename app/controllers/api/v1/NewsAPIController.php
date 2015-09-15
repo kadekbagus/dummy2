@@ -993,9 +993,9 @@ class NewsAPIController extends ControllerAPI
                     if ($relation === 'tenants') {
                         $news->with('tenants');
                     } elseif ($relation === 'translations') {
-                        $coupons->with('translations');
+                        $news->with('translations');
                     } elseif ($relation === 'translations.media') {
-                        $coupons->with('translations.media');
+                        $news->with('translations.media');
                     }
                 }
             });

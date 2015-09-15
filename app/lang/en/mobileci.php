@@ -177,6 +177,7 @@ return array(
         'want_unlimited_browsing'          => 'Want unlimited browsing?',
         'or_want_to_follow_the_lucky_draw' => 'Or want to follow the lucky draw?',
         'open_your_email_and_verify_now'   => 'Open your email and verify now!!',
+        'validity'                         => 'Validity',
     ),    
 
     'promotion_list' => array(
