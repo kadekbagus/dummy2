@@ -8447,15 +8447,39 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 250;
             }          
 
-            $news = \News::with('translations')->active()->where('mall_id', $retailer->merchant_id)
+            $news = \News::with('translations')->active()
+                            ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'news')
                             ->whereRaw("NOW() between begin_date and end_date")
                             ->orderBy('sticky_order', 'desc')
                             ->orderBy('created_at', 'desc')
                             ->get();
-// echo "<pre>";
-// print_r($news);
-// die();
+
+            if (!empty($alternate_language) && !empty($news)) {
+                foreach ($news as $key => $val) {
+                    
+                    $news_translation = \NewsTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('news_id', $val->news_id)->first();
+
+                    if (!empty($news_translation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            if (isset($news_translation->{$field})) {
+                                $val->{$field} = $news_translation->{$field};
+                            }
+                        }
+
+                        $media = $news_translation->find($news_translation->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $val->image = $media->path;
+                        }
+
+                    }
+                }
+            }
 
             if ($news->isEmpty()) {
                 $data = new stdclass();
@@ -8515,19 +8539,45 @@ class MobileCIAPIController extends ControllerAPI
         $product = null;
         try {
             $user = $this->getLoggedInUser();
-
             $retailer = $this->getRetailerInfo();
+
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
             $product_id = trim(OrbitInput::get('id'));
 
-            $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'news')->where('news_id', $product_id)->first();
+            $news = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'news')->where('news_id', $product_id)->first();
 
-            if (empty($coupons)) {
+            if (empty($news)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
             }
 
-            if (empty($coupons->image)) {
-                $coupons->image = 'mobile-ci/images/default_product.png';
+            if (empty($news->image)) {
+                $news->image = 'mobile-ci/images/default_product.png';
+            }
+
+            // cek if any language active
+            if (!empty($alternate_language) && !empty($news)) {
+                $news_translation = \NewsTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                    ->where('news_id', $news->news_id)->first();
+
+                if (!empty($news_translation)) {
+                    foreach (['news_name', 'description'] as $field) {
+                        if (isset($news_translation->{$field})) {
+                            $news->{$field} = $news_translation->{$field};
+                        }
+                    }
+
+                    $media = $news_translation->find($news_translation->news_translation_id)
+                        ->media_orig()
+                        ->first();
+
+                    if (isset($media->path)) {
+                        $news->image = $media->path;
+                    }
+
+                }
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -8536,14 +8586,14 @@ class MobileCIAPIController extends ControllerAPI
             $activityPage->setUser($user)
                 ->setActivityName('view_news')
                 ->setActivityNameLong('View News Detail')
-                ->setObject($coupons)
-                ->setNews($coupons)
+                ->setObject($news)
+                ->setNews($news)
                 ->setModuleName('News')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'languages' => $languages));
+            return View::make('mobile-ci.mall-news-detail', array('page_title' => $news->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $news, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);

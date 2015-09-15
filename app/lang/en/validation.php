@@ -159,6 +159,7 @@ return array(
             'coupon'               => 'The Coupon ID you specified is not found.',
             'issued_coupon'        => 'The Issued Coupon ID you specified is not found.',
             'event'                => 'The Event ID you specified is not found.',
+            'news'                 => 'The News ID you specified is not found.',
             'user_status'          => 'The user status you specified is not found.',
             'user_sortby'          => 'The sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, membership_since, created_at, updated_at.',
             'merchant_status'      => 'The merchant status you specified is not found.',

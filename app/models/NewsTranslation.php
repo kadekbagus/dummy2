@@ -25,7 +25,7 @@ class NewsTranslation extends Eloquent
 
     public function news()
     {
-        return $this->belongsTo('EventModel', 'news_id', 'news_id');
+        return $this->belongsTo('NewsModel', 'news_id', 'news_id');
     }
 
     public function language()
@@ -33,9 +33,15 @@ class NewsTranslation extends Eloquent
         return $this->belongsTo('MerchantLanguage', 'merchant_language_id', 'merchant_language_id');
     }    
 
-    public function languagetest()
+    public function media()
     {
-        return $this->hasOne('MerchantLanguage', 'merchant_language_id', 'merchant_language_id');
+        return $this->hasMany('Media', 'object_id', 'news_translation_id')
+                    ->where('object_name', 'news_translation');
+    }
+    
+    public function media_orig()
+    {
+        return $this->media()->where('media_name_long', '=', 'news_translation_image_orig');
     }
 
 }

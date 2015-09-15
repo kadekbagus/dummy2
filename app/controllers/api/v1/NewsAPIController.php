@@ -686,6 +686,11 @@ class NewsAPIController extends ControllerAPI
                 $deletenewsretailer->delete();
             }
 
+            foreach ($deletenews->translations as $translation) {
+                $translation->modified_by = $this->api->user->user_id;
+                $translation->delete();
+            }
+
             $deletenews->save();
 
             Event::fire('orbit.news.postdeletenews.after.save', array($this, $deletenews));
@@ -987,6 +992,10 @@ class NewsAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'tenants') {
                         $news->with('tenants');
+                    } elseif ($relation === 'translations') {
+                        $coupons->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $coupons->with('translations.media');
                     }
                 }
             });
@@ -1645,6 +1654,13 @@ class NewsAPIController extends ControllerAPI
                         $new_translation_merchant->save();
                     }
                 }
+
+                // Fire an news which listen on orbit.news.after.translation.save
+                // @param ControllerAPI $this
+                // @param EventTranslation $new_transalation
+                Event::fire('orbit.news.after.translation.save', array($this, $new_translation));
+
+                $news->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
                 /** @var NewsTranslation $existing_translation */
