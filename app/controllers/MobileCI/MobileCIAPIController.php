@@ -129,13 +129,21 @@ class MobileCIAPIController extends ControllerAPI
             // check available auto-issuance coupon
             $coupons = DB::select(
                 DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                    'SELECT *, p.image AS promo_image, 
+                    (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
+                          where ic.promotion_id = p.promotion_id
+                          and ic.status!="deleted") as total_issued_coupon
+                FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id 
+                WHERE pr.rule_type = "auto_issue_on_signup"
+                    AND p.merchant_id = :merchantid
                     AND p.is_coupon = "Y" AND p.status = "active" 
                     AND p.begin_date <= "' . $user->created_at . '" 
                     AND p.end_date >= "' . $user->created_at . '"
-                WHERE pr.rule_type = "auto_issue_on_signup"
-                    AND p.merchant_id = :merchantid
+                HAVING
+                    (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
+                    OR
+                    (p.maximum_issued_coupon = 0)
                     '
                 ),
                 array('merchantid' => $retailer->merchant_id)
@@ -146,17 +154,18 @@ class MobileCIAPIController extends ControllerAPI
                 DB::raw(
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
-                    AND p.is_coupon = "Y" AND p.status = "active" 
-                    AND p.begin_date <= "' . $user->created_at . '" 
-                    AND p.end_date >= "' . $user->created_at . '"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
                 WHERE pr.rule_type = "auto_issue_on_signup"
                     AND p.merchant_id = :merchantid
-                    AND ic.user_id = :userid'
+                    AND ic.user_id = :userid
+                    AND p.is_coupon = "Y" AND p.status = "active" 
+                    AND p.begin_date <= "' . $user->created_at . '" 
+                    AND p.end_date >= "' . $user->created_at . '"
+                    '
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );            
-            
+
             // get obtained auto-issuance coupon ids
             $obtained_coupon_ids = array();
             foreach ($obtained_coupons as $obtained_coupon) {
@@ -226,7 +235,7 @@ class MobileCIAPIController extends ControllerAPI
                 $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
 
                 $name = $user->getFullName();
-                $name = $name ? $name : $user->email;
+                $name = trim($name) ? trim($name) : $user->user_email;
                 $subject = Lang::get('mobileci.inbox.coupon.subject');
 
                 $inbox = new Inbox();
@@ -8301,19 +8310,11 @@ class MobileCIAPIController extends ControllerAPI
             $coupons = DB::select(
                 DB::raw(
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id 
-                    AND p.is_coupon = "Y" 
-                    AND p.status = "active" 
-                    AND 
-                    (
-                        (p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") 
-                        OR
-                        (p.begin_date <= "' . Carbon::now() . '"  and p.end_date IS NULL)
-                        OR
-                        (p.begin_date IS NULL and p.end_date >= "' . Carbon::now() . '")
-                    )
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" 
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '"'
+                WHERE ic.expired_date >= "' . Carbon::now(). '" 
+                    AND p.merchant_id = :merchantid 
+                    AND ic.user_id = :userid'
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );
@@ -8392,21 +8393,24 @@ class MobileCIAPIController extends ControllerAPI
                 $q->where('issued_coupons.user_id', $user->user_id);
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now());
                 $q->where('issued_coupons.status', 'active');
-            }))->where('merchant_id', $retailer->merchant_id)->active()
-            ->where(function($q){
-                $q->where(function($q2){
-                    $q2->where('begin_date', '<=', Carbon::now());
-                    $q2->where('end_date', '>=',  Carbon::now());
-                });
-                $q->orWhere(function($q2){
-                    $q2->where('begin_date', '<=', Carbon::now());
-                    $q2->whereNull('end_date');
-                });
-                $q->orWhere(function($q2){
-                    $q2->whereNull('begin_date');
-                    $q2->where('end_date', '>=',  Carbon::now());
-                });
-            })->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user) {
+            }))
+            ->where('merchant_id', $retailer->merchant_id)
+            // ->active()
+            // ->where(function($q){
+            //     $q->where(function($q2){
+            //         $q2->where('begin_date', '<=', Carbon::now());
+            //         $q2->where('end_date', '>=',  Carbon::now());
+            //     });
+            //     $q->orWhere(function($q2){
+            //         $q2->where('begin_date', '<=', Carbon::now());
+            //         $q2->whereNull('end_date');
+            //     });
+            //     $q->orWhere(function($q2){
+            //         $q2->whereNull('begin_date');
+            //         $q2->where('end_date', '>=',  Carbon::now());
+            //     });
+            // })
+            ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user) {
                 $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                 $q->where('issued_coupons.user_id', $user->user_id);
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now());
