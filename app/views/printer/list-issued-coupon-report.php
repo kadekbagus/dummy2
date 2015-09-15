@@ -90,7 +90,7 @@
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer</th>
             <th style="text-align:left;">Issued Date & Time</th>
-            <th style="text-align:left;">Issued/Available</th>
+            <th style="text-align:left;">Issued/Maximum</th>
             <th style="text-align:left;">Status</th>
         </thead>
         <tbody>
@@ -103,8 +103,8 @@
                 <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
                 <td><?php echo htmlentities($row->user_email); ?></td>
                 <td><?php echo $me->printDateTime($row->issued_date, 'd M Y H:i'); ?></td>
-                <td><?php printf('%s/%s', $row->total_issued, $row->maximum_issued_coupon); ?></td>
-                <td><?php echo htmlentities($row->status); ?></td>
+                <td><?php printf('%s / %s', '1', $me->printUnlimitedFormatter($row->maximum_issued_coupon)); ?></td>
+                <td><?php echo htmlentities($row->coupon_status); ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>
