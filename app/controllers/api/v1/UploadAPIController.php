@@ -6153,6 +6153,20 @@ class UploadAPIController extends ControllerAPI
             });
         }
 
+        Validator::extend('orbit.empty.news_translation', function ($attribute, $value, $parameters) {
+            $news_translation = NewsTranslation::excludeDeleted()
+                        ->where('news_translation_id', $value)
+                        ->first();
+
+            if (empty($news_translation)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.news_translation', $news_translation);
+
+            return TRUE;
+        });
+
         Validator::extend('orbit.empty.event_translation', function ($attribute, $value, $parameters) {
             $event_translation = EventTranslation::excludeDeleted()
                         ->where('event_translation_id', $value)
