@@ -62,13 +62,22 @@ class PromotionAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.promotion.postnewpromotion.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('create_promotion')) {
                 Event::fire('orbit.promotion.postnewpromotion.authz.notallowed', array($this, $user));
                 $createPromotionLang = Lang::get('validation.orbit.actionlist.new_promotion');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createPromotionLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.promotion.postnewpromotion.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -232,6 +241,12 @@ class PromotionAPIController extends ControllerAPI
             $newpromotion->retailers = $promotionretailers;
 
             Event::fire('orbit.promotion.postnewpromotion.after.save', array($this, $newpromotion));
+
+            // Save Promotion Translation
+            OrbitInput::post('translations', function($translation_json_string) use ($newpromotion) {
+                $this->validateAndSaveTranslations($newpromotion, $translation_json_string, 'create');
+            });
+
             $this->response->data = $newpromotion;
 
             // Commit the changes
@@ -385,12 +400,21 @@ class PromotionAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.promotion.postupdatepromotion.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('update_promotion')) {
+/*            if (! ACL::create($user)->isAllowed('update_promotion')) {
                 Event::fire('orbit.promotion.postupdatepromotion.authz.notallowed', array($this, $user));
                 $updatePromotionLang = Lang::get('validation.orbit.actionlist.update_promotion');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updatePromotionLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.promotion.postupdatepromotion.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -611,6 +635,11 @@ class PromotionAPIController extends ControllerAPI
             Event::fire('orbit.promotion.postupdatepromotion.after.save', array($this, $updatedpromotion));
             $this->response->data = $updatedpromotion;
 
+            // save PromotionTranslation
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedpromotion) {
+                $this->validateAndSaveTranslations($updatedpromotion, $translation_json_string, 'update');
+            });
+
             // Commit the changes
             $this->commit();
 
@@ -746,13 +775,22 @@ class PromotionAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.promotion.postdeletepromotion.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('delete_promotion')) {
                 Event::fire('orbit.promotion.postdeletepromotion.authz.notallowed', array($this, $user));
                 $deletePromotionLang = Lang::get('validation.orbit.actionlist.delete_promotion');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deletePromotionLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.promotion.postdeletepromotion.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -790,6 +828,11 @@ class PromotionAPIController extends ControllerAPI
             $deletepromotionretailers = PromotionRetailer::where('promotion_id', $deletepromotion->promotion_id)->get();
             foreach ($deletepromotionretailers as $deletepromotionretailer) {
                 $deletepromotionretailer->delete();
+            }
+
+            foreach ($deletepromotion->translations as $translation) {
+                $translation->modified_by = $this->api->user->user_id;
+                $translation->delete();
             }
 
             $deletepromotion->save();
@@ -1156,6 +1199,8 @@ class PromotionAPIController extends ControllerAPI
                         $promotions->with('promotionrule.discountproduct');
                     } elseif ($relation === 'family') {
                         $promotions->with('promotionrule.discountcategory1', 'promotionrule.discountcategory2', 'promotionrule.discountcategory3', 'promotionrule.discountcategory4', 'promotionrule.discountcategory5');
+                    } elseif ($relation === 'translations') {
+                        $promotions->with('translations');
                     }
                 }
             });
@@ -1796,4 +1841,116 @@ class PromotionAPIController extends ControllerAPI
         });
 
     }
+
+    /**
+     * @param Promotion $promotion
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslations($promotion, $translations_json_string, $scenario = 'create')
+    {
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where PromotionTranslation object is object with keys:
+         *   promotion_name, description
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['promotion_name', 'description'];
+        $user = $this->api->user;
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+        foreach ($data as $merchant_language_id => $translations) {
+            $language = MerchantLanguage::excludeDeleted()
+                ->allowedForUser($user)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            }
+            $existing_translation = PromotionTranslation::excludeDeleted()
+                ->where('promotion_id', '=', $promotion->promotion_id)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $merchant_language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+                $new_translation = new PromotionTranslation();
+                $new_translation->promotion_id = $promotion->promotion_id;
+                $new_translation->merchant_language_id = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $new_translation->{$field} = $value;
+                }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
+                $new_translation->save();
+
+                // Fire an promotion which listen on orbit.promotion.after.translation.save
+                // @param ControllerAPI $this
+                // @param PromotionTranslation $new_transalation
+                Event::fire('orbit.promotion.after.translation.save', array($this, $new_translation));
+
+                $promotion->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
+            }
+            elseif ($op === 'update') {
+                /** @var PromotionTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->save();
+
+                // Fire an promotion which listen on orbit.promotion.after.translation.save
+                // @param ControllerAPI $this
+                // @param PromotionTranslation $existing_transalation
+                Event::fire('orbit.promotion.after.translation.save', array($this, $existing_translation));
+
+                $promotion->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
+            
+            }
+            elseif ($op === 'delete') {
+                /** @var PromotionTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->delete();
+            }
+        }
+    }
+
 }

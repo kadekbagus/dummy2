@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateTableCouponTranslations extends Migration 
+class CreateTableCouponTranslations extends Migration
 {
 
 	/**

@@ -1244,6 +1244,228 @@ class UploadAPIController extends ControllerAPI
     }
 
     /**
+     * Upload image for a promotion tranlation (selected language).
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `promotion_id`                                         (required) - ID of the promotion
+     * @param integer    `promotion_translation_id`                             (required) - ID of the promotion tranlation
+     * @param integer    `merchant_language_id`                                 (required) - ID of the merchan language
+     * @param file|array `image_translation_<merchant_language_id>`             (required) - Event translation images
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadPromotionTranslationImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.before.auth', array($this));
+
+            if (! $this->calledFrom('promotion.translations'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadpromotiontranslationimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadpromotiontranslationimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_promotion')) {
+                    Event::fire('orbit.upload.postuploadpromotiontranslationimage.authz.notallowed', array($this, $user));
+                    $editPromotionLang = Lang::get('validation.orbit.actionlist.update_promotion');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editPromotionLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadpromotiontranslationimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $promotion_translation_id = OrbitInput::post('promotion_translation_id');
+            $promotion_id = OrbitInput::post('promotion_id');
+            $merchant_language_id = OrbitInput::post('merchant_language_id');
+            $image_translation = OrbitInput::files('image_translation_' . $merchant_language_id);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'promotion_translation_id'      => $promotion_translation_id,
+                    'promotion_id'                  => $promotion_id,
+                    'merchant_language_id'          => $merchant_language_id,
+                    'image_translation'             => $image_translation,
+                ),
+                array(
+                    'promotion_translation_id'      => 'required|numeric|orbit.empty.promotion_translation',
+                    'promotion_id'                  => 'required|numeric|orbit.empty.promotion',
+                    'merchant_language_id'          => 'required|numeric|orbit.empty.merchant_language',
+                    'image_translation'             => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.after.validation', array($this, $validator));
+
+            if (! $this->calledFrom('promotion.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // We already had Promotion Translation instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $promotion_translations = App::make('orbit.empty.promotion_translation');
+            
+            // Delete old promotion translation image
+            $pastMedia = Media::where('object_id', $promotion_translations->promotion_translation_id)
+                              ->where('object_name', 'promotion_translation')
+                              ->where('media_name_id', 'promotion_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($promotion_translations)
+            {
+                $promotion_translation_id = $promotion_translations->promotion_translation_id;
+                $slug = Str::slug($promotion_translations->promotion_name);
+                $file['new']->name = sprintf('%s-%s-%s', $promotion_translation_id, $slug, time());
+            };
+
+            // Load the orbit configuration for promotion upload
+            $uploadPromotionConfig = Config::get('orbit.upload.promotion.translation');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadPromotionConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.before.save', array($this, $promotion_translations, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($image_translation);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $promotion_translations->promotion_translation_id,
+                'name'          => 'promotion_translation',
+                'media_name_id' => 'promotion_translation_image',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image_translation` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per promotion
+            if (isset($uploaded[0])) {
+                $promotion_translations->save();
+            }
+
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.after.save', array($this, $promotion_translations, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.promotion_translation.main');
+
+            if (! $this->calledFrom('promotion.translations')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.after.commit', array($this, $promotion_translations, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('promotion.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('promotion.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('promotion.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadpromotiontranslationimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('promotion.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadpromotiontranslationimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
      * Upload profile picure (avatar) for User.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -5593,6 +5815,34 @@ class UploadAPIController extends ControllerAPI
                 return TRUE;
             });
         }
+
+        Validator::extend('orbit.empty.promotion_translation', function ($attribute, $value, $parameters) {
+            $promotion_translation = PromotionTranslation::excludeDeleted()
+                        ->where('promotion_translation_id', $value)
+                        ->first();
+
+            if (empty($promotion_translation)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.promotion_translation', $promotion_translation);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.merchant_language', function ($attribute, $value, $parameters) {
+            $merchant_language = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+
+            if (empty($merchant_language)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.merchant_language', $merchant_language);
+
+            return TRUE;
+        });
 
         if ($this->calledFrom('default')) {
             // Check the existance of user id
