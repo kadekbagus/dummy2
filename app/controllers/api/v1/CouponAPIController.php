@@ -1288,9 +1288,9 @@ class CouponAPIController extends ControllerAPI
                 ->groupBy('promotions.promotion_id');
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
-                $now = date('Y-m-d');
+                $now = date('Y-m-d H:i:s');
                 $prefix = DB::getTablePrefix();
-                $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))");
+                $coupons->whereRaw("('$now' >= {$prefix}promotions.begin_date and '$now' <= {$prefix}promotions.end_date)");
                 $coupons->whereRaw("(((select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
                                         where {$prefix}issued_coupons.promotion_id={$prefix}promotions.promotion_id
                                         and status!='deleted') < {$prefix}promotions.maximum_issued_coupon) or
@@ -2206,7 +2206,7 @@ class CouponAPIController extends ControllerAPI
         // Check the existance of issued coupon id
         $user = $this->api->user;
         Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) use ($user) {
-            $now = date('Y-m-d');
+            $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
             $tenant_id = OrbitInput::post('tenant_id');
 
@@ -2229,7 +2229,7 @@ class CouponAPIController extends ControllerAPI
             $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw("(date({$prefix}issued_coupons.expired_date) >= ? or date({$prefix}issued_coupons.expired_date) is null)", [$now])
+                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                         ->first();
 
             if (empty($issuedCoupon)) {
@@ -2243,7 +2243,7 @@ class CouponAPIController extends ControllerAPI
                         ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw("(date({$prefix}issued_coupons.expired_date) >= ? or date({$prefix}issued_coupons.expired_date) is null)", [$now])
+                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                         ->where('merchants.masterbox_number', $number)
                         ->first();
 
