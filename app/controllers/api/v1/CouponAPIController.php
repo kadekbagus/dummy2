@@ -1280,7 +1280,7 @@ class CouponAPIController extends ControllerAPI
                     END AS 'display_discount_value',
                     {$table_prefix}merchants.name as retailer_name
                     "),
-                    DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'")
+                    DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'")
                 )
                 ->joinPromotionRules()
                 ->joinPromotionRetailer()
