@@ -888,35 +888,35 @@ class MallGroupAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postUpdateMall()
+    public function postUpdateMallGroup()
     {
         $activity = Activity::portal()
                            ->setActivityType('update');
 
         $user = NULL;
-        $updatedmall = NULL;
+        $updatedmallgroup = NULL;
         try {
             $httpCode=200;
 
-            Event::fire('orbit.mall.postupdatemall.before.auth', array($this));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.mall.postupdatemall.after.auth', array($this));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.mall.postupdatemall.before.authz', array($this, $user));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('update_mall')) {
-                Event::fire('orbit.mall.postupdatemall.authz.notallowed', array($this, $user));
-                $updateMallLang = Lang::get('validation.orbit.actionlist.update_mall');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMallLang));
+            if (! ACL::create($user)->isAllowed('update_mall_group')) {
+                Event::fire('orbit.mallgroup.postupdatemallgroup.authz.notallowed', array($this, $user));
+                $updateMallGroupLang = Lang::get('validation.orbit.actionlist.update_mall_group');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMallGroupLang));
                 ACL::throwAccessForbidden($message);
             }
-            Event::fire('orbit.mall.postupdatemall.after.authz', array($this, $user));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -958,201 +958,201 @@ class MallGroupAPIController extends ControllerAPI
                )
             );
 
-            Event::fire('orbit.mall.postupdatemall.before.validation', array($this, $validator));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.mall.postupdatemall.after.validation', array($this, $validator));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.after.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
 
-            $updatedmall = Mall::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
+            $updatedmallgroup = MallGroup::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
 
-            OrbitInput::post('omid', function($omid) use ($updatedmall) {
-                $updatedmall->omid = $omid;
+            OrbitInput::post('omid', function($omid) use ($updatedmallgroup) {
+                $updatedmallgroup->omid = $omid;
             });
 
-            OrbitInput::post('user_id', function($user_id) use ($updatedmall) {
+            OrbitInput::post('user_id', function($user_id) use ($updatedmallgroup) {
                 // Right know the interface does not provide a way to change
                 // the user so it's better to skip it.
-                // $updatedmall->user_id = $user_id;
+                // $updatedmallgroup->user_id = $user_id;
             });
 
-            OrbitInput::post('email', function($email) use ($updatedmall) {
-                $updatedmall->email = $email;
+            OrbitInput::post('email', function($email) use ($updatedmallgroup) {
+                $updatedmallgroup->email = $email;
             });
 
-            OrbitInput::post('name', function($name) use ($updatedmall) {
-                $updatedmall->name = $name;
+            OrbitInput::post('name', function($name) use ($updatedmallgroup) {
+                $updatedmallgroup->name = $name;
             });
 
-            OrbitInput::post('description', function($description) use ($updatedmall) {
-                $updatedmall->description = $description;
+            OrbitInput::post('description', function($description) use ($updatedmallgroup) {
+                $updatedmallgroup->description = $description;
             });
 
-            OrbitInput::post('address_line1', function($address_line1) use ($updatedmall) {
-                $updatedmall->address_line1 = $address_line1;
+            OrbitInput::post('address_line1', function($address_line1) use ($updatedmallgroup) {
+                $updatedmallgroup->address_line1 = $address_line1;
             });
 
-            OrbitInput::post('address_line2', function($address_line2) use ($updatedmall) {
-                $updatedmall->address_line2 = $address_line2;
+            OrbitInput::post('address_line2', function($address_line2) use ($updatedmallgroup) {
+                $updatedmallgroup->address_line2 = $address_line2;
             });
 
-            OrbitInput::post('address_line3', function($address_line3) use ($updatedmall) {
-                $updatedmall->address_line3 = $address_line3;
+            OrbitInput::post('address_line3', function($address_line3) use ($updatedmallgroup) {
+                $updatedmallgroup->address_line3 = $address_line3;
             });
 
-            OrbitInput::post('postal_code', function($postal_code) use ($updatedmall) {
-                $updatedmall->postal_code = $postal_code;
+            OrbitInput::post('postal_code', function($postal_code) use ($updatedmallgroup) {
+                $updatedmallgroup->postal_code = $postal_code;
             });
 
-            OrbitInput::post('city_id', function($city_id) use ($updatedmall) {
-                $updatedmall->city_id = $city_id;
+            OrbitInput::post('city_id', function($city_id) use ($updatedmallgroup) {
+                $updatedmallgroup->city_id = $city_id;
             });
 
-            OrbitInput::post('city', function($city) use ($updatedmall) {
-                $updatedmall->city = $city;
+            OrbitInput::post('city', function($city) use ($updatedmallgroup) {
+                $updatedmallgroup->city = $city;
             });
 
-            OrbitInput::post('country', function($country_id) use ($updatedmall) {
+            OrbitInput::post('country', function($country_id) use ($updatedmallgroup) {
                 $countryName = '';
                 $countryObject = Country::find($country_id);
                 if (is_object($countryObject)) {
                     $countryName = $countryObject->name;
                 }
 
-                $updatedmall->country_id = $country_id;
-                $updatedmall->country = $countryName;
+                $updatedmallgroup->country_id = $country_id;
+                $updatedmallgroup->country = $countryName;
             });
 
             OrbitInput::post('phone', function($phone) use ($updatedmall) {
-                $updatedmall->phone = $phone;
+                $updatedmallgroup->phone = $phone;
             });
 
             OrbitInput::post('fax', function($fax) use ($updatedmall) {
-                $updatedmall->fax = $fax;
+                $updatedmallgroup->fax = $fax;
             });
 
-            OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmall) {
-                $updatedmall->start_date_activity = $start_date_activity;
+            OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmallgroup) {
+                $updatedmallgroup->start_date_activity = $start_date_activity;
             });
 
-            OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmall) {
-                $updatedmall->end_date_activity = $end_date_activity;
+            OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmallgroup) {
+                $updatedmallgroup->end_date_activity = $end_date_activity;
             });
 
-            OrbitInput::post('status', function($status) use ($updatedmall) {
-                $updatedmall->status = $status;
+            OrbitInput::post('status', function($status) use ($updatedmallgroup) {
+                $updatedmallgroup->status = $status;
             });
 
-            OrbitInput::post('logo', function($logo) use ($updatedmall) {
-                $updatedmall->logo = $logo;
+            OrbitInput::post('logo', function($logo) use ($updatedmallgroup) {
+                $updatedmallgroup->logo = $logo;
             });
 
-            OrbitInput::post('currency', function($currency) use ($updatedmall) {
-                $updatedmall->currency = $currency;
+            OrbitInput::post('currency', function($currency) use ($updatedmallgroup) {
+                $updatedmallgroup->currency = $currency;
             });
 
-            OrbitInput::post('currency_symbol', function($currency_symbol) use ($updatedmall) {
-                $updatedmall->currency_symbol = $currency_symbol;
+            OrbitInput::post('currency_symbol', function($currency_symbol) use ($updatedmallgroup) {
+                $updatedmallgroup->currency_symbol = $currency_symbol;
             });
 
-            OrbitInput::post('tax_code1', function($tax_code1) use ($updatedmall) {
-                $updatedmall->tax_code1 = $tax_code1;
+            OrbitInput::post('tax_code1', function($tax_code1) use ($updatedmallgroup) {
+                $updatedmallgroup->tax_code1 = $tax_code1;
             });
 
-            OrbitInput::post('tax_code2', function($tax_code2) use ($updatedmall) {
-                $updatedmall->tax_code2 = $tax_code2;
+            OrbitInput::post('tax_code2', function($tax_code2) use ($updatedmallgroup) {
+                $updatedmallgroup->tax_code2 = $tax_code2;
             });
 
-            OrbitInput::post('tax_code3', function($tax_code3) use ($updatedmall) {
-                $updatedmall->tax_code3 = $tax_code3;
+            OrbitInput::post('tax_code3', function($tax_code3) use ($updatedmallgroup) {
+                $updatedmallgroup->tax_code3 = $tax_code3;
             });
 
-            OrbitInput::post('slogan', function($slogan) use ($updatedmall) {
-                $updatedmall->slogan = $slogan;
+            OrbitInput::post('slogan', function($slogan) use ($updatedmallgroup) {
+                $updatedmallgroup->slogan = $slogan;
             });
 
-            OrbitInput::post('vat_included', function($vat_included) use ($updatedmall) {
-                $updatedmall->vat_included = $vat_included;
+            OrbitInput::post('vat_included', function($vat_included) use ($updatedmallgroup) {
+                $updatedmallgroup->vat_included = $vat_included;
             });
 
-            OrbitInput::post('contact_person_firstname', function($contact_person_firstname) use ($updatedmall) {
-                $updatedmall->contact_person_firstname = $contact_person_firstname;
+            OrbitInput::post('contact_person_firstname', function($contact_person_firstname) use ($updatedmallgroup) {
+                $updatedmallgroup->contact_person_firstname = $contact_person_firstname;
             });
 
-            OrbitInput::post('contact_person_lastname', function($contact_person_lastname) use ($updatedmall) {
-                $updatedmall->contact_person_lastname = $contact_person_lastname;
+            OrbitInput::post('contact_person_lastname', function($contact_person_lastname) use ($updatedmallgroup) {
+                $updatedmallgroup->contact_person_lastname = $contact_person_lastname;
             });
 
-            OrbitInput::post('contact_person_position', function($contact_person_position) use ($updatedmall) {
-                $updatedmall->contact_person_position = $contact_person_position;
+            OrbitInput::post('contact_person_position', function($contact_person_position) use ($updatedmallgroup) {
+                $updatedmallgroup->contact_person_position = $contact_person_position;
             });
 
-            OrbitInput::post('contact_person_phone', function($contact_person_phone) use ($updatedmall) {
-                $updatedmall->contact_person_phone = $contact_person_phone;
+            OrbitInput::post('contact_person_phone', function($contact_person_phone) use ($updatedmallgroup) {
+                $updatedmallgroup->contact_person_phone = $contact_person_phone;
             });
 
-            OrbitInput::post('contact_person_phone2', function($contact_person_phone2) use ($updatedmall) {
-                $updatedmall->contact_person_phone2 = $contact_person_phone2;
+            OrbitInput::post('contact_person_phone2', function($contact_person_phone2) use ($updatedmallgroup) {
+                $updatedmallgroup->contact_person_phone2 = $contact_person_phone2;
             });
 
-            OrbitInput::post('contact_person_email', function($contact_person_email) use ($updatedmall) {
-                $updatedmall->contact_person_email = $contact_person_email;
+            OrbitInput::post('contact_person_email', function($contact_person_email) use ($updatedmallgroup) {
+                $updatedmallgroup->contact_person_email = $contact_person_email;
             });
 
-            OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmall) {
-                $updatedmall->sector_of_activity = $sector_of_activity;
+            OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmallgroup) {
+                $updatedmallgroup->sector_of_activity = $sector_of_activity;
             });
 
-            OrbitInput::post('parent_id', function($parent_id) use ($updatedmall) {
-                $updatedmall->parent_id = $parent_id;
+            OrbitInput::post('parent_id', function($parent_id) use ($updatedmallgroup) {
+                $updatedmallgroup->parent_id = $parent_id;
             });
 
-            OrbitInput::post('url', function($url) use ($updatedmall) {
-                $updatedmall->url = $url;
+            OrbitInput::post('url', function($url) use ($updatedmallgroup) {
+                $updatedmallgroup->url = $url;
             });
 
-            OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedmall) {
-                $updatedmall->masterbox_number = $masterbox_number;
+            OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedmallgroup) {
+                $updatedmallgroup->masterbox_number = $masterbox_number;
             });
 
-            OrbitInput::post('slavebox_number', function($slavebox_number) use ($updatedmall) {
-                $updatedmall->slavebox_number = $slavebox_number;
+            OrbitInput::post('slavebox_number', function($slavebox_number) use ($updatedmallgroup) {
+                $updatedmallgroup->slavebox_number = $slavebox_number;
             });
 
-            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmall) {
-                $updatedmall->mobile_default_language = $mobile_default_language;
+            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedmallgroup) {
+                $updatedmallgroup->mobile_default_language = $mobile_default_language;
             });
 
-            OrbitInput::post('pos_language', function($pos_language) use ($updatedmall) {
+            OrbitInput::post('pos_language', function($pos_language) use ($updatedmallgroup) {
                 if (trim($pos_language) === '') {
                     $pos_language = NULL;
                 }
-                $updatedmall->pos_language = $pos_language;
+                $updatedmallgroup->pos_language = $pos_language;
             });
 
-            OrbitInput::post('ticket_header', function($ticket_header) use ($updatedmall) {
-                $updatedmall->ticket_header = $ticket_header;
+            OrbitInput::post('ticket_header', function($ticket_header) use ($updatedmallgroup) {
+                $updatedmallgroup->ticket_header = $ticket_header;
             });
 
-            OrbitInput::post('ticket_footer', function($ticket_footer) use ($updatedmall) {
-                $updatedmall->ticket_footer = $ticket_footer;
+            OrbitInput::post('ticket_footer', function($ticket_footer) use ($updatedmallgroup) {
+                $updatedmallgroup->ticket_footer = $ticket_footer;
             });
 
-            $updatedmall->modified_by = $this->api->user->user_id;
+            $updatedmallgroup->modified_by = $this->api->user->user_id;
 
-            Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
+            Event::fire('orbit.mallgroup.postupdatemall.before.save', array($this, $updatedmallgroup));
 
-            $updatedmall->save();
+            $updatedmallgroup->save();
 
             // update user status
-            OrbitInput::post('status', function($status) use ($updatedmall) {
-                $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedmall->user_id);
+            OrbitInput::post('status', function($status) use ($updatedmallgroup) {
+                $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedmallgroup->user_id);
                 if (! $updateuser->isSuperAdmin()) {
                     $updateuser->status = $status;
                     $updateuser->modified_by = $this->api->user->user_id;
@@ -1162,7 +1162,7 @@ class MallGroupAPIController extends ControllerAPI
             });
 
             // do insert/update/delete merchant_taxes
-            OrbitInput::post('merchant_taxes', function($merchant_taxes) use ($updatedmall) {
+            OrbitInput::post('merchant_taxes', function($merchant_taxes) use ($updatedmallgroup) {
                 $merchant_taxes = (array) $merchant_taxes;
                 foreach ($merchant_taxes as $merchant_tax) {
                     // validate merchant_taxes
@@ -1175,7 +1175,7 @@ class MallGroupAPIController extends ControllerAPI
                         ),
                         array(
                             'merchant_tax_id'        => 'orbit.empty.tax',
-                            'tax_name'               => 'required|max:50|tax_name_exists_but_me:'.$merchant_tax['merchant_tax_id'].','.$updatedmall->merchant_id,
+                            'tax_name'               => 'required|max:50|tax_name_exists_but_me:'.$merchant_tax['merchant_tax_id'].','.$updatedmallgroup->merchant_id,
                             'tax_type'               => 'orbit.empty.tax_type',
                             'is_delete'              => 'orbit.exists.tax_link_to_product:'.$merchant_tax['merchant_tax_id'],
                         ),
@@ -1184,7 +1184,7 @@ class MallGroupAPIController extends ControllerAPI
                         )
                     );
 
-                    Event::fire('orbit.mall.postupdatemall.before.merchanttaxesvalidation', array($this, $validator));
+                    Event::fire('orbit.mallgroup.postupdatemall.before.merchanttaxesvalidation', array($this, $validator));
 
                     // Run the validation
                     if ($validator->fails()) {
@@ -1192,13 +1192,13 @@ class MallGroupAPIController extends ControllerAPI
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
 
-                    Event::fire('orbit.mall.postupdatemall.after.merchanttaxesvalidation', array($this, $validator));
+                    Event::fire('orbit.mallgroup.postupdatemall.after.merchanttaxesvalidation', array($this, $validator));
 
                     //save merchant_taxes
                     if (trim($merchant_tax['merchant_tax_id']) === '') {
                         // do insert
                         $merchanttax = new MerchantTax();
-                        $merchanttax->merchant_id = $updatedmall->merchant_id;
+                        $merchanttax->merchant_id = $updatedmallgroup->merchant_id;
                         $merchanttax->tax_name = $merchant_tax['tax_name'];
                         $merchanttax->tax_type = $merchant_tax['tax_type'];
                         $merchanttax->tax_value = $merchant_tax['tax_value'];
@@ -1225,27 +1225,27 @@ class MallGroupAPIController extends ControllerAPI
                 }
 
                 // reload taxes relation
-                $updatedmall->load('taxes');
+                $updatedmallgroup->load('taxes');
             });
 
-            Event::fire('orbit.mall.postupdatemall.after.save', array($this, $updatedmall));
-            $this->response->data = $updatedmall;
+            Event::fire('orbit.mallgroup.postupdatemallgroup.after.save', array($this, $updatedmallgroup));
+            $this->response->data = $updatedmallgroup;
 
             // Commit the changes
             $this->commit();
 
             // Successfull Update
-            $activityNotes = sprintf('Mall updated: %s', $updatedmall->name);
+            $activityNotes = sprintf('Mall Group updated: %s', $updatedmallgroup->name);
             $activity->setUser($user)
-                    ->setActivityName('update_mall')
-                    ->setActivityNameLong('Update Mall OK')
-                    ->setObject($updatedmall)
+                    ->setActivityName('update_mall_group')
+                    ->setActivityNameLong('Update Mall Group OK')
+                    ->setObject($updatedmallgroup)
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.mall.postupdatemall.after.commit', array($this, $updatedmall));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.after.commit', array($this, $updatedmallgroup));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.mall.postupdatemall.access.forbidden', array($this, $e));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1258,13 +1258,13 @@ class MallGroupAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_mall')
-                    ->setActivityNameLong('Update Mall Failed')
-                    ->setObject($updatedmall)
+                    ->setActivityName('update_mall_group')
+                    ->setActivityNameLong('Update Mall Group Failed')
+                    ->setObject($updatedmallgroup)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.mall.postupdatemall.invalid.arguments', array($this, $e));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1277,13 +1277,13 @@ class MallGroupAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_mall')
-                    ->setActivityNameLong('Update Mall Failed')
-                    ->setObject($updatedmall)
+                    ->setActivityName('update_mall_group')
+                    ->setActivityNameLong('Update Mall Group Failed')
+                    ->setObject($updatedmallgroup)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
-            Event::fire('orbit.mall.postupdatemall.query.error', array($this, $e));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1302,13 +1302,13 @@ class MallGroupAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_mall')
-                    ->setActivityNameLong('Update Mall Failed')
-                    ->setObject($updatedmall)
+                    ->setActivityName('update_mall_group')
+                    ->setActivityNameLong('Update Mall Group Failed')
+                    ->setObject($updatedmallgroup)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
-            Event::fire('orbit.mall.postupdatemall.general.exception', array($this, $e));
+            Event::fire('orbit.mallgroup.postupdatemallgroup.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -1320,9 +1320,9 @@ class MallGroupAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_mall')
-                    ->setActivityNameLong('Update Mall Failed')
-                    ->setObject($updatedmall)
+                    ->setActivityName('update_mall_group')
+                    ->setActivityNameLong('Update Mall Group Failed')
+                    ->setObject($updatedmallgroup)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         }
@@ -1334,7 +1334,7 @@ class MallGroupAPIController extends ControllerAPI
     }
 
     /**
-     * POST - Delete Mall
+     * POST - Delete Mall Group
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      * @author Kadek <kadek@dominopos.com>
@@ -1346,35 +1346,35 @@ class MallGroupAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postDeleteMall()
+    public function postDeleteMallGroup()
     {
         $activity = Activity::portal()
                           ->setActivityType('delete');
 
         $user = NULL;
-        $deletemall = NULL;
+        $deletemallgroup = NULL;
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.mall.postdeletemall.before.auth', array($this));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.mall.postdeletemall.after.auth', array($this));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.after.auth', array($this));
 
             // Try to check access control list, does this merchant allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.mall.postdeletemall.before.authz', array($this, $user));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('delete_mall')) {
-                Event::fire('orbit.mall.postdeletemall.authz.notallowed', array($this, $user));
-                $deleteMallLang = Lang::get('validation.orbit.actionlist.delete_mall');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteMallLang));
+            if (! ACL::create($user)->isAllowed('delete_mall_group')) {
+                Event::fire('orbit.mallgroup.postdeletemallgroup.authz.notallowed', array($this, $user));
+                $deleteMallGroupLang = Lang::get('validation.orbit.actionlist.delete_mall_group');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteMallGroupLang));
                 ACL::throwAccessForbidden($message);
             }
-            Event::fire('orbit.mall.postdeletemall.after.authz', array($this, $user));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -1387,34 +1387,34 @@ class MallGroupAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'merchant_id' => 'required|numeric|orbit.empty.mall|orbit.exists.mall_have_tenant',
+                    'merchant_id' => 'required|numeric|orbit.empty.mall|orbit.exists.mallgroup_have_mall',
                     'password'    => 'required|orbit.access.wrongpassword',
                 )
             );
 
-            Event::fire('orbit.mall.postdeletemall.before.validation', array($this, $validator));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.mall.postdeletemall.after.validation', array($this, $validator));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.after.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
 
             // soft delete merchant.
-            $deletemall = Mall::excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
-            $deletemall->status = 'deleted';
-            $deletemall->modified_by = $this->api->user->user_id;
+            $deletemallgroup = MallGroup::excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
+            $deletemallgroup->status = 'deleted';
+            $deletemallgroup->modified_by = $this->api->user->user_id;
 
-            Event::fire('orbit.mall.postdeletemall.before.save', array($this, $deletemall));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.before.save', array($this, $deletemallgroup));
 
-            $deletemall->save();
+            $deletemallgroup->save();
 
             // soft delete user.
-            $deleteuser = User::with(array('apikey', 'role'))->excludeDeleted()->find($deletemall->user_id);
+            $deleteuser = User::with(array('apikey', 'role'))->excludeDeleted()->find($deletemallgroup->user_id);
             // don't delete linked user if linked user is super admin.
             if (! $deleteuser->isSuperAdmin()) {
                 $deleteuser->status = 'deleted';
@@ -1430,25 +1430,25 @@ class MallGroupAPIController extends ControllerAPI
                 $deleteuser->save();
             }
 
-            Event::fire('orbit.mall.postdeletemall.after.save', array($this, $deletemall));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.after.save', array($this, $deletemallgroup));
             $this->response->data = null;
-            $this->response->message = Lang::get('statuses.orbit.deleted.mall');
+            $this->response->message = Lang::get('statuses.orbit.deleted.mallgroup');
 
             // Commit the changes
             $this->commit();
 
             // Successfull Creation
-            $activityNotes = sprintf('Mall Deleted: %s', $deletemall->name);
+            $activityNotes = sprintf('Mall Group Deleted: %s', $deletemallgroup->name);
             $activity->setUser($user)
                     ->setActivityName('delete_mall')
                     ->setActivityNameLong('Delete Mall OK')
-                    ->setObject($deletemall)
+                    ->setObject($deletemallgroup)
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.mall.postdeletemall.after.commit', array($this, $deletemall));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.after.commit', array($this, $deletemallgroup));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.mall.postdeletemall.access.forbidden', array($this, $e));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1463,11 +1463,11 @@ class MallGroupAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('delete_mall')
                     ->setActivityNameLong('Delete Mall Failed')
-                    ->setObject($deletemall)
+                    ->setObject($deletemallgroup)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.mall.postdeletemall.invalid.arguments', array($this, $e));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1480,13 +1480,13 @@ class MallGroupAPIController extends ControllerAPI
 
             // Deletion failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('delete_mall')
-                    ->setActivityNameLong('Delete Mall Failed')
-                    ->setObject($deletemall)
+                    ->setActivityName('delete_mall_group')
+                    ->setActivityNameLong('Delete Mall Group Failed')
+                    ->setObject($deletemallgroup)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
-            Event::fire('orbit.mall.postdeletemall.query.error', array($this, $e));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -1505,13 +1505,13 @@ class MallGroupAPIController extends ControllerAPI
 
             // Deletion failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('delete_mall')
-                    ->setActivityNameLong('Delete Mall Failed')
-                    ->setObject($deletemall)
+                    ->setActivityName('delete_mall_group')
+                    ->setActivityNameLong('Delete Mall Group Failed')
+                    ->setObject($deletemallgroup)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
-            Event::fire('orbit.mall.postdeletemall.general.exception', array($this, $e));
+            Event::fire('orbit.mallgroup.postdeletemallgroup.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -1523,15 +1523,15 @@ class MallGroupAPIController extends ControllerAPI
 
             // Deletion failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('delete_mall')
-                    ->setActivityNameLong('Delete Mall Failed')
-                    ->setObject($deletemall)
+                    ->setActivityName('delete_mall_group')
+                    ->setActivityNameLong('Delete Mall Group Failed')
+                    ->setObject($deletemallgroup)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.mall.postdeletemall.before.render', array($this, $output));
+        Event::fire('orbit.mallgroup.postdeletemallgroup.before.render', array($this, $output));
 
         // Save the activity
         $activity->save();
@@ -1774,15 +1774,15 @@ class MallGroupAPIController extends ControllerAPI
         });
 
         // Check if mall have tenant.
-        Validator::extend('orbit.exists.mall_have_tenant', function ($attribute, $value, $parameters) {
-            $tenant = Tenant::excludeDeleted()
+        Validator::extend('orbit.exists.mallgroup_have_mall', function ($attribute, $value, $parameters) {
+            $tenant = Mall::excludeDeleted()
                             ->where('parent_id', $value)
                             ->first();
             if (! empty($tenant)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exists.mall_have_tenant', $tenant);
+            App::instance('orbit.exists.mallgroup_have_mall', $tenant);
 
             return TRUE;
         });
