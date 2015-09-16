@@ -145,7 +145,7 @@
                 <td><?php echo htmlspecialchars($me->printUtf8($row->first_name)); ?></td>
                 <td><?php echo htmlspecialchars($me->printUtf8($row->last_name)); ?></td>
                 <td><?php echo htmlspecialchars($row->os); ?></td>
-                <td><?php echo $me->printAge($row->age); ?></td>
+                <td><?php echo $me->printAge($age); ?></td>
                 <td><?php echo $me->printGender($row->gender); ?></td>
                 <td><?php echo $row->total_visits; ?></td>
                 <td><?php echo $row->sign_up_method; ?></td>
