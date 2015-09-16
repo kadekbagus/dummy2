@@ -1570,7 +1570,7 @@ class ActivityAPIController extends ControllerAPI
                     'sort_mode'     => $sort_mode,
                 ),
                 array(
-                    'sort_by'       => 'in:first_name,last_name,os,age,gender,visits,sign_up_method,email,first_visit,last_visit',
+                    'sort_by'       => 'in:first_name,last_name,os,age,gender,total_visits,sign_up_method,email,first_visit,last_visit',
                     'sort_mode'     => 'in:asc,desc',
                     'start_date'    => 'date_format:Y-m-d H:i:s',
                     'end_date'      => 'date_format:Y-m-d H:i:s',
