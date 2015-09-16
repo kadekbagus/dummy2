@@ -1821,7 +1821,7 @@ class ActivityAPIController extends ControllerAPI
                 (
                    select
                    user_id, min(activity_name_long) as registration
-                   from orbs_activities total_visits_activity
+                   from {$prefix}activities total_visits_activity
                    {$registration_activity_conditions}
                    group by user_id
                 )
