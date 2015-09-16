@@ -98,6 +98,8 @@ class UserLoginNotifier
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
             }
 
+            $this->poster->addHeader('Accept', 'application/json');
+
             $this->poster->setUserAgent(Config::get('orbit-notifier.user-agent'));
             $this->poster->post($url, $postData);
 
@@ -175,7 +177,7 @@ class UserLoginNotifier
 
             if (! DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->beginTransaction();
-                $insideTransactionFromNotifier = TRUE;                
+                $insideTransactionFromNotifier = TRUE;
             }
 
             // Check for the previous membership number, if it was empty assuming this is the first time
