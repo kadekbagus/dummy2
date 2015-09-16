@@ -8,7 +8,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\Helper\Generator;
 use OrbitShop\API\v1\OrbitShopAPI;
 
-class postNewRetailerTest extends OrbitTestCase
+class postNewTenantTest extends OrbitTestCase
 {
     /**
      * Executed only once at the beginning of the test.
