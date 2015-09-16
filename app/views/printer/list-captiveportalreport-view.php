@@ -124,8 +124,8 @@
             <th style="text-align:left;">No.</th>
             <th style="text-align:left;">First Name</th>
             <th style="text-align:left;">Last Name</th>
-            <th style="text-align:left;">OS / Devices</th>
-            <th style="text-align:left;">Ages</th>
+            <th style="text-align:left;">OS / Device</th>
+            <th style="text-align:left;">Age</th>
             <th style="text-align:left;">Gender</th>
             <th style="text-align:left;">Visits</th>
             <th style="text-align:left;">Sign Up Method</th>

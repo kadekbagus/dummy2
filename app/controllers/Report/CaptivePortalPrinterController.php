@@ -43,7 +43,7 @@ class CaptivePortalPrinterController extends DataPrinterController
                 printf($header_template, '', 'Total Rows', $totalRec, '', '', '', '', '', '', '', '');
 
                 printf($header_template, '', '', '', '', '', '', '', '', '', '', '');
-                printf($header_template, '', '"First Name"', '"Last Name"', '"OS / Devices"', '"Age"', '"Gender"', '"Visits"', '"Sign Up Method"', '"Email Address"', '"First Visit"', '"Last Visit"');
+                printf($header_template, '', '"First Name"', '"Last Name"', '"OS / Device"', '"Age"', '"Gender"', '"Visits"', '"Sign Up Method"', '"Email Address"', '"First Visit"', '"Last Visit"');
                 printf($header_template, '', '', '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
