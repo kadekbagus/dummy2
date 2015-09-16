@@ -14,6 +14,8 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class ActivityAPIController extends ControllerAPI
 {
+    private $returnQuery = false;
+
     /**
      * GET - List of Activities history
      *
@@ -890,18 +892,7 @@ class ActivityAPIController extends ControllerAPI
             // todo if too much move to PDO and stream rows
             foreach ($activities->get() as $row) {
                 $ua = $row->user_agent;
-                if (preg_match('/Linux.*?Android/', $ua)) {
-                    // not "Windows Phone 10.0; Android"...
-                    $devices['android'] += $row->count;
-                } elseif (preg_match('/\((iPhone|iPod|iPad)/', $ua)) {
-                    $devices['ios'] += $row->count;
-                } elseif (preg_match('/BlackBerry/', $ua)) {
-                    $devices['blackberry'] += $row->count;
-                } elseif (preg_match('/Windows Phone/i', $ua)) {
-                    $devices['windows_phone'] += $row->count;
-                } else {
-                    $devices['other'] += $row->count;
-                }
+                $devices[$this->categorizeUserAgent($ua)] += $row->count;
             }
 
             $this->response->data = [
@@ -1524,6 +1515,396 @@ class ActivityAPIController extends ControllerAPI
         return $output;
     }
 
+    public function getCaptivePortalReport()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.activity.getactivity.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.activity.getactivity.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.activity.getactivity.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.activity.getactivity.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+            $first_name = OrbitInput::get('first_name');
+            $last_name = OrbitInput::get('last_name');
+            $email = OrbitInput::get('email');
+            $gender = OrbitInput::get('gender');
+            $os = OrbitInput::get('os');
+            $sign_up_method = OrbitInput::get('sign_up_method');
+
+
+            $validator = Validator::make(
+                array(
+                    'start_date'    => $start_date,
+                    'end_date'      => $end_date,
+                    'first_name'    => $first_name,
+                    'last_name'     => $last_name,
+                    'email'         => $email,
+                    'gender'        => $gender,
+                    'os'            => $os,
+                    'sign_up_method' => $sign_up_method,
+                ),
+                array(
+                    'start_date'    => 'date_format:Y-m-d H:i:s',
+                    'end_date'      => 'date_format:Y-m-d H:i:s',
+                    'name'          => '',
+                    'gender'        => 'in:m,f,unknown',
+                    'email'         => '',
+                    'os'            => 'in:android,ios,blackberry,windows_phone,other',
+                    'sign_up_method' => 'in:email,facebook',
+                )
+            );
+
+            Event::fire('orbit.activity.getactivity.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.activity.getactivity.after.validation', array($this, $validator));
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.activity.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.activity.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
+            }
+
+            $take = $perPage;
+
+            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                if ($_take > $maxRecord) {
+                    $_take = $maxRecord;
+                }
+                $take = (int)$_take;
+
+                if ((int)$take <= 0) {
+                    $take = $maxRecord;
+                }
+            });
+
+            $skip = 0;
+            OrbitInput::get('skip', function ($_skip) use (&$skip) {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = (int)$_skip;
+            });
+
+            $limit_clause = sprintf(' LIMIT %d OFFSET %d ', $take, $skip);
+
+            $prefix = DB::getTablePrefix();
+
+            $binds = [];
+
+            $first_name_condition = '';
+            OrbitInput::get('first_name', function ($name) use (&$binds, &$first_name_condition) {
+                $binds['first_name_like'] = '%' . $name . '%';
+                $first_name_condition = ' and (user_data.user_firstname LIKE :first_name_like) ';
+            });
+
+            $last_name_condition = '';
+            OrbitInput::get('last_name', function ($name) use (&$binds, &$last_name_condition) {
+                $binds['last_name_like'] = '%' . $name . '%';
+                $last_name_condition = ' and (user_data.user_lastname LIKE :last_name_like) ';
+            });
+
+            $email_condition = '';
+            OrbitInput::get('email', function ($email) use (&$binds, &$email_condition) {
+                $binds['email_like'] = '%' . $email . '%';
+                $email_condition = ' and (user_data.user_email LIKE :email_like) ';
+            });
+
+            $gender_condition = '';
+            OrbitInput::get('gender', function ($gender) use (&$binds, &$gender_condition) {
+                $binds['gender'] = $gender;
+                $gender_condition = ' and (user_details.gender = :gender) ';
+            });
+
+            $start_date_condition = '';
+            OrbitInput::get('start_date', function ($start_date) use (&$binds, &$start_date_condition) {
+                $binds['start_date'] = $start_date;
+                $start_date_condition = ' and (created_at >= :start_date) ';
+            });
+
+            $end_date_condition = '';
+            OrbitInput::get('end_date', function ($end_date) use (&$binds, &$end_date_condition) {
+                $binds['end_date'] = $end_date;
+                $end_date_condition = ' and (created_at <= :end_date) ';
+            });
+
+            $sign_up_method_condition = '';
+            OrbitInput::get('sign_up_method', function ($sign_up_method) use (&$binds, &$sign_up_method_condition) {
+                if ($sign_up_method === 'facebook') {
+                    $sign_up_method_condition = ' and (registration.registration = :sign_up_method) ';
+                    $binds['sign_up_method'] = 'Facebook Sign Up';
+                } else if ($sign_up_method === 'email') {
+                    $sign_up_method_condition = ' and ((registration.registration = :sign_up_method_1) OR (registration.registration = :sign_up_method_2))';
+                    $binds['sign_up_method_1'] = 'Email Sign Up';
+                    $binds['sign_up_method_2'] = 'Sign Up';
+                }
+                else {
+                    $sign_up_method_condition = ' and (1 = 0) ';
+                }
+            });
+
+
+            $os_condition = '';
+            OrbitInput::get('os', function ($os) use (&$binds, &$os_condition) {
+                $regexes['android'] = 'Linux.*Android';
+                $regexes['ios'] = '\\((iPhone|iPod|iPad)';
+                $regexes['blackberry'] = 'BlackBerry';
+                $regexes['windows_phone'] = 'Windows Phone';
+                if (isset($regexes[$os])) {
+                    $os_condition = ' and (last_visit.user_agent RLIKE :ua_like) ';
+                    $binds['ua_like'] = $regexes[$os];
+                } else {
+                    // no better way to do this?
+                    $os_condition = ' and (NOT (
+                    (last_visit.user_agent RLIKE :ua_like_1) OR
+                    (last_visit.user_agent RLIKE :ua_like_2) OR
+                    (last_visit.user_agent RLIKE :ua_like_3) OR
+                    (last_visit.user_agent RLIKE :ua_like_4)
+                    )) ';
+                    $binds['ua_like_1'] = $regexes['android'];
+                    $binds['ua_like_2'] = $regexes['ios'];
+                    $binds['ua_like_3'] = $regexes['blackberry'];
+                    $binds['ua_like_4'] = $regexes['windows_phone'];
+                }
+            });
+
+            // Only shows activities which belongs to this merchant
+            if ($user->isSuperAdmin() !== TRUE) {
+                $locationIds = $this->getLocationIdsForUser($user);
+            } else {
+                // Filter by user location id
+                $locationIds = OrbitInput::get('location_ids', []);
+            }
+            if (count($locationIds) == 0) {
+                if ($user->isSuperAdmin() !== TRUE) {
+                    // not admin and getLocationIdsForUser returns 0 locations
+                    $location_id_condition = ' and 1 = 0 ';
+                } else {
+                    // admin does not provide, view all locations
+                    $location_id_condition = '';
+                }
+            } else {
+                $location_id_condition = ' and location_id in ( ';
+                $i = 0;
+                foreach ($locationIds as $location_id) {
+                    $bind_name = sprintf('location_id_%d', $i++);
+                    $binds[$bind_name] = $location_id;
+                    $location_id_condition .= ":{$bind_name},";
+                }
+                // remove last , and close paren
+                $location_id_condition = substr($location_id_condition, 0, strlen($location_id_condition) - 1) . ') ';
+            }
+
+            $login_activity_conditions = " where module_name = 'Application'
+                    and `group` = 'mobile-ci'
+                    and activity_type = 'login'
+                    and activity_name = 'login_ok'
+                    ";
+
+            $registration_activity_conditions = " where module_name = 'Application'
+                    and `group` = 'mobile-ci'
+                    and activity_type = 'registration'
+                    and activity_name = 'registration_ok'
+                    ";
+
+            $count_fields = "SELECT COUNT(*) as count ";
+            $query_fields = "SELECT user_data.user_id,
+                user_data.user_firstname,
+                user_data.user_lastname,
+                user_data.user_email,
+                user_details.gender,
+                user_details.birthdate,
+                last_visit.last_visit as last_visit,
+                last_visit.user_agent,
+                (
+                    select
+                    min(created_at) as first_visit
+                    from {$prefix}activities first_visit_activity
+                    {$login_activity_conditions}
+                    and user_id = user_data.user_id
+                    {$location_id_condition}
+                ) as first_visit,
+                (
+                   select
+                   count(DISTINCT DATE(created_at)) as total_visits
+                   from {$prefix}activities total_visits_activity
+                   {$login_activity_conditions}
+                   and user_id = user_data.user_id
+                   {$location_id_condition}
+                   {$start_date_condition}
+                   {$end_date_condition}
+                )
+                as total_visits,
+                registration.registration
+                as registration ";
+
+
+            $query_without_fields = "
+                from {$prefix}users user_data
+                inner join
+                (
+                   select
+                   last_visit.user_id, last_visit.created_at as last_visit, a1.user_agent
+                   from {$prefix}activities a1
+                   inner join
+                   (
+                      select
+                      user_id, max(created_at) as created_at
+                      from {$prefix}activities a2
+                      {$login_activity_conditions}
+                      {$location_id_condition}
+                      {$start_date_condition}
+                      {$end_date_condition}
+                      group by 1
+                   )
+                   last_visit on (a1.user_id = last_visit.user_id)
+                   and (a1.created_at = last_visit.created_at)
+                )
+                last_visit on (user_data.user_id = last_visit.user_id)
+                left join {$prefix}user_details user_details on (user_data.user_id = user_details.user_id)
+                left join
+                (
+                   select
+                   user_id, min(activity_name_long) as registration
+                   from orbs_activities total_visits_activity
+                   {$registration_activity_conditions}
+                   group by user_id
+                )
+                registration on (user_data.user_id = registration.user_id)
+                where (1 = 1)
+                {$first_name_condition}
+                {$last_name_condition}
+                {$gender_condition}
+                {$email_condition}
+                {$os_condition}
+                {$sign_up_method_condition}
+                ";
+
+            if ($this->returnQuery) {
+                return [
+                    'query' => $query_fields . $query_without_fields,
+                    'count_query' => $count_fields . $query_without_fields,
+                    'binds' => $binds
+                ];
+            }
+
+            $data = DB::select(DB::raw($query_fields . $query_without_fields . $limit_clause), $binds);
+            $count = DB::select(DB::raw($count_fields . $query_without_fields), $binds);
+
+            $today_year = (int) date("Y");
+            $today_date = date("m-d");
+            foreach ($data as $row) {
+                $row->os = $this->categorizeUserAgent($row->user_agent);
+                $row->age = $this->calculateAge($row->birthdate, $today_date, $today_year);
+                if ($row->registration === null) {
+                    $row->sign_up_method = 'unknown';
+                } elseif (preg_match('/Facebook/i', $row->registration)) {
+                    $row->sign_up_method = 'facebook';
+                } else {
+                    $row->sign_up_method = 'email';
+                }
+            }
+
+
+            $this->response->data = [
+                'total_records' => (int)$count[0]->count,
+                'returned_records' => count($data),
+                'records' => $data
+            ];
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.activity.getactivity.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.activity.getactivity.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.activity.getactivity.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.activity.getactivity.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.activity.getactivity.before.render', array($this, &$output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         $user = $this->api->user;
@@ -1578,4 +1959,38 @@ class ActivityAPIController extends ControllerAPI
             }
         }
     }
+
+    public function categorizeUserAgent($ua)
+    {
+        if (preg_match('/Linux.*?Android/', $ua)) {
+            // not "Windows Phone 10.0; Android"...
+            return 'android';
+        } elseif (preg_match('/\((iPhone|iPod|iPad)/', $ua)) {
+            return 'ios';
+        } elseif (preg_match('/BlackBerry/', $ua)) {
+            return 'blackberry';
+        } elseif (preg_match('/Windows Phone/i', $ua)) {
+            return 'windows_phone';
+        } else {
+            return 'other';
+        }
+    }
+
+    public function calculateAge($birth_date, $today_date, $today_year)
+    {
+        if ($birth_date === null) {
+            return null;
+        }
+        $birth_year = (int)substr($birth_date, 0, 4);
+        $age = $today_year - $birth_year;
+        if (substr($birth_date, 5) < $today_date) {
+            $age -= 1;
+        }
+        return $age;
+    }
+
+    public function setReturnQuery($bool) {
+        $this->returnQuery = $bool;
+    }
+
 }

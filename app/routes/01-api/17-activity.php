@@ -50,3 +50,11 @@ Route::get('/api/v1/activity/new-returning-statistics', function()
 {
     return ActivityAPIController::create()->getNewAndReturningUserStatistics();
 });
+
+/**
+ * Get captive portal report
+ */
+Route::get('/api/v1/activity/captive-report', function()
+{
+    return ActivityAPIController::create()->getCaptivePortalReport();
+});
