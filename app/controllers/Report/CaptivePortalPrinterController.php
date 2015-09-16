@@ -32,7 +32,7 @@ class CaptivePortalPrinterController extends DataPrinterController
         switch ($mode) {
             case 'csv':
                 $fields = ['user_firstname', 'user_lastname', 'os', 'age', 'gender', 'total_visits', 'sign_up_method', 'user_email', 'first_visit', 'last_visit'];
-                $header_template = substr(str_repeat('%s,', count($fields) + 1), -1) . "\n";
+                $header_template = substr(str_repeat('%s,', count($fields) + 1), 0, -1) . "\n";
                 $data_template = '%s,"%s","%s","%s",%s,"%s",%s,"%s","%s","%s","%s"' . "\n";
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
@@ -60,10 +60,10 @@ class CaptivePortalPrinterController extends DataPrinterController
                         $this->printAge($age),
                         $this->printGender($row->gender),
                         $row->total_visits,
-                        $row->sign_up_method,
+                        ucfirst($row->sign_up_method),
                         $row->email,
-                        $this->printDate($row->first_visit),
-                        $this->printDate($row->last_visit));
+                        $row->first_visit,
+                        $row->last_visit);
                     $count++;
 
                 }
