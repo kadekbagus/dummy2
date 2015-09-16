@@ -1819,14 +1819,14 @@ class ActivityAPIController extends ControllerAPI
 
             $order_clause = ' ORDER BY last_visit DESC ';
 
-            $fields = ['first_name','last_name','os','age','gender','total_visits','sign_up_method','email','first_visit','last_visit'];
+            $fields = ['__NOT_USED__', 'user_id', 'first_name','last_name','os','age','gender','total_visits','sign_up_method','email','first_visit','last_visit'];
             $order_by_index = array_search($sort_by, $fields, true);
             if ($order_by_index !== FALSE) {
                 $direction = strtolower($sort_mode) == 'desc' ? 'desc' : 'asc';
                 if ($sort_by === 'age') {
                     $direction = ($direction === 'desc' ? 'asc' : 'desc');
                 }
-                $order_clause = sprintf(' ORDER BY %d %s ', $order_by_index + 1, $direction);
+                $order_clause = sprintf(' ORDER BY %d %s ', $order_by_index, $direction);
             }
 
 
