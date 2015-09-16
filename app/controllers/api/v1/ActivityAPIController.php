@@ -1824,9 +1824,13 @@ class ActivityAPIController extends ControllerAPI
             if ($order_by_index !== FALSE) {
                 $direction = strtolower($sort_mode) == 'desc' ? 'desc' : 'asc';
                 if ($sort_by === 'age') {
-                    $direction = ($direction === 'desc' ? 'asc' : 'desc');
+                    // order by age = order by birthdate with direction reversed, but if direction reversed the nulls
+                    // are sorted the wrong way. using datediff with the birthdate on the right hand side will sort the
+                    // nulls the right way.
+                    $order_clause = " ORDER BY DATEDIFF('2000-01-01', user_details.birthdate) $direction ";
+                } else {
+                    $order_clause = sprintf(' ORDER BY %d %s ', $order_by_index, $direction);
                 }
-                $order_clause = sprintf(' ORDER BY %d %s ', $order_by_index, $direction);
             }
 
 
