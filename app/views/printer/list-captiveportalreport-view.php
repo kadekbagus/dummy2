@@ -148,7 +148,7 @@
                 <td><?php echo $me->printAge($age); ?></td>
                 <td><?php echo $me->printGender($row->gender); ?></td>
                 <td><?php echo $row->total_visits; ?></td>
-                <td><?php echo $row->sign_up_method; ?></td>
+                <td><?php echo ucfirst($row->sign_up_method); ?></td>
                 <td><?php echo htmlspecialchars($row->email); ?></td>
                 <td><?php echo $me->printDate($row->first_visit); ?></td>
                 <td><?php echo $me->printDate($row->last_visit); ?></td>
