@@ -1552,6 +1552,8 @@ class ActivityAPIController extends ControllerAPI
             $gender = OrbitInput::get('gender');
             $os = OrbitInput::get('os');
             $sign_up_method = OrbitInput::get('sign_up_method');
+            $sort_by = OrbitInput::get('sortby');
+            $sort_mode = OrbitInput::get('sortmode', 'asc');
 
 
             $validator = Validator::make(
@@ -1564,8 +1566,12 @@ class ActivityAPIController extends ControllerAPI
                     'gender'        => $gender,
                     'os'            => $os,
                     'sign_up_method' => $sign_up_method,
+                    'sort_by'       => $sort_by,
+                    'sort_mode'     => $sort_mode,
                 ),
                 array(
+                    'sort_by'       => 'in:first_name,last_name,os,age,gender,visits,sign_up_method,email,first_visit,last_visit',
+                    'sort_mode'     => 'in:asc,desc',
                     'start_date'    => 'date_format:Y-m-d H:i:s',
                     'end_date'      => 'date_format:Y-m-d H:i:s',
                     'name'          => '',
@@ -1652,8 +1658,14 @@ class ActivityAPIController extends ControllerAPI
 
             $gender_condition = '';
             OrbitInput::get('gender', function ($gender) use (&$binds, &$gender_condition) {
-                $binds['gender'] = $gender;
-                $gender_condition = ' and (user_details.gender = :gender) ';
+                if ($gender == 'unknown') {
+                    $binds['gender_1'] = 'm';
+                    $binds['gender_2'] = 'f';
+                    $gender_condition = ' and (user_details.gender IS NULL OR user_details.gender NOT IN ( :gender_1, :gender_2 )) ';
+                } else {
+                    $binds['gender'] = $gender;
+                    $gender_condition = ' and (user_details.gender = :gender) ';
+                }
             });
 
             $start_date_condition_1 = '';
@@ -1764,21 +1776,18 @@ class ActivityAPIController extends ControllerAPI
 
             $count_fields = "SELECT COUNT(*) as count ";
             $query_fields = "SELECT user_data.user_id,
-                user_data.user_firstname,
-                user_data.user_lastname,
-                user_data.user_email,
-                user_details.gender,
+                user_data.user_firstname as first_name,
+                user_data.user_lastname as last_name,
+                case
+                    when last_visit.user_agent rlike 'Linux.*Android' then 'android'
+                    when last_visit.user_agent rlike '\\\\(iPhone|iPod|iPad)' then 'ios'
+                    when last_visit.user_agent rlike 'BlackBerry' then 'blackberry'
+                    when last_visit.user_agent rlike 'Windows Phone' then 'windows_phone'
+                    else 'other'
+                end
+                as os,
                 user_details.birthdate,
-                last_visit.last_visit as last_visit,
-                last_visit.user_agent,
-                (
-                    select
-                    min(created_at) as first_visit
-                    from {$prefix}activities first_visit_activity
-                    {$login_activity_conditions}
-                    and user_id = user_data.user_id
-                    {$location_id_condition_1}
-                ) as first_visit,
+                user_details.gender,
                 (
                    select
                    count(DISTINCT DATE(created_at)) as total_visits
@@ -1790,8 +1799,31 @@ class ActivityAPIController extends ControllerAPI
                    {$end_date_condition_1}
                 )
                 as total_visits,
-                registration.registration
-                as registration ";
+                case
+                    when registration.registration like '%Facebook%' then 'facebook'
+                    when registration.registration is null then 'unknown'
+                    else 'email'
+                end
+                as sign_up_method,
+                user_data.user_email as email,
+                (
+                    select
+                    min(created_at) as first_visit
+                    from {$prefix}activities first_visit_activity
+                    {$login_activity_conditions}
+                    and user_id = user_data.user_id
+                    {$location_id_condition_1}
+                ) as first_visit,
+                last_visit.last_visit as last_visit
+             ";
+
+            $order_clause = ' ORDER BY last_visit DESC ';
+
+            $fields = ['first_name','last_name','os','age','gender','total_visits','sign_up_method','email','first_visit','last_visit'];
+            $order_by_index = array_search($sort_by, $fields, true);
+            if ($order_by_index !== FALSE) {
+                $order_clause = sprintf(' ORDER BY %d %s ', $order_by_index + 1, strtolower($sort_mode) == 'desc' ? 'desc' : 'asc');
+            }
 
 
             $query_without_fields = "
@@ -1852,21 +1884,13 @@ class ActivityAPIController extends ControllerAPI
                 ];
             }
 
-            $data = DB::select(DB::raw($query_fields . $query_without_fields . $limit_clause), $binds);
+            $data = DB::select(DB::raw($query_fields . $query_without_fields . $order_clause . $limit_clause), $binds);
             $count = DB::select(DB::raw($count_fields . $query_without_fields), $count_binds);
 
             $today_year = (int) date("Y");
             $today_date = date("m-d");
             foreach ($data as $row) {
-                $row->os = $this->categorizeUserAgent($row->user_agent);
                 $row->age = $this->calculateAge($row->birthdate, $today_date, $today_year);
-                if ($row->registration === null) {
-                    $row->sign_up_method = 'unknown';
-                } elseif (preg_match('/Facebook/i', $row->registration)) {
-                    $row->sign_up_method = 'facebook';
-                } else {
-                    $row->sign_up_method = 'email';
-                }
             }
 
 

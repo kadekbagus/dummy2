@@ -138,18 +138,17 @@
         <?php $today_year = (int) date("Y"); ?>
         <?php $today_date = date("m-d"); ?>
         <?php while  ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <?php $os = $controller->categorizeUserAgent($row->user_agent); ?>
             <?php $age = $controller->calculateAge($row->birthdate, $today_date, $today_year); ?>
 
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo ($count); ?></td>
                 <td><?php echo htmlspecialchars($me->printUtf8($row->user_firstname)); ?></td>
                 <td><?php echo htmlspecialchars($me->printUtf8($row->user_lastname)); ?></td>
-                <td><?php echo htmlspecialchars($os); ?></td>
+                <td><?php echo htmlspecialchars($row->os); ?></td>
                 <td><?php echo $me->printAge($row->age); ?></td>
                 <td><?php echo $me->printGender($row->gender); ?></td>
                 <td><?php echo $row->total_visits; ?></td>
-                <td><?php echo $me->printSignUpMethod($row->registration); ?></td>
+                <td><?php echo $row->sign_up_method; ?></td>
                 <td><?php echo htmlspecialchars($row->user_email); ?></td>
                 <td><?php echo $row->first_visit; ?></td>
                 <td><?php echo $row->last_visit; ?></td>

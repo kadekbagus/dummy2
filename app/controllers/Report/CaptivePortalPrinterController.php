@@ -51,17 +51,16 @@ class CaptivePortalPrinterController extends DataPrinterController
                 $today_date = date("m-d");
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    $os = $controller->categorizeUserAgent($row->user_agent);
                     $age = $controller->calculateAge($row->birthdate, $today_date, $today_year);
                     printf($data_template,
                         $count,
                         $this->printUtf8($row->user_firstname),
                         $this->printUtf8($row->user_lastname),
-                        $os,
+                        $row->os,
                         $this->printAge($age),
                         $this->printGender($row->gender),
                         $row->total_visits,
-                        $this->printSignUpMethod($row->registration),
+                        $row->sign_up_method,
                         $row->user_email,
                         $row->first_visit,
                         $row->last_visit);
@@ -93,7 +92,7 @@ class CaptivePortalPrinterController extends DataPrinterController
     public function printGender($gender)
     {
         if ($gender === null) {
-            return '';
+            return 'unknown';
         }
         $gender = strtolower($gender);
         switch ($gender) {
@@ -105,7 +104,7 @@ class CaptivePortalPrinterController extends DataPrinterController
                 $result = 'female';
                 break;
             default:
-                $result = '';
+                $result = 'unknown';
         }
 
         return $result;
