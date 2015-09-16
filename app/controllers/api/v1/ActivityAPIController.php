@@ -1881,7 +1881,7 @@ class ActivityAPIController extends ControllerAPI
             }
             if ($this->returnQuery) {
                 return [
-                    'query' => $query_fields . $query_without_fields,
+                    'query' => $query_fields . $query_without_fields . $order_clause,
                     'binds' => $binds,
                     'count_query' => $count_fields . $query_without_fields,
                     'count_binds' => $count_binds,
