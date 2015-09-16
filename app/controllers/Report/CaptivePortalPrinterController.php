@@ -22,7 +22,7 @@ class CaptivePortalPrinterController extends DataPrinterController
         $this->prepareUnbufferedQuery();
 
         $count = $this->pdo->prepare($queries['count_query']);
-        $count->execute($queries['binds']);
+        $count->execute($queries['count_binds']);
         $totalRec = $count->fetch(PDO::FETCH_NUM)[0];
         $count->closeCursor();
         $statement = $this->pdo->prepare($queries['query']);

@@ -1656,16 +1656,20 @@ class ActivityAPIController extends ControllerAPI
                 $gender_condition = ' and (user_details.gender = :gender) ';
             });
 
-            $start_date_condition = '';
-            OrbitInput::get('start_date', function ($start_date) use (&$binds, &$start_date_condition) {
-                $binds['start_date'] = $start_date;
-                $start_date_condition = ' and (created_at >= :start_date) ';
+            $start_date_condition_1 = '';
+            $start_date_condition_2 = '';
+            OrbitInput::get('start_date', function ($start_date) use (&$binds, &$start_date_condition_1, &$start_date_condition_2) {
+                $binds['start_date_1'] = $binds['start_date_2'] = $start_date;
+                $start_date_condition_1 = ' and (created_at >= :start_date_1) ';
+                $start_date_condition_2 = ' and (created_at >= :start_date_2) ';
             });
 
-            $end_date_condition = '';
-            OrbitInput::get('end_date', function ($end_date) use (&$binds, &$end_date_condition) {
-                $binds['end_date'] = $end_date;
-                $end_date_condition = ' and (created_at <= :end_date) ';
+            $end_date_condition_1 = '';
+            $end_date_condition_2 = '';
+            OrbitInput::get('end_date', function ($end_date) use (&$binds, &$end_date_condition_1, &$end_date_condition_2) {
+                $binds['end_date_1'] = $binds['end_date_2'] = $end_date;
+                $end_date_condition_1 = ' and (created_at <= :end_date_1) ';
+                $end_date_condition_2 = ' and (created_at <= :end_date_2) ';
             });
 
             $sign_up_method_condition = '';
@@ -1718,21 +1722,32 @@ class ActivityAPIController extends ControllerAPI
             if (count($locationIds) == 0) {
                 if ($user->isSuperAdmin() !== TRUE) {
                     // not admin and getLocationIdsForUser returns 0 locations
-                    $location_id_condition = ' and 1 = 0 ';
+                    $location_id_condition_1 = ' and 1 = 0 ';
+                    $location_id_condition_2 = ' and 1 = 0 ';
+                    $location_id_condition_3 = ' and 1 = 0 ';
                 } else {
                     // admin does not provide, view all locations
-                    $location_id_condition = '';
+                    $location_id_condition_1 = '';
+                    $location_id_condition_2 = '';
+                    $location_id_condition_3 = '';
                 }
             } else {
-                $location_id_condition = ' and location_id in ( ';
-                $i = 0;
-                foreach ($locationIds as $location_id) {
-                    $bind_name = sprintf('location_id_%d', $i++);
-                    $binds[$bind_name] = $location_id;
-                    $location_id_condition .= ":{$bind_name},";
+                // overwritten later just so it does not complain
+                $location_id_condition_1 = ' and 1 = 0 ';
+                $location_id_condition_2 = ' and 1 = 0 ';
+                $location_id_condition_3 = ' and 1 = 0 ';
+                for ($condition_index = 1; $condition_index <= 3; $condition_index++) {
+                    $var_name = 'location_id_condition_' . $condition_index;
+                    $$var_name = ' and location_id in ( ';
+                    $i = 0;
+                    foreach ($locationIds as $location_id) {
+                        $bind_name = sprintf('location_id_%d_%d', $condition_index, $i++);
+                        $binds[$bind_name] = $location_id;
+                        $$var_name .= ":{$bind_name},";
+                    }
+                    // remove last , and close paren
+                    $$var_name = substr($$var_name, 0, strlen($$var_name) - 1) . ') ';
                 }
-                // remove last , and close paren
-                $location_id_condition = substr($location_id_condition, 0, strlen($location_id_condition) - 1) . ') ';
             }
 
             $login_activity_conditions = " where module_name = 'Application'
@@ -1762,7 +1777,7 @@ class ActivityAPIController extends ControllerAPI
                     from {$prefix}activities first_visit_activity
                     {$login_activity_conditions}
                     and user_id = user_data.user_id
-                    {$location_id_condition}
+                    {$location_id_condition_1}
                 ) as first_visit,
                 (
                    select
@@ -1770,9 +1785,9 @@ class ActivityAPIController extends ControllerAPI
                    from {$prefix}activities total_visits_activity
                    {$login_activity_conditions}
                    and user_id = user_data.user_id
-                   {$location_id_condition}
-                   {$start_date_condition}
-                   {$end_date_condition}
+                   {$location_id_condition_2}
+                   {$start_date_condition_1}
+                   {$end_date_condition_1}
                 )
                 as total_visits,
                 registration.registration
@@ -1792,9 +1807,9 @@ class ActivityAPIController extends ControllerAPI
                       user_id, max(created_at) as created_at
                       from {$prefix}activities a2
                       {$login_activity_conditions}
-                      {$location_id_condition}
-                      {$start_date_condition}
-                      {$end_date_condition}
+                      {$location_id_condition_3}
+                      {$start_date_condition_2}
+                      {$end_date_condition_2}
                       group by 1
                    )
                    last_visit on (a1.user_id = last_visit.user_id)
@@ -1820,16 +1835,25 @@ class ActivityAPIController extends ControllerAPI
                 {$sign_up_method_condition}
                 ";
 
+            // binds for count are without $location_id_condition_1, $location_id_condition_2, $start_date_condition_1, $end_date_condition_1
+            $count_binds = [];
+            foreach ($binds as $k => $v) {
+                if (preg_match('/^(location_id_[12]|(start|end)_date_1)/', $k)) {
+                    continue;
+                }
+                $count_binds[$k] = $v;
+            }
             if ($this->returnQuery) {
                 return [
                     'query' => $query_fields . $query_without_fields,
+                    'binds' => $binds,
                     'count_query' => $count_fields . $query_without_fields,
-                    'binds' => $binds
+                    'count_binds' => $count_binds,
                 ];
             }
 
             $data = DB::select(DB::raw($query_fields . $query_without_fields . $limit_clause), $binds);
-            $count = DB::select(DB::raw($count_fields . $query_without_fields), $binds);
+            $count = DB::select(DB::raw($count_fields . $query_without_fields), $count_binds);
 
             $today_year = (int) date("Y");
             $today_date = date("m-d");
