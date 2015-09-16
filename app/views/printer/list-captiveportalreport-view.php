@@ -142,14 +142,14 @@
 
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo ($count); ?></td>
-                <td><?php echo htmlspecialchars($me->printUtf8($row->user_firstname)); ?></td>
-                <td><?php echo htmlspecialchars($me->printUtf8($row->user_lastname)); ?></td>
+                <td><?php echo htmlspecialchars($me->printUtf8($row->first_name)); ?></td>
+                <td><?php echo htmlspecialchars($me->printUtf8($row->last_name)); ?></td>
                 <td><?php echo htmlspecialchars($row->os); ?></td>
                 <td><?php echo $me->printAge($row->age); ?></td>
                 <td><?php echo $me->printGender($row->gender); ?></td>
                 <td><?php echo $row->total_visits; ?></td>
                 <td><?php echo $row->sign_up_method; ?></td>
-                <td><?php echo htmlspecialchars($row->user_email); ?></td>
+                <td><?php echo htmlspecialchars($row->email); ?></td>
                 <td><?php echo $row->first_visit; ?></td>
                 <td><?php echo $row->last_visit; ?></td>
             </tr>

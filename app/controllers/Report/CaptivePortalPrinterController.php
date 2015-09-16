@@ -54,14 +54,14 @@ class CaptivePortalPrinterController extends DataPrinterController
                     $age = $controller->calculateAge($row->birthdate, $today_date, $today_year);
                     printf($data_template,
                         $count,
-                        $this->printUtf8($row->user_firstname),
-                        $this->printUtf8($row->user_lastname),
+                        $this->printUtf8($row->first_name),
+                        $this->printUtf8($row->last_name),
                         $row->os,
                         $this->printAge($age),
                         $this->printGender($row->gender),
                         $row->total_visits,
                         $row->sign_up_method,
-                        $row->user_email,
+                        $row->email,
                         $row->first_visit,
                         $row->last_visit);
                     $count++;
