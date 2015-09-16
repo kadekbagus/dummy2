@@ -132,6 +132,7 @@ return array(
             'lucky_draw_active'      => 'Only one lucky draw campaign can be active at the same time.',
             'news_name'              => 'The news name has already been used.',
             'mall_have_tenant'       => 'The mall has one or more tenants linked to it, so it cannot be deleted.',
+            'mallgroup_have_mall'    => 'The mall group has one or more mall linked to it, so it cannot be deleted.',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action.',
@@ -260,6 +261,7 @@ return array(
             'link_object_id'       => 'The Link Object ID you specified is not found.',
             'bank_object'          => 'The Bank Object ID you specified is not found.',
             'mall'                 => 'The Mall ID you specified is not found.',
+            'mallgroup'            => 'The Mall Group ID you specified is not found.',
             'membership'           => 'The Membership ID you specified is not found.',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',

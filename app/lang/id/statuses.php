@@ -24,6 +24,7 @@ return array(
             'event'          => 'Event telah berhasil dihapus.',
             'lucky_draw'     => 'Lucky Draw telah berhasil dihapus.',
             'mall'           => 'Mall telah berhasil dihapus.',
+            'mallgroup'      => 'Mall group telah berhasil dihapus.',
             'tenant'         => 'Tenant telah berhasil dihapus.',
         ),
         'updated'   => array(
@@ -52,6 +53,7 @@ return array(
             'token'         => 'Tidak ada token yang sesuai kriteria.',
             'lucky_draw'    => 'Tidak ada lucky draw yang sesuai kriteria.',
             'mall'          => 'Tidak ada mall yang sesuai kriteria.',
+            'mallgroup'     => 'Tidak ada mall group yang sesuai kriteria.',
             'tenant'        => 'Tidak ada tenant yang sesuai kriteria.',
         ),
         'uploaded'  => array(

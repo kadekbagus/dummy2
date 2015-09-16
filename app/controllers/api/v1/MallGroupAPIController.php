@@ -941,7 +941,7 @@ class MallGroupAPIController extends ControllerAPI
                     'url'               => $url,
                 ),
                 array(
-                    'merchant_id'       => 'required|numeric|orbit.empty.mall',
+                    'merchant_id'       => 'required|numeric|orbit.empty.mallgroup',
                     'user_id'           => 'numeric|orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.mall_status|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
@@ -1387,7 +1387,7 @@ class MallGroupAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'merchant_id' => 'required|numeric|orbit.empty.mall|orbit.exists.mallgroup_have_mall',
+                    'merchant_id' => 'required|numeric|orbit.empty.mallgroup|orbit.exists.mallgroup_have_mall',
                     'password'    => 'required|orbit.access.wrongpassword',
                 )
             );
@@ -1543,7 +1543,7 @@ class MallGroupAPIController extends ControllerAPI
     {
         // Check the existance of merchant id
         $user = $this->api->user;
-        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user){
+        Validator::extend('orbit.empty.mallgroup', function ($attribute, $value, $parameters) use ($user){
             $mall = MallGroup::excludeDeleted()
                         ->allowedForUser($user)
                         ->where('merchant_id', $value)
@@ -1553,7 +1553,7 @@ class MallGroupAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.empty.mall', $mall);
+            App::instance('orbit.empty.mallgroup', $mall);
 
             return TRUE;
         });
@@ -1568,7 +1568,7 @@ class MallGroupAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.validation.mall', $mall);
+            App::instance('orbit.validation.mallgroup', $mall);
 
             return TRUE;
         });
@@ -1585,7 +1585,7 @@ class MallGroupAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.validation.mall', $mall);
+            App::instance('orbit.validation.mallgroup', $mall);
 
             return TRUE;
         });
@@ -1602,7 +1602,7 @@ class MallGroupAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.validation.mall', $mall);
+            App::instance('orbit.validation.mallgroup', $mall);
 
             return TRUE;
         });
@@ -1617,7 +1617,7 @@ class MallGroupAPIController extends ControllerAPI
                 return FALSE;
             }
 
-            App::instance('orbit.validation.mall', $mall);
+            App::instance('orbit.validation.mallgroup', $mall);
 
             return TRUE;
         });
@@ -1654,7 +1654,7 @@ class MallGroupAPIController extends ControllerAPI
                 return TRUE;
             }
 
-            App::instance('orbit.validation.mall', $value);
+            App::instance('orbit.validation.mallgroup', $value);
 
             return FALSE;
         });

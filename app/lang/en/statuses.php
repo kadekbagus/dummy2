@@ -26,6 +26,7 @@ return array(
             'news'           => 'News has been successfully deleted.',
             'object'         => 'Object has been successfully deleted.',
             'mall'           => 'Mall has been successfully deleted.',
+            'mallgroup'      => 'Mall group has been successfully deleted.',
             'tenant'         => 'Tenant has been successfully deleted.',
         ),
         'updated'   => array(
@@ -59,6 +60,7 @@ return array(
             'object'        => 'There is no object that matched your search criteria.',
             'activity'      => 'There is no activity that matched your search criteria.',
             'mall'          => 'There is no mall that matched your search criteria.',
+            'mallgroup'     => 'There is no mall group that matched your search criteria.',
             'tenant'        => 'There is no tenant that matched your search criteria.',
         ),
         'uploaded'  => array(
