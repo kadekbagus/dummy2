@@ -56,14 +56,14 @@ class CaptivePortalPrinterController extends DataPrinterController
                         $count,
                         $this->printUtf8($row->first_name),
                         $this->printUtf8($row->last_name),
-                        $row->os,
+                        $this->printOs($row->os),
                         $this->printAge($age),
                         $this->printGender($row->gender),
                         $row->total_visits,
                         $row->sign_up_method,
                         $row->email,
-                        $row->first_visit,
-                        $row->last_visit);
+                        $this->printDate($row->first_visit),
+                        $this->printDate($row->last_visit));
                     $count++;
 
                 }
@@ -92,19 +92,19 @@ class CaptivePortalPrinterController extends DataPrinterController
     public function printGender($gender)
     {
         if ($gender === null) {
-            return 'unknown';
+            return 'Unknown';
         }
         $gender = strtolower($gender);
         switch ($gender) {
             case 'm':
-                $result = 'male';
+                $result = 'Male';
                 break;
 
             case 'f':
-                $result = 'female';
+                $result = 'Female';
                 break;
             default:
-                $result = 'unknown';
+                $result = 'Unknown';
         }
 
         return $result;
@@ -119,14 +119,30 @@ class CaptivePortalPrinterController extends DataPrinterController
         return $age === null ? '' : $age;
     }
 
-    private function printSignUpMethod($registration)
+    public function printDate($date)
     {
-        if ($registration === null) {
-            return 'unknown';
-        } elseif (preg_match('/Facebook/i', $registration)) {
-            return 'facebook';
-        } else {
-            return 'email';
+        if ($date === null) {
+            return '';
+        }
+        $date = explode(' ',$date);
+        $time = strtotime($date[0]);
+        $new_format = date('d / M / Y', $time);
+        $result = $new_format.' '.$date[1];
+        return $result;
+    }
+
+    public function printOs($os) {
+        switch ($os) {
+            case 'android':
+                return 'Android';
+            case 'ios':
+                return 'iOS';
+            case 'blackberry':
+                return 'BlackBerry';
+            case 'windows_phone':
+                return 'Windows Phone';
+            default:
+                return 'Other';
         }
     }
 
