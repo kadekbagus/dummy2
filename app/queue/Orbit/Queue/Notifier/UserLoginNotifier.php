@@ -98,7 +98,7 @@ class UserLoginNotifier
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
             }
 
-            Log::info('Post data: ' . $postData);
+            Log::info('Post data: ' . serialize($postData));
 
             $this->poster->addHeader('Accept', 'application/json');
 
