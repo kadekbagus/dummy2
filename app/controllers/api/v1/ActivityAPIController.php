@@ -1839,7 +1839,7 @@ class ActivityAPIController extends ControllerAPI
                 inner join
                 (
                    select
-                   last_visit.user_id, last_visit.created_at as last_visit, a1.user_agent
+                   last_visit.user_id, max(last_visit.created_at) as last_visit, max(a1.user_agent) as user_agent
                    from {$prefix}activities a1
                    inner join
                    (
@@ -1854,6 +1854,7 @@ class ActivityAPIController extends ControllerAPI
                    )
                    last_visit on (a1.user_id = last_visit.user_id)
                    and (a1.created_at = last_visit.created_at)
+                   group by 1
                 )
                 last_visit on (user_data.user_id = last_visit.user_id)
                 left join {$prefix}user_details user_details on (user_data.user_id = user_details.user_id)
