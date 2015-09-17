@@ -917,11 +917,11 @@ class postNewTenantTest extends OrbitTestCase
         DB::statement("INSERT INTO `{$retailer_table}`
                 (`merchant_id`, `omid`, `orid`, `user_id`, `email`, `name`, `description`, `address_line1`, `address_line2`, `address_line3`, `postal_code`, `city_id`, `city`, `country_id`, `country`, `phone`, `fax`, `start_date_activity`, `end_date_activity`, `status`, `logo`, `currency`, `currency_symbol`, `tax_code1`, `tax_code2`, `tax_code3`, `slogan`, `vat_included`, `contact_person_firstname`, `contact_person_lastname`, `contact_person_position`, `contact_person_phone`, `contact_person_phone2`, `contact_person_email`, `sector_of_activity`, `object_type`, `parent_id`, `is_mall`, `url`, `masterbox_number`, `slavebox_number`, `mobile_default_language`, `pos_language`, `ticket_header`, `ticket_footer`, `floor`, `unit`, `external_object_id`, `modified_by`, `created_at`, `updated_at`)
                     VALUES
-                (3, '', '', 0, '', 'ARMANI EXCHANGE', 'The modern wardrobe as only Giorgio Armani could envision it, Armani Exchange embodies the youthful spirit of a new generation. \r\n\r\nArmani Exchange takes a playful, urban approach to apparel and accessories, reaching a global audience through over 200 stores worldwide.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68352855', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/3-armani-exchange-1433763154_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 1, 'no', 'armaniexchange.com/singapore', '3', NULL, NULL, NULL, NULL, NULL, 'LG', '3', NULL, 3, '2015-04-10 12:21:25', '2015-06-08 03:32:34'),
-                (4, '', '', 0, '', 'BEAUTY SPA MIS PARIS & DANDY HOUSE', 'The concept of our salon is“Respect for Japanese Style”The typical Japanese wooden interior welcomes you in a warm atmosphere, the tiles on our floors and walls remind of Japanese ceramics, creating the grace of the traditional beauty of Japan. If you take one step into our salon, for a little while, you will be able to indulge in luxury that will make you feel like a real VIP in a traditional Japanese surrounding, all the while being in a different country.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '62351159', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/4-beauty-spa-mis-paris-dandy-house-1433763172_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 1, 'no', 'miss-paris.com.sg/', '4', NULL, NULL, NULL, NULL, NULL, 'L5', '25', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:32:52'),
-                (5, '', '', 0, '', 'BEST DENKI', 'stores in Japan. We are constantly developing new retail concepts including multimedia oriented era outlets, information based exchanges and housing related specialty shops.\r\nTo date, Best Denki has more than 500 retail stores worldwide with 466 in Japan, 11 in singapore, 10 in Malaysia, 6 in Indonesia', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68352855', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/5-best-denki-1433763119_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 1, 'no', 'go.bestdenki.com.sg', '5', NULL, NULL, NULL, NULL, NULL, 'L5', '1', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:31:59'),
-                (6, '', '', 0, '', 'BRICKS WORLD', 'Bricks World main shop is located at Ngee Ann City, Level 5 and the shop is the first and largest LEGO Exclusive shop in Singapore. Our Ngee Ann City store was officially opened on 13 December 2003 and was the first monobrand LEGO store in Singapore.\r\nWe carry more than 90 per cent of the LEGO merchandise available in Singapore and thus able to provide superior service and support for our customers.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67345512', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/6-bricks-world-1433763557_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 1, 'no', 'bricksworld.com/', '6', NULL, NULL, NULL, NULL, NULL, 'L5', '15', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:39:17'),
-                (7, '', '', 0, '', 'CHARLES & KEITH', 'CHARLES & KEITH SUMMER 2015 lends an element of finesse accompanied by contemporary appeal that binds the lithe movements and vivacity of youth to life.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67370152', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/7-charles-keith-1433763771_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.charleskeith.com/', '7', NULL, NULL, NULL, NULL, NULL, 'LG', '12', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:42:51'),
+                (3, '', '', 1, 'john@localhost.org', 'ARMANI EXCHANGE', 'The modern wardrobe as only Giorgio Armani could envision it, Armani Exchange embodies the youthful spirit of a new generation. \r\n\r\nArmani Exchange takes a playful, urban approach to apparel and accessories, reaching a global audience through over 200 stores worldwide.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68352855', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/3-armani-exchange-1433763154_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 1, 'no', 'armaniexchange.com/singapore', '3', NULL, NULL, NULL, NULL, NULL, 'LG', '3', NULL, 3, '2015-04-10 12:21:25', '2015-06-08 03:32:34'),
+                (4, '', '', 0, 'smith@localhost.org', 'BEAUTY SPA MIS PARIS & DANDY HOUSE', 'The concept of our salon is“Respect for Japanese Style”The typical Japanese wooden interior welcomes you in a warm atmosphere, the tiles on our floors and walls remind of Japanese ceramics, creating the grace of the traditional beauty of Japan. If you take one step into our salon, for a little while, you will be able to indulge in luxury that will make you feel like a real VIP in a traditional Japanese surrounding, all the while being in a different country.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '62351159', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/4-beauty-spa-mis-paris-dandy-house-1433763172_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 1, 'no', 'miss-paris.com.sg/', '4', NULL, NULL, NULL, NULL, NULL, 'L5', '25', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:32:52'),
+                (5, '', '', 0, 'chuck@localhost.org', 'BEST DENKI', 'stores in Japan. We are constantly developing new retail concepts including multimedia oriented era outlets, information based exchanges and housing related specialty shops.\r\nTo date, Best Denki has more than 500 retail stores worldwide with 466 in Japan, 11 in singapore, 10 in Malaysia, 6 in Indonesia', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68352855', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/5-best-denki-1433763119_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 1, 'no', 'go.bestdenki.com.sg', '5', NULL, NULL, NULL, NULL, NULL, 'L5', '1', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:31:59'),
+                (6, '', '', 0, 'optimus@localhost.org', 'BRICKS WORLD', 'Bricks World main shop is located at Ngee Ann City, Level 5 and the shop is the first and largest LEGO Exclusive shop in Singapore. Our Ngee Ann City store was officially opened on 13 December 2003 and was the first monobrand LEGO store in Singapore.\r\nWe carry more than 90 per cent of the LEGO merchandise available in Singapore and thus able to provide superior service and support for our customers.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67345512', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/6-bricks-world-1433763557_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 1, 'no', 'bricksworld.com/', '6', NULL, NULL, NULL, NULL, NULL, 'L5', '15', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:39:17'),
+                (7, '', '', 0, 'panther@localhost.org', 'CHARLES & KEITH', 'CHARLES & KEITH SUMMER 2015 lends an element of finesse accompanied by contemporary appeal that binds the lithe movements and vivacity of youth to life.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67370152', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/7-charles-keith-1433763771_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.charleskeith.com/', '7', NULL, NULL, NULL, NULL, NULL, 'LG', '12', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:42:51'),
                 (8, '', '', 0, '', 'CHOPARD BOUTIQUE', 'It all began in 1860 in the small village of Sonvilier, Switzerland. Here Louis-Ulysse Chopard, a talented young craftsman, established his workshop. By virtue of their precision and reliability, his watches quickly gained a solid reputation among enthusiasts and found buyers as far afield as Eastern Europe, Russia and Scandinavia.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67338111', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/8-chopard-boutique-1433763967_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.chopard.com/‎', '8', NULL, NULL, NULL, NULL, NULL, 'L1', '3', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:46:07'),
                 (9, '', '', 0, '', 'LA CURE GOURMANDE', 'Created in 1989, La Cure Gourmande is far more than chocolates, confectionery and biscuits. It''s an emotional experience from the moment you walk into the store. Everything about La Cure Gourmande will make you feel like you just stepped back into childhood.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '66842983', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/9-la-cure-gourmande-1433764758_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.curegourmande.com/index.cfm', '9', NULL, NULL, NULL, NULL, NULL, 'L3', '9', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 03:59:18'),
                 (10, '', '', 0, '', 'LADUREE BOUTIQUE', 'Parisian tea rooms'' history is intimately tied to the \r\nhistory of the Ladurée family. It all began in 1862, when \r\nLouis Ernest Ladurée, a miller from the southwest of \r\nFrance, founded a bakery in Paris at 16 rue Royale.\r\nIn 1871, while Baron Haussmann was giving \r\nParis a « new face », a fire in the bakery opened \r\nthe opportunity to transform it into a pastry shop.\r\nThe decoration of the pastry shop was entrusted to \r\nJules Cheret, a famous turn-of-the-century \r\npainter and poster artist.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68847361', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/10-laduree-boutique-1433764911_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.laduree.com', '10', NULL, NULL, NULL, NULL, NULL, 'L2', '9', NULL, 3, '2015-04-10 12:21:26', '2015-06-08 04:01:52'),
@@ -1048,425 +1048,230 @@ class postNewTenantTest extends OrbitTestCase
         $this->assertSame($expect, $return);
     }
 
-    // public function testSignatureExpire_POST_api_v1_retailer_new()
-    // {
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time() - 3600;  // an hour ago
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $data = new stdclass();
-    //     $data->code = Status::REQUEST_EXPIRED;
-    //     $data->status = 'error';
-    //     $data->message = Status::REQUEST_EXPIRED_MSG;
-    //     $data->data = null;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testAccessForbidden_POST_api_v1_retailer_new()
-    // {
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     // Error message when access is forbidden
-    //     $newRetailerLang = Lang::get('validation.orbit.actionlist.new_retailer');
-    //     $message = Lang::get('validation.orbit.access.forbidden',
-    //                          array('action' => $newRetailerLang));
-
-    //     $data = new stdclass();
-    //     $data->code = Status::ACCESS_DENIED;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = null;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testMissingUserId_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['email'] = 'george@localhost.org';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     // Add new permission name 'add_retailer'
-    //     $chuck = User::find(3);
-    //     $permission = new Permission();
-    //     $permission->permission_name = 'create_retailer';
-    //     $permission->save();
-
-    //     $chuck->permissions()->attach($permission->permission_id, array('allowed' => 'yes'));
-
-    //     $message = Lang::get('validation.required', array('attribute' => 'user id'));
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testUserIdNotNumeric_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = 'foo';
-    //     $_POST['email'] = 'george@localhost.org';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.numeric', array('attribute' => 'user id'));
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testUserIdNotExists_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = 99;
-    //     $_POST['email'] = 'george@localhost.org';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.orbit.empty.user');
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testMissingEmail_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = '3';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = Lang::get('validation.required', array('attribute' => 'email'));
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testInvalidEmailFormat_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = '3';
-    //     $_POST['email'] = 'wrong-format@localhost';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = Lang::get('validation.email', array('attribute' => 'email'));
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testEmailAlreadyExists_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = 3;
-    //     $_POST['email'] = 'alfamer@localhost.org';
-    //     $_POST['name'] = 'Alfa Beta';
-    //     $_POST['status'] = 'active';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.orbit.exists.email');
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testMissingRetailerName_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = '3';
-    //     $_POST['email'] = 'george@localhost.org';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.required', array('attribute' => 'name'));
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testMissingStatus_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = '3';
-    //     $_POST['email'] = 'george@localhost.org';
-    //     $_POST['name'] = 'test missing status';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.required', array('attribute' => 'status'));
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testStatusNotExists_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = 3;
-    //     $_POST['email'] = 'george@localhost.org';
-    //     $_POST['name'] = 'test status not exists';
-    //     $_POST['status'] = 'dummy';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.orbit.empty.retailer_status');
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testMissingParentId_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = 3;
-    //     $_POST['email'] = 'george@localhost.org';
-    //     $_POST['name'] = 'test missing parent id';
-    //     $_POST['status'] = 'active';
-    //     $_POST['orid'] = 'R010';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.required', array('attribute' => 'parent id'));
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testParentIdNotNumeric_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = 3;
-    //     $_POST['email'] = 'george@localhost.org';
-    //     $_POST['name'] = 'test parent id not numeric';
-    //     $_POST['status'] = 'active';
-    //     $_POST['orid'] = 'R010';
-    //     $_POST['parent_id'] = 'foo';
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.numeric', array('attribute' => 'parent id'));
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
-
-    // public function testParentIdNotExists_POST_api_v1_retailer_new()
-    // {
-    //     // Data to be post
-    //     $_POST['user_id'] = 3;
-    //     $_POST['email'] = 'george@localhost.org';
-    //     $_POST['name'] = 'test parent id not exists';
-    //     $_POST['status'] = 'active';
-    //     $_POST['orid'] = 'R010';
-    //     $_POST['parent_id'] = 99;
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'cde345';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/retailer/new?' . http_build_query($_GET);
-
-    //     $secretKey = 'cde34567890100';
-    //     $_SERVER['REQUEST_METHOD'] = 'POST';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $message = Lang::get('validation.orbit.empty.merchant');
-    //     $data = new stdclass();
-    //     $data->code = Status::INVALID_ARGUMENT;
-    //     $data->status = 'error';
-    //     $data->message = $message;
-    //     $data->data = NULL;
-
-    //     $expect = json_encode($data);
-    //     $return = $this->call('POST', $url)->getContent();
-    //     $this->assertSame($expect, $return);
-    // }
+    public function testSignatureExpire_POST_api_v1_tenant_new()
+    {
+        // Set the client API Keys
+        $_GET['apikey'] = 'cde345';
+        $_GET['apitimestamp'] = time() - 3600;  // an hour ago
+
+        $url = '/api/v1/tenant/new?' . http_build_query($_GET);
+
+        $secretKey = 'cde34567890100';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $data = new stdclass();
+        $data->code = Status::REQUEST_EXPIRED;
+        $data->status = 'error';
+        $data->message = Status::REQUEST_EXPIRED_MSG;
+        $data->data = null;
+
+        $expect = json_encode($data);
+        $return = $this->call('POST', $url)->getContent();
+        $this->assertSame($expect, $return);
+    }
+
+    public function testAccessForbidden_POST_api_v1_tenant_new()
+    {
+        // Set the client API Keys
+        $_GET['apikey'] = 'cde345';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/tenant/new?' . http_build_query($_GET);
+
+        $secretKey = 'cde34567890100';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        // Error message when access is forbidden
+        $newRetailerLang = Lang::get('validation.orbit.actionlist.new_tenant');
+        $message = Lang::get('validation.orbit.access.forbidden',
+                             array('action' => $newRetailerLang));
+
+        $data = new stdclass();
+        $data->code = Status::ACCESS_DENIED;
+        $data->status = 'error';
+        $data->message = $message;
+        $data->data = null;
+
+        $expect = json_encode($data);
+        $return = $this->call('POST', $url)->getContent();
+        $this->assertSame($expect, $return);
+    }
+
+
+    public function testMissingTenantEmail_POST_api_v1_tenant_new()
+    {
+        // Data to be post
+        $_POST['name'] = 'New Tenant';
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'cde345';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/tenant/new?' . http_build_query($_GET);
+
+        $secretKey = 'cde34567890100';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        // Add new permission name 'create_tenant'
+        $chuck = User::find(3);
+        $permission = new Permission();
+        $permission->permission_name = 'create_tenant';
+        $permission->save();
+
+        $chuck->permissions()->attach($permission->permission_id, array('allowed' => 'yes'));
+
+        $message = Lang::get('validation.required', array('attribute' => 'email'));
+        $data = new stdclass();
+        $data->code = Status::INVALID_ARGUMENT;
+        $data->status = 'error';
+        $data->message = $message;
+        $data->data = NULL;
+
+        $expect = json_encode($data);
+        $return = $this->call('POST', $url)->getContent();
+        $this->assertSame($expect, $return);
+    }
+
+    public function testMissingTenantName_POST_api_v1_tenant_new()
+    {
+        // Data to be post
+        $_POST['email'] = 'george@localhost.org';
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'cde345';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/tenant/new?' . http_build_query($_GET);
+
+        $secretKey = 'cde34567890100';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        // Add new permission name 'create_tenant'
+        $chuck = User::find(3);
+        $permission = new Permission();
+        $permission->permission_name = 'create_tenant';
+        $permission->save();
+
+        $chuck->permissions()->attach($permission->permission_id, array('allowed' => 'yes'));
+
+        $message = Lang::get('validation.required', array('attribute' => 'name'));
+        $data = new stdclass();
+        $data->code = Status::INVALID_ARGUMENT;
+        $data->status = 'error';
+        $data->message = $message;
+        $data->data = NULL;
+
+        $expect = json_encode($data);
+        $return = $this->call('POST', $url)->getContent();
+        $this->assertSame($expect, $return);
+    }
+
+
+    public function testInvalidEmailFormat_POST_api_v1_tenant_new()
+    {
+        // Data to be post
+        $_POST['user_id'] = '3';
+        $_POST['email'] = 'wrong-format@localhost';
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'cde345';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/tenant/new?' . http_build_query($_GET);
+
+        $secretKey = 'cde34567890100';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $data = new stdclass();
+        $data->code = Status::INVALID_ARGUMENT;
+        $data->status = 'error';
+        $data->message = Lang::get('validation.email', array('attribute' => 'email'));
+        $data->data = NULL;
+
+        $expect = json_encode($data);
+        $return = $this->call('POST', $url)->getContent();
+        $this->assertSame($expect, $return);
+    }
+
+    public function testEmailAlreadyExists_POST_api_v1_tenant_new()
+    {
+        // Data to be post
+        $_POST['email'] = 'john@localhost.org';
+        $_POST['name'] = 'Alfa Beta';
+        $_POST['status'] = 'active';
+        $_POST['external_object_id'] = 0;
+        $_SERVER['REMOTE_ADDR'] = '192.168.0.1';
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'cde345';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/tenant/new?' . http_build_query($_GET);
+
+        $secretKey = 'cde34567890100';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $message = Lang::get('validation.orbit.exists.email');
+        $data = new stdclass();
+        $data->code = Status::INVALID_ARGUMENT;
+        $data->status = 'error';
+        $data->message = $message;
+        $data->data = NULL;
+
+        $expect = json_encode($data);
+        $return = $this->call('POST', $url)->getContent();
+        $this->assertSame($expect, $return);
+    }
+
+    public function testMissingExternalObjectId_POST_api_v1_tenant_new()
+    {
+        // Data to be post
+        $_POST['email'] = 'george@localhost.org';
+        $_POST['name'] = 'Alfa Beta';
+        $_POST['status'] = 'active';
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'cde345';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/tenant/new?' . http_build_query($_GET);
+
+        $secretKey = 'cde34567890100';
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        // Add new permission name 'create_tenant'
+        $chuck = User::find(3);
+        $permission = new Permission();
+        $permission->permission_name = 'create_tenant';
+        $permission->save();
+
+        $chuck->permissions()->attach($permission->permission_id, array('allowed' => 'yes'));
+
+        $message = Lang::get('validation.required', array('attribute' => 'external object id'));
+        $data = new stdclass();
+        $data->code = Status::INVALID_ARGUMENT;
+        $data->status = 'error';
+        $data->message = $message;
+        $data->data = NULL;
+
+        $expect = json_encode($data);
+        $return = $this->call('POST', $url)->getContent();
+        $this->assertSame($expect, $return);
+    }
+
 
 }

@@ -372,7 +372,11 @@ return array(
             'new_lucky_draw'            => 'add new lucky draw',
             'update_lucky_draw'         => 'update lucky draw',
             'delete_lucky_draw'         => 'delete lucky draw',
-            'view_lucky_draw'           => 'view lucky draw'
+            'view_lucky_draw'           => 'view lucky draw',
+            'new_tenant'                => 'add new tenant',
+            'update_tenant'             => 'update tenant',
+            'delete_tenant'             => 'delete tenant',
+            'view_tenant'               => 'view tenant',
         ),
     ),
 
