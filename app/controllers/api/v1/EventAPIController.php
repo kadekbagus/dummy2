@@ -1021,6 +1021,8 @@ class EventAPIController extends ControllerAPI
                         $events->with('news');
                     } elseif ($relation === 'translations') {
                         $events->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $events->with('translations.media');
                     }
                 }
             });
