@@ -123,6 +123,7 @@ return array(
         'click_here'        => '点击这里',
         'email_not_valid'   => '电子邮件地址无效',
         'logging_in_button' => '登录，请稍候',
+        'loading_orbit'     => '轨道加载中，请稍候...',        
     ),
 
     'catalogue' => array(
@@ -176,6 +177,7 @@ return array(
         'want_unlimited_browsing'          => '希望限制浏览?',
         'or_want_to_follow_the_lucky_draw' => '还是想跟着抽奖?',
         'open_your_email_and_verify_now'   => '打开你的邮件，现在确认!!',
+        'validity'                         => '有效性',
     ), 
 
     'promotion_list' => array(

@@ -123,6 +123,7 @@ return array(
         'click_here'        => 'click here',
         'email_not_valid'   => 'Email address is not valid',
         'logging_in_button' => 'Logging in. Please wait...',
+        'loading_orbit'     => 'Loading Orbit, please wait...',
     ),
 
     'catalogue' => array(
@@ -176,6 +177,7 @@ return array(
         'want_unlimited_browsing'          => 'Want unlimited browsing?',
         'or_want_to_follow_the_lucky_draw' => 'Or want to follow the lucky draw?',
         'open_your_email_and_verify_now'   => 'Open your email and verify now!!',
+        'validity'                         => 'Validity',
     ),    
 
     'promotion_list' => array(

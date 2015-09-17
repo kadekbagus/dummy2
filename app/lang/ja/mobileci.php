@@ -123,6 +123,7 @@ return array(
         'click_here'        => 'ここをクリック',
         'email_not_valid'   => 'メールアドレスが有効ではありません',
         'logging_in_button' => 'ログインしています.しばらくお待ちください...',
+        'loading_orbit'     => 'オービットをロードすると、待機してください...',        
     ),
 
     'catalogue' => array(
@@ -176,6 +177,7 @@ return array(
         'want_unlimited_browsing'          => '無制限のブラウジングをしたいです',
         'or_want_to_follow_the_lucky_draw' => 'または抽選をフォローしたいです',
         'open_your_email_and_verify_now'   => 'あなたの電子メールを開いて、今すぐ確認します',
+        'validity'                         => '妥当性',
     ), 
 
     'promotion_list' => array(

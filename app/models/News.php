@@ -32,6 +32,14 @@ class News extends Eloquent
         return $this->belongsTo('User', 'modified_by', 'user_id');
     }
 
+    /**
+     * Event strings can be translated to many languages.
+     */
+    public function translations()
+    {
+        return $this->hasMany('NewsTranslation', 'news_id', 'news_id')->excludeDeleted();
+    }
+
     public function tenants()
     {
         return $this->belongsToMany('Retailer', 'news_merchant', 'news_id', 'merchant_id')
