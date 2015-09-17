@@ -80,6 +80,8 @@ class postNewEvent_TranslationsTest extends TestCase
             'translations' => json_encode($translations)
         ]);
 
+        $_POST['id_language_default'] = 1;
+
         $url = '/api/v1/event/new?' . http_build_query($_GET);
 
         $secretKey = $this->authData->api_secret_key;
