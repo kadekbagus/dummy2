@@ -28,7 +28,7 @@ class CaptivePortalPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($queries['query']);
         $statement->execute($queries['binds']);
 
-        $pageTitle = 'Captive Portal Report';
+        $pageTitle = 'Orbit Captive Portal User Report';
         switch ($mode) {
             case 'csv':
                 $fields = ['user_firstname', 'user_lastname', 'os', 'age', 'gender', 'total_visits', 'sign_up_method', 'user_email', 'first_visit', 'last_visit'];
@@ -39,7 +39,7 @@ class CaptivePortalPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
 
                 printf($header_template, '', '', '', '', '', '', '', '', '', '', '');
-                printf($header_template, '', 'Captive Portal Report', '', '', '', '', '', '', '', '', '');
+                printf($header_template, '', 'Orbit Captive Portal User Report', '', '', '', '', '', '', '', '', '');
                 printf($header_template, '', 'Total Rows', $totalRec, '', '', '', '', '', '', '', '');
 
                 printf($header_template, '', '', '', '', '', '', '', '', '', '', '');
@@ -126,7 +126,7 @@ class CaptivePortalPrinterController extends DataPrinterController
         }
         $date = explode(' ',$date);
         $time = strtotime($date[0]);
-        $new_format = date('d / M / Y', $time);
+        $new_format = date('d M Y', $time);
         $result = $new_format.' '.$date[1];
         return $result;
     }
