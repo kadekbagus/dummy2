@@ -162,6 +162,21 @@ class NewsAPIController extends ControllerAPI
 
             $newnews->save();
 
+            // save default language translation
+            $news_translation_default = new NewsTranslation();
+            $news_translation_default->news_id = $newnews->news_id;
+            $news_translation_default->merchant_id = $newnews->mall_id;
+            $news_translation_default->merchant_language_id = $id_language_default;
+            $news_translation_default->news_name = $newnews->news_name;
+            $news_translation_default->description = $newnews->description;
+            $news_translation_default->status = 'active';
+            $news_translation_default->created_by = $this->api->user->user_id;
+            $news_translation_default->modified_by = $this->api->user->user_id;
+            $news_translation_default->save();
+
+            Event::fire('orbit.news.after.translation.save', array($this, $news_translation_default));
+
+
             // save NewsMerchant.
             $newsretailers = array();
             foreach ($retailer_ids as $retailer_id) {
@@ -182,6 +197,7 @@ class NewsAPIController extends ControllerAPI
             });
 
             $this->response->data = $newnews;
+            $this->response->data->translation_default = $news_translation_default;
 
             // Commit the changes
             $this->commit();
@@ -1622,21 +1638,6 @@ class NewsAPIController extends ControllerAPI
                 }
             }
         }
-
-        // save default language translation
-        $news_translation_default = new NewsTranslation();
-        $news_translation_default->news_id = $news->news_id;
-        $news_translation_default->merchant_id = $news->mall_id;
-        $news_translation_default->merchant_language_id = $id_language_default;
-        $news_translation_default->news_name = $news->news_name;
-        $news_translation_default->description = $news->description;
-        $news_translation_default->status = 'active';
-        $news_translation_default->created_by = $this->api->user->user_id;
-        $news_translation_default->modified_by = $this->api->user->user_id;
-        $news_translation_default->save();
-
-        Event::fire('orbit.news.after.translation.save', array($this, $news_translation_default));
-
 
         foreach ($operations as $operation) {
             $op = $operation[0];
