@@ -119,6 +119,8 @@ class LuckyDrawNumberNotifier
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
             }
 
+            $this->poster->addHeader('Accept', 'application/json');
+
             $this->poster->setUserAgent(Config::get('orbit-notifier.user-agent'));
             $this->poster->post($url, $postData);
 

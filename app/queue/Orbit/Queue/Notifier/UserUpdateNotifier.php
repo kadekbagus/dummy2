@@ -117,6 +117,8 @@ class UserUpdateNotifier
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
             }
 
+            $this->poster->addHeader('Accept', 'application/json');
+
             $this->poster->setUserAgent(Config::get('orbit-notifier.user-agent'));
             $this->poster->post($url, $postData);
 
@@ -188,7 +190,7 @@ class UserUpdateNotifier
 
             if (! DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->beginTransaction();
-                $insideTransactionFromNotifier = TRUE;                
+                $insideTransactionFromNotifier = TRUE;
             }
 
             $doSave = FALSE;
