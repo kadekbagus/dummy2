@@ -105,7 +105,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Captive Portal Report</h2>
+    <h2 style="margin-bottom:0.5em;"><?php echo htmlspecialchars($pageTitle); ?></h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
