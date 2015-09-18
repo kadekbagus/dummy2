@@ -8,6 +8,7 @@
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\Helper\Generator;
 use Laracasts\TestDummy\Factory;
+use Faker\Factory as Faker;
 
 class postNewNewsTest extends TestCase {
 
@@ -30,7 +31,7 @@ class postNewNewsTest extends TestCase {
         $_GET['apitimestamp'] = time();
 
         $_POST['mall_id']                   = $merchant->merchant_id;
-        $_POST['news_name']                 = 'Unique Submitted News';
+        $_POST['news_name']                 = Faker::create()->sentence(3);
         $_POST['object_type']               = 'news';
         $_POST['status']                    = 'active';
         $_POST['link_object_type']          = 'tenant';
@@ -48,9 +49,8 @@ class postNewNewsTest extends TestCase {
 
         // Should be OK
         $this->assertResponseOk();
-
         // should say OK
         $this->assertSame(Status::OK, $response->code);
-        $this->assertSame('Request OK', $response->message);
+        $this->assertSame(Status::OK_MSG, $response->message);
     }
 }

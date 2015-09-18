@@ -21,7 +21,7 @@
 
 $factory('News', [
     'mall_id' => 'factory:Merchant',
-    'news_name'  => $faker->words(2),
+    'news_name'  => $faker->sentence(3),
     'object_type'  => $faker->randomElement(['promotion', 'news']),
     'status'      => 'active',
     'begin_date'  => $faker->dateTimeBetween('-2 months'),
