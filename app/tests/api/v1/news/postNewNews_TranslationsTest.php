@@ -97,7 +97,6 @@ class postNewNews_TranslationsTest extends TestCase
 
     private function createNewsData()
     {
-        $faker = Faker\Factory::create();
         return Factory::attributesFor('News', [
             'mall_id' => $this->mall->merchant_id,
         ]);
