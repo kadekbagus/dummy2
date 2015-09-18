@@ -145,6 +145,8 @@ return array(
             'view_personal_interest' => 'You do not have access to view personal interest',
             'view_role'              => 'You do not have access to view role',
             'inactiveuser'           => 'You do not have access to the requested resource.',
+            'missingmasterpassword'  => 'The master password is not set.',
+            'wrongmasterpassword'    => 'The master password is incorrect.',
         ),
         'empty' => array(
             'role'                 => 'The Role ID you specified is not found.',

@@ -58,7 +58,7 @@ class TenantAPIController extends ControllerAPI
 
             $retailer_id = OrbitInput::post('retailer_id');
             $password = OrbitInput::post('password');
-
+            
             $validator = Validator::make(
                 array(
                     'retailer_id' => $retailer_id,
@@ -1877,12 +1877,13 @@ class TenantAPIController extends ControllerAPI
 
             if (! is_object($masterPassword)) {
                 // @Todo replace with language
-                $message = 'The master password is not set.';
+                $message = Lang::get('validation.orbit.access.wrongmasterpassword');
                 ACL::throwAccessForbidden($message);
             }
 
             if (! Hash::check($value, $masterPassword->setting_value)) {
-                $message = 'The master password is incorrect.';
+                $message = Lang::get('validation.orbit.access.wrongmasterpassword');
+
                 ACL::throwAccessForbidden($message);
             }
 
