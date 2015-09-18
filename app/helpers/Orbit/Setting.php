@@ -115,8 +115,8 @@ class Setting
         }
 
 
-        if (Config::get('app.aliases.Eloquent') != 'OrbitShop\API\V2\Model') {
-            throw new \Exception('Eloquent should be an OrbitShop\API\V2\Model');
+        if (Config::get('app.aliases.Eloquent') != 'Orbit\Database\ModelWithObjectID') {
+            throw new \Exception('Eloquent should be an Orbit\Database\ModelWithObjectID');
         };
 
         if ($user === NULL) {

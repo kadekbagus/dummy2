@@ -1,9 +1,8 @@
-<?php namespace OrbitShop\API\V2;
-
+<?php namespace Orbit\Database;
 
 use JsonSerializable;
-use OrbitShop\API\V2\ObjectID\Generator;
-use OrbitShop\API\V2\ObjectID\InvalidException;
+use Orbit\Database\ObjectID\Generator;
+use Orbit\Database\ObjectID\InvalidException;
 
 class ObjectID implements JsonSerializable {
 
@@ -92,7 +91,7 @@ class ObjectID implements JsonSerializable {
     {
         if (! is_string($str) ) return false;
 
-        return $this->isHex($str) || $this->isd64($str);
+        return static::isHex($str) || static::isd64($str);
     }
 
     /**

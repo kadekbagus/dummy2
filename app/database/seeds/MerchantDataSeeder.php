@@ -6,6 +6,9 @@
  */
 class MerchantDataSeeder extends Seeder
 {
+    const MERCHANT_ID = "EWv3------------";
+    const RETAILER_ID = "EXs5F-----------";
+
     public function run()
     {
         // Mall account but this on the database is recorded as "Merchant"
@@ -77,9 +80,9 @@ class MerchantDataSeeder extends Seeder
 
         // Data for merchant
         $merchantData = [
-            'merchant_id'   => 1,
+            'merchant_id'   => static::MERCHANT_ID,
             'omid'          => 'LIPPO-MALL',
-            'user_id'       => 2,
+            'user_id'       => $merchantUser->user_id,
             'email'         => 'lippomall@myorbit.com',
             'name'          => 'Lippo Mall',
             'description'   => 'Lippo Mall',
@@ -107,9 +110,9 @@ class MerchantDataSeeder extends Seeder
 
         // Data for retailer
         $retailerData = [
-            'merchant_id'   => 2,
+            'merchant_id'   => static::RETAILER_ID,
             'omid'          => 'LIPPO-MALL-PURI-01',
-            'user_id'       => 3,
+            'user_id'       => $merchantUser->user_id,
             'email'         => 'lippomallpuri@myorbit.com',
             'name'          => 'Lippo Mall Puri',
             'description'   => 'Lippo Mall Puri',

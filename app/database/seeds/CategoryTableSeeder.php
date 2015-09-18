@@ -42,15 +42,13 @@ CATEGORIES;
         } catch (Illuminate\Database\QueryException $e) {
         }
 
-        $lippoMallPuri = Retailer::where('merchant_id', 2)->first();
-
         foreach ($categories as $category) {
             $category = trim($category);
 
             $this->command->info(sprintf('    Create record for category %s.', $category));
 
             $record = [
-                'merchant_id'       => $lippoMallPuri->merchant_id,
+                'merchant_id'       => MerchantDataSeeder::MERCHANT_ID,
                 'category_name'     => $category,
                 'category_level'    => 1,
                 'category_order'    => 0,

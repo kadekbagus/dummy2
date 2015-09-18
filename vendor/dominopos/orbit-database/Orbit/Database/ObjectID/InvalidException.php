@@ -1,4 +1,4 @@
-<?php namespace OrbitShop\API\V2\ObjectID;
+<?php namespace Orbit\Database\ObjectID;
 
 
 class InvalidException extends \Exception {

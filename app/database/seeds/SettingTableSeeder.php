@@ -19,11 +19,11 @@ class SettingTableSeeder extends Seeder
 
         $record = [
             'setting_name'  => 'current_retailer',
-            'setting_value' => '2',
+            'setting_value' => MerchantDataSeeder::RETAILER_ID,
             'status'        => 'active'
         ];
         Setting::create($record);
-        $this->command->info(sprintf('    Create record `current_retailer` set to %s.', 2));
+        $this->command->info(sprintf('    Create record `current_retailer` set to %s.', MerchantDataSeeder::RETAILER_ID));
         $this->command->info('settings table seeded.');
     }
 }
