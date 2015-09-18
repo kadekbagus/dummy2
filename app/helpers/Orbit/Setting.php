@@ -114,6 +114,11 @@ class Setting
             throw new \Exception('Please change "app.key" setting on app.php file .');
         }
 
+
+        if (Config::get('app.aliases.Eloquent') != 'OrbitShop\API\V2\Model') {
+            throw new \Exception('Eloquent should be an OrbitShop\API\V2\Model');
+        };
+
         if ($user === NULL) {
             // Create dummy user
             $this->user = new \stdclass();
