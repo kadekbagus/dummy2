@@ -726,7 +726,7 @@ class TenantAPIController extends ControllerAPI
             });
 
             OrbitInput::post('user_id', function($user_id) use ($updatedtenant) {
-                // $updatedtenant->user_id = $user_id;
+                $updatedtenant->user_id = $user_id;
             });
 
             OrbitInput::post('email', function($email) use ($updatedtenant) {
@@ -1027,7 +1027,7 @@ class TenantAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
 
             // Rollback the changes
             $this->rollBack();
