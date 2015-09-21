@@ -83,9 +83,9 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
  */
 Event::listen('orbit.news.after.translation.save', function($controller, $news_translations)
 {
-    
-    $image_id = $news_translations->merchant_language_id;
 
+    $image_id = $news_translations->merchant_language_id;
+    
     $files = OrbitInput::files('image_translation_' . $image_id);
     if (! $files) {
         return;
