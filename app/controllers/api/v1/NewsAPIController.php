@@ -485,6 +485,10 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.after.translation.save', array($this, $updatednews_default_language));
 
+            // return respones if any upload image or no
+            $updatednews_default_language->load('media');
+
+
             // save NewsMerchant
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatednews) {
                 if ($no_retailer == 'Y') {
@@ -1704,8 +1708,10 @@ class NewsAPIController extends ControllerAPI
                 // @param NewsTranslation $existing_transalation
                 Event::fire('orbit.news.after.translation.save', array($this, $existing_translation));
 
-                $news->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
+                // return respones if any upload image or no
+                $existing_translation->load('media');
 
+                $news->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
 
             }
             elseif ($op === 'delete') {
