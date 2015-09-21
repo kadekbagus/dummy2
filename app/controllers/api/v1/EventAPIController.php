@@ -31,7 +31,7 @@ class EventAPIController extends ControllerAPI
      * @param file       `images`                (optional) - Event image
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: retailer, retailer_category, promotion, news.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
-     * @param array      `id_language_default`   (optional) - ID language default     
+     * @param integer    `id_language_default`   (optional) - ID language default  
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -159,8 +159,7 @@ class EventAPIController extends ControllerAPI
 
             $newevent->save();
 
-
-            // save default language translation
+            // save event language translation
             $event_translation_default = new EventTranslation();
             $event_translation_default->event_id = $newevent->event_id;
             $event_translation_default->merchant_language_id = $id_language_default;
@@ -172,7 +171,6 @@ class EventAPIController extends ControllerAPI
             $event_translation_default->save();
 
             Event::fire('orbit.event.after.translation.save', array($this, $event_translation_default));
-
 
             // save EventRetailer
             $eventretailers = array();
@@ -313,6 +311,7 @@ class EventAPIController extends ControllerAPI
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: retailer, retailer_category, promotion, news.
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
+     * @param integer    `id_language_default`   (optional) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -363,13 +362,15 @@ class EventAPIController extends ControllerAPI
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
-                'event_id'         => $event_id,
-                'merchant_id'      => $merchant_id,
-                'event_type'       => $event_type,
-                'status'           => $status,
-                'link_object_type' => $link_object_type,
+                'event_id'            => $event_id,
+                'merchant_id'         => $merchant_id,
+                'event_type'          => $event_type,
+                'status'              => $status,
+                'link_object_type'    => $link_object_type,
+                'id_language_default' => $id_language_default,
             );
 
             // Validate event_name only if exists in POST.
@@ -380,12 +381,13 @@ class EventAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'event_id'         => 'required|numeric|orbit.empty.event',
-                    'merchant_id'      => 'numeric|orbit.empty.merchant',
-                    'event_name'       => 'sometimes|required|min:5|max:255|event_name_exists_but_me',
-                    'event_type'       => 'orbit.empty.event_type',
-                    'status'           => 'orbit.empty.event_status',
-                    'link_object_type' => 'orbit.empty.link_object_type',
+                    'event_id'            => 'required|numeric|orbit.empty.event',
+                    'merchant_id'         => 'numeric|orbit.empty.merchant',
+                    'event_name'          => 'sometimes|required|min:5|max:255|event_name_exists_but_me',
+                    'event_type'          => 'orbit.empty.event_type',
+                    'status'              => 'orbit.empty.event_status',
+                    'link_object_type'    => 'orbit.empty.link_object_type',
+                    'id_language_default' => 'required|numeric',
                 ),
                 array(
                    'event_name_exists_but_me' => Lang::get('validation.orbit.exists.event_name'),
@@ -405,6 +407,8 @@ class EventAPIController extends ControllerAPI
             $this->beginTransaction();
 
             $updatedevent = EventModel::with('retailers', 'retailerCategories', 'promotions', 'news')->excludeDeleted()->where('event_id', $event_id)->first();
+
+            $updatedevent_default_language = EventTranslation::excludeDeleted()->where('event_id', $event_id)->where('merchant_language_id', $id_language_default)->first();
 
             // save Event
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedevent) {
@@ -452,9 +456,26 @@ class EventAPIController extends ControllerAPI
 
             $updatedevent->modified_by = $this->api->user->user_id;
 
+
+            // post event default language
+            OrbitInput::post('event_name', function($event_name) use ($updatedevent_default_language) {
+                $updatedevent_default_language->event_name = $event_name;
+            });
+
+            OrbitInput::post('status', function($status) use ($updatedevent_default_language) {
+                $updatedevent_default_language->status = $status;
+            });
+
+            OrbitInput::post('description', function($description) use ($updatedevent_default_language) {
+                $updatedevent_default_language->description = $description;
+            });
+
+            $updatedevent_default_language->modified_by = $this->api->user->user_id;
+
             Event::fire('orbit.event.postupdateevent.before.save', array($this, $updatedevent));
 
             $updatedevent->save();
+            $updatedevent_default_language->save();            
 
             // save EventRetailer
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedevent) {
@@ -527,6 +548,8 @@ class EventAPIController extends ControllerAPI
 
             Event::fire('orbit.event.postupdateevent.after.save', array($this, $updatedevent));
             $this->response->data = $updatedevent;
+            $this->response->data->translation_default = $updatedevent_default_language;
+
 
             // Commit the changes
             $this->commit();
@@ -1753,6 +1776,7 @@ class EventAPIController extends ControllerAPI
                 $event->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
+
                 /** @var EventTranslation $existing_translation */
                 $existing_translation = $operation[1];
                 $data = $operation[2];

@@ -31,7 +31,7 @@ class NewsAPIController extends ControllerAPI
      * @param integer    `sticky_order`          (optional) - Sticky order.
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: tenant, tenant_category.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
-     * @param array      `id_language_default`   (optional) - ID language default
+     * @param integer    `id_language_default`   (optional) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -192,8 +192,8 @@ class NewsAPIController extends ControllerAPI
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));            
 
             // translation for mallnews
-            OrbitInput::post('translations', function($translation_json_string) use ($newnews, $id_language_default) {
-                $this->validateAndSaveTranslations($id_language_default, $newnews, $translation_json_string, 'create');
+            OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
+                $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
             });
 
             $this->response->data = $newnews;
@@ -317,6 +317,7 @@ class NewsAPIController extends ControllerAPI
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: tenant, tenant_category.
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
+     * @param integer    `id_language_default`   (optional) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -367,13 +368,15 @@ class NewsAPIController extends ControllerAPI
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
-                'news_id'          => $news_id,
-                'mall_id'          => $mall_id,
-                'object_type'      => $object_type,
-                'status'           => $status,
-                'link_object_type' => $link_object_type,
+                'news_id'             => $news_id,
+                'mall_id'             => $mall_id,
+                'object_type'         => $object_type,
+                'status'              => $status,
+                'link_object_type'    => $link_object_type,
+                'id_language_default' => $id_language_default,
             );
 
             // Validate news_name only if exists in POST.
@@ -384,12 +387,13 @@ class NewsAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'news_id'          => 'required|numeric|orbit.empty.news',
-                    'mall_id'          => 'numeric|orbit.empty.mall',
-                    'news_name'        => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
-                    'object_type'      => 'orbit.empty.news_object_type',
-                    'status'           => 'orbit.empty.news_status',
-                    'link_object_type' => 'orbit.empty.link_object_type',
+                    'news_id'             => 'required|numeric|orbit.empty.news',
+                    'mall_id'             => 'numeric|orbit.empty.mall',
+                    'news_name'           => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
+                    'object_type'         => 'orbit.empty.news_object_type',
+                    'status'              => 'orbit.empty.news_status',
+                    'link_object_type'    => 'orbit.empty.link_object_type',
+                    'id_language_default' => 'required|numeric',
                 ),
                 array(
                    'news_name_exists_but_me' => Lang::get('validation.orbit.exists.news_name'),
@@ -409,6 +413,9 @@ class NewsAPIController extends ControllerAPI
             $this->beginTransaction();
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
+            
+            $updatednews_default_language = NewsTranslation::excludeDeleted()->where('news_id', $news_id)->where('merchant_id', $mall_id)->where('merchant_language_id', $id_language_default)->first();
+
 
             // save News
             OrbitInput::post('mall_id', function($mall_id) use ($updatednews) {
@@ -425,10 +432,6 @@ class NewsAPIController extends ControllerAPI
 
             OrbitInput::post('status', function($status) use ($updatednews) {
                 $updatednews->status = $status;
-            });
-
-            OrbitInput::post('description', function($description) use ($updatednews) {
-                $updatednews->description = $description;
             });
 
             OrbitInput::post('begin_date', function($begin_date) use ($updatednews) {
@@ -453,15 +456,34 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->link_object_type = $link_object_type;
             });
 
-            OrbitInput::post('translations', function($translation_json_string) use ($updatedeventupdatednews) {
+            OrbitInput::post('translations', function($translation_json_string) use ($updatednews) {
                 $this->validateAndSaveTranslations($updatednews, $translation_json_string, 'update');
             });
 
             $updatednews->modified_by = $this->api->user->user_id;
 
+
+            //  save news default language
+            OrbitInput::post('news_name', function($news_name) use ($updatednews_default_language) {
+                $updatednews_default_language->news_name = $news_name;
+            });
+
+            OrbitInput::post('description', function($description) use ($updatednews_default_language) {
+                $updatednews_default_language->description = $description;
+            });
+
+            OrbitInput::post('status', function($status) use ($updatednews_default_language) {
+                $updatednews_default_language->status = $status;
+            });
+
+            $updatednews_default_language->modified_by = $this->api->user->user_id;
+
             Event::fire('orbit.news.postupdatenews.before.save', array($this, $updatednews));
 
             $updatednews->save();
+            $updatednews_default_language->save();
+
+            Event::fire('orbit.news.after.translation.save', array($this, $updatednews_default_language));
 
             // save NewsMerchant
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatednews) {
@@ -506,6 +528,7 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
+            $this->response->data->translation_default = $updatednews_default_language;
 
             // Commit the changes
             $this->commit();
@@ -1580,7 +1603,7 @@ class NewsAPIController extends ControllerAPI
      * @param string $scenario 'create' / 'update'
      * @throws InvalidArgsException
      */
-    private function validateAndSaveTranslations($id_language_default, $news, $translations_json_string, $scenario = 'create')
+    private function validateAndSaveTranslations($news, $translations_json_string, $scenario = 'create')
     {
         /*
          * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
@@ -1602,6 +1625,7 @@ class NewsAPIController extends ControllerAPI
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
+
 
         // translate for mall
         foreach ($data as $merchant_language_id => $translations) {
@@ -1641,6 +1665,7 @@ class NewsAPIController extends ControllerAPI
 
         foreach ($operations as $operation) {
             $op = $operation[0];
+
             if ($op === 'create') {
 
                 // for translation per mall
@@ -1658,12 +1683,13 @@ class NewsAPIController extends ControllerAPI
 
                 // Fire an news which listen on orbit.news.after.translation.save
                 // @param ControllerAPI $this
-                // @param EventTranslation $new_transalation
+                // @param NewsTranslation $new_transalation
                 Event::fire('orbit.news.after.translation.save', array($this, $new_translation));
 
                 $news->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
+
                 /** @var NewsTranslation $existing_translation */
                 $existing_translation = $operation[1];
                 $data = $operation[2];
@@ -1673,32 +1699,13 @@ class NewsAPIController extends ControllerAPI
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
 
-                // for translation per merchant
-                if (!empty($news->tenants)) {
-                    foreach ($news->tenants as $key => $merchant) {
-                        
-                        $new_translation_merchant = new NewsTranslation();
-                        $new_translation_merchant->news_id = $news->news_id;
-                        $new_translation->merchant_id = $news->mall_id;
-                        $new_translation_merchant->merchant_id = $merchant->merchant_id;
-                        $new_translation_merchant->merchant_language_id = $operation[1];
-                        foreach ($data as $field => $value) {
-                            $new_translation_merchant->{$field} = $value;
-                        }
+                // Fire an news which listen on orbit.news.after.translation.save
+                // @param ControllerAPI $this
+                // @param NewsTranslation $existing_transalation
+                Event::fire('orbit.news.after.translation.save', array($this, $existing_translation));
 
-                        $new_translation_merchant->created_by = $this->api->user->user_id;
-                        $new_translation_merchant->modified_by = $this->api->user->user_id;
+                $news->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
 
-                        $new_translation_merchant->save();
-
-                        // Fire an news which listen on orbit.news.after.translation.save
-                        // @param ControllerAPI $this
-                        // @param EventTranslation $new_transalation
-                        Event::fire('orbit.news.after.translation.save', array($this, $new_translation));
-
-                        $news->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
-                    }
-                }
 
             }
             elseif ($op === 'delete') {
