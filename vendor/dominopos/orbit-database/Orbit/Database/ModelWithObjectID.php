@@ -6,7 +6,17 @@ use Orbit\Database\Relation\BelongToManyWithObjectID;
 class ModelWithObjectID extends Model {
     public $incrementing = false;
 
-    public function save(array $options = array())
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function(ModelWithObjectID $model) {
+            $model->assignObjectID();
+        });
+    }
+
+    public function assignObjectID()
     {
         if (! $this->exists )
         {
@@ -20,7 +30,11 @@ class ModelWithObjectID extends Model {
 
             $this->setAttribute($this->getKeyName(), (string) $key);
         }
+    }
 
+    public function save(array $options = array())
+    {
+        $this->assignObjectID();
         parent::save();
     }
 
