@@ -873,12 +873,6 @@ class MallGroupAPIController extends ControllerAPI
      * @param file       `images`                   (optional) - Merchant logo
      * @param string     `mobile_default_language`  (optional) - Mobile default language
      * @param string     `pos_language`             (optional) - POS language
-     * @param array      `merchant_taxes`           (optional) - Merchant taxes array
-     * @param integer    `merchant_tax_id`          (optional) - Merchant Tax ID
-     * @param string     `tax_name`                 (optional) - Tax name
-     * @param string     `tax_type`                 (optional) - Tax type. Valid value: government, service, luxury.
-     * @param decimal    `tax_value`                (optional) - Tax value
-     * @param string     `is_delete`                (optional) - Soft delete flag. Valid value: Y.
      * @param string     `ticket_header`            (optional) - Ticket header
      * @param string     `ticket_footer`            (optional) - Ticket footer
      *
@@ -1151,73 +1145,6 @@ class MallGroupAPIController extends ControllerAPI
 
                     $updateuser->save();
                 }
-            });
-
-            // do insert/update/delete merchant_taxes
-            OrbitInput::post('merchant_taxes', function($merchant_taxes) use ($updatedmallgroup) {
-                $merchant_taxes = (array) $merchant_taxes;
-                foreach ($merchant_taxes as $merchant_tax) {
-                    // validate merchant_taxes
-                    $validator = Validator::make(
-                        array(
-                            'merchant_tax_id'        => $merchant_tax['merchant_tax_id'],
-                            'tax_name'               => $merchant_tax['tax_name'],
-                            'tax_type'               => $merchant_tax['tax_type'],
-                            'is_delete'              => $merchant_tax['is_delete'],
-                        ),
-                        array(
-                            'merchant_tax_id'        => 'orbit.empty.tax',
-                            'tax_name'               => 'required|max:50|tax_name_exists_but_me:'.$merchant_tax['merchant_tax_id'].','.$updatedmallgroup->merchant_id,
-                            'tax_type'               => 'orbit.empty.tax_type',
-                            'is_delete'              => 'orbit.exists.tax_link_to_product:'.$merchant_tax['merchant_tax_id'],
-                        ),
-                        array(
-                            'tax_name_exists_but_me' => Lang::get('validation.orbit.exists.tax_name'),
-                        )
-                    );
-
-                    Event::fire('orbit.mallgroup.postupdatemall.before.merchanttaxesvalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.mallgroup.postupdatemall.after.merchanttaxesvalidation', array($this, $validator));
-
-                    //save merchant_taxes
-                    if (trim($merchant_tax['merchant_tax_id']) === '') {
-                        // do insert
-                        $merchanttax = new MerchantTax();
-                        $merchanttax->merchant_id = $updatedmallgroup->merchant_id;
-                        $merchanttax->tax_name = $merchant_tax['tax_name'];
-                        $merchanttax->tax_type = $merchant_tax['tax_type'];
-                        $merchanttax->tax_value = $merchant_tax['tax_value'];
-                        $merchanttax->status = 'active';
-                        $merchanttax->created_by = $this->api->user->user_id;
-                        $merchanttax->save();
-                    } else {
-                        if ($merchant_tax['is_delete'] === 'Y') {
-                            // do soft delete
-                            $merchanttax = MerchantTax::excludeDeleted()->where('merchant_tax_id', $merchant_tax['merchant_tax_id'])->first();
-                            $merchanttax->status = 'deleted';
-                            $merchanttax->modified_by = $this->api->user->user_id;
-                            $merchanttax->save();
-                        } else {
-                            // do update
-                            $merchanttax = MerchantTax::excludeDeleted()->where('merchant_tax_id', $merchant_tax['merchant_tax_id'])->first();
-                            $merchanttax->tax_name = $merchant_tax['tax_name'];
-                            $merchanttax->tax_type = $merchant_tax['tax_type'];
-                            $merchanttax->tax_value = $merchant_tax['tax_value'];
-                            $merchanttax->modified_by = $this->api->user->user_id;
-                            $merchanttax->save();
-                        }
-                    }
-                }
-
-                // reload taxes relation
-                $updatedmallgroup->load('taxes');
             });
 
             Event::fire('orbit.mallgroup.postupdatemallgroup.after.save', array($this, $updatedmallgroup));
