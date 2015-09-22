@@ -190,7 +190,7 @@ class postNewMallGroup extends TestCase
 
         // check the created user
         $user = $db_mall_group->user;
-        Hash::check($data['password'], $user->user_password);
+        $this->assertTrue(Hash::check($data['password'], $user->user_password));
         $this->assertSame($data['email'], $user->user_email);
         $this->assertSame($data['email'], $user->username);
         $this->assertSame($data['status'], $user->status);
