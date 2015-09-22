@@ -104,6 +104,8 @@ class postNewMallGroup extends TestCase
         $data['address_line1'] = $faker->streetAddress;
         $data['address_line2'] = $faker->city;
         $data['address_line3'] = $faker->state;
+        // todo fix when postal code turns into string
+        $data['postal_code'] = $faker->numberBetween(1000, 4000);
         $data['city'] = $faker->city;
         $data['description'] = $faker->sentence();
         $data['phone'] = $faker->phoneNumber;
@@ -148,6 +150,7 @@ class postNewMallGroup extends TestCase
             'address_line1',
             'address_line2',
             'address_line3',
+            'postal_code',
             'city',
             'phone',
             'fax',
@@ -173,7 +176,7 @@ class postNewMallGroup extends TestCase
         ];
 
         foreach ($fields as $field) {
-            $this->assertSame($data[$field], $db_mall_group->{$field}, 'Field ' . $field . ' must match');
+            $this->assertSame((string)$data[$field], (string)$db_mall_group->{$field}, 'Field ' . $field . ' must match');
         }
 
         $datetime_fields = [
