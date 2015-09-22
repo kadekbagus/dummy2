@@ -6,8 +6,5 @@ Route::get('/app/v1/language/list', 'IntermediateAuthController@Language_getSear
 // Get merchant languages
 Route::get('/app/v1/language/list-merchant', 'IntermediateAuthController@Language_getSearchMerchantLanguage');
 
-// Add merchant language
-Route::post('/app/v1/language/add-merchant', 'IntermediateAuthController@Language_postAddMerchantLanguage');
-
-// Delete merchant language
-Route::post('/app/v1/language/delete-merchant', 'IntermediateAuthController@Language_postDeleteMerchantLanguage');
+// Add and modif merchant language
+Route::post('/app/v1/language/merchant', 'IntermediateAuthController@Language_postAddMerchantLanguage');
