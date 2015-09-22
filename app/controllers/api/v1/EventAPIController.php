@@ -475,7 +475,6 @@ class EventAPIController extends ControllerAPI
             Event::fire('orbit.event.postupdateevent.before.save', array($this, $updatedevent));
 
             $updatedevent->save();
-            $updatedevent_default_language->save();
 
             Event::fire('orbit.event.after.translation.save', array($this, $updatedevent_default_language));
 
