@@ -870,7 +870,6 @@ class MallGroupAPIController extends ControllerAPI
      * @param string     `contact_person_phone2`    (optional) - Contact person phone2
      * @param string     `contact_person_email`     (optional) - Contact person email
      * @param string     `sector_of_activity`       (optional) - Sector of activity
-     * @param string     `parent_id`                (optional) - The merchant id
      * @param file       `images`                   (optional) - Merchant logo
      * @param string     `mobile_default_language`  (optional) - Mobile default language
      * @param string     `pos_language`             (optional) - POS language
@@ -1104,10 +1103,6 @@ class MallGroupAPIController extends ControllerAPI
 
             OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedmallgroup) {
                 $updatedmallgroup->sector_of_activity = $sector_of_activity;
-            });
-
-            OrbitInput::post('parent_id', function($parent_id) use ($updatedmallgroup) {
-                $updatedmallgroup->parent_id = $parent_id;
             });
 
             OrbitInput::post('url', function($url) use ($updatedmallgroup) {
