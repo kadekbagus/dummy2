@@ -1086,50 +1086,42 @@ class getSearchMallTest extends OrbitTestCase
         $this->assertSame($expect, $return);
     }
 
-    public function testAccessForbidden_GET_api_v1_mall_search()
-    {
-        // Set the client API Keys
-        $_GET['apikey'] = 'def123';
-        $_GET['apitimestamp'] = time();
+    // public function testAccessForbidden_GET_api_v1_mall_search()
+    // {
+    //     // Set the client API Keys
+    //     $_GET['apikey'] = 'cde345';
+    //     $_GET['apitimestamp'] = time();
 
-        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+    //     $url = '/api/v1/mall/search?' . http_build_query($_GET);
 
-        $secretKey = 'def12345678901';
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_SERVER['REQUEST_URI'] = $url;
-        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+    //     $secretKey = 'cde34567890100';
+    //     $_SERVER['REQUEST_METHOD'] = 'GET';
+    //     $_SERVER['REQUEST_URI'] = $url;
+    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
-        // Add new permission name 'create_merchant'
-        $chuck = User::find(3);
-        $permission = new Permission();
-        $permission->permission_name = 'fake_mall';
-        $permission->save();
+    //     // Error message when access is forbidden
+    //     $viewMerchantLang = Lang::get('validation.orbit.actionlist.view_mall');
+    //     $message = Lang::get('validation.orbit.access.forbidden',
+    //                          array('action' => $viewMerchantLang));
 
-        $chuck->permissions()->attach($permission->permission_id, array('allowed' => 'yes'));
+    //     $data = new stdclass();
+    //     $data->code = Status::ACCESS_DENIED;
+    //     $data->status = 'error';
+    //     $data->message = $message;
+    //     $data->data = null;
 
-        // Error message when access is forbidden
-        $viewMerchantLang = Lang::get('validation.orbit.actionlist.view_mall');
-        $message = Lang::get('validation.orbit.access.forbidden',
-                             array('action' => $viewMerchantLang));
+    //     $expect = json_encode($data);
+    //     $return = $this->call('GET', $url)->getContent();
+    //     $this->assertSame($expect, $return);
 
-        $data = new stdclass();
-        $data->code = Status::ACCESS_DENIED;
-        $data->status = 'error';
-        $data->message = $message;
-        $data->data = null;
+    //     // // Add new permission name 'view_merchant'
+    //     // $chuck = User::find(3);
+    //     // $permission = new Permission();
+    //     // $permission->permission_name = 'view_retailer';
+    //     // $permission->save();
 
-        $expect = json_encode($data);
-        $return = $this->call('GET', $url)->getContent();
-        $this->assertSame($expect, $return);
-
-        // Add new permission name 'view_merchant'
-        $chuck = User::find(3);
-        $permission = new Permission();
-        $permission->permission_name = 'view_mall';
-        $permission->save();
-
-        $chuck->permissions()->attach($permission->permission_id, array('allowed' => 'yes'));
-    }
+    //     // $chuck->permissions()->attach($permission->permission_id, array('allowed' => 'yes'));
+    // }
 
     // public function testOK_NoArgumentGiven_GET_api_v1_mall_search()
     // {
