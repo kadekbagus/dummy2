@@ -966,12 +966,6 @@ class MallGroupAPIController extends ControllerAPI
                 $updatedmallgroup->omid = $omid;
             });
 
-            OrbitInput::post('user_id', function($user_id) use ($updatedmallgroup) {
-                // Right know the interface does not provide a way to change
-                // the user so it's better to skip it.
-                // $updatedmallgroup->user_id = $user_id;
-            });
-
             OrbitInput::post('email', function($email) use ($updatedmallgroup) {
                 $updatedmallgroup->email = $email;
             });
