@@ -1210,7 +1210,6 @@ class postNewTenantTest extends OrbitTestCase
         $_POST['name'] = 'Alfa Beta';
         $_POST['status'] = 'active';
         $_POST['external_object_id'] = 0;
-        $_SERVER['REMOTE_ADDR'] = '192.168.0.1';
 
         // Set the client API Keys
         $_GET['apikey'] = 'cde345';
@@ -1222,6 +1221,7 @@ class postNewTenantTest extends OrbitTestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_SERVER['REQUEST_URI'] = $url;
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+        $_SERVER['REMOTE_ADDR'] = '192.168.0.1';
 
         $message = Lang::get('validation.orbit.exists.email');
         $data = new stdclass();

@@ -315,6 +315,7 @@ return array(
             'update_user'               => 'update user',
             'view_user'                 => 'view user',
             'new_merchant'              => 'add new merchant',
+            'new_mall'                  => 'add new mall',
             'update_merchant'           => 'update merchant',
             'delete_merchant'           => 'delete merchant',
             'view_merchant'             => 'view merchant',
