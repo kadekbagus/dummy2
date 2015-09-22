@@ -159,7 +159,7 @@ class EventAPIController extends ControllerAPI
 
             $newevent->save();
 
-            // save event language translation
+            // save default language translation
             $event_translation_default = new EventTranslation();
             $event_translation_default->event_id = $newevent->event_id;
             $event_translation_default->merchant_language_id = $id_language_default;
@@ -475,7 +475,12 @@ class EventAPIController extends ControllerAPI
             Event::fire('orbit.event.postupdateevent.before.save', array($this, $updatedevent));
 
             $updatedevent->save();
-            $updatedevent_default_language->save();            
+            $updatedevent_default_language->save();
+
+            Event::fire('orbit.event.after.translation.save', array($this, $updatedevent_default_language));
+
+            // return respones if any upload image or no
+            $updatedevent_default_language->load('media');
 
             // save EventRetailer
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedevent) {
@@ -1790,6 +1795,9 @@ class EventAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $existing_transalation
                 Event::fire('orbit.event.after.translation.save', array($this, $existing_translation));
+
+                // return respones if any upload image or no
+                $existing_translation->load('media');
 
                 $event->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
             }
