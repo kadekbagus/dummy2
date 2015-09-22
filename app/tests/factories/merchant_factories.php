@@ -77,3 +77,20 @@ $factory('Retailer', 'retailer_mall', [
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
 ]);
+
+$factory('MallGroup', [
+    'name'      => $faker->company,
+    'user_id'   => 'factory:User',
+    'contact_person_firstname' => $faker->firstName,
+    'contact_person_lastname'  => $faker->lastName,
+    'contact_person_phone'     => $faker->phoneNumber,
+]);
+
+$factory('Mall', [
+    'parent_id' => 'factory:MallGroup',
+    'name'      => $faker->company,
+    'user_id'   => 'factory:User',
+    'contact_person_firstname' => $faker->firstName,
+    'contact_person_lastname'  => $faker->lastName,
+    'contact_person_phone'     => $faker->phoneNumber,
+]);
