@@ -196,6 +196,46 @@ class postNewMallGroup extends TestCase
         $this->assertSame($data['status'], $user->status);
     }
 
+    public function testPasswordNotEmptyIfNotSpecified()
+    {
+        $count_before = MallGroup::excludeDeleted()->count();
+
+        $response = $this->makeRequest($this->makeRequestData());
+        $this->assertSame('success', $response->status);
+        $this->assertSame('Request OK', $response->message);
+        $this->assertResponseStatus(200);
+
+        $count_after = MallGroup::excludeDeleted()->count();
+        $this->assertSame($count_before + 1, $count_after);
+
+        $db_mall_group = MallGroup::find($response->data->merchant_id);
+
+        $user = $db_mall_group->user;
+        $this->assertFalse(Hash::check('', $user->user_password),
+            'Password hash must not match empty password if password not specified');
+    }
+
+    public function testPasswordCanBeEmptyIfSpecified()
+    {
+        $count_before = MallGroup::excludeDeleted()->count();
+        $data = $this->makeRequestData();
+        $data['password'] = '';
+
+        $response = $this->makeRequest($data);
+        $this->assertSame('success', $response->status);
+        $this->assertSame('Request OK', $response->message);
+        $this->assertResponseStatus(200);
+
+        $count_after = MallGroup::excludeDeleted()->count();
+        $this->assertSame($count_before + 1, $count_after);
+
+        $db_mall_group = MallGroup::find($response->data->merchant_id);
+
+        $user = $db_mall_group->user;
+        $this->assertTrue(Hash::check('', $user->user_password),
+            'Password hash must match empty password if password specified as empty');
+    }
+
     public function testAddDuplicateEmail()
     {
         $data = $this->makeRequestData();

@@ -170,7 +170,11 @@ class MallGroupAPIController extends ControllerAPI
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_email = $email;
-            $newuser->user_password = Hash::make($password);
+            // lock the password unless specified
+            $newuser->user_password = '!';
+            OrbitInput::post('password', function ($password) use ($newuser) {
+                $newuser->user_password = Hash::make($password);
+            });
             $newuser->status = $status;
             $newuser->user_role_id = $roleMerchant->role_id;
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
