@@ -1027,11 +1027,11 @@ class MallGroupAPIController extends ControllerAPI
                 $updatedmallgroup->country = $countryName;
             });
 
-            OrbitInput::post('phone', function($phone) use ($updatedmall) {
+            OrbitInput::post('phone', function($phone) use ($updatedmallgroup) {
                 $updatedmallgroup->phone = $phone;
             });
 
-            OrbitInput::post('fax', function($fax) use ($updatedmall) {
+            OrbitInput::post('fax', function($fax) use ($updatedmallgroup) {
                 $updatedmallgroup->fax = $fax;
             });
 
