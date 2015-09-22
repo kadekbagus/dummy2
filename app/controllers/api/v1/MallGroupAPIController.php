@@ -877,8 +877,6 @@ class MallGroupAPIController extends ControllerAPI
      * @param file       `images`                   (optional) - Merchant logo
      * @param string     `mobile_default_language`  (optional) - Mobile default language
      * @param string     `pos_language`             (optional) - POS language
-     * @param string     `ticket_header`            (optional) - Ticket header
-     * @param string     `ticket_footer`            (optional) - Ticket footer
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -919,8 +917,6 @@ class MallGroupAPIController extends ControllerAPI
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
             $omid = OrbitInput::post('omid');
-            $ticket_header = OrbitInput::post('ticket_header');
-            $ticket_footer = OrbitInput::post('ticket_footer');
             $url = OrbitInput::post('url');
 
             $validator = Validator::make(
@@ -930,8 +926,6 @@ class MallGroupAPIController extends ControllerAPI
                     'email'             => $email,
                     'status'            => $status,
                     'omid'              => $omid,
-                    'ticket_header'     => $ticket_header,
-                    'ticket_footer'     => $ticket_footer,
                     'url'               => $url,
                 ),
                 array(
@@ -940,15 +934,11 @@ class MallGroupAPIController extends ControllerAPI
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.mall_status',
                     'omid'              => 'omid_exists_but_me',
-                    'ticket_header'     => 'ticket_header_max_length',
-                    'ticket_footer'     => 'ticket_footer_max_length',
                     'url'               => 'orbit.formaterror.url.web'
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
                    'omid_exists_but_me'       => Lang::get('validation.orbit.exists.omid'),
-                   'ticket_header_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
-                   'ticket_footer_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
             );
 
@@ -1118,14 +1108,6 @@ class MallGroupAPIController extends ControllerAPI
                     $pos_language = NULL;
                 }
                 $updatedmallgroup->pos_language = $pos_language;
-            });
-
-            OrbitInput::post('ticket_header', function($ticket_header) use ($updatedmallgroup) {
-                $updatedmallgroup->ticket_header = $ticket_header;
-            });
-
-            OrbitInput::post('ticket_footer', function($ticket_footer) use ($updatedmallgroup) {
-                $updatedmallgroup->ticket_footer = $ticket_footer;
             });
 
             $updatedmallgroup->modified_by = $this->api->user->user_id;
@@ -1646,32 +1628,6 @@ class MallGroupAPIController extends ControllerAPI
             }
 
             App::instance('orbit.exists.tax_link_to_product', $product);
-
-            return TRUE;
-        });
-
-        // Check ticket header max length
-        Validator::extend('ticket_header_max_length', function ($attribute, $value, $parameters) {
-            $ticketHeader = LineChecker::create($value)->noMoreThan(40);
-
-            if (!empty($ticketHeader)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.formaterror.mall.ticket_header.max_length', $ticketHeader);
-
-            return TRUE;
-        });
-
-        // Check ticket footer max length
-        Validator::extend('ticket_footer_max_length', function ($attribute, $value, $parameters) {
-            $ticketFooter = LineChecker::create($value)->noMoreThan(40);
-
-            if (!empty($ticketFooter)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.formaterror.mall.ticket_footer.max_length', $ticketFooter);
 
             return TRUE;
         });
