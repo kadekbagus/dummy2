@@ -38,7 +38,7 @@ class MallGroupAPIController extends ControllerAPI
      * @param string     `fax`                     (optional) - Fax of the merchant
      * @param string     `start_date_activity`     (optional) - Start date activity of the merchant
      * @param string     `end_date_activity`       (optional) - End date activity of the merchant
-     * @param string     `status`                  (optional) - Status of the merchant
+     * @param string     `status`                  (required) - Status of the merchant
      * @param string     `logo`                    (optional) - Logo of the merchant
      * @param string     `currency`                (optional) - Currency used by the merchant
      * @param string     `currency_symbol`         (optional) - Currency symbol
