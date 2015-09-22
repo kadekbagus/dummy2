@@ -911,7 +911,7 @@ class getSearchMallTest extends OrbitTestCase
                 (`merchant_id`, `omid`, `orid`, `user_id`, `email`, `name`, `description`, `address_line1`, `address_line2`, `address_line3`, `postal_code`, `city_id`, `city`, `country_id`, `country`, `phone`, `fax`, `start_date_activity`, `end_date_activity`, `status`, `logo`, `currency`, `currency_symbol`, `tax_code1`, `tax_code2`, `tax_code3`, `slogan`, `vat_included`, `contact_person_firstname`, `contact_person_lastname`, `contact_person_position`, `contact_person_phone`, `contact_person_phone2`, `contact_person_email`, `sector_of_activity`, `object_type`, `parent_id`, `is_mall`, `url`, `masterbox_number`, `slavebox_number`, `mobile_default_language`, `pos_language`, `ticket_header`, `ticket_footer`, `floor`, `unit`, `external_object_id`, `modified_by`, `created_at`, `updated_at`)
                 VALUES
                 (1, 'TAKASHIMAYA', '', 2, 'takashimaya@myorbit.com', 'Takashimaya', 'Takashimaya Shopping Center', NULL, NULL, NULL, 60123, 0, 'Jakarta', 101, 'Indonesia', '62|#|21|#|987654321', NULL, '2015-09-08 00:00:00', NULL, 'active', NULL, 'USD', '$', NULL, NULL, NULL, NULL, 'no', 'John', 'Doe', 'Marketing', '62|#||#|812345678', NULL, 'john-doe@myorbit.com', 'Retail', 'mall', NULL, 'yes', 'www.takashimaya.com.sg', '1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '2015-09-07 23:19:52', '2015-09-07 23:19:52'),
-                (2, 'TAKASHIMAYA-SC', '', 3, 'takashimayasc@myorbit.com', 'Takashimaya Shopping Center', 'Takashimaya Shopping Center', NULL, NULL, NULL, 60123, 0, 'Jakarta', 101, 'Indonesia', '62|#|21|#|987654321', NULL, '2015-09-08 00:00:00', NULL, 'active', NULL, 'USD', '$', NULL, NULL, NULL, NULL, 'no', 'John', 'Smith', 'Marketing', '62|#||#|812345679', NULL, 'john-smith@myorbit.com', 'Retail', 'mall', 1, 'yes', 'www.takashimaya.com.sg', '2', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '2015-09-07 23:19:52', '2015-09-07 23:19:52')"
+                (2, 'TAKASHIMAYA-SC', '', 3, 'takashimayasc@myorbit.com', 'Takashimaya Shopping Center', 'Takashimaya Shopping Center', NULL, NULL, NULL, 60123, 0, 'Jakarta', 101, 'Indonesia', '62|#|21|#|987654321', NULL, '2015-09-08 00:00:00', NULL, 'active', NULL, 'USD', '$', NULL, NULL, NULL, NULL, 'no', 'John', 'Smith', 'Marketing', '62|#||#|812345679', NULL, 'john-smith@myorbit.com', 'Retail', 'mall', NULL, 'yes', 'www.takashimaya.com.sg', '2', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '2015-09-07 23:19:52', '2015-09-07 23:19:52')"
         );
 
         // Insert dummy tenant
@@ -1123,857 +1123,733 @@ class getSearchMallTest extends OrbitTestCase
     //     // $chuck->permissions()->attach($permission->permission_id, array('allowed' => 'yes'));
     // }
 
-    // public function testOK_NoArgumentGiven_GET_api_v1_mall_search()
-    // {
-    //     // Data
-    //     // No argument given at all, show all merchants
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 2;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-    //     Config::set('orbit.pagination.per_page', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-    //     $_GET['sortby'] = 'registered_date';
-    //     $_GET['sortmode'] = 'desc';
-
-    //     $url = '/api/v1/mall/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame(Status::OK_MSG, (string)$response->message);
-
-    //     // Number of total records should be 6 and returned records 2
-    //     $this->assertSame(6, (int)$response->data->total_records); //exclude deleted merchants.
-    //     $this->assertSame(2, (int)$response->data->returned_records);
-
-    //     // The records attribute should be array
-    //     $this->assertTrue(is_array($response->data->records));
-    //     $this->assertSame(2, count($response->data->records));
-
-    //     $expect = array(
-    //         array(
-    //             'merchant_id'               => '7',
-    //             'user_id'                   => '3',
-    //             'email'                     => 'matabulan@localhost.org',
-    //             'name'                      => 'Mata Bulan',
-    //             'description'               => 'Tempat Beli Baju',
-    //             'address_line1'             => 'Jl. Tunjungan 07',
-    //             'address_line2'             => 'Komplek B7',
-    //             'address_line3'             => 'Lantai 07',
-    //             'postal_code'               => NULL,
-    //             'city_id'                   => '10',
-    //             'city'                      => 'Surabaya',
-    //             'country_id'                => '62',
-    //             'country'                   => 'Indonesia',
-    //             'phone'                     => '031-2123456',
-    //             'fax'                       => '031-212344',
-    //             'start_date_activity'       => '2012-07-02 01:01:06',
-    //             'status'                    => 'inactive',
-    //             'logo'                      => 'merchants/logo/matabulan.png',
-    //             'currency'                  => 'IDR',
-    //             'currency_symbol'           => 'Rp',
-    //             'tax_code1'                 => 'tx1',
-    //             'tax_code2'                 => 'tx2',
-    //             'tax_code3'                 => 'tx3',
-    //             'slogan'                    => 'Big Sale Everyday',
-    //             'vat_included'              => 'yes',
-    //             'contact_person_firstname'  => NULL,
-    //             'contact_person_position'   => NULL,
-    //             'contact_person_phone'      => NULL,
-    //             'sector_of_activity'        => NULL,
-    //             'object_type'               => 'merchant',
-    //             'parent_id'                 => NULL,
-    //             'modified_by'               => '1',
-    //             'created_at'                => '2014-11-20 06:30:07'
-    //         ),
-    //         array(
-    //             'merchant_id'               => '5',
-    //             'user_id'                   => '1',
-    //             'email'                     => 'mekdi@localhost.org',
-    //             'name'                      => 'Mek Di',
-    //             'description'               => 'Burger Fast Food',
-    //             'address_line1'             => 'Jl. Tunjungan 05',
-    //             'address_line2'             => 'Komplek B5',
-    //             'address_line3'             => 'Lantai 05',
-    //             'postal_code'               => NULL,
-    //             'city_id'                   => '10',
-    //             'city'                      => 'Surabaya',
-    //             'country_id'                => '62',
-    //             'country'                   => 'Indonesia',
-    //             'phone'                     => '031-4123456',
-    //             'fax'                       => '031-412344',
-    //             'start_date_activity'       => '2012-05-02 01:01:05',
-    //             'status'                    => 'inactive',
-    //             'logo'                      => 'merchants/logo/mekdi1.png',
-    //             'currency'                  => 'IDR',
-    //             'currency_symbol'           => 'Rp',
-    //             'tax_code1'                 => 'tx1',
-    //             'tax_code2'                 => 'tx2',
-    //             'tax_code3'                 => 'tx3',
-    //             'slogan'                    => 'I\'m not lovit',
-    //             'vat_included'              => 'yes',
-    //             'contact_person_firstname'  => NULL,
-    //             'contact_person_position'   => NULL,
-    //             'contact_person_phone'      => NULL,
-    //             'sector_of_activity'        => NULL,
-    //             'object_type'               => 'merchant',
-    //             'parent_id'                 => NULL,
-    //             'modified_by'               => '1',
-    //             'created_at'                => '2014-11-20 06:30:05'
-    //         )
-    //     );
-
-    //     // It is ordered by registered date by default so 1) Mata Bulan 2) Mek Di
-    //     foreach ($response->data->records as $index=>$return)
-    //     {
-    //         $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
-    //         $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
-    //         $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
-    //         $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
-    //         $this->assertSame((string)$expect[$index]['description'], (string)$return->description);
-    //         $this->assertSame((string)$expect[$index]['address_line1'], (string)$return->address_line1);
-    //         $this->assertSame((string)$expect[$index]['address_line2'], (string)$return->address_line2);
-    //         $this->assertSame((string)$expect[$index]['address_line3'], (string)$return->address_line3);
-    //         $this->assertSame((string)$expect[$index]['postal_code'], (string)$return->postal_code);
-    //         $this->assertSame((string)$expect[$index]['city_id'], (string)$return->city_id);
-    //         $this->assertSame((string)$expect[$index]['city'], (string)$return->city);
-    //         $this->assertSame((string)$expect[$index]['country_id'], (string)$return->country_id);
-    //         $this->assertSame((string)$expect[$index]['country'], (string)$return->country);
-    //         $this->assertSame((string)$expect[$index]['phone'], (string)$return->phone);
-    //         $this->assertSame((string)$expect[$index]['fax'], (string)$return->fax);
-    //         $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
-    //         $this->assertSame((string)$expect[$index]['status'], (string)$return->status);
-    //         $this->assertSame((string)$expect[$index]['logo'], (string)$return->logo);
-    //         $this->assertSame((string)$expect[$index]['currency'], (string)$return->currency);
-    //         $this->assertSame((string)$expect[$index]['currency_symbol'], (string)$return->currency_symbol);
-    //         $this->assertSame((string)$expect[$index]['tax_code1'], (string)$return->tax_code1);
-    //         $this->assertSame((string)$expect[$index]['tax_code2'], (string)$return->tax_code2);
-    //         $this->assertSame((string)$expect[$index]['tax_code3'], (string)$return->tax_code3);
-    //         $this->assertSame((string)$expect[$index]['slogan'], (string)$return->slogan);
-    //         $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
-    //         $this->assertSame((string)$expect[$index]['contact_person_firstname'], (string)$return->contact_person_firstname);
-    //         $this->assertSame((string)$expect[$index]['contact_person_position'], (string)$return->contact_person_position);
-    //         $this->assertSame((string)$expect[$index]['contact_person_phone'], (string)$return->contact_person_phone);
-    //         $this->assertSame((string)$expect[$index]['contact_person_position'], (string)$return->contact_person_position);
-    //         $this->assertSame((string)$expect[$index]['sector_of_activity'], (string)$return->sector_of_activity);
-    //         $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
-    //         $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
-    //         $this->assertSame((string)$expect[$index]['modified_by'], (string)$return->modified_by);
-    //         $this->assertSame((string)$expect[$index]['created_at'], (string)$return->created_at);
-    //     }
-    // }
-
-    // public function testOK_NoArgumentGiven_MaxRecordMoreThenRecords_GET_api_v1_merchant_search()
-    // {
-    //     // Data
-    //     // No argument given at all, show all users
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 10;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-    //     Config::set('orbit.pagination.per_page', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-    //     $_GET['sortby'] = 'registered_date';
-    //     $_GET['sortmode'] = 'desc';
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame(Status::OK_MSG, (string)$response->message);
-
-    //     // Number of total and returned records should be 6, exclude deleted merchants.
-    //     $this->assertSame(6, (int)$response->data->total_records);
-    //     $this->assertSame(6, (int)$response->data->returned_records);
-
-    //     // The records attribute should be array
-    //     $this->assertTrue(is_array($response->data->records));
-    //     $this->assertSame(6, count($response->data->records));
-
-    //     $expect = array(
-    //         array(
-    //             'merchant_id'         => '7',
-    //             'user_id'             => '3',
-    //             'email'               => 'matabulan@localhost.org',
-    //             'name'                => 'Mata Bulan',
-    //             'start_date_activity' => '2012-07-02 01:01:06',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '5',
-    //             'user_id'             => '1',
-    //             'email'               => 'mekdi@localhost.org',
-    //             'name'                => 'Mek Di',
-    //             'start_date_activity' => '2012-05-02 01:01:05',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '4',
-    //             'user_id'             => '1',
-    //             'email'               => 'keefce@localhost.org',
-    //             'name'                => 'Ke Ef Ce',
-    //             'start_date_activity' => '2012-04-02 01:01:04',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '3',
-    //             'user_id'             => '2',
-    //             'email'               => 'mitra9@localhost.org',
-    //             'name'                => 'Mitra 9',
-    //             'start_date_activity' => '2012-03-02 01:01:03',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '2',
-    //             'user_id'             => '3',
-    //             'email'               => 'indomer@localhost.org',
-    //             'name'                => 'Indo Mer',
-    //             'start_date_activity' => '2012-02-02 01:01:02',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '1',
-    //             'user_id'             => '2',
-    //             'email'               => 'alfamer@localhost.org',
-    //             'name'                => 'Alfa Mer',
-    //             'start_date_activity' => '2012-01-02 01:01:01',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         )
-    //     );
-
-    //     // It is ordered by registered date by default so
-    //     // 7-Mata Bulan, 5-Mek Di, 4-Ke Ef Ce, 3-Mitra 9, 2-Indo Mer, 1-Alfa Mer
-    //     foreach ($response->data->records as $index=>$return)
-    //     {
-    //         $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
-    //         $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
-    //         $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
-    //         $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
-    //         $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
-    //         $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
-    //         $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
-    //         $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
-    //     }
-    // }
-
-    // public function testInvalidSortBy_GET_api_v1_merchant_search()
-    // {
-    //     // Data
-    //     $_GET['sortby'] = 'dummy';
-
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 10;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $message = Lang::get('validation.orbit.empty.merchant_sortby');
-    //     $this->assertSame(Status::INVALID_ARGUMENT, (int)$response->code);
-    //     $this->assertSame('error', (string)$response->status);
-    //     $this->assertSame($message, (string)$response->message);
-    //     $this->assertSame(0, (int)$response->data->total_records);
-    //     $this->assertSame(0, (int)$response->data->returned_records);
-    //     $this->assertTrue(is_null($response->data->records));
-    // }
-
-    // public function testOK_OrderByRegisteredDateDESC_GET_api_v1_merchant_search()
-    // {
-    //     // Data
-    //     $_GET['sortby'] = 'registered_date';
-    //     $_GET['sortmode'] = 'desc';
-
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 6;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame(Status::OK_MSG, (string)$response->message);
-
-    //     // Number of total records and returned should be 6, exclude deleted merchants.
-    //     $this->assertSame($max_record, (int)$response->data->total_records);
-    //     $this->assertSame(6, (int)$response->data->returned_records);
-
-    //     // The records attribute should be array
-    //     $this->assertTrue(is_array($response->data->records));
-    //     $this->assertSame(6, count($response->data->records));
-
-    //     $expect = array(
-    //         array(
-    //             'merchant_id'         => '7',
-    //             'user_id'             => '3',
-    //             'email'               => 'matabulan@localhost.org',
-    //             'name'                => 'Mata Bulan',
-    //             'start_date_activity' => '2012-07-02 01:01:06',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '5',
-    //             'user_id'             => '1',
-    //             'email'               => 'mekdi@localhost.org',
-    //             'name'                => 'Mek Di',
-    //             'start_date_activity' => '2012-05-02 01:01:05',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '4',
-    //             'user_id'             => '1',
-    //             'email'               => 'keefce@localhost.org',
-    //             'name'                => 'Ke Ef Ce',
-    //             'start_date_activity' => '2012-04-02 01:01:04',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '3',
-    //             'user_id'             => '2',
-    //             'email'               => 'mitra9@localhost.org',
-    //             'name'                => 'Mitra 9',
-    //             'start_date_activity' => '2012-03-02 01:01:03',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '2',
-    //             'user_id'             => '3',
-    //             'email'               => 'indomer@localhost.org',
-    //             'name'                => 'Indo Mer',
-    //             'start_date_activity' => '2012-02-02 01:01:02',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '1',
-    //             'user_id'             => '2',
-    //             'email'               => 'alfamer@localhost.org',
-    //             'name'                => 'Alfa Mer',
-    //             'start_date_activity' => '2012-01-02 01:01:01',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         )
-    //     );
-
-    //     // It is ordered by registered date by default so
-    //     // 7-Mata Bulan, 5-Mek Di, 4-Ke Ef Ce, 3-Mitra 9, 2-Indo Mer, 1-Alfa Mer
-    //     foreach ($response->data->records as $index=>$return)
-    //     {
-    //         $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
-    //         $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
-    //         $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
-    //         $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
-    //         $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
-    //         $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
-    //         $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
-    //         $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
-    //     }
-    // }
-
-    // public function testOK_OrderByRegisteredDateASC_GET_api_v1_merchant_search()
-    // {
-    //     // Data
-    //     $_GET['sortby'] = 'registered_date';
-    //     $_GET['sortmode'] = 'asc';
-
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 6;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame(Status::OK_MSG, (string)$response->message);
-
-    //     // Number of total records and returned should be 6, exclude deleted merchants.
-    //     $this->assertSame($max_record, (int)$response->data->total_records);
-    //     $this->assertSame(6, (int)$response->data->returned_records);
-
-    //     // The records attribute should be array
-    //     $this->assertTrue(is_array($response->data->records));
-    //     $this->assertSame(6, count($response->data->records));
-
-    //     $expect = array(
-    //         array(
-    //             'merchant_id'         => '1',
-    //             'user_id'             => '2',
-    //             'email'               => 'alfamer@localhost.org',
-    //             'name'                => 'Alfa Mer',
-    //             'start_date_activity' => '2012-01-02 01:01:01',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '2',
-    //             'user_id'             => '3',
-    //             'email'               => 'indomer@localhost.org',
-    //             'name'                => 'Indo Mer',
-    //             'start_date_activity' => '2012-02-02 01:01:02',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '3',
-    //             'user_id'             => '2',
-    //             'email'               => 'mitra9@localhost.org',
-    //             'name'                => 'Mitra 9',
-    //             'start_date_activity' => '2012-03-02 01:01:03',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '4',
-    //             'user_id'             => '1',
-    //             'email'               => 'keefce@localhost.org',
-    //             'name'                => 'Ke Ef Ce',
-    //             'start_date_activity' => '2012-04-02 01:01:04',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '5',
-    //             'user_id'             => '1',
-    //             'email'               => 'mekdi@localhost.org',
-    //             'name'                => 'Mek Di',
-    //             'start_date_activity' => '2012-05-02 01:01:05',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '7',
-    //             'user_id'             => '3',
-    //             'email'               => 'matabulan@localhost.org',
-    //             'name'                => 'Mata Bulan',
-    //             'start_date_activity' => '2012-07-02 01:01:06',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         )
-    //     );
-
-    //     // It is ordered by registered date ASC, so
-    //     // 1-Alfa Mer, 2-Indo Mer, 3-Mitra 9, 4-Ke Ef Ce, 5-Mek Di, 7-Mata Bulan
-    //     foreach ($response->data->records as $index=>$return)
-    //     {
-    //         $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
-    //         $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
-    //         $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
-    //         $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
-    //         $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
-    //         $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
-    //         $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
-    //         $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
-    //     }
-    // }
-
-    // public function testOK_SearchName_GET_api_v1_merchant_search()
-    // {
-    //     // Data
-    //     // Should be ordered by registered date desc if not specified
-    //     $_GET['name'] = array('Indo Mer', 'Mek Di');
-    //     $_GET['sortby'] = 'merchant_name';
-
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 10;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-    //     $_GET['sortby'] = 'registered_date';
-    //     $_GET['sortmode'] = 'desc';
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame(Status::OK_MSG, (string)$response->message);
-
-    //     // Number of total records should be 2 and returned records 2
-    //     $this->assertSame(2, (int)$response->data->total_records);
-    //     $this->assertSame(2, (int)$response->data->returned_records);
-
-    //     // The records attribute should be array
-    //     $this->assertTrue(is_array($response->data->records));
-    //     $this->assertSame(2, count($response->data->records));
-
-    //     $expect = array(
-    //         array(
-    //             'merchant_id'         => '5',
-    //             'user_id'             => '1',
-    //             'email'               => 'mekdi@localhost.org',
-    //             'name'                => 'Mek Di',
-    //             'start_date_activity' => '2012-05-02 01:01:05',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '2',
-    //             'user_id'             => '3',
-    //             'email'               => 'indomer@localhost.org',
-    //             'name'                => 'Indo Mer',
-    //             'start_date_activity' => '2012-02-02 01:01:02',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         )
-    //     );
-
-    //     foreach ($response->data->records as $index=>$return)
-    //     {
-    //         $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
-    //         $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
-    //         $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
-    //         $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
-    //         $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
-    //         $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
-    //         $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
-    //         $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
-    //     }
-    // }
-
-    // public function testOK_SearchName_OrderByNameASC_GET_api_v1_merchant_search()
-    // {
-    //     // set merchant name, sortby, and sort mode.
-    //     $_GET['name'] = array('Indo Mer', 'Mek Di');
-    //     $_GET['sortby'] = 'merchant_name';
-    //     $_GET['sortmode'] = 'asc';
-
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 10;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame(Status::OK_MSG, (string)$response->message);
-
-    //     // Number of total records should be 2 and returned records 2
-    //     $this->assertSame(2, (int)$response->data->total_records);
-    //     $this->assertSame(2, (int)$response->data->returned_records);
-
-    //     // The records attribute should be array
-    //     $this->assertTrue(is_array($response->data->records));
-    //     $this->assertSame(2, count($response->data->records));
-
-    //     $expect = array(
-    //         array(
-    //             'merchant_id'         => '2',
-    //             'user_id'             => '3',
-    //             'email'               => 'indomer@localhost.org',
-    //             'name'                => 'Indo Mer',
-    //             'start_date_activity' => '2012-02-02 01:01:02',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         ),
-    //         array(
-    //             'merchant_id'         => '5',
-    //             'user_id'             => '1',
-    //             'email'               => 'mekdi@localhost.org',
-    //             'name'                => 'Mek Di',
-    //             'start_date_activity' => '2012-05-02 01:01:05',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         )
-    //     );
-
-    //     // checking data.
-    //     foreach ($response->data->records as $index=>$return)
-    //     {
-    //         $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
-    //         $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
-    //         $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
-    //         $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
-    //         $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
-    //         $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
-    //         $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
-    //         $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
-    //     }
-    // }
-
-    // public function testOK_SearchById_WithRetailersRelationship_OrderByOmidASC_GET_api_v1_merchant_search()
-    // {
-    //     // set merchant name, sortby, and sort mode.
-    //     $_GET['merchant_id'] = array(1, 2);
-    //     $_GET['with'] = array('retailers');
-    //     $_GET['with_count'] = array('retailers');
-    //     $_GET['sortby'] = 'merchant_omid';
-    //     $_GET['sortmode'] = 'asc';
-
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 10;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame(Status::OK_MSG, (string)$response->message);
-
-    //     // Number of total records should be 2 and returned records 2
-    //     $this->assertSame(2, (int)$response->data->total_records);
-    //     $this->assertSame(2, (int)$response->data->returned_records);
-
-    //     // The records attribute should be array
-    //     $this->assertTrue(is_array($response->data->records));
-    //     $this->assertSame(2, count($response->data->records));
-
-    //     $expect = array(
-    //         array(
-    //             'merchant_id'         => '1',
-    //             'user_id'             => '2',
-    //             'email'               => 'alfamer@localhost.org',
-    //             'name'                => 'Alfa Mer',
-    //             'start_date_activity' => '2012-01-02 01:01:01',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL,
-    //             'retailers_number'    => 2,
-    //         ),
-    //         array(
-    //             'merchant_id'         => '2',
-    //             'user_id'             => '3',
-    //             'email'               => 'indomer@localhost.org',
-    //             'name'                => 'Indo Mer',
-    //             'start_date_activity' => '2012-02-02 01:01:02',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL,
-    //             'retailers_number'    => 1,
-    //         )
-    //     );
-
-    //     // checking data.
-    //     foreach ($response->data->records as $index=>$return)
-    //     {
-    //         $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
-    //         $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
-    //         $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
-    //         $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
-    //         $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
-    //         $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
-    //         $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
-    //         $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
-    //         $this->assertSame((string)$expect[$index]['retailers_number'], (string)$return->retailers_number->count);
-    //         $this->assertTrue( is_array($return->retailers) && (count($return->retailers) == $expect[$index]['retailers_number']));
-    //     }
-    // }
-
-    // public function testOK_SearchNameLike_OrderByNameASC_GET_api_v1_merchant_search()
-    // {
-    //     // Data
-    //     $_GET['name_like'] = 'tra'; // from merchant name 'Mitra 9'.
-    //     $_GET['sortby'] = 'merchant_name';
-    //     $_GET['sortmode'] = 'asc';
-
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 10;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame(Status::OK_MSG, (string)$response->message);
-
-    //     // Number of total records should be 1 and returned records 1
-    //     $this->assertSame(1, (int)$response->data->total_records);
-    //     $this->assertSame(1, (int)$response->data->returned_records);
-
-    //     // The records attribute should be array
-    //     $this->assertTrue(is_array($response->data->records));
-    //     $this->assertSame(1, count($response->data->records));
-
-    //     $expect = array(
-    //         array(
-    //             'merchant_id'         => '3',
-    //             'user_id'             => '2',
-    //             'email'               => 'mitra9@localhost.org',
-    //             'name'                => 'Mitra 9',
-    //             'start_date_activity' => '2012-03-02 01:01:03',
-    //             'vat_included'        => 'yes',
-    //             'object_type'         => 'merchant',
-    //             'parent_id'           => NULL
-    //         )
-    //     );
-
-    //     // checking data.
-    //     foreach ($response->data->records as $index=>$return)
-    //     {
-    //         $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
-    //         $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
-    //         $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
-    //         $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
-    //         $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
-    //         $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
-    //         $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
-    //         $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
-    //     }
-    // }
-
-    // public function testOK_SearchName_NotFound_GET_api_v1_merchant_search()
-    // {
-    //     // Data
-    //     $_GET['name'] = array('not-exists');
-
-    //     // It should read from config named 'orbit.pagination.max_record'
-    //     // It should fallback to whathever you like when the config is not exists
-    //     $max_record = 10;
-    //     Config::set('orbit.pagination.max_record', $max_record);
-
-    //     // Set the client API Keys
-    //     $_GET['apikey'] = 'def123';
-    //     $_GET['apitimestamp'] = time();
-
-    //     $url = '/api/v1/merchant/search?' . http_build_query($_GET);
-
-    //     $secretKey = 'def12345678901';
-    //     $_SERVER['REQUEST_METHOD'] = 'GET';
-    //     $_SERVER['REQUEST_URI'] = $url;
-    //     $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
-
-    //     $response = $this->call('GET', $url)->getContent();
-    //     $response = json_decode($response);
-    //     $message = Lang::get('statuses.orbit.nodata.merchant');
-
-    //     $this->assertSame(Status::OK, (int)$response->code);
-    //     $this->assertSame('success', (string)$response->status);
-    //     $this->assertSame($message, (string)$response->message);
-    //     $this->assertSame(0, (int)$response->data->total_records);
-    //     $this->assertSame(0, (int)$response->data->returned_records);
-    //     $this->assertTrue( is_null($response->data->records) );
-    // }
+    public function testOK_NoArgumentGiven_GET_api_v1_mall_search()
+    {
+        // Data
+        // No argument given at all, show all merchants
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 2;
+        Config::set('orbit.pagination.max_record', $max_record);
+        Config::set('orbit.pagination.per_page', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+        $_GET['sortby'] = 'registered_date';
+        $_GET['sortmode'] = 'desc';
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame(Status::OK_MSG, (string)$response->message);
+
+        // Number of total records should be 6 and returned records 2
+        $this->assertSame(2, (int)$response->data->total_records); //exclude deleted merchants.
+        $this->assertSame(2, (int)$response->data->returned_records);
+
+        // The records attribute should be array
+        $this->assertTrue(is_array($response->data->records));
+        $this->assertSame(2, count($response->data->records));
+
+        $expect = array(
+            array(
+                'merchant_id'               => '1',
+                'user_id'                   => '2',
+                'email'                     => 'takashimaya@myorbit.com',
+                'name'                      => 'Takashimaya',
+                'description'               => 'Takashimaya Shopping Center',
+                'address_line1'             => NULL,
+                'address_line2'             => NULL,
+                'address_line3'             => NULL,
+                'postal_code'               => '60123',
+                'city_id'                   => '0',
+                'city'                      => 'Jakarta',
+                'country_id'                => '101',
+                'country'                   => 'Indonesia',
+                'phone'                     => '62|#|21|#|987654321',
+                'fax'                       => NULL,
+                'start_date_activity'       => '2015-09-08 00:00:00',
+                'status'                    => 'active',
+                'logo'                      => '/mobile-ci/images/default-logo.png',
+                'currency'                  => 'USD',
+                'currency_symbol'           => '$',
+                'tax_code1'                 => NULL,
+                'tax_code2'                 => NULL,
+                'tax_code3'                 => NULL,
+                'slogan'                    => NULL,
+                'vat_included'              => 'no',
+                'contact_person_firstname'  => 'John',
+                'contact_person_position'   => 'Marketing',
+                'contact_person_phone'      => '62|#||#|812345678',
+                'sector_of_activity'        => 'Retail',
+                'object_type'               => 'mall',
+                'parent_id'                 => NULL,
+                'modified_by'               => '0',
+                'created_at'                => '2015-09-07 23:19:52'
+            ),
+            array(
+                'merchant_id'               => '2',
+                'user_id'                   => '3',
+                'email'                     => 'takashimayasc@myorbit.com',
+                'name'                      => 'Takashimaya Shopping Center',
+                'description'               => 'Takashimaya Shopping Center',
+                'address_line1'             => NULL,
+                'address_line2'             => NULL,
+                'address_line3'             => NULL,
+                'postal_code'               => '60123',
+                'city_id'                   => '0',
+                'city'                      => 'Jakarta',
+                'country_id'                => '101',
+                'country'                   => 'Indonesia',
+                'phone'                     => '62|#|21|#|987654321',
+                'fax'                       => NULL,
+                'start_date_activity'       => '2015-09-08 00:00:00',
+                'status'                    => 'active',
+                'logo'                      => '/mobile-ci/images/default-logo.png',
+                'currency'                  => 'USD',
+                'currency_symbol'           => '$',
+                'tax_code1'                 => NULL,
+                'tax_code2'                 => NULL,
+                'tax_code3'                 => NULL,
+                'slogan'                    => NULL,
+                'vat_included'              => 'no',
+                'contact_person_firstname'  => 'John',
+                'contact_person_position'   => 'Marketing',
+                'contact_person_phone'      => '62|#||#|812345679',
+                'sector_of_activity'        => 'Retail',
+                'object_type'               => 'mall',
+                'parent_id'                 => NULL,
+                'modified_by'               => '0',
+                'created_at'                => '2015-09-07 23:19:52'
+            )
+        );
+
+        // It is ordered by registered date by default so 1) Mata Bulan 2) Mek Di
+        foreach ($response->data->records as $index=>$return)
+        {
+            $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
+            $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
+            $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
+            $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
+            $this->assertSame((string)$expect[$index]['description'], (string)$return->description);
+            $this->assertSame((string)$expect[$index]['address_line1'], (string)$return->address_line1);
+            $this->assertSame((string)$expect[$index]['address_line2'], (string)$return->address_line2);
+            $this->assertSame((string)$expect[$index]['address_line3'], (string)$return->address_line3);
+            $this->assertSame((string)$expect[$index]['postal_code'], (string)$return->postal_code);
+            $this->assertSame((string)$expect[$index]['city_id'], (string)$return->city_id);
+            $this->assertSame((string)$expect[$index]['city'], (string)$return->city);
+            $this->assertSame((string)$expect[$index]['country_id'], (string)$return->country_id);
+            $this->assertSame((string)$expect[$index]['country'], (string)$return->country);
+            $this->assertSame((string)$expect[$index]['phone'], (string)$return->phone);
+            $this->assertSame((string)$expect[$index]['fax'], (string)$return->fax);
+            $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
+            $this->assertSame((string)$expect[$index]['status'], (string)$return->status);
+            $this->assertSame((string)$expect[$index]['logo'], (string)$return->logo);
+            $this->assertSame((string)$expect[$index]['currency'], (string)$return->currency);
+            $this->assertSame((string)$expect[$index]['currency_symbol'], (string)$return->currency_symbol);
+            $this->assertSame((string)$expect[$index]['tax_code1'], (string)$return->tax_code1);
+            $this->assertSame((string)$expect[$index]['tax_code2'], (string)$return->tax_code2);
+            $this->assertSame((string)$expect[$index]['tax_code3'], (string)$return->tax_code3);
+            $this->assertSame((string)$expect[$index]['slogan'], (string)$return->slogan);
+            $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
+            $this->assertSame((string)$expect[$index]['contact_person_firstname'], (string)$return->contact_person_firstname);
+            $this->assertSame((string)$expect[$index]['contact_person_position'], (string)$return->contact_person_position);
+            $this->assertSame((string)$expect[$index]['contact_person_phone'], (string)$return->contact_person_phone);
+            $this->assertSame((string)$expect[$index]['contact_person_position'], (string)$return->contact_person_position);
+            $this->assertSame((string)$expect[$index]['sector_of_activity'], (string)$return->sector_of_activity);
+            $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
+            $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
+            $this->assertSame((string)$expect[$index]['modified_by'], (string)$return->modified_by);
+            $this->assertSame((string)$expect[$index]['created_at'], (string)$return->created_at);
+        }
+    }
+
+    public function testOK_NoArgumentGiven_MaxRecordMoreThenRecords_GET_api_v1_merchant_search()
+    {
+        // Data
+        // No argument given at all, show all users
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 10;
+        Config::set('orbit.pagination.max_record', $max_record);
+        Config::set('orbit.pagination.per_page', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+        $_GET['sortby'] = 'registered_date';
+        $_GET['sortmode'] = 'desc';
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame(Status::OK_MSG, (string)$response->message);
+
+        // Number of total and returned records should be 6, exclude deleted merchants.
+        $this->assertSame(2, (int)$response->data->total_records);
+        $this->assertSame(2, (int)$response->data->returned_records);
+
+        // The records attribute should be array
+        $this->assertTrue(is_array($response->data->records));
+        $this->assertSame(2, count($response->data->records));
+
+        $expect = array(
+            array(
+                'merchant_id'         => '1',
+                'user_id'             => '2',
+                'email'               => 'takashimaya@myorbit.com',
+                'name'                => 'Takashimaya',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            ),
+            array(
+                'merchant_id'         => '2',
+                'user_id'             => '3',
+                'email'               => 'takashimayasc@myorbit.com',
+                'name'                => 'Takashimaya Shopping Center',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            )
+        );
+
+        // It is ordered by registered date by default so
+        // 7-Mata Bulan, 5-Mek Di, 4-Ke Ef Ce, 3-Mitra 9, 2-Indo Mer, 1-Alfa Mer
+        foreach ($response->data->records as $index=>$return)
+        {
+            $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
+            $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
+            $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
+            $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
+            $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
+            $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
+            $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
+            $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
+        }
+    }
+
+    public function testInvalidSortBy_GET_api_v1_merchant_search()
+    {
+        // Data
+        $_GET['sortby'] = 'dummy';
+
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 10;
+        Config::set('orbit.pagination.max_record', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $message = Lang::get('validation.orbit.empty.merchant_sortby');
+        $this->assertSame(Status::INVALID_ARGUMENT, (int)$response->code);
+        $this->assertSame('error', (string)$response->status);
+        $this->assertSame($message, (string)$response->message);
+        $this->assertSame(0, (int)$response->data->total_records);
+        $this->assertSame(0, (int)$response->data->returned_records);
+        $this->assertTrue(is_null($response->data->records));
+    }
+
+    public function testOK_OrderByRegisteredDateDESC_GET_api_v1_merchant_search()
+    {
+        // Data
+        $_GET['sortby'] = 'registered_date';
+        $_GET['sortmode'] = 'desc';
+
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 2;
+        Config::set('orbit.pagination.max_record', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame(Status::OK_MSG, (string)$response->message);
+
+        // Number of total records and returned should be 6, exclude deleted merchants.
+        $this->assertSame($max_record, (int)$response->data->total_records);
+        $this->assertSame(2, (int)$response->data->returned_records);
+
+        // The records attribute should be array
+        $this->assertTrue(is_array($response->data->records));
+        $this->assertSame(2, count($response->data->records));
+
+        $expect = array(
+            array(
+                'merchant_id'         => '1',
+                'user_id'             => '2',
+                'email'               => 'takashimaya@myorbit.com',
+                'name'                => 'Takashimaya',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            ),
+            array(
+                'merchant_id'         => '2',
+                'user_id'             => '3',
+                'email'               => 'takashimayasc@myorbit.com',
+                'name'                => 'Takashimaya Shopping Center',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            )
+        );
+
+        // It is ordered by registered date by default so
+        // 7-Mata Bulan, 5-Mek Di, 4-Ke Ef Ce, 3-Mitra 9, 2-Indo Mer, 1-Alfa Mer
+        foreach ($response->data->records as $index=>$return)
+        {
+            $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
+            $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
+            $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
+            $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
+            $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
+            $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
+            $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
+            $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
+        }
+    }
+
+    public function testOK_OrderByRegisteredDateASC_GET_api_v1_merchant_search()
+    {
+        // Data
+        $_GET['sortby'] = 'registered_date';
+        $_GET['sortmode'] = 'asc';
+
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 2;
+        Config::set('orbit.pagination.max_record', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame(Status::OK_MSG, (string)$response->message);
+
+        // Number of total records and returned should be 6, exclude deleted merchants.
+        $this->assertSame($max_record, (int)$response->data->total_records);
+        $this->assertSame(2, (int)$response->data->returned_records);
+
+        // The records attribute should be array
+        $this->assertTrue(is_array($response->data->records));
+        $this->assertSame(2, count($response->data->records));
+
+        $expect = array(
+            array(
+                'merchant_id'         => '1',
+                'user_id'             => '2',
+                'email'               => 'takashimaya@myorbit.com',
+                'name'                => 'Takashimaya',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            ),
+            array(
+                'merchant_id'         => '2',
+                'user_id'             => '3',
+                'email'               => 'takashimayasc@myorbit.com',
+                'name'                => 'Takashimaya Shopping Center',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            )
+        );
+
+        // It is ordered by registered date ASC, so
+        // 1-Alfa Mer, 2-Indo Mer, 3-Mitra 9, 4-Ke Ef Ce, 5-Mek Di, 7-Mata Bulan
+        foreach ($response->data->records as $index=>$return)
+        {
+            $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
+            $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
+            $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
+            $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
+            $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
+            $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
+            $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
+            $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
+        }
+    }
+
+    public function testOK_SearchName_GET_api_v1_merchant_search()
+    {
+        // Data
+        // Should be ordered by registered date desc if not specified
+        $_GET['name'] = array('Takashimaya', 'Maya');
+        $_GET['sortby'] = 'merchant_name';
+
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 2;
+        Config::set('orbit.pagination.max_record', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+        $_GET['sortby'] = 'registered_date';
+        $_GET['sortmode'] = 'desc';
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame(Status::OK_MSG, (string)$response->message);
+
+        // Number of total records should be 2 and returned records 2
+        $this->assertSame(1, (int)$response->data->total_records);
+        $this->assertSame(1, (int)$response->data->returned_records);
+
+        // The records attribute should be array
+        $this->assertTrue(is_array($response->data->records));
+        $this->assertSame(1, count($response->data->records));
+
+        $expect = array(
+            array(
+                'merchant_id'         => '1',
+                'user_id'             => '2',
+                'email'               => 'takashimaya@myorbit.com',
+                'name'                => 'Takashimaya',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            )
+        );
+
+        foreach ($response->data->records as $index=>$return)
+        {
+            $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
+            $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
+            $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
+            $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
+            $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
+            $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
+            $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
+            $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
+        }
+    }
+
+    public function testOK_SearchName_OrderByNameASC_GET_api_v1_merchant_search()
+    {
+        // set merchant name, sortby, and sort mode.
+        $_GET['name'] = array('Takashimaya', 'Maya');
+        $_GET['sortby'] = 'merchant_name';
+        $_GET['sortmode'] = 'asc';
+
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 10;
+        Config::set('orbit.pagination.max_record', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame(Status::OK_MSG, (string)$response->message);
+
+        // Number of total records should be 2 and returned records 2
+        $this->assertSame(1, (int)$response->data->total_records);
+        $this->assertSame(1, (int)$response->data->returned_records);
+
+        // The records attribute should be array
+        $this->assertTrue(is_array($response->data->records));
+        $this->assertSame(1, count($response->data->records));
+
+        $expect = array(
+            array(
+                'merchant_id'         => '1',
+                'user_id'             => '2',
+                'email'               => 'takashimaya@myorbit.com',
+                'name'                => 'Takashimaya',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            ),
+            array(
+                'merchant_id'         => '2',
+                'user_id'             => '3',
+                'email'               => 'takashimayasc@myorbit.com',
+                'name'                => 'Takashimaya Shopping Center',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            )
+        );
+
+        // checking data.
+        foreach ($response->data->records as $index=>$return)
+        {
+            $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
+            $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
+            $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
+            $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
+            $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
+            $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
+            $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
+            $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
+        }
+    }
+
+    public function testOK_SearchById_WithRetailersRelationship_OrderByOmidASC_GET_api_v1_merchant_search()
+    {
+        // set merchant name, sortby, and sort mode.
+        $_GET['merchant_id'] = array(1, 2);
+        $_GET['with'] = array('tenants');
+        $_GET['with_count'] = array('tenants');
+        $_GET['sortby'] = 'merchant_omid';
+        $_GET['sortmode'] = 'asc';
+
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 10;
+        Config::set('orbit.pagination.max_record', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame(Status::OK_MSG, (string)$response->message);
+
+        // Number of total records should be 2 and returned records 2
+        $this->assertSame(2, (int)$response->data->total_records);
+        $this->assertSame(2, (int)$response->data->returned_records);
+
+        // The records attribute should be array
+        $this->assertTrue(is_array($response->data->records));
+        $this->assertSame(2, count($response->data->records));
+
+        $expect = array(
+            array(
+                'merchant_id'         => '1',
+                'user_id'             => '2',
+                'email'               => 'takashimaya@myorbit.com',
+                'name'                => 'Takashimaya',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            ),
+            array(
+                'merchant_id'         => '2',
+                'user_id'             => '3',
+                'email'               => 'takashimayasc@myorbit.com',
+                'name'                => 'Takashimaya Shopping Center',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            )
+        );
+
+        // checking data.
+        foreach ($response->data->records as $index=>$return)
+        {
+            $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
+            $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
+            $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
+            $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
+            $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
+            $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
+            $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
+            $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
+        }
+    }
+
+    public function testOK_SearchNameLike_OrderByNameASC_GET_api_v1_merchant_search()
+    {
+        // Data
+        $_GET['name_like'] = 'Maya'; // from merchant name 'Mitra 9'.
+        $_GET['sortby'] = 'merchant_name';
+        $_GET['sortmode'] = 'asc';
+
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 10;
+        Config::set('orbit.pagination.max_record', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame(Status::OK_MSG, (string)$response->message);
+
+        // Number of total records should be 1 and returned records 1
+        $this->assertSame(2, (int)$response->data->total_records);
+        $this->assertSame(2, (int)$response->data->returned_records);
+
+        // The records attribute should be array
+        $this->assertTrue(is_array($response->data->records));
+        $this->assertSame(2, count($response->data->records));
+
+        $expect = array(
+            array(
+                'merchant_id'         => '1',
+                'user_id'             => '2',
+                'email'               => 'takashimaya@myorbit.com',
+                'name'                => 'Takashimaya',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            ),
+            array(
+                'merchant_id'         => '2',
+                'user_id'             => '3',
+                'email'               => 'takashimayasc@myorbit.com',
+                'name'                => 'Takashimaya Shopping Center',
+                'start_date_activity' => '2015-09-08 00:00:00',
+                'vat_included'        => 'no',
+                'object_type'         => 'mall',
+                'parent_id'           => NULL
+            )
+        );
+
+        // checking data.
+        foreach ($response->data->records as $index=>$return)
+        {
+            $this->assertSame((string)$expect[$index]['merchant_id'], (string)$return->merchant_id);
+            $this->assertSame((string)$expect[$index]['user_id'], (string)$return->user_id);
+            $this->assertSame((string)$expect[$index]['email'], (string)$return->email);
+            $this->assertSame((string)$expect[$index]['name'], (string)$return->name);
+            $this->assertSame((string)$expect[$index]['start_date_activity'], (string)$return->start_date_activity);
+            $this->assertSame((string)$expect[$index]['vat_included'], (string)$return->vat_included);
+            $this->assertSame((string)$expect[$index]['object_type'], (string)$return->object_type);
+            $this->assertSame((string)$expect[$index]['parent_id'], (string)$return->parent_id);
+        }
+    }
+
+    public function testOK_SearchName_NotFound_GET_api_v1_merchant_search()
+    {
+        // Data
+        $_GET['name'] = array('not-exists');
+
+        // It should read from config named 'orbit.pagination.max_record'
+        // It should fallback to whathever you like when the config is not exists
+        $max_record = 10;
+        Config::set('orbit.pagination.max_record', $max_record);
+
+        // Set the client API Keys
+        $_GET['apikey'] = 'def123';
+        $_GET['apitimestamp'] = time();
+
+        $url = '/api/v1/mall/search?' . http_build_query($_GET);
+
+        $secretKey = 'def12345678901';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $response = $this->call('GET', $url)->getContent();
+        $response = json_decode($response);
+        $message = Lang::get('statuses.orbit.nodata.mall');
+
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('success', (string)$response->status);
+        $this->assertSame($message, (string)$response->message);
+        $this->assertSame(0, (int)$response->data->total_records);
+        $this->assertSame(0, (int)$response->data->returned_records);
+        $this->assertTrue( is_null($response->data->records) );
+    }
 
 
 }
