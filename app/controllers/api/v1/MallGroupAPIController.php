@@ -127,7 +127,6 @@ class MallGroupAPIController extends ControllerAPI
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
             $sector_of_activity = OrbitInput::post('sector_of_activity');
-            $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
             $masterbox_number = OrbitInput::post('masterbox_number');
             $slavebox_number = OrbitInput::post('slavebox_number');
@@ -223,7 +222,6 @@ class MallGroupAPIController extends ControllerAPI
             $newmallgroup->contact_person_phone2 = $contact_person_phone2;
             $newmallgroup->contact_person_email = $contact_person_email;
             $newmallgroup->sector_of_activity = $sector_of_activity;
-            $newmallgroup->parent_id = $parent_id;
             $newmallgroup->url = $url;
             $newmallgroup->masterbox_number = $masterbox_number;
             $newmallgroup->slavebox_number = $slavebox_number;
