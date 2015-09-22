@@ -115,6 +115,7 @@ class postNewCategoryTest extends TestCase
         $_POST['category_name']  = 'Unique Submited';
         $_POST['category_level'] = '1';
         $_POST['status']         = 'active';
+        $_POST['id_language_default']         = 1;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 

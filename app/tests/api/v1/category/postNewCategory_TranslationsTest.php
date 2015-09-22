@@ -11,6 +11,7 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Merchant $group
  * @property Merchant $unrelatedGroup
  * @property Retailer $mall
+ * @property Retailer $unrelatedMall
  *
  * @property Apikey $authData
  * @property int $userId
@@ -28,7 +29,12 @@ class postNewCategory_TranslationsTest extends TestCase
         $this->group = $merchant = Factory::create('Merchant');
         $this->unrelatedGroup = $unrelatedMerchant = Factory::create('Merchant');
 
-        $this->mall = Factory::create('Retailer', ['is_mall' => 'yes']);
+        $owner_role = Factory::create('Role', ['role_name' => 'mall owner']);
+
+        $owner_user = Factory::create('User', ['user_role_id' => $owner_role->role_id]);
+
+        $this->mall = Factory::create('Retailer', ['is_mall' => 'yes', 'user_id' => $owner_user->user_id]);
+        $this->unrelatedMall = Factory::create('Retailer', ['is_mall' => 'yes', 'parent_id' => $this->unrelatedGroup->merchant_id]);
 
         $setting = new Setting();
         $setting->setting_name = 'current_retailer';
@@ -39,15 +45,15 @@ class postNewCategory_TranslationsTest extends TestCase
 
         Factory::create('PermissionRole',
             ['role_id' => $merchant->user->user_role_id, 'permission_id' => $permission->permission_id]);
-        $this->authData = Factory::create('Apikey', ['user_id' => $merchant->user->user_id]);
-        $this->userId = $merchant->user->user_id;
+        $this->authData = Factory::create('Apikey', ['user_id' => $owner_user->user_id]);
+        $this->userId = $owner_user->user_id;
 
         $combos = [
-            [$merchant, $english, 'english'],
-            [$merchant, $french, 'french'],
-            [$merchant, $balinese, 'deleted_balinese'],
-            [$unrelatedMerchant, $balinese, 'balinese'],
-            [$unrelatedMerchant, $chinese, 'chinese']
+            [$this->mall, $english, 'english'],
+            [$this->mall, $french, 'french'],
+            [$this->mall, $balinese, 'deleted_balinese'],
+            [$this->unrelatedMall, $balinese, 'balinese'],
+            [$this->unrelatedMall, $chinese, 'chinese']
         ];
         $merchant_languages = [];
         foreach ($combos as $combo) {
@@ -73,6 +79,8 @@ class postNewCategory_TranslationsTest extends TestCase
         $_POST = array_merge($category_data, [
             'translations' => json_encode($translations)
         ]);
+
+        $_POST['id_language_default'] = 1;
 
         $url = '/api/v1/family/new?' . http_build_query($_GET);
 
@@ -137,8 +145,8 @@ class postNewCategory_TranslationsTest extends TestCase
         foreach ($english_translations as $key => $value) {
             $this->assertSame($value, $saved_translation->{$key});
         }
-        $this->assertSame($this->userId, $saved_translation->created_by);
-        $this->assertSame($this->userId, $saved_translation->modified_by);
+        $this->assertSame((string)$this->userId, (string)$saved_translation->created_by);
+        $this->assertSame((string)$this->userId, (string)$saved_translation->modified_by);
     }
 
     // ... for a nonexistent language
