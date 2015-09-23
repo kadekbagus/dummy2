@@ -94,3 +94,12 @@ $factory('Mall', [
     'contact_person_lastname'  => $faker->lastName,
     'contact_person_phone'     => $faker->phoneNumber,
 ]);
+
+$factory('Tenant', [
+    'parent_id' => 'factory:Mall',
+    'name'      => $faker->company,
+    'user_id'   => 'factory:User',
+    'contact_person_firstname' => $faker->firstName,
+    'contact_person_lastname'  => $faker->lastName,
+    'contact_person_phone'     => $faker->phoneNumber,
+]);
