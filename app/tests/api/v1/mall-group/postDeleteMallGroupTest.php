@@ -18,8 +18,9 @@ class postDeleteMallGroup extends TestCase
         parent::setUp();
 
         $this->authData = Factory::create('apikey_super_admin');
-        $this->authData->user->user_password = Hash::make($this->password = 'password');
-        $this->authData->user->save();
+        $user = $this->authData->user;
+        $user->user_password = Hash::make($this->password = 'password');
+        $user->save();
         $this->country = Factory::create('Country');
         Factory::create('role_mall_owner');
     }
