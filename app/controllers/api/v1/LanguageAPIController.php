@@ -233,10 +233,21 @@ class LanguageAPIController extends ControllerAPI
                 $merchant_language->merchant_id = $merchant_id;
                 $merchant_language->language_id = $value;
                 $merchant_language->language_id = $value;
-                $merchant_language->save();                
+                $merchant_language->save();
             }
 
             $this->response->data = $merchant_language;
+            
+            if($this->response->code === 0){
+                $merchant_languages = MerchantLanguage::excludeDeleted()->where('merchant_id', '=',$merchant_id)->with('language')->get();
+                $count = count($merchant_languages);
+                $this->response->data = new stdClass();
+                $this->response->data->total_records = $count;
+                $this->response->data->returned_records = $count;
+                $this->response->data->records = $merchant_languages;
+            }else{
+                $this->response->data = $merchant_language;
+            }
 
             $activityNotes = sprintf('Merchant updated: %s - added language %s', $merchant->name, $language->name);
             $activity->setUser($user)
