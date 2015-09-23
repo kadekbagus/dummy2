@@ -1705,7 +1705,7 @@ class CouponAPIController extends ControllerAPI
                 array(
                     'tenant_id'         => 'required|orbit.empty.retailer',
                     'issued_coupon_id'              => 'required|numeric|orbit.empty.issuedcoupon',
-                    'merchant_verification_number'  => 'required|numeric',
+                    'merchant_verification_number'  => 'required',
                 )
             );
 
@@ -2212,7 +2212,7 @@ class CouponAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $tenant = Retailer::excludeDeleted()
+            $tenant = Retailer::active()
                             ->where('merchant_id', $tenant_id)
                             ->first();
 

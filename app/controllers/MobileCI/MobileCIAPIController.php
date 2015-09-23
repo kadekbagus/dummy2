@@ -8428,7 +8428,11 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
-            $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
+            $tenants = \CouponRetailer::with('retailer')
+                ->wherehas('retailer', function($q){
+                    $q->where('merchants.status', 'active');
+                })
+                ->where('promotion_id', $coupon_id)->get();
 
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
