@@ -281,7 +281,8 @@ class MobileCIAPIController extends ControllerAPI
                 'event_families' => $event_families,
                 'event_family_url_param' => $event_family_url_param,
                 'widgets' => $widgets,
-                'widget_flags' => $widget_flags
+                'widget_flags' => $widget_flags,
+                'active_user' => ($user->status === 'active'),
             );
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
         } catch (Exception $e) {
