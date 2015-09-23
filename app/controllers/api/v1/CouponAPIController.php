@@ -55,6 +55,7 @@ class CouponAPIController extends ControllerAPI
      * @param string     `is_cumulative_with_promotions`     (optional) - Cumulative with other promotions. Valid value: Y, N.
      * @param decimal    `coupon_redeem_rule_value`          (optional) - Coupon redeem rule value
      * @param array      `retailer_ids`                      (optional) - Tenant IDs
+     * @param array      `id_language_default`               (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -133,37 +134,40 @@ class CouponAPIController extends ControllerAPI
             $coupon_redeem_rule_value = OrbitInput::post('coupon_redeem_rule_value');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'               => $merchant_id,
-                    'promotion_name'            => $promotion_name,
-                    'promotion_type'            => $promotion_type,
-                    'begin_date'                => $begin_date,
-                    'end_date'                  => $end_date,
-                    'status'                    => $status,
-                    'coupon_validity_in_date'   => $coupon_validity_in_date,
-                    'rule_value'                => $rule_value,
-                    'discount_value'            => $discount_value,
+                    'merchant_id'             => $merchant_id,
+                    'promotion_name'          => $promotion_name,
+                    'promotion_type'          => $promotion_type,
+                    'begin_date'              => $begin_date,
+                    'end_date'                => $end_date,
+                    'status'                  => $status,
+                    'coupon_validity_in_date' => $coupon_validity_in_date,
+                    'rule_value'              => $rule_value,
+                    'discount_value'          => $discount_value,
+                    'id_language_default'     => $id_language_default,
                 ),
                 array(
-                    'merchant_id'               => 'required|numeric|orbit.empty.merchant',
-                    'promotion_name'            => 'required|max:255|orbit.exists.coupon_name',
-                    'promotion_type'            => 'required|orbit.empty.coupon_type',
-                    'begin_date'                => 'required|date_format:Y-m-d H:i:s',
-                    'end_date'                  => 'required|date_format:Y-m-d H:i:s',
-                    'status'                    => 'required|orbit.empty.coupon_status',
-                    'coupon_validity_in_date'   => 'required|date_format:Y-m-d H:i:s',
-                    'rule_value'                => 'required|numeric|min:0',
-                    'discount_value'            => 'required|numeric|min:0',
+                    'merchant_id'             => 'required|numeric|orbit.empty.merchant',
+                    'promotion_name'          => 'required|max:255|orbit.exists.coupon_name',
+                    'promotion_type'          => 'required|orbit.empty.coupon_type',
+                    'begin_date'              => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'                => 'required|date_format:Y-m-d H:i:s',
+                    'status'                  => 'required|orbit.empty.coupon_status',
+                    'coupon_validity_in_date' => 'required|date_format:Y-m-d H:i:s',
+                    'rule_value'              => 'required|numeric|min:0',
+                    'discount_value'          => 'required|numeric|min:0',
+                    'id_language_default'     => 'required|numeric',
                 ),
                 array(
-                    'rule_value.required'       => 'The amount to obtain is required',
-                    'rule_value.numeric'        => 'The amount to obtain must be a number',
-                    'rule_value.min'            => 'The amount to obtain must be greater than zero',
-                    'discount_value.required'       => 'The coupon value is required',
-                    'discount_value.numeric'        => 'The coupon value must be a number',
-                    'discount_value.min'            => 'The coupon value must be greater than zero',
+                    'rule_value.required'     => 'The amount to obtain is required',
+                    'rule_value.numeric'      => 'The amount to obtain must be a number',
+                    'rule_value.min'          => 'The amount to obtain must be greater than zero',
+                    'discount_value.required' => 'The coupon value is required',
+                    'discount_value.numeric'  => 'The coupon value must be a number',
+                    'discount_value.min'      => 'The coupon value must be greater than zero',
                 )
             );
 
@@ -232,6 +236,20 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
             $newcoupon->save();
+
+            // save default language translation
+            $coupon_translation_default = new CouponTranslation();
+            $coupon_translation_default->promotion_id = $newcoupon->promotion_id;
+            $coupon_translation_default->merchant_language_id = $id_language_default;
+            $coupon_translation_default->promotion_name = $newcoupon->promotion_name;
+            $coupon_translation_default->description = $newcoupon->description;
+            $coupon_translation_default->long_description = $newcoupon->long_description;
+            $coupon_translation_default->status = 'active';
+            $coupon_translation_default->created_by = $this->api->user->user_id;
+            $coupon_translation_default->modified_by = $this->api->user->user_id;
+            $coupon_translation_default->save();
+
+            Event::fire('orbit.coupon.after.translation.save', array($this, $coupon_translation_default));
 
             // save CouponRule.
             $couponrule = new CouponRule();
@@ -336,6 +354,7 @@ class CouponAPIController extends ControllerAPI
             });
 
             $this->response->data = $newcoupon;
+            $this->response->data->translation_default = $coupon_translation_default;
 
             // Commit the changes
             $this->commit();
@@ -478,6 +497,7 @@ class CouponAPIController extends ControllerAPI
      * @param decimal    `coupon_redeem_rule_value`          (optional) - Coupon redeem rule value
      * @param array      `retailer_ids`                      (optional) - Retailer IDs
      * @param string     `no_retailer`                       (optional) - Flag to delete all retailer links. Valid value: Y.
+     * @param array      `id_language_default`               (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -551,17 +571,19 @@ class CouponAPIController extends ControllerAPI
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $discount_value = OrbitInput::post('discount_value');
             $rule_value = OrbitInput::post('rule_value');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
-                'promotion_id'         => $promotion_id,
-                'merchant_id'          => $merchant_id,
-                'promotion_type'       => $promotion_type,
-                'status'               => $status,
-                'begin_date'                => $begin_date,
-                'end_date'                  => $end_date,
-                'coupon_validity_in_date'   => $coupon_validity_in_date,
-                'rule_value'                => $rule_value,
-                'discount_value'            => $discount_value,
+                'promotion_id'            => $promotion_id,
+                'merchant_id'             => $merchant_id,
+                'promotion_type'          => $promotion_type,
+                'status'                  => $status,
+                'begin_date'              => $begin_date,
+                'end_date'                => $end_date,
+                'coupon_validity_in_date' => $coupon_validity_in_date,
+                'rule_value'              => $rule_value,
+                'discount_value'          => $discount_value,
+                'id_language_default'     => $id_language_default,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -572,26 +594,27 @@ class CouponAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'promotion_id'         => 'required|numeric|orbit.empty.coupon',
-                    'merchant_id'          => 'numeric|orbit.empty.merchant',
-                    'promotion_name'       => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
-                    'promotion_type'       => 'orbit.empty.coupon_type',
-                    'status'               => 'orbit.empty.coupon_status',
-                    'begin_date'                => 'date_format:Y-m-d H:i:s',
-                    'end_date'                  => 'date_format:Y-m-d H:i:s',
-                    'status'                    => 'orbit.empty.coupon_status',
-                    'coupon_validity_in_date'   => 'date_format:Y-m-d H:i:s',
-                    'rule_value'                => 'numeric|min:0',
-                    'discount_value'            => 'numeric|min:0',
+                    'promotion_id'            => 'required|numeric|orbit.empty.coupon',
+                    'merchant_id'             => 'numeric|orbit.empty.merchant',
+                    'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
+                    'promotion_type'          => 'orbit.empty.coupon_type',
+                    'status'                  => 'orbit.empty.coupon_status',
+                    'begin_date'              => 'date_format:Y-m-d H:i:s',
+                    'end_date'                => 'date_format:Y-m-d H:i:s',
+                    'status'                  => 'orbit.empty.coupon_status',
+                    'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
+                    'rule_value'              => 'numeric|min:0',
+                    'discount_value'          => 'numeric|min:0',
+                    'id_language_default'     => 'required|numeric',
                 ),
                 array(
-                   'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
-                    'rule_value.required'       => 'The amount to obtain is required',
-                    'rule_value.numeric'        => 'The amount to obtain must be a number',
-                    'rule_value.min'            => 'The amount to obtain must be greater than zero',
-                    'discount_value.required'       => 'The coupon value is required',
-                    'discount_value.numeric'        => 'The coupon value must be a number',
-                    'discount_value.min'            => 'The coupon value must be greater than zero',
+                    'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
+                    'rule_value.required'     => 'The amount to obtain is required',
+                    'rule_value.numeric'      => 'The amount to obtain must be a number',
+                    'rule_value.min'          => 'The amount to obtain must be greater than zero',
+                    'discount_value.required' => 'The coupon value is required',
+                    'discount_value.numeric'  => 'The coupon value must be a number',
+                    'discount_value.min'      => 'The coupon value must be greater than zero',
                 )
             );
 
@@ -608,6 +631,8 @@ class CouponAPIController extends ControllerAPI
             $this->beginTransaction();
 
             $updatedcoupon = Coupon::with('couponRule', 'tenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
+
+            $updatedcoupon_default_language = CouponTranslation::excludeDeleted()->where('promotion_id', $promotion_id)->where('merchant_language_id', $id_language_default)->first();
 
             // save Coupon
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedcoupon) {
@@ -676,9 +701,36 @@ class CouponAPIController extends ControllerAPI
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
+
+
+            //  save coupon default language
+            OrbitInput::post('promotion_name', function($promotion_name) use ($updatedcoupon_default_language) {
+                $updatedcoupon_default_language->promotion_name = $promotion_name;
+            });
+
+            OrbitInput::post('description', function($description) use ($updatedcoupon_default_language) {
+                $updatedcoupon_default_language->description = $description;
+            });
+            
+            OrbitInput::post('long_description', function($long_description) use ($updatedcoupon_default_language) {
+                $updatedcoupon_default_language->long_description = $long_description;
+            });
+
+            OrbitInput::post('status', function($status) use ($updatedcoupon_default_language) {
+                $updatedcoupon_default_language->status = $status;
+            });
+
+            $updatedcoupon_default_language->modified_by = $this->api->user->user_id;
+
             Event::fire('orbit.coupon.postupdatecoupon.before.save', array($this, $updatedcoupon));
 
             $updatedcoupon->save();
+            $updatedcoupon_default_language->save();
+
+            Event::fire('orbit.coupon.after.translation.save', array($this, $updatedcoupon_default_language));
+
+            // return respones if any upload image or no
+            $updatedcoupon_default_language->load('media');
 
 
             // save CouponRule.
@@ -845,6 +897,7 @@ class CouponAPIController extends ControllerAPI
             });
 
             $this->response->data = $updatedcoupon;
+            $this->response->data->translation_default = $updatedcoupon_default_language;
 
             // Commit the changes
             $this->commit();
@@ -2560,11 +2613,16 @@ class CouponAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
+// dd($translations_json_string);
+
         $valid_fields = ['promotion_name', 'description', 'long_description'];
         $user = $this->api->user;
         $operations = [];
 
         $data = @json_decode($translations_json_string);
+
+// dd($data);
+
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
@@ -2638,6 +2696,9 @@ class CouponAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.coupon.after.translation.save', array($this, $existing_translation));
+
+                // return respones if any upload image or no
+                $existing_translation->load('media');
 
                 $coupon->setRelation('translation_' . $existing_translation->merchant_language_id, $existing_translation);
             }
