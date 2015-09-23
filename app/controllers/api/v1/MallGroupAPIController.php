@@ -238,7 +238,7 @@ class MallGroupAPIController extends ControllerAPI
             $newmallgroup->save();
 
             // add omid to newly created mall
-            $newmallgroup->omid = Mall::OMID_INCREMENT + $newmallgroup->merchant_id;
+            $newmallgroup->omid = MallGroup::OMID_INCREMENT + $newmallgroup->merchant_id;
             $newmallgroup->save();
 
             Event::fire('orbit.mallgroup.postnewmallgroup.after.save', array($this, $newmallgroup));
