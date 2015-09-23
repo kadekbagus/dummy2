@@ -533,8 +533,8 @@ class CouponReportAPIController extends ControllerAPI
             $coupons = Coupon::select('promotions.promotion_id', 'promotions.merchant_id as mall_id', 'promotions.is_coupon', 'promotions.promotion_name',
                                       'promotions.begin_date', 'promotions.end_date',
                                       DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
-                                      DB::raw("issued.*"),
-                                      DB::raw("redeemed.*"),
+                                      DB::raw("CASE WHEN issued.total_issued IS NULL THEN 0 ELSE issued.total_issued END AS total_issued"),
+                                      DB::raw("CASE WHEN redeemed.total_redeemed IS NULL THEN 0 ELSE redeemed.total_redeemed END AS total_redeemed"),
                                       DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
                                                     CASE WHEN
                                                         DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
