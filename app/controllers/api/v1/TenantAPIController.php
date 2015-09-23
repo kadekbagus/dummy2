@@ -212,7 +212,6 @@ class TenantAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer    `user_id`                 (optional) - User id for the retailer
-     * @param string     `orid`                    (optional) - ORID of the retailer
      * @param string     `email`                   (required) - Email address of the retailer
      * @param string     `name`                    (required) - Name of the retailer
      * @param string     `description`             (optional) - Merchant description
@@ -429,9 +428,9 @@ class TenantAPIController extends ControllerAPI
             }
 
             $newtenant = new Tenant();
-            $newtenant->is_mall = 'no';
             $newtenant->user_id = $newuser->user_id;
             $newtenant->omid = '';
+            $newtenant->orid = '';
             $newtenant->email = $email;
             $newtenant->name = $name;
             $newtenant->description = $description;
@@ -474,10 +473,6 @@ class TenantAPIController extends ControllerAPI
 
             Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newtenant));
 
-            $newtenant->save();
-
-            // add orid to newly created tenant
-            $newtenant->orid = Tenant::ORID_INCREMENT + $newtenant->merchant_id;
             $newtenant->save();
 
             // save merchant categories
@@ -600,7 +595,6 @@ class TenantAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer    `merchant_id`              (required) - ID of the retailer
-     * @param string     `orid`                     (optional) - ORID of the retailer
      * @param integer    `user_id`                  (optional) - User id for the retailer
      * @param string     `email`                    (optional) - Email address of the retailer
      * @param string     `name`                     (optional) - Name of the retailer
@@ -678,7 +672,6 @@ class TenantAPIController extends ControllerAPI
             $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
-            $orid = OrbitInput::post('orid');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
 
@@ -691,7 +684,6 @@ class TenantAPIController extends ControllerAPI
                     'user_id'           => $user_id,
                     'email'             => $email,
                     'status'            => $status,
-                    'orid'              => $orid,
                     'parent_id'         => $parent_id,
                     'url'               => $url,
                 ),
@@ -700,13 +692,11 @@ class TenantAPIController extends ControllerAPI
                     'user_id'           => 'numeric|orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.tenant_status|orbit.exists.inactive_tenant_is_box_current_retailer:'.$retailer_id,
-                    'orid'              => 'orid_exists_but_me',
                     'parent_id'         => 'numeric|orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                 ),
                 array(
                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
-                   'orid_exists_but_me'  => Lang::get('validation.orbit.exists.orid')
                )
             );
 
@@ -720,10 +710,6 @@ class TenantAPIController extends ControllerAPI
             Event::fire('orbit.tenant.postupdatetenant.after.validation', array($this, $validator));
 
             $updatedtenant = App::make('orbit.empty.tenant');
-
-            OrbitInput::post('orid', function($orid) use ($updatedtenant) {
-                $updatedtenant->orid = $orid;
-            });
 
             OrbitInput::post('user_id', function($user_id) use ($updatedtenant) {
                 $updatedtenant->user_id = $user_id;
@@ -1143,7 +1129,7 @@ class TenantAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:orid,registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_external_object_id,retailer_created_at,retailer_updated_at',
+                    'sortby' => 'in:registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_external_object_id,retailer_created_at,retailer_updated_at',
                 ),
                 array(
                     'sortby.in' => Lang::get('validation.orbit.empty.retailer_sortby'),
@@ -1531,7 +1517,6 @@ class TenantAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'orid' => 'merchants.orid',
                     'registered_date' => 'merchants.created_at',
                     'retailer_name' => 'merchants.name',
                     'retailer_email' => 'merchants.email',
