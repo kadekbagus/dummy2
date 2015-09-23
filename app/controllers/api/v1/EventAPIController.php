@@ -159,19 +159,6 @@ class EventAPIController extends ControllerAPI
 
             $newevent->save();
 
-            // save default language translation
-            $event_translation_default = new EventTranslation();
-            $event_translation_default->event_id = $newevent->event_id;
-            $event_translation_default->merchant_language_id = $id_language_default;
-            $event_translation_default->event_name = $newevent->event_name;
-            $event_translation_default->description = $newevent->description;
-            $event_translation_default->status = 'active';
-            $event_translation_default->created_by = $this->api->user->user_id;
-            $event_translation_default->modified_by = $this->api->user->user_id;
-            $event_translation_default->save();
-
-            Event::fire('orbit.event.after.translation.save', array($this, $event_translation_default));
-
             // save EventRetailer
             $eventretailers = array();
             foreach ($retailer_ids as $retailer_id) {
@@ -186,12 +173,20 @@ class EventAPIController extends ControllerAPI
 
             Event::fire('orbit.event.postnewevent.after.save', array($this, $newevent));
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'event_name' => $newevent->event_name,
+                    'description' => $newevent->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($newevent, json_encode($default_translation), 'create');
+
             OrbitInput::post('translations', function($translation_json_string) use ($newevent) {
                 $this->validateAndSaveTranslations($newevent, $translation_json_string, 'create');
             });
 
             $this->response->data = $newevent;
-            $this->response->data->translation_default = $event_translation_default;
 
             // Commit the changes
             $this->commit();
