@@ -1694,16 +1694,13 @@ class CouponAPIController extends ControllerAPI
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
-            $tenant_id = OrbitInput::post('tenant_id');
 
             $validator = Validator::make(
                 array(
-                    'tenant_id'        => $tenant_id,
                     'issued_coupon_id' => $issuedCouponId,
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
-                    'tenant_id'         => 'required|orbit.empty.retailer',
                     'issued_coupon_id'              => 'required|numeric|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required',
                 )
@@ -1718,6 +1715,17 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
+            $tenant = Retailer::active()
+                ->where('parent_id', $mall_id)
+                ->where('masterbox_number', $verificationNumber)
+                ->first();
+
+            if (! is_object($tenant)) {
+                // @Todo replace with language
+                $message = 'Tenant is not found.';
+                ACL::throwAccessForbidden($message);
+            }
+
             // Begin database transaction
             $this->beginTransaction();
 
@@ -1727,7 +1735,7 @@ class CouponAPIController extends ControllerAPI
             $coupon = $issuedcoupon->coupon;
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
-            $issuedcoupon->redeem_retailer_id = $tenant_id;
+            $issuedcoupon->redeem_retailer_id = $tenant->merchant_id;
             $issuedcoupon->redeem_verification_code = $verificationNumber;
             $issuedcoupon->status = 'redeemed';
 
@@ -2208,23 +2216,8 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) use ($user) {
             $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
-            $tenant_id = OrbitInput::post('tenant_id');
 
             $prefix = DB::getTablePrefix();
-
-            $tenant = Retailer::active()
-                            ->where('merchant_id', $tenant_id)
-                            ->first();
-
-            if(empty($tenant)) {
-                $errorMessage = sprintf('Retailer not found.');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            if($tenant->masterbox_number !== $number) {
-                $errorMessage = sprintf('Wrong verification number.');
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
 
             $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
                         ->where('issued_coupons.issued_coupon_id', $value)

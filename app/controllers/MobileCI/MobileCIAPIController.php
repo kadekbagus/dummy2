@@ -8428,11 +8428,33 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
-            $tenants = \CouponRetailer::with('retailer')
+            $tenants = \CouponRetailer::with('retailer', 'retailer.categories')
                 ->wherehas('retailer', function($q){
                     $q->where('merchants.status', 'active');
                 })
                 ->where('promotion_id', $coupon_id)->get();
+
+            // -- START hack: extracting multiple CSO from Tenants
+            
+            $cso_exists = FALSE;
+
+            $pure_tenants = array();
+
+            foreach ($tenants as $tenant) {
+                $cso_flag = 0;
+                foreach ($tenant->retailer->categories as $category) {
+                    if ($category->category_name !== 'Customer Service') {
+                        $cso_exists = TRUE;
+                        $cso_flag = 1;
+                    }
+                }
+                if($cso_flag === 1) {
+                    $pure_tenants[] = $tenant;
+                }
+            }
+
+            $tenants = $pure_tenants; // 100% pure tenant ready to be served
+            // -- END of hack
 
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
@@ -8445,7 +8467,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'cso_exists' => $cso_exists));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);

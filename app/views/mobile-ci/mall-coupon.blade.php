@@ -57,8 +57,11 @@
             <div class="col-xs-12">
                 <h4>Tenant Redeem</h4>
                 <ul class="tenant-list">
+                    @if($cso_exists)
+                    <li>Customer Service</li>
+                    @endif
                     @foreach($tenants as $tenant)
-                    <li>{{ $tenant->retailer->name }}</li>
+                        <li>{{ $tenant->retailer->name }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -97,19 +100,6 @@
                 <h4 class="modal-title" id="hasCouponLabel">Redeem Coupon</h4>
             </div>
             <div class="modal-body">
-                <div class="row select-tenant">
-                    <div class="col-xs-12 vertically-spaced text-center">
-                        <h4>Select Tenant</h4>
-                        <div class="form-data">
-                            <select id="tenantid" class="form-control">
-                                <option value="">--- Select Tenant ---</option>
-                                @foreach($tenants as $tenant)
-                                <option value="{{ $tenant->retailer->merchant_id }}">{{ $tenant->retailer->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
                 <div class="row select-tenant">
                     <div class="col-xs-12 vertically-spaced text-center">
                         <h4>Enter Tenant's Verification Number</h4>
@@ -241,16 +231,8 @@
                     $('#applyCoupon').hide();
                     $('#errorOK').show();
                 }
-
-                if(!$('#tenantid').val()) {
-                    $('.select-tenant').hide();
-                    $('.select-tenant-error').show();
-                    $('.select-tenant-error h4').text('Please select the tenant.');
-                    $('#applyCoupon').hide();
-                    $('#errorOK').show();
-                } 
                 
-                if($('#tenantid').val() && $('#tenantverify').val()) {
+                if($('#tenantverify').val()) {
                     $('#hasCouponModal .modal-content').css('display', 'none');
                     $('#hasCouponModal .modal-spinner').css('display', 'block');
                     $.ajax({
@@ -258,8 +240,7 @@
                         method: 'POST',
                         data: {
                             issued_coupon_id: {{$product->issuedCoupons[0]->issued_coupon_id}},
-                            merchant_verification_number: $('#tenantverify').val(),
-                            tenant_id: $('#tenantid').val()
+                            merchant_verification_number: $('#tenantverify').val()
                         }
                     }).done(function(data){
                         console.log(data);
