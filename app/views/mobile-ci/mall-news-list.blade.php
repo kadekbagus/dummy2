@@ -60,17 +60,25 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-xs-12">
+                    <div class="col-xs-12 text-center">
                         <p>
-                            Mau browsing sepuasnya?<br>
-                            Atau mau ikutan undian berhadiah?<br>
-                            Buka email Anda untuk verifikasi sekarang juga!!<br>
+                            <b>ENJOY FREE</b>
+                            <br>
+                            <span style="color:#0aa5d5; font-size:20px; font-weight: bold;">UNLIMITED</span>
+                            <br>
+                            <b>INTERNET</b>
+                            <br><br>
+                            <b>CHECK OUT OUR</b>
+                            <br>
+                            <b><span style="color:#0aa5d5;">PROMOTIONS</span> AND <span style="color:#0aa5d5;">COUPONS</span></b>
                         </p>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <div class="pull-right"><button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button></div>
+                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
+                    <div class="col-xs-12">
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
