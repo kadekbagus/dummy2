@@ -195,10 +195,10 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-xs-12 text-center">
-                        <p>
+                        <p style="font-size:15px;">
                             <b>ENJOY FREE</b>
                             <br>
-                            <span style="color:#0aa5d5; font-size:20px; font-weight: bold;">UNLIMITED</span>
+                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
                             <br>
                             <b>INTERNET</b>
                             <br><br>
