@@ -8434,7 +8434,8 @@ class MobileCIAPIController extends ControllerAPI
                 })
                 ->where('promotion_id', $coupon_id)->get();
 
-            // -- START hack: extracting multiple CSO from Tenants
+            // -- START hack
+            // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
             
             $cso_exists = FALSE;
 
