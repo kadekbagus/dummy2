@@ -25,8 +25,7 @@ class Tenant extends Eloquent
      * Column name which determine the type of Mall or Tenant.
      */
     const OBJECT_TYPE = 'object_type';
-
-    const ORID_INCREMENT = 111111;
+    
 
     protected $primaryKey = 'merchant_id';
 
