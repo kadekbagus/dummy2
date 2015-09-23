@@ -7783,7 +7783,13 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
+            $products = Retailer::with('mediaLogo', 'categories')
+                ->whereHas('categories', function($q) {
+                    $q->where('categories.category_name', '<>', 'Customer Service');
+                })
+                ->active()
+                ->where('is_mall', 'no')
+                ->where('parent_id', $retailer->merchant_id);
 
             // Filter product by name pattern
             OrbitInput::get(
