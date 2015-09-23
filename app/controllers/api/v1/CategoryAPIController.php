@@ -28,7 +28,7 @@ class CategoryAPIController extends ControllerAPI
      * @param string     `status`                   (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param integer    `category_order`           (optional) - Category order
      * @param string     `description`              (optional) - Description
-     * @param integer     `id_language_default`     (required) - ID language default
+     * @param integer    `id_language_default`      (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -106,6 +106,8 @@ class CategoryAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            Event::fire('orbit.category.postnewcategory.after.validation', array($this, $validator));
+
             // Begin database transaction
             $this->beginTransaction();
 
@@ -123,27 +125,22 @@ class CategoryAPIController extends ControllerAPI
 
             $newcategory->save();
 
-            // save category language translation
-            $category_translation_default = new CategoryTranslation();
-            $category_translation_default->category_id = $newcategory->category_id;
-            $category_translation_default->merchant_language_id = $id_language_default;
-            $category_translation_default->category_name = $newcategory->category_name;
-            $category_translation_default->description = $newcategory->description;
-            $category_translation_default->status = 'active';
-            $category_translation_default->created_by = $this->api->user->user_id;
-            $category_translation_default->modified_by = $this->api->user->user_id;
-            $category_translation_default->save();
-
-            Event::fire('orbit.category.after.translation.save', array($this, $category_translation_default));
-
             Event::fire('orbit.category.postnewcategory.after.save', array($this, $newcategory));
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'category_name' => $newcategory->category_name,
+                    'description' => $newcategory->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($newcategory, json_encode($default_translation), 'create');
 
             OrbitInput::post('translations', function($translation_json_string) use ($newcategory) {
                 $this->validateAndSaveTranslations($newcategory, $translation_json_string, 'create');
             });
 
             $this->response->data = $newcategory;
-            $this->response->data->translation_default = $category_translation_default;
 
             // Commit the changes
             $this->commit();
@@ -1183,6 +1180,8 @@ if (! ACL::create($user)->isAllowed('view_category')) {
                 $new_translation->created_by = $this->api->user->user_id;
                 $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
+
+                $category->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
                 /** @var CategoryTranslation $existing_translation */
@@ -1193,6 +1192,8 @@ if (! ACL::create($user)->isAllowed('view_category')) {
                 }
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
+
+                $category->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
             }
             elseif ($op === 'delete') {
                 /** @var CategoryTranslation $existing_translation */
