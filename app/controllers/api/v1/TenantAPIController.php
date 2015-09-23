@@ -409,7 +409,9 @@ class TenantAPIController extends ControllerAPI
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_email = $email;
-            $newuser->user_password = Hash::make($password);
+            OrbitInput::post('password', function ($password) use ($newuser) {
+                $newuser->user_password = Hash::make($password);
+            });
             $newuser->status = $status;
             $newuser->user_role_id = $roleTenant->role_id;
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
