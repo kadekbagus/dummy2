@@ -64,7 +64,11 @@
                         <p style="font-size:15px;">
                             <b>ENJOY FREE</b>
                             <br>
-                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
+                            @if ($active_user)
+                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
+                            @else
+                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">30 MINUTES</span>
+                            @endif
                             <br>
                             <b>INTERNET</b>
                             <br><br>
@@ -112,6 +116,9 @@
         }
     }
     $(document).ready(function(){
+        var fromLogin = $.cookie('orbit_from_login');
+        $.removeCookie('orbit_from_login', {path: '/'});
+        var displayModal = (fromLogin === '1');
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
             $(this).css('z-index', zIndex);
@@ -120,8 +127,13 @@
             }, 0);
         });
         if(!$.cookie('dismiss_verification_popup')) {
-            $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-            $('#verifyModal').modal();
+            if (displayModal) {
+                $('#verifyModal').on('hidden.bs.modal', function () {
+                    if ($('#verifyModalCheck')[0].checked) {
+                        $.cookie('dismiss_verification_popup', 't', {expires: 3650});
+                    }
+                }).modal();
+            }
         }
         
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}';
