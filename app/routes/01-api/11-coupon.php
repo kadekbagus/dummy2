@@ -106,3 +106,11 @@ Route::post('/api/v1/issued-coupon/redeem', function()
 {
     return CouponAPIController::create()->postRedeemCoupon();
 });
+
+/**
+ * Coupon Report By Name
+ */
+Route::post('/api/v1/coupon-report/list', function()
+{
+    return CouponReportAPIController::create()->getCouponReport();
+});

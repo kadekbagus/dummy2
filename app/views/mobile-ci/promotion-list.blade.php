@@ -27,7 +27,7 @@
                                         <p class="promo-item">{{ Lang::get('mobileci.promotion_list.product_label') }}: {{ $promo->promotionrule->discountproduct->product_name }}</p>
                                     @elseif($promo->promotionrule->discount_object_type == 'family')
                                         <p class="promo-item">
-                                            {{ Lang::get('mobileci.promotion_list.category_label') }}: 
+                                            {{ Lang::get('mobileci.promotion_list.category_label') }}:
                                             @if(!is_null($promo->promotionrule->discountcategory1))
                                             <span>{{ $promo->promotionrule->discountcategory1->category_name }}</span>
                                             @endif
@@ -87,9 +87,9 @@
                 <div class="row">
                     <div class="col-xs-12">
                         <p>
-                            Mau browsing sepuasnya?<br>
-                            Atau mau ikutan undian berhadiah?<br>
-                            Buka email Anda untuk verifikasi sekarang juga!!<br>
+                            You are about to enjoy free WiFi at Lippo Mall Puri!
+                            <br><br>
+                            Find our exciting deals and latest news here. Don't forget to exchange your transaction receipts and get a chance to win a car!
                         </p>
                     </div>
                 </div>
@@ -109,7 +109,7 @@
 <script type="text/javascript">
     $(window).bind("pageshow", function(event) {
         if (event.originalEvent.persisted) {
-            window.location.reload() 
+            window.location.reload()
         }
     });
     $(document).ready(function(){
