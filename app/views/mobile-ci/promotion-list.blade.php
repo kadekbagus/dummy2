@@ -27,7 +27,7 @@
                                         <p class="promo-item">{{ Lang::get('mobileci.promotion_list.product_label') }}: {{ $promo->promotionrule->discountproduct->product_name }}</p>
                                     @elseif($promo->promotionrule->discount_object_type == 'family')
                                         <p class="promo-item">
-                                            {{ Lang::get('mobileci.promotion_list.category_label') }}:
+                                            {{ Lang::get('mobileci.promotion_list.category_label') }}: 
                                             @if(!is_null($promo->promotionrule->discountcategory1))
                                             <span>{{ $promo->promotionrule->discountcategory1->category_name }}</span>
                                             @endif
@@ -85,11 +85,34 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-xs-12">
-                        <p>
-                            You are about to enjoy free WiFi at Lippo Mall Puri!
+                    <div class="col-xs-12 text-center">
+                        <p style="font-size:15px;">
+                            <b>ENJOY FREE</b>
+                            <br>
+                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
+                            <br>
+                            <b>INTERNET</b>
                             <br><br>
-                            Find our exciting deals and latest news here. Don't forget to exchange your transaction receipts and get a chance to win a car!
+                            <b>CHECK OUT OUR</b>
+                            <br>
+                            <b><span style="color:#0aa5d5;">PROMOTIONS</span> AND <span style="color:#0aa5d5;">COUPONS</span></b>
+                        </p>
+                    </div>
+                </div>
+                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
+                    <div class="col-xs-12">
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="row">
+                    <div class="col-xs-12 text-center">
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
+                    </div>
+                    <div class="col-xs-12 text-left">
+                        <p>
+                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck"> <span>Do not display this message again</span>
                         </p>
                     </div>
                 </div>
@@ -109,10 +132,13 @@
 <script type="text/javascript">
     $(window).bind("pageshow", function(event) {
         if (event.originalEvent.persisted) {
-            window.location.reload()
+            window.location.reload() 
         }
     });
     $(document).ready(function(){
+        var fromLogin = $.cookie('orbit_from_login');
+        $.removeCookie('orbit_from_login', {path: '/'});
+        var displayModal = (fromLogin === '1');
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
             $(this).css('z-index', zIndex);
@@ -121,8 +147,13 @@
             }, 0);
         });
         if(!$.cookie('dismiss_verification_popup')) {
-            $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-            $('#verifyModal').modal();
+            if (displayModal) {
+                $('#verifyModal').on('hidden.bs.modal', function () {
+                    if ($('#verifyModalCheck')[0].checked) {
+                        $.cookie('dismiss_verification_popup', 't', {expires: 3650});
+                    }
+                }).modal();
+            }
         }
         if(window.location.hash){
             var hash = window.location.hash;

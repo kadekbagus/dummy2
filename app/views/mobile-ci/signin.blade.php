@@ -165,6 +165,7 @@
 
     $(document).ready(function() {
 
+      $.cookie('orbit_from_login', '1', {path: '/'});
       var em;
       var user_em = '{{ strtolower($user_email) }}';
       function isValidEmailAddress(emailAddress) {

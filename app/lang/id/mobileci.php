@@ -78,6 +78,7 @@ return array(
         'yes_button'            => 'Ya',
         'do_not_show_label'     => 'Jangan tunjukkan pesan ini lagi',
         'new_product_price'     => 'Harga baru',
+        'okay'                  => 'OK',
     ),
 
     // page specific lang
