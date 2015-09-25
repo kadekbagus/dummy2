@@ -358,21 +358,15 @@ class TenantAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'                => $email,
                     'name'                 => $name,
-                    'external_object_id'   => $external_object_id,
                     'status'               => $status,
                     'parent_id'            => $parent_id,
-                    'country'              => $country,
                     'url'                  => $url
                 ),
                 array(
-                    'email'                => 'required|email|orbit.exists.email',
                     'name'                 => 'required',
-                    'external_object_id'   => 'required',
                     'status'               => 'orbit.empty.retailer_status',
                     'parent_id'            => 'numeric|orbit.empty.merchant',
-                    'country'              => 'numeric',
                     'url'                  => 'orbit.formaterror.url.web'
                 )
             );
@@ -414,21 +408,6 @@ class TenantAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Could not find role named "Retailer Owner".');
             }
 
-            $newuser = new User();
-            $newuser->username = $email;
-            $newuser->user_email = $email;
-            $newuser->user_password = Hash::make($password);
-            $newuser->status = $status;
-            $newuser->user_role_id = $roleRetailer->role_id;
-            $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
-            $newuser->modified_by = $user->user_id;
-            $newuser->save();
-
-            $newuser->createAPiKey();
-
-            $userdetail = new UserDetail();
-            $userdetail = $newuser->userdetail()->save($userdetail);
-
             $countryName = '';
             $countryObject = Country::find($country);
             if (is_object($countryObject)) {
@@ -438,9 +417,10 @@ class TenantAPIController extends ControllerAPI
             $newretailer = new Retailer();
             $newretailer->object_type = 'retailer';
             $newretailer->is_mall = 'no';
-            $newretailer->user_id = $newuser->user_id;
             $newretailer->omid = '';
-            $newretailer->email = $email;
+            if (! is_null($email)) {
+                $newretailer->email = $email;
+            }
             $newretailer->name = $name;
             $newretailer->description = $description;
             $newretailer->address_line1 = $address_line1;

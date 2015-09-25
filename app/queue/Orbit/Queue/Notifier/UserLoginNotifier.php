@@ -98,6 +98,10 @@ class UserLoginNotifier
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
             }
 
+            Log::info('Post data: ' . serialize($postData));
+
+            $this->poster->addHeader('Accept', 'application/json');
+
             $this->poster->setUserAgent(Config::get('orbit-notifier.user-agent'));
             $this->poster->post($url, $postData);
 
@@ -110,6 +114,8 @@ class UserLoginNotifier
 
             // Lets try to decode the body
             $httpBody = $this->poster->getResponse();
+            Log::info('External response: ' . $httpBody);
+
             $response = json_decode($httpBody);
 
             // Non-Zero code means an error
@@ -122,6 +128,9 @@ class UserLoginNotifier
             // does not have the email address and not intented to update membership number
             if (is_null($response->data)) {
                 $message .= ' Message: No data returned.';
+
+                // Delete the job we don't interested any more
+                $job->delete();
 
                 return [
                     'status' => 'ok',
@@ -175,7 +184,7 @@ class UserLoginNotifier
 
             if (! DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->beginTransaction();
-                $insideTransactionFromNotifier = TRUE;                
+                $insideTransactionFromNotifier = TRUE;
             }
 
             // Check for the previous membership number, if it was empty assuming this is the first time
