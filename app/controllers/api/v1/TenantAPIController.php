@@ -308,7 +308,7 @@ class TenantAPIController extends ControllerAPI
             $currency_symbol = OrbitInput::post('currency_symbol');
             $tax_code1 = OrbitInput::post('tax_code1');
             $tax_code2 = OrbitInput::post('tax_code2');
-            $tax_code3 = OrbitInput::post('tax_code3');
+            $tax_code3 = OrbitInput::post('tax_code3');@
             $slogan = OrbitInput::post('slogan');
             $vat_included = OrbitInput::post('vat_included');
             $contact_person_firstname = OrbitInput::post('contact_person_firstname');
@@ -617,6 +617,7 @@ class TenantAPIController extends ControllerAPI
             $orid = OrbitInput::post('orid');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
+            $masterbox_number = OrbitInput::post('masterbox_number');
             $category_ids = OrbitInput::post('category_ids');
 
             $validator = Validator::make(
@@ -628,6 +629,7 @@ class TenantAPIController extends ControllerAPI
                     'orid'              => $orid,
                     'parent_id'         => $parent_id,
                     'url'               => $url,
+                    'masterbox_number'  => $masterbox_number,
                     'category_ids'      => $category_ids,
                 ),
                 array(
@@ -638,6 +640,7 @@ class TenantAPIController extends ControllerAPI
                     'orid'              => 'orid_exists_but_me',
                     'parent_id'         => 'numeric|orbit.empty.merchant',
                     'url'               => 'orbit.formaterror.url.web',
+                    'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id,
                     'category_ids'      => 'required|array'
                 ),
                 array(
@@ -1685,6 +1688,30 @@ class TenantAPIController extends ControllerAPI
 
             if (! Hash::check($value, $masterPassword->setting_value)) {
                 $message = 'The master password is incorrect.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
+
+        // Check if the merchant verification number is unique
+        Validator::extend('orbit_unique_verification_number', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Check the tenants which has verification number posted
+            $tenant = Retailer::excludeDeleted()
+                               ->where('parent_id', $currentMall)
+                               /**
+                                * @Todo
+                                * Use proper field instead of `masterbox_number`
+                                */
+                               ->where('masterbox_number', $value)
+                               ->where('merchant_id', '!=', $parameters[0])
+                               ->first();
+
+            if (! is_object($tenant)) {
+                $message = 'The verification number already used by other tenant.';
                 ACL::throwAccessForbidden($message);
             }
 
