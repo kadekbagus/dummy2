@@ -347,8 +347,6 @@ class CategoryAPIController extends ControllerAPI
 
             $updatedcategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
 
-            $updatedcategory_default_language = CategoryTranslation::excludeDeleted()->where('category_id', $category_id)->where('merchant_language_id', $id_language_default)->first();
-
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedcategory) {
                 if (! (trim($merchant_id) === '')) {
                     $updatedcategory->merchant_id = $merchant_id;
@@ -375,39 +373,27 @@ class CategoryAPIController extends ControllerAPI
                 $updatedcategory->status = $status;
             });
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'category_name' => $updatedcategory->category_name,
+                    'description' => $updatedcategory->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($updatedcategory, json_encode($default_translation), 'update');
+
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcategory) {
                 $this->validateAndSaveTranslations($updatedcategory, $translation_json_string, 'update');
             });
 
             $updatedcategory->modified_by = $this->api->user->user_id;
 
-            // post category default language
-            OrbitInput::post('category_name', function($category_name) use ($updatedcategory_default_language) {
-                $updatedcategory_default_language->category_name = $category_name;
-            });
-
-            OrbitInput::post('status', function($status) use ($updatedcategory_default_language) {
-                $updatedcateogry_default_language->status = $status;
-            });
-
-            OrbitInput::post('description', function($description) use ($updatedcateogry_default_language) {
-                $updatedcateogry_default_language->description = $description;
-            });
-
-            $updatedcateogry_default_language->modified_by = $this->api->user->user_id;
-
             Event::fire('orbit.category.postupdatecategory.before.save', array($this, $updatedcategory));
 
             $updatedcategory->save();
 
-            Event::fire('orbit.category.after.translation.save', array($this, $updatedcategory_default_language));
-
-            // return respones if any upload image or no
-            $updatedcategory_default_language->load('media');
-
             Event::fire('orbit.category.postupdatecategory.after.save', array($this, $updatedcategory));
             $this->response->data = $updatedcategory;
-            $this->response->data->translation_default = $updatedcategory_default_language;
 
             // Commit the changes
             $this->commit();
