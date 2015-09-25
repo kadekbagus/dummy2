@@ -238,7 +238,7 @@
         $('#email').val(em.toLowerCase());
 
         if (get('auto_login') == 'yes') {
-            $('.orbit-login-button').hide();
+            $('.orbit-auto-login').hide();
             callLoginAPI();
         }
       }
