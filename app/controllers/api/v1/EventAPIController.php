@@ -458,6 +458,10 @@ class EventAPIController extends ControllerAPI
 
             $updatedevent->modified_by = $this->api->user->user_id;
 
+            Event::fire('orbit.event.postupdateevent.before.save', array($this, $updatedevent));
+
+            $updatedevent->save();
+
             // save EventRetailer
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedevent) {
                 if ($no_retailer == 'Y') {
