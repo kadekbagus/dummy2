@@ -254,6 +254,7 @@ return array(
             'couponreportbycouponname_sortby' => 'The sort by argument you specified is not valid, the valid values are: redeem_retailer_name, total_redeemed, issued_coupon_code, user_email, redeemed_date, redeem_verification_code',
             'couponreportbytenant_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, user_email, issued_coupon_code, redeemed_date, redeem_verification_code, total_issued, total_redeemed',
             'issuedcouponreport_sortby'   => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, is_auto_issue_on_signup, user_email, issued_coupon_code, issued_date, total_issued, maximum_issued_coupon, coupon_status, status',
+            'couponsummaryreport_sortby'  => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, is_auto_issue_on_signup, total_redeemed, total_issued, coupon_status',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

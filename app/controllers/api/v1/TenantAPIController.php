@@ -644,9 +644,11 @@ class TenantAPIController extends ControllerAPI
                     'category_ids'      => 'required|array'
                 ),
                 array(
-                   'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
-                   'orid_exists_but_me'  => Lang::get('validation.orbit.exists.orid'),
-                   'category_ids.required' => 'The category is required.'
+                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
+                    'orid_exists_but_me'  => Lang::get('validation.orbit.exists.orid'),
+                    'category_ids.required' => 'The category is required.',
+                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
+                //ACL::throwAccessForbidden($message);
                )
             );
 
@@ -1710,9 +1712,8 @@ class TenantAPIController extends ControllerAPI
                                ->where('merchant_id', '!=', $parameters[0])
                                ->first();
 
-            if (! is_object($tenant)) {
-                $message = 'The verification number already used by other tenant.';
-                ACL::throwAccessForbidden($message);
+            if (! empty($tenant)) {
+                return FALSE;
             }
 
             return TRUE;
