@@ -45,7 +45,7 @@
             <div class="form-group">
                 <input type="text" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
             </div>
-            <div class="form-group">
+            <div class="form-group orbit-auto-login">
                 <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
             </div>
         </form>
@@ -68,13 +68,13 @@
                 <div class="form-group">
                     <input type="hidden" class="form-control" name="email" id="emailSigned" value="{{{ $user_email }}}" />
                 </div>
-                <div class="form-group">
+                <div class="form-group orbit-auto-login">
                     <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
                 </div>
             </form>
         </div>
     </div>
-    <div class="col-xs-12 text-center vertically-spaced">
+    <div class="col-xs-12 text-center vertically-spaced orbit-auto-login">
         <a id="notMe">{{ Lang::get('mobileci.signin.not') }} <span class="signedUser">{{{ $user_email or '' }}}</span><span class="userName">{{{ $display_name or '' }}}</span>, {{ Lang::get('mobileci.signin.click_here') }}.</a>
     </div>
 </div>
@@ -238,6 +238,7 @@
         $('#email').val(em.toLowerCase());
 
         if (get('auto_login') == 'yes') {
+            $('.orbit-login-button').hide();
             callLoginAPI();
         }
       }
