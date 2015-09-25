@@ -8376,7 +8376,13 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'retailer' => $retailer, 'data' => $data));
+            $view_data = array(
+                'page_title' => $pagetitle,
+                'retailer' => $retailer,
+                'data' => $data,
+                'active_user' => ($user->status === 'active'),
+            );
+            return View::make('mobile-ci.mall-coupon-list', $view_data);
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
