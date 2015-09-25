@@ -385,7 +385,7 @@ class WidgetAPIController extends ControllerAPI
             $widget->save();
 
             // Insert attribute values if specified by the caller
-            OrbitInput::post('retailer_ids', function($retailerIds) use ($widget) {
+            OrbitInput::post('retailer_ids', function($retailerIds) use ($widget, $merchantId) {
                 // $widget->retailers()->sync($retailerIds);
                 $widget->retailers()->sync(array($merchantId));
             });
