@@ -90,7 +90,11 @@
                         <p style="font-size:15px;">
                             <b>ENJOY FREE</b>
                             <br>
-                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
+                            @if ($active_user)
+                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
+                            @else
+                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">30 MINUTES</span>
+                            @endif
                             <br>
                             <b>INTERNET</b>
                             <br><br>
@@ -138,6 +142,9 @@
         }
     }
     $(document).ready(function(){
+        var fromLogin = $.cookie('orbit_from_login');
+        $.removeCookie('orbit_from_login', {path: '/'});
+        var displayModal = (fromLogin === '1');
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}';
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
@@ -157,9 +164,14 @@
             console.log(path);
             window.location.replace(path);
         });
-        if(!$.cookie('dismiss_verification_popup')) {
-            $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-            $('#verifyModal').modal();
+        if (!$.cookie('dismiss_verification_popup')) {
+            if (displayModal) {
+                $('#verifyModal').on('hidden.bs.modal', function () {
+                    if ($('#verifyModalCheck')[0].checked) {
+                        $.cookie('dismiss_verification_popup', 't', {expires: 3650});
+                    }
+                }).modal();
+            }
         }
     });
 </script>
