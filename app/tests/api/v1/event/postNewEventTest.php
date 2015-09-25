@@ -3,6 +3,7 @@
  * PHP Unit Test for Category Controller getSearchCategory
  *
  * @author: Yudi Rahono <yudi.rahono@dominopos.com>
+ * note: can't do this test if merchant language table is empty
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\Helper\Generator;
@@ -63,6 +64,7 @@ class postNewEventTest extends TestCase {
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
         $response = $this->call('POST', $url, $_POST)->getContent();
+        dd($response);
         $response = json_decode($response);
 
         // Should be OK
