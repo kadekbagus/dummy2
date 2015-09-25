@@ -403,8 +403,6 @@ class EventAPIController extends ControllerAPI
 
             $updatedevent = EventModel::with('retailers', 'retailerCategories', 'promotions', 'news')->excludeDeleted()->where('event_id', $event_id)->first();
 
-            $updatedevent_default_language = EventTranslation::excludeDeleted()->where('event_id', $event_id)->where('merchant_language_id', $id_language_default)->first();
-
             // save Event
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedevent) {
                 $updatedevent->merchant_id = $merchant_id;
@@ -445,36 +443,20 @@ class EventAPIController extends ControllerAPI
                 $updatedevent->link_object_type = $link_object_type;
             });
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'event_name' => $updatedevent->event_name,
+                    'description' => $updatedevent->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($updatedevent, json_encode($default_translation), 'update');
+
             OrbitInput::post('translations', function($translation_json_string) use ($updatedevent) {
                 $this->validateAndSaveTranslations($updatedevent, $translation_json_string, 'update');
             });
 
             $updatedevent->modified_by = $this->api->user->user_id;
-
-
-            // post event default language
-            OrbitInput::post('event_name', function($event_name) use ($updatedevent_default_language) {
-                $updatedevent_default_language->event_name = $event_name;
-            });
-
-            OrbitInput::post('status', function($status) use ($updatedevent_default_language) {
-                $updatedevent_default_language->status = $status;
-            });
-
-            OrbitInput::post('description', function($description) use ($updatedevent_default_language) {
-                $updatedevent_default_language->description = $description;
-            });
-
-            $updatedevent_default_language->modified_by = $this->api->user->user_id;
-
-            Event::fire('orbit.event.postupdateevent.before.save', array($this, $updatedevent));
-
-            $updatedevent->save();
-
-            Event::fire('orbit.event.after.translation.save', array($this, $updatedevent_default_language));
-
-            // return respones if any upload image or no
-            $updatedevent_default_language->load('media');
 
             // save EventRetailer
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedevent) {
@@ -547,8 +529,6 @@ class EventAPIController extends ControllerAPI
 
             Event::fire('orbit.event.postupdateevent.after.save', array($this, $updatedevent));
             $this->response->data = $updatedevent;
-            $this->response->data->translation_default = $updatedevent_default_language;
-
 
             // Commit the changes
             $this->commit();
