@@ -125,12 +125,20 @@
   {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
   <script type="text/javascript">
     /**
+     * Flag for AJAX call to login API
+     *
+     * @var boolean
+     */
+    var orbit_login_processing = false;
+
+    /**
      * Get Query String from the URL
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @param string n - Name of the parameter
      */
-    function get(n) {
+    function get(n)
+    {
         var half = location.search.split(n + '=')[1];
         return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
     }
@@ -143,7 +151,8 @@
      * @param XMLHttpRequest|jqXHR xhr
      * @return void
      */
-    function afterLogin(xhr) {
+    function afterLogin(xhr)
+    {
         // Get Session which returned by the Orbit backend named
         // 'Set-X-Orbit-Session: SESSION_ID
         // To do: replace this hardcode session name
@@ -163,6 +172,51 @@
         return;
     }
 
+    /**
+     * Call the Login API
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Rio Astamal <me@rioastamal.net>
+     */
+    function callLoginAPI()
+    {
+        if (orbit_login_processing) {
+            return;
+        }
+        orbit_login_processing = true;
+
+        $.ajax({
+            method:'POST',
+            url:apiPath+'customer/login',
+            data:{
+                email: $('#email').val().trim(),
+                payload: "{{{ Input::get('payload', '') }}}"
+            }
+        }).done(function(data, status, xhr) {
+            orbit_login_processing = false;
+
+            if (data.status==='error') {
+                $('#errorModalText').text(data.message);
+                $('#errorModal').modal();
+            }
+
+            if (data.data) {
+                // Check if we are redirected from captive portal
+                // The query string 'from_captive' are from apache configuration
+                if (get('from_captive') == 'yes') {
+                    afterLogin(xhr);
+                } else {
+                    window.location.replace('{{ $landing_url }}');
+                }
+            }
+        }).fail(function(data) {
+            orbit_login_processing = false;
+
+            $('#errorModalText').text(data.responseJSON.message);
+            $('#errorModal').modal();
+        });
+    }
+
     $(document).ready(function() {
 
       $.cookie('orbit_from_login', '1', {path: '/'});
@@ -176,11 +230,16 @@
       if (user_em != '') {
         $('#signedIn').show();
         $('#signIn').hide();
+
         em = user_em.toLowerCase();
+
         $('.signedUser').text(em.toLowerCase());
         $('.emailSigned').val(em.toLowerCase());
         $('#email').val(em.toLowerCase());
-        // console.log(user_em);
+
+        if (get('auto_login') == 'yes') {
+            callLoginAPI();
+        }
       }
 
       if ($('.userName')[0].innerHTML.length > 0) {
@@ -188,7 +247,7 @@
         $('.userName').show();
       }
 
-      $('#notMe').click(function(){
+      $('#notMe').click(function() {
         var currentDomain = window.location.hostname;
 
         $.removeCookie('orbit_email', { path: '/', domain: currentDomain });
@@ -196,7 +255,8 @@
 
         window.location.replace('/customer/logout?not_me=true');
       });
-      $('form[name="loginForm"]').submit(function(event){
+
+      $('form[name="loginForm"]').submit(function(event) {
         event.preventDefault();
         // $('.signedUser').text(em);
 
@@ -204,44 +264,12 @@
         $('#errorModalText').text('');
         $('#emailSignUp').val('');
 
-        if(!$('#email').val().trim()) {
-          $('#errorModalText').text('{{ Lang::get('mobileci.modals.email_error') }}');
-          $('#errorModal').modal();
-        }else{
-
-          if(isValidEmailAddress($('#email').val().trim())){
-            $.ajax({
-              method:'POST',
-              url:apiPath+'customer/login',
-              data:{
-                email: $('#email').val().trim(),
-                payload: "{{{ Input::get('payload', '') }}}"
-              }
-            }).done(function(data, status, xhr){
-              if(data.status==='error'){
-                console.log(data);
-                $('#errorModalText').text(data.message);
-                $('#errorModal').modal();
-              }
-              if(data.data){
-                // console.log(data.data);
-                // $.cookie('orbit_email', data.data.user_email, { expires: 5 * 365, path: '/' });
-                // if(data.data.user_firstname) {
-                  // $.cookie('orbit_firstname', data.data.user_firstname, { expires: 5 * 365, path: '/' });
-                // }
-
-                // Check if we are redirected from captive portal
-                // The query string 'from_captive' are from apache configuration
-                if (get('from_captive') == 'yes') {
-                    afterLogin(xhr);
-                } else {
-                    window.location.replace('{{ $landing_url }}');
-                }
-              }
-            }).fail(function(data){
-              $('#errorModalText').text(data.responseJSON.message);
-              $('#errorModal').modal();
-            });
+        if (! $('#email').val().trim()) {
+            $('#errorModalText').text('{{ Lang::get('mobileci.modals.email_error') }}');
+            $('#errorModal').modal();
+        } else {
+          if(isValidEmailAddress($('#email').val().trim())) {
+            callLoginAPI();
           } else {
             $('#errorModalText').text('{{ Lang::get('mobileci.signin.email_not_valid') }}');
             $('#errorModal').modal();
