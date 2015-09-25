@@ -43,7 +43,7 @@
         </header>
         <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
             <div class="form-group">
-                <input type="text" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
+                <input type="text" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
             </div>
             <div class="form-group orbit-auto-login">
                 <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
@@ -66,7 +66,7 @@
         <div class="col-xs-12 text-center">
             <form name="loginForm" id="loginSignedForm" action="{{ url('customer/login') }}" method="post">
                 <div class="form-group">
-                    <input type="hidden" class="form-control" name="email" id="emailSigned" value="{{{ $user_email }}}" />
+                    <input type="hidden" class="form-control orbit-auto-login" name="email" id="emailSigned" value="{{{ $user_email }}}" />
                 </div>
                 <div class="form-group orbit-auto-login">
                     <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
