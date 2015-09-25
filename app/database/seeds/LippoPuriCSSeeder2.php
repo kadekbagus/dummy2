@@ -33,8 +33,8 @@ TENANT;
 
         $this->command->info('Seeding CS merchants table with lippo puri tenants...');
 
-        // Loop from 2 to 12
-        for ($i=2; $i<=12; $i++) {
+        // Loop from 2 to 15
+        for ($i=2; $i<=15; $i++) {
             $number = str_pad($i, 2, '0', STR_PAD_LEFT);
 
             $current_query = str_replace('{{NUMBER}}', $number, $tenants);
