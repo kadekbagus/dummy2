@@ -35,7 +35,7 @@ TENANT;
 
         // Loop from 2 to 12
         for ($i=2; $i<=12; $i++) {
-            $number = str_pad($i, 2, STR_PAD_LEFT);
+            $number = str_pad($i, 2, '0', STR_PAD_LEFT);
 
             $current_query = str_replace('{{NUMBER}}', $number, $tenants);
 
