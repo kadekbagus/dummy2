@@ -601,7 +601,6 @@ class CouponAPIController extends ControllerAPI
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
                     'end_date'                => 'date_format:Y-m-d H:i:s',
-                    'status'                  => 'orbit.empty.coupon_status',
                     'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'numeric|min:0',
                     'discount_value'          => 'numeric|min:0',
@@ -2584,7 +2583,7 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.issuedcoupon.exists', function ($attribute, $value, $parameters) {
             $coupon = IssuedCoupon::active()->where('promotion_id', $value)->count();
 
-            if ($count > 0) {
+            if ($coupon > 0) {
                 $message = sprintf('Can not delete coupon since there is still %s issued coupon which not redeemed yet.', $coupon);
                 ACL::throwAccessForbidden($message);
             }
