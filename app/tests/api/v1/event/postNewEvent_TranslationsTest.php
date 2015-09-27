@@ -69,7 +69,7 @@ class postNewEvent_TranslationsTest extends TestCase
 
     }
 
-    private function makeRequest($event_data, $translations)
+    private function makeRequest($event_data, $translations, $id_language_default = 1)
     {
         $_GET = [
             'apikey' => $this->authData->api_key,
@@ -77,10 +77,9 @@ class postNewEvent_TranslationsTest extends TestCase
         ];
 
         $_POST = array_merge($event_data, [
-            'translations' => json_encode($translations)
+            'translations' => json_encode($translations),
+            'id_language_default' => $id_language_default,
         ]);
-
-        $_POST['id_language_default'] = 1;
 
         $url = '/api/v1/event/new?' . http_build_query($_GET);
 
@@ -127,6 +126,8 @@ class postNewEvent_TranslationsTest extends TestCase
     // with no translations, add translation
     public function testAddTranslation()
     {
+        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
+
         $event = $this->createEventData();
         $english_translations = [
             'event_name' => 'English Name',
@@ -135,7 +136,7 @@ class postNewEvent_TranslationsTest extends TestCase
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => $english_translations
         ];
-        $response = $this->makeRequest($event, $translations);
+        $response = $this->makeRequest($event, $translations, $id_language_default);
         $this->assertJsonResponseOk($response);
 
         $saved_translation = EventTranslation::where('event_id', '=', $response->data->event_id)
