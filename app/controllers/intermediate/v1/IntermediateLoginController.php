@@ -658,7 +658,7 @@ class IntermediateLoginController extends IntermediateBaseController
             ];
 
             $payload = (new Encrypter($key))->encrypt(http_build_query($query));
-            $redirectTo = sprintf('/customer/?%s=%s&payload_login=%s', $sessionName, $sessionId, $payload);
+            $redirectTo = sprintf('/customer?%s=%s&payload_login=%s', $sessionName, $sessionId, $payload);
 
             setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
             setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);

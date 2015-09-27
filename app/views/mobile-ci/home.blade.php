@@ -22,7 +22,7 @@
                 <section class="widget-single">
                     <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">    
+                            <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">
                                 <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_tenants.jpg') }}"/>
                             </a>
                         </li>
@@ -40,7 +40,7 @@
                 <section class="widget-single">
                     <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">    
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">
                                 <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_promotion.jpg') }}"/>
                             </a>
                         </li>
@@ -58,14 +58,14 @@
                 <section class="widget-single">
                     <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">
                                 <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_news.jpg') }}"/>
                             </a>
                         </li>
                     </ul>
                 </section>
             </div>
-            
+
             <div class="single-widget-container col-xs-6 col-sm-6">
                 <header class="widget-title">
                     <div><strong>Coupons</strong></div>
@@ -76,7 +76,7 @@
                 <section class="widget-single">
                     <ul class="rslides" id="slider1">
                         <li>
-                            <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">    
+                            <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">
                                 <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_coupon.jpg') }}"/>
                             </a>
                         </li>
@@ -356,18 +356,26 @@
 {{ HTML::script('mobile-ci/scripts/responsiveslides.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
-    $(document).ready(function(){
-        var fromLogin = $.cookie('orbit_from_login');
-        $.removeCookie('orbit_from_login', {path: '/'});
-        var displayModal = (fromLogin === '1');
-        // $(document).on('show.bs.modal', '.modal', function (event) {
-        //     var zIndex = 1040 + (10 * $('.modal:visible').length);
-        //     $(this).css('z-index', zIndex);
-        //     setTimeout(function() {
-        //         $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
-        //     }, 0);
-        // });
-        
+    /**
+     * Get Query String from the URL
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string n - Name of the parameter
+     */
+    function get(n)
+    {
+        var half = location.search.split(n + '=')[1];
+        return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
+    }
+
+    $(document).ready(function() {
+        var displayModal = false;
+
+        // Override the content of displayModal
+        if (get('internet_info') == 'yes') {
+            displayModal = true;
+        }
+
         @if(! is_null($events))
             if(!$.cookie('dismiss_verification_popup') && displayModal) {
                 $('#verifyModal').on('hidden.bs.modal', function () {
@@ -426,11 +434,11 @@
           $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
-        $('#promoModal a').click(function (event){ 
+        $('#promoModal a').click(function (event){
             var link = $(this).attr('href');
             var eventdata = $(this).data('event');
 
-            event.preventDefault(); 
+            event.preventDefault();
             $.ajax({
               data: {
                 eventdata: eventdata
@@ -474,7 +482,7 @@
           nextText: '<i class="fa fa-chevron-right"></i>',
           speed: 500
         });
-        
+
         $.each($('.rslides li'), function(i, v){
            $(this).css('height', $(this).width());
         });

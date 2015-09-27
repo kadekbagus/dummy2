@@ -129,16 +129,16 @@ class MobileCIAPIController extends ControllerAPI
             // check available auto-issuance coupon
             $coupons = DB::select(
                 DB::raw(
-                    'SELECT *, p.image AS promo_image, 
+                    'SELECT *, p.image AS promo_image,
                     (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
                           where ic.promotion_id = p.promotion_id
                           and ic.status!="deleted") as total_issued_coupon
                 FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id 
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
                 WHERE pr.rule_type = "auto_issue_on_signup"
                     AND p.merchant_id = :merchantid
-                    AND p.is_coupon = "Y" AND p.status = "active" 
-                    AND p.begin_date <= "' . $user->created_at . '" 
+                    AND p.is_coupon = "Y" AND p.status = "active"
+                    AND p.begin_date <= "' . $user->created_at . '"
                     AND p.end_date >= "' . $user->created_at . '"
                 HAVING
                     (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
@@ -158,13 +158,13 @@ class MobileCIAPIController extends ControllerAPI
                 WHERE pr.rule_type = "auto_issue_on_signup"
                     AND p.merchant_id = :merchantid
                     AND ic.user_id = :userid
-                    AND p.is_coupon = "Y" AND p.status = "active" 
-                    AND p.begin_date <= "' . $user->created_at . '" 
+                    AND p.is_coupon = "Y" AND p.status = "active"
+                    AND p.begin_date <= "' . $user->created_at . '"
                     AND p.end_date >= "' . $user->created_at . '"
                     '
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
-            );            
+            );
 
             // get obtained auto-issuance coupon ids
             $obtained_coupon_ids = array();
@@ -518,14 +518,14 @@ class MobileCIAPIController extends ControllerAPI
                 Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
                 Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
 
-                return Redirect::to($landing_url);
+                return Redirect::to($landing_url . '?internet_info=yes');
             }
 
             $viewData = array(
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url,
+                'landing_url' => $landing_url . '?internet_info=yes',
                 'display_name' => $display_name
             );
         } catch (Exception $e) {
@@ -537,7 +537,7 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url,
+                'landing_url' => $landing_url . '?internet_info=yes',
                 'display_name' => $display_name
             );
         }
@@ -8346,10 +8346,10 @@ class MobileCIAPIController extends ControllerAPI
             $coupons = DB::select(
                 DB::raw(
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" 
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now(). '" 
-                    AND p.merchant_id = :merchantid 
+                WHERE ic.expired_date >= "' . Carbon::now(). '"
+                    AND p.merchant_id = :merchantid
                     AND ic.user_id = :userid'
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
@@ -8429,7 +8429,7 @@ class MobileCIAPIController extends ControllerAPI
             //     ),
             //     array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id, 'issuedid' => $issued_coupon_id)
             // );
-            
+
             $coupons = Coupon::with(array('couponRule', 'issuedCoupons' => function($q) use($issued_coupon_id, $user){
                 $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                 $q->where('issued_coupons.user_id', $user->user_id);
@@ -8478,7 +8478,7 @@ class MobileCIAPIController extends ControllerAPI
 
             // -- START hack
             // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
-            
+
             $cso_exists = FALSE;
 
             $pure_tenants = array();
