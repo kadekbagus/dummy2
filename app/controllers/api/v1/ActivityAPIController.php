@@ -433,6 +433,9 @@ class ActivityAPIController extends ControllerAPI
             // skip, and order by
             $_activities = clone $activities;
 
+            // Prevent query leak, we select only field which should guarantee to be indexed
+            $_activities->select('activities.activity_id');
+
             // Get the take args
             $take = $perPage;
             OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
