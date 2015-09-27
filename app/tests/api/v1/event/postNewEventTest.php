@@ -3,7 +3,6 @@
  * PHP Unit Test for Category Controller getSearchCategory
  *
  * @author: Yudi Rahono <yudi.rahono@dominopos.com>
- * note: can't do this test if merchant language table is empty
  */
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\Helper\Generator;
@@ -16,6 +15,11 @@ class postNewEventTest extends TestCase {
     public function setUp()
     {
         parent::setUp();
+
+        $english = Factory::create('Language', ['name' => 'English']);
+        $chinese = Factory::create('Language', ['name' => 'Chinese']);
+        $french = Factory::create('Language', ['name' => 'French']);
+        $balinese = Factory::create('Language', ['name' => 'Balinese']);
 
         $this->group = $merchant = Factory::create('Merchant');
         $this->unrelatedGroup = $unrelatedMerchant = Factory::create('Merchant');
@@ -41,20 +45,45 @@ class postNewEventTest extends TestCase {
 
         $this->authData = Factory::create('apikey_super_admin');
         $this->events   = Factory::times(3)->create("EventModel");
+
+        $combos = [
+            [$this->mall, $english, 'english'],
+            [$this->mall, $french, 'french'],
+            [$this->mall, $balinese, 'deleted_balinese'],
+            [$this->unrelatedMall, $balinese, 'balinese'],
+            [$this->unrelatedMall, $chinese, 'chinese']
+        ];
+        $merchant_languages = [];
+        foreach ($combos as $combo) {
+            $lang = new MerchantLanguage();
+            $lang->merchant_id = $combo[0]->merchant_id;
+            $lang->language_id = $combo[1]->language_id;
+            $lang->save();
+            $merchant_languages[$combo[2]] = $lang;
+        }
+        $merchant_languages['deleted_balinese']->delete();
+
+        $this->merchantLanguages = $merchant_languages;
+    }
+
+    private function createEventData()
+    {
+        $faker = Faker\Factory::create();
+        return Factory::attributesFor('EventModel', [
+            'merchant_id' => $this->mall->merchant_id,
+        ]);
     }
 
     public function testOK_post_new_event_with_more_than_one_link_id()
     {
+        $event = $this->createEventData();
+
         $_GET['apikey']       = $this->authData->api_key;
         $_GET['apitimestamp'] = time();
 
-        $_POST['merchant_id']    = $this->mall->merchant_id;
-        $_POST['event_name']     = 'Unique Submitted Event';
-        $_POST['event_type']     = 'link';
-        $_POST['status']         = 'active';
-        $_POST['description']    = 'Description for event here';
-
-        $_POST['id_language_default'] = 1;
+        $_POST = array_merge($event, [
+            'id_language_default' => $this->merchantLanguages['english']->merchant_language_id,
+        ]);
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
@@ -64,7 +93,6 @@ class postNewEventTest extends TestCase {
         $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
 
         $response = $this->call('POST', $url, $_POST)->getContent();
-        dd($response);
         $response = json_decode($response);
 
         // Should be OK
@@ -86,7 +114,7 @@ class postNewEventTest extends TestCase {
         $_POST['status']         = 'active';
         $_POST['description']    = 'Description for event here';
 
-        $_POST['id_language_default'] = 1;
+        $_POST['id_language_default'] = $this->merchantLanguages['english']->merchant_language_id;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
