@@ -132,6 +132,24 @@
 {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    var cookie_dismiss_name = 'dismiss_verification_popup';
+
+    @if ($active_user)
+    cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
+    @endif
+
+    /**
+     * Get Query String from the URL
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string n - Name of the parameter
+     */
+    function get(n)
+    {
+        var half = location.search.split(n + '=')[1];
+        return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
+    }
+
     function updateQueryStringParameter(uri, key, value) {
         var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
         var separator = uri.indexOf('?') !== -1 ? "&" : "?";
@@ -164,11 +182,11 @@
             console.log(path);
             window.location.replace(path);
         });
-        if (!$.cookie('dismiss_verification_popup')) {
+        if (!$.cookie(cookie_dismiss_name)) {
             if (displayModal) {
                 $('#verifyModal').on('hidden.bs.modal', function () {
                     if ($('#verifyModalCheck')[0].checked) {
-                        $.cookie('dismiss_verification_popup', 't', {expires: 3650});
+                        $.cookie(cookie_dismiss_name, 't', {expires: 3650});
                     }
                 }).modal();
             }
