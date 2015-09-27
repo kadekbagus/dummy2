@@ -340,10 +340,11 @@
                     <div class="col-xs-12 text-center">
                         <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
                     </div>
+                </div>
+                <div class="row">
                     <div class="col-xs-12 text-left">
-                        <p>
-                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck"> <span>Do not display this message again</span>
-                        </p>
+                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck" style="top:2px;position:relative;">
+                            <label for="verifyModalCheck">Do not display this message again</label>
                     </div>
                 </div>
             </div>

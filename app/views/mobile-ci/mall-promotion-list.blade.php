@@ -115,10 +115,11 @@
                     <div class="col-xs-12 text-center">
                         <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
                     </div>
+                </div>
+                <div class="row">
                     <div class="col-xs-12 text-left">
-                        <p>
-                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck"> <span>Do not display this message again</span>
-                        </p>
+                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck" style="top:2px;position:relative;">
+                            <label for="verifyModalCheck">Do not display this message again</label>
                     </div>
                 </div>
             </div>
@@ -132,6 +133,18 @@
 {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    /**
+     * Get Query String from the URL
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string n - Name of the parameter
+     */
+    function get(n)
+    {
+        var half = location.search.split(n + '=')[1];
+        return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
+    }
+
     function updateQueryStringParameter(uri, key, value) {
         var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
         var separator = uri.indexOf('?') !== -1 ? "&" : "?";
@@ -142,9 +155,13 @@
         }
     }
     $(document).ready(function(){
-        var fromLogin = $.cookie('orbit_from_login');
-        $.removeCookie('orbit_from_login', {path: '/'});
-        var displayModal = (fromLogin === '1');
+        var displayModal = false;
+
+        // Override the content of displayModal
+        if (get('internet_info') == 'yes') {
+            displayModal = true;
+        }
+
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}';
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
