@@ -162,21 +162,6 @@ class NewsAPIController extends ControllerAPI
 
             $newnews->save();
 
-            // save default language translation
-            $news_translation_default = new NewsTranslation();
-            $news_translation_default->news_id = $newnews->news_id;
-            $news_translation_default->merchant_id = $newnews->mall_id;
-            $news_translation_default->merchant_language_id = $id_language_default;
-            $news_translation_default->news_name = $newnews->news_name;
-            $news_translation_default->description = $newnews->description;
-            $news_translation_default->status = 'active';
-            $news_translation_default->created_by = $this->api->user->user_id;
-            $news_translation_default->modified_by = $this->api->user->user_id;
-            $news_translation_default->save();
-
-            Event::fire('orbit.news.after.translation.save', array($this, $news_translation_default));
-
-
             // save NewsMerchant.
             $newsretailers = array();
             foreach ($retailer_ids as $retailer_id) {
@@ -191,13 +176,21 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));            
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'news_name' => $newnews->news_name,
+                    'description' => $newnews->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($newnews, json_encode($default_translation), 'create');
+
             // translation for mallnews
             OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
             });
 
             $this->response->data = $newnews;
-            $this->response->data->translation_default = $news_translation_default;
 
             // Commit the changes
             $this->commit();
@@ -456,38 +449,24 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->link_object_type = $link_object_type;
             });
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'news_name' => $updatednews->news_name,
+                    'description' => $updatednews->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($updatednews, json_encode($default_translation), 'update');
+
             OrbitInput::post('translations', function($translation_json_string) use ($updatednews) {
                 $this->validateAndSaveTranslations($updatednews, $translation_json_string, 'update');
             });
 
             $updatednews->modified_by = $this->api->user->user_id;
 
-
-            //  save news default language
-            OrbitInput::post('news_name', function($news_name) use ($updatednews_default_language) {
-                $updatednews_default_language->news_name = $news_name;
-            });
-
-            OrbitInput::post('description', function($description) use ($updatednews_default_language) {
-                $updatednews_default_language->description = $description;
-            });
-
-            OrbitInput::post('status', function($status) use ($updatednews_default_language) {
-                $updatednews_default_language->status = $status;
-            });
-
-            $updatednews_default_language->modified_by = $this->api->user->user_id;
-
             Event::fire('orbit.news.postupdatenews.before.save', array($this, $updatednews));
 
             $updatednews->save();
-            $updatednews_default_language->save();
-
-            Event::fire('orbit.news.after.translation.save', array($this, $updatednews_default_language));
-
-            // return respones if any upload image or no
-            $updatednews_default_language->load('media');
-
 
             // save NewsMerchant
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatednews) {
@@ -532,10 +511,6 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
-            $this->response->data->translation_default = $updatednews_default_language;
-
-            // Commit the changes
-            $this->commit();
 
             // Successfull Update
             $activityNotes = sprintf('News updated: %s', $updatednews->news_name);

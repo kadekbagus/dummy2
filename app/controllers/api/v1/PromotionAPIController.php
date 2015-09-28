@@ -39,6 +39,7 @@ class PromotionAPIController extends ControllerAPI
      * @param integer    `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
      * @param decimal    `discount_value`        (optional) - Discount value
      * @param array      `retailer_ids`          (optional) - Retailer IDs
+     * @param integer    `id_language_default`      (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -102,6 +103,7 @@ class PromotionAPIController extends ControllerAPI
             $discount_value = OrbitInput::post('discount_value');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $validator = Validator::make(
                 array(
@@ -116,6 +118,7 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => $discount_object_id3,
                     'discount_object_id4'  => $discount_object_id4,
                     'discount_object_id5'  => $discount_object_id5,
+                    'id_language_default'   => $id_language_default,
                 ),
                 array(
                     'merchant_id'          => 'required|numeric|orbit.empty.merchant',
@@ -129,6 +132,7 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => 'orbit.empty.discount_object_id3',
                     'discount_object_id4'  => 'orbit.empty.discount_object_id4',
                     'discount_object_id5'  => 'orbit.empty.discount_object_id5',
+                    'id_language_default'   => 'required|numeric',
                 )
             );
 
@@ -384,6 +388,7 @@ class PromotionAPIController extends ControllerAPI
      * @param decimal    `discount_value`        (optional) - Discount value
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
+     * @param integer    `id_language_default`   (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -439,6 +444,7 @@ class PromotionAPIController extends ControllerAPI
             $discount_object_id3 = OrbitInput::post('discount_object_id3');
             $discount_object_id4 = OrbitInput::post('discount_object_id4');
             $discount_object_id5 = OrbitInput::post('discount_object_id5');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
                 'promotion_id'         => $promotion_id,
@@ -452,6 +458,7 @@ class PromotionAPIController extends ControllerAPI
                 'discount_object_id3'  => $discount_object_id3,
                 'discount_object_id4'  => $discount_object_id4,
                 'discount_object_id5'  => $discount_object_id5,
+                'id_language_default' => $id_language_default,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -474,6 +481,7 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => 'orbit.empty.discount_object_id3',
                     'discount_object_id4'  => 'orbit.empty.discount_object_id4',
                     'discount_object_id5'  => 'orbit.empty.discount_object_id5',
+                    'id_language_default' => 'required|numeric',
                 ),
                 array(
                    'promotion_name_exists_but_me' => Lang::get('validation.orbit.exists.promotion_name'),
