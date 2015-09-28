@@ -69,7 +69,7 @@ class TenantAPIController extends ControllerAPI
                     */
                 ),
                 array(
-                    'retailer_id' => 'required|numeric|orbit.empty.tenant|orbit.exists.deleted_tenant_is_box_current_retailer',
+                    'retailer_id' => 'required|numeric|orbit.empty.tenant',//|orbit.exists.deleted_tenant_is_box_current_retailer',
                     /* for next version
                     'password'    => 'required|orbit.masterpassword.delete',
                     */
@@ -343,7 +343,7 @@ class TenantAPIController extends ControllerAPI
             $sector_of_activity = OrbitInput::post('sector_of_activity');
 
             // set user mall id
-            $parent_id = Config::get('orbit.shop.id');
+            $parent_id = OrbitInput::post('parent_id');//Config::get('orbit.shop.id');
 
             $url = OrbitInput::post('url');
             $masterbox_number = OrbitInput::post('masterbox_number');
@@ -702,7 +702,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|numeric|orbit.empty.tenant',
                     'user_id'           => 'numeric|orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status|orbit.exists.inactive_tenant_is_box_current_retailer:'.$retailer_id,
+                    'status'            => 'orbit.empty.tenant_status',//|orbit.exists.inactive_tenant_is_box_current_retailer:'.$retailer_id,
                     'parent_id'         => 'numeric|orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                 ),

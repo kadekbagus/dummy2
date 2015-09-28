@@ -950,7 +950,7 @@ class MallAPIController extends ControllerAPI
                     'merchant_id'       => 'required|numeric|orbit.empty.mall',
                     'user_id'           => 'numeric|orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.mall_status|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    'status'            => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     'orid'              => 'orid_exists_but_me',
                     'ticket_header'     => 'ticket_header_max_length',
                     'ticket_footer'     => 'ticket_footer_max_length',
