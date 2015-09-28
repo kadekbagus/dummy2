@@ -942,8 +942,8 @@ class MerchantAPIController extends ControllerAPI
                     'url'               => $url,
                 ),
                 array(
-                    'merchant_id'       => 'required|numeric|orbit.empty.merchant',
-                    'user_id'           => 'numeric|orbit.empty.user',
+                    'merchant_id'       => 'required|orbit.empty.merchant',
+                    'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.merchant_status|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     'omid'              => 'omid_exists_but_me',
@@ -1388,7 +1388,7 @@ class MerchantAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'merchant_id' => 'required|numeric|orbit.empty.merchant|orbit.exists.merchant_have_retailer',
+                    'merchant_id' => 'required|orbit.empty.merchant|orbit.exists.merchant_have_retailer',
                     'password'    => 'required|orbit.access.wrongpassword',
                 )
             );
