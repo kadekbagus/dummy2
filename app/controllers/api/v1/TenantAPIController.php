@@ -65,7 +65,7 @@ class TenantAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'retailer_id' => 'required|numeric|orbit.empty.tenant|orbit.exists.deleted_retailer_is_box_current_retailer',
+                    'retailer_id' => 'required|orbit.empty.tenant|orbit.exists.deleted_retailer_is_box_current_retailer',
                     'password'    => 'required|orbit.masterpassword.delete',
                 ),
                 array(
@@ -364,8 +364,8 @@ class TenantAPIController extends ControllerAPI
                     'name'                 => 'required',
                     'external_object_id'   => 'required',
                     'status'               => 'orbit.empty.retailer_status',
-                    'parent_id'            => 'numeric|orbit.empty.merchant',
-                    'country'              => 'numeric',
+                    'parent_id'            => 'orbit.empty.merchant',
+                    'country'              => '',
                     'url'                  => 'orbit.formaterror.url.web'
                 )
             );
@@ -385,7 +385,7 @@ class TenantAPIController extends ControllerAPI
                         'category_id'   => $category_id_check,
                     ),
                     array(
-                        'category_id'   => 'numeric|orbit.empty.category:' . $parent_id,
+                        'category_id'   => 'orbit.empty.category:' . $parent_id,
                     )
                 );
 
@@ -697,12 +697,12 @@ class TenantAPIController extends ControllerAPI
                     'url'               => $url,
                 ),
                 array(
-                    'retailer_id'       => 'required|numeric|orbit.empty.tenant',
-                    'user_id'           => 'numeric|orbit.empty.user',
+                    'retailer_id'       => 'required|orbit.empty.tenant',
+                    'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.retailer_status|orbit.exists.inactive_retailer_is_box_current_retailer:'.$retailer_id,
                     'orid'              => 'orid_exists_but_me',
-                    'parent_id'         => 'numeric|orbit.empty.merchant',
+                    'parent_id'         => 'orbit.empty.merchant',
                     'url'               => 'orbit.formaterror.url.web',
                 ),
                 array(
@@ -922,7 +922,7 @@ class TenantAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'numeric|orbit.empty.category:' . $updatedretailer->parent_id,
+                            'category_id'   => 'orbit.empty.category:' . $updatedretailer->parent_id,
                         )
                     );
 
