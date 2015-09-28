@@ -121,15 +121,15 @@ class ProductAPIController extends ControllerAPI
                     'product_variants_delete'    => $product_combinations_delete
                 ),
                 array(
-                    'product_id'        => 'required|numeric|orbit.empty.product',
+                    'product_id'        => 'required|orbit.empty.product',
                     'upc_code'          => 'orbit.exists.product.upc_code_but_me',
                     'product_code'      => 'orbit.exists.product.sku_code_but_me',
-                    'merchant_id'       => 'numeric|orbit.empty.merchant',
-                    'category_id1'      => 'numeric|orbit.empty.category_id1',
-                    'category_id2'      => 'numeric|orbit.empty.category_id2',
-                    'category_id3'      => 'numeric|orbit.empty.category_id3',
-                    'category_id4'      => 'numeric|orbit.empty.category_id4',
-                    'category_id5'      => 'numeric|orbit.empty.category_id5',
+                    'merchant_id'       => 'orbit.empty.merchant',
+                    'category_id1'      => 'orbit.empty.category_id1',
+                    'category_id2'      => 'orbit.empty.category_id2',
+                    'category_id3'      => 'orbit.empty.category_id3',
+                    'category_id4'      => 'orbit.empty.category_id4',
+                    'category_id5'      => 'orbit.empty.category_id5',
                     'product_variants_delete'   => 'array|orbit.empty.product_variant_array'
                 ),
                 array(
@@ -321,7 +321,7 @@ class ProductAPIController extends ControllerAPI
 
                         ),
                         array(
-                            'retailer_id'   => 'numeric|orbit.empty.retailer',
+                            'retailer_id'   => 'orbit.empty.retailer',
                         )
                     );
 
@@ -1188,16 +1188,16 @@ class ProductAPIController extends ControllerAPI
                     'category_id5'      => $category_id5,
                 ),
                 array(
-                    'merchant_id'           => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'           => 'required|orbit.empty.merchant',
                     'product_name'          => 'required',
                     'status'                => 'required|orbit.empty.product_status',
                     'upc_code'              => 'orbit.exists.product.upc_code',
                     'product_code'          => 'orbit.exists.product.sku_code',
-                    'category_id1'          => 'numeric|orbit.empty.category_id1',
-                    'category_id2'          => 'numeric|orbit.empty.category_id2',
-                    'category_id3'          => 'numeric|orbit.empty.category_id3',
-                    'category_id4'          => 'numeric|orbit.empty.category_id4',
-                    'category_id5'          => 'numeric|orbit.empty.category_id5',
+                    'category_id1'          => 'orbit.empty.category_id1',
+                    'category_id2'          => 'orbit.empty.category_id2',
+                    'category_id3'          => 'orbit.empty.category_id3',
+                    'category_id4'          => 'orbit.empty.category_id4',
+                    'category_id5'          => 'orbit.empty.category_id5',
                 ),
                 array(
                     // Duplicate UPC error message
@@ -1227,7 +1227,7 @@ class ProductAPIController extends ControllerAPI
 
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
+                        'retailer_id'   => 'orbit.empty.retailer',
                     )
                 );
 
@@ -1526,7 +1526,7 @@ class ProductAPIController extends ControllerAPI
                     'product_id' => $product_id,
                 ),
                 array(
-                    'product_id' => 'required|numeric|orbit.empty.product|orbit.exists.product_have_transaction',
+                    'product_id' => 'required|orbit.empty.product|orbit.exists.product_have_transaction',
                 )
             );
 
