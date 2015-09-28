@@ -148,7 +148,7 @@ class InboxAPIController extends ControllerAPI
                     'inbox_id'             => $alertId,
                 ),
                 array(
-                    'inbox_id'             => 'required|numeric|orbit.empty.alert',
+                    'inbox_id'             => 'required|orbit.empty.alert',
                 )
             );
 
