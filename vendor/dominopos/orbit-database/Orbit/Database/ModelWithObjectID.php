@@ -32,10 +32,14 @@ class ModelWithObjectID extends Model {
         }
     }
 
+    /**
+     * @param  array  $options
+     * @return bool
+     */
     public function save(array $options = array())
     {
         $this->assignObjectID();
-        parent::save();
+        return parent::save();
     }
 
     public function belongsToManyObjectID($related, $table = null, $foreignKey = null, $otherKey = null, $pivotKey = null, $relation = null)
