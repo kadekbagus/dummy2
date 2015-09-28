@@ -81,12 +81,11 @@ class getSearchCategoryTest extends TestCase
         $response = $this->call('GET', $url)->getContent();
         $response = json_decode($response);
 
-        // Should be failed
-        $this->assertResponseStatus(403);
-
-        // Should be error access denied
-        $this->assertSame(Status::ACCESS_DENIED, $response->code);
-        $this->assertSame('Your role are not allowed to access this resource.', $response->message);
+        // Should Be OK
+        $this->assertResponseOk();
+        // Should Be No Error
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('Request OK', $response->message);
     }
 
     public function testOK_get_without_additional_parameters()
