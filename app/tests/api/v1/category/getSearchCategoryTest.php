@@ -86,7 +86,7 @@ class getSearchCategoryTest extends TestCase
 
         // Should be error access denied
         $this->assertSame(Status::ACCESS_DENIED, $response->code);
-        $this->assertSame('You do not have permission to view category.', $response->message);
+        $this->assertSame('Your role are not allowed to access this resource.', $response->message);
     }
 
     public function testOK_get_without_additional_parameters()
