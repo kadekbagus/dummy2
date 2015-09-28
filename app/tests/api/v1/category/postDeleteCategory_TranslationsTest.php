@@ -22,6 +22,9 @@ class postDeleteCategory_TranslationsTest extends TestCase
         $this->group = $merchant = Factory::create('Merchant');
 
         $this->mall = Factory::create('Retailer', ['is_mall' => 'yes']);
+        $role = $this->mall->user->role;
+        $role->role_name = 'mall owner';
+        $role->save();
 
         $setting = new Setting();
         $setting->setting_name = 'current_category';
