@@ -344,6 +344,213 @@ class LanguageAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * POST - Adds a supported language.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer  `merchant_id`           (required) - Merchant ID
+     * @param json     `language_statuses      (required) 
+     * 
+     * json format :
+     * { language_id : {"status" : "active or inactive"}}
+     * json example :
+     * {"1" : {"status" : "active"},"2" : {"status" : "inactive"}}
+     *
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function postUpdateSupportedLanguage()
+    {
+
+        $activity = Activity::portal()
+            ->setActivityType('create');
+        $user = NULL;
+        $merchant = NULL;
+
+        $httpCode = 200;
+
+        try {
+
+            Event::fire('orbit.language.postupdatesupportedlanguage.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.language.postupdatesupportedlanguage.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            if (! ACL::create($user)->isAllowed('update_merchant')) {
+                $updateMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMerchantLang));
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->registerCustomValidation();
+            $languages_status_json = OrbitInput::post('language_statuses');
+
+
+            $validator = Validator::make(
+                array(
+                    'languages_status_json' => $languages_status_json
+                ),
+                array(
+                    'languages_status_json' => 'required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $data = @json_decode($languages_status_json);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            foreach ($data as $key_language_id => $value) {
+                $validator = Validator::make(
+                    array(
+                        'language_id' => $key_language_id,
+                        'status'      => $value->status,
+                    ),
+                    array(
+                        'language_id' => 'required|numeric|orbit.empty.language',
+                        'status'      => 'required|orbit.empty.supported_language_status',
+                    )
+                );
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+
+            Event::fire('orbit.language.postupdatesupportedlanguage.before.validation', array($this, $validator));
+
+
+            // save all language
+            foreach ($data as $key_language_id => $value) {
+                $supported_language = Language::find($key_language_id);
+                $supported_language->status = $value->status;
+
+                Event::fire('orbit.language.postupdatesupportedlanguage.before.save', array($this, $supported_language));
+                
+                $supported_language->save();
+
+                Event::fire('orbit.language.postupdatesupportedlanguage.after.save', array($this, $supported_language));
+
+                //for return all updated date
+                $data_update[$key_language_id] = $supported_language;
+            }
+
+            $this->response->data = $data_update;
+
+            $activityNotes = sprintf('Supported languages updated');
+            $activity->setUser($user)
+                ->setActivityName('update_supported_language')
+                ->setActivityNameLong('Modif Supported Languages OK')
+                ->setObject($supported_language)
+                ->setNotes($activityNotes)
+                ->responseOK();
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.language.postupdatemerchant.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                ->setActivityName('add_merchant_language')
+                ->setActivityNameLong('Add Merchant Language Failed')
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+        } catch
+        (InvalidArgsException $e) {
+            Event::fire('orbit.language.postupdatemerchant.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                ->setActivityName('add_merchant_language')
+                ->setActivityNameLong('Add Merchant Language Failed')
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.language.postupdatemerchant.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                ->setActivityName('add_merchant_language')
+                ->setActivityNameLong('Add Merchant Language Failed')
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.language.postupdatemerchant.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                ->setActivityName('add_merchant_language')
+                ->setActivityNameLong('Add Merchant Language Failed')
+                ->setNotes($e->getMessage())
+                ->responseFailed();
+        }
+
+        // Save activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
+
     private function registerCustomValidation()
     {
         Validator::extend('orbit.empty.merchant.public', function ($attribute, $value, $parameters) {
@@ -397,6 +604,19 @@ class LanguageAPIController extends ControllerAPI
             App::instance('orbit.empty.merchant_language', $merchant_language);
             return true;
         });
+
+        // Check the existence of the supported language
+        Validator::extend('orbit.empty.supported_language_status', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('active', 'inactive');
+            foreach ($statuses as $status) {
+                if($value === $status) $valid = $valid || TRUE;
+            }
+
+            return $valid;
+        });
+
+
     }
 
 }

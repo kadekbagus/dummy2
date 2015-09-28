@@ -196,6 +196,7 @@ return array(
             'issued_coupon_status' => ' issued coupon status 您指定未找到.',
             'issued_coupon_sortby' => ' 排序您指定的参数无效，则有效值为: registered_date, issued_coupon_code, expired_date, issued_date, redeemed_date, status.',
             'issued_coupon_by_retailer_sortby' => ' 排序您指定的参数无效，则有效值为: redeem_retailer_name, registered_date, issued_coupon_code, expired_date, promotion_name, promotion_type, description.',
+            'supported_language_status' => '您指定的支持语言的地位没有找到.',
             'event_status'         => ' event status 您指定未找到.',
             'event_sortby'         => ' 排序您指定的参数无效，则有效值为: registered_date, event_name, event_type, description, begin_date, end_date, is_permanent, status.',
             'event_by_retailer_sortby' => ' 排序您指定的参数无效，则有效值为: retailer_name, registered_date, event_name, event_type, description, begin_date, end_date, is_permanent, status.',

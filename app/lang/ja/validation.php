@@ -196,6 +196,7 @@ return array(
             'issued_coupon_status' => 'issued coupon status あなたが見つかりません指定され.',
             'issued_coupon_sortby' => 'あなたは指定された引数によって並べ替えが有効でない、有効な値は、: registered_date, issued_coupon_code, expired_date, issued_date, redeemed_date, status.',
             'issued_coupon_by_retailer_sortby' => 'あなたは指定された引数によって並べ替えが有効でない、有効な値は、: redeem_retailer_name, registered_date, issued_coupon_code, expired_date, promotion_name, promotion_type, description.',
+            'supported_language_status' => 'あなたが指定したサポートされている言語のステータスが見つかりません.',
             'event_status'         => 'event status あなたが見つかりません指定され.',
             'event_sortby'         => 'あなたは指定された引数によって並べ替えが有効でない、有効な値は、: registered_date, event_name, event_type, description, begin_date, end_date, is_permanent, status.',
             'event_by_retailer_sortby' => 'あなたは指定された引数によって並べ替えが有効でない、有効な値は、: retailer_name, registered_date, event_name, event_type, description, begin_date, end_date, is_permanent, status.',
