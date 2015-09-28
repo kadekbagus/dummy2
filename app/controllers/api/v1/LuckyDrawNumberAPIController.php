@@ -169,6 +169,8 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             $data->total_receipts = $total_receipts;
             $data->total_amounts = $total_receipts_amount;
             $data->total_generated_lucky_draw_number = count($luckyDrawnumbers);
+            $data->records = $luckyDrawnumbers;
+            $data->total_records = $data->total_generated_lucky_draw_number;
 
             $this->response->data = $data;
 
