@@ -65,7 +65,7 @@ class TransactionHistoryAPIController extends ControllerAPI
                     'user_id'       => $user_id
                 ),
                 array(
-                    'user_id'       => 'required|numeric',
+                    'user_id'       => 'required',
                     'sort_by'       => 'in:name,last_transaction'
                 ),
                 array(
@@ -277,8 +277,8 @@ class TransactionHistoryAPIController extends ControllerAPI
                     'merchant_id'   => $merchant_id,
                 ),
                 array(
-                    'user_id'       => 'required|numeric',
-                    'merchant_id'   => 'required|numeric',
+                    'user_id'       => 'required',
+                    'merchant_id'   => 'required',
                     'sort_by'       => 'in:name,last_transaction',
                 ),
                 array(
@@ -490,7 +490,7 @@ class TransactionHistoryAPIController extends ControllerAPI
                     'user_id'       => $user_id
                 ),
                 array(
-                    'user_id'       => 'required|numeric',
+                    'user_id'       => 'required',
                     'retailer_ids'  => 'array|min:0',
                     'merchant_ids'  => 'array|min:0',
                     'sort_by'       => 'in:product_name,last_transaction,qty,price'
