@@ -57,21 +57,30 @@ class TenantAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $retailer_id = OrbitInput::post('retailer_id');
+            /* for next version
             $password = OrbitInput::post('password');
+            */
             
             $validator = Validator::make(
                 array(
                     'retailer_id' => $retailer_id,
+                    /* for next version
                     'password'    => $password,
+                    */
                 ),
                 array(
                     'retailer_id' => 'required|numeric|orbit.empty.tenant|orbit.exists.deleted_tenant_is_box_current_retailer',
+                    /* for next version
                     'password'    => 'required|orbit.masterpassword.delete',
-                ),
+                    */
+                )
+                /* for next version
+                ,
                 array(
                     'required.password'             => 'The master is password is required.',
                     'orbit.masterpassword.delete'   => 'The password is incorrect.'
                 )
+                */
             );
 
             Event::fire('orbit.tenant.postdeletetenant.before.validation', array($this, $validator));
