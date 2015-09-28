@@ -920,7 +920,7 @@ class EmployeeAPIController extends ControllerAPI
                     'status'                => $status
                 ),
                 array(
-                    'user_id'               => 'required|numeric|orbit.empty.user',
+                    'user_id'               => 'required|orbit.empty.user',
                     'birthdate'             => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
                     'password'              => 'min:5|confirmed',
                     'employee_role'         => 'orbit.empty.employee.role',
@@ -1165,7 +1165,7 @@ class EmployeeAPIController extends ControllerAPI
                     'user_id'               => $userId,
                 ),
                 array(
-                    'user_id'               => 'required|numeric|orbit.empty.user'
+                    'user_id'               => 'required|orbit.empty.user'
                 )
             );
 
@@ -1366,7 +1366,7 @@ class EmployeeAPIController extends ControllerAPI
                     'password'       => $password,
                 ),
                 array(
-                    'user_id'       => 'required|numeric|orbit.empty.user',
+                    'user_id'       => 'required|orbit.empty.user',
                     'password'      => 'required|orbit.masterpassword.delete',
                 )
             );
