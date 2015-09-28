@@ -76,7 +76,7 @@ class UserAPIController extends ControllerAPI
                 array(
                     'email'     => 'required|email|orbit.email.exists',
                     'password'  => 'required|min:5|confirmed',
-                    'role_id' => 'required|numeric|orbit.empty.role',
+                    'role_id' => 'required|orbit.empty.role',
                 )
             );
 
@@ -278,7 +278,7 @@ class UserAPIController extends ControllerAPI
                     'user_id' => $user_id,
                 ),
                 array(
-                    'user_id' => 'required|numeric|orbit.empty.user|no_delete_themself',
+                    'user_id' => 'required|orbit.empty.user|no_delete_themself',
                 ),
                 array(
                     'no_delete_themself' => $message,
@@ -542,10 +542,10 @@ class UserAPIController extends ControllerAPI
                     'personal_interests'    => $personal_interests,
                 ),
                 array(
-                    'user_id'               => 'required|numeric',
+                    'user_id'               => 'required',
                     'username'              => 'orbit.exists.username',
                     'email'                 => 'email|email_exists_but_me',
-                    'role_id'               => 'numeric|orbit.empty.role',
+                    'role_id'               => 'orbit.empty.role',
                     'status'                => 'orbit.empty.user_status',
 
                     'firstname'             => 'required',
@@ -777,7 +777,7 @@ class UserAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'numeric',
+                            'category_id'   => '',
                         )
                     );
 
@@ -1781,7 +1781,7 @@ class UserAPIController extends ControllerAPI
                     'new_password_confirmation' => $new_password_confirmation,
                 ),
                 array(
-                    'user_id'                   => 'required|numeric|orbit.empty.user',
+                    'user_id'                   => 'required|orbit.empty.user',
                     'old_password'              => 'required|min:5|valid_user_password:'.$user_id,
                     'new_password'              => 'required|min:5|confirmed',
                 ),
@@ -2035,7 +2035,7 @@ class UserAPIController extends ControllerAPI
                         'category_id'   => $category_id_check,
                     ),
                     array(
-                        'category_id'   => 'numeric|orbit.empty.category:' . $mallId,
+                        'category_id'   => 'orbit.empty.category:' . $mallId,
                     )
                 );
 
@@ -2057,7 +2057,7 @@ class UserAPIController extends ControllerAPI
                         'bank_object_id'  => $bank_object_id_check,
                     ),
                     array(
-                        'bank_object_id'  => 'numeric|orbit.empty.bank_object:' . $mallId,
+                        'bank_object_id'  => 'orbit.empty.bank_object:' . $mallId,
                     )
                 );
 
@@ -2396,7 +2396,7 @@ class UserAPIController extends ControllerAPI
                     'work_phone'            => '',
                     'occupation'            => '',
                     'date_of_work'          => 'date_format:Y-m-d',
-                    'user_id'               => 'required|numeric|orbit.empty.user'
+                    'user_id'               => 'required|orbit.empty.user'
                 ),
                 array('email_exists_but_me' => Lang::get('validation.orbit.email.exists'))
             );
@@ -2539,7 +2539,7 @@ class UserAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'numeric|orbit.empty.category:' . $mallId,
+                            'category_id'   => 'orbit.empty.category:' . $mallId,
                         )
                     );
 
@@ -2595,7 +2595,7 @@ class UserAPIController extends ControllerAPI
                             'bank_object_id'  => $bank_object_id_check,
                         ),
                         array(
-                            'bank_object_id'  => 'numeric|orbit.empty.bank_object:' . $mallId,
+                            'bank_object_id'  => 'orbit.empty.bank_object:' . $mallId,
                         )
                     );
 
@@ -2790,7 +2790,7 @@ class UserAPIController extends ControllerAPI
                     'password'  => $password,
                 ),
                 array(
-                    'user_id'   => 'required|numeric|orbit.empty.membership|no_delete_themself',
+                    'user_id'   => 'required|orbit.empty.membership|no_delete_themself',
                     'password'  => 'required|orbit.masterpassword.delete',
                 ),
                 array(
