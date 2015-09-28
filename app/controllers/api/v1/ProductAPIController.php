@@ -267,7 +267,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id1) === '') {
                     $category_id1 = NULL;
                 }
-                $updatedproduct->category_id1 = (int) $category_id1;
+                $updatedproduct->category_id1 =  $category_id1;
                 $updatedproduct->load('category1');
             });
 
@@ -275,7 +275,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id2) === '') {
                     $category_id2 = NULL;
                 }
-                $updatedproduct->category_id2 = (int) $category_id2;
+                $updatedproduct->category_id2 =  $category_id2;
                 $updatedproduct->load('category2');
             });
 
@@ -283,7 +283,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id3) === '') {
                     $category_id3 = NULL;
                 }
-                $updatedproduct->category_id3 = (int) $category_id3;
+                $updatedproduct->category_id3 =  $category_id3;
                 $updatedproduct->load('category3');
             });
 
@@ -291,7 +291,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id4) === '') {
                     $category_id4 = NULL;
                 }
-                $updatedproduct->category_id4 = (int) $category_id4;
+                $updatedproduct->category_id4 =  $category_id4;
                 $updatedproduct->load('category4');
             });
 
@@ -299,7 +299,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id5) === '') {
                     $category_id5 = NULL;
                 }
-                $updatedproduct->category_id5 = (int) $category_id5;
+                $updatedproduct->category_id5 =  $category_id5;
                 $updatedproduct->load('category5');
             });
 
