@@ -96,7 +96,7 @@ class NewsAPIController extends ControllerAPI
                     'link_object_type'   => $link_object_type,
                 ),
                 array(
-                    'mall_id'            => 'required|numeric|orbit.empty.mall',
+                    'mall_id'            => 'required|orbit.empty.mall',
                     'news_name'          => 'required|max:255|orbit.exists.news_name',
                     'object_type'        => 'orbit.empty.news_object_type',
                     'status'             => 'required|orbit.empty.news_status',
@@ -118,7 +118,7 @@ class NewsAPIController extends ControllerAPI
                         'retailer_id'   => $retailer_id_check,
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
+                        'retailer_id'   => 'orbit.empty.retailer',
                     )
                 );
 
@@ -358,8 +358,8 @@ class NewsAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'news_id'          => 'required|numeric|orbit.empty.news',
-                    'mall_id'          => 'numeric|orbit.empty.mall',
+                    'news_id'          => 'required|orbit.empty.news',
+                    'mall_id'          => 'orbit.empty.mall',
                     'news_name'        => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
                     'object_type'      => 'orbit.empty.news_object_type',
                     'status'           => 'orbit.empty.news_status',
@@ -643,7 +643,7 @@ class NewsAPIController extends ControllerAPI
                     'password' => $password,
                 ),
                 array(
-                    'news_id'  => 'required|numeric|orbit.empty.news',
+                    'news_id'  => 'required|orbit.empty.news',
                     'password' => 'required|orbit.masterpassword.delete',
                 ),
                 array(
