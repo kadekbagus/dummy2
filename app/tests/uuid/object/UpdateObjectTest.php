@@ -42,7 +42,7 @@ class UpdateObjectTest extends TestCase
         return $response;
     }
 
-    public function testUpdateNews()
+    public function testUpdateObject()
     {
         $object = new Object();
         $object->merchant_id = $this->retailer->merchant_id;
