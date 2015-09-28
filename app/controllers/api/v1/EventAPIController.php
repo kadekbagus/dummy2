@@ -96,7 +96,7 @@ class EventAPIController extends ControllerAPI
                     'link_object_type'   => $link_object_type,
                 ),
                 array(
-                    'merchant_id'        => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'        => 'required|orbit.empty.merchant',
                     'event_name'         => 'required|max:255|orbit.exists.event_name',
                     'event_type'         => 'required|orbit.empty.event_type',
                     'status'             => 'required|orbit.empty.event_status',
@@ -118,7 +118,7 @@ class EventAPIController extends ControllerAPI
                         'retailer_id'   => $retailer_id_check,
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.link_object_id:'.$link_object_type,
+                        'retailer_id'   => 'orbit.empty.link_object_id:'.$link_object_type,
                     )
                 );
 
@@ -355,8 +355,8 @@ class EventAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'event_id'         => 'required|numeric|orbit.empty.event',
-                    'merchant_id'      => 'numeric|orbit.empty.merchant',
+                    'event_id'         => 'required|orbit.empty.event',
+                    'merchant_id'      => 'orbit.empty.merchant',
                     'event_name'       => 'sometimes|required|min:5|max:255|event_name_exists_but_me',
                     'event_type'       => 'orbit.empty.event_type',
                     'status'           => 'orbit.empty.event_status',
@@ -665,7 +665,7 @@ class EventAPIController extends ControllerAPI
                     'password' => $password,
                 ),
                 array(
-                    'event_id' => 'required|numeric|orbit.empty.event',
+                    'event_id' => 'required|orbit.empty.event',
                     'password' => 'required|orbit.masterpassword.delete',
                 ),
                 array(
