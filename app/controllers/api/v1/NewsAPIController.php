@@ -104,7 +104,7 @@ class NewsAPIController extends ControllerAPI
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required|numeric',
+                    'id_language_default' => 'required|numeric|orbit.empty.language_default',
                 )
             );
 
@@ -169,7 +169,6 @@ class NewsAPIController extends ControllerAPI
             $news_translation_default->merchant_language_id = $id_language_default;
             $news_translation_default->news_name = $newnews->news_name;
             $news_translation_default->description = $newnews->description;
-            $news_translation_default->status = 'active';
             $news_translation_default->created_by = $this->api->user->user_id;
             $news_translation_default->modified_by = $this->api->user->user_id;
             $news_translation_default->save();
@@ -393,7 +392,7 @@ class NewsAPIController extends ControllerAPI
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required|numeric',
+                    'id_language_default' => 'required|numeric|orbit.empty.language_default',
                 ),
                 array(
                    'news_name_exists_but_me' => Lang::get('validation.orbit.exists.news_name'),
@@ -424,6 +423,10 @@ class NewsAPIController extends ControllerAPI
 
             OrbitInput::post('news_name', function($news_name) use ($updatednews) {
                 $updatednews->news_name = $news_name;
+            });
+
+            OrbitInput::post('description', function($description) use ($updatednews) {
+                $updatednews->description = $description;
             });
 
             OrbitInput::post('object_type', function($object_type) use ($updatednews) {
@@ -1478,6 +1481,21 @@ class NewsAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.news', $news);
+
+            return TRUE;
+        });
+
+        // Check the existance of news id
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $news = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+
+            if (empty($news)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.language_default', $news);
 
             return TRUE;
         });
