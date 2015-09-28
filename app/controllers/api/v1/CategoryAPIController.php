@@ -746,25 +746,6 @@ class CategoryAPIController extends ControllerAPI
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.category.getsearchcategory.before.authz', array($this, $user));
-
-/*
-if (! ACL::create($user)->isAllowed('view_category')) {
-                Event::fire('orbit.category.getsearchcategory.authz.notallowed', array($this, $user));
-                $viewCategoryLang = Lang::get('validation.orbit.actionlist.view_category');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCategoryLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
-            // @Todo: Use ACL authentication instead
-            $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
-            if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
-            }
-
-            Event::fire('orbit.category.getsearchcategory.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
