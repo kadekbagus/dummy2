@@ -73,7 +73,7 @@
         </div>
         <div class="row">
             <div class="col-xs-12 text-center">
-                <button class="btn btn-info btn-block" id="useBtn">Use</button>
+                <button class="btn btn-info btn-block" id="useBtn">{{ Lang::get('mobileci.modals.coupon_use') }}</button>
             </div>
         </div>
     </div>
