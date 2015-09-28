@@ -147,7 +147,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value'            => $discount_value,
                 ),
                 array(
-                    'merchant_id'               => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'               => 'required|orbit.empty.merchant',
                     'promotion_name'            => 'required|max:255|orbit.exists.coupon_name',
                     'promotion_type'            => 'required|orbit.empty.coupon_type',
                     'begin_date'                => 'required|date_format:Y-m-d H:i:s',
@@ -191,7 +191,7 @@ class CouponAPIController extends ControllerAPI
 
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
+                        'retailer_id'   => 'orbit.empty.retailer',
                     )
                 );
 
@@ -567,8 +567,8 @@ class CouponAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'promotion_id'         => 'required|numeric|orbit.empty.coupon',
-                    'merchant_id'          => 'numeric|orbit.empty.merchant',
+                    'promotion_id'         => 'required|orbit.empty.coupon',
+                    'merchant_id'          => 'orbit.empty.merchant',
                     'promotion_name'       => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
                     'promotion_type'       => 'orbit.empty.coupon_type',
                     'status'               => 'orbit.empty.coupon_status',
@@ -1001,7 +1001,7 @@ class CouponAPIController extends ControllerAPI
                     'password'      => $password
                 ),
                 array(
-                    'promotion_id'  => 'required|numeric|orbit.empty.coupon|orbit.issuedcoupon.exists',
+                    'promotion_id'  => 'required|orbit.empty.coupon|orbit.issuedcoupon.exists',
                     'password'      => 'required|orbit.masterpassword.delete'
                 )
             );
@@ -1690,7 +1690,7 @@ class CouponAPIController extends ControllerAPI
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
-                    'issued_coupon_id'              => 'required|numeric|orbit.empty.issuedcoupon',
+                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required|numeric'
                 )
             );
