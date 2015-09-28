@@ -242,6 +242,15 @@ class PromotionAPIController extends ControllerAPI
 
             Event::fire('orbit.promotion.postnewpromotion.after.save', array($this, $newpromotion));
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'promotion_name' => $newpromotion->promotion_name,
+                    'description' => $newpromotion->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($newpromotion, json_encode($default_translation), 'create');
+
             // Save Promotion Translation
             OrbitInput::post('translations', function($translation_json_string) use ($newpromotion) {
                 $this->validateAndSaveTranslations($newpromotion, $translation_json_string, 'create');
@@ -634,6 +643,15 @@ class PromotionAPIController extends ControllerAPI
 
             Event::fire('orbit.promotion.postupdatepromotion.after.save', array($this, $updatedpromotion));
             $this->response->data = $updatedpromotion;
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'promotion_name' => $updatedpromotion->promotion_name,
+                    'description' => $updatedpromotion->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($updatedpromotion, json_encode($default_translation), 'update');
 
             // save PromotionTranslation
             OrbitInput::post('translations', function($translation_json_string) use ($updatedpromotion) {

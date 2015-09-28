@@ -336,54 +336,54 @@ class postUpdateEvent_TranslationsTest extends TestCase
         $this->assertSame((string)$this->userId, (string)$updated_translation->modified_by);
     }
 
-    // // ... with some fields left unspecified
-    // public function testUpdatingTranslationWithUnspecifiedFields()
-    // {
-    //     $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
+    // ... with some fields left unspecified
+    public function testUpdatingTranslationWithUnspecifiedFields()
+    {
+        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
 
-    //     $updated_english = [
-    //         'event_name' => 'English name',
-    //         'description' => 'English description',
-    //     ];
+        $updated_english = [
+            'event_name' => 'English name',
+            'description' => 'English description',
+        ];
 
-    //     foreach ($updated_english as $field => $value) {
-    //         $minimal_update = [$field => $value];
+        foreach ($updated_english as $field => $value) {
+            $minimal_update = [$field => $value];
 
-    //         list($event, $original_translation) = $this->createEventWithTranslation('english');
-    //         $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-    //             $event->event_id)->count();
-    //         $this->assertSame(1, $translation_count_before);
+            list($event, $original_translation) = $this->createEventWithTranslation('english');
+            $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
+                $event->event_id)->count();
+            $this->assertSame(1, $translation_count_before);
 
-    //         foreach ($minimal_update as $k => $v) {
-    //             $this->assertNotSame($v, $original_translation->{$k});
-    //         }
+            foreach ($minimal_update as $k => $v) {
+                $this->assertNotSame($v, $original_translation->{$k});
+            }
 
-    //         $translations = [
-    //             $this->merchantLanguages['english']->merchant_language_id => $minimal_update
-    //         ];
-    //         $response = $this->makeRequest($event, $translations, $id_language_default);
-    //         $this->assertJsonResponseOk($response);
+            $translations = [
+                $this->merchantLanguages['english']->merchant_language_id => $minimal_update
+            ];
+            $response = $this->makeRequest($event, $translations, $id_language_default);
+            $this->assertJsonResponseOk($response);
 
-    //         $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-    //             $event->event_id)->count();
-    //         $this->assertSame(1, $translation_count_after);
+            $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
+                $event->event_id)->count();
+            $this->assertSame(1, $translation_count_after);
 
-    //         $updated_translation = EventTranslation::excludeDeleted()->where('event_id', '=',
-    //             $event->event_id)->first();
+            $updated_translation = EventTranslation::excludeDeleted()->where('event_id', '=',
+                $event->event_id)->first();
 
-    //         // the one sent is updated
-    //         foreach ($minimal_update as $k => $v) {
-    //             $this->assertSame($v, $updated_translation->{$k});
-    //         }
-    //         // the others are not
-    //         foreach ($updated_english as $k => $v) {
-    //             if ($k === $field) {
-    //                 break;
-    //             }
-    //             $this->assertSame($original_translation->{$k}, $updated_translation->{$k});
-    //         }
-    //     }
-    // }
+            // the one sent is updated
+            foreach ($minimal_update as $k => $v) {
+                $this->assertSame($v, $updated_translation->{$k});
+            }
+            // the others are not
+            foreach ($updated_english as $k => $v) {
+                if ($k === $field) {
+                    break;
+                }
+                $this->assertSame($original_translation->{$k}, $updated_translation->{$k});
+            }
+        }
+    }
 
     // ... with null values
     public function testUpdatingTranslationWithNullValue()
