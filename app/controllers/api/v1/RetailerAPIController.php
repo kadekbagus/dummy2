@@ -367,7 +367,7 @@ class RetailerAPIController extends ControllerAPI
 
             $roleRetailer = Role::where('role_name', 'retailer owner')->first();
             if (empty($roleRetailer)) {
-                OrbitShopAPI::throwInvalidArgument('Could not find role named "Merchant Owner".');
+                OrbitShopAPI::throwInvalidArgument('Could not find role named "Retailer Owner".');
             }
 
             $newuser = new User();
