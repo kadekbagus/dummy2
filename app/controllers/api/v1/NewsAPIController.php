@@ -667,20 +667,20 @@ class NewsAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $news_id = OrbitInput::post('news_id');
-            $password = OrbitInput::post('password');
+            // $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
                     'news_id'  => $news_id,
-                    'password' => $password,
+                    // 'password' => $password,
                 ),
                 array(
                     'news_id'  => 'required|numeric|orbit.empty.news',
-                    'password' => 'required|orbit.masterpassword.delete',
+                    // 'password' => 'required|orbit.masterpassword.delete',
                 ),
                 array(
-                    'required.password'             => 'The master is password is required.',
-                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
+                    // 'required.password'             => 'The master is password is required.',
+                    // 'orbit.masterpassword.delete'   => 'The password is incorrect.'
                 )
             );
 
@@ -1551,7 +1551,7 @@ class NewsAPIController extends ControllerAPI
 
             return TRUE;
         });
-
+/*
         // News deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
             // Current Mall location
@@ -1573,7 +1573,7 @@ class NewsAPIController extends ControllerAPI
 
             return TRUE;
         });
-
+*/
     }
 
     /**
