@@ -101,6 +101,14 @@ class Mall extends Eloquent
         return NULL;
     }
 
+    /**
+     * Merchant has many languages for translations.
+     */
+    public function languages()
+    {
+        return $this->hasMany('MerchantLanguage', 'merchant_id', 'merchant_id')->excludeDeleted();
+    }
+
     public function getPhoneNumber($separator='|#|')
     {
         $phone = explode($separator, $this->phone);
