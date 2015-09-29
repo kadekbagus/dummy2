@@ -119,6 +119,10 @@ class LuckyDrawNumberNotifier
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
             }
 
+            $this->poster->addHeader('Accept', 'application/json');
+
+            Log::info('Post data: ' . serialize($postData));
+
             $this->poster->setUserAgent(Config::get('orbit-notifier.user-agent'));
             $this->poster->post($url, $postData);
 
@@ -131,6 +135,8 @@ class LuckyDrawNumberNotifier
 
             // Lets try to decode the body
             $httpBody = $this->poster->getResponse();
+            Log::info('External response: ' . $httpBody);
+
             $response = json_decode($httpBody);
 
             // Non-Zero code means an error
@@ -143,6 +149,9 @@ class LuckyDrawNumberNotifier
             // does not have the email address and not intented to update membership number
             if (is_null($response->data)) {
                 $message .= ' Message: No data returned.';
+
+                // Delete the job we don't interested any more
+                $job->delete();
 
                 return [
                     'status' => 'ok',

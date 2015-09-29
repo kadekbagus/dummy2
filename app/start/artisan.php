@@ -30,4 +30,5 @@ Artisan::add(new configDiffFromSample);
 Artisan::add(new ConfigAgreement);
 
 // Insert or update data on settings table
-Artisan::add(new MerchantSetting);
+// @Todo investigate why its error
+// Artisan::add(new MerchantSetting);

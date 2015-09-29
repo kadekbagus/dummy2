@@ -17,6 +17,7 @@ return array(
     'AlterTableEventsRemoveColumns' => $baseDir . '/app/database/migrations/2015_04_17_102621_alter_table_events_remove_columns.php',
     'AlterTableInboxesChangeInboxType' => $baseDir . '/app/database/migrations/2015_04_19_113408_alter_table_inboxes_change_inbox_type.php',
     'AlterTableLanguageAddNameLogAndIndex' => $baseDir . '/app/database/migrations/2015_08_25_132645_alter_table_language_add_name_log_and_index.php',
+    'AlterTableLanguagesAddNativeNameAndStatus' => $baseDir . '/app/database/migrations/2015_09_23_065804_alter_table_languages_add_native_name_and_status.php',
     'AlterTableLuckyDrawNumbersAddColumnHash' => $baseDir . '/app/database/migrations/2015_04_13_090851_alter_table_lucky_draw_numbers_add_column_hash.php',
     'AlterTableLuckyDrawNumbersAddUniqueIndexForIdNumberStatus' => $baseDir . '/app/database/migrations/2015_04_13_034658_alter_table_lucky_draw_numbers_add_unique_index_for_id_number_status.php',
     'AlterTableLuckyDrawNumbersChangeUserIdToNullable' => $baseDir . '/app/database/migrations/2015_04_12_153306_alter_table_lucky_draw_numbers_change_user_id_to_nullable.php',

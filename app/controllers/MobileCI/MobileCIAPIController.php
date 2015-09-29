@@ -5293,7 +5293,7 @@ class MobileCIAPIController extends ControllerAPI
                 if ($details_key==0) {
                     $product = $this->productListFormat(substr($details_value['product_name'], 0, 25), $details_value['variant_price'], $details_value['quantity'], $details_value['variant_sku']);
                 } else {
-                    $product .= $this->productListFormat(substr($details_value['product_name'], 0, 25), $details_value['variant_price'], $details_value['quantity'], $details_value['variant_sku']);
+                    $product = $this->productListFormat(substr($details_value['product_name'], 0, 25), $details_value['variant_price'], $details_value['quantity'], $details_value['variant_sku']);
                 }
 
                 foreach ($detailpromotion as $detailpromotion_key => $detailpromotion_value) {

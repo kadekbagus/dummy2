@@ -52,7 +52,7 @@ class postAddMerchantLanguageTest extends TestCase
 
         $_POST = $post_data;
 
-        $url = '/api/v1/language/add-merchant?' . http_build_query($_GET);
+        $url = '/api/v1/language/merchant?' . http_build_query($_GET);
 
         $secretKey = $this->authData->api_secret_key;
         $_SERVER['REQUEST_METHOD'] = 'GET';

@@ -384,7 +384,6 @@ class TenantAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'                => $email,
                     'name'                 => $name,
                     'external_object_id'   => $external_object_id,
                     'status'               => $status,
@@ -394,7 +393,6 @@ class TenantAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                 ),
                 array(
-                    'email'                => 'required|email|orbit.exists.email',
                     'name'                 => 'required',
                     'external_object_id'   => 'required',
                     'status'               => 'orbit.empty.tenant_status',
@@ -512,6 +510,60 @@ class TenantAPIController extends ControllerAPI
             Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newtenant));
 
             $newtenant->save();
+
+            $newretailer = new Retailer();
+            $newretailer->object_type = 'retailer';
+            $newretailer->is_mall = 'no';
+            $newretailer->omid = '';
+            if (! is_null($email)) {
+                $newretailer->email = $email;
+            }
+            $newretailer->name = $name;
+            $newretailer->description = $description;
+            $newretailer->address_line1 = $address_line1;
+            $newretailer->address_line2 = $address_line2;
+            $newretailer->address_line3 = $address_line3;
+            $newretailer->postal_code = $postal_code;
+            $newretailer->city_id = $city_id;
+            $newretailer->city = $city;
+            $newretailer->country_id = $country;
+            $newretailer->country = $countryName;
+            $newretailer->phone = $phone;
+            $newretailer->fax = $fax;
+            $newretailer->start_date_activity = $start_date_activity;
+            $newretailer->end_date_activity = $end_date_activity;
+            $newretailer->status = $status;
+            $newretailer->logo = $logo;
+            $newretailer->currency = $currency;
+            $newretailer->currency_symbol = $currency_symbol;
+            $newretailer->tax_code1 = $tax_code1;
+            $newretailer->tax_code2 = $tax_code2;
+            $newretailer->tax_code3 = $tax_code3;
+            $newretailer->slogan = $slogan;
+            $newretailer->vat_included = $vat_included;
+            $newretailer->contact_person_firstname = $contact_person_firstname;
+            $newretailer->contact_person_lastname = $contact_person_lastname;
+            $newretailer->contact_person_position = $contact_person_position;
+            $newretailer->contact_person_phone = $contact_person_phone;
+            $newretailer->contact_person_phone2 = $contact_person_phone2;
+            $newretailer->contact_person_email = $contact_person_email;
+            $newretailer->sector_of_activity = $sector_of_activity;
+            $newretailer->parent_id = $parent_id;
+            $newretailer->url = $url;
+            $newretailer->masterbox_number = $masterbox_number;
+            $newretailer->slavebox_number = $slavebox_number;
+            $newretailer->modified_by = $this->api->user->user_id;
+            $newretailer->floor = $floor;
+            $newretailer->unit = $unit;
+            $newretailer->external_object_id = $external_object_id;
+
+            Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newretailer));
+
+            $newretailer->save();
+
+            // add orid to newly created tenant
+            $newretailer->orid = Retailer::ORID_INCREMENT + $newretailer->merchant_id;
+            $newretailer->save();
 
             // save merchant categories
             $categoryMerchants = array();
