@@ -138,16 +138,16 @@ class TakashimayaMerchantSeeder extends Seeder {
         ];
 
         // ------- MERCHANT DATA
-        Merchant::unguard();
-        $merchant = Merchant::create($merchantData);
+        MallGroup::unguard();
+        $merchant = MallGroup::create($merchantData);
         $this->command->info(sprintf('    Create record on merchants table, name: %s.', $merchantData['name']));
 
         // ------- RETAILER DATA
-        Retailer::unguard();
-        $retailer = Retailer::create($retailerData);
+        Mall::unguard();
+        $retailer = Mall::create($retailerData);
         $this->command->info(sprintf('    Create record on retailers table, name: %s.', $retailerData['name']));
 
-        $this->command->info('Merchant and retailer data seeded.');
+        $this->command->info('MallGroup and retailer data seeded.');
     }
 
 }
