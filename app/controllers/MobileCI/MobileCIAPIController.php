@@ -8257,7 +8257,7 @@ class MobileCIAPIController extends ControllerAPI
             $coupon_id = $coupons->promotion_id;
 
             $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
-            
+
             if (! empty($alternate_language)) {
                 $coupon_translation = \CouponTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
@@ -8276,6 +8276,35 @@ class MobileCIAPIController extends ControllerAPI
 
                     if (isset($media->path)) {
                         $coupons->image = $media->path;
+                    }
+                }
+            } else {
+                $lang = \Language::where('name', '=', $retailer->mobile_default_language)->first();
+
+                if(! empty($lang)) {
+                    $alternate_language = \MerchantLanguage::excludeDeleted()
+                        ->where('merchant_id', '=', $retailer->merchant_id)
+                        ->where('language_id', '=', $lang->language_id)
+                        ->first();
+
+                    $coupon_translation = \CouponTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('promotion_id', $coupons->promotion_id)->first();
+
+                    if (! empty($coupon_translation)) {
+                        foreach (['promotion_name', 'description', 'long_description'] as $field) {
+                            if (isset($coupon_translation->{$field})) {
+                                $coupons->{$field} = $coupon_translation->{$field};
+                            }
+                        }
+
+                        $media = $coupon_translation->find($coupon_translation->coupon_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $coupons->image = $media->path;
+                        }
                     }
                 }
             }
