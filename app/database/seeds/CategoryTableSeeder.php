@@ -48,7 +48,7 @@ CATEGORIES;
             $this->command->info(sprintf('    Create record for category %s.', $category));
 
             $record = [
-                'merchant_id'       => MerchantDataSeeder::MERCHANT_ID,
+                'merchant_id'       => MerchantDataSeeder::MALL_ID,
                 'category_name'     => $category,
                 'category_level'    => 1,
                 'category_order'    => 0,
