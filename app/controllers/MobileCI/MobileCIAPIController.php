@@ -8117,7 +8117,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->where('promotion_id', $coupon->promotion_id)->first();
 
                     if (! empty($coupon_translation)) {
-                        foreach (['promotion_name', 'description'] as $field) {
+                        foreach (['promotion_name', 'description', 'long_description'] as $field) {
                             if (isset($coupon_translation->{$field})) {
                                 $coupon->{$field} = $coupon_translation->{$field};
                             }
@@ -8227,14 +8227,14 @@ class MobileCIAPIController extends ControllerAPI
             $coupon_id = $coupons->promotion_id;
 
             $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
-            
+
             if (! empty($alternate_language)) {
                 $coupon_translation = \CouponTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
                     ->where('promotion_id', $coupons->promotion_id)->first();
 
                 if (! empty($coupon_translation)) {
-                    foreach (['promotion_name', 'description'] as $field) {
+                    foreach (['promotion_name', 'description', 'long_description'] as $field) {
                         if (isset($coupon_translation->{$field})) {
                             $coupons->{$field} = $coupon_translation->{$field};
                         }
@@ -8274,7 +8274,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'languages' => $languages));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'coupon' => $coupons, 'tenants' => $tenants, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
