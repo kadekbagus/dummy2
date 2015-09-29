@@ -7933,7 +7933,15 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product));
+            if (! empty($product->box_url)) {
+                $box_url = $product->box_url;
+
+                $my_url = url('/customer?email=' . $user->user_email);
+
+                $box_url = $box_url . '?email=' . urlencode($user->user_email) . '&logout_to=' . urlencode($my_url);
+            }
+
+            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product, 'box_url' => $box_url));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);

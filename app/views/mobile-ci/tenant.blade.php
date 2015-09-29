@@ -52,6 +52,11 @@
                 <p>{{ $retailer->name }} - {{ $product->floor }} - {{ $product->unit }}</p>
                 <p>Phone : {{ $product->phone }}</p>
                 <p>{{ $product->url }}</p>
+
+                @if ($box_url)
+                <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
+                @endif
+
                 @foreach($product->mediaMapOrig as $map)
                 <p>
                     <img class="img-responsive maps" src="{{ asset($map->path) }}">
