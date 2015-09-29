@@ -260,6 +260,7 @@ class TenantAPIController extends ControllerAPI
      * @param string     `unit`                    (optional) - The unit number
      * @param string     `category_ids`            (optional) - List of category ids
      * @param string     `external_object_id`      (required) - External object ID
+     * @param integer    `id_language_default`     (required) - ID language default  
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -286,12 +287,22 @@ class TenantAPIController extends ControllerAPI
 
             Event::fire('orbit.tenant.postnewtenant.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('create_tenant')) {
                 Event::fire('orbit.tenant.postnewtenant.authz.notallowed', array($this, $user));
                 $createTenantLang = Lang::get('validation.orbit.actionlist.new_tenant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createTenantLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.tenant.postnewtenant.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -313,6 +324,7 @@ class TenantAPIController extends ControllerAPI
             $fax = OrbitInput::post('fax');
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             // default value for status is inactive
             $status = OrbitInput::post('status');
@@ -365,7 +377,8 @@ class TenantAPIController extends ControllerAPI
                     'status'               => $status,
                     'parent_id'            => $parent_id,
                     'country'              => $country,
-                    'url'                  => $url
+                    'url'                  => $url,
+                    'id_language_default' => $id_language_default,
                 ),
                 array(
                     'email'                => 'required|email|orbit.exists.email',
@@ -374,7 +387,8 @@ class TenantAPIController extends ControllerAPI
                     'status'               => 'orbit.empty.tenant_status',
                     'parent_id'            => 'numeric|orbit.empty.mall',
                     'country'              => 'numeric',
-                    'url'                  => 'orbit.formaterror.url.web'
+                    'url'                  => 'orbit.formaterror.url.web',
+                    'id_language_default' => 'required|numeric',
                 )
             );
 
@@ -498,6 +512,20 @@ class TenantAPIController extends ControllerAPI
             $newtenant->categories = $categoryMerchants;
 
             Event::fire('orbit.tenant.postnewtenant.after.save', array($this, $newtenant));
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'tenant_name' => $newtenant->tenant_name,
+                    'description' => $newtenant->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($newtenant, json_encode($default_translation), 'create');
+
+            OrbitInput::post('translations', function($translation_json_string) use ($newtenant) {
+                $this->validateAndSaveTranslations($newtenant, $translation_json_string, 'create');
+            });
+
             $this->response->data = $newtenant;
 
             // Commit the changes
