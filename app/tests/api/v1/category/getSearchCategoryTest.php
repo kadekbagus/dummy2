@@ -81,12 +81,11 @@ class getSearchCategoryTest extends TestCase
         $response = $this->call('GET', $url)->getContent();
         $response = json_decode($response);
 
-        // Should be failed
-        $this->assertResponseStatus(403);
-
-        // Should be error access denied
-        $this->assertSame(Status::ACCESS_DENIED, $response->code);
-        $this->assertSame('You do not have permission to view category.', $response->message);
+        // Should Be OK
+        $this->assertResponseOk();
+        // Should Be No Error
+        $this->assertSame(Status::OK, (int)$response->code);
+        $this->assertSame('Request OK', $response->message);
     }
 
     public function testOK_get_without_additional_parameters()
@@ -200,7 +199,7 @@ class getSearchCategoryTest extends TestCase
         // 744: Builder#whereIn accept only array and parameter from Request was string,
         // 896: Zero Exceptions code should be a unknown error.
         $this->assertSame(1, count($response->data->records));
-        $this->assertSame($searchable->category_id, $response->data->records[0]->category_id);
+        $this->assertSame($searchable->category_id, (int)$response->data->records[0]->category_id);
 
     }
 
@@ -230,7 +229,7 @@ class getSearchCategoryTest extends TestCase
         // should return correct number fo result
         $this->assertSame(1, count($response->data->records));
         // should  return correct data
-        $this->assertSame($searchable->category_id, $response->data->records[0]->category_id);
+        $this->assertSame($searchable->category_id, (int)$response->data->records[0]->category_id);
     }
 
     public function testOK_get_search_with_custom_pagination()

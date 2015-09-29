@@ -12,8 +12,8 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Retailer $mall
  * @property Retailer $unrelatedMall
  *
- * @property int $userId
  * @property Apikey $authData
+ * @property int $userId
  */
 class postUpdateCategory_TranslationsTest extends TestCase
 {
@@ -28,7 +28,11 @@ class postUpdateCategory_TranslationsTest extends TestCase
         $this->group = $merchant = Factory::create('Merchant');
         $this->unrelatedGroup = $unrelatedMerchant = Factory::create('Merchant');
 
-        $this->mall = Factory::create('Retailer', ['is_mall' => 'yes', 'parent_id' => $this->group->merchant_id]);
+        $owner_role = Factory::create('Role', ['role_name' => 'mall owner']);
+
+        $owner_user = Factory::create('User', ['user_role_id' => $owner_role->role_id]);
+
+        $this->mall = Factory::create('Retailer', ['is_mall' => 'yes', 'user_id' => $owner_user->user_id]);
         $this->unrelatedMall = Factory::create('Retailer', ['is_mall' => 'yes', 'parent_id' => $this->unrelatedGroup->merchant_id]);
 
         $setting = new Setting();
@@ -40,8 +44,8 @@ class postUpdateCategory_TranslationsTest extends TestCase
 
         Factory::create('PermissionRole',
             ['role_id' => $this->mall->user->user_role_id, 'permission_id' => $permission->permission_id]);
-        $this->authData = Factory::create('Apikey', ['user_id' => $this->mall->user->user_id]);
-        $this->userId = $this->mall->user->user_id;
+        $this->authData = Factory::create('Apikey', ['user_id' => $owner_user->user_id]);
+        $this->userId = $owner_user->user_id;
 
         $combos = [
             [$this->mall, $english, 'english'],
@@ -75,6 +79,8 @@ class postUpdateCategory_TranslationsTest extends TestCase
             'category_id' => $category->category_id,
             'translations' => json_encode($translations),
         ];
+
+        $_POST['id_language_default'] = 1;
 
         $url = '/api/v1/family/update?' . http_build_query($_GET);
 
@@ -155,8 +161,8 @@ class postUpdateCategory_TranslationsTest extends TestCase
         foreach ($english_translations as $key => $value) {
             $this->assertSame($value, $saved_translation->{$key});
         }
-        $this->assertSame($this->userId, $saved_translation->created_by);
-        $this->assertSame($this->userId, $saved_translation->modified_by);
+        $this->assertSame((string)$this->userId, (string)$saved_translation->created_by);
+        $this->assertSame((string)$this->userId, (string)$saved_translation->modified_by);
     }
 
     // ... for a nonexistent language
@@ -235,8 +241,8 @@ class postUpdateCategory_TranslationsTest extends TestCase
             $category->category_id)->count();
         $this->assertSame(0, $translation_count_after);
         $this->assertSame(
-            $this->userId,
-            CategoryTranslation::find($translation->category_translation_id)->modified_by
+            (string)$this->userId,
+            (string)CategoryTranslation::find($translation->category_translation_id)->modified_by
         );
     }
 
@@ -312,7 +318,7 @@ class postUpdateCategory_TranslationsTest extends TestCase
         foreach ($updated_english as $k => $v) {
             $this->assertSame($v, $updated_translation->{$k});
         }
-        $this->assertSame($this->userId, $updated_translation->modified_by);
+        $this->assertSame((string)$this->userId, (string)$updated_translation->modified_by);
     }
 
     // ... with some fields left unspecified

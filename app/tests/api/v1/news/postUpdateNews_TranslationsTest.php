@@ -4,7 +4,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\Helper\Generator;
 
 /**
- * Test handling of translations when updating a Event.
+ * Test handling of translations when updating a News.
  *
  * @property MerchantLanguage[] $merchantLanguages
  * @property Merchant $group
@@ -12,10 +12,10 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Retailer $mall
  * @property Retailer $unrelatedMall
  *
- * @property Apikey $authData
  * @property int $userId
+ * @property Apikey $authData
  */
-class postUpdateEvent_TranslationsTest extends TestCase
+class postUpdateNews_TranslationsTest extends TestCase
 {
     public function setUp()
     {
@@ -28,11 +28,7 @@ class postUpdateEvent_TranslationsTest extends TestCase
         $this->group = $merchant = Factory::create('Merchant');
         $this->unrelatedGroup = $unrelatedMerchant = Factory::create('Merchant');
 
-        $owner_role = Factory::create('Role', ['role_name' => 'mall owner']);
-
-        $owner_user = Factory::create('User', ['user_role_id' => $owner_role->role_id]);
-
-        $this->mall = Factory::create('Retailer', ['is_mall' => 'yes', 'user_id' => $owner_user->user_id]);
+        $this->mall = Factory::create('Retailer', ['is_mall' => 'yes', 'parent_id' => $this->group->merchant_id]);
         $this->unrelatedMall = Factory::create('Retailer', ['is_mall' => 'yes', 'parent_id' => $this->unrelatedGroup->merchant_id]);
 
         $setting = new Setting();
@@ -40,12 +36,12 @@ class postUpdateEvent_TranslationsTest extends TestCase
         $setting->setting_value = $this->mall->merchant_id;
         $setting->save();
 
-        $permission = Factory::create('Permission', ['permission_name' => 'update_event']);
+        $permission = Factory::create('Permission', ['permission_name' => 'update_news']);
 
         Factory::create('PermissionRole',
             ['role_id' => $this->mall->user->user_role_id, 'permission_id' => $permission->permission_id]);
-        $this->authData = Factory::create('Apikey', ['user_id' => $owner_user->user_id]);
-        $this->userId = $owner_user->user_id;
+        $this->authData = Factory::create('Apikey', ['user_id' => $this->mall->user->user_id]);
+        $this->userId = $this->mall->user->user_id;
 
         $combos = [
             [$this->mall, $english, 'english'],
@@ -68,7 +64,7 @@ class postUpdateEvent_TranslationsTest extends TestCase
 
     }
 
-    private function makeRequest($event, $translations, $id_language_default)
+    private function makeRequest($news, $translations)
     {
         $_GET = [
             'apikey' => $this->authData->api_key,
@@ -76,12 +72,12 @@ class postUpdateEvent_TranslationsTest extends TestCase
         ];
 
         $_POST = [
-            'event_id' => $event->event_id,
+            'news_id' => $news->news_id,
             'translations' => json_encode($translations),
-            'id_language_default' => $id_language_default,
+            'id_language_default' => 1,
         ];
 
-        $url = '/api/v1/event/update?' . http_build_query($_GET);
+        $url = '/api/v1/family/update?' . http_build_query($_GET);
 
         $secretKey = $this->authData->api_secret_key;
         $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -119,59 +115,55 @@ class postUpdateEvent_TranslationsTest extends TestCase
         $this->assertSame($expected_code, (int)$response->code);
     }
 
-    private function createEvent()
+    private function createNews()
     {
-        return Factory::create('EventModel', [
-            'merchant_id' => $this->mall->merchant_id,
+        return Factory::create('News', [
+            'mall_id' => $this->mall->merchant_id,
         ]);
     }
 
-    private function createEventWithTranslation($merchant_language_name)
+    private function createNewsWithTranslation($merchant_language_name)
     {
-        $event = $this->createEvent();
-        $translation = new EventTranslation();
-        $translation->event_id = $event->event_id;
+        $news = $this->createNews();
+        $translation = new NewsTranslation();
+        $translation->news_id = $news->news_id;
         $translation->merchant_language_id = $this->merchantLanguages[$merchant_language_name]->merchant_language_id;
-        $translation->event_name = 'Translated name';
+        $translation->news_name = 'Translated name';
         $translation->description = 'Translated description';
         $translation->save();
 
-        return [$event, $translation];
+        return [$news, $translation];
     }
 
     // with no translations, add translation
     public function testAddTranslationsWithNoExistingTranslations()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        $event = $this->createEvent();
+        $news = $this->createNews();
         $english_translations = [
-            'event_name' => 'English name',
+            'news_name' => 'English name',
             'description' => 'English description',
         ];
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => $english_translations
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseOk($response);
 
-        $saved_translation = EventTranslation::where('event_id', '=', $event->event_id)
+        $saved_translation = NewsTranslation::where('news_id', '=', $news->news_id)
             ->where('merchant_language_id', '=', $this->merchantLanguages['english']->merchant_language_id)
             ->first();
         $this->assertNotNull($saved_translation);
         foreach ($english_translations as $key => $value) {
             $this->assertSame($value, $saved_translation->{$key});
         }
-        $this->assertSame((string)$this->userId, (string)$saved_translation->created_by);
-        $this->assertSame((string)$this->userId, (string)$saved_translation->modified_by);
+        $this->assertSame($this->userId, $saved_translation->created_by);
+        $this->assertSame($this->userId, $saved_translation->modified_by);
     }
 
     // ... for a nonexistent language
     public function testAddTranslationForNonexistentLanguage()
     {
-        $id_language_default = 1;
-
-        $event = $this->createEvent();
+        $news = $this->createNews();
         $english_translations = [
             'name' => 'English name',
             'description' => 'English description',
@@ -179,137 +171,125 @@ class postUpdateEvent_TranslationsTest extends TestCase
         $translations = [
             '999999' => $english_translations
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $translation_count = EventTranslation::where('event_id', '=', $event->event_id)->count();
+        $translation_count = NewsTranslation::where('news_id', '=', $news->news_id)->count();
         $this->assertSame(0, $translation_count);
     }
 
     // ... for a deleted language
     public function testAddTranslationForDeletedLanguage()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        $event = $this->createEvent();
+        $news = $this->createNews();
         $english_translations = [
-            'event_name' => 'English name',
+            'news_name' => 'English name',
             'description' => 'English description',
         ];
         $translations = [
             $this->merchantLanguages['deleted_balinese']->merchant_language_id => $english_translations
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $translation_count = EventTranslation::where('event_id', '=', $event->event_id)->count();
+        $translation_count = NewsTranslation::where('news_id', '=', $news->news_id)->count();
         $this->assertSame(0, $translation_count);
     }
 
     // ... for a language belonging to another merchant
     public function testAddTranslationForOtherMerchantLanguage()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        $event = $this->createEvent();
+        $news = $this->createNews();
         $english_translations = [
-            'event_name' => 'English name',
+            'news_name' => 'English name',
             'description' => 'English description',
         ];
         $translations = [
             $this->merchantLanguages['balinese']->merchant_language_id => $english_translations
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $translation_count = EventTranslation::where('event_id', '=', $event->event_id)->count();
+        $translation_count = NewsTranslation::where('news_id', '=', $news->news_id)->count();
         $this->assertSame(0, $translation_count);
     }
 
     // with a translation, delete translation
     public function testDeletingTranslation()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        list($event, $translation) = $this->createEventWithTranslation('english');
+        list($news, $translation) = $this->createNewsWithTranslation('english');
         $this->assertNull(
-            EventTranslation::find($translation->event_translation_id)->modified_by
+            NewsTranslation::find($translation->news_translation_id)->modified_by
         );
-        $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        $translation_count_before = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_before);
 
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => null
         ];
 
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseOk($response);
 
-        $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        $translation_count_after = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(0, $translation_count_after);
         $this->assertSame(
-            (string)$this->userId,
-            (string)EventTranslation::find($translation->event_translation_id)->modified_by
+            $this->userId,
+            NewsTranslation::find($translation->news_translation_id)->modified_by
         );
     }
 
     // ... for a nonexistent language
     public function testDeletingNonexistentTranslation()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        list($event, $translation) = $this->createEventWithTranslation('english');
-        $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        list($news, $translation) = $this->createNewsWithTranslation('english');
+        $translation_count_before = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_before);
         $translations = [
             $this->merchantLanguages['french']->merchant_language_id => null
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        $translation_count_after = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_after);
     }
 
     // ... for a language belonging to another merchant
     public function testDeletingOtherMerchantLanguage()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        list($event, $translation) = $this->createEventWithTranslation('english');
-        $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        list($news, $translation) = $this->createNewsWithTranslation('english');
+        $translation_count_before = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_before);
         $translations = [
             $this->merchantLanguages['chinese']->merchant_language_id => null
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        $translation_count_after = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_after);
     }
 
     // with a translation, update translation
     public function testUpdatingTranslation()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        list($event, $translation) = $this->createEventWithTranslation('english');
+        list($news, $translation) = $this->createNewsWithTranslation('english');
         $this->assertNull(
-            EventTranslation::find($translation->event_translation_id)->modified_by
+            NewsTranslation::find($translation->news_translation_id)->modified_by
         );
-        $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        $translation_count_before = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_before);
 
         $updated_english = [
-            'event_name' => 'English name',
+            'news_name' => 'English name',
             'description' => 'English description',
         ];
         foreach ($updated_english as $k => $v) {
@@ -319,39 +299,37 @@ class postUpdateEvent_TranslationsTest extends TestCase
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => $updated_english
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseOk($response);
 
-        $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        $translation_count_after = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_after);
 
-        /** @var EventTranslation $updated_translation */
-        $updated_translation = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->first();
+        /** @var NewsTranslation $updated_translation */
+        $updated_translation = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->first();
 
         foreach ($updated_english as $k => $v) {
             $this->assertSame($v, $updated_translation->{$k});
         }
-        $this->assertSame((string)$this->userId, (string)$updated_translation->modified_by);
+        $this->assertSame($this->userId, $updated_translation->modified_by);
     }
 
     // ... with some fields left unspecified
     public function testUpdatingTranslationWithUnspecifiedFields()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
         $updated_english = [
-            'event_name' => 'English name',
+            'news_name' => 'English name',
             'description' => 'English description',
         ];
 
         foreach ($updated_english as $field => $value) {
             $minimal_update = [$field => $value];
 
-            list($event, $original_translation) = $this->createEventWithTranslation('english');
-            $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-                $event->event_id)->count();
+            list($news, $original_translation) = $this->createNewsWithTranslation('english');
+            $translation_count_before = NewsTranslation::excludeDeleted()->where('news_id', '=',
+                $news->news_id)->count();
             $this->assertSame(1, $translation_count_before);
 
             foreach ($minimal_update as $k => $v) {
@@ -361,15 +339,15 @@ class postUpdateEvent_TranslationsTest extends TestCase
             $translations = [
                 $this->merchantLanguages['english']->merchant_language_id => $minimal_update
             ];
-            $response = $this->makeRequest($event, $translations, $id_language_default);
+            $response = $this->makeRequest($news, $translations);
             $this->assertJsonResponseOk($response);
 
-            $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-                $event->event_id)->count();
+            $translation_count_after = NewsTranslation::excludeDeleted()->where('news_id', '=',
+                $news->news_id)->count();
             $this->assertSame(1, $translation_count_after);
 
-            $updated_translation = EventTranslation::excludeDeleted()->where('event_id', '=',
-                $event->event_id)->first();
+            $updated_translation = NewsTranslation::excludeDeleted()->where('news_id', '=',
+                $news->news_id)->first();
 
             // the one sent is updated
             foreach ($minimal_update as $k => $v) {
@@ -388,30 +366,28 @@ class postUpdateEvent_TranslationsTest extends TestCase
     // ... with null values
     public function testUpdatingTranslationWithNullValue()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        list($event, $translation) = $this->createEventWithTranslation('english');
-        $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        list($news, $translation) = $this->createNewsWithTranslation('english');
+        $translation_count_before = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_before);
 
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => [
-                'event_name' => null,
+                'news_name' => null,
                 'description' => null,
             ]
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseOk($response);
 
-        $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        $translation_count_after = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_after);
 
-        $updated_translation = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->first();
+        $updated_translation = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->first();
 
-        foreach (['event_name', 'description'] as $k) {
+        foreach (['news_name', 'description'] as $k) {
             $this->assertNull($updated_translation->{$k});
         }
     }
@@ -419,30 +395,28 @@ class postUpdateEvent_TranslationsTest extends TestCase
     // ... with some illegal fields
     public function testUpdatingTranslationWithIllegalFields()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
-        list($event, $translation) = $this->createEventWithTranslation('english');
-        $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        list($news, $translation) = $this->createNewsWithTranslation('english');
+        $translation_count_before = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_before);
 
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => [
                 'this' => 'should not be here',
-                'event_name' => 'should not be updated'
+                'news_name' => 'should not be updated'
             ]
         ];
-        $response = $this->makeRequest($event, $translations, $id_language_default);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/invalid key/i', $response);
 
-        $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->count();
+        $translation_count_after = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->count();
         $this->assertSame(1, $translation_count_after);
 
-        $updated_translation = EventTranslation::excludeDeleted()->where('event_id', '=',
-            $event->event_id)->first();
+        $updated_translation = NewsTranslation::excludeDeleted()->where('news_id', '=',
+            $news->news_id)->first();
 
-        foreach (['event_name', 'description'] as $k) {
+        foreach (['news_name', 'description'] as $k) {
             $this->assertSame($translation->{$k}, $updated_translation->{$k});
         }
     }
@@ -450,8 +424,6 @@ class postUpdateEvent_TranslationsTest extends TestCase
     // ... with fields having illegal values
     public function testUpdatingTranslationWithIllegalValues()
     {
-        $id_language_default = $this->merchantLanguages['english']->merchant_language_id;
-
         $illegal_values = [
             ['an', 'array', 'is', 'illegal'],
             ['and' => 'objects', 'are' => 'too'],
@@ -460,9 +432,9 @@ class postUpdateEvent_TranslationsTest extends TestCase
             1234.56, // and numbers
         ];
         foreach ($illegal_values as $illegal_value) {
-            list($event, $translation) = $this->createEventWithTranslation('english');
-            $translation_count_before = EventTranslation::excludeDeleted()->where('event_id', '=',
-                $event->event_id)->count();
+            list($news, $translation) = $this->createNewsWithTranslation('english');
+            $translation_count_before = NewsTranslation::excludeDeleted()->where('news_id', '=',
+                $news->news_id)->count();
             $this->assertSame(1, $translation_count_before);
 
             $translations = [
@@ -471,17 +443,17 @@ class postUpdateEvent_TranslationsTest extends TestCase
                     'name' => 'should not be updated'
                 ]
             ];
-            $response = $this->makeRequest($event, $translations, $id_language_default);
+            $response = $this->makeRequest($news, $translations);
             $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/invalid value/i', $response);
 
-            $translation_count_after = EventTranslation::excludeDeleted()->where('event_id', '=',
-                $event->event_id)->count();
+            $translation_count_after = NewsTranslation::excludeDeleted()->where('news_id', '=',
+                $news->news_id)->count();
             $this->assertSame(1, $translation_count_after);
 
-            $updated_translation = EventTranslation::excludeDeleted()->where('event_id', '=',
-                $event->event_id)->first();
+            $updated_translation = NewsTranslation::excludeDeleted()->where('news_id', '=',
+                $news->news_id)->first();
 
-            foreach (['event_name', 'description'] as $k) {
+            foreach (['news_name', 'description'] as $k) {
                 $this->assertSame($translation->{$k}, $updated_translation->{$k});
             }
         }

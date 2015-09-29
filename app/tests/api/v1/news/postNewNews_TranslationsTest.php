@@ -5,7 +5,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\Helper\Generator;
 
 /**
- * Tests handling of translations when creating new Category.
+ * Tests handling of translations when creating new News.
  *
  * @property MerchantLanguage[] $merchantLanguages
  * @property Merchant $group
@@ -16,7 +16,7 @@ use OrbitShop\API\v1\Helper\Generator;
  * @property Apikey $authData
  * @property int $userId
  */
-class postNewCategory_TranslationsTest extends TestCase
+class postNewNews_TranslationsTest extends TestCase
 {
     public function setUp()
     {
@@ -41,7 +41,7 @@ class postNewCategory_TranslationsTest extends TestCase
         $setting->setting_value = $this->mall->merchant_id;
         $setting->save();
 
-        $permission = Factory::create('Permission', ['permission_name' => 'create_category']);
+        $permission = Factory::create('Permission', ['permission_name' => 'create_news']);
 
         Factory::create('PermissionRole',
             ['role_id' => $merchant->user->user_role_id, 'permission_id' => $permission->permission_id]);
@@ -69,20 +69,20 @@ class postNewCategory_TranslationsTest extends TestCase
 
     }
 
-    private function makeRequest($category_data, $translations)
+    private function makeRequest($news_data, $translations)
     {
         $_GET = [
             'apikey' => $this->authData->api_key,
             'apitimestamp' => time(),
         ];
 
-        $_POST = array_merge($category_data, [
+        $_POST = array_merge($news_data, [
             'translations' => json_encode($translations)
         ]);
 
         $_POST['id_language_default'] = 1;
 
-        $url = '/api/v1/family/new?' . http_build_query($_GET);
+        $url = '/api/v1/news/new?' . http_build_query($_GET);
 
         $secretKey = $this->authData->api_secret_key;
         $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -95,11 +95,10 @@ class postNewCategory_TranslationsTest extends TestCase
         return $response;
     }
 
-    private function createCategoryData()
+    private function createNewsData()
     {
-        $faker = Faker\Factory::create();
-        return Factory::attributesFor('Category', [
-            'merchant_id' => $this->mall->merchant_id,
+        return Factory::attributesFor('News', [
+            'mall_id' => $this->mall->merchant_id,
         ]);
     }
 
@@ -127,18 +126,18 @@ class postNewCategory_TranslationsTest extends TestCase
     // with no translations, add translation
     public function testAddTranslation()
     {
-        $category = $this->createCategoryData();
+        $news = $this->createNewsData();
         $english_translations = [
-            'category_name' => 'English Name',
+            'news_name' => 'English Name',
             'description' => 'English Description',
         ];
         $translations = [
             $this->merchantLanguages['english']->merchant_language_id => $english_translations
         ];
-        $response = $this->makeRequest($category, $translations);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseOk($response);
 
-        $saved_translation = CategoryTranslation::where('category_id', '=', $response->data->category_id)
+        $saved_translation = NewsTranslation::where('news_id', '=', $response->data->news_id)
             ->where('merchant_language_id', '=', $this->merchantLanguages['english']->merchant_language_id)
             ->first();
         $this->assertNotNull($saved_translation);
@@ -153,15 +152,15 @@ class postNewCategory_TranslationsTest extends TestCase
     public function testAddTranslationForNonexistentLanguage()
     {
         $count_before = Retailer::excludeDeleted()->count();
-        $category = $this->createCategoryData();
+        $news = $this->createNewsData();
         $english_translations = [
-            'category_name' => 'English Name',
+            'news_name' => 'English Name',
             'description' => 'English Description',
         ];
         $translations = [
             '999999' => $english_translations
         ];
-        $response = $this->makeRequest($category, $translations);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
         $count_after = Retailer::excludeDeleted()->count();
@@ -171,46 +170,46 @@ class postNewCategory_TranslationsTest extends TestCase
     // ... for a deleted language
     public function testAddTranslationForDeletedLanguage()
     {
-        $count_before = Category::excludeDeleted()->count();
-        $category = $this->createCategoryData();
+        $count_before = News::excludeDeleted()->count();
+        $news = $this->createNewsData();
         $english_translations = [
-            'category_name' => 'English Name',
+            'news_name' => 'English Name',
             'description' => 'English Description',
         ];
         $translations = [
             $this->merchantLanguages['deleted_balinese']->merchant_language_id => $english_translations
         ];
-        $response = $this->makeRequest($category, $translations);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $count_after = Category::excludeDeleted()->count();
+        $count_after = News::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 
     // ... for a language belonging to another merchant
     public function testAddTranslationForOtherMerchantLanguage()
     {
-        $count_before = Category::excludeDeleted()->count();
-        $category = $this->createCategoryData();
+        $count_before = News::excludeDeleted()->count();
+        $news = $this->createNewsData();
         $english_translations = [
-            'category_name' => 'English Name',
+            'news_name' => 'English Name',
             'description' => 'English Description',
         ];
         $translations = [
             $this->merchantLanguages['balinese']->merchant_language_id => $english_translations
         ];
-        $response = $this->makeRequest($category, $translations);
+        $response = $this->makeRequest($news, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $count_after = Category::excludeDeleted()->count();
+        $count_after = News::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 
     // should not be able to delete, ever.
     public function testDeletingTranslation()
     {
-        $count_before = Category::excludeDeleted()->count();
-        $category = $this->createCategoryData();
+        $count_before = News::excludeDeleted()->count();
+        $news = $this->createNewsData();
 
         $merchant_languages_to_try = [
             $this->merchantLanguages['english']->merchant_language_id,
@@ -223,11 +222,11 @@ class postNewCategory_TranslationsTest extends TestCase
             $translations = [
                 $language => null
             ];
-            $response = $this->makeRequest($category, $translations);
+            $response = $this->makeRequest($news, $translations);
             $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
         }
 
-        $count_after = Category::excludeDeleted()->count();
+        $count_after = News::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 

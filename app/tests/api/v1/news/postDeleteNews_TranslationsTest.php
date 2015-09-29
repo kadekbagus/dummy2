@@ -3,16 +3,17 @@ use Laracasts\TestDummy\Factory;
 use OrbitShop\API\v1\Helper\Generator;
 
 /**
- * Tests translations are deleted when categories are.
+ * Tests translations are deleted when news are.
  *
  * @property MerchantLanguage[] $merchantLanguages
  * @property Merchant $group
  * @property Retailer $mall
+ * @property string $masterPassword
  *
  * @property Apikey $authData
  * @property int $userId
  */
-class postDeleteCategory_TranslationsTest extends TestCase
+class postDeleteNews_TranslationsTest extends TestCase
 {
     public function setUp()
     {
@@ -27,11 +28,18 @@ class postDeleteCategory_TranslationsTest extends TestCase
         $role->save();
 
         $setting = new Setting();
-        $setting->setting_name = 'current_category';
+        $setting->setting_name = 'current_news';
         $setting->setting_value = $this->mall->merchant_id;
         $setting->save();
 
-        $permission = Factory::create('Permission', ['permission_name' => 'delete_category']);
+        $password_setting = new Setting();
+        $password_setting->setting_name = 'master_password';
+        $password_setting->object_type = 'merchant';
+        $password_setting->object_id = $merchant->object_id;
+        $password_setting->setting_value = Hash::make($this->masterPassword = '12345');
+        $password_setting->save();
+
+        $permission = Factory::create('Permission', ['permission_name' => 'delete_news']);
 
         Factory::create('PermissionRole',
             ['role_id' => $this->mall->user->user_role_id, 'permission_id' => $permission->permission_id]);
@@ -48,7 +56,7 @@ class postDeleteCategory_TranslationsTest extends TestCase
         ];
     }
 
-    private function makeRequest($category)
+    private function makeRequest($news)
     {
         $_GET = [
             'apikey' => $this->authData->api_key,
@@ -56,10 +64,11 @@ class postDeleteCategory_TranslationsTest extends TestCase
         ];
 
         $_POST = [
-            'category_id' => $category->category_id,
+            'news_id' => $news->news_id,
+            'password' => $this->masterPassword
         ];
 
-        $url = '/api/v1/family/delete?' . http_build_query($_GET);
+        $url = '/api/v1/news/delete?' . http_build_query($_GET);
 
         $secretKey = $this->authData->api_secret_key;
         $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -72,19 +81,19 @@ class postDeleteCategory_TranslationsTest extends TestCase
         return $response;
     }
 
-    private function createCategoryWithTranslation($merchant_language_name)
+    private function createNewsWithTranslation($merchant_language_name)
     {
-        $category = Factory::create('Category', [
-            'merchant_id' => $this->mall->merchant_id,
+        $news = Factory::create('News', [
+            'mall_id' => $this->mall->merchant_id,
         ]);
-        $translation = new CategoryTranslation();
-        $translation->category_id = $category->category_id;
+        $translation = new NewsTranslation();
+        $translation->news_id = $news->news_id;
         $translation->merchant_language_id = $this->merchantLanguages[$merchant_language_name]->merchant_language_id;
-        $translation->category_name = 'Translated name';
+        $translation->news_name = 'Translated name';
         $translation->description = 'Translated description';
         $translation->save();
 
-        return [$category, $translation];
+        return [$news, $translation];
     }
 
     /**
@@ -92,29 +101,29 @@ class postDeleteCategory_TranslationsTest extends TestCase
      */
     private function assertJsonResponseOk($response)
     {
-        $this->assertSame('Category has been successfully deleted.', $response->message);
+        $this->assertSame('News has been successfully deleted.', $response->message);
         $this->assertSame('success', $response->status);
         $this->assertSame(0, (int)$response->code);
     }
 
-    function testDeletingCategoryDeletesTranslations() {
-        list($category, $translation) = $this->createCategoryWithTranslation('english');
+    function testDeletingNewsDeletesTranslations() {
+        list($news, $translation) = $this->createNewsWithTranslation('english');
         $this->assertNull(
-            CategoryTranslation::find($translation->category_translation_id)->modified_by
+            NewsTranslation::find($translation->news_translation_id)->modified_by
         );
-        $count_category_before = Category::excludeDeleted()->count();
-        $count_translation_before = CategoryTranslation::excludeDeleted()->count();
+        $count_news_before = News::excludeDeleted()->count();
+        $count_translation_before = NewsTranslation::excludeDeleted()->count();
 
-        $response = $this->makeRequest($category);
+        $response = $this->makeRequest($news);
         $this->assertJsonResponseOk($response);
 
-        $count_category_after = Category::excludeDeleted()->count();
-        $count_translation_after = CategoryTranslation::excludeDeleted()->count();
-        $this->assertSame($count_category_before - 1, $count_category_after);
+        $count_news_after = News::excludeDeleted()->count();
+        $count_translation_after = NewsTranslation::excludeDeleted()->count();
+        $this->assertSame($count_news_before - 1, $count_news_after);
         $this->assertSame($count_translation_before - 1, $count_translation_after);
         $this->assertSame(
             $this->userId,
-            CategoryTranslation::find($translation->category_translation_id)->modified_by
+            NewsTranslation::find($translation->news_translation_id)->modified_by
         );
     }
 

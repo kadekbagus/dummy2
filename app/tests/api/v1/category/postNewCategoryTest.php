@@ -106,7 +106,7 @@ class postNewCategoryTest extends TestCase
 
     public function testOK_post_new_category_with_valid_data()
     {
-        $merchant = Factory::create('Merchant');
+        $merchant = Factory::create('retailer_mall');
 
         $_GET['apikey']       = $this->authData->api_key;
         $_GET['apitimestamp'] = time();
@@ -115,6 +115,7 @@ class postNewCategoryTest extends TestCase
         $_POST['category_name']  = 'Unique Submited';
         $_POST['category_level'] = '1';
         $_POST['status']         = 'active';
+        $_POST['id_language_default']         = 1;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
