@@ -7,27 +7,27 @@
 @section('content')
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
-            @foreach($data->records as $product)
-                <div class="main-theme-mall catalogue" id="product-{{$product->promotion_id}}">
+            @foreach($data->records as $news)
+                <div class="main-theme-mall catalogue" id="product-{{$news->promotion_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">
-                            @if(!empty($product->image))
-                            <a href="{{ asset($product->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->image) }}"></a>
+                            @if(!empty($news->image))
+                            <a href="{{ asset($news->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($news->image) }}"></a>
                             @else
-                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/><img class="img-responsive" alt="" src="{{ asset('mobile-ci/images/default_product.png') }}"></a>
                             @endif
                         </div>
                         <div class="col-xs-6">
-                            <h4>{{ $product->news_name }}</h4>
-                            @if (strlen($product->description) > 120)
-                            <p>{{{ substr($product->description, 0, 120) }}} [<a href="{{ url('customer/mallnewsdetail?id='.$product->news_id) }}">...</a>] </p>
+                            <h4>{{ $news->news_name }}</h4>
+                            @if (strlen($news->description) > 120)
+                            <p>{{{ substr($news->description, 0, 120) }}} [<a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}">...</a>] </p>
                             @else
-                            <p>{{{ $product->description }}}</p>
+                            <p>{{{ $news->description }}}</p>
                             @endif
                         </div>
                         <div class="col-xs-3" style="margin-top:20px">
                             <div class="circlet btn-blue detail-btn pull-right">
-                                <a href="{{ url('customer/mallnewsdetail?id='.$product->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
+                                <a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
                             </div>
                         </div>
                     </div>

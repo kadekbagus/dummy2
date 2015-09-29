@@ -8568,6 +8568,37 @@ class MobileCIAPIController extends ControllerAPI
 
                     }
                 }
+            } else {
+                $lang = \Language::where('name', '=', $retailer->mobile_default_language)->first();
+
+                if(! empty($lang)) {
+                    $alternate_language = \MerchantLanguage::excludeDeleted()
+                        ->where('merchant_id', '=', $retailer->merchant_id)
+                        ->where('language_id', '=', $lang->language_id)
+                        ->first();
+                    foreach ($news as $new) {
+                        $news_translation = \NewsTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('news_id', $new->news_id)->first();
+
+                        if (!empty($news_translation)) {
+                            foreach (['news_name', 'description'] as $field) {
+                                if (isset($news_translation->{$field})) {
+                                    $new->{$field} = $news_translation->{$field};
+                                }
+                            }
+
+                            $media = $news_translation->find($news_translation->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($media->path)) {
+                                $new->image = $media->path;
+                            }
+
+                        }
+                    }
+                }
             }
 
             if ($news->isEmpty()) {
@@ -8666,6 +8697,37 @@ class MobileCIAPIController extends ControllerAPI
                         $news->image = $media->path;
                     }
 
+                }
+            } else {
+                $lang = \Language::where('name', '=', $retailer->mobile_default_language)->first();
+
+                if(! empty($lang)) {
+                    $alternate_language = \MerchantLanguage::excludeDeleted()
+                        ->where('merchant_id', '=', $retailer->merchant_id)
+                        ->where('language_id', '=', $lang->language_id)
+                        ->first();
+                    
+                    $news_translation = \NewsTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                    ->where('news_id', $news->news_id)->first();
+
+                    if (!empty($news_translation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            if (isset($news_translation->{$field})) {
+                                $news->{$field} = $news_translation->{$field};
+                            }
+                        }
+
+                        $media = $news_translation->find($news_translation->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $news->image = $media->path;
+                        }
+
+                    }
+                    
                 }
             }
 
