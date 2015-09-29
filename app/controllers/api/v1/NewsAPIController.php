@@ -99,12 +99,12 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                 ),
                 array(
-                    'mall_id'             => 'required|numeric|orbit.empty.mall',
+                    'mall_id'             => 'required|orbit.empty.mall',
                     'news_name'           => 'required|max:255|orbit.exists.news_name',
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required|numeric|orbit.empty.language_default',
+                    'id_language_default' => 'required',
                 )
             );
 
@@ -122,7 +122,7 @@ class NewsAPIController extends ControllerAPI
                         'retailer_id'   => $retailer_id_check,
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
+                        'retailer_id'   => 'orbit.empty.retailer',
                     )
                 );
 
@@ -169,6 +169,7 @@ class NewsAPIController extends ControllerAPI
             $news_translation_default->merchant_language_id = $id_language_default;
             $news_translation_default->news_name = $newnews->news_name;
             $news_translation_default->description = $newnews->description;
+            $news_translation_default->status = 'active';
             $news_translation_default->created_by = $this->api->user->user_id;
             $news_translation_default->modified_by = $this->api->user->user_id;
             $news_translation_default->save();
@@ -188,7 +189,7 @@ class NewsAPIController extends ControllerAPI
             }
             $newnews->tenants = $newsretailers;
 
-            Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));            
+            Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
 
             // translation for mallnews
             OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
@@ -386,13 +387,13 @@ class NewsAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'news_id'             => 'required|numeric|orbit.empty.news',
-                    'mall_id'             => 'numeric|orbit.empty.mall',
+                    'news_id'             => 'required|orbit.empty.news',
+                    'mall_id'             => 'orbit.empty.mall',
                     'news_name'           => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required|numeric|orbit.empty.language_default',
+                    'id_language_default' => 'required|numeric',
                 ),
                 array(
                    'news_name_exists_but_me' => Lang::get('validation.orbit.exists.news_name'),
@@ -412,7 +413,7 @@ class NewsAPIController extends ControllerAPI
             $this->beginTransaction();
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
-            
+
             $updatednews_default_language = NewsTranslation::excludeDeleted()->where('news_id', $news_id)->where('merchant_id', $mall_id)->where('merchant_language_id', $id_language_default)->first();
 
 
@@ -695,20 +696,20 @@ class NewsAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $news_id = OrbitInput::post('news_id');
-            $password = OrbitInput::post('password');
+            // $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
                     'news_id'  => $news_id,
-                    'password' => $password,
+                    // 'password' => $password,
                 ),
                 array(
-                    'news_id'  => 'required|numeric|orbit.empty.news',
-                    'password' => 'required|orbit.masterpassword.delete',
+                    'news_id'  => 'required|orbit.empty.news',
+                    // 'password' => 'required|orbit.masterpassword.delete',
                 ),
                 array(
-                    'required.password'             => 'The master is password is required.',
-                    'orbit.masterpassword.delete'   => 'The password is incorrect.'
+                    // 'required.password'             => 'The master is password is required.',
+                    // 'orbit.masterpassword.delete'   => 'The password is incorrect.'
                 )
             );
 
@@ -1594,7 +1595,7 @@ class NewsAPIController extends ControllerAPI
 
             return TRUE;
         });
-
+/*
         // News deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
             // Current Mall location
@@ -1616,7 +1617,7 @@ class NewsAPIController extends ControllerAPI
 
             return TRUE;
         });
-
+*/
     }
 
     /**

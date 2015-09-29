@@ -95,8 +95,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'receipts'      => 'array|required',
                     'receipt_dates' => 'array|required',
                     'payment_types' => 'array|required',
-                    'user_id'       => 'required|numeric|orbit.empty.user',
-                    'lucky_draw_id' => 'required|numeric|orbit.empty.lucky_draw',
+                    'user_id'       => 'required|orbit.empty.user',
+                    'lucky_draw_id' => 'required|orbit.empty.lucky_draw',
                     'mode'          => 'required|in:sequence,number_driven,random',
                     'lucky_number'  => 'numeric|min:0:max:9'
                 )
@@ -454,8 +454,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'receipts'      => 'array|required',
                     'receipt_dates' => 'array|required',
                     'payment_types' => 'array|required',
-                    'user_id'       => 'required|numeric|orbit.empty.user',
-                    'lucky_draw_id' => 'required|numeric|orbit.empty.lucky_draw',
+                    'user_id'       => 'required|orbit.empty.user',
+                    'lucky_draw_id' => 'required|orbit.empty.lucky_draw',
                     'mode'          => 'required|in:sequence,number_driven,random',
                     'lucky_number'  => 'numeric|min:0:max:9'
                 )
@@ -771,7 +771,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'receipts'      => 'array|required',
                     'receipt_dates' => 'array|required',
                     'payment_types' => 'array|required',
-                    'user_id'       => 'required|numeric|orbit.empty.user',
+                    'user_id'       => 'required|orbit.empty.user',
                 )
             );
 
@@ -1093,7 +1093,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 ),
                 array(
                     'coupon_ids'        => 'array|required',
-                    'user_id'           => 'required|numeric|orbit.empty.user',
+                    'user_id'           => 'required|orbit.empty.user',
                 ),
                 array(
                     'user_id.required'      => 'Please select customer first',

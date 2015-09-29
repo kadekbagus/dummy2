@@ -39,6 +39,7 @@ class PromotionAPIController extends ControllerAPI
      * @param integer    `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
      * @param decimal    `discount_value`        (optional) - Discount value
      * @param array      `retailer_ids`          (optional) - Retailer IDs
+     * @param integer    `id_language_default`      (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -102,6 +103,7 @@ class PromotionAPIController extends ControllerAPI
             $discount_value = OrbitInput::post('discount_value');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $validator = Validator::make(
                 array(
@@ -116,9 +118,10 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => $discount_object_id3,
                     'discount_object_id4'  => $discount_object_id4,
                     'discount_object_id5'  => $discount_object_id5,
+                    'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'merchant_id'          => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'          => 'required|orbit.empty.merchant',
                     'promotion_name'       => 'required|max:100|orbit.exists.promotion_name',
                     'promotion_type'       => 'required|orbit.empty.promotion_type',
                     'status'               => 'required|orbit.empty.promotion_status',
@@ -129,6 +132,7 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => 'orbit.empty.discount_object_id3',
                     'discount_object_id4'  => 'orbit.empty.discount_object_id4',
                     'discount_object_id5'  => 'orbit.empty.discount_object_id5',
+                    'id_language_default'   => 'required|numeric',
                 )
             );
 
@@ -147,7 +151,7 @@ class PromotionAPIController extends ControllerAPI
 
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
+                        'retailer_id'   => 'orbit.empty.retailer',
                     )
                 );
 
@@ -241,6 +245,15 @@ class PromotionAPIController extends ControllerAPI
             $newpromotion->retailers = $promotionretailers;
 
             Event::fire('orbit.promotion.postnewpromotion.after.save', array($this, $newpromotion));
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'promotion_name' => $newpromotion->promotion_name,
+                    'description' => $newpromotion->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($newpromotion, json_encode($default_translation), 'create');
 
             // Save Promotion Translation
             OrbitInput::post('translations', function($translation_json_string) use ($newpromotion) {
@@ -375,6 +388,7 @@ class PromotionAPIController extends ControllerAPI
      * @param decimal    `discount_value`        (optional) - Discount value
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
+     * @param integer    `id_language_default`   (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -430,6 +444,7 @@ class PromotionAPIController extends ControllerAPI
             $discount_object_id3 = OrbitInput::post('discount_object_id3');
             $discount_object_id4 = OrbitInput::post('discount_object_id4');
             $discount_object_id5 = OrbitInput::post('discount_object_id5');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
                 'promotion_id'         => $promotion_id,
@@ -443,6 +458,7 @@ class PromotionAPIController extends ControllerAPI
                 'discount_object_id3'  => $discount_object_id3,
                 'discount_object_id4'  => $discount_object_id4,
                 'discount_object_id5'  => $discount_object_id5,
+                'id_language_default' => $id_language_default,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -453,8 +469,8 @@ class PromotionAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'promotion_id'         => 'required|numeric|orbit.empty.promotion',
-                    'merchant_id'          => 'numeric|orbit.empty.merchant',
+                    'promotion_id'         => 'required|orbit.empty.promotion',
+                    'merchant_id'          => 'orbit.empty.merchant',
                     'promotion_name'       => 'sometimes|required|min:5|max:100|promotion_name_exists_but_me',
                     'promotion_type'       => 'orbit.empty.promotion_type',
                     'status'               => 'orbit.empty.promotion_status',
@@ -465,6 +481,7 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => 'orbit.empty.discount_object_id3',
                     'discount_object_id4'  => 'orbit.empty.discount_object_id4',
                     'discount_object_id5'  => 'orbit.empty.discount_object_id5',
+                    'id_language_default' => 'required|numeric',
                 ),
                 array(
                    'promotion_name_exists_but_me' => Lang::get('validation.orbit.exists.promotion_name'),
@@ -635,6 +652,15 @@ class PromotionAPIController extends ControllerAPI
             Event::fire('orbit.promotion.postupdatepromotion.after.save', array($this, $updatedpromotion));
             $this->response->data = $updatedpromotion;
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'promotion_name' => $updatedpromotion->promotion_name,
+                    'description' => $updatedpromotion->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($updatedpromotion, json_encode($default_translation), 'update');
+
             // save PromotionTranslation
             OrbitInput::post('translations', function($translation_json_string) use ($updatedpromotion) {
                 $this->validateAndSaveTranslations($updatedpromotion, $translation_json_string, 'update');
@@ -802,7 +828,7 @@ class PromotionAPIController extends ControllerAPI
                     'promotion_id' => $promotion_id,
                 ),
                 array(
-                    'promotion_id' => 'required|numeric|orbit.empty.promotion',
+                    'promotion_id' => 'required|orbit.empty.promotion',
                 )
             );
 

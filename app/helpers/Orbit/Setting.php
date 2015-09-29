@@ -114,6 +114,11 @@ class Setting
             throw new \Exception('Please change "app.key" setting on app.php file .');
         }
 
+
+        if (Config::get('app.aliases.Eloquent') != 'Orbit\Database\ModelWithObjectID') {
+            throw new \Exception('Eloquent should be an Orbit\Database\ModelWithObjectID');
+        };
+
         if ($user === NULL) {
             // Create dummy user
             $this->user = new \stdclass();

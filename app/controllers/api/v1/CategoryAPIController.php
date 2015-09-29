@@ -18,15 +18,17 @@ class CategoryAPIController extends ControllerAPI
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      * @author Tian <tian@dominopos.com>
+     * @author Irianto Pratama <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `merchant_id`           (required) - Merchant ID
-     * @param string     `category_name`         (required) - Category name
-     * @param integer    `category_level`        (optional) - Category level.
-     * @param string     `status`                (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param integer    `category_order`        (optional) - Category order
-     * @param string     `description`           (optional) - Description
+     * @param integer    `merchant_id`              (required) - Merchant ID
+     * @param string     `category_name`            (required) - Category name
+     * @param integer    `category_level`           (optional) - Category level.
+     * @param string     `status`                   (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param integer    `category_order`           (optional) - Category order
+     * @param string     `description`              (optional) - Description
+     * @param integer    `id_language_default`      (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -51,12 +53,22 @@ class CategoryAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.category.postnewcategory.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('create_category')) {
                 Event::fire('orbit.category.postnewcategory.authz.notallowed', array($this, $user));
                 $createCategoryLang = Lang::get('validation.orbit.actionlist.new_category');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createCategoryLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.category.postnewcategory.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -67,19 +79,22 @@ class CategoryAPIController extends ControllerAPI
             $category_order = OrbitInput::post('category_order');
             $description = OrbitInput::post('description');
             $status = OrbitInput::post('status');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'    => $merchant_id,
-                    'category_name'  => $category_name,
-                    'category_level' => $category_level,
-                    'status'         => $status,
+                    'merchant_id'           => $merchant_id,
+                    'category_name'         => $category_name,
+                    'category_level'        => $category_level,
+                    'status'                => $status,
+                    'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'merchant_id'    => 'required|numeric|orbit.empty.merchant',
-                    'category_name'  => 'required|orbit.exists.category_name:'.$merchant_id,
-                    'category_level' => 'numeric',
-                    'status'         => 'required|orbit.empty.category_status',
+                    'merchant_id'           => 'required|orbit.empty.merchant',
+                    'category_name'         => 'required|orbit.exists.category_name:'.$merchant_id,
+                    'category_level'        => 'numeric',
+                    'status'                => 'required|orbit.empty.category_status',
+                    'id_language_default'   => 'required',
                 )
             );
 
@@ -90,6 +105,8 @@ class CategoryAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            Event::fire('orbit.category.postnewcategory.after.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
@@ -109,11 +126,21 @@ class CategoryAPIController extends ControllerAPI
             $newcategory->save();
 
             Event::fire('orbit.category.postnewcategory.after.save', array($this, $newcategory));
-            $this->response->data = $newcategory;
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'category_name' => $newcategory->category_name,
+                    'description' => $newcategory->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($newcategory, json_encode($default_translation), 'create');
 
             OrbitInput::post('translations', function($translation_json_string) use ($newcategory) {
                 $this->validateAndSaveTranslations($newcategory, $translation_json_string, 'create');
             });
+
+            $this->response->data = $newcategory;
 
             // Commit the changes
             $this->commit();
@@ -218,6 +245,7 @@ class CategoryAPIController extends ControllerAPI
      *
      * @author <Kadek> <kadek@dominopos.com>
      * @author <Tian> <tian@dominopos.com>
+     * @author <Irianto Pratama> <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -228,6 +256,7 @@ class CategoryAPIController extends ControllerAPI
      * @param integer    `category_order`        (optional) - Category order
      * @param string     `description`           (optional) - Description
      * @param string     `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param integer    `id_language_default`   (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -253,12 +282,22 @@ class CategoryAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.category.postupdatecategory.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('update_category')) {
                 Event::fire('orbit.category.postupdatecategory.authz.notallowed', array($this, $user));
                 $updateCategoryLang = Lang::get('validation.orbit.actionlist.update_category');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateCategoryLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.category.postupdatecategory.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -270,6 +309,7 @@ class CategoryAPIController extends ControllerAPI
             $category_order = OrbitInput::post('category_order');
             $description = OrbitInput::post('description');
             $status = OrbitInput::post('status');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $validator = Validator::make(
                 array(
@@ -278,13 +318,15 @@ class CategoryAPIController extends ControllerAPI
                     'category_name'     => $category_name,
                     'category_level'    => $category_level,
                     'status'            => $status,
+                    'id_language_default' => $id_language_default,
                 ),
                 array(
-                    'category_id'       => 'required|numeric|orbit.empty.category',
-                    'merchant_id'       => 'numeric|orbit.empty.merchant',
+                    'category_id'       => 'required|orbit.empty.category',
+                    'merchant_id'       => 'orbit.empty.merchant',
                     'category_name'     => 'category_name_exists_but_me:'.$category_id.','.$merchant_id,
                     'category_level'    => 'numeric',
                     'status'            => 'orbit.empty.category_status',
+                    'id_language_default' => 'required',
                 ),
                 array(
                    'category_name_exists_but_me' => Lang::get('validation.orbit.exists.category_name'),
@@ -330,6 +372,15 @@ class CategoryAPIController extends ControllerAPI
             OrbitInput::post('status', function($status) use ($updatedcategory) {
                 $updatedcategory->status = $status;
             });
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'category_name' => $updatedcategory->category_name,
+                    'description' => $updatedcategory->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($updatedcategory, json_encode($default_translation), 'update');
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcategory) {
                 $this->validateAndSaveTranslations($updatedcategory, $translation_json_string, 'update');
@@ -481,12 +532,23 @@ class CategoryAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.category.postdeletecategory.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('delete_category')) {
                 Event::fire('orbit.category.postdeletecategory.authz.notallowed', array($this, $user));
                 $deleteCategoryLang = Lang::get('validation.orbit.actionlist.delete_category');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteCategoryLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.category.postdeletecategory.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -499,7 +561,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_id' => $category_id,
                 ),
                 array(
-                    'category_id' => 'required|numeric|orbit.empty.category',
+                    'category_id' => 'required|orbit.empty.category',
                 )
             );
 
@@ -684,15 +746,6 @@ class CategoryAPIController extends ControllerAPI
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.category.getsearchcategory.before.authz', array($this, $user));
-
-            if (! ACL::create($user)->isAllowed('view_category')) {
-                Event::fire('orbit.category.getsearchcategory.authz.notallowed', array($this, $user));
-                $viewCategoryLang = Lang::get('validation.orbit.actionlist.view_category');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCategoryLang));
-                ACL::throwAccessForbidden($message);
-            }
-            Event::fire('orbit.category.getsearchcategory.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
@@ -1094,6 +1147,8 @@ class CategoryAPIController extends ControllerAPI
                 $new_translation->created_by = $this->api->user->user_id;
                 $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
+
+                $category->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
                 /** @var CategoryTranslation $existing_translation */
@@ -1104,6 +1159,8 @@ class CategoryAPIController extends ControllerAPI
                 }
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
+
+                $category->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
             }
             elseif ($op === 'delete') {
                 /** @var CategoryTranslation $existing_translation */

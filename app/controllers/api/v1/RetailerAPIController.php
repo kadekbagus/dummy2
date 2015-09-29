@@ -64,7 +64,7 @@ class RetailerAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'retailer_id' => 'required|numeric|orbit.empty.retailer|orbit.exists.deleted_retailer_is_box_current_retailer',
+                    'retailer_id' => 'required|orbit.empty.retailer|orbit.exists.deleted_retailer_is_box_current_retailer',
                     'password'    => 'required|orbit.access.wrongpassword',
                 )
             );
@@ -347,8 +347,8 @@ class RetailerAPIController extends ControllerAPI
                     'email'     => 'required|email|orbit.exists.email',
                     'name'      => 'required',
                     'status'    => 'required|orbit.empty.retailer_status',
-                    'parent_id' => 'required|numeric|orbit.empty.merchant',
-                    'country'   => 'required|numeric',
+                    'parent_id' => 'required|orbit.empty.merchant',
+                    'country'   => 'required',
                     'url'       => 'orbit.formaterror.url.web'
                 )
             );
@@ -367,7 +367,7 @@ class RetailerAPIController extends ControllerAPI
 
             $roleRetailer = Role::where('role_name', 'retailer owner')->first();
             if (empty($roleRetailer)) {
-                OrbitShopAPI::throwInvalidArgument('Could not find role named "Merchant Owner".');
+                OrbitShopAPI::throwInvalidArgument('Could not find role named "Retailer Owner".');
             }
 
             $newuser = new User();
@@ -637,12 +637,12 @@ class RetailerAPIController extends ControllerAPI
                     'url'               => $url,
                 ),
                 array(
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
-                    'user_id'           => 'numeric|orbit.empty.user',
+                    'retailer_id'       => 'required|orbit.empty.retailer',
+                    'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.retailer_status|orbit.exists.inactive_retailer_is_box_current_retailer:'.$retailer_id,
                     'orid'              => 'orid_exists_but_me',
-                    'parent_id'         => 'numeric|orbit.empty.merchant',
+                    'parent_id'         => 'orbit.empty.merchant',
                     'url'               => 'orbit.formaterror.url.web'
                 ),
                 array(

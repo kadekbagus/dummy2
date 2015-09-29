@@ -7,23 +7,23 @@
 @section('content')
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
-            @foreach($data->records as $product)
-                <div class="main-theme-mall catalogue" id="product-{{$product->promotion_id}}">
+            @foreach($data->records as $coupon)
+                <div class="main-theme-mall catalogue" id="product-{{$coupon->promotion_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">
-                            @if(!empty($product->promo_image))
-                            <a href="{{ asset($product->promo_image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->promo_image) }}"></a>
+                            @if(!empty($coupon->promo_image))
+                            <a href="{{ asset($coupon->promo_image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($coupon->promo_image) }}"></a>
                             @else
-                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/><img class="img-responsive" alt="" src="{{ asset('mobile-ci/images/default_product.png') }}"></a>
                             @endif
                         </div>
                         <div class="col-xs-6">
-                            <h4>{{ $product->promotion_name }}</h4>
-                            <p>{{ substr($product->description, 0, 120) }}</p>
+                            <h4>{{ $coupon->promotion_name }}</h4>
+                            <p>{{ substr($coupon->description, 0, 120) }}</p>
                         </div>
                         <div class="col-xs-3" style="margin-top:20px">
                             <div class="circlet btn-blue detail-btn pull-right">
-                                <a href="{{ url('customer/mallcoupon?id='.$product->issued_coupon_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
+                                <a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
                             </div>
                         </div>
                     </div>

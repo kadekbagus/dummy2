@@ -83,7 +83,7 @@ CATEGORIES;
         } catch (Illuminate\Database\QueryException $e) {
         }
 
-        $mall = Retailer::where('merchant_id', 2)->first();
+        $mall = Mall::where('merchant_id', TakashimayaMerchantSeeder::MALL_ID)->first();
 
         $languages_by_name = [];
         foreach ($mall->languages as $language) {

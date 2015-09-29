@@ -28,3 +28,13 @@ $factory('Role', 'role_guest', [
     'role_name'  => 'Guest',
     'role_order' => 1
 ]);
+
+$factory('Role', 'role_mall_owner', [
+    'role_name'  => 'Mall Owner',
+    'role_order' => 1
+]);
+
+$factory('Role', 'role_tenant_owner', [
+    'role_name'  => 'Tenant Owner',
+    'role_order' => 1
+]);

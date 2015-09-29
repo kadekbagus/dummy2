@@ -5293,7 +5293,7 @@ class MobileCIAPIController extends ControllerAPI
                 if ($details_key==0) {
                     $product = $this->productListFormat(substr($details_value['product_name'], 0, 25), $details_value['variant_price'], $details_value['quantity'], $details_value['variant_sku']);
                 } else {
-                    $product .= $this->productListFormat(substr($details_value['product_name'], 0, 25), $details_value['variant_price'], $details_value['quantity'], $details_value['variant_sku']);
+                    $product = $this->productListFormat(substr($details_value['product_name'], 0, 25), $details_value['variant_price'], $details_value['quantity'], $details_value['variant_sku']);
                 }
 
                 foreach ($detailpromotion as $detailpromotion_key => $detailpromotion_value) {
@@ -8117,7 +8117,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->where('promotion_id', $coupon->promotion_id)->first();
 
                     if (! empty($coupon_translation)) {
-                        foreach (['promotion_name', 'description'] as $field) {
+                        foreach (['promotion_name', 'description', 'long_description'] as $field) {
                             if (isset($coupon_translation->{$field})) {
                                 $coupon->{$field} = $coupon_translation->{$field};
                             }
@@ -8227,14 +8227,14 @@ class MobileCIAPIController extends ControllerAPI
             $coupon_id = $coupons->promotion_id;
 
             $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
-            
+
             if (! empty($alternate_language)) {
                 $coupon_translation = \CouponTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
                     ->where('promotion_id', $coupons->promotion_id)->first();
 
                 if (! empty($coupon_translation)) {
-                    foreach (['promotion_name', 'description'] as $field) {
+                    foreach (['promotion_name', 'description', 'long_description'] as $field) {
                         if (isset($coupon_translation->{$field})) {
                             $coupons->{$field} = $coupon_translation->{$field};
                         }
@@ -8274,7 +8274,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'languages' => $languages));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'coupon' => $coupons, 'tenants' => $tenants, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -8309,6 +8309,9 @@ class MobileCIAPIController extends ControllerAPI
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -8350,6 +8353,33 @@ class MobileCIAPIController extends ControllerAPI
                             ->orderBy('sticky_order', 'desc')
                             ->orderBy('created_at', 'desc')
                             ->get();
+
+            if (!empty($alternate_language) && !empty($coupons)) {
+                foreach ($coupons as $key => $val) {
+                    
+                    $coupon_translation = \NewsTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('news_id', $val->news_id)->first();
+
+                    if (!empty($coupon_translation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            if (isset($coupon_translation->{$field})) {
+                                $val->{$field} = $coupon_translation->{$field};
+                            }
+                        }
+
+                        $media = $coupon_translation->find($coupon_translation->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $val->image = $media->path;
+                        }
+
+                    }
+                }
+            }
+
 
             if ($coupons->isEmpty()) {
                 $data = new stdclass();
@@ -8409,8 +8439,10 @@ class MobileCIAPIController extends ControllerAPI
         $product = null;
         try {
             $user = $this->getLoggedInUser();
-
             $retailer = $this->getRetailerInfo();
+
+            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+
             $product_id = trim(OrbitInput::get('id'));
 
             $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'promotion')->where('news_id', $product_id)->first();
@@ -8424,6 +8456,31 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
+            if (! empty($alternate_language)) {
+                $coupon_translation = \NewsTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                    ->where('news_id', $coupons->news_id)->first();
+
+                if (!empty($coupon_translation)) {
+                    foreach (['news_name', 'description'] as $field) {
+                        if (isset($coupon_translation->{$field})) {
+                            $coupons->{$field} = $coupon_translation->{$field};
+                        }
+                    }
+
+                    $media = $coupon_translation->find($coupon_translation->news_translation_id)
+                        ->media_orig()
+                        ->first();
+
+                    if (isset($media->path)) {
+                        $coupons->image = $media->path;
+                    }
+
+                }
+            }
+
+            $languages = $this->getListLanguages($retailer);
+
             $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $product_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_promotion')
@@ -8435,7 +8492,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
@@ -8899,6 +8956,7 @@ class MobileCIAPIController extends ControllerAPI
                 return substr($lang, 0, 2);
             }
         ];
+
         $language = [];
         $selected_language = null;
         foreach ($priority as $method) {
@@ -8908,10 +8966,7 @@ class MobileCIAPIController extends ControllerAPI
                 // method does not return language, try next one
                 continue;
             }
-            if ($mall->mobile_default_language === $name) {
-                // returned language same as mall language, do not translate
-                return null;
-            }
+            
             $selected_language = null;
             if (array_key_exists($name, $language)) {
                 $selected_language = $language[$name];
@@ -8927,6 +8982,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('merchant_id', '=', $mall->merchant_id)
                 ->where('language_id', '=', $selected_language->language_id)
                 ->first();
+
             if ($alternate_language !== null) {
                 return $alternate_language;
             }

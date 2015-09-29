@@ -79,9 +79,9 @@ class PosQuickProductAPIController extends ControllerAPI
                     'product_order'     => $order,
                 ),
                 array(
-                    'product_id'        => 'required|numeric|orbit.empty.product',
-                    'merchant_id'       => 'required|numeric|orbit.empty.merchant',
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
+                    'product_id'        => 'required|orbit.empty.product',
+                    'merchant_id'       => 'required|orbit.empty.merchant',
+                    'retailer_id'       => 'required|orbit.empty.retailer',
                     'product_order'     => 'required|numeric|min:0'
                 )
             );
@@ -286,9 +286,9 @@ class PosQuickProductAPIController extends ControllerAPI
                     'product_order'     => $order,
                 ),
                 array(
-                    'product_id'        => 'required|numeric|orbit.empty.product',
-                    'merchant_id'       => 'required|numeric|orbit.empty.merchant',
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
+                    'product_id'        => 'required|orbit.empty.product',
+                    'merchant_id'       => 'required|orbit.empty.merchant',
+                    'retailer_id'       => 'required|orbit.empty.retailer',
                     'product_order'     => 'required|numeric|min:0'
                 )
             );
@@ -494,9 +494,9 @@ class PosQuickProductAPIController extends ControllerAPI
                     'retailer_id'       => $retailerId,
                 ),
                 array(
-                    'product_id'        => 'required|numeric|orbit.empty.product',
-                    'merchant_id'       => 'required|numeric|orbit.empty.merchant',
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
+                    'product_id'        => 'required|orbit.empty.product',
+                    'merchant_id'       => 'required|orbit.empty.merchant',
+                    'retailer_id'       => 'required|orbit.empty.retailer',
                 )
             );
 

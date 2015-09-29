@@ -45,7 +45,7 @@ class MerchantSetting extends Command
         $merchantId = $this->option('merchant_id');
         $merchant = DB::table('merchants')
                       ->where('status', '!=', 'deleted')
-                      ->where('merchant_id', '=', $mercahntId)
+                      ->where('merchant_id', '=', $merchantId)
                       ->first();
 
         if (empty($merchant)) {

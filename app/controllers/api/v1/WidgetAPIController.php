@@ -86,8 +86,8 @@ class WidgetAPIController extends ControllerAPI
                     // 'images'                => $images
                 ),
                 array(
-                    'object_id'             => 'required|numeric',
-                    'merchant_id'           => 'required|numeric|orbit.empty.merchant',
+                    'object_id'             => 'required',
+                    'merchant_id'           => 'required|orbit.empty.merchant',
                     'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type:' . $merchantId,
                     // 'slogan'                => 'required',
                     'animation'             => 'in:none,horizontal,vertical',
@@ -322,9 +322,9 @@ class WidgetAPIController extends ControllerAPI
                     // 'images'                => $images
                 ),
                 array(
-                    'widget_id'             => 'required|numeric|orbit.empty.widget',
-                    'object_id'             => 'numeric',
-                    'merchant_id'           => 'numeric|orbit.empty.merchant',
+                    'widget_id'             => 'required|orbit.empty.widget',
+                    'object_id'             => '',
+                    'merchant_id'           => 'orbit.empty.merchant',
                     'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
                     'animation'             => 'in:none,horizontal,vertical',
                     // 'images'                => 'required_if:animation,none',
@@ -385,7 +385,7 @@ class WidgetAPIController extends ControllerAPI
             $widget->save();
 
             // Insert attribute values if specified by the caller
-            OrbitInput::post('retailer_ids', function($retailerIds) use ($widget) {
+            OrbitInput::post('retailer_ids', function($retailerIds) use ($widget, $merchantId) {
                 // $widget->retailers()->sync($retailerIds);
                 $widget->retailers()->sync(array($merchantId));
             });
@@ -557,7 +557,7 @@ class WidgetAPIController extends ControllerAPI
                     'widget_id'             => $widgetId,
                 ),
                 array(
-                    'widget_id'             => 'required|numeric|orbit.empty.widget',
+                    'widget_id'             => 'required|orbit.empty.widget',
                 )
             );
 
@@ -738,7 +738,7 @@ class WidgetAPIController extends ControllerAPI
                     'widget_id'             => $widgetId,
                 ),
                 array(
-                    'widget_id'             => 'required|numeric|orbit.empty.widget',
+                    'widget_id'             => 'required|orbit.empty.widget',
                 )
             );
 

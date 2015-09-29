@@ -108,7 +108,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'status'                   => $status,
                 ),
                 array(
-                    'mall_id'                  => 'required|numeric|orbit.empty.mall',
+                    'mall_id'                  => 'required|orbit.empty.mall',
                     'lucky_draw_name'          => 'required|max:255|orbit.exists.lucky_draw_name',
                     'description'              => 'required',
                     'start_date'               => 'required|date_format:Y-m-d H:i:s',
@@ -359,8 +359,8 @@ class LuckyDrawAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'lucky_draw_id'        => 'required|numeric|orbit.empty.lucky_draw',
-                    'mall_id'              => 'numeric|orbit.empty.mall',
+                    'lucky_draw_id'        => 'required|orbit.empty.lucky_draw',
+                    'mall_id'              => 'orbit.empty.mall',
                     'lucky_draw_name'      => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
                     'status'               => 'sometimes|required|orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active_but_me:' . $mall_id . ',' . $lucky_draw_id,
                     'start_date'           => 'date_format:Y-m-d H:i:s',
@@ -622,7 +622,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'lucky_draw_id' => $lucky_draw_id,
                 ),
                 array(
-                    'lucky_draw_id' => 'required|numeric|orbit.empty.lucky_draw',
+                    'lucky_draw_id' => 'required|orbit.empty.lucky_draw',
                 )
             );
 

@@ -1,4 +1,5 @@
 <?php
+use Orbit\Database\ObjectID;
 /**
  * Seeder for Tenant.
  *
@@ -29,18 +30,32 @@ ALTER TABLE {$prefix}lucky_numbers AUTO_INCREMENT=1;
 INIT;
         DB::unprepared($init);
 
+        $generatedIDs = [
+            'tenant' => [],
+            'category_merchant' => []
+        ];
+        $pdo = DB::connection()->getPdo();
+        $mall_id = $pdo->quote(TakashimayaMerchantSeeder::MALL_ID);
+        $generateID = function ($group = null, $sequence = false) use (&$generatedIDs, $pdo)
+        {
+                $id  = $this->generateID();
+                $id  = $pdo->quote($id);
+                if($sequence) $generatedIDs[$group] [$sequence] = $id;
+                return $id;
+        };
+
         $tenants = <<<TENANT
 INSERT INTO `{$prefix}merchants` (`merchant_id`, `omid`, `orid`, `user_id`, `email`, `name`, `description`, `address_line1`, `address_line2`, `address_line3`, `postal_code`, `city_id`, `city`, `country_id`, `country`, `phone`, `fax`, `start_date_activity`, `end_date_activity`, `status`, `logo`, `currency`, `currency_symbol`, `tax_code1`, `tax_code2`, `tax_code3`, `slogan`, `vat_included`, `contact_person_firstname`, `contact_person_lastname`, `contact_person_position`, `contact_person_phone`, `contact_person_phone2`, `contact_person_email`, `sector_of_activity`, `object_type`, `parent_id`, `is_mall`, `url`, `masterbox_number`, `slavebox_number`, `mobile_default_language`, `pos_language`, `ticket_header`, `ticket_footer`, `floor`, `unit`, `modified_by`, `created_at`, `updated_at`) VALUES
-(3, '', '', 0, '', 'ARMANI EXCHANGE', 'The modern wardrobe as only Giorgio Armani could envision it, Armani Exchange embodies the youthful spirit of a new generation. \r\n\r\nArmani Exchange takes a playful, urban approach to apparel and accessories, reaching a global audience through over 200 stores worldwide.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68352855', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/3-armani-exchange-1433763154_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'armaniexchange.com/singapore', '3', NULL, NULL, NULL, NULL, NULL, 'LG', '3', 3, '2015-04-10 20:21:25', '2015-06-08 11:32:34'),
-(4, '', '', 0, '', 'BEAUTY SPA MIS PARIS & DANDY HOUSE', 'The concept of our salon is“Respect for Japanese Style”The typical Japanese wooden interior welcomes you in a warm atmosphere, the tiles on our floors and walls remind of Japanese ceramics, creating the grace of the traditional beauty of Japan. If you take one step into our salon, for a little while, you will be able to indulge in luxury that will make you feel like a real VIP in a traditional Japanese surrounding, all the while being in a different country.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '62351159', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/4-beauty-spa-mis-paris-dandy-house-1433763172_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'miss-paris.com.sg/', '4', NULL, NULL, NULL, NULL, NULL, 'L5', '25', 3, '2015-04-10 20:21:26', '2015-06-08 11:32:52'),
-(5, '', '', 0, '', 'BEST DENKI', 'stores in Japan. We are constantly developing new retail concepts including multimedia oriented era outlets, information based exchanges and housing related specialty shops.\r\nTo date, Best Denki has more than 500 retail stores worldwide with 466 in Japan, 11 in singapore, 10 in Malaysia, 6 in Indonesia', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68352855', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/5-best-denki-1433763119_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'go.bestdenki.com.sg', '5', NULL, NULL, NULL, NULL, NULL, 'L5', '1', 3, '2015-04-10 20:21:26', '2015-06-08 11:31:59'),
-(6, '', '', 0, '', 'BRICKS WORLD', 'Bricks World main shop is located at Ngee Ann City, Level 5 and the shop is the first and largest LEGO Exclusive shop in Singapore. Our Ngee Ann City store was officially opened on 13 December 2003 and was the first monobrand LEGO store in Singapore.\r\nWe carry more than 90 per cent of the LEGO merchandise available in Singapore and thus able to provide superior service and support for our customers.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67345512', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/6-bricks-world-1433763557_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'bricksworld.com/', '6', NULL, NULL, NULL, NULL, NULL, 'L5', '15', 3, '2015-04-10 20:21:26', '2015-06-08 11:39:17'),
-(7, '', '', 0, '', 'CHARLES & KEITH', 'CHARLES & KEITH SUMMER 2015 lends an element of finesse accompanied by contemporary appeal that binds the lithe movements and vivacity of youth to life.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67370152', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/7-charles-keith-1433763771_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'www.charleskeith.com/', '7', NULL, NULL, NULL, NULL, NULL, 'LG', '12', 3, '2015-04-10 20:21:26', '2015-06-08 11:42:51'),
-(8, '', '', 0, '', 'CHOPARD BOUTIQUE', 'It all began in 1860 in the small village of Sonvilier, Switzerland. Here Louis-Ulysse Chopard, a talented young craftsman, established his workshop. By virtue of their precision and reliability, his watches quickly gained a solid reputation among enthusiasts and found buyers as far afield as Eastern Europe, Russia and Scandinavia.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67338111', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/8-chopard-boutique-1433763967_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'www.chopard.com/‎', '8', NULL, NULL, NULL, NULL, NULL, 'L1', '3', 3, '2015-04-10 20:21:26', '2015-06-08 11:46:07'),
-(9, '', '', 0, '', 'LA CURE GOURMANDE', 'Created in 1989, La Cure Gourmande is far more than chocolates, confectionery and biscuits. It''s an emotional experience from the moment you walk into the store. Everything about La Cure Gourmande will make you feel like you just stepped back into childhood.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '66842983', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/9-la-cure-gourmande-1433764758_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'www.curegourmande.com/index.cfm', '9', NULL, NULL, NULL, NULL, NULL, 'L3', '9', 3, '2015-04-10 20:21:26', '2015-06-08 11:59:18'),
-(10, '', '', 0, '', 'LADUREE BOUTIQUE', 'Parisian tea rooms'' history is intimately tied to the \r\nhistory of the Ladurée family. It all began in 1862, when \r\nLouis Ernest Ladurée, a miller from the southwest of \r\nFrance, founded a bakery in Paris at 16 rue Royale.\r\nIn 1871, while Baron Haussmann was giving \r\nParis a « new face », a fire in the bakery opened \r\nthe opportunity to transform it into a pastry shop.\r\nThe decoration of the pastry shop was entrusted to \r\nJules Cheret, a famous turn-of-the-century \r\npainter and poster artist.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68847361', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/10-laduree-boutique-1433764911_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'www.laduree.com', '10', NULL, NULL, NULL, NULL, NULL, 'L2', '9', 3, '2015-04-10 20:21:26', '2015-06-08 12:01:52'),
-(11, '', '', 0, '', 'L''OCCITANE', 'With nothing but an alambic, a small truck and a solid knowledge of plants, Olivier Baussan, at the age of 23, distills Rosemary essential oil which he sells on the local markets of Provence. The L’OCCITANE journey begins.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67377800', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/11-loccitane-1433764346_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'www.shihlinsnacks.com.tw/id', '11', NULL, NULL, NULL, NULL, NULL, 'LG', '33', 3, '2015-04-10 20:21:26', '2015-06-08 11:52:26'),
-(12, '', '', 0, '', 'SEPHORA', 'Sephora is a visionary beauty-retail concept founded in France by Dominique Mandonnaud in 1970. Sephora''s unique, open-sell environment features an ever-increasing amount of classic and emerging brands across a broad range of product categories including skincare, color, fragrance, body, smilecare, and haircare, in addition to Sephora''s own private label. \r\n\r\nToday, Sephora is not only the leading chain of perfume and cosmetics stores in France, but also a powerful beauty presence in countries around the world. \r\n\r\nTo build the most knowledgeable and professional team of product consultants in the beauty industry, Sephora developed "Science of Sephora." This program ensures that our team is skilled to identify skin types, have knowledge of skin physiology, the history of makeup, application techniques, the science of creating fragrances, and most importantly, how to interact with Sephora''s diverse clientele. \r\n\r\nOwned by LVMH Moët Hennessy Louis Vuitton, the world''s leading luxury goods group, Sephora is highly regarded as a beauty trailblazer, thanks to its unparalleled assortment of prestige products, unbiased service from experts, interactive shopping environment, and innovation.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68365622', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/12-sephora-1433765032_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'retailer', 2, 'no', 'sephora.com/', '12', NULL, NULL, NULL, NULL, NULL, 'L1', '6', 3, '2015-04-10 20:21:26', '2015-06-08 12:03:52');
+({$generateID('tenant', 3)}, '', '', 0, '', 'ARMANI EXCHANGE', 'The modern wardrobe as only Giorgio Armani could envision it, Armani Exchange embodies the youthful spirit of a new generation. \r\n\r\nArmani Exchange takes a playful, urban approach to apparel and accessories, reaching a global audience through over 200 stores worldwide.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68352855', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/3-armani-exchange-1433763154_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'armaniexchange.com/singapore', '3', NULL, NULL, NULL, NULL, NULL, 'LG', '3', 3, '2015-04-10 20:21:25', '2015-06-08 11:32:34'),
+({$generateID('tenant', 4)}, '', '', 0, '', 'BEAUTY SPA MIS PARIS & DANDY HOUSE', 'The concept of our salon is“Respect for Japanese Style”The typical Japanese wooden interior welcomes you in a warm atmosphere, the tiles on our floors and walls remind of Japanese ceramics, creating the grace of the traditional beauty of Japan. If you take one step into our salon, for a little while, you will be able to indulge in luxury that will make you feel like a real VIP in a traditional Japanese surrounding, all the while being in a different country.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '62351159', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/4-beauty-spa-mis-paris-dandy-house-1433763172_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'miss-paris.com.sg/', '4', NULL, NULL, NULL, NULL, NULL, 'L5', '25', 3, '2015-04-10 20:21:26', '2015-06-08 11:32:52'),
+({$generateID('tenant', 5)}, '', '', 0, '', 'BEST DENKI', 'stores in Japan. We are constantly developing new retail concepts including multimedia oriented era outlets, information based exchanges and housing related specialty shops.\r\nTo date, Best Denki has more than 500 retail stores worldwide with 466 in Japan, 11 in singapore, 10 in Malaysia, 6 in Indonesia', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68352855', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/maps/5-best-denki-1433763119_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'go.bestdenki.com.sg', '5', NULL, NULL, NULL, NULL, NULL, 'L5', '1', 3, '2015-04-10 20:21:26', '2015-06-08 11:31:59'),
+({$generateID('tenant', 6)}, '', '', 0, '', 'BRICKS WORLD', 'Bricks World main shop is located at Ngee Ann City, Level 5 and the shop is the first and largest LEGO Exclusive shop in Singapore. Our Ngee Ann City store was officially opened on 13 December 2003 and was the first monobrand LEGO store in Singapore.\r\nWe carry more than 90 per cent of the LEGO merchandise available in Singapore and thus able to provide superior service and support for our customers.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67345512', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/6-bricks-world-1433763557_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'bricksworld.com/', '6', NULL, NULL, NULL, NULL, NULL, 'L5', '15', 3, '2015-04-10 20:21:26', '2015-06-08 11:39:17'),
+({$generateID('tenant', 7)}, '', '', 0, '', 'CHARLES & KEITH', 'CHARLES & KEITH SUMMER 2015 lends an element of finesse accompanied by contemporary appeal that binds the lithe movements and vivacity of youth to life.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67370152', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/7-charles-keith-1433763771_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.charleskeith.com/', '7', NULL, NULL, NULL, NULL, NULL, 'LG', '12', 3, '2015-04-10 20:21:26', '2015-06-08 11:42:51'),
+({$generateID('tenant', 8)}, '', '', 0, '', 'CHOPARD BOUTIQUE', 'It all began in 1860 in the small village of Sonvilier, Switzerland. Here Louis-Ulysse Chopard, a talented young craftsman, established his workshop. By virtue of their precision and reliability, his watches quickly gained a solid reputation among enthusiasts and found buyers as far afield as Eastern Europe, Russia and Scandinavia.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67338111', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/8-chopard-boutique-1433763967_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.chopard.com/‎', '8', NULL, NULL, NULL, NULL, NULL, 'L1', '3', 3, '2015-04-10 20:21:26', '2015-06-08 11:46:07'),
+({$generateID('tenant', 9)}, '', '', 0, '', 'LA CURE GOURMANDE', 'Created in 1989, La Cure Gourmande is far more than chocolates, confectionery and biscuits. It''s an emotional experience from the moment you walk into the store. Everything about La Cure Gourmande will make you feel like you just stepped back into childhood.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '66842983', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/9-la-cure-gourmande-1433764758_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.curegourmande.com/index.cfm', '9', NULL, NULL, NULL, NULL, NULL, 'L3', '9', 3, '2015-04-10 20:21:26', '2015-06-08 11:59:18'),
+({$generateID('tenant', 10)}, '', '', 0, '', 'LADUREE BOUTIQUE', 'Parisian tea rooms'' history is intimately tied to the \r\nhistory of the Ladurée family. It all began in 1862, when \r\nLouis Ernest Ladurée, a miller from the southwest of \r\nFrance, founded a bakery in Paris at 16 rue Royale.\r\nIn 1871, while Baron Haussmann was giving \r\nParis a « new face », a fire in the bakery opened \r\nthe opportunity to transform it into a pastry shop.\r\nThe decoration of the pastry shop was entrusted to \r\nJules Cheret, a famous turn-of-the-century \r\npainter and poster artist.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68847361', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/10-laduree-boutique-1433764911_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.laduree.com', '10', NULL, NULL, NULL, NULL, NULL, 'L2', '9', 3, '2015-04-10 20:21:26', '2015-06-08 12:01:52'),
+({$generateID('tenant', 11)}, '', '', 0, '', 'L''OCCITANE', 'With nothing but an alambic, a small truck and a solid knowledge of plants, Olivier Baussan, at the age of 23, distills Rosemary essential oil which he sells on the local markets of Provence. The L’OCCITANE journey begins.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '67377800', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/11-loccitane-1433764346_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'www.shihlinsnacks.com.tw/id', '11', NULL, NULL, NULL, NULL, NULL, 'LG', '33', 3, '2015-04-10 20:21:26', '2015-06-08 11:52:26'),
+({$generateID('tenant', 12)}, '', '', 0, '', 'SEPHORA', 'Sephora is a visionary beauty-retail concept founded in France by Dominique Mandonnaud in 1970. Sephora''s unique, open-sell environment features an ever-increasing amount of classic and emerging brands across a broad range of product categories including skincare, color, fragrance, body, smilecare, and haircare, in addition to Sephora''s own private label. \r\n\r\nToday, Sephora is not only the leading chain of perfume and cosmetics stores in France, but also a powerful beauty presence in countries around the world. \r\n\r\nTo build the most knowledgeable and professional team of product consultants in the beauty industry, Sephora developed "Science of Sephora." This program ensures that our team is skilled to identify skin types, have knowledge of skin physiology, the history of makeup, application techniques, the science of creating fragrances, and most importantly, how to interact with Sephora''s diverse clientele. \r\n\r\nOwned by LVMH Moët Hennessy Louis Vuitton, the world''s leading luxury goods group, Sephora is highly regarded as a beauty trailblazer, thanks to its unparalleled assortment of prestige products, unbiased service from experts, interactive shopping environment, and innovation.', 'null', 'null', NULL, 0, NULL, 'null', 0, '', '68365622', NULL, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'active', 'uploads/retailers/pictures/12-sephora-1433765032_1.jpg', 'IDR', 'Rp', NULL, NULL, NULL, NULL, 'yes', 'null', 'null', 'null', NULL, NULL, 'null', NULL, 'tenant', 2, 'no', 'sephora.com/', '12', NULL, NULL, NULL, NULL, NULL, 'L1', '6', 3, '2015-04-10 20:21:26', '2015-06-08 12:03:52');
 
 -- Update Master Box Number (The Merchant Verification Number)
 UPDATE `{$prefix}merchants` SET masterbox_number=merchant_id;
@@ -50,19 +65,24 @@ TENANT;
         DB::unprepared($tenants);
         $this->command->info('merchants table seeded.');
 
+        $findCategoryId = function  ($skip) use ($pdo) {
+            $id = DB::table('categories')->skip($skip - 1)->first()->category_id;
+            return $pdo->quote($id);
+        };
+
         $categories = <<<CAT
-INSERT INTO `{$prefix}category_merchant` (`category_id`, `merchant_id`, `created_at`, `updated_at`) VALUES
-( 6,  3, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 1,  4, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 4,  5, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 1,  6, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 9,  6, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 6,  7, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-(12,  8, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 7,  9, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 7, 10, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 1, 11, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
-( 1, 12, '0000-00-00 00:00:00', '0000-00-00 00:00:00');
+INSERT INTO `{$prefix}category_merchant` (`category_merchant_id`, `category_id`, `merchant_id`, `created_at`, `updated_at`) VALUES
+({$generateID()}, {$findCategoryId(6)},  3, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(1)},  4, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(4)},  5, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(1)},  6, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(9)},  6, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(6)},  7, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(12)},  8, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(7)},  9, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(7)}, 10, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(1)}, 11, '0000-00-00 00:00:00', '0000-00-00 00:00:00'),
+({$generateID()}, {$findCategoryId(1)}, 12, '0000-00-00 00:00:00', '0000-00-00 00:00:00');
 CAT;
 
         $this->command->info('Seeding category_merchant table with Takashimaya tenants...');
@@ -72,7 +92,7 @@ CAT;
         $twoMonth = date('Y-m-d H:i:s', strtotime('+2 month'));
         $luckydraws = <<<LUCKY
 INSERT INTO `{$prefix}lucky_draws` (`lucky_draw_id`, `mall_id`, `lucky_draw_name`, `description`, `image`, `start_date`, `end_date`, `minimum_amount`, `grace_period_date`, `grace_period_in_days`, `min_number`, `max_number`, `status`, `created_by`, `modified_by`, `created_at`, `updated_at`) VALUES
-(1, 2, 'Takashimaya Lucky Draw', 'Takashimaya Lucky Draw.', NULL, NOW(), '{$twoMonth}', 100000.00, NULL, 30, 100000, 200000, 'active', 0, 3, '0000-00-00 00:00:00', '2015-04-17 18:08:43');
+({$generateID()}, {$mall_id}, 'Takashimaya Lucky Draw', 'Takashimaya Lucky Draw.', NULL, NOW(), '{$twoMonth}', 100000.00, NULL, 30, 100000, 200000, 'active', 0, 3, '0000-00-00 00:00:00', '2015-04-17 18:08:43');
 
 truncate table {$prefix}lucky_draw_numbers;
 start transaction;
@@ -154,7 +174,7 @@ LUCKY;
             $newEmployee = $newUser->employee()->save($newEmployee);
 
             // @Todo: Remove this hardcode
-            $retailerIds = [2];
+            $retailerIds = [TakashimayaMerchantSeeder::MALL_ID];
             $newEmployee->retailers()->sync($retailerIds);
 
         } catch (Exception $e) {
@@ -165,14 +185,14 @@ LUCKY;
     protected function createSetting()
     {
         $landingPage = Setting::where('object_type', 'merchant')
-                              ->where('object_id', 2)
+                              ->where('object_id', TakashimayaMerchantSeeder::MALL_ID)
                               ->where('setting_name', 'landing_page')
                               ->active()
                               ->first();
 
        if (empty($landingPage)) {
             $landingPage = new Setting();
-            $landingPage->object_id = 2;
+            $landingPage->object_id = TakashimayaMerchantSeeder::MALL_ID;
             $landingPage->object_type = 'merchant';
         }
 
@@ -181,14 +201,14 @@ LUCKY;
         $landingPage->save();
 
         $masterPassword = Setting::where('object_type', 'merchant')
-                              ->where('object_id', 2)
+                              ->where('object_id', TakashimayaMerchantSeeder::MALL_ID)
                               ->where('setting_name', 'master_password')
                               ->active()
                               ->first();
 
         if (empty($masterPassword)) {
             $masterPassword = new Setting();
-            $masterPassword->object_id = 2;
+            $masterPassword->object_id = TakashimayaMerchantSeeder::MALL_ID;
             $masterPassword->object_type = 'merchant';
         }
 
@@ -243,7 +263,7 @@ LUCKY;
             // sephora
             '12' => 'セフォラは1970年セフォラのユニークな、オープン売り環境でドミニクMandonnaudによってフランスで設立されたビジョンを持った美しさ、小売コンセプトである古典的なの増え続ける量とスキンケア、色、香り、ボディなどの製品カテゴリーの広い範囲にわたって新興ブランドを提供しています、smilecare、およびヘアケア、セフォラ自身のプライベートラベルに加えました。',
         ];
-        $mall = Retailer::find(2);
+        $mall = Mall::find(TakashimayaMerchantSeeder::MALL_ID);
         $languages_by_name = [];
         foreach ($mall->languages as $language) {
             $name = $language->language->name;
@@ -260,5 +280,10 @@ LUCKY;
                 $merchant_translation->save();
             }
         }
+    }
+
+    private function generateID()
+    {
+        return ObjectID::make();
     }
 }

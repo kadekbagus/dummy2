@@ -34,6 +34,5 @@ $factory('EventModel', 'Event', [
     'begin_date'  => $faker->dateTimeBetween('-3 months', '-3 weeks'),
     'end_date'    => $faker->dateTimeBetween('+2 days', '+2 weeks'),
     'is_permanent' => $faker->randomElement(['Y', 'N']),
-    'link_object_type' => 'product',
-    'link_object_id1'  => 'factory:Product'
+    'link_object_type' => $faker->randomElement(['retailer', 'retailer_category', 'promotion', 'news']),
 ]);

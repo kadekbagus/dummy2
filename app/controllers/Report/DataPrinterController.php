@@ -45,7 +45,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
         }
 
         if (Config::get('app.debug') === FALSE) {
-            return View::make('errors/500', $data);
+            return View::make('errors/500', $this->viewData);
         }
 
         return print_r($tenants, TRUE);

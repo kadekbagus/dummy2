@@ -10,7 +10,7 @@ class TakashimayaLanguageSeeder extends Seeder
     {
         DB::table('merchant_languages')->truncate();
 
-        $mall_id = 2;
+        $mall_id = TakashimayaMerchantSeeder::MALL_ID;
 
         $languages = ['en', 'zh', 'ja'];
         foreach ($languages as $language_name) {
