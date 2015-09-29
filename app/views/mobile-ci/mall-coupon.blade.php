@@ -23,34 +23,33 @@
 @stop
 
 @section('content')
-<!-- product -->
 <div class="row product">
     <div class="col-xs-12 product-img">
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{ asset($product->image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
+            <div class="zoom"><a href="{{ asset($coupon->image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
-        <a href="{{ asset($product->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($product->image) }}" ></a>
+        <a href="{{ asset($coupon->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($coupon->image) }}" ></a>
     </div>
     <div class="col-xs-12 main-theme product-detail">
         <div class="row">
             <div class="col-xs-12">
-                <h3>{{ $product->promotion_name }}</h3>
+                <h3>{{ $coupon->promotion_name }}</h3>
             </div>
             <div class="col-xs-12">
-                <p>{{ $product->description }}</p>
+                <p>{{ $coupon->description }}</p>
             </div>
             <div class="col-xs-12">
-                <p>{{ $product->long_description }}</p>
+                <p>{{ $coupon->long_description }}</p>
             </div>
             <div class="col-xs-12">
                 <h4>{{ Lang::get('mobileci.promotion.validity') }}</h4>
-                <p>{{ date('d M Y', strtotime($product->coupon_validity_in_date)) }}</p>
+                <p>{{ date('d M Y', strtotime($coupon->coupon_validity_in_date)) }}</p>
             </div>
             <div class="hide col-xs-12">
                 <h4>Coupon Type</h4>
-                @if($product->promotion_type == 'tenant')
+                @if($coupon->promotion_type == 'tenant')
                     <p>{{ Lang::get('mobileci.coupon.tenant_based') }}</p>
-                @elseif($product->promotion_type == 'mall')
+                @elseif($coupon->promotion_type == 'mall')
                     <p>{{ Lang::get('mobileci.coupon.mall_based') }}</p>
                 @endif
             </div>
@@ -68,7 +67,7 @@
         <div class="row">
             <div class="col-xs-12 text-center">
                 <h4>{{ Lang::get('mobileci.coupon.coupon_value') }}</h4>
-                <p>IDR <span class="formatted-numx">{{ $product->couponRule->discount_value }}</span></p>
+                <p>IDR <span class="formatted-numx">{{ $coupon->couponRule->discount_value }}</span></p>
             </div>
         </div>
         <div class="row">
@@ -227,7 +226,7 @@
                     url: apiPath+'issued-coupon/redeem',
                     method: 'POST',
                     data: {
-                        issued_coupon_id: {{$product->issuedCoupons[0]->issued_coupon_id}},
+                        issued_coupon_id: {{$coupon->issuedCoupons[0]->issued_coupon_id}},
                         merchant_verification_number: $('#tenantverify').val()
                     }
                 }).done(function(data){

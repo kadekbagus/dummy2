@@ -8304,7 +8304,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'languages' => $languages));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'coupon' => $coupons, 'tenants' => $tenants, 'languages' => $languages));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
