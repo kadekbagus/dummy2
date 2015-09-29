@@ -90,11 +90,11 @@ class CategoryAPIController extends ControllerAPI
                     'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'merchant_id'           => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'           => 'required|orbit.empty.merchant',
                     'category_name'         => 'required|orbit.exists.category_name:'.$merchant_id,
                     'category_level'        => 'numeric',
                     'status'                => 'required|orbit.empty.category_status',
-                    'id_language_default'   => 'required|numeric',
+                    'id_language_default'   => 'required',
                 )
             );
 
@@ -321,12 +321,12 @@ class CategoryAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                 ),
                 array(
-                    'category_id'       => 'required|numeric|orbit.empty.category',
-                    'merchant_id'       => 'numeric|orbit.empty.merchant',
+                    'category_id'       => 'required|orbit.empty.category',
+                    'merchant_id'       => 'orbit.empty.merchant',
                     'category_name'     => 'category_name_exists_but_me:'.$category_id.','.$merchant_id,
                     'category_level'    => 'numeric',
                     'status'            => 'orbit.empty.category_status',
-                    'id_language_default' => 'required|numeric',
+                    'id_language_default' => 'required',
                 ),
                 array(
                    'category_name_exists_but_me' => Lang::get('validation.orbit.exists.category_name'),
@@ -561,7 +561,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_id' => $category_id,
                 ),
                 array(
-                    'category_id' => 'required|numeric|orbit.empty.category',
+                    'category_id' => 'required|orbit.empty.category',
                 )
             );
 

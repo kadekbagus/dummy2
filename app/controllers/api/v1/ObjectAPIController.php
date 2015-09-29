@@ -81,7 +81,7 @@ class ObjectAPIController extends ControllerAPI
                     'status'             => $status,
                 ),
                 array(
-                    'merchant_id'        => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'        => 'required|orbit.empty.merchant',
                     'object_name'        => 'required|orbit.exists.object_name',
                     'object_type'        => 'required|orbit.empty.object_object_type',
                     'status'             => 'required|orbit.empty.object_status',
@@ -290,8 +290,8 @@ class ObjectAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'object_id'        => 'required|numeric|orbit.empty.object',
-                    'merchant_id'      => 'numeric|orbit.empty.merchant',
+                    'object_id'        => 'required|orbit.empty.object',
+                    'merchant_id'      => 'orbit.empty.merchant',
                     'object_name'      => 'sometimes|required|object_name_exists_but_me',
                     'object_type'      => 'orbit.empty.object_object_type',
                     'status'           => 'orbit.empty.object_status',
@@ -505,7 +505,7 @@ class ObjectAPIController extends ControllerAPI
                     'password'   => $password,
                 ),
                 array(
-                    'object_id'  => 'required|numeric|orbit.empty.object',
+                    'object_id'  => 'required|orbit.empty.object',
                     'password'   => 'required|orbit.masterpassword.delete',
                 ),
                 array(

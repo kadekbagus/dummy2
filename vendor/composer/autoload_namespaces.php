@@ -30,6 +30,7 @@ return array(
     'Patchwork' => array($vendorDir . '/patchwork/utf8/class'),
     'PHPParser' => array($vendorDir . '/nikic/php-parser/lib'),
     'Orbit\\Queue\\' => array($baseDir . '/app/queue'),
+    'Orbit\\Database\\' => array($vendorDir . '/dominopos/orbit-database'),
     'OrbitShop\\API\\' => array($vendorDir . '/dominopos/orbit-shop-api'),
     'Normalizer' => array($vendorDir . '/patchwork/utf8/class'),
     'Net' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),

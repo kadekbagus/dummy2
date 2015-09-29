@@ -31,7 +31,7 @@ class EventAPIController extends ControllerAPI
      * @param file       `images`                (optional) - Event image
      * @param string     `link_object_type`      (optional) - Link object type. Valid value: retailer, retailer_category, promotion, news.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
-     * @param integer    `id_language_default`   (optional) - ID language default  
+     * @param integer    `id_language_default`   (optional) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -99,12 +99,12 @@ class EventAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                 ),
                 array(
-                    'merchant_id'         => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'         => 'required|orbit.empty.merchant',
                     'event_name'          => 'required|max:255|orbit.exists.event_name',
                     'event_type'          => 'required|orbit.empty.event_type',
                     'status'              => 'required|orbit.empty.event_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required|numeric',
+                    'id_language_default' => 'required',
                 )
             );
 
@@ -122,7 +122,7 @@ class EventAPIController extends ControllerAPI
                         'retailer_id'   => $retailer_id_check,
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.link_object_id:'.$link_object_type,
+                        'retailer_id'   => 'orbit.empty.link_object_id:'.$link_object_type,
                     )
                 );
 
@@ -376,13 +376,13 @@ class EventAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'event_id'            => 'required|numeric|orbit.empty.event',
-                    'merchant_id'         => 'numeric|orbit.empty.merchant',
+                    'event_id'            => 'required|orbit.empty.event',
+                    'merchant_id'         => 'orbit.empty.merchant',
                     'event_name'          => 'sometimes|required|min:5|max:255|event_name_exists_but_me',
                     'event_type'          => 'orbit.empty.event_type',
                     'status'              => 'orbit.empty.event_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required|numeric',
+                    'id_language_default' => 'required',
                 ),
                 array(
                    'event_name_exists_but_me' => Lang::get('validation.orbit.exists.event_name'),
@@ -700,7 +700,7 @@ class EventAPIController extends ControllerAPI
                     'password' => $password,
                 ),
                 array(
-                    'event_id' => 'required|numeric|orbit.empty.event',
+                    'event_id' => 'required|orbit.empty.event',
                     'password' => 'required|orbit.masterpassword.delete',
                 ),
                 array(
@@ -1607,7 +1607,7 @@ class EventAPIController extends ControllerAPI
 
         // Check the existence of the link object type
         Validator::extend('orbit.empty.link_object_type', function ($attribute, $value, $parameters) {
-            $valid = false; 
+            $valid = false;
             $linkobjecttypes = array('retailer', 'retailer_category', 'promotion', 'news');
             foreach ($linkobjecttypes as $linkobjecttype) {
                 if($value === $linkobjecttype) $valid = $valid || TRUE;

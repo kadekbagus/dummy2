@@ -6,13 +6,15 @@
  */
 class MerchantDataSeeder extends Seeder
 {
+    const MALL_GROUP_ID = "EWv3-LMP--------";
+    const MALL_ID = "EXs5F-LMP-------";
+
     public function run()
     {
         // Mall account but this on the database is recorded as "Merchant"
         $passwordMall = 'lippomall';
         $role = Role::where('role_name', 'Mall Owner')->first();
         $merchantUserData = [
-            'user_id'           => 2,
             'username'          => 'lippomall',
             'user_email'        => 'lippomall@myorbit.com',
             'user_password'     => Hash::make($passwordMall),
@@ -25,7 +27,6 @@ class MerchantDataSeeder extends Seeder
         // Mall location account but this on the database is recorded as "Retailer"
         $passwordRetailer = 'lippomallpuri';
         $retailerUserData = [
-            'user_id'           => 3,
             'username'          => 'lippomallpuri',
             'user_email'        => 'lippomallpuri@myorbit.com',
             'user_password'     => Hash::make($passwordRetailer),
@@ -49,8 +50,7 @@ class MerchantDataSeeder extends Seeder
 
         // Record for user_details table
         $merchantUserDetail = [
-            'user_detail_id'    => 2,
-            'user_id'           => 2
+            'user_id'           => $merchantUser->user_id
         ];
         UserDetail::unguard();
         UserDetail::create($merchantUserDetail);
@@ -65,8 +65,7 @@ class MerchantDataSeeder extends Seeder
 
         // Record for user_details table
         $retailerUserDetail = [
-            'user_detail_id'    => 3,
-            'user_id'           => 3
+            'user_id'           => $retailerUser->user_id
         ];
         UserDetail::unguard();
         UserDetail::create($retailerUserDetail);
@@ -77,9 +76,9 @@ class MerchantDataSeeder extends Seeder
 
         // Data for merchant
         $merchantData = [
-            'merchant_id'   => 1,
+            'merchant_id'   => static::MALL_GROUP_ID,
             'omid'          => 'LIPPO-MALL',
-            'user_id'       => 2,
+            'user_id'       => $merchantUser->user_id,
             'email'         => 'lippomall@myorbit.com',
             'name'          => 'Lippo Mall',
             'description'   => 'Lippo Mall',
@@ -107,14 +106,14 @@ class MerchantDataSeeder extends Seeder
 
         // Data for retailer
         $retailerData = [
-            'merchant_id'   => 2,
+            'merchant_id'   => static::MALL_ID,
             'omid'          => 'LIPPO-MALL-PURI-01',
-            'user_id'       => 3,
+            'user_id'       => $merchantUser->user_id,
             'email'         => 'lippomallpuri@myorbit.com',
             'name'          => 'Lippo Mall Puri',
             'description'   => 'Lippo Mall Puri',
             'status'        => 'active',
-            'parent_id'     => 1,
+            'parent_id'     => static::MALL_GROUP_ID,
             'start_date_activity'   => date('Y-m-d 00:00:00'),
             'postal_code'           => '60123',
             'city_id'               => 0,

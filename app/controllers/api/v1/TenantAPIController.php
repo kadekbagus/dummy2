@@ -7,7 +7,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 
@@ -69,7 +69,7 @@ class TenantAPIController extends ControllerAPI
             /* for next version
             $password = OrbitInput::post('password');
             */
-            
+
             $validator = Validator::make(
                 array(
                     'retailer_id' => $retailer_id,
@@ -78,7 +78,7 @@ class TenantAPIController extends ControllerAPI
                     */
                 ),
                 array(
-                    'retailer_id' => 'required|numeric|orbit.empty.tenant',//|orbit.exists.deleted_tenant_is_box_current_retailer',
+                    'retailer_id' => 'required|orbit.empty.tenant',//|orbit.exists.deleted_tenant_is_box_current_retailer',
                     /* for next version
                     'password'    => 'required|orbit.masterpassword.delete',
                     */
@@ -274,7 +274,7 @@ class TenantAPIController extends ControllerAPI
      * @param string     `unit`                    (optional) - The unit number
      * @param string     `category_ids`            (optional) - List of category ids
      * @param string     `external_object_id`      (required) - External object ID
-     * @param integer    `id_language_default`     (required) - ID language default  
+     * @param integer    `id_language_default`     (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -388,7 +388,7 @@ class TenantAPIController extends ControllerAPI
                     'external_object_id'   => $external_object_id,
                     'status'               => $status,
                     'parent_id'            => $parent_id,
-                    'country'              => $country,
+                    /* 'country'              => $country, */
                     'url'                  => $url,
                     'id_language_default' => $id_language_default,
                 ),
@@ -396,10 +396,10 @@ class TenantAPIController extends ControllerAPI
                     'name'                 => 'required',
                     'external_object_id'   => 'required',
                     'status'               => 'orbit.empty.tenant_status',
-                    'parent_id'            => 'numeric|orbit.empty.mall',
-                    'country'              => 'numeric',
+                    'parent_id'            => 'orbit.empty.mall',
+                    /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
-                    'id_language_default' => 'required|numeric',
+                    'id_language_default' => 'required',
                 )
             );
 
@@ -418,7 +418,7 @@ class TenantAPIController extends ControllerAPI
                         'category_id'   => $category_id_check,
                     ),
                     array(
-                        'category_id'   => 'numeric|orbit.empty.category:' . $parent_id,
+                        'category_id'   => 'orbit.empty.category:' . $parent_id,
                     )
                 );
 
@@ -803,13 +803,13 @@ class TenantAPIController extends ControllerAPI
                     'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'retailer_id'           => 'required|numeric|orbit.empty.tenant',
-                    'user_id'               => 'numeric|orbit.empty.user',
+                    'retailer_id'           => 'required|orbit.empty.tenant',
+                    'user_id'               => 'orbit.empty.user',
                     'email'                 => 'email|email_exists_but_me',
                     'status'                => 'orbit.empty.tenant_status',//|orbit.exists.inactive_tenant_is_box_current_retailer:'.$retailer_id,
-                    'parent_id'             => 'numeric|orbit.empty.mall',
+                    'parent_id'             => 'orbit.empty.mall',
                     'url'                   => 'orbit.formaterror.url.web',
-                    'id_language_default'   => 'required|numeric',
+                    'id_language_default'   => 'required',
                 ),
                 array(
                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
@@ -1035,7 +1035,7 @@ class TenantAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'numeric|orbit.empty.category:' . $updatedtenant->parent_id,
+                            'category_id'   => 'orbit.empty.category:' . $updatedtenant->parent_id,
                         )
                     );
 

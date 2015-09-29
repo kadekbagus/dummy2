@@ -613,11 +613,12 @@ class Activity extends Eloquent
      */
     public function scopeMerchantIds($builder, array $merchantIds)
     {
+        // need to rename this so it does not conflict if used with scopeJoinRetailer
         return $builder->select('activities.*')
-                       ->join('merchants', 'merchants.merchant_id', '=', 'activities.location_id')
-                       ->whereIn('merchants.parent_id', $merchantIds)
-                       ->where('merchants.status', 'active')
-                       ->where('merchants.object_type', 'retailer');
+                       ->join('merchants as ' . DB::getTablePrefix() .  'retailers', 'retailers.merchant_id', '=', 'activities.location_id')
+                       ->whereIn('retailers.parent_id', $merchantIds)
+                       ->where('retailers.status', 'active')
+                       ->where('retailers.object_type', 'retailer');
     }
 
     /**
