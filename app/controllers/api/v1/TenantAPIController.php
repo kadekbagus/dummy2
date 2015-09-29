@@ -379,7 +379,6 @@ class TenantAPIController extends ControllerAPI
             $external_object_id = OrbitInput::post('external_object_id');
             $category_ids = OrbitInput::post('category_ids');
             $category_ids = (array) $category_ids;
-
             // Begin database transaction
             $this->beginTransaction();
 
@@ -413,7 +412,7 @@ class TenantAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
+// dd('here');
             // validate category_ids
             foreach ($category_ids as $category_id_check) {
                 $validator = Validator::make(
@@ -2141,7 +2140,7 @@ class TenantAPIController extends ControllerAPI
                 $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
 
-                $event->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
+                $tenant->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
                 /** @var MerchantTranslation $existing_translation */
@@ -2153,7 +2152,7 @@ class TenantAPIController extends ControllerAPI
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
 
-                $event->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
+                $tenant->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
             }
             elseif ($op === 'delete') {
                 /** @var MerchantTranslation $existing_translation */
