@@ -6,7 +6,15 @@ class TakashimayaDatabaseSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+     public function run()
+    {
+        try {
+            $this->doRun();
+        } catch (Exception $e) {
+            $this->command->info($e);
+        };
+    }
+    public function doRun()
     {
         Eloquent::unguard();
 

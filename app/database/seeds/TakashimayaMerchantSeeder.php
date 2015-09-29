@@ -7,6 +7,8 @@
  */
 
 class TakashimayaMerchantSeeder extends Seeder {
+    const MALL_GROUP_ID = "EWv3-TKS--------";
+    const MALL_ID = "EXs5F-TKS-------";
     public function run()
     {
         // Mall account but this on the database is recorded as "Merchant"
@@ -50,8 +52,7 @@ class TakashimayaMerchantSeeder extends Seeder {
 
         // Record for user_details table
         $merchantUserDetail = [
-            'user_detail_id'    => 2,
-            'user_id'           => 2
+            'user_id'           => $merchantUser->user_id
         ];
         UserDetail::unguard();
         UserDetail::create($merchantUserDetail);
@@ -66,8 +67,7 @@ class TakashimayaMerchantSeeder extends Seeder {
 
         // Record for user_details table
         $retailerUserDetail = [
-            'user_detail_id'    => 3,
-            'user_id'           => 3
+            'user_id'           => $retailerUser->user_id
         ];
         UserDetail::unguard();
         UserDetail::create($retailerUserDetail);
@@ -78,9 +78,9 @@ class TakashimayaMerchantSeeder extends Seeder {
 
         // Data for merchant
         $merchantData = [
-            'merchant_id'   => 1,
+            'merchant_id'   => static::MALL_GROUP_ID,
             'omid'          => 'TAKASHIMAYA',
-            'user_id'       => 2,
+            'user_id'       => $merchantUser->user_id,
             'email'         => 'takashimaya@myorbit.com',
             'name'          => 'Takashimaya',
             'description'   => 'Takashimaya Shopping Center',
@@ -108,14 +108,14 @@ class TakashimayaMerchantSeeder extends Seeder {
 
         // Data for retailer
         $retailerData = [
-            'merchant_id'   => 2,
+            'merchant_id'   => static::MALL_ID,
             'omid'          => 'TAKASHIMAYA-SC',
-            'user_id'       => 3,
+            'user_id'       => $retailerUser->user_id,
             'email'         => 'takashimayasc@myorbit.com',
             'name'          => 'Takashimaya Shopping Center',
             'description'   => 'Takashimaya Shopping Center',
             'status'        => 'active',
-            'parent_id'     => 1,
+            'parent_id'     => static::MALL_GROUP_ID,
             'start_date_activity'   => date('Y-m-d 00:00:00'),
             'postal_code'           => '60123',
             'city_id'               => 0,
