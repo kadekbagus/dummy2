@@ -45,13 +45,22 @@ class TenantAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.tenant.postdeletetenant.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('delete_tenant')) {
                 Event::fire('orbit.tenant.postdeletetenant.authz.notallowed', array($this, $user));
                 $deleteTenantLang = Lang::get('validation.orbit.actionlist.delete_tenant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteTenantLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.tenant.postdeletetenant.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -521,7 +530,6 @@ class TenantAPIController extends ControllerAPI
             // @author Irianto Pratama <irianto@dominopos.com>
             $default_translation = [
                 $id_language_default => [
-                    'tenant_name' => $newtenant->tenant_name,
                     'description' => $newtenant->description
                 ]
             ];
@@ -930,14 +938,13 @@ class TenantAPIController extends ControllerAPI
             // @author Irianto Pratama <irianto@dominopos.com>
             $default_translation = [
                 $id_language_default => [
-                    'event_name' => $updatedevent->event_name,
-                    'description' => $updatedevent->description
+                    'description' => $updatedtenant->description
                 ]
             ];
-            $this->validateAndSaveTranslations($updatedevent, json_encode($default_translation), 'update');
+            $this->validateAndSaveTranslations($updatedtenant, json_encode($default_translation), 'update');
 
-            OrbitInput::post('translations', function($translation_json_string) use ($updatedevent) {
-                $this->validateAndSaveTranslations($updatedevent, $translation_json_string, 'update');
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedtenant) {
+                $this->validateAndSaveTranslations($updatedtenant, $translation_json_string, 'update');
             });
 
             $updatedtenant->modified_by = $this->api->user->user_id;
@@ -1546,6 +1553,19 @@ class TenantAPIController extends ControllerAPI
                         $countRelation = $relation . 'Number';
                         $tenants->with($countRelation);
                     }
+                    // relation with translation
+                    if ($relation === 'translations') {
+                        $tenants->with('translations');
+                    }
+                }
+            });
+
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($tenants) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+
                 }
             });
 
@@ -2058,13 +2078,13 @@ class TenantAPIController extends ControllerAPI
          * Having a value of null means deleting the translation
          *
          * where MerchantTranslation object is object with keys:
-         *   name, description, ticket_header, ticket_footer.
+         *   description, ticket_header, ticket_footer.
          *
          * No requirement for including fields. If field not included it means not updated. If field included with
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['name', 'description', 'ticket_header', 'ticket_footer'];
+        $valid_fields = ['description'];
         $user = $this->api->user;
         $operations = [];
 
@@ -2120,6 +2140,8 @@ class TenantAPIController extends ControllerAPI
                 $new_translation->created_by = $this->api->user->user_id;
                 $new_translation->modified_by = $this->api->user->user_id;
                 $new_translation->save();
+
+                $event->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
             }
             elseif ($op === 'update') {
                 /** @var MerchantTranslation $existing_translation */
@@ -2130,6 +2152,8 @@ class TenantAPIController extends ControllerAPI
                 }
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
+
+                $event->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
             }
             elseif ($op === 'delete') {
                 /** @var MerchantTranslation $existing_translation */
