@@ -102,6 +102,11 @@ class TenantAPIController extends ControllerAPI
 
             Event::fire('orbit.tenant.postdeletetenant.before.save', array($this, $deletetenant));
 
+            foreach ($deletetenant->translations as $translation) {
+                $translation->modified_by = $this->api->user->user_id;
+                $translation->delete();
+            }
+
             $deletetenant->save();
 
             Event::fire('orbit.tenant.postdeletetenant.after.save', array($this, $deletetenant));
@@ -672,6 +677,7 @@ class TenantAPIController extends ControllerAPI
      * @param string     `external_object_id`       (optional) - External object ID
      * @param string     `no_category`              (optional) - Flag to delete all category links. Valid value: Y.
      * @param array      `category_ids`             (optional) - List of category ids
+     * @param integer    `id_language_default`      (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -696,13 +702,22 @@ class TenantAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.tenant.postupdatetenant.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('update_tenant')) {
                 Event::fire('orbit.tenant.postupdatetenant.authz.notallowed', array($this, $user));
                 $updateTenantLang = Lang::get('validation.orbit.actionlist.update_tenant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateTenantLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.tenant.postupdatetenant.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -713,26 +728,29 @@ class TenantAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             // Begin database transaction
             $this->beginTransaction();
 
             $validator = Validator::make(
                 array(
-                    'retailer_id'       => $retailer_id,
-                    'user_id'           => $user_id,
-                    'email'             => $email,
-                    'status'            => $status,
-                    'parent_id'         => $parent_id,
-                    'url'               => $url,
+                    'retailer_id'           => $retailer_id,
+                    'user_id'               => $user_id,
+                    'email'                 => $email,
+                    'status'                => $status,
+                    'parent_id'             => $parent_id,
+                    'url'                   => $url,
+                    'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'retailer_id'       => 'required|numeric|orbit.empty.tenant',
-                    'user_id'           => 'numeric|orbit.empty.user',
-                    'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status',//|orbit.exists.inactive_tenant_is_box_current_retailer:'.$retailer_id,
-                    'parent_id'         => 'numeric|orbit.empty.mall',
-                    'url'               => 'orbit.formaterror.url.web',
+                    'retailer_id'           => 'required|numeric|orbit.empty.tenant',
+                    'user_id'               => 'numeric|orbit.empty.user',
+                    'email'                 => 'email|email_exists_but_me',
+                    'status'                => 'orbit.empty.tenant_status',//|orbit.exists.inactive_tenant_is_box_current_retailer:'.$retailer_id,
+                    'parent_id'             => 'numeric|orbit.empty.mall',
+                    'url'                   => 'orbit.formaterror.url.web',
+                    'id_language_default'   => 'required|numeric',
                 ),
                 array(
                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
@@ -907,6 +925,19 @@ class TenantAPIController extends ControllerAPI
 
             OrbitInput::post('external_object_id', function($external_object_id) use ($updatedtenant) {
                 $updatedtenant->external_object_id = $external_object_id;
+            });
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'event_name' => $updatedevent->event_name,
+                    'description' => $updatedevent->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($updatedevent, json_encode($default_translation), 'update');
+
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedevent) {
+                $this->validateAndSaveTranslations($updatedevent, $translation_json_string, 'update');
             });
 
             $updatedtenant->modified_by = $this->api->user->user_id;
