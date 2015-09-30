@@ -422,7 +422,7 @@ class LanguageAPIController extends ControllerAPI
                         'status'      => $value->status,
                     ),
                     array(
-                        'language_id' => 'required|numeric|orbit.empty.language',
+                        'language_id' => 'required|orbit.empty.language',
                         'status'      => 'required|orbit.empty.supported_language_status',
                     )
                 );

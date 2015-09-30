@@ -7754,7 +7754,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->setNotes($activityPageNotes)
                     ->responseOK()
                     ->save();
-            
+
 }
             $languages = $this->getListLanguages($retailer);
 
@@ -7864,7 +7864,16 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product, 'languages' => $languages));
+            $box_url = "";
+            if (! empty($product->box_url)) {
+                $box_url = $product->box_url;
+
+                $my_url = url('/customer?email=' . $user->user_email);
+
+                $box_url = $box_url . '?email=' . urlencode($user->user_email) . '&logout_to=' . urlencode($my_url);
+            }
+
+            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product, 'languages' => $languages, 'box_url' => $box_url));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
@@ -8356,7 +8365,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if (!empty($alternate_language) && !empty($coupons)) {
                 foreach ($coupons as $key => $val) {
-                    
+
                     $coupon_translation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
@@ -8561,7 +8570,7 @@ class MobileCIAPIController extends ControllerAPI
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
             if ($maxRecord <= 0) {
                 $maxRecord = 250;
-            }          
+            }
 
             $news = \News::with('translations')->active()
                             ->where('mall_id', $retailer->merchant_id)
@@ -8573,7 +8582,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if (!empty($alternate_language) && !empty($news)) {
                 foreach ($news as $key => $val) {
-                    
+
                     $news_translation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
@@ -8966,7 +8975,7 @@ class MobileCIAPIController extends ControllerAPI
                 // method does not return language, try next one
                 continue;
             }
-            
+
             $selected_language = null;
             if (array_key_exists($name, $language)) {
                 $selected_language = $language[$name];
