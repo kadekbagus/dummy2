@@ -109,7 +109,7 @@ class WidgetAPIController extends ControllerAPI
             }
             Event::fire('orbit.widget.postnewwidget.after.validation', array($this, $validator));
 
-            $mall = Retailer::find($merchantId);
+            $mall = Mall::find($merchantId);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -348,7 +348,7 @@ class WidgetAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
             
-            $mall = Retailer::find($merchantId);
+            $mall = Mall::find($merchantId);
 
             $widget = App::make('orbit.empty.widget');
 
@@ -1170,7 +1170,7 @@ class WidgetAPIController extends ControllerAPI
         // Check the existance of merchant id
         $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
-            $merchant = Retailer::excludeDeleted()
+            $merchant = Mall::excludeDeleted()
                         ->allowedForUser($user)
                         ->isMall()
                         ->where('merchant_id', $value)
@@ -1189,7 +1189,7 @@ class WidgetAPIController extends ControllerAPI
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) use ($user) {
             $expectedNumber = count($value);
             $merchant = App::make('orbit.empty.merchant');
-            $retailerNumber = Retailer::excludeDeleted()
+            $retailerNumber = Mall::excludeDeleted()
                         ->allowedForUser($user)
                         ->whereIn('merchant_id', $value)
                         ->where('parent_id', $merchant->merchant_id)

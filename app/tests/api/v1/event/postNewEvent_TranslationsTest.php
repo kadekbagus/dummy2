@@ -153,7 +153,7 @@ class postNewEvent_TranslationsTest extends TestCase
     // ... for a nonexistent language
     public function testAddTranslationForNonexistentLanguage()
     {
-        $count_before = Retailer::excludeDeleted()->count();
+        $count_before = Mall::excludeDeleted()->count();
         $event = $this->createEventData();
         $english_translations = [
             'event_name' => 'English Name',
@@ -165,7 +165,7 @@ class postNewEvent_TranslationsTest extends TestCase
         $response = $this->makeRequest($event, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $count_after = Retailer::excludeDeleted()->count();
+        $count_after = Mall::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 

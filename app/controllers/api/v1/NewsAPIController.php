@@ -104,7 +104,7 @@ class NewsAPIController extends ControllerAPI
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required',
+                    'id_language_default' => 'required|orbit.empty.language_default',
                 )
             );
 
@@ -393,7 +393,7 @@ class NewsAPIController extends ControllerAPI
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required|numeric',
+                    'id_language_default' => 'required|orbit.empty.language_default',
                 ),
                 array(
                    'news_name_exists_but_me' => Lang::get('validation.orbit.exists.news_name'),
@@ -1471,6 +1471,21 @@ class NewsAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $news = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+        
+            if (empty($news)) {
+                return FALSE;
+            }
+        
+            App::instance('orbit.empty.language_default', $news);
+        
+            return TRUE;
+        });
+
         // Check the existance of news id
         Validator::extend('orbit.empty.news', function ($attribute, $value, $parameters) {
             $news = News::excludeDeleted()
@@ -1486,24 +1501,9 @@ class NewsAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // Check the existance of news id
-        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
-            $news = MerchantLanguage::excludeDeleted()
-                        ->where('merchant_language_id', $value)
-                        ->first();
-
-            if (empty($news)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.language_default', $news);
-
-            return TRUE;
-        });
-
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Retailer::excludeDeleted()
+            $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1583,7 +1583,7 @@ class NewsAPIController extends ControllerAPI
 
         // Check the existance of retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()
+            $retailer = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1595,6 +1595,7 @@ class NewsAPIController extends ControllerAPI
 
             return TRUE;
         });
+
 /*
         // News deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {

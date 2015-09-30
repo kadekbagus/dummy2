@@ -63,7 +63,7 @@ class LuckyDrawNumberNotifier
         $retailerId = $data['retailer_id'];
 
         $user = User::excludeDeleted()->find($userId);
-        $retailer = Retailer::excludeDeleted()->find($retailerId);
+        $retailer = Mall::excludeDeleted()->find($retailerId);
         $luckyDraw = LuckyDraw::excludeDeleted()->find($luckyDrawId);
         $receipts = LuckyDrawReceipt::excludeDeleted()
                                     ->where('user_id', $user->user_id)

@@ -146,7 +146,7 @@ Route::filter('orbit-settings', function()
             App::setLocale($browserLang);
         } else {
             // Set Merchant Setting Lang
-            $merchantLang = Retailer::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->parent->mobile_default_language;
+            $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->parent->mobile_default_language;
             if (! empty($merchantLang)) {
                 App::setLocale($merchantLang);
             } else {
@@ -165,7 +165,7 @@ Route::filter('orbit-settings', function()
 */
 Route::filter('check-routes-luckydraw', function()
 {
-    $retailer = Retailer::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
+    $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 
     foreach ($retailer->settings as $setting) {
         if ($setting->setting_name == 'enable_lucky_draw') {

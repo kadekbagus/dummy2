@@ -104,7 +104,7 @@ class EventAPIController extends ControllerAPI
                     'event_type'          => 'required|orbit.empty.event_type',
                     'status'              => 'required|orbit.empty.event_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required',
+                    'id_language_default' => 'required|orbit.empty.language_default',
                 )
             );
 
@@ -382,7 +382,7 @@ class EventAPIController extends ControllerAPI
                     'event_type'          => 'orbit.empty.event_type',
                     'status'              => 'orbit.empty.event_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'id_language_default' => 'required',
+                    'id_language_default' => 'required|orbit.empty.language_default',
                 ),
                 array(
                    'event_name_exists_but_me' => Lang::get('validation.orbit.exists.event_name'),
@@ -1520,6 +1520,21 @@ class EventAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $news = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+        
+            if (empty($news)) {
+                return FALSE;
+            }
+        
+            App::instance('orbit.empty.language_default', $news);
+        
+            return TRUE;
+        });
+
         // Check the existance of event id
         Validator::extend('orbit.empty.event', function ($attribute, $value, $parameters) {
             $event = EventModel::excludeDeleted()
@@ -1537,7 +1552,7 @@ class EventAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Retailer::excludeDeleted()
+            $merchant = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->where('is_mall', 'yes')
                         ->first();
@@ -1621,7 +1636,7 @@ class EventAPIController extends ControllerAPI
             $link_object_type = trim($parameters[0]);
 
             if ($link_object_type === 'retailer') {
-                $linkObject = Retailer::excludeDeleted()
+                $linkObject = Mall::excludeDeleted()
                             ->where('merchant_id', $value)
                             ->where('is_mall', 'no')
                             ->first();

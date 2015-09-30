@@ -925,7 +925,7 @@ class ObjectAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Retailer::excludeDeleted()
+            $merchant = Mall::excludeDeleted()
                                 ->where('merchant_id', $value)
                                 ->first();
 

@@ -2428,7 +2428,7 @@ class EmployeeAPIController extends ControllerAPI
 
             $number = count($retailerIds);
             $user = $this->api->user;
-            $realNumber = Retailer::allowedForUser($user)
+            $realNumber = Mall::allowedForUser($user)
                                   ->excludeDeleted()
                                   ->whereIn('merchant_id', $retailerIds)
                                   ->count();

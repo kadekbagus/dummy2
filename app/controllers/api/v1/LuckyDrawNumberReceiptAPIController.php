@@ -353,7 +353,7 @@ class LuckyDrawNumberReceiptAPIController extends ControllerAPI
 
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Retailer::excludeDeleted()
+            $mall = Mall::excludeDeleted()
                             ->isMall()
                             ->where('merchant_id', $value)
                             ->first();

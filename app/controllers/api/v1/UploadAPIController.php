@@ -1307,9 +1307,9 @@ class UploadAPIController extends ControllerAPI
                     'image_translation'             => $image_translation,
                 ),
                 array(
-                    'promotion_translation_id'      => 'required|numeric|orbit.empty.promotion_translation',
-                    'promotion_id'                  => 'required|numeric|orbit.empty.promotion',
-                    'merchant_language_id'          => 'required|numeric|orbit.empty.merchant_language',
+                    'promotion_translation_id'      => 'required|orbit.empty.promotion_translation',
+                    'promotion_id'                  => 'required|orbit.empty.promotion',
+                    'merchant_language_id'          => 'required|orbit.empty.merchant_language',
                     'image_translation'             => 'required|nomore.than.one',
                 ),
                 $messages
@@ -2920,9 +2920,9 @@ class UploadAPIController extends ControllerAPI
                     'image_translation'         => $image_translation,
                 ),
                 array(
-                    'event_translation_id'      => 'required|numeric|orbit.empty.event_translation',
-                    'event_id'                  => 'required|numeric|orbit.empty.event',
-                    'merchant_language_id'      => 'required|numeric|orbit.empty.merchant_language',
+                    'event_translation_id'      => 'required|orbit.empty.event_translation',
+                    'event_id'                  => 'required|orbit.empty.event',
+                    'merchant_language_id'      => 'required|orbit.empty.merchant_language',
                     'image_translation'         => 'required|nomore.than.one',
                 ),
                 $messages
@@ -3143,9 +3143,9 @@ class UploadAPIController extends ControllerAPI
                     'image_translation'          => $image_translation,
                 ),
                 array(
-                    'coupon_translation_id'      => 'required|numeric|orbit.empty.coupon_translation',
-                    'promotion_id'               => 'required|numeric|orbit.empty.coupon',
-                    'merchant_language_id'       => 'required|numeric|orbit.empty.merchant_language',
+                    'coupon_translation_id'      => 'required|orbit.empty.coupon_translation',
+                    'promotion_id'               => 'required|orbit.empty.coupon',
+                    'merchant_language_id'       => 'required|orbit.empty.merchant_language',
                     'image_translation'          => 'required|nomore.than.one',
                 ),
                 $messages
@@ -5368,9 +5368,9 @@ class UploadAPIController extends ControllerAPI
                     'image_translation'    => $image_translation,
                 ),
                 array(
-                    'news_translation_id'  => 'required|numeric|orbit.empty.news_translation',
-                    'news_id'              => 'required|numeric|orbit.empty.news',
-                    'merchant_language_id' => 'required|numeric|orbit.empty.merchant_language',
+                    'news_translation_id'  => 'required|orbit.empty.news_translation',
+                    'news_id'              => 'required|orbit.empty.news',
+                    'merchant_language_id' => 'required|orbit.empty.merchant_language',
                     'image_translation'    => 'required|nomore.than.one',
                 ),
                 $messages
@@ -5947,7 +5947,7 @@ class UploadAPIController extends ControllerAPI
 
             // @Todo: Refactor by adding allowedForUser for tenant
             Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) use ($user) {
-                $merchant = Retailer::excludeDeleted()
+                $merchant = Mall::excludeDeleted()
                             ->isMall('no')
                             ->where('merchant_id', $value)
                             ->first();
@@ -5963,7 +5963,7 @@ class UploadAPIController extends ControllerAPI
 
             // @Todo: Refactor by adding allowedForUser for mall
             Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
-                $merchant = Retailer::excludeDeleted()
+                $merchant = Mall::excludeDeleted()
                             ->isMall('yes')
                             ->where('merchant_id', $value)
                             ->first();

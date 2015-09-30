@@ -56,7 +56,7 @@ class UserLoginNotifier
         $retailerId = $data['retailer_id'];
 
         $user = User::excludeDeleted()->find($userId);
-        $retailer = Retailer::excludeDeleted()->find($retailerId);
+        $retailer = Mall::excludeDeleted()->find($retailerId);
 
         // Get list of URL which can be notified
         $notifyData = Config::get('orbit-notifier.user-login.' . $retailerId);

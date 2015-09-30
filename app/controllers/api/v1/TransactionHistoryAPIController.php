@@ -315,7 +315,7 @@ class TransactionHistoryAPIController extends ControllerAPI
             }
 
             // Builder object
-            $retailers = Retailer::transactionCustomerMerchantIds(array($user_id), array($merchant_id))
+            $retailers = Mall::transactionCustomerMerchantIds(array($user_id), array($merchant_id))
                                  ->excludeDeleted('merchants');
 
             // Clone the query builder which still does not include the take,

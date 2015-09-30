@@ -159,7 +159,7 @@ class CouponAPIController extends ControllerAPI
                     'coupon_validity_in_date' => 'required|date_format:Y-m-d H:i:s',
                     'rule_value'              => 'required|numeric|min:0',
                     'discount_value'          => 'required|numeric|min:0',
-                    'id_language_default'     => 'required',
+                    'id_language_default'     => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -604,7 +604,7 @@ class CouponAPIController extends ControllerAPI
                     'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'numeric|min:0',
                     'discount_value'          => 'numeric|min:0',
-                    'id_language_default'     => 'required',
+                    'id_language_default'     => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
@@ -2223,6 +2223,21 @@ class CouponAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $news = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+        
+            if (empty($news)) {
+                return FALSE;
+            }
+        
+            App::instance('orbit.empty.language_default', $news);
+        
+            return TRUE;
+        });
+
         // Mall deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
             // Current Mall location
@@ -2300,7 +2315,7 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Retailer::excludeDeleted()
+            $merchant = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -2566,7 +2581,7 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()
+            $retailer = Mall::excludeDeleted()
                                 ->where('merchant_id', $value)
                                 ->first();
 

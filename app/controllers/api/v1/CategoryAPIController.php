@@ -94,7 +94,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_name'         => 'required|orbit.exists.category_name:'.$merchant_id,
                     'category_level'        => 'numeric',
                     'status'                => 'required|orbit.empty.category_status',
-                    'id_language_default'   => 'required',
+                    'id_language_default'   => 'required|orbit.empty.language_default',
                 )
             );
 
@@ -326,7 +326,7 @@ class CategoryAPIController extends ControllerAPI
                     'category_name'     => 'category_name_exists_but_me:'.$category_id.','.$merchant_id,
                     'category_level'    => 'numeric',
                     'status'            => 'orbit.empty.category_status',
-                    'id_language_default' => 'required',
+                    'id_language_default' => 'required|orbit.empty.language_default',
                 ),
                 array(
                    'category_name_exists_but_me' => Lang::get('validation.orbit.exists.category_name'),
@@ -984,6 +984,21 @@ class CategoryAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $news = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+        
+            if (empty($news)) {
+                return FALSE;
+            }
+        
+            App::instance('orbit.empty.language_default', $news);
+        
+            return TRUE;
+        });
+
         // Check the existance of category id
         Validator::extend('orbit.empty.category', function ($attribute, $value, $parameters) {
             $category = Category::excludeDeleted()
@@ -1001,7 +1016,7 @@ class CategoryAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Retailer::excludeDeleted()
+            $merchant = Mall::excludeDeleted()
                         ->isMall()
                         ->where('merchant_id', $value)
                         ->first();

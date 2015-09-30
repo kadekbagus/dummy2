@@ -111,13 +111,13 @@ class postDeleteTenant_TranslationsTest extends TestCase
         $this->assertNull(
             MerchantTranslation::find($translation->merchant_translation_id)->modified_by
         );
-        $count_retailer_before = Retailer::excludeDeleted()->count();
+        $count_retailer_before = Mall::excludeDeleted()->count();
         $count_translation_before = MerchantTranslation::excludeDeleted()->count();
 
         $response = $this->makeRequest($tenant);
         $this->assertJsonResponseOk($response);
 
-        $count_retailer_after = Retailer::excludeDeleted()->count();
+        $count_retailer_after = Mall::excludeDeleted()->count();
         $count_translation_after = MerchantTranslation::excludeDeleted()->count();
         $this->assertSame($count_retailer_before - 1, $count_retailer_after);
         $this->assertSame($count_translation_before - 1, $count_translation_after);

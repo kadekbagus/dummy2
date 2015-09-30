@@ -935,7 +935,7 @@ class PosQuickProductAPIController extends ControllerAPI
 
         // Check the existance of retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()
+            $retailer = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 

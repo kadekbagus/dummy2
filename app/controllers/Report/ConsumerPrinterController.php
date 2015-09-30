@@ -340,7 +340,7 @@ class ConsumerPrinterController extends DataPrinterController
     {
         try {
             $retailer_id = Config::get('orbit.shop.id');
-            $retailer = \Retailer::with('parent')->where('merchant_id', $retailer_id)->first();
+            $retailer = \Mall::with('parent')->where('merchant_id', $retailer_id)->first();
 
             return $retailer;
         } catch (ACLForbiddenException $e) {

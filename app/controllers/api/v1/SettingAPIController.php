@@ -337,7 +337,7 @@ class SettingAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $mall = Retailer::find($setting->setting_value);
+            $mall = Mall::find($setting->setting_value);
 
             $backgroundSetting = NULL;
             $masterPasswordSetting = NULL;
@@ -1031,7 +1031,7 @@ class SettingAPIController extends ControllerAPI
         // @Todo: Refactor by adding allowedForUser for mall
         $user = $this->api->user;
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
-            $merchant = Retailer::excludeDeleted()
+            $merchant = Mall::excludeDeleted()
                         ->isMall('yes')
                         ->where('merchant_id', $value)
                         ->first();

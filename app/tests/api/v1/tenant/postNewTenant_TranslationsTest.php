@@ -152,7 +152,7 @@ class postNewTenant_TranslationsTest extends TestCase
     // ... for a nonexistent language
     public function testAddTranslationForNonexistentLanguage()
     {
-        $count_before = Retailer::excludeDeleted()->count();
+        $count_before = Mall::excludeDeleted()->count();
         $tenant = $this->createTenantData();
         $english_translations = [
             'name' => 'English Name',
@@ -166,14 +166,14 @@ class postNewTenant_TranslationsTest extends TestCase
         $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $count_after = Retailer::excludeDeleted()->count();
+        $count_after = Mall::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 
     // ... for a deleted language
     public function testAddTranslationForDeletedLanguage()
     {
-        $count_before = Retailer::excludeDeleted()->count();
+        $count_before = Mall::excludeDeleted()->count();
         $tenant = $this->createTenantData();
         $english_translations = [
             'name' => 'English Name',
@@ -187,14 +187,14 @@ class postNewTenant_TranslationsTest extends TestCase
         $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $count_after = Retailer::excludeDeleted()->count();
+        $count_after = Mall::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 
     // ... for a language belonging to another merchant
     public function testAddTranslationForOtherMerchantLanguage()
     {
-        $count_before = Retailer::excludeDeleted()->count();
+        $count_before = Mall::excludeDeleted()->count();
         $tenant = $this->createTenantData();
         $english_translations = [
             'name' => 'English Name',
@@ -208,14 +208,14 @@ class postNewTenant_TranslationsTest extends TestCase
         $response = $this->makeRequest($tenant, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $count_after = Retailer::excludeDeleted()->count();
+        $count_after = Mall::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 
     // should not be able to delete, ever.
     public function testDeletingTranslation()
     {
-        $count_before = Retailer::excludeDeleted()->count();
+        $count_before = Mall::excludeDeleted()->count();
         $tenant = $this->createTenantData();
 
         $merchant_languages_to_try = [
@@ -233,7 +233,7 @@ class postNewTenant_TranslationsTest extends TestCase
             $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
         }
 
-        $count_after = Retailer::excludeDeleted()->count();
+        $count_after = Mall::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 

@@ -241,7 +241,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
     public function getCurrentRetailer()
     {
         $current = Config::get('orbit.shop.id');
-        $retailer = Retailer::find($current);
+        $retailer = Mall::find($current);
 
         return $retailer;
     }

@@ -1412,7 +1412,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                                ->where('lucky_draw_id', $luckyDraw->lucky_draw_id)
                                                ->count();
 
-        $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+        $retailer = Mall::isMall()->where('merchant_id', $retailerId)->first();
         $data = [
             'fullName'              => $name,
             'subject'               => 'Lucky Draw',
@@ -1467,7 +1467,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
         $inbox->save();
 
         $retailerId = Config::get('orbit.shop.id');
-        $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+        $retailer = Mall::isMall()->where('merchant_id', $retailerId)->first();
         $data = [
             'fullName'          => $name,
             'subject'           => 'Coupon',

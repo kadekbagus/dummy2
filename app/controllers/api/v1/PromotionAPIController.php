@@ -1853,7 +1853,7 @@ class PromotionAPIController extends ControllerAPI
 
         // Check the existance of retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()->allowedForUser($this->api->user)
+            $retailer = Mall::excludeDeleted()->allowedForUser($this->api->user)
                         ->where('merchant_id', $value)
                         ->first();
 

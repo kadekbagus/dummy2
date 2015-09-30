@@ -1702,7 +1702,7 @@ class ProductAPIController extends ControllerAPI
         // Check the existance of retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
             $merchant = App::make('orbit.empty.merchant');
-            $retailer = Retailer::excludeDeleted()->allowedForUser($this->api->user)
+            $retailer = Mall::excludeDeleted()->allowedForUser($this->api->user)
                         ->where('merchant_id', $value)
                         ->where('parent_id', $merchant->merchant_id)
                         ->first();

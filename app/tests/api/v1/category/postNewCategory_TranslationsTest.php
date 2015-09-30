@@ -152,7 +152,7 @@ class postNewCategory_TranslationsTest extends TestCase
     // ... for a nonexistent language
     public function testAddTranslationForNonexistentLanguage()
     {
-        $count_before = Retailer::excludeDeleted()->count();
+        $count_before = Mall::excludeDeleted()->count();
         $category = $this->createCategoryData();
         $english_translations = [
             'category_name' => 'English Name',
@@ -164,7 +164,7 @@ class postNewCategory_TranslationsTest extends TestCase
         $response = $this->makeRequest($category, $translations);
         $this->assertJsonResponseMatchesRegExp(Status::INVALID_ARGUMENT, 'error', '/language.*not found/i', $response);
 
-        $count_after = Retailer::excludeDeleted()->count();
+        $count_after = Mall::excludeDeleted()->count();
         $this->assertSame($count_before, $count_after);
     }
 

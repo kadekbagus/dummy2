@@ -597,7 +597,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
 
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Retailer::excludeDeleted()
+            $mall = Mall::excludeDeleted()
                             ->isMall()
                             ->where('merchant_id', $value)
                             ->first();
@@ -733,7 +733,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 }
 
                 // Check retailer ID
-                $retailer = Retailer::excludeDeleted()->find($receipt->receipt_retailer_id);
+                $retailer = Mall::excludeDeleted()->find($receipt->receipt_retailer_id);
                 if (empty($retailer)) {
                     $errorMessage = sprintf('Retailer ID %s on receipt is not found.', $receipt->receipt_payment_type);
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -789,7 +789,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                                                ->where('lucky_draw_id', $luckyDraw->lucky_draw_id)
                                                ->count();
 
-        $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+        $retailer = Mall::isMall()->where('merchant_id', $retailerId)->first();
         $data = [
             'fullName'              => $name,
             'subject'               => 'Lucky Draw',

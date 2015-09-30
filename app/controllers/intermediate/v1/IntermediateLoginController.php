@@ -470,7 +470,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
             try {
                 $retailer_id = Config::get('orbit.shop.id');
-                $retailer = Retailer::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
+                $retailer = Mall::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
 
                 $bg = Setting::getFromList($retailer->settings, 'background_image');
             } catch (Exception $e) {
