@@ -232,9 +232,10 @@ class LoginAPIController extends ControllerAPI
 
             // The retailer (shop) which this registration taken
             $retailerId = Config::get('orbit.shop.id');
-            $retailer = Retailer::excludeDeleted()
+            $retailer = Mall::excludeDeleted()
                                 ->where('merchant_id', $retailerId)
                                 ->first();
+
             if (empty($retailer)) {
                 $errorMessage = Lang::get('validation.orbit.empty.retailer');
                 throw new Exception($errorMessage);
