@@ -66,7 +66,7 @@ private function getColumnNames()
     ['merchant_translations', 'merchant_translation_id', 'NO'],
     ['merchant_translations', 'merchant_id', 'NO'],
     ['merchant_translations', 'merchant_language_id', 'NO'],
-    ['merchants', 'location_id', 'NO'],
+    // ['merchants', 'location_id', 'NO'],
     ['news_translations', 'news_translation_id', 'NO'],
     ['news_translations', 'news_id', 'NO'],
     ['news_translations', 'merchant_id', 'NO'],
@@ -74,7 +74,7 @@ private function getColumnNames()
     ['promotion_translations', 'promotion_translation_id', 'NO'],
     ['promotion_translations', 'promotion_id', 'NO'],
     ['promotion_translations', 'merchant_language_id', 'NO'],
-    ['promotions', 'location_id', 'YES'],
+    // ['promotions', 'location_id', 'YES'],
     ];
 }
 
