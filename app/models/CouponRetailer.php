@@ -17,8 +17,8 @@ class CouponRetailer extends Eloquent
         return $this->belongsTo('Coupon', 'promotion_id', 'promotion_id');
     }
 
-    public function retailer()
+    public function tenant()
     {
-        return $this->belongsTo('Retailer', 'retailer_id', 'merchant_id');
+        return $this->belongsTo('Tenant', 'retailer_id', 'merchant_id');
     }
 }

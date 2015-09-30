@@ -49,9 +49,19 @@ class Mall extends Eloquent
         return $this->hasMany('MerchantTax', 'merchant_id', 'merchant_id')->excludeDeleted();
     }
 
+    public function parent()
+    {
+        return $this->belongsTo('MallGroup', 'parent_id', 'merchant_id');
+    }
+
     public function children()
     {
         return $this->tenants();
+    }
+
+    public function settings()
+    {
+        return $this->hasMany('Setting', 'object_id', 'merchant_id')->where('object_type', 'merchant');
     }
 
     /**

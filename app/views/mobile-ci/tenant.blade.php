@@ -18,13 +18,13 @@
             <div class="zoom"><a href="#" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
-            @foreach($product->mediaLogoOrig as $media)
+            @foreach($tenant->mediaLogoOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
                 <span class="gallery-helper"></span>
                 <a href="{{ asset($media->path) }}" data-featherlight="image"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
             </li>
             @endforeach
-            @foreach($product->mediaImageOrig as $media)
+            @foreach($tenant->mediaImageOrig as $media)
             <li data-thumb="{{ asset($media->path) }}"> 
                 <a href="{{ asset($media->path) }}" data-featherlight="image"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
             </li>
@@ -34,10 +34,10 @@
     <div class="col-xs-12 main-theme product-detail">
         <div class="row">
             <div class="col-xs-12">
-                <h3>{{ $product->name }}</h3>
+                <h3>{{ $tenant->name }}</h3>
             </div>
             <div class="col-xs-12">
-                <p>{{ $product->description }}</p>
+                <p>{{ $tenant->description }}</p>
             </div>
         </div>
     </div>
@@ -48,16 +48,16 @@
                 <h4>WHERE</h4>
             </div>
             <div class="col-xs-12">
-                <p>{{ $product->name }} at</p>
-                <p>{{ $retailer->name }} - {{ $product->floor }} - {{ $product->unit }}</p>
-                <p>Phone : {{ $product->phone }}</p>
-                <p>{{ $product->url }}</p>
+                <p>{{ $tenant->name }} at</p>
+                <p>{{ $retailer->name }} - {{ $tenant->floor }} - {{ $tenant->unit }}</p>
+                <p>Phone : {{ $tenant->phone }}</p>
+                <p>{{ $tenant->url }}</p>
 
                 @if ($box_url)
                 <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
                 @endif
 
-                @foreach($product->mediaMapOrig as $map)
+                @foreach($tenant->mediaMapOrig as $map)
                 <p>
                     <img class="img-responsive maps" src="{{ asset($map->path) }}">
                 </p>
@@ -73,8 +73,8 @@
         <!-- Tab panes -->
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="news">
-                @if(sizeof($product->news) > 0)
-                    @foreach($product->news as $news)
+                @if(sizeof($tenant->news) > 0)
+                    @foreach($tenant->news as $news)
                         <div class="main-theme-mall catalogue" id="news-{{$news->promotion_id}}">
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">
@@ -109,8 +109,8 @@
                 @endif
             </div>
             <div role="tabpanel" class="tab-pane" id="promotions">
-                @if(sizeof($product->newsPromotions) > 0)
-                    @foreach($product->newsPromotions as $promotions)
+                @if(sizeof($tenant->newsPromotions) > 0)
+                    @foreach($tenant->newsPromotions as $promotions)
                         <div class="main-theme-mall catalogue" id="promotions-{{$promotions->promotion_id}}">
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">
