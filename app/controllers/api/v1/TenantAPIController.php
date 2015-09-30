@@ -339,6 +339,7 @@ class TenantAPIController extends ControllerAPI
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
             $id_language_default = OrbitInput::post('id_language_default');
+            $box_url = OrbitInput::post('box_url');
 
             // default value for status is inactive
             $status = OrbitInput::post('status');
@@ -410,7 +411,7 @@ class TenantAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-// dd('here');
+
             // validate category_ids
             foreach ($category_ids as $category_id_check) {
                 $validator = Validator::make(
@@ -506,6 +507,7 @@ class TenantAPIController extends ControllerAPI
             $newtenant->floor = $floor;
             $newtenant->unit = $unit;
             $newtenant->external_object_id = $external_object_id;
+            $newtenant->box_url = $box_url;
 
             Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newtenant));
 
@@ -556,6 +558,7 @@ class TenantAPIController extends ControllerAPI
             $newretailer->floor = $floor;
             $newretailer->unit = $unit;
             $newretailer->external_object_id = $external_object_id;
+            $newretailer->box_url = $box_url;
 
             Event::fire('orbit.tenant.postnewtenant.before.save', array($this, $newretailer));
 
@@ -984,6 +987,10 @@ class TenantAPIController extends ControllerAPI
 
             OrbitInput::post('external_object_id', function($external_object_id) use ($updatedtenant) {
                 $updatedtenant->external_object_id = $external_object_id;
+            });
+
+            OrbitInput::post('box_url', function($box_url) use ($updatedtenant) {
+                $updatedtenant->box_url = $box_url;
             });
 
             // @author Irianto Pratama <irianto@dominopos.com>
@@ -1568,6 +1575,18 @@ class TenantAPIController extends ControllerAPI
             // Filter by updated_at date
             OrbitInput::get('updated_at_before', function($end) use ($tenants) {
                 $tenants->where('merchants.updated_at', '<=', $end);
+            });
+
+             // Filter tenant by box_url
+            OrbitInput::get('box_url', function($box_url) use ($tenants)
+            {
+                $tenants->whereIn('merchants.box_url', $box_url);
+            });
+
+             // Filter tenant by box_url
+            OrbitInput::get('box_url', function($box_url) use ($tenants)
+            {
+                $tenants->where('merchants.box_url', 'like', "%$box_url%");
             });
 
             $tenants->where(function ($query) use ($tenants) {
