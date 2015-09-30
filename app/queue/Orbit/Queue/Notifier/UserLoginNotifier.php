@@ -6,6 +6,7 @@
  */
 use Log;
 use User;
+use Mall;
 use Config;
 use Retailer;
 use CurlWrapper;
