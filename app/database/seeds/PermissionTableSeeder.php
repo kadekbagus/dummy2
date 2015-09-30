@@ -64,6 +64,21 @@ class PermissionTableSeeder extends Seeder
                 'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
+            'MallGroup'  => [
+                'name'  => 'mall_group',
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
+            'Mall'  => [
+                'name'  => 'mall',
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
+            'Tenant'  => [
+                'name'  => 'tenant',
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
             'Product'  => [
                 'name'  => 'product',
                 'order' => ++$permSourceNumber,
