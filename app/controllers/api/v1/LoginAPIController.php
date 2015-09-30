@@ -609,7 +609,7 @@ class LoginAPIController extends ControllerAPI
 
             if (in_array($from, ['mall', 'cs-portal'])) {
                 $mallId = Config::get('orbit.shop.id');
-                $mall = Retailer::excludeDeleted()->find($mallId);
+                $mall = Mall::excludeDeleted()->find($mallId);
             }
             $user->mall = $mall;
 
