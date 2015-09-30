@@ -14,7 +14,7 @@
                             @if(!empty($product->image))
                             <a href="{{ asset($product->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->image) }}"></a>
                             @else
-                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"></a>
                             @endif
                         </div>
                         <div class="col-xs-6">
