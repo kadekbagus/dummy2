@@ -27,6 +27,7 @@ return array(
     'AlterTableLuckyDrawReceiptsAddColumnReceiptGroup' => $baseDir . '/app/database/migrations/2015_07_14_094939_alter_table_lucky_draw_receipts_add_column_receipt_group.php',
     'AlterTableLuckyDrawsAddColumnExternalLuckyDrawId' => $baseDir . '/app/database/migrations/2015_06_15_081218_alter_table_lucky_draws_add_column_external_lucky_draw_id.php',
     'AlterTableMacAddressesAddIpAddress' => $baseDir . '/app/database/migrations/2015_04_20_035133_alter_table_mac_addresses_add_ip_address.php',
+    'AlterTableMerchantsAddColumnBoxUrl' => $baseDir . '/app/database/migrations/2015_09_28_033143_alter_table_merchants_add_column_box_url.php',
     'AlterTableMerchantsAddColumnExternalObjectId' => $baseDir . '/app/database/migrations/2015_07_06_032226_alter_table_merchants_add_column_external_object_id.php',
     'AlterTableMerchantsAddFloorAndUnit' => $baseDir . '/app/database/migrations/2015_04_11_083827_alter_table_merchants_add_floor_and_unit.php',
     'AlterTableMerchantsAddIsMall' => $baseDir . '/app/database/migrations/2015_04_11_072135_alter_table_merchants_add_is_mall.php',
