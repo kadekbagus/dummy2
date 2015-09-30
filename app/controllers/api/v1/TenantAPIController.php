@@ -372,6 +372,7 @@ class TenantAPIController extends ControllerAPI
             $parent_id = OrbitInput::post('parent_id');//Config::get('orbit.shop.id');
 
             $url = OrbitInput::post('url');
+            $box_url = OrbitInput::post('box_url');
             $masterbox_number = OrbitInput::post('masterbox_number');
             $slavebox_number = OrbitInput::post('slavebox_number');
             $floor = OrbitInput::post('floor');
@@ -391,9 +392,11 @@ class TenantAPIController extends ControllerAPI
                     /* 'country'              => $country, */
                     'url'                  => $url,
                     'id_language_default' => $id_language_default,
+                    'box_url'              => $box_url
                 ),
                 array(
                     'name'                 => 'required',
+                    'box_url'              => 'orbit.formaterror.url.web',
                     'external_object_id'   => 'required',
                     'status'               => 'orbit.empty.tenant_status',
                     'parent_id'            => 'orbit.empty.mall',
@@ -550,6 +553,7 @@ class TenantAPIController extends ControllerAPI
             $newretailer->sector_of_activity = $sector_of_activity;
             $newretailer->parent_id = $parent_id;
             $newretailer->url = $url;
+            $newretailer->box_url = $box_url;
             $newretailer->masterbox_number = $masterbox_number;
             $newretailer->slavebox_number = $slavebox_number;
             $newretailer->modified_by = $this->api->user->user_id;
@@ -787,6 +791,7 @@ class TenantAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
+            $box_url = OrbitInput::post('box_url');
             $id_language_default = OrbitInput::post('id_language_default');
 
             // Begin database transaction
@@ -794,12 +799,13 @@ class TenantAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'retailer_id'           => $retailer_id,
-                    'user_id'               => $user_id,
-                    'email'                 => $email,
-                    'status'                => $status,
-                    'parent_id'             => $parent_id,
-                    'url'                   => $url,
+                    'retailer_id'       => $retailer_id,
+                    'user_id'           => $user_id,
+                    'email'             => $email,
+                    'status'            => $status,
+                    'parent_id'         => $parent_id,
+                    'url'               => $url,
+                    'box_url'           => $box_url,
                     'id_language_default'   => $id_language_default,
                 ),
                 array(
@@ -810,6 +816,7 @@ class TenantAPIController extends ControllerAPI
                     'parent_id'             => 'orbit.empty.mall',
                     'url'                   => 'orbit.formaterror.url.web',
                     'id_language_default'   => 'required',
+                    'box_url'           => 'orbit.formaterror.url.web',
                 ),
                 array(
                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
@@ -966,8 +973,12 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->url = $url;
             });
 
-            OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedtenant) {
-                $updatedtenant->masterbox_number = $masterbox_number;
+            OrbitInput::post('box_url', function($box_url) use ($updatedretailer) {
+                $updatedretailer->box_url = $box_url;
+            });
+
+            OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedretailer) {
+                $updatedretailer->masterbox_number = $masterbox_number;
             });
 
             OrbitInput::post('slavebox_number', function($slavebox_number) use ($updatedtenant) {
@@ -1208,6 +1219,7 @@ class TenantAPIController extends ControllerAPI
      * @param string            `contact_person_phone2`         (optional) - Contact person phone2
      * @param string            `contact_person_email`          (optional) - Contact person email
      * @param string            `url`                           (optional) - Url
+     * @param string            `box_url`                       (optional) - Box url
      * @param string            `masterbox_number`              (optional) - Masterbox number
      * @param string            `slavebox_number`               (optional) - Slavebox number
      * @param integer           `parent_id`                     (optional) - Merchant id for the retailer
@@ -1495,9 +1507,19 @@ class TenantAPIController extends ControllerAPI
                 $tenants->whereIn('merchants.sector_of_activity', $sector_of_activity);
             });
 
-            // Filter tenant by url
+            // Filter retailer by url
             OrbitInput::get('url', function ($url) use ($tenants) {
                 $tenants->whereIn('merchants.url', $url);
+            });
+
+            // Filter retailer by box_url
+            OrbitInput::get('box_url', function ($box_url) use ($tenants) {
+                $tenants->whereIn('merchants.box_url', $box_url);
+            });
+
+            // Filter retailer by box_url like
+            OrbitInput::get('box_url_like', function ($data) use ($tenants) {
+                $tenants->where('merchants.box_url', 'like', "%$data%");
             });
 
             // Filter tenant by parent_id
