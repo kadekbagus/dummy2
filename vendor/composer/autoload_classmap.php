@@ -753,6 +753,7 @@ return array(
     'OrbitShop\\API\\v1\\ResponseProvider' => $vendorDir . '/dominopos/orbit-shop-api/OrbitShop/API/v1/ResponseProvider.php',
     'OrbitTestCase' => $baseDir . '/app/tests/OrbitTestCase.php',
     'OrbitVersionAPIController' => $baseDir . '/app/controllers/OrbitVersionAPIController.php',
+    'Orbit\\CloudMAC' => $baseDir . '/app/helpers/Orbit/CloudMAC.php',
     'Orbit\\Database\\ModelWithObjectID' => $vendorDir . '/dominopos/orbit-database/Orbit/Database/ModelWithObjectID.php',
     'Orbit\\Database\\ObjectID' => $vendorDir . '/dominopos/orbit-database/Orbit/Database/ObjectID.php',
     'Orbit\\Database\\ObjectID\\Generator' => $vendorDir . '/dominopos/orbit-database/Orbit/Database/ObjectID/Generator.php',
