@@ -541,29 +541,7 @@ class MobileCIAPIController extends ControllerAPI
             $mall = Mall::with('settings')->where('merchant_id', $retailer->merchant_id)
                 ->first();
 
-            $landing = Setting::getFromList($mall->settings, 'landing_page');
-
-            // Get the landing page URL based on settings
-            $landing_url = '';
-
-            switch ($landing[0]) {
-                case 'tenant':
-                    $landing_url = URL::route('ci-tenants');
-                    break;
-
-                case 'promotion':
-                    $landing_url = URL::route('ci-mall-promotions');
-                    break;
-
-                case 'news':
-                    $landing_url = URL::route('ci-mall-news');
-                    break;
-
-                case 'widget':
-                default:
-                    $landing_url = URL::route('ci-customer-home');
-                    break;
-            }
+            $landing_url = $this->getLandingUrl($mall);
 
             try {
                 $bg = Setting::getFromList($mall->settings, 'background_image');
@@ -1097,6 +1075,39 @@ class MobileCIAPIController extends ControllerAPI
             $this->session = new Session($config);
             $this->session->start();
         }
+    }
+
+    /**
+     * @param $mall
+     * @return string
+     * @throws Exception
+     */
+    public function getLandingUrl($mall)
+    {
+        $landing = Setting::getFromList($mall->settings, 'landing_page');
+
+        // Get the landing page URL based on settings
+        $landing_url = '';
+
+        switch ($landing[0]) {
+            case 'tenant':
+                $landing_url = URL::route('ci-tenants');
+                break;
+
+            case 'promotion':
+                $landing_url = URL::route('ci-mall-promotions');
+                break;
+
+            case 'news':
+                $landing_url = URL::route('ci-mall-news');
+                break;
+
+            case 'widget':
+            default:
+                $landing_url = URL::route('ci-customer-home');
+                break;
+        }
+        return $landing_url;
     }
 
     /**
