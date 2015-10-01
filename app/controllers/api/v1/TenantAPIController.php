@@ -352,7 +352,7 @@ class TenantAPIController extends ControllerAPI
             $currency_symbol = OrbitInput::post('currency_symbol');
             $tax_code1 = OrbitInput::post('tax_code1');
             $tax_code2 = OrbitInput::post('tax_code2');
-            $tax_code3 = OrbitInput::post('tax_code3');
+            $tax_code3 = OrbitInput::post('tax_code3');@
             $slogan = OrbitInput::post('slogan');
 
             // default value for vat_included is 'yes'
@@ -740,6 +740,8 @@ class TenantAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $parent_id = OrbitInput::post('parent_id');
             $url = OrbitInput::post('url');
+            $masterbox_number = OrbitInput::post('masterbox_number');
+            $category_ids = OrbitInput::post('category_ids');
             $box_url = OrbitInput::post('box_url');
             $id_language_default = OrbitInput::post('id_language_default');
 
@@ -754,21 +756,26 @@ class TenantAPIController extends ControllerAPI
                     'status'            => $status,
                     'parent_id'         => $parent_id,
                     'url'               => $url,
+                    'masterbox_number'  => $masterbox_number,
+                    'category_ids'      => $category_ids,
                     'box_url'           => $box_url,
                     'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'retailer_id'           => 'required|orbit.empty.tenant',
-                    'user_id'               => 'orbit.empty.user',
-                    'email'                 => 'email|email_exists_but_me',
-                    'status'                => 'orbit.empty.tenant_status',//|orbit.exists.inactive_tenant_is_box_current_retailer:'.$retailer_id,
-                    'parent_id'             => 'orbit.empty.mall',
-                    'url'                   => 'orbit.formaterror.url.web',
-                    'id_language_default'   => 'required|orbit.empty.language_default',
-                    'box_url'           => 'orbit.formaterror.url.web',
+                    'retailer_id'       => 'required|orbit.empty.tenant',
+                    'user_id'           => 'orbit.empty.user',
+                    'email'             => 'email|email_exists_but_me',
+                    'status'            => 'orbit.empty.tenant_status',
+                    'parent_id'         => 'orbit.empty.mall',
+                    'url'               => 'orbit.formaterror.url.web',
+                    'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id,
+                    'category_ids'      => 'required|array'
                 ),
                 array(
-                   'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
+                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
+                    'category_ids.required' => 'The category is required.',
+                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
+                //ACL::throwAccessForbidden($message);
                )
             );
 
@@ -1762,13 +1769,13 @@ class TenantAPIController extends ControllerAPI
             $news = MerchantLanguage::excludeDeleted()
                         ->where('merchant_language_id', $value)
                         ->first();
-        
+
             if (empty($news)) {
                 return FALSE;
             }
-        
+
             App::instance('orbit.empty.language_default', $news);
-        
+
             return TRUE;
         });
 
@@ -2005,6 +2012,29 @@ class TenantAPIController extends ControllerAPI
                 $message = Lang::get('validation.orbit.access.wrongmasterpassword');
 
                 ACL::throwAccessForbidden($message);
+            }
+
+            return TRUE;
+        });
+
+        // Check if the merchant verification number is unique
+        Validator::extend('orbit_unique_verification_number', function ($attribute, $value, $parameters) {
+            // Current Mall location
+            $currentMall = Config::get('orbit.shop.id');
+
+            // Check the tenants which has verification number posted
+            $tenant = Retailer::excludeDeleted()
+                               ->where('parent_id', $currentMall)
+                               /**
+                                * @Todo
+                                * Use proper field instead of `masterbox_number`
+                                */
+                               ->where('masterbox_number', $value)
+                               ->where('merchant_id', '!=', $parameters[0])
+                               ->first();
+
+            if (! empty($tenant)) {
+                return FALSE;
             }
 
             return TRUE;

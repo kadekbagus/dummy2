@@ -56,20 +56,26 @@
             <div class="col-xs-12">
                 <h4>{{ Lang::get('mobileci.coupon.tenant_redeem') }}</h4>
                 <ul class="tenant-list">
+                    @if($cso_exists)
+                    <li>Customer Service</li>
+                    @endif
                     @foreach($tenants as $tenant)
-                    <li>{{ $tenant->retailer->name }}</li>
+                        <li>{{ $tenant->retailer->name }}</li>
                     @endforeach
                 </ul>
             </div>
         </div>
     </div>
+
     <div class="col-xs-12 main-theme-mall product-detail where">
+        @if(! empty((float) $product->couponRule->discount_value))
         <div class="row">
             <div class="col-xs-12 text-center">
                 <h4>{{ Lang::get('mobileci.coupon.coupon_value') }}</h4>
                 <p>IDR <span class="formatted-numx">{{ $coupon->couponRule->discount_value }}</span></p>
             </div>
         </div>
+        @endif
         <div class="row">
             <div class="col-xs-12 text-center">
                 <button class="btn btn-info btn-block" id="useBtn">{{ Lang::get('mobileci.modals.coupon_use') }}</button>
@@ -109,13 +115,18 @@
                 <h4 class="modal-title" id="hasCouponLabel">{{ Lang::get('mobileci.coupon.use_coupon') }}</h4>
             </div>
             <div class="modal-body">
-                <div class="row ">
+                <div class="row select-tenant">
                     <div class="col-xs-12 vertically-spaced text-center">
                         <h4>{{ Lang::get('mobileci.coupon.enter_tenant_verification_number') }}</h4>
                         <small>{{ Lang::get('mobileci.coupon.ask_our_tenant_employee') }}</small>
                         <div class="form-data">
                             <input type="text" class="form-control text-center" id="tenantverify" style="font-size:20px;">
                         </div>
+                    </div>
+                </div>
+                <div class="row select-tenant-error" style="display:none;">
+                    <div class="col-xs-12 vertically-spaced text-center">
+                        <h4></h4>
                     </div>
                 </div>
             </div>
@@ -141,7 +152,7 @@
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced text-center">
-                        <h4 style="color:#d9534f">{{ Lang::get('mobileci.coupon.wrong_verification_number') }}</h4>
+                        <h4 style="color:#d9534f" id="errMsg">{{ Lang::get('mobileci.coupon.wrong_verification_number') }}</h4>
                         <small>"{{ Lang::get('mobileci.coupon.please_check_tenant') }}"</small>
                     </div>
                 </div>
@@ -253,15 +264,14 @@
                         });
                     }else{
                         $('#wrongCouponModal').modal();
-                    }
-                }).fail(function() {
-                    $('#wrongCouponModal').modal();
-                }).always(function(data){
-                    $('#hasCouponModal .modal-content').css('display', 'block');
-                    $('#hasCouponModal .modal-spinner').css('display', 'none');
-                    $('#tenantverify').val('');
-                    $('#hasCouponModal').modal('hide');
-                });
+                        $('#errMsg').text(data.responseJSON.message);
+                    }).always(function(data){
+                        $('#hasCouponModal .modal-content').css('display', 'block');
+                        $('#hasCouponModal .modal-spinner').css('display', 'none');
+                        $('#tenantverify').val('');
+                        $('#hasCouponModal').modal('hide');
+                    });
+                }
             });
         });
     </script>

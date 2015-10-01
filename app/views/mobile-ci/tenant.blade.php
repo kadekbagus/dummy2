@@ -25,7 +25,7 @@
             </li>
             @endforeach
             @foreach($tenant->mediaImageOrig as $media)
-            <li data-thumb="{{ asset($media->path) }}"> 
+            <li data-thumb="{{ asset($media->path) }}">
                 <a href="{{ asset($media->path) }}" data-featherlight="image"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
             </li>
             @endforeach
@@ -67,50 +67,14 @@
         <div role="tabpanel" class="">
         <!-- Nav tabs -->
         <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active"><a href="#news" aria-controls="news" role="tab" data-toggle="tab">{{ Lang::get('mobileci.tenant.news') }}</a></li>
-            <li role="presentation"><a href="#promotions" aria-controls="promotions" role="tab" data-toggle="tab">{{ Lang::get('mobileci.tenant.promotions') }}</a></li>
+            <li role="presentation" class="active"><a href="#promotions" aria-controls="promotions" role="tab" data-toggle="tab">{{ Lang::get('mobileci.tenant.promotions') }}</a></li>
+            <li role="presentation"><a href="#news" aria-controls="news" role="tab" data-toggle="tab">{{ Lang::get('mobileci.tenant.news') }}</a></li>
         </ul>
         <!-- Tab panes -->
         <div class="tab-content">
-            <div role="tabpanel" class="tab-pane active" id="news">
-                @if(sizeof($tenant->news) > 0)
-                    @foreach($tenant->news as $news)
-                        <div class="main-theme-mall catalogue" id="news-{{$news->promotion_id}}">
-                            <div class="row catalogue-top">
-                                <div class="col-xs-3 catalogue-img">
-                                    @if(!empty($news->image))
-                                    <a href="{{ asset($news->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($news->image) }}"></a>
-                                    @else
-                                    <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                    @endif
-                                </div>
-                                <div class="col-xs-6">
-                                    <h4>{{ $news->news_name }}</h4>
-                                    @if (strlen($news->description) > 120)
-                                    <p>{{{ substr($news->description, 0, 120) }}} [<a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}">...</a>] </p>
-                                    @else
-                                    <p>{{{ $news->description }}}</p>
-                                    @endif
-                                </div>
-                                <div class="col-xs-3" style="margin-top:20px">
-                                    <div class="circlet btn-blue detail-btn pull-right">
-                                        <a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                @else
-                    <div class="row padded">
-                        <div class="col-xs-12">
-                            <p>{{ Lang::get('mobileci.tenant.check_our_latest_news') }}</p>
-                        </div>
-                    </div>
-                @endif
-            </div>
-            <div role="tabpanel" class="tab-pane" id="promotions">
-                @if(sizeof($tenant->newsPromotions) > 0)
-                    @foreach($tenant->newsPromotions as $promotions)
+            <div role="tabpanel" class="tab-pane active" id="promotions">
+                @if(sizeof($product->newsPromotions) > 0)
+                    @foreach($product->newsPromotions as $promotions)
                         <div class="main-theme-mall catalogue" id="promotions-{{$promotions->promotion_id}}">
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">
@@ -144,11 +108,47 @@
                     </div>
                 @endif
             </div>
+            <div role="tabpanel" class="tab-pane" id="news">
+                @if(sizeof($product->news) > 0)
+                    @foreach($product->news as $news)
+                        <div class="main-theme-mall catalogue" id="news-{{$news->promotion_id}}">
+                            <div class="row catalogue-top">
+                                <div class="col-xs-3 catalogue-img">
+                                    @if(!empty($news->image))
+                                    <a href="{{ asset($news->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($news->image) }}"></a>
+                                    @else
+                                    <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    @endif
+                                </div>
+                                <div class="col-xs-6">
+                                    <h4>{{ $news->news_name }}</h4>
+                                    @if (strlen($news->description) > 120)
+                                    <p>{{{ substr($news->description, 0, 120) }}} [<a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}">...</a>] </p>
+                                    @else
+                                    <p>{{{ $news->description }}}</p>
+                                    @endif
+                                </div>
+                                <div class="col-xs-3" style="margin-top:20px">
+                                    <div class="circlet btn-blue detail-btn pull-right">
+                                        <a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="row padded">
+                        <div class="col-xs-12">
+                            <p>{{ Lang::get('mobileci.tenant.check_our_latest_news') }}</p>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
     </div>
-    
-    
+
+
 </div>
 <!-- end of product -->
 @stop

@@ -310,6 +310,9 @@ class DatabaseSimulationPrinterController extends DataPrinterController
         // skip, and order by
         $_activities = clone $activities;
 
+        // Prevent query leak, we select only field which should guarantee to be indexed
+        $_activities->select('activities.activity_id');
+
         // Default sort by
         $sortBy = 'activities.activity_id';
         // Default sort mode
@@ -376,7 +379,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Events', 'Promotions', 'Coupons');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
-                
+
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
@@ -403,7 +406,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
      * @return string
      */
     public function printGender($databasesimulation)
-    {     
+    {
         $gender = $databasesimulation->gender;
         $gender = strtolower($gender);
         switch ($gender) {

@@ -137,6 +137,7 @@ Route::filter('orbit-settings', function()
     }
 
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
+    $retailer = Retailer::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 
     if (array_key_exists('orbit_preferred_language', $_COOKIE)) {
         App::setLocale($_COOKIE['orbit_preferred_language']);
@@ -154,6 +155,19 @@ Route::filter('orbit-settings', function()
                 App::setLocale('en');
             }
         }
+    }
+
+    // set start_button_label config
+    foreach ($retailer->settings as $setting) {
+        if ($setting->setting_name == 'start_button_label') {
+            if (! empty($setting->setting_value)) {
+                Config::set('shop.start_button_label', $setting->setting_value);
+            }
+        }
+    }
+
+    if(empty(Config::get('shop.start_button_label'))) {
+        Config::set('shop.start_button_label', Lang::get('mobileci.signin.start_button_mall'));
     }
 
 });

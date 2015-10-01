@@ -672,7 +672,7 @@ class Activity extends Eloquent
      */
     public function save(array $options = array())
     {
-        if (App::environment() === 'testing') {
+        if ((App::environment() === 'testing') && (Config::get('orbit.activity.force.save', FALSE) !== TRUE)) {
             // Skip saving
             return 1;
         }

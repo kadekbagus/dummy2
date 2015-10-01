@@ -68,5 +68,13 @@ Route::get('/app/v1/issued-coupon/by-redeem-retailer/search', 'IntermediateAuthC
  */
 Route::group(['before' => 'orbit-settings'], function()
 {
-	Route::post('/app/v1/issued-coupon/redeem', 'IntermediateAuthController@Coupon_postRedeemCoupon');
+    Route::post('/app/v1/issued-coupon/redeem', 'IntermediateAuthController@Coupon_postRedeemCoupon');
+});
+
+/**
+ * Report Coupon By Name
+ */
+Route::group(['before' => 'orbit-settings'], function()
+{
+    Route::get('/app/v1/coupon-report/list', 'IntermediateAuthController@CouponReport_getCouponReport');
 });

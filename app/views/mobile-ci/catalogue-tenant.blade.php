@@ -185,12 +185,40 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-xs-12">
-                        <p>
-                            {{ Lang::get('mobileci.promotion.want_unlimited_browsing') }}<br>
-                            {{ Lang::get('mobileci.promotion.or_want_to_follow_the_lucky_draw') }}<br>
-                            {{ Lang::get('mobileci.promotion.open_your_email_and_verify_now') }}<br>
+                    <div class="col-xs-12 text-center">
+                        <p style="font-size:15px;">
+                            <b>ENJOY FREE</b>
+                            <br>
+                            @if ($active_user)
+                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
+                            @else
+                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">30 MINUTES</span>
+                            @endif
+                            <br>
+                            <b>INTERNET</b>
+                            <br><br>
+                            <b>CHECK OUT OUR</b>
+                            <br>
+                            <b><span style="color:#0aa5d5;">PROMOTIONS</span> AND <span style="color:#0aa5d5;">COUPONS</span></b>
                         </p>
+                    </div>
+                </div>
+                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
+                    <div class="col-xs-12">
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="row">
+                    <div class="col-xs-12 text-center">
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12 text-left">
+                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck" style="top:2px;position:relative;">
+                            <label for="verifyModalCheck">Do not display this message again</label>
                     </div>
                 </div>
             </div>
@@ -207,6 +235,24 @@
 {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    var cookie_dismiss_name = 'dismiss_verification_popup';
+
+    @if ($active_user)
+    cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
+    @endif
+
+    /**
+     * Get Query String from the URL
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string n - Name of the parameter
+     */
+    function get(n)
+    {
+        var half = location.search.split(n + '=')[1];
+        return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
+    }
+
     function updateQueryStringParameter(uri, key, value) {
         var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
         var separator = uri.indexOf('?') !== -1 ? "&" : "?";
@@ -217,6 +263,13 @@
         }
     }
     $(document).ready(function(){
+        var displayModal = false;
+
+        // Override the content of displayModal
+        if (get('internet_info') == 'yes') {
+            displayModal = true;
+        }
+
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
             $(this).css('z-index', zIndex);
@@ -224,9 +277,14 @@
                 $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
             }, 0);
         });
-        if(!$.cookie('dismiss_verification_popup')) {
-            $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-            // $('#verifyModal').modal();
+        if(!$.cookie(cookie_dismiss_name)) {
+            if (displayModal) {
+                $('#verifyModal').on('hidden.bs.modal', function () {
+                    if ($('#verifyModalCheck')[0].checked) {
+                        $.cookie(cookie_dismiss_name, 't', {expires: 3650});
+                    }
+                }).modal();
+            }
         }
 
         var promo = '';

@@ -46,7 +46,7 @@
                 <input type="text" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-info btn-block submit-btn">{{ Lang::get('mobileci.signin.login_button') }}</button>
+                <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
             </div>
         </form>
     </div>
@@ -69,7 +69,7 @@
                     <input type="hidden" class="form-control" name="email" id="emailSigned" />
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block submit-btn2">{{ Lang::get('mobileci.signin.start_button') }}</button>
+                    <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
                 </div>
             </form>
         </div>
@@ -107,7 +107,7 @@
     /**
      * Get Query String from the URL
      *
-     * @author Rio Astamal <me@rioastamal.net> 
+     * @author Rio Astamal <me@rioastamal.net>
      * @param string n - Name of the parameter
      */
     function get(n) {
@@ -235,13 +235,13 @@
           $('#errorModalText').text('{{ Lang::get('mobileci.modals.email_error') }}');
           $('#errorModal').modal();
         }else{
-          
+
           if(isValidEmailAddress($('#email').val().trim())){
             $('.submit-btn').attr('disabled', 'disabled');
             $('.submit-btn2').attr('disabled', 'disabled');
             $('.submit-btn').text('{{ Lang::get('mobileci.signin.logging_in_button') }}');
             $('.submit-btn2').text('{{ Lang::get('mobileci.signin.logging_in_button') }}');
-            
+
             $.ajax({
               method:'POST',
               url:apiPath+'customer/login',

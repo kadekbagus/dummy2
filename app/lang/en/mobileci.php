@@ -70,18 +70,18 @@ return array(
         'reset_cart_title'       => 'Reset Cart',
         'membership_title'       => 'Membership Information',
         'language_title'         => 'Select Language',
-        
+
         'message_no_coupon'      => 'Sorry, you do not have any coupons yet.',
         'message_no_new_product' => 'Sorry, there are no new products for today.',
         'message_no_promotion'   => 'Sorry, there are no promotions for today.',
         'message_no_lucky_draw'  => "Sign up now and get a chance to win a Mazda car every three months! Exchange your transaction receipts minimum Rp. 100,000 at our VIP Lounge on L2. Get a FREE merchandise if you register now! <br><br> • While Stock Lasts <br> • Terms & Conditions Apply.",
-        
+
         'message_delete_item'    => 'Are you sure to remove this item from your cart?',
         'message_delete_coupon'  => 'Are you sure to remove this coupon from your cart? Removed coupon could be used next time.',
         'message_transfer_cart'  => 'Show this screen to the cashier to complete your checkout.',
         'message_close_cart'     => 'Your cart is not transferred to the cashier. Please show the following barcode to the cashier.',
         'message_reset_cart'     => 'Are you sure you want to reset your cart?',
-        
+
         'coupon_use'             => 'Use',
         'coupon_ignore'          => 'Later',
         'search_label'           => 'Search by Tenant Name, Categories, FLoor or Description',
@@ -95,23 +95,12 @@ return array(
         'yes_button'             => 'Yes',
         'do_not_show_label'      => 'Do not show this message again',
         'new_product_price'      => 'New price',
-        
+        'okay'                   => 'OK',
+
         'membership_notfound'    => 'Membership Not Found',
         'membership_want_member' => 'Want to be a member?',
         'membership_great_deal'  => 'To get special great deals from us',
         'membership_contact_our' => 'Please, contact our customer service to get your membership number',
-    ),
-
-    //tenant catalogue
-    'tenant' => array(
-        'floor'                 => 'Floor',
-        'category'              => 'Category',
-        'all'                   => 'All',
-        'check_our_new_promo'   => 'Check out our new promotions coming soon',
-        'check_our_latest_news' => 'Check out our latest news coming soon',
-        'news'                  => 'News',
-        'promotions'            => 'Promotions',
-        'see_tenants'           => 'See Tenants',
     ),
 
     // page specific lang
@@ -124,6 +113,7 @@ return array(
         'email_not_valid'   => 'Email address is not valid',
         'logging_in_button' => 'Logging in. Please wait...',
         'loading_orbit'     => 'Loading Orbit, please wait...',
+        'start_button_mall' => 'Enter Mall'
     ),
 
     'catalogue' => array(
@@ -178,7 +168,7 @@ return array(
         'or_want_to_follow_the_lucky_draw' => 'Or want to follow the lucky draw?',
         'open_your_email_and_verify_now'   => 'Open your email and verify now!!',
         'validity'                         => 'Validity',
-    ),    
+    ),
 
     'promotion_list' => array(
         'no_promo'       => 'There are no promotions for today.',
@@ -293,8 +283,8 @@ return array(
         'activate' => 'Activate',
         'close'    => 'Close',
         'error'    => 'Error',
-    ), 
-    
+    ),
+
     'lucky_draw'  => array(
         'hello'                     => 'Hello',
         'goodluck'                  => 'Goodluck!',
@@ -307,7 +297,7 @@ return array(
         'lucky_draw_info_5'         => 'lucky numbers draw, you can see your entire page numbers',
         'lucky_draw'                => 'Lucky Draw.',
         'close'                     => 'Close.',
-        
+
         'no_ongoing_lucky_draws'    => 'There is no ongoing lucky draws at the moment.',
         'winner_number_will_appear' => 'The Winner Number will appear here while you are in the Mall.',
         'winning_number'            => 'Winning Number',
@@ -324,7 +314,7 @@ return array(
         'of'                        => 'Of',
         'prev'                      => 'Prev',
         'next'                      => 'Next',
-        
+
         'lucky_draw_total_info_1'   => 'You have total',
         'lucky_draw_total_info_2'   => 'lucky draw numbers. You have total ',
         'lucky_draw_total_info_3'   => 'image to download,',

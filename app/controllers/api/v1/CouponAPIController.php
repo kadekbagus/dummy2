@@ -1346,7 +1346,8 @@ class CouponAPIController extends ControllerAPI
                         ELSE discount_value
                     END AS 'display_discount_value',
                     {$table_prefix}merchants.name as retailer_name
-                    ")
+                    "),
+                    DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'")
                 )
                 ->joinPromotionRules()
                 ->joinPromotionRetailer()
@@ -1354,13 +1355,13 @@ class CouponAPIController extends ControllerAPI
                 ->groupBy('promotions.promotion_id');
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
-                $now = date('Y-m-d');
+                $now = date('Y-m-d H:i:s');
                 $prefix = DB::getTablePrefix();
-                $coupons->whereRaw("(date('$now') >= date({$prefix}promotions.begin_date) and date('$now') <= date({$prefix}promotions.end_date))");
-                $coupons->whereRaw("((select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
+                $coupons->whereRaw("('$now' >= {$prefix}promotions.begin_date and '$now' <= {$prefix}promotions.end_date)");
+                $coupons->whereRaw("(((select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
                                         where {$prefix}issued_coupons.promotion_id={$prefix}promotions.promotion_id
                                         and status!='deleted') < {$prefix}promotions.maximum_issued_coupon) or
-                                    ({$prefix}promotions.maximum_issued_coupon = 0 or {$prefix}promotions.maximum_issued_coupon is null)");
+                                    ({$prefix}promotions.maximum_issued_coupon = 0 or {$prefix}promotions.maximum_issued_coupon is null))");
                 $coupons->active('promotions');
             } else {
                 $coupons->excludeDeleted('promotions');
@@ -1448,9 +1449,18 @@ class CouponAPIController extends ControllerAPI
 
             // Filter coupon rule by rule type
             OrbitInput::get('rule_type', function ($ruleTypes) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($ruleTypes) {
-                    $q->whereIn('rule_type', $ruleTypes);
-                });
+                if (is_array($ruleTypes)) {
+                    $coupons->whereHas('couponrule', function($q) use ($ruleTypes) {
+                        $q->whereIn('rule_type', $ruleTypes);
+                    });
+                } else {
+                    $coupons->whereHas('couponrule', function($q) use ($ruleTypes) {
+                        $q->where(function($q) use ($ruleTypes) {
+                            $q->where('rule_type', $ruleTypes);
+                            $q->orWhereNull('rule_type');
+                        });
+                    });
+                }
             });
 
              // Filter coupon rule by rule object type
@@ -1613,7 +1623,8 @@ class CouponAPIController extends ControllerAPI
                     'is_permanent'             => 'promotions.is_permanent',
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
-                    'tenant_name'              => 'tenant_name'
+                    'tenant_name'              => 'tenant_name',
+                    'is_auto_issuance'         => 'is_auto_issue_on_signup'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -1762,7 +1773,7 @@ class CouponAPIController extends ControllerAPI
                 ),
                 array(
                     'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
-                    'merchant_verification_number'  => 'required|numeric'
+                    'merchant_verification_number'  => 'required'
                 )
             );
 
@@ -1775,9 +1786,15 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
-            if ($user->status !== 'active') {
-                $errorMessage = 'Can not redeem coupon, your status is not active.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            $tenant = Retailer::active()
+                ->where('parent_id', $mall_id)
+                ->where('masterbox_number', $verificationNumber)
+                ->first();
+
+            if (! is_object($tenant)) {
+                // @Todo replace with language
+                $message = 'Tenant is not found.';
+                ACL::throwAccessForbidden($message);
             }
 
             // Begin database transaction
@@ -1789,6 +1806,8 @@ class CouponAPIController extends ControllerAPI
             $coupon = $issuedcoupon->coupon;
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
+            $issuedcoupon->redeem_retailer_id = $tenant->merchant_id;
+            $issuedcoupon->redeem_verification_code = $verificationNumber;
             $issuedcoupon->status = 'redeemed';
 
             Event::fire('orbit.coupon.postissuedcoupon.before.save', array($this, $issuedcoupon));
@@ -1806,7 +1825,7 @@ class CouponAPIController extends ControllerAPI
             $this->response->data = $issuedcoupon;
 
             // Successfull Creation
-            $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->promotion_name);
+            $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Redeem Coupon OK')
@@ -1815,6 +1834,9 @@ class CouponAPIController extends ControllerAPI
                     ->setLocation($mall_id)
                     ->setModuleName('Coupon')
                     ->responseOK();
+
+            $activity->coupon_id = $issuedcoupon->promotion_id;
+            $activity->coupon_name = $issuedcoupon->coupon->promotion_name;
 
             Event::fire('orbit.coupon.postissuedcoupon.after.commit', array($this, $issuedcoupon));
         } catch (ACLForbiddenException $e) {
@@ -2228,13 +2250,13 @@ class CouponAPIController extends ControllerAPI
             $news = MerchantLanguage::excludeDeleted()
                         ->where('merchant_language_id', $value)
                         ->first();
-        
+
             if (empty($news)) {
                 return FALSE;
             }
-        
+
             App::instance('orbit.empty.language_default', $news);
-        
+
             return TRUE;
         });
 
@@ -2278,14 +2300,15 @@ class CouponAPIController extends ControllerAPI
         // Check the existance of issued coupon id
         $user = $this->api->user;
         Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) use ($user) {
-            $now = date('Y-m-d');
+            $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
+
             $prefix = DB::getTablePrefix();
 
             $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw("(date({$prefix}issued_coupons.expired_date) >= ? or date({$prefix}issued_coupons.expired_date) is null)", [$now])
+                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                         ->first();
 
             if (empty($issuedCoupon)) {
@@ -2299,7 +2322,7 @@ class CouponAPIController extends ControllerAPI
                         ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw("(date({$prefix}issued_coupons.expired_date) >= ? or date({$prefix}issued_coupons.expired_date) is null)", [$now])
+                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
                         ->where('merchants.masterbox_number', $number)
                         ->first();
 

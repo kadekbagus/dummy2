@@ -47,7 +47,7 @@
                     <div class="callbacks_container">
                         <ul class="rslides">
                             <li>
-                                <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">    
+                                <a class="widget-link" data-widget="" href="{{ url('customer/tenants') }}">
                                     <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
                                 </a>
                             </li>
@@ -90,7 +90,7 @@
                     <div class="callbacks_container">
                         <ul class="rslides">
                             <li>
-                                <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">    
+                                <a class="widget-link" data-widget="" href="{{ url('customer/mallpromotions') }}">
                                     <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
                                 </a>
                             </li>
@@ -135,7 +135,7 @@
                     <div class="callbacks_container">
                         <ul class="rslides">
                             <li>
-                                <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">    
+                                <a class="widget-link" data-widget="" href="{{ url('customer/mallnews') }}">
                                     <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
                                 </a>
                             </li>
@@ -180,7 +180,7 @@
                     <div class="callbacks_container">
                         <ul class="rslides">
                             <li>
-                                <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">    
+                                <a class="widget-link" data-widget="" href="{{ url('customer/mallcoupons') }}">
                                     <img class="img-responsive vcenter" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
                                 </a>
                             </li>
@@ -445,17 +445,42 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-xs-12">
-                        <p>
-                            You are about to enjoy free WiFi at Lippo Mall Puri!
+                    <div class="col-xs-12 text-center">
+                        <p style="font-size:15px;">
+                            <b>ENJOY FREE</b>
+                            <br>
+                            @if ($active_user)
+                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
+                            @else
+                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">30 MINUTES</span>
+                            @endif
+                            <br>
+                            <b>INTERNET</b>
                             <br><br>
-                            {{ Lang::get('mobileci.greetings.find_our_exciting') }}
+                            <b>CHECK OUT OUR</b>
+                            <br>
+                            <b><span style="color:#0aa5d5;">PROMOTIONS</span> AND <span style="color:#0aa5d5;">COUPONS</span></b>
                         </p>
+                    </div>
+                </div>
+                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
+                    <div class="col-xs-12">
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <div class="pull-right"><button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button></div>
+                <div class="row">
+                    <div class="col-xs-12 text-center">
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12 text-left">
+                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck" style="top:2px;position:relative;">
+                            <label for="verifyModalCheck">Do not display this message again</label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -466,19 +491,39 @@
 {{ HTML::script('mobile-ci/scripts/responsiveslides.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
-    $(document).ready(function(){
-        // $(document).on('show.bs.modal', '.modal', function (event) {
-        //     var zIndex = 1040 + (10 * $('.modal:visible').length);
-        //     $(this).css('z-index', zIndex);
-        //     setTimeout(function() {
-        //         $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
-        //     }, 0);
-        // });
-        
+    var cookie_dismiss_name = 'dismiss_verification_popup';
+
+    @if ($active_user)
+    cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
+    @endif
+
+    /**
+     * Get Query String from the URL
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string n - Name of the parameter
+     */
+    function get(n)
+    {
+        var half = location.search.split(n + '=')[1];
+        return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
+    }
+
+    $(document).ready(function() {
+        var displayModal = false;
+
+        // Override the content of displayModal
+        if (get('internet_info') == 'yes') {
+            displayModal = true;
+        }
+
         @if(! is_null($events))
-            if(!$.cookie('dismiss_verification_popup')) {
-                $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-                $('#verifyModal').modal();
+            if(!$.cookie(cookie_dismiss_name) && displayModal) {
+                $('#verifyModal').on('hidden.bs.modal', function () {
+                    if ($('#verifyModalCheck')[0].checked) {
+                        $.cookie(cookie_dismiss_name, 't', {expires: 3650});
+                    }
+                }).modal();
             } else {
                 $('#promoModal').modal();
                 $.ajax({
@@ -498,12 +543,17 @@
                     },
                     method: 'POST'
                 });
-            })
+            });
         @else
-            if(!$.cookie('dismiss_verification_popup')) {
-                $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-                $('#verifyModal').modal();
+        if (!$.cookie(cookie_dismiss_name)) {
+            if (displayModal) {
+                $('#verifyModal').on('hidden.bs.modal', function () {
+                    if ($('#verifyModalCheck')[0].checked) {
+                        $.cookie(cookie_dismiss_name, 't', {expires: 3650});
+                    }
+                }).modal();
             }
+        }
         @endif
         $('#emptyCoupon').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
@@ -525,11 +575,11 @@
           $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
-        $('#promoModal a').click(function (event){ 
+        $('#promoModal a').click(function (event){
             var link = $(this).attr('href');
             var eventdata = $(this).data('event');
 
-            event.preventDefault(); 
+            event.preventDefault();
             $.ajax({
               data: {
                 eventdata: eventdata
@@ -573,7 +623,7 @@
           nextText: '<i class="fa fa-chevron-right"></i>',
           speed: 500
         });
-        
+
         $.each($('.rslides li'), function(i, v){
            $(this).css('height', $(this).width());
         });

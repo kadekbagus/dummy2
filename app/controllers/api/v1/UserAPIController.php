@@ -27,6 +27,7 @@ class UserAPIController extends ControllerAPI
      * @param string    `role_id`               (required) - Role ID
      * @param string    `firstname`             (optional) - User first name
      * @param string    `lastname`              (optional) - User last name
+     * @param boolean   `new_consumer_from_captive` (optional) - if 'Y' then role is always consumer, password random
      * @return Illuminate\Support\Facades\Response
      */
     public function postNewUser()
@@ -65,20 +66,33 @@ class UserAPIController extends ControllerAPI
             $password = OrbitInput::post('password');
             $password2 = OrbitInput::post('password_confirmation');
             $user_role_id = OrbitInput::post('role_id');
+            $is_new_consumer_from_captive = OrbitInput::post('new_consumer_from_captive', 'N') === 'Y';
 
-            $validator = Validator::make(
-                array(
-                    'email'     => $email,
-                    'password'  => $password,
-                    'password_confirmation' => $password2,
-                    'role_id' => $user_role_id,
-                ),
-                array(
-                    'email'     => 'required|email|orbit.email.exists',
-                    'password'  => 'required|min:5|confirmed',
-                    'role_id' => 'required|orbit.empty.role',
-                )
-            );
+            if ($is_new_consumer_from_captive) {
+                $validator = Validator::make(
+                    array(
+                        'email'     => $email,
+                    ),
+                    array(
+                        'email'     => 'required|email|orbit.email.exists',
+                    )
+                );
+            } else {
+                $validator = Validator::make(
+                    array(
+                        'email'     => $email,
+                        'password'  => $password,
+                        'password_confirmation' => $password2,
+                        'role_id' => $user_role_id,
+                    ),
+                    array(
+                        'email'     => 'required|email|orbit.email.exists',
+                        'password'  => 'required|min:5|confirmed',
+                        'role_id' => 'required|orbit.empty.role',
+                    )
+                );
+            }
+
 
             Event::fire('orbit.user.postnewuser.before.validation', array($this, $validator));
 
@@ -86,6 +100,15 @@ class UserAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // we need this for the registration activity.
+            $captive_location = null;
+            if ($is_new_consumer_from_captive) {
+                $captive_location = Retailer::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
+                if (!isset($captive_location)) {
+                    OrbitShopAPI::throwInvalidArgument('cannot find captive portal location');
+                }
             }
 
             Event::fire('orbit.user.postnewuser.after.validation', array($this, $validator));
@@ -96,9 +119,19 @@ class UserAPIController extends ControllerAPI
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_email = $email;
-            $newuser->user_password = Hash::make($password);
             $newuser->status = 'pending';
-            $newuser->user_role_id = $user_role_id;
+            if ($is_new_consumer_from_captive) {
+                $consumer_role = Role::where('role_name', '=', 'consumer')->first();
+                if ($consumer_role === null) {
+                    OrbitShopAPI::throwInvalidArgument('consumer role not found');  // should never happen?
+                }
+                $newuser->user_role_id = $consumer_role->role_id;
+                $newuser->user_password = Hash::make(mcrypt_create_iv(32));  // just some random password
+            } else {
+                $newuser->user_role_id = $user_role_id;
+                $newuser->user_password = Hash::make($password);
+            }
+
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
             $newuser->modified_by = $this->api->user->user_id;
 
@@ -139,6 +172,19 @@ class UserAPIController extends ControllerAPI
                     ->responseOK();
 
             Event::fire('orbit.user.postnewuser.after.commit', array($this, $newuser));
+
+            if ($is_new_consumer_from_captive) {
+                $registration_activity = Activity::mobileci()
+                    ->setActivityType('registration')
+                    ->setLocation($captive_location)
+                    ->setUser($newuser)
+                    ->setActivityName('registration_ok')
+                    ->setActivityNameLong('Email Sign Up')  // todo make this configurable?
+                    ->setModuleName('Application')
+                    ->responseOK();
+                $registration_activity->save();
+            }
+
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.user.postnewuser.access.forbidden', array($this, $e));
 
@@ -433,6 +479,7 @@ class UserAPIController extends ControllerAPI
      * @param string    `firstname`             (optional) - User first name
      * @param string    `lastname`              (optional) - User last name
      * @param string    `status`                (optional) - Status of the user 'active', 'pending', 'blocked', or 'deleted'
+     * @param boolean   `updated_consumer_from_captive` (optional) - if 'Y' then only updates name, gender, birth date.
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateUser()
@@ -457,8 +504,10 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.postupdateuser.before.authz', array($this, $user));
 
+            $is_updated_consumer_from_captive = OrbitInput::post('updated_consumer_from_captive', 'N') === 'Y';
+            $captive_from_mall_owner = $is_updated_consumer_from_captive && $user->isRoleName('mall owner');
             $user_id = OrbitInput::post('user_id');
-            if (! ACL::create($user)->isAllowed('update_user')) {
+            if (! (ACL::create($user)->isAllowed('update_user') || $captive_from_mall_owner)) {
                 // No need to check if it is the user itself
                 if ((string)$user->user_id !== (string)$user_id) {
                     Event::fire('orbit.user.postupdateuser.authz.notallowed', array($this, $user));
@@ -511,64 +560,87 @@ class UserAPIController extends ControllerAPI
             $postal_code = OrbitInput::post('postal_code');
             $workphone = OrbitInput::post('work_phone');
 
+            $validate_data = array(
+                'user_id'               => $user_id,
+                'username'              => $username,
+                'email'                 => $email,
+                'role_id'               => $user_role_id,
+                'status'                => $status,
+
+                'firstname'             => $user_firstname,
+                'lastname'              => $user_lastname,
+
+                'birthdate'             => $birthdate,
+                'gender'                => $gender,
+                'address_line1'         => $address1,
+                'city'                  => $city,
+                'province'              => $province,
+                'postal_code'           => $postal_code,
+                'country'               => $country,
+                'phone'                 => $phone1,
+                'phone2'                => $phone2,
+                'relationship_status'   => $relationship_status,
+                'number_of_children'    => $number_of_children,
+                'education_level'       => $education_level,
+                'preferred_language'    => $preferred_lang,
+                'avg_annual_income1'    => $avg_annual_income1,
+                'avg_annual_income2'    => $avg_annual_income2,
+                'avg_monthly_spent1'    => $avg_monthly_spent1,
+                'avg_monthly_spent2'    => $avg_monthly_spent2,
+                'personal_interests'    => $personal_interests,
+            );
+
+            $validate_rules = array(
+                'user_id'               => 'required',
+                'username'              => 'orbit.exists.username',
+                'email'                 => 'email|email_exists_but_me',
+                'role_id'               => 'orbit.empty.role',
+                'status'                => 'orbit.empty.user_status',
+
+                'firstname'             => 'required',
+                'lastname'              => '',
+
+                'birthdate'             => 'date_format:Y-m-d',
+                'gender'                => 'in:m,f',
+                // 'address_line1'         => 'required',
+                // 'city'                  => 'required',
+                // 'province'              => 'required',
+                // 'postal_code'           => 'required',
+                // 'country'               => 'required',
+                // 'phone'                 => 'required',
+                'relationship_status'   => 'in:none,single,in a relationship,engaged,married,divorced,widowed',
+                'number_of_children'    => 'numeric|min:0',
+                'education_level'       => 'in:none,junior high school,high school,diploma,bachelor,master,ph.d,doctor,other',
+                'preferred_language'    => 'in:en,id',
+                'avg_annual_income1'    => 'numeric',
+                'avg_annual_income2'    => 'numeric',
+                'avg_monthly_spent1'    => 'numeric',
+                'avg_monthly_spent2'    => 'numeric',
+                'personal_interests'    => 'array|min:0|orbit.empty.personal_interest',
+            );
+
+            if ($is_updated_consumer_from_captive) {
+                // only use & validate a subset of the fields.
+                // also must ensure nothing is passed except these to prevent people sneaking in updates unvalidated
+                $captive_fields = ['user_id', 'firstname', 'lastname', 'gender', 'birthdate', 'status'];
+                $new_validate_data = [];
+                $new_validate_rules = [];
+                $old_post = $_POST;
+                $old_post['status'] = 'active';
+                $_POST = [];
+                foreach ($captive_fields as $field) {
+                    $new_validate_data[$field] = $validate_data[$field];
+                    $new_validate_rules[$field] = $validate_rules[$field];
+                    $_POST[$field] = $old_post[$field];
+                }
+                $_POST['status'] = 'active';
+                $validate_data = $new_validate_data;
+                $validate_rules = $new_validate_rules;
+            }
+
             $validator = Validator::make(
-                array(
-                    'user_id'               => $user_id,
-                    'username'              => $username,
-                    'email'                 => $email,
-                    'role_id'               => $user_role_id,
-                    'status'                => $status,
-
-                    'firstname'             => $user_firstname,
-                    'lastname'              => $user_lastname,
-
-                    'birthdate'             => $birthdate,
-                    'gender'                => $gender,
-                    'address_line1'         => $address1,
-                    'city'                  => $city,
-                    'province'              => $province,
-                    'postal_code'           => $postal_code,
-                    'country'               => $country,
-                    'phone'                 => $phone1,
-                    'phone2'                => $phone2,
-                    'relationship_status'   => $relationship_status,
-                    'number_of_children'    => $number_of_children,
-                    'education_level'       => $education_level,
-                    'preferred_language'    => $preferred_lang,
-                    'avg_annual_income1'    => $avg_annual_income1,
-                    'avg_annual_income2'    => $avg_annual_income2,
-                    'avg_monthly_spent1'    => $avg_monthly_spent1,
-                    'avg_monthly_spent2'    => $avg_monthly_spent2,
-                    'personal_interests'    => $personal_interests,
-                ),
-                array(
-                    'user_id'               => 'required',
-                    'username'              => 'orbit.exists.username',
-                    'email'                 => 'email|email_exists_but_me',
-                    'role_id'               => 'orbit.empty.role',
-                    'status'                => 'orbit.empty.user_status',
-
-                    'firstname'             => 'required',
-                    // 'lastname'              => 'required',
-
-                    'birthdate'             => 'date_format:Y-m-d',
-                    'gender'                => 'in:m,f',
-                    // 'address_line1'         => 'required',
-                    // 'city'                  => 'required',
-                    // 'province'              => 'required',
-                    // 'postal_code'           => 'required',
-                    // 'country'               => 'required',
-                    // 'phone'                 => 'required',
-                    'relationship_status'   => 'in:none,single,in a relationship,engaged,married,divorced,widowed',
-                    'number_of_children'    => 'numeric|min:0',
-                    'education_level'       => 'in:none,junior high school,high school,diploma,bachelor,master,ph.d,doctor,other',
-                    'preferred_language'    => 'in:en,id',
-                    'avg_annual_income1'    => 'numeric',
-                    'avg_annual_income2'    => 'numeric',
-                    'avg_monthly_spent1'    => 'numeric',
-                    'avg_monthly_spent2'    => 'numeric',
-                    'personal_interests'    => 'array|min:0|orbit.empty.personal_interest',
-                ),
+                $validate_data,
+                $validate_rules,
                 array('email_exists_but_me' => Lang::get('validation.orbit.email.exists'))
             );
 
@@ -587,6 +659,16 @@ class UserAPIController extends ControllerAPI
             $updateduser = User::with('userdetail')
                                ->excludeDeleted()
                                ->find($user_id);
+
+            if ($is_updated_consumer_from_captive) {
+                // can only be called for pending consumers, probably inappropriate error message...
+                if ($updateduser->role === null || !$updateduser->isRoleName('consumer')) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.user_status'));
+                }
+                if ($updateduser->status !== 'pending') {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.user_status'));
+                }
+            }
 
             OrbitInput::post('username', function($username) use ($updateduser) {
                 $updateduser->username = $username;
