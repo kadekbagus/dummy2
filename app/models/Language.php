@@ -12,4 +12,13 @@ class Language extends Eloquent
 
     protected $table = 'languages';
 
+    /**
+     * Prefered language has many merchant language.
+     */
+    public function merchantLanguage()
+    {
+        return $this->hasMany('MerchantLanguage', 'language_id', 'language_id')->excludeDeleted();
+    }
+
+
 }

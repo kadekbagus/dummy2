@@ -415,6 +415,7 @@ class LanguageAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
             }
 
+            // validation 
             foreach ($data as $key_language_id => $value) {
                 $validator = Validator::make(
                     array(
@@ -440,12 +441,25 @@ class LanguageAPIController extends ControllerAPI
 
             // save all language
             foreach ($data as $key_language_id => $value) {
+
                 $supported_language = Language::find($key_language_id);
                 $supported_language->status = $value->status;
 
                 Event::fire('orbit.language.postupdatesupportedlanguage.before.save', array($this, $supported_language));
 
                 $supported_language->save();
+
+                // deleted merchant language
+                if ($value->status === 'inactive') {
+                    foreach ($supported_language->merchantLanguage as $merchantLanguage) {
+                        $merchantLanguage->delete();
+                    }
+                }else if($value->status === 'active'){
+                    foreach ($supported_language->merchantLanguage as $merchantLanguage) {
+                        $merchantLanguage->status = "active";
+                        $merchantLanguage->save();
+                    }
+                }
 
                 Event::fire('orbit.language.postupdatesupportedlanguage.after.save', array($this, $supported_language));
 
