@@ -175,7 +175,7 @@ class LanguageAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
 
-            if (! ACL::create($user)->isAllowed('update_merchant')) {
+            if (! ACL::create($user)->isAllowed('update_mall')) {
                 $updateMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMerchantLang));
                 ACL::throwAccessForbidden($message);
@@ -385,7 +385,7 @@ class LanguageAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
 
-            if (! ACL::create($user)->isAllowed('update_merchant')) {
+            if (! ACL::create($user)->isAllowed('update_mall')) {
                 $updateMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMerchantLang));
                 ACL::throwAccessForbidden($message);

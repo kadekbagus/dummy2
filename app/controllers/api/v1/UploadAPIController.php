@@ -324,7 +324,7 @@ class UploadAPIController extends ControllerAPI
                 $user = $this->api->user;
                 Event::fire('orbit.upload.postdeletemerchantlogo.before.authz', array($this, $user));
 
-                if (! ACL::create($user)->isAllowed('update_merchant')) {
+                if (! ACL::create($user)->isAllowed('update_mall')) {
                     Event::fire('orbit.upload.postdeletemerchantlogo.authz.notallowed', array($this, $user));
                     $editMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
                     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
@@ -3549,7 +3549,7 @@ class UploadAPIController extends ControllerAPI
                 $user = $this->api->user;
                 Event::fire('orbit.upload.postdeletetenantlogo.before.authz', array($this, $user));
 
-                if (! ACL::create($user)->isAllowed('update_merchant')) {
+                if (! ACL::create($user)->isAllowed('update_mall')) {
                     Event::fire('orbit.upload.postdeletetenantlogo.authz.notallowed', array($this, $user));
                     $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
                     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
@@ -3951,7 +3951,7 @@ class UploadAPIController extends ControllerAPI
                 $user = $this->api->user;
                 Event::fire('orbit.upload.postdeletetenantimage.before.authz', array($this, $user));
 
-                if (! ACL::create($user)->isAllowed('update_merchant')) {
+                if (! ACL::create($user)->isAllowed('update_mall')) {
                     Event::fire('orbit.upload.postdeletetenantimage.authz.notallowed', array($this, $user));
                     $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
                     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
@@ -4353,7 +4353,7 @@ class UploadAPIController extends ControllerAPI
                 $user = $this->api->user;
                 Event::fire('orbit.upload.postdeletetenantmap.before.authz', array($this, $user));
 
-                if (! ACL::create($user)->isAllowed('update_merchant')) {
+                if (! ACL::create($user)->isAllowed('update_mall')) {
                     Event::fire('orbit.upload.postdeletetenantmap.authz.notallowed', array($this, $user));
                     $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
                     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
