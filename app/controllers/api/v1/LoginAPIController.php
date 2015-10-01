@@ -13,6 +13,9 @@ use Illuminate\Database\QueryException;
 
 class LoginAPIController extends ControllerAPI
 {
+    /** @var string|null the retailer ID (may be force set in cloud to match ID of requesting box) */
+    private $retailerId = null;
+
     /**
      * POST - Login user
      *
@@ -668,4 +671,26 @@ class LoginAPIController extends ControllerAPI
 
         return $this->render();
     }
+
+    /**
+     * @return mixed
+     */
+    protected function getRetailerId()
+    {
+        if (isset($this->retailerId)) {
+            return $this->retailerId;
+        }
+        return Config::get('orbit.shop.id');
+    }
+
+    /**
+     * @param $id
+     * @return self
+     */
+    public function setRetailerId($id)
+    {
+        $this->retailerId = $id;
+        return $this;
+    }
+
 }
