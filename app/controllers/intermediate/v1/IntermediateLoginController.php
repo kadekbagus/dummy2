@@ -4,10 +4,12 @@
  *
  * @author Rio Astamal <me@rioastamal.net>
  */
+use Orbit\CloudMAC;
 use OrbitShop\API\v1\ResponseProvider;
 use MobileCI\MobileCIAPIController;
 use Net\Security\Firewall;
 use Orbit\Helper\Security\Encrypter;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
@@ -179,6 +181,154 @@ class IntermediateLoginController extends IntermediateBaseController
         }
 
         return $this->render($response);
+    }
+
+    /**
+     *
+     * Calls: MobileCIAPIController getCloudLogin
+     * Passed: GET[email, retailer_id, callback_url]
+     *
+     * Returns: redirect to callback with
+     *   GET[status=, message=(if error), user_id=(if success), user_email=(if success)]
+     *
+     * @return RedirectResponse
+     */
+    public function getCloudLogin()
+    {
+        $callback_url = OrbitInput::get('callback_url', '');
+        $email = OrbitInput::get('email', '');
+        $retailer_id = OrbitInput::get('retailer_id', '');
+
+        $mac = OrbitInput::get('mac', '');
+        $timestamp = (int)OrbitInput::get('timestamp', 0);
+
+        if (!CloudMAC::validateDataFromBox($mac, $timestamp, [
+            'email' => $email,
+            'retailer_id' => $retailer_id,
+            'callback_url' => $callback_url
+        ])) {
+            return $this->displayValidationError();
+        }
+
+        $response = MobileCIAPIController::create('raw')->getCloudLogin();
+        $params = ['status' => $response->status];
+
+        if ($response->status === 'success') {
+            $params['user_id'] = $response->data->user_id;
+            $params['user_detail_id'] = $response->data->user_detail_id;
+            $params['apikey_id'] = $response->data->apikey_id;
+            $params['user_email'] = $response->data->user_email;
+        } else {
+            $params['message'] = $response->message;
+        }
+        $params = CloudMAC::wrapDataFromCloud($params);
+
+        // we use this to assemble a normalized URL.
+        $req = \Symfony\Component\HttpFoundation\Request::create($callback_url, 'GET', $params);
+        return Redirect::away($req->getUri());
+    }
+
+    /**
+     * Cloud login callback function.
+     *
+     * User is redirected to here by cloud after cloud determines user id for given email.
+     *
+     * Gets: GET[user_email, user_id, user_detail_id, apikey_id]
+     *
+     * This should insert the user and associated objects using the given email and ids.
+     *
+     * After the user is inserted this performs the same logic as the regular mobile CI POST login, then directly
+     * redirects to the landing url.
+     *
+     */
+    public function getCloudLoginCallback()
+    {
+        $email = OrbitInput::get('user_email', '');
+        $user_id = OrbitInput::get('user_id', '');
+        $user_detail_id = OrbitInput::get('user_detail_id', '');
+        $apikey_id = OrbitInput::get('apikey_id', '');
+
+        $mac = OrbitInput::get('mac', '');
+        $timestamp = (int)OrbitInput::get('timestamp', 0);
+
+        $status = OrbitInput::get('status', 'failed');
+        if ($status !== 'success') {
+            $message = OrbitInput::get('message');
+            if (!CloudMAC::validateDataFromCloud($mac, $timestamp, [
+                'status' => $status,
+                'message' => $message,
+            ])) {
+                return $this->displayValidationError();
+            }
+            return $this->displayError($message);
+        }
+
+        // else success
+
+        if (!CloudMAC::validateDataFromCloud($mac, $timestamp, [
+            'status' => $status,
+            'user_email' => $email,
+            'user_id' => $user_id,
+            'user_detail_id' => $user_detail_id,
+            'apikey_id' => $apikey_id,
+        ])) {
+            return $this->displayValidationError();
+        }
+
+        $user = NULL;
+        /** @var PDO $pdo */
+        $pdo = DB::connection()->getPdo();
+        /** @var LoginAPIController $login */
+        $login = LoginAPIController::create('raw');
+        $login->setUseTransaction(false);
+        $pdo->beginTransaction();
+        try {
+            // try getting user again, if found do not insert, just use that.
+            $user = User::with('apikey', 'userdetail', 'role')
+                ->excludeDeleted()
+                ->where('user_email', $email)
+                ->whereHas(
+                    'role',
+                    function ($query) {
+                        $query->where('role_name', 'Consumer');
+                    }
+                )->sharedLock()
+                ->first();
+
+            if (!isset($user)) {
+                list($user, $userdetail, $apikey) = $login->createCustomerUser($email, $user_id, $user_detail_id, $apikey_id);
+            }
+
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e; // TODO display error?
+        }
+
+        // do the usual login stuff
+        $_POST['email'] = $email;
+        $this->postLoginMobileCI(); // sets cookies & inserts activity - we ignore the JSON result
+
+        $mobile_ci = MobileCIAPIController::create('raw');
+
+        $retailer = $mobile_ci->getRetailerInfo();
+
+        $mall = Mall::with('settings')->where('merchant_id', $retailer->merchant_id)
+            ->first();
+
+        $landing_url = $mobile_ci->getLandingUrl($mall);
+
+        return Redirect::away($landing_url);
+    }
+
+    private function displayValidationError()
+    {
+        return "Validation error occurred"; // TODO
+    }
+
+    private function displayError($message)
+    {
+        return $message; // TODO
     }
 
     /**

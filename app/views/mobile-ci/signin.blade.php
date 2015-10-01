@@ -201,6 +201,10 @@
             }
 
             if (data.data) {
+                if (data.data.redirect_to) {
+                    document.location = data.data.redirect_to;
+                    return;
+                }
                 // Check if we are redirected from captive portal
                 // The query string 'from_captive' are from apache configuration
                 if (get('from_captive') == 'yes') {

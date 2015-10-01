@@ -3,6 +3,7 @@
 /**
  * An API controller for managing Mobile CI.
  */
+use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -84,8 +85,6 @@ class MobileCIAPIController extends ControllerAPI
             }
             $retailer = $this->getRetailerInfo();
 
-            $notAllowedStatus = ['inactive'];
-
             $this->beginTransaction();
 
             $user = User::with('apikey', 'userdetail', 'role')
@@ -100,185 +99,10 @@ class MobileCIAPIController extends ControllerAPI
                         ->first();
 
             if (! is_object($user)) {
-                $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
-                if ($response->code !== 0) {
-                    throw new Exception($response->message, $response->code);
-                }
-                $user = $response->data;
+                return $this->redirectToCloud($email, $retailer);
+            } else {
+                return $this->loginStage2($user, $retailer);
             }
-
-            $lowerCasedStatus = strtolower($user->status);
-            if (in_array($lowerCasedStatus, $notAllowedStatus)) {
-                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
-            }
-
-            $user_detail = UserDetail::where('user_id', $user->user_id)->first();
-            $user_detail->last_visit_shop_id = $retailer->merchant_id;
-            $user_detail->last_visit_any_shop = Carbon::now();
-            $user_detail->save();
-
-            $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
-            if (is_null($cart)) {
-                $cart = new Cart();
-                $cart->customer_id = $user->user_id;
-                $cart->merchant_id = $retailer->parent_id;
-                $cart->retailer_id = $retailer->merchant_id;
-                $cart->status = 'active';
-                $cart->save();
-                $cart->cart_code = Cart::CART_INCREMENT + $cart->cart_id;
-                $cart->save();
-            }
-
-            $user->setHidden(array('user_password', 'apikey'));
-
-            // check available auto-issuance coupon
-            $coupons = DB::select(
-                DB::raw(
-                    'SELECT *, p.image AS promo_image,
-                    (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
-                          where ic.promotion_id = p.promotion_id
-                          and ic.status!="deleted") as total_issued_coupon
-                FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
-                WHERE pr.rule_type = "auto_issue_on_signup"
-                    AND p.merchant_id = :merchantid
-                    AND p.is_coupon = "Y" AND p.status = "active"
-                    AND p.begin_date <= "' . $user->created_at . '"
-                    AND p.end_date >= "' . $user->created_at . '"
-                HAVING
-                    (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
-                    OR
-                    (p.maximum_issued_coupon = 0)
-                    '
-                ),
-                array('merchantid' => $retailer->merchant_id)
-            );
-
-            // check available autho-issuance coupon that already obtainde by user
-            $obtained_coupons = DB::select(
-                DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
-                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
-                WHERE pr.rule_type = "auto_issue_on_signup"
-                    AND p.merchant_id = :merchantid
-                    AND ic.user_id = :userid
-                    AND p.is_coupon = "Y" AND p.status = "active"
-                    AND p.begin_date <= "' . $user->created_at . '"
-                    AND p.end_date >= "' . $user->created_at . '"
-                    '
-                ),
-                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
-            );
-
-            // get obtained auto-issuance coupon ids
-            $obtained_coupon_ids = array();
-            foreach ($obtained_coupons as $obtained_coupon) {
-                $obtained_coupon_ids[] = $obtained_coupon->promotion_id;
-            }
-
-            // filter available auto-issuance coupon id by array above
-            $coupons_to_be_obtained = array_filter(
-                $coupons,
-                function ($v) use ($obtained_coupon_ids) {
-                    $match = TRUE;
-                    foreach ($obtained_coupon_ids as $key => $obtained_coupon) {
-                        if($v->promotion_id === $obtained_coupon) {
-                            $match = $match && FALSE;
-                        }
-                    }
-
-                    if($match) {
-                        return $v;
-                    }
-                }
-            );
-
-            // get available auto-issuance coupon ids
-            $couponIds = array();
-            foreach ($coupons_to_be_obtained as $coupon_to_be_obtained) {
-                $couponIds[] = $coupon_to_be_obtained->promotion_id;
-            }
-
-            // use them to issue
-            if(count($couponIds)) {
-                // Issue coupons
-                $issuedCoupons = [];
-                $numberOfCouponIssued = 0;
-                $applicableCouponNames = [];
-                $issuedCouponNames = [];
-                $prefix = DB::getTablePrefix();
-
-                foreach ($couponIds as $couponId) {
-                    $coupon = Coupon::select('promotions.*',
-                                             DB::raw("(select count(ic.issued_coupon_id) from {$prefix}issued_coupons ic
-                                                      where ic.promotion_id={$prefix}promotions.promotion_id
-                                                      and ic.status!='deleted') as total_issued_coupon"))
-                                    ->active('promotions')
-                                    ->where('promotion_id', $couponId)
-                                    ->first();
-
-                    $issuedCoupon = new IssuedCoupon();
-                    $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user);
-
-                    $obj = new stdClass();
-                    $obj->coupon_number = $tmp->issued_coupon_code;
-                    $obj->coupon_name = $coupon->promotion_name;
-                    $obj->promotion_id = $coupon->promotion_id;
-
-                    $issuedCoupons[] = $obj;
-                    $applicableCouponNames[] = $coupon->promotion_name;
-                    $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
-
-                    $tmp = NULL;
-                    $obj = NULL;
-
-                    $numberOfCouponIssued++;
-                }
-
-                // Insert to alert system
-                $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
-
-                $name = $user->getFullName();
-                $name = trim($name) ? trim($name) : $user->user_email;
-                $subject = Lang::get('mobileci.inbox.coupon.subject');
-
-                $inbox = new Inbox();
-                $inbox->user_id = $user->user_id;
-                $inbox->from_id = 0;
-                $inbox->from_name = 'Orbit';
-                $inbox->subject = $subject;
-                $inbox->content = '';
-                $inbox->inbox_type = 'alert';
-                $inbox->status = 'active';
-                $inbox->is_read = 'N';
-                $inbox->save();
-
-                $retailerId = Config::get('orbit.shop.id');
-                $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
-                $data = [
-                    'fullName'          => $name,
-                    'subject'           => 'Coupon',
-                    'inbox'             => $inbox,
-                    'retailerName'      => $retailer->name,
-                    'numberOfCoupon'    => count($issuedCoupons),
-                    'coupons'           => $issuedCouponNames,
-                    'mallName'          => $retailer->name
-                ];
-
-                $template = View::make('mobile-ci.push-notification-coupon', $data);
-
-                $inbox->content = $template;
-                $inbox->save();
-            }
-
-            $this->response->data = $user;
-
-            $this->commit();
-
-            // @param: Controller, User, Mall/Retailer
-            Event::fire('orbit.postlogininshop.login.done', [$this, $user, $retailer]);
-
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -3065,5 +2889,322 @@ class MobileCIAPIController extends ControllerAPI
 
         return \Redirect::to('/customer/home');
    }
+
+    /**
+     * @param $user
+     * @param $retailer
+     * @throws Exception
+     */
+    protected function loginStage2($user, $retailer)
+    {
+        try {
+            $notAllowedStatus = ['inactive'];
+
+            $lowerCasedStatus = strtolower($user->status);
+            if (in_array($lowerCasedStatus, $notAllowedStatus)) {
+                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
+            }
+
+            $user_detail = UserDetail::where('user_id', $user->user_id)->first();
+            $user_detail->last_visit_shop_id = $retailer->merchant_id;
+            $user_detail->last_visit_any_shop = Carbon::now();
+            $user_detail->save();
+
+            $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
+            if (is_null($cart)) {
+                $cart = new Cart();
+                $cart->customer_id = $user->user_id;
+                $cart->merchant_id = $retailer->parent_id;
+                $cart->retailer_id = $retailer->merchant_id;
+                $cart->status = 'active';
+                $cart->save();
+                $cart->cart_code = Cart::CART_INCREMENT + $cart->cart_id;
+                $cart->save();
+            }
+
+            $user->setHidden(array('user_password', 'apikey'));
+            // check available auto-issuance coupon
+            $coupons = DB::select(
+                DB::raw(
+                    'SELECT *, p.image AS promo_image,
+                    (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
+                          where ic.promotion_id = p.promotion_id
+                          and ic.status!="deleted") as total_issued_coupon
+                FROM ' . DB::getTablePrefix() . 'promotions p
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
+                WHERE pr.rule_type = "auto_issue_on_signup"
+                    AND p.merchant_id = :merchantid
+                    AND p.is_coupon = "Y" AND p.status = "active"
+                    AND p.begin_date <= "' . $user->created_at . '"
+                    AND p.end_date >= "' . $user->created_at . '"
+                HAVING
+                    (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
+                    OR
+                    (p.maximum_issued_coupon = 0)
+                    '
+                ),
+                array('merchantid' => $retailer->merchant_id)
+            );
+
+            // check available autho-issuance coupon that already obtainde by user
+            $obtained_coupons = DB::select(
+                DB::raw(
+                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
+                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
+                WHERE pr.rule_type = "auto_issue_on_signup"
+                    AND p.merchant_id = :merchantid
+                    AND ic.user_id = :userid
+                    AND p.is_coupon = "Y" AND p.status = "active"
+                    AND p.begin_date <= "' . $user->created_at . '"
+                    AND p.end_date >= "' . $user->created_at . '"
+                    '
+                ),
+                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+            );
+
+            // get obtained auto-issuance coupon ids
+            $obtained_coupon_ids = array();
+            foreach ($obtained_coupons as $obtained_coupon) {
+                $obtained_coupon_ids[] = $obtained_coupon->promotion_id;
+            }
+
+            // filter available auto-issuance coupon id by array above
+            $coupons_to_be_obtained = array_filter(
+                $coupons,
+                function ($v) use ($obtained_coupon_ids) {
+                    $match = TRUE;
+                    foreach ($obtained_coupon_ids as $key => $obtained_coupon) {
+                        if($v->promotion_id === $obtained_coupon) {
+                            $match = $match && FALSE;
+                        }
+                    }
+
+                    if($match) {
+                        return $v;
+                    }
+                }
+            );
+
+            // get available auto-issuance coupon ids
+            $couponIds = array();
+            foreach ($coupons_to_be_obtained as $coupon_to_be_obtained) {
+                $couponIds[] = $coupon_to_be_obtained->promotion_id;
+            }
+
+            // use them to issue
+            if(count($couponIds)) {
+                // Issue coupons
+                $issuedCoupons = [];
+                $numberOfCouponIssued = 0;
+                $applicableCouponNames = [];
+                $issuedCouponNames = [];
+                $prefix = DB::getTablePrefix();
+
+                foreach ($couponIds as $couponId) {
+                    $coupon = Coupon::select('promotions.*',
+                        DB::raw("(select count(ic.issued_coupon_id) from {$prefix}issued_coupons ic
+                                                      where ic.promotion_id={$prefix}promotions.promotion_id
+                                                      and ic.status!='deleted') as total_issued_coupon"))
+                        ->active('promotions')
+                        ->where('promotion_id', $couponId)
+                        ->first();
+
+                    $issuedCoupon = new IssuedCoupon();
+                    $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user);
+
+                    $obj = new stdClass();
+                    $obj->coupon_number = $tmp->issued_coupon_code;
+                    $obj->coupon_name = $coupon->promotion_name;
+                    $obj->promotion_id = $coupon->promotion_id;
+
+                    $issuedCoupons[] = $obj;
+                    $applicableCouponNames[] = $coupon->promotion_name;
+                    $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
+
+                    $tmp = NULL;
+                    $obj = NULL;
+
+                    $numberOfCouponIssued++;
+                }
+
+                // Insert to alert system
+                $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
+
+                $name = $user->getFullName();
+                $name = trim($name) ? trim($name) : $user->user_email;
+                $subject = Lang::get('mobileci.inbox.coupon.subject');
+
+                $inbox = new Inbox();
+                $inbox->user_id = $user->user_id;
+                $inbox->from_id = 0;
+                $inbox->from_name = 'Orbit';
+                $inbox->subject = $subject;
+                $inbox->content = '';
+                $inbox->inbox_type = 'alert';
+                $inbox->status = 'active';
+                $inbox->is_read = 'N';
+                $inbox->save();
+
+                $retailerId = Config::get('orbit.shop.id');
+                $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+                $data = [
+                    'fullName'          => $name,
+                    'subject'           => 'Coupon',
+                    'inbox'             => $inbox,
+                    'retailerName'      => $retailer->name,
+                    'numberOfCoupon'    => count($issuedCoupons),
+                    'coupons'           => $issuedCouponNames,
+                    'mallName'          => $retailer->name
+                ];
+
+                $template = View::make('mobile-ci.push-notification-coupon', $data);
+
+                $inbox->content = $template;
+                $inbox->save();
+            }
+
+            $this->response->data = $user;
+
+            $this->commit();
+
+            // @param: Controller, User, Mall/Retailer
+            Event::fire('orbit.postlogininshop.login.done', [$this, $user, $retailer]);
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        }
+
+        return $this->render();
+
+    }
+
+    /**
+     * Runs on box.
+     *
+     * Returns response with redirect_to set to URL of cloud login.
+     * Passes email, retailer_id, callback_url in parameters
+     *
+     * @param string $email
+     * @param Mall $retailer
+     * @return \OrbitShop\API\v1\ResponseProvider|string
+     */
+    private function redirectToCloud($email, $retailer) {
+        $this->response->code = 302; // must not be 0
+        $this->response->status = 'success';
+        $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
+        $url = Config::get('orbit.registration.mobile.cloud_login_url');
+        $values = [
+            'email' => $email,
+            'retailer_id' => $retailer->merchant_id,
+            'callback_url' => URL::route('customer-login-callback'),
+        ];
+        $values = CloudMAC::wrapDataFromBox($values);
+        $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
+        $this->response->data = [
+            'redirect_to' => $req->getUri(),
+        ];
+        return $this->render();
+    }
+
+    /**
+     * Called from: IntermediateAPIController getCloudLogin
+     *
+     * Gets: email, retailer_id
+     *
+     * Calls: LoginAPIController postRegisterUserInShop
+     *
+     * Returns: { user_id: ..., user_email: ..., user_detail_id: ..., apikey_id: ... }
+     *
+     * @return \OrbitShop\API\v1\ResponseProvider|string
+     */
+    public function getCloudLogin()
+    {
+        $this->beginTransaction();
+        try {
+            // getCloudLogin uses: GET[email, retailer_id]
+            // postRegisterUserInShop: requires: POST[email]
+            $retailer = null;
+            OrbitInput::get('retailer_id', function ($id) use (&$retailer) {
+                $retailer = Mall::with('parent', 'settings')->where('merchant_id', $id)->first();
+            });
+            if ($retailer === null) {
+                OrbitShopAPI::throwInvalidArgument('Retailer not found');
+            }
+            $email = OrbitInput::get('email');
+            $user = User::with('apikey', 'userdetail', 'role')
+                ->excludeDeleted()
+                ->where('user_email', $email)
+                ->whereHas(
+                    'role',
+                    function ($query) {
+                        $query->where('role_name', 'Consumer');
+                    }
+                )->sharedLock()
+                ->first();
+
+            if ($user === null) {
+                $_POST['email'] = $email;
+                $response = \LoginAPIController::create('raw')->setRetailerId(OrbitInput::get('retailer_id'))->setUseTransaction(false)->postRegisterUserInShop();
+                if ($response->code !== 0) {
+                    throw new Exception($response->message, $response->code);
+                }
+
+                $user = $response->data;
+            }
+
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->data = (object)[
+                'user_id' => $user->user_id,
+                'user_email' => $user->user_email,
+                'apikey_id' => $user->apikey->apikey_id,
+                'user_detail_id' => $user->userdetail->user_detail_id,
+            ];
+            $this->commit();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        }
+
+        return $this->render();
+    }
 
 }
