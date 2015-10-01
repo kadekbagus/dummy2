@@ -85,7 +85,7 @@ class MerchantAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.merchant.postnewmerchant.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('create_merchant')) {
+            if (! ACL::create($user)->isAllowed('create_mall')) {
                 Event::fire('orbit.merchant.postnewmerchant.authz.notallowed', array($this, $user));
                 $createMerchantLang = Lang::get('validation.orbit.actionlist.new_merchant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createMerchantLang));
@@ -250,7 +250,7 @@ class MerchantAPIController extends ControllerAPI
             // Successfull Creation
             $activityNotes = sprintf('Merchant Created: %s', $newmerchant->name);
             $activity->setUser($user)
-                    ->setActivityName('create_merchant')
+                    ->setActivityName('create_mall')
                     ->setActivityNameLong('Create Merchant OK')
                     ->setObject($newmerchant)
                     ->setNotes($activityNotes)
@@ -271,7 +271,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Creation failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('create_merchant')
+                    ->setActivityName('create_mall')
                     ->setActivityNameLong('Create Merchant Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
@@ -289,7 +289,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Creation failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('create_merchant')
+                    ->setActivityName('create_mall')
                     ->setActivityNameLong('Create Merchant Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
@@ -313,7 +313,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Creation failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('create_merchant')
+                    ->setActivityName('create_mall')
                     ->setActivityNameLong('Create Merchant Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
@@ -330,7 +330,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Creation failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('create_merchant')
+                    ->setActivityName('create_mall')
                     ->setActivityNameLong('Create Merchant Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
@@ -416,7 +416,7 @@ class MerchantAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.merchant.getsearchmerchant.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_merchant')) {
+            if (! ACL::create($user)->isAllowed('view_mall')) {
                 Event::fire('orbit.merchant.getsearchmerchant.authz.notallowed', array($this, $user));
                 $viewUserLang = Lang::get('validation.orbit.actionlist.view_merchant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewUserLang));
@@ -911,7 +911,7 @@ class MerchantAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.merchant.postupdatemerchant.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('update_merchant')) {
+            if (! ACL::create($user)->isAllowed('update_mall')) {
                 Event::fire('orbit.merchant.postupdatemerchant.authz.notallowed', array($this, $user));
                 $updateMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMerchantLang));
@@ -1238,7 +1238,7 @@ class MerchantAPIController extends ControllerAPI
             // Successfull Update
             $activityNotes = sprintf('Merchant updated: %s', $updatedmerchant->name);
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
+                    ->setActivityName('update_mall')
                     ->setActivityNameLong('Update Merchant OK')
                     ->setObject($updatedmerchant)
                     ->setNotes($activityNotes)
@@ -1259,7 +1259,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
+                    ->setActivityName('update_mall')
                     ->setActivityNameLong('Update Merchant Failed')
                     ->setObject($updatedmerchant)
                     ->setNotes($e->getMessage())
@@ -1278,7 +1278,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
+                    ->setActivityName('update_mall')
                     ->setActivityNameLong('Update Merchant Failed')
                     ->setObject($updatedmerchant)
                     ->setNotes($e->getMessage())
@@ -1303,7 +1303,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
+                    ->setActivityName('update_mall')
                     ->setActivityNameLong('Update Merchant Failed')
                     ->setObject($updatedmerchant)
                     ->setNotes($e->getMessage())
@@ -1321,7 +1321,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Failed Update
             $activity->setUser($user)
-                    ->setActivityName('update_merchant')
+                    ->setActivityName('update_mall')
                     ->setActivityNameLong('Update Merchant Failed')
                     ->setObject($updatedmerchant)
                     ->setNotes($e->getMessage())
@@ -1369,7 +1369,7 @@ class MerchantAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.merchant.postdeletemerchant.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('delete_merchant')) {
+            if (! ACL::create($user)->isAllowed('delete_mall')) {
                 Event::fire('orbit.merchant.postdeletemerchant.authz.notallowed', array($this, $user));
                 $deleteMerchantLang = Lang::get('validation.orbit.actionlist.delete_merchant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteMerchantLang));
@@ -1441,7 +1441,7 @@ class MerchantAPIController extends ControllerAPI
             // Successfull Creation
             $activityNotes = sprintf('Merchant Deleted: %s', $deletemerchant->name);
             $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
+                    ->setActivityName('delete_mall')
                     ->setActivityNameLong('Delete Merchant OK')
                     ->setObject($deletemerchant)
                     ->setNotes($activityNotes)
@@ -1462,7 +1462,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Deletion failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
+                    ->setActivityName('delete_mall')
                     ->setActivityNameLong('Delete Merchant Failed')
                     ->setObject($deletemerchant)
                     ->setNotes($e->getMessage())
@@ -1481,7 +1481,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Deletion failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
+                    ->setActivityName('delete_mall')
                     ->setActivityNameLong('Delete Merchant Failed')
                     ->setObject($deletemerchant)
                     ->setNotes($e->getMessage())
@@ -1506,7 +1506,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Deletion failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
+                    ->setActivityName('delete_mall')
                     ->setActivityNameLong('Delete Merchant Failed')
                     ->setObject($deletemerchant)
                     ->setNotes($e->getMessage())
@@ -1524,7 +1524,7 @@ class MerchantAPIController extends ControllerAPI
 
             // Deletion failed Activity log
             $activity->setUser($user)
-                    ->setActivityName('delete_merchant')
+                    ->setActivityName('delete_mall')
                     ->setActivityNameLong('Delete Merchant Failed')
                     ->setObject($deletemerchant)
                     ->setNotes($e->getMessage())
