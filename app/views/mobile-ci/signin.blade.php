@@ -185,7 +185,11 @@
                 $('#errorModalText').text(data.message);
                 $('#errorModal').modal();
             }
-            if(data.data){
+            if(data.data) {
+              if (data.data.redirect_to) {
+                document.location = data.data.redirect_to;
+                return;
+              }
               // console.log(data.data);
               $.cookie('orbit_email', data.data.user_email, { expires: 5 * 365, path: '/' });
               if(data.data.user_firstname) {
@@ -278,6 +282,10 @@
                 $('#errorModal').modal();
               }
               if(data.data){
+                if (data.data.redirect_to) {
+                  window.location.replace(data.data.redirect_to);
+                  return;
+                }
                 // console.log(data.data);
                 $.cookie('orbit_email', data.data.user_email, { expires: 5 * 365, path: '/' });
                 if(data.data.user_firstname) {

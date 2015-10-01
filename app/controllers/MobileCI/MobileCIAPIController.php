@@ -3,6 +3,7 @@
 /**
  * An API controller for managing Mobile CI.
  */
+use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -80,8 +81,6 @@ class MobileCIAPIController extends ControllerAPI
             }
             $retailer = $this->getRetailerInfo();
 
-            $notAllowedStatus = ['inactive'];
-
             $this->beginTransaction();
 
             $user = User::with('apikey', 'userdetail', 'role')
@@ -96,43 +95,10 @@ class MobileCIAPIController extends ControllerAPI
                         ->first();
 
             if (! is_object($user)) {
-                $response = \LoginAPIController::create('raw')->setUseTransaction(false)->postRegisterUserInShop();
-                if ($response->code !== 0) {
-                    throw new Exception($response->message, $response->code);
-                }
-                $user = $response->data;
+                return $this->redirectToCloud($email, $retailer);
+            } else {
+                return $this->loginStage2($user, $retailer);
             }
-
-            $lowerCasedStatus = strtolower($user->status);
-            if (in_array($lowerCasedStatus, $notAllowedStatus)) {
-                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
-            }
-
-            $user_detail = UserDetail::where('user_id', $user->user_id)->first();
-            $user_detail->last_visit_shop_id = $retailer->merchant_id;
-            $user_detail->last_visit_any_shop = Carbon::now();
-            $user_detail->save();
-
-            $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
-            if (is_null($cart)) {
-                $cart = new Cart();
-                $cart->customer_id = $user->user_id;
-                $cart->merchant_id = $retailer->parent_id;
-                $cart->retailer_id = $retailer->merchant_id;
-                $cart->status = 'active';
-                $cart->save();
-                $cart->cart_code = Cart::CART_INCREMENT + $cart->cart_id;
-                $cart->save();
-            }
-
-            $user->setHidden(array('user_password', 'apikey'));
-            $this->response->data = $user;
-
-            $this->commit();
-
-            // @param: Controller, User, Mall/Retailer
-            Event::fire('orbit.postlogininshop.login.done', [$this, $user, $retailer]);
-
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -2660,5 +2626,181 @@ class MobileCIAPIController extends ControllerAPI
 
         return \Redirect::to('/customer/home');
    }
+
+    /**
+     * @param $user
+     * @param $retailer
+     * @throws Exception
+     */
+    protected function loginStage2($user, $retailer)
+    {
+        try {
+            $notAllowedStatus = ['inactive'];
+
+            $lowerCasedStatus = strtolower($user->status);
+            if (in_array($lowerCasedStatus, $notAllowedStatus)) {
+                throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
+            }
+
+            $user_detail = UserDetail::where('user_id', $user->user_id)->first();
+            $user_detail->last_visit_shop_id = $retailer->merchant_id;
+            $user_detail->last_visit_any_shop = Carbon::now();
+            $user_detail->save();
+
+            $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
+            if (is_null($cart)) {
+                $cart = new Cart();
+                $cart->customer_id = $user->user_id;
+                $cart->merchant_id = $retailer->parent_id;
+                $cart->retailer_id = $retailer->merchant_id;
+                $cart->status = 'active';
+                $cart->save();
+                $cart->cart_code = Cart::CART_INCREMENT + $cart->cart_id;
+                $cart->save();
+            }
+
+            $user->setHidden(array('user_password', 'apikey'));
+            $this->response->data = $user;
+
+            $this->commit();
+
+            // @param: Controller, User, Mall/Retailer
+            Event::fire('orbit.postlogininshop.login.done', [$this, $user, $retailer]);
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        }
+
+        return $this->render();
+
+    }
+
+    /**
+     * Runs on box.
+     *
+     * Returns response with redirect_to set to URL of cloud login.
+     * Passes email, retailer_id, callback_url in parameters
+     *
+     * @param string $email
+     * @param Mall $retailer
+     * @return \OrbitShop\API\v1\ResponseProvider|string
+     */
+    private function redirectToCloud($email, $retailer) {
+        $this->response->code = 302; // must not be 0
+        $this->response->status = 'success';
+        $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
+        $url = Config::get('orbit.registration.mobile.cloud_login_url');
+        $values = [
+            'email' => $email,
+            'retailer_id' => $retailer->merchant_id,
+            'callback_url' => URL::route('customer-login-callback'),
+        ];
+        $values = CloudMAC::wrapDataFromBox($values);
+        $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
+        $this->response->data = [
+            'redirect_to' => $req->getUri(),
+        ];
+        return $this->render();
+    }
+
+    /**
+     * Called from: IntermediateAPIController getCloudLogin
+     *
+     * Gets: email, retailer_id
+     *
+     * Calls: LoginAPIController postRegisterUserInShop
+     *
+     * Returns: { user_id: ..., user_email: ..., user_detail_id: ..., apikey_id: ... }
+     *
+     * @return \OrbitShop\API\v1\ResponseProvider|string
+     */
+    public function getCloudLogin()
+    {
+        $this->beginTransaction();
+        try {
+            // getCloudLogin uses: GET[email, retailer_id]
+            // postRegisterUserInShop: requires: POST[email]
+            $retailer = null;
+            OrbitInput::get('retailer_id', function ($id) use (&$retailer) {
+                $retailer = Mall::with('parent', 'settings')->where('merchant_id', $id)->first();
+            });
+            if ($retailer === null) {
+                OrbitShopAPI::throwInvalidArgument('Retailer not found');
+            }
+            $email = OrbitInput::get('email');
+            $user = User::with('apikey', 'userdetail', 'role')
+                ->excludeDeleted()
+                ->where('user_email', $email)
+                ->whereHas(
+                    'role',
+                    function ($query) {
+                        $query->where('role_name', 'Consumer');
+                    }
+                )->sharedLock()
+                ->first();
+
+            if ($user === null) {
+                $_POST['email'] = $email;
+                $response = \LoginAPIController::create('raw')->setRetailerId(OrbitInput::get('retailer_id'))->setUseTransaction(false)->postRegisterUserInShop();
+                if ($response->code !== 0) {
+                    throw new Exception($response->message, $response->code);
+                }
+
+                $user = $response->data;
+            }
+
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->data = (object)[
+                'user_id' => $user->user_id,
+                'user_email' => $user->user_email,
+                'apikey_id' => $user->apikey->apikey_id,
+                'user_detail_id' => $user->userdetail->user_detail_id,
+            ];
+            $this->commit();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        }
+
+        return $this->render();
+    }
 
 }
