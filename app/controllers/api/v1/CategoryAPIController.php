@@ -728,11 +728,15 @@ class CategoryAPIController extends ControllerAPI
      * @param array    `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
      * @param integer  `take`                  (optional) - limit
      * @param integer  `skip`                  (optional) - limit offset
+     * @param integer  `skip`                  (optional) - limit offset
      *
      * @return Illuminate\Support\Facades\Response
      */
     public function getSearchCategory()
     {
+        // flag for limit the query result
+        // TODO : should be change in the future
+        $limit = FALSE;
         try {
             $httpCode = 200;
 
@@ -750,6 +754,14 @@ class CategoryAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+
+            // TODO : change this into something else
+            $limited = OrbitInput::get('limited');
+
+            if ($limited === 'yes') {
+                $limit = TRUE;
+            }
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
@@ -791,7 +803,13 @@ class CategoryAPIController extends ControllerAPI
             }
 
             // Builder object
-            $categories = Category::excludeDeleted();
+            // if flag limit is true then show only category_id and category_name to make the frontend life easier
+            // TODO : remove this with something like is_all_retailer on orbit-shop
+            if ($limit) {
+                $categories = Category::select('category_id','category_name')->excludeDeleted();
+            } else {
+                $categories = Category::excludeDeleted();
+            }
 
             // Filter category by Ids
             OrbitInput::get('category_id', function($categoryIds) use ($categories)
@@ -860,30 +878,34 @@ class CategoryAPIController extends ControllerAPI
             // skip, and order by
             $_categories = clone $categories;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            // if limit is true show all records
+            // TODO : replace this with something else in the future
+            if (!$limit) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $categories->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $categories->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $categories)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $categories)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $categories->skip($skip);
+                    $skip = $_skip;
+                });
+                $categories->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'categories.category_name';
