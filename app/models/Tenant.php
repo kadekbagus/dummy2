@@ -25,7 +25,7 @@ class Tenant extends Eloquent
      * Column name which determine the type of Mall or Tenant.
      */
     const OBJECT_TYPE = 'object_type';
-    
+
 
     protected $primaryKey = 'merchant_id';
 
@@ -51,10 +51,18 @@ class Tenant extends Eloquent
         return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'merchant_id')->where('news.object_type', 'news')->active();
     }
 
+    /**
+     * Event strings can be translated to many languages.
+     */
+    public function translations()
+    {
+        return $this->hasMany('MerchantTranslation', 'merchant_id', 'merchant_id')->excludeDeleted();
+    }
+
     public function newsPromotions()
     {
         return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'merchant_id')->where('news.object_type', 'promotion')->active();
-    }  
+    }
 
     /**
      * A Retailer has many and belongs to an employee
