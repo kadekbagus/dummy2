@@ -229,7 +229,9 @@ return array(
             'fake'  => FALSE,
 
             // Flag to send welcome email
-            'send_welcome_email'    => FALSE
+            'send_welcome_email'    => FALSE,
+
+            'cloud_login_url' => 'http://orbit-mall.here/app/v1/customer/cloud-login'
         ),
     ),
 
