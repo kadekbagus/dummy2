@@ -207,7 +207,7 @@ class LanguageAPIController extends ControllerAPI
                         'language_id'   => $language_id_check,
                     ),
                     array(
-                        'language_id'   => 'numeric|required|orbit.empty.language',
+                        'language_id'   => 'required|orbit.empty.language',
                     )
                 );
 
@@ -237,7 +237,7 @@ class LanguageAPIController extends ControllerAPI
             }
 
             $this->response->data = $merchant_language;
-            
+
             if($this->response->code === 0){
                 $merchant_languages = MerchantLanguage::excludeDeleted()->where('merchant_id', '=',$merchant_id)->with('language')->get();
                 $count = count($merchant_languages);
@@ -352,8 +352,8 @@ class LanguageAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param integer  `merchant_id`           (required) - Merchant ID
-     * @param json     `language_statuses      (required) 
-     * 
+     * @param json     `language_statuses      (required)
+     *
      * json format :
      * { language_id : {"status" : "active or inactive"}}
      * json example :
@@ -444,7 +444,7 @@ class LanguageAPIController extends ControllerAPI
                 $supported_language->status = $value->status;
 
                 Event::fire('orbit.language.postupdatesupportedlanguage.before.save', array($this, $supported_language));
-                
+
                 $supported_language->save();
 
                 Event::fire('orbit.language.postupdatesupportedlanguage.after.save', array($this, $supported_language));
@@ -556,7 +556,6 @@ class LanguageAPIController extends ControllerAPI
         Validator::extend('orbit.empty.merchant.public', function ($attribute, $value, $parameters) {
             $merchant = Mall::excludeDeleted()
                 ->where('merchant_id', $value)
-                ->where('is_mall', 'yes')
                 ->first();
 
             if (empty($merchant)) {
@@ -571,9 +570,9 @@ class LanguageAPIController extends ControllerAPI
         $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
             $merchant = Mall::excludeDeleted()
-                ->allowedForUser($user)
+                /* ->allowedForUser($user) */
                 ->where('merchant_id', $value)
-                ->where('is_mall', 'yes')
+                /* ->where('is_mall', 'yes') */
                 ->first();
 
             if (empty($merchant)) {
