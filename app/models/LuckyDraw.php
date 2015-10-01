@@ -52,6 +52,67 @@ class LuckyDraw extends Eloquent
     }
 
     /**
+     * Simple authorization check for whom this object can be accessed.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @important You should only
+     * @param \Illuminate\Database\Eloquent\Builder $builder
+     * @return \Illuminate\Database\Eloquent\Builder $builder
+     */
+    public function scopeAllowedFor($builder, $user)
+    {
+        // Roles which are allowed to see all the lucky draws
+        $grantedRoles = ['customer'];
+
+        // Super admin allowed to see all entries
+        $superAdmin = Config::get('orbit.security.superadmin');
+
+        // Regular customer allowed to see all entries, strange?
+        // why? because we are not planning to separate the API calls
+        // all are using the same end point
+        // @todo
+        // If customer allowed to see, it is better to put it as 'guest' mode?
+        if (empty($superAdmin))
+        {
+            $superAdmin = 'super admin';
+        }
+        $grantedRoles[] = $superadmin;
+
+        // Transform all array into lowercase
+        $grantedRoles = array_map('strtolower', $grantedRoles);
+        $userRole = trim(strtolower($user->role->role_name));
+
+        if (in_array($userRole, $grantedRoles)) {
+            // do nothing return as is
+            return $builder;
+        }
+
+        // If this is not granted roles means we need to do some further check
+        $employeeRoles = ['mall admin', 'mall customer service'];
+
+        // Does this user are employee? if yes then do some check on employees
+        // table also to determine whether this employee are allowable to access or not
+        if (in_array($userRole, $employeeRoles)) {
+            $builder->where(function($query) use ($user) {
+                $query->whereRaw("{$prefix}lucky_draws.mall_id in (select er.retailer_id from {$prefix}employees e
+                                 join {$prefix}employee_retailer er on er.employee_id=e.employee_id and e.user_id=? and e.status != ?)", [$user->user_id, 'deleted']);
+            });
+        }
+
+        // This should be mall owner or the mall group
+        // Mall group should be able to see all lucky draws belongs to his mall group and
+        // mall owner should be able to see only lucky draws on his mall
+        $builder->where(function($query) {
+            $query->whereRaw("{$prefix}lucky_draws.mall_id in (select m.merchant_id from {$prefix}merchants m
+                              where is_mall='yes' and m.status != 'deleted' and (m.user_id=? or m.parent_id in (
+                              select m2.merchant_id from {$prefix}merchants m2
+                              where m2.user_id=? and m.is_mall='yes' and m.status != ?))", [$user->user_id, $user->user_id, 'deleted']);
+        });
+
+        return $builder;
+    }
+
+    /**
      * Lucky Draw has many uploaded media.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $builder
