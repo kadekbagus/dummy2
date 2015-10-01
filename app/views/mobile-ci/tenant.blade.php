@@ -73,8 +73,8 @@
         <!-- Tab panes -->
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="promotions">
-                @if(sizeof($product->newsPromotions) > 0)
-                    @foreach($product->newsPromotions as $promotions)
+                @if(sizeof($tenant->newsPromotions) > 0)
+                    @foreach($tenant->newsPromotions as $promotions)
                         <div class="main-theme-mall catalogue" id="promotions-{{$promotions->promotion_id}}">
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">
@@ -109,8 +109,8 @@
                 @endif
             </div>
             <div role="tabpanel" class="tab-pane" id="news">
-                @if(sizeof($product->news) > 0)
-                    @foreach($product->news as $news)
+                @if(sizeof($tenant->news) > 0)
+                    @foreach($tenant->news as $news)
                         <div class="main-theme-mall catalogue" id="news-{{$news->promotion_id}}">
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">

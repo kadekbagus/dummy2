@@ -173,7 +173,7 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store = \Cookie::get('event');
             }
 
-            $event = EventModel::active()->where('merchant_id', $retailer->merchant_id)
+            $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
                     function ($q) {
                         $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
@@ -182,11 +182,11 @@ class MobileCIAPIController extends ControllerAPI
 
             if (! empty($event_store)) {
                 foreach ($event_store as $event_idx) {
-                    $event->where('event_id', '!=', $event_idx);
+                    $events->where('event_id', '!=', $event_idx);
                 }
             }
 
-            $event = $event->orderBy('events.event_id', 'DESC')->first();
+            $events = $events->orderBy('events.event_id', 'DESC')->first();
             $event_families = array();
             if (! empty($event)) {
                 if ($event->link_object_type == 'family') {
@@ -308,6 +308,7 @@ class MobileCIAPIController extends ControllerAPI
                 'event_family_url_param' => $event_family_url_param,
                 'widgets' => $widgets,
                 'widget_flags' => $widget_flags,
+                'widget_singles' => $widget_singles,
                 'active_user' => ($user->status === 'active'),
             );
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
@@ -1373,6 +1374,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'cartitems' => $cartitems,
                 'categories' => $categories,
+                'active_user' => ($user->status === 'active'),
                 'floorList' => $floorList,
                 'languages' => $languages));
 
@@ -1489,7 +1491,13 @@ class MobileCIAPIController extends ControllerAPI
                 $box_url = $box_url . '?email=' . urlencode($user->user_email) . '&logout_to=' . urlencode($my_url);
             }
 
-            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($tenant->name), 'user' => $user, 'retailer' => $retailer, 'tenant' => $tenant, 'languages' => $languages, 'box_url' => $box_url));
+            return View::make('mobile-ci.tenant', array(
+                'page_title' => strtoupper($tenant->name),
+                'user' => $user,
+                'retailer' => $retailer,
+                'tenant' => $tenant,
+                'languages' => $languages,
+                'box_url' => $box_url));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
