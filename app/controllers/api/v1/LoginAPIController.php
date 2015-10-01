@@ -227,51 +227,7 @@ class LoginAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            $customerRole = Role::where('role_name', 'Consumer')->first();
-            if (empty($customerRole)) {
-                $errorMessage = Lang::get('validation.orbit.empty.consumer_role');
-                throw new Exception($errorMessage);
-            }
-
-            // The retailer (shop) which this registration taken
-            $retailerId = Config::get('orbit.shop.id');
-            $retailer = Mall::excludeDeleted()
-                                ->where('merchant_id', $retailerId)
-                                ->first();
-
-            if (empty($retailer)) {
-                $errorMessage = Lang::get('validation.orbit.empty.retailer');
-                throw new Exception($errorMessage);
-            }
-
-            $newuser = new User();
-            $newuser->username = strtolower($email);
-            $newuser->user_email = strtolower($email);
-            $newuser->status = 'pending';
-            $newuser->user_role_id = $customerRole->role_id;
-            $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
-            $newuser->external_user_id = 0;
-
-            $newuser->save();
-
-            $userdetail = new UserDetail();
-
-            // Fill the information about retailer (shop)
-            $userdetail->merchant_id = $retailer->parent_id;
-            $userdetail->merchant_acquired_date = date('Y-m-d H:i:s');
-            $userdetail->retailer_id = $retailer->merchant_id;
-
-            // Save the user details
-            $userdetail = $newuser->userdetail()->save($userdetail);
-
-            // Generate API key for this user
-            $apikey = $newuser->createApiKey();
-
-            $newuser->setRelation('userDetail', $userdetail);
-            $newuser->user_detail = $userdetail;
-
-            $newuser->setRelation('apikey', $apikey);
-            $newuser->apikey = $apikey;
+            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email);
 
             $this->response->data = $newuser;
 
@@ -693,4 +649,75 @@ class LoginAPIController extends ControllerAPI
         return $this;
     }
 
+    /**
+     * Creates a customer user and the associated user detail and API key objects.
+     *
+     * NOT transactional, wrap in transaction yourself.
+     *
+     * May throw exception if cannot find retailer or cannot find consumer role.
+     *
+     * Uses retailer set using setRetailerId() or the one in config.
+     *
+     * @param string $email the user's email
+     * @param string|null $userId the unique ID (if provided) of the user to create - used in box to match data on cloud
+     * @param string|null $userDetailId .... of the user detail to create - used in box to match data on cloud
+     * @param string|null $apiKeyId .... of the API key to create - used in box to match data on cloud
+     * @return array [User, UserDetail, ApiKey]
+     * @throws Exception
+     */
+    public function createCustomerUser($email, $userId = null, $userDetailId = null, $apiKeyId = null)
+    {
+        // The retailer (shop) which this registration taken
+        $retailerId = $this->getRetailerId();
+        $retailer = Mall::excludeDeleted()
+            ->where('merchant_id', $retailerId)
+            ->first();
+
+        if (empty($retailer)) {
+            $errorMessage = Lang::get('validation.orbit.empty.retailer');
+            throw new Exception($errorMessage);
+        }
+
+        $customerRole = Role::where('role_name', 'Consumer')->first();
+        if (empty($customerRole)) {
+            $errorMessage = Lang::get('validation.orbit.empty.consumer_role');
+            throw new Exception($errorMessage);
+        }
+
+        $new_user = new User();
+        if (isset($userId)) {
+            $new_user->user_id = $userId;
+        }
+        $new_user->username = strtolower($email);
+        $new_user->user_email = strtolower($email);
+        $new_user->status = 'pending';
+        $new_user->user_role_id = $customerRole->role_id;
+        $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
+        $new_user->external_user_id = 0;
+
+        $new_user->save();
+
+        $user_detail = new UserDetail();
+
+        if (isset($userDetailId)) {
+            $user_detail->user_detail_id = $userDetailId;
+        }
+        // Fill the information about retailer (shop)
+        $user_detail->merchant_id = $retailer->parent_id;
+        $user_detail->merchant_acquired_date = date('Y-m-d H:i:s');
+        $user_detail->retailer_id = $retailer->merchant_id;
+
+        // Save the user details
+        $user_detail = $new_user->userdetail()->save($user_detail);
+
+        // Generate API key for this user (with given ID if specified)
+        $apikey = $new_user->createApiKey($apiKeyId);
+
+        $new_user->setRelation('userDetail', $user_detail);
+        $new_user->user_detail = $user_detail;
+
+        $new_user->setRelation('apikey', $apikey);
+        $new_user->apikey = $apikey;
+        return [$new_user, $user_detail, $apikey];
+    }
 }
