@@ -115,12 +115,17 @@ class User extends Eloquent implements UserInterface
     /**
      * Method to create api keys for current user.
      *
+     * @param string $apiKeyId API key ID (only specified on box, to match the one on cloud).
+     *
      * @author Rio Astamal <me@rioastamal.net>
      * @return ApiKey Object
      */
-    public function createAPiKey()
+    public function createAPiKey($apiKeyId = null)
     {
         $apikey = new Apikey();
+        if (isset($apiKeyId)) {
+            $apikey->apikey_id = $apiKeyId;
+        }
         $apikey->api_key = Apikey::genApiKey($this);
         $apikey->api_secret_key = Apikey::genSecretKey($this);
         $apikey->status = 'active';
