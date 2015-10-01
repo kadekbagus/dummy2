@@ -305,6 +305,10 @@ class SettingAPIController extends ControllerAPI
             $password = OrbitInput::post('password');
             $password2 = OrbitInput::post('password_confirmation');
 
+            // Catch the supported language for mall
+            $supportedMallLanguageIds = OrbitInput::post('mall_supported_language_ids');
+
+
             $validator = Validator::make(
                 array(
                     'language'                  => $language,
@@ -313,7 +317,7 @@ class SettingAPIController extends ControllerAPI
                     'password_confirmation'     => $password2,
                 ),
                 array(
-                    'language'          => 'required|in:en,id',
+                    'language'          => 'required',
                     'landing_page'      => 'required|in:widget,news,promotion,tenant',
                     'password'          => 'min:5|confirmed',
                 )
@@ -442,6 +446,19 @@ class SettingAPIController extends ControllerAPI
                 $startButtonSetting->modified_by = $user->user_id;
                 $startButtonSetting->save();
             });
+
+            // Update mall supported language by calling dedicated controller
+            // Simulate post data that required by controller
+            $_POST['merchant_id'] = $mall->merchant_id;
+            $_POST['language_id'] = $supportedMallLanguageIds;
+            $updateLanguageResponse = LanguageAPIController::create('raw')
+                                                          ->postAddMerchantLanguage();
+
+            if ($updateLanguageResponse->code !== 0)
+            {
+                throw new \Exception($updateLanguageResponse->message, $response->code);
+            }
+
 
             $this->response->data = [
                 'landing_page'      => $landingPageSetting,

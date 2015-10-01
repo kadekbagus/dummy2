@@ -137,7 +137,7 @@ Route::filter('orbit-settings', function()
     }
 
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
-    $retailer = Retailer::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
+    $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 
     if (array_key_exists('orbit_preferred_language', $_COOKIE)) {
         App::setLocale($_COOKIE['orbit_preferred_language']);

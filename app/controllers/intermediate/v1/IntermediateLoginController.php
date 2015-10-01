@@ -8,7 +8,6 @@ use OrbitShop\API\v1\ResponseProvider;
 use MobileCI\MobileCIAPIController;
 use Net\Security\Firewall;
 use Orbit\Helper\Security\Encrypter;
-use \Cookie;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
