@@ -456,7 +456,7 @@ class SettingAPIController extends ControllerAPI
 
             if ($updateLanguageResponse->code !== 0)
             {
-                throw new \Exception($updateLanguageResponse->message, $response->code);
+                throw new \Exception($updateLanguageResponse->message, $updateLanguageResponse->code);
             }
 
 

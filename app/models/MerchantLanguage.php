@@ -24,7 +24,7 @@ class MerchantLanguage extends Eloquent
 
     public function mall()
     {
-        return $this->hasOne('Retailer', 'merchant_id', 'merchant_id');
+        return $this->hasOne('Mall', 'merchant_id', 'merchant_id');
     }
 
     public function language()

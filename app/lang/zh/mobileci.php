@@ -95,11 +95,20 @@ return array(
         'yes_button'            => '对',
         'do_not_show_label'     => '不要再显示此消息',
         'new_product_price'     => '新价格',
+        'okay'                  => 'OK',
 
         'membership_notfound'    => '会员未找到',
         'membership_want_member' => '想成为会员?',
         'membership_great_deal'  => '为了得到我们特别的优惠',
         'membership_contact_our' => '请, 联系我们的客户服务，让您的会员号码',
+
+        'enjoy_free'             => '享受免费的',
+        'unlimited'              => '无限',
+        'minutes'                => '分钟',
+        'internet'               => '互联网',
+        'check_out_our'          => '看看我们',
+        'do_not_display'         => '不要再显示此消息',
+        'and'                    => '与',
     ),
 
     //tenant catalogue
@@ -112,6 +121,7 @@ return array(
         'news'                  => '信息',
         'promotions'            => '促销',
         'see_tenants'           => '见房客',
+        'where'                 => '哪里',
     ),
 
     // page specific lang
@@ -123,7 +133,9 @@ return array(
         'click_here'        => '点击这里',
         'email_not_valid'   => '电子邮件地址无效',
         'logging_in_button' => '登录，请稍候',
-        'loading_orbit'     => '轨道加载中，请稍候...',        
+        'loading_orbit'     => '轨道加载中，请稍候...',
+        'start_button_mall' => '进入商城',
+        'register'          => '定位',
     ),
 
     'catalogue' => array(
@@ -197,7 +209,6 @@ return array(
         'tenant_redeem'                    => '租客兑换',
         'coupon_value'                     => '优惠券价值',
         'use_coupon'                       => '使用优惠券',
-        'close'                            => '亲密',
         'enter_tenant_verification_number' => '进入租户验证号码',
         'ask_our_tenant_employee'          => '（请我们的租户员工）',
         'validate'                         => '验证',
@@ -210,6 +221,9 @@ return array(
         'coupon_here_is_coupon_you'        => '优惠券。这里是优惠券，你',
         'happy_shopping'                   => '快乐购物!',
         'close'                            => '亲密',
+        'my_coupon'                        => '我的优惠券',
+        'use'                              => '采用',
+        'next_time'                        => '下一次',
     ),
 
     'coupon_list' => array(
@@ -290,9 +304,12 @@ return array(
     ),
 
     'activation' => array(
-        'activate' => '激活',
-        'close'    => '亲密',
-        'error'    => '误',
+        'activate'         => '激活',
+        'close'            => '亲密',
+        'error'            => '误',
+        'new_password'     => 'New Password',
+        'fill_password'    => 'Please Fill Password (5-20 character)',
+        'confirm_password' => 'Confirm Password',        
     ), 
         
     'lucky_draw'  => array(

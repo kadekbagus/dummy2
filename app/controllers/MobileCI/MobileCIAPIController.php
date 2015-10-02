@@ -3197,6 +3197,17 @@ class MobileCIAPIController extends ControllerAPI
                 $user = $response->data;
             }
 
+            $acq = \UserAcquisition::where('user_id', $user->user_id)
+                ->where('acquirer_id', $retailer->merchant_id)
+                ->lockForUpdate()->first();
+
+            if ($acq === null) {
+                $acq = new \UserAcquisition();
+                $acq->user_id = $user->user_id;
+                $acq->acquirer_id = $retailer->merchant_id;
+                $acq->save();
+            }
+
 
             $this->response->code = 0;
             $this->response->status = 'success';

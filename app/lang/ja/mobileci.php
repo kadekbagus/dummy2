@@ -95,11 +95,20 @@ return array(
         'yes_button'            => 'はい',
         'do_not_show_label'     => '今後このメッセージを表示しません',
         'new_product_price'     => '新価格',
+        'okay'                  => 'オーケー',
 
         'membership_notfound'    => 'メンバーが見つかりません',
         'membership_want_member' => 'メンバーになりたいです?',
         'membership_great_deal'  => '私たちから特別なお得を取得するには',
         'membership_contact_our' => 'お願いします, あなたの会員番号を得るために私達のカスタマーサービスにお問い合わせください',
+
+        'enjoy_free'             => '無料で楽しみます',
+        'unlimited'              => '無制限の',
+        'minutes'                => '分',
+        'internet'               => 'インターネット',
+        'check_out_our'          => 'チェックアウト',
+        'do_not_display'         => '今後このメッセージを表示しません',
+        'and'                    => 'アンド',
     ),
 
     //tenant catalogue
@@ -112,6 +121,7 @@ return array(
         'news'                  => '報道',
         'promotions'            => 'プロモーション',
         'see_tenants'           => 'テナントを参照してください.',
+        'where'                 => '何処',
     ),
 
     // page specific lang
@@ -123,7 +133,9 @@ return array(
         'click_here'        => 'ここをクリック',
         'email_not_valid'   => 'メールアドレスが有効ではありません',
         'logging_in_button' => 'ログインしています.しばらくお待ちください...',
-        'loading_orbit'     => 'オービットをロードすると、待機してください...',        
+        'loading_orbit'     => 'オービットをロードすると、待機してください...',
+        'start_button_mall' => 'モールを入力してください',
+        'register'          => '登録',
     ),
 
     'catalogue' => array(
@@ -197,7 +209,6 @@ return array(
         'tenant_redeem'                    => 'テナントで引換',
         'coupon_value'                     => 'クーポン値',
         'use_coupon'                       => '利用クーポン',
-        'close'                            => 'クローズ',
         'enter_tenant_verification_number' => 'テナント検証番号を入力してください',
         'ask_our_tenant_employee'          => '（当社のテナントの従業員を依頼）',
         'validate'                         => '検証',
@@ -210,6 +221,9 @@ return array(
         'coupon_here_is_coupon_you'        => 'クーポン.ここではクーポンはあります',
         'happy_shopping'                   => '幸せなショッピング！',
         'close'                            => 'クローズ',
+        'my_coupon'                        => 'マイクーポン',
+        'use'                              => '使用',
+        'next_time'                        => '次回',        
     ),
 
     'coupon_list' => array(
@@ -290,9 +304,12 @@ return array(
     ),
 
     'activation'  => array(
-        'activate' => 'アクティブ化',
-        'close'    => 'クローズ',
-        'error'    => 'エラー',
+        'activate'         => 'アクティブ化',
+        'close'            => 'クローズ',
+        'error'            => 'エラー',
+        'new_password'     => '新しいパスワード',
+        'fill_password'    => 'パスワード（5-20文字）を入力してください',
+        'confirm_password' => 'パスワードを認証する',
     ), 
      
     'lucky_draw' => array(

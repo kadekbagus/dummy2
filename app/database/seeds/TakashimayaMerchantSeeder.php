@@ -30,7 +30,7 @@ class TakashimayaMerchantSeeder extends Seeder {
         $retailerUserData = [
             'user_id'           => 3,
             'username'          => 'takashimayasc',
-            'user_email'        => 'takashimaya@myorbit.com',
+            'user_email'        => 'takashimayasc@myorbit.com',
             'user_password'     => Hash::make($passwordRetailer),
             'user_firstname'    => 'Takashimaya',
             'user_lastname'     => 'Mall',

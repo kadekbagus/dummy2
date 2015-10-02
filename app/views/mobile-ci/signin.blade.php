@@ -108,7 +108,7 @@
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="myModalLabel">Error</h4>
+                <h4 class="modal-title" id="myModalLabel">{{ Lang::get('mobileci.activation.error') }}</h4>
             </div>
             <div class="modal-body">
                 <p id="errorModalText"></p>
