@@ -25,7 +25,7 @@ class CreateUserAcquisitionsTable extends Migration
             $table->encodedId('user_id');
             $table->encodedId('acquirer_id'); // mall (on mall) / merchant (on shop)
             $table->primary('user_acquisition_id');
-            $table->index(['user_id', 'acquirer_id'], 'user_acquirer_idx');
+            $table->unique(['user_id', 'acquirer_id']);
             $table->timestamps();
         });
     }
