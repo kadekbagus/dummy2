@@ -103,6 +103,18 @@ return array(
         'membership_contact_our' => 'Please, contact our customer service to get your membership number',
     ),
 
+    //tenant catalogue
+    'tenant' => array(
+        'floor'                 => 'Floor',
+        'category'              => 'Category',
+        'all'                   => 'All',
+        'check_our_new_promo'   => 'Check out our new promotions coming soon',
+        'check_our_latest_news' => 'Check out our latest news coming soon',
+        'news'                  => 'News',
+        'promotions'            => 'Promotions',
+        'see_tenants'           => 'See Tenants',
+    ),
+
     // page specific lang
     'signin' => array(
         'email_placeholder' => 'Insert your email address',
@@ -187,7 +199,6 @@ return array(
         'tenant_redeem'                    => 'Tenant Redeem',
         'coupon_value'                     => 'Coupon Value',
         'use_coupon'                       => 'Use Coupon',
-        'close'                            => 'Close',
         'enter_tenant_verification_number' => 'Enter Tenant Verification Number',
         'ask_our_tenant_employee'          => '(Ask our tenant employee)',
         'validate'                         => 'Validate',
@@ -280,9 +291,12 @@ return array(
     ),
 
     'activation'  => array(
-        'activate' => 'Activate',
-        'close'    => 'Close',
-        'error'    => 'Error',
+        'activate'         => 'Activate',
+        'close'            => 'Close',
+        'error'            => 'Error',
+        'new_password'     => 'New Password',
+        'fill_password'    => 'Please Fill Password (5-20 character)',
+        'confirm_password' => 'Confirm Password',
     ),
 
     'lucky_draw'  => array(

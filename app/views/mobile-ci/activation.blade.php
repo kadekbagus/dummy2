@@ -30,10 +30,10 @@
         <form name="loginForm" id="loginForm">
             <input type="hidden" name="token" id="token" value="{{ Input::get('token') }}">
             <div class="form-group">
-                <input type="password" class="form-control" name="password" id="password" placeholder="Password Baru" pattern=".{5,}" required title="Harap isi password (5-20 karakter)"/>
+                <input type="password" class="form-control" name="password" id="password" placeholder="{{ Lang::get('mobileci.activation.new_password') }}" pattern=".{5,}" required title="Harap isi password (5-20 karakter)"/>
             </div>
             <div class="form-group">
-                <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="Konfirmasi Password" required title="Harap isi password (5-20 karakter)"/>
+                <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="{{ Lang::get('mobileci.activation.confirm_password') }}" required title="{{ Lang::get('mobileci.activation.fill_password') }}"/>
             </div>
             <div class="form-group">
                 <button type="submit" class="btn btn-success btn-block">{{ Lang::get('mobileci.activation.activate') }}</button>
@@ -49,7 +49,7 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.activation.close') }}</span></button>
                 <h4 class="modal-title" id="myModalLabel">{{ Lang::get('mobileci.activation.error') }}</h4>
             </div>
             <div class="modal-body">
