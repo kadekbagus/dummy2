@@ -1190,6 +1190,9 @@ class TenantAPIController extends ControllerAPI
      */
     public function getSearchTenant()
     {
+        // flag for limit the query result
+        // TODO : should be change in the future
+        $limit = FALSE;
         try {
             $httpCode = 200;
 
@@ -1216,6 +1219,14 @@ class TenantAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+
+            // TODO : change this into something else
+            $limited = OrbitInput::get('limited');
+
+            if ($limited === 'yes') {
+                $limit = TRUE;
+            }
+
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,
@@ -1257,8 +1268,15 @@ class TenantAPIController extends ControllerAPI
             }
 
             // Builder object
-            $tenants = Tenant::select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
+            // if flag limit is true then show only merchant_id and name to make the frontend life easier
+            // TODO : remove this with something like is_all_retailer just like on orbit-shop
+            if ($limit) {
+                 $tenants = Tenant::select('merchant_id', 'name')
                                  ->excludeDeleted('merchants');
+            } else {
+                $tenants = Tenant::select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
+                                 ->excludeDeleted('merchants');
+            }           
 
             // Filter tenant by Ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($tenants)
@@ -1610,30 +1628,36 @@ class TenantAPIController extends ControllerAPI
             // skip, and order by
             $_tenants = clone $tenants;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            // if limit is true show all records
+            // TODO : replace this with something else in the future
+            if (!$limit) {
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $tenants->take($take);
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-            $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $tenants)
-            {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $tenants->take($take);
 
-                $skip = $_skip;
-            });
-            $tenants->skip($skip);
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $tenants)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                });
+                $tenants->skip($skip);
+
+            }
 
             // Default sort by
             $sortBy = 'merchants.name';
