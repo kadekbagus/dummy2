@@ -133,6 +133,7 @@ return array(
             'news_name'              => 'The news name has already been used.',
             'mall_have_tenant'       => 'The mall has one or more tenants linked to it, so it cannot be deleted.',
             'mallgroup_have_mall'    => 'The mall group has one or more mall linked to it, so it cannot be deleted.',
+            'tenant_id'    => 'The tenant id has already exists.',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action.',
