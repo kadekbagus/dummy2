@@ -538,10 +538,13 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
-            // For login page
-            $expireTime = time() + 3600 * 24 * 365 * 5;
-            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
-            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);
+            if ($user->role->role_name === 'Consumer') {
+                // For login page
+                $expireTime = time() + 3600 * 24 * 365 * 5;
+
+                setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
+                setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);
+            }
 
             // Successfull login
             $activity->setUser($user)
