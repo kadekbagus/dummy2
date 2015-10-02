@@ -35,7 +35,7 @@ class Coupon extends Eloquent
 
     public function mall()
     {
-        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall();
+        return $this->belongsTo('Mall', 'merchant_id', 'merchant_id')->isMall();
     }
 
     public function creator()
@@ -50,7 +50,7 @@ class Coupon extends Eloquent
 
     public function tenants()
     {
-        return $this->belongsToMany('Retailer', 'promotion_retailer', 'promotion_id', 'retailer_id');
+        return $this->belongsToMany('Tenant', 'promotion_retailer', 'promotion_id', 'retailer_id');
     }
 
     public function issuedCoupons()
