@@ -1446,6 +1446,23 @@ class MobileCIAPIController extends ControllerAPI
 
             $languages = $this->getListLanguages($retailer);
 
+            // cek if any language active
+            if (!empty($alternate_language) && !empty($tenant)) {
+                    $merchant_translation = \MerchantTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('merchant_id', $tenant->merchant_id)->first();
+
+                if (!empty($merchant_translation)) {
+                    foreach (['merchant_name', 'description'] as $field) {
+                        if (isset($merchant_translation->{$field})) {
+                            $tenant->{$field} = $merchant_translation->{$field};
+                        }
+                    }
+
+                }
+            }
+
+
             if (! empty($promo_id)) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $tenant->merchant_id . ', promotion ID: '. $promo_id);
                 $activityPage->setUser($user)
