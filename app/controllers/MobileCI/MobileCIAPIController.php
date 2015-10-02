@@ -94,6 +94,7 @@ class MobileCIAPIController extends ControllerAPI
                             'role',
                             function ($query) {
                                 $query->where('role_name', 'Consumer');
+                                $query->orWhere('role_name', 'Guest');
                             }
                         )->sharedLock()
                         ->first();
