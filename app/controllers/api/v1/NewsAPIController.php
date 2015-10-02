@@ -122,7 +122,7 @@ class NewsAPIController extends ControllerAPI
                         'retailer_id'   => $retailer_id_check,
                     ),
                     array(
-                        'retailer_id'   => 'orbit.empty.retailer',
+                        'retailer_id'   => 'orbit.empty.tenant',
                     )
                 );
 
@@ -511,7 +511,7 @@ class NewsAPIController extends ControllerAPI
                             'merchant_id'   => $retailer_id_check,
                         ),
                         array(
-                            'merchant_id'   => 'orbit.empty.retailer',
+                            'merchant_id'   => 'orbit.empty.tenant',
                         )
                     );
 
@@ -1581,17 +1581,17 @@ class NewsAPIController extends ControllerAPI
             return $valid;
         });
 
-        // Check the existance of retailer id
-        Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Mall::excludeDeleted()
+        // Check the existance of tenant id
+        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
+            $tenant = Tenant::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
-            if (empty($retailer)) {
+            if (empty($tenant)) {
                 return FALSE;
             }
 
-            App::instance('orbit.empty.retailer', $retailer);
+            App::instance('orbit.empty.tenant', $tenant);
 
             return TRUE;
         });
