@@ -89,21 +89,6 @@
 @section('modals')
 <!-- Modal -->
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <div class="modal fade" id="hasCouponModal" tabindex="-1" role="dialog" aria-labelledby="hasCouponLabel" aria-hidden="true">
     <div class="modal-spinner text-center">
         <i class="fa fa-circle-o-notch fa-spin"></i>

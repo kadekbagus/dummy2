@@ -96,11 +96,19 @@ return array(
         'do_not_show_label'      => 'Do not show this message again',
         'new_product_price'      => 'New price',
         'okay'                   => 'OK',
-
+        
         'membership_notfound'    => 'Membership Not Found',
         'membership_want_member' => 'Want to be a member?',
         'membership_great_deal'  => 'To get special great deals from us',
         'membership_contact_our' => 'Please, contact our customer service to get your membership number',
+        
+        'enjoy_free'             => 'ENJOY FREE',
+        'unlimited'              => 'UNLIMITED',
+        'minutes'                => 'MINUTES',
+        'internet'               => 'INTERNET',
+        'check_out_our'          => 'CHECK OUT OUR',
+        'do_not_display'         => 'Do not display this message again',
+        'and'                    => 'AND',
     ),
 
     //tenant catalogue
@@ -113,6 +121,7 @@ return array(
         'news'                  => 'News',
         'promotions'            => 'Promotions',
         'see_tenants'           => 'See Tenants',
+        'where'                 => 'WHERE',
     ),
 
     // page specific lang
@@ -125,7 +134,8 @@ return array(
         'email_not_valid'   => 'Email address is not valid',
         'logging_in_button' => 'Logging in. Please wait...',
         'loading_orbit'     => 'Loading Orbit, please wait...',
-        'start_button_mall' => 'Enter Mall'
+        'start_button_mall' => 'Enter Mall',
+        'register'          => 'Daftar',
     ),
 
     'catalogue' => array(
@@ -211,6 +221,9 @@ return array(
         'coupon_here_is_coupon_you'        => 'coupon. Here is a coupon you',
         'happy_shopping'                   => 'Happy shopping!',
         'close'                            => 'Close',
+        'my_coupon'                        => 'My Coupon',
+        'use'                              => 'Use',
+        'next_time'                        => 'Next time',
     ),
 
     'coupon_list' => array(
@@ -244,13 +257,13 @@ return array(
         'retailer'                 => 'Retailer',
     ),
 
-    'transfer_cart'         => array(
+    'transfer_cart' => array(
         'transfer_message'  => 'To complete the transfer cart, show the following barcode to the cashier.',
         'done_button'       => 'Done',
         'back_button'       => 'Back',
     ),
 
-    'payment'               => array(
+    'payment' => array(
         'total_to_pay_label'      => 'Total',
         'name_label'              => 'Name',
         'name_placeholder'        => 'Enter your name',
@@ -273,19 +286,19 @@ return array(
     ),
 
     'inbox' => array(
-        'lucky_draw'        => array(
+        'lucky_draw' => array(
             'subject'       => 'You Got New Lucky Draw Number(s)',
         ),
-        'coupon'            => array(
+        'coupon' => array(
             'subject'       => 'You Got New Coupon(s)'
         ),
     ),
 
     'inbox' => array(
-        'lucky_draw'        => array(
+        'lucky_draw' => array(
             'subject'       => 'You Got New Lucky Draw Number(s)',
         ),
-        'coupon'            => array(
+        'coupon' => array(
             'subject'       => 'You Got New Coupon(s)'
         ),
     ),

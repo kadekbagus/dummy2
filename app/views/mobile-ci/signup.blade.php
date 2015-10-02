@@ -34,7 +34,7 @@
                 <input type="text" class="form-control" name="email" id="email" value="{{ $email }}"/>
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-success btn-block">Daftar</button>
+                <button type="submit" class="btn btn-success btn-block">{{ Lang::get('mobileci.signin.register') }}</button>
             </div>
         </form>
     </div>
@@ -60,14 +60,14 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="myModalLabel">Error</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.activation.close') }}</span></button>
+                <h4 class="modal-title" id="myModalLabel">{{ Lang::get('mobileci.activation.error') }}</h4>
             </div>
             <div class="modal-body">
                 <p id="errorModalText"></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.activation.close') }}</button>
             </div>
         </div>
     </div>

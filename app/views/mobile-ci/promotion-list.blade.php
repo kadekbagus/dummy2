@@ -87,15 +87,15 @@
                 <div class="row">
                     <div class="col-xs-12 text-center">
                         <p style="font-size:15px;">
-                            <b>ENJOY FREE</b>
+                            <b>{{ Lang::get('mobileci.modals.enjoy_free') }}</b>
                             <br>
-                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">UNLIMITED</span>
+                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">{{ Lang::get('mobileci.modals.unlimited') }}</span>
                             <br>
-                            <b>INTERNET</b>
+                            <b>{{ Lang::get('mobileci.modals.internet') }}</b>
                             <br><br>
-                            <b>CHECK OUT OUR</b>
+                            <b>{{ Lang::get('mobileci.modals.check_out_our') }}</b>
                             <br>
-                            <b><span style="color:#0aa5d5;">PROMOTIONS</span> AND <span style="color:#0aa5d5;">COUPONS</span></b>
+                            <b><span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.promotion') }}</span> {{ Lang::get('mobileci.page_title.and') }} <span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.coupon_single') }}</span></b>
                         </p>
                     </div>
                 </div>
@@ -112,7 +112,7 @@
                     </div>
                     <div class="col-xs-12 text-left">
                         <p>
-                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck"> <span>Do not display this message again</span>
+                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck"> <span>{{ Lang::get('mobileci.modals.do_not_display') }}</span>
                         </p>
                     </div>
                 </div>
