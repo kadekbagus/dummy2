@@ -13,7 +13,34 @@
 
 App::before(function($request)
 {
-    //
+    $allowedRoutes = ['api/v1/agreement', 'app/v1/agreement'];
+
+    // If: request route is agreement then allowed
+    // else: check agreement setting
+    if (! in_array($request->path(), $allowedRoutes)) {
+
+        // set mall id
+        $mallId = App::make('orbitSetting')->getSetting('current_retailer');
+
+        // Builder object
+        $settings = Setting::excludeDeleted()
+                           ->where('object_type', 'merchant')
+                           ->where('object_id', $mallId)
+                           ->where('setting_name', 'agreement')
+                           ->where('status', 'active')
+                           ->first();
+
+        if (empty($settings)) {
+            $agreement = 'no';
+        } else {
+            $agreement = $settings->setting_value;
+        }
+
+        if ($agreement !== 'yes') {
+            return DummyAPIController::create()->unsupported();
+        }
+
+    }
 });
 
 
@@ -145,7 +172,7 @@ Route::filter('orbit-settings', function()
 | Check luckydraw routes based on database setting
 |--------------------------------------------------------------------------
 */
-Route::filter('check-routes-luckydraw', function() 
+Route::filter('check-routes-luckydraw', function()
 {
     $retailer = Retailer::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 

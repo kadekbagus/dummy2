@@ -552,6 +552,13 @@ class UserAPIController extends ControllerAPI
             $avg_monthly_spent2 = OrbitInput::post('avg_monthly_spent2');
             $personal_interests = OrbitInput::post('personal_interests');
 
+            $idcard = OrbitInput::post('idcard_number');
+            $mobile = OrbitInput::post('mobile_phone');
+            $mobile2 = OrbitInput::post('mobile_phone2');
+            $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
+            $workphone = OrbitInput::post('work_phone');
 
             $validate_data = array(
                 'user_id'               => $user_id,
@@ -591,16 +598,16 @@ class UserAPIController extends ControllerAPI
                 'status'                => 'orbit.empty.user_status',
 
                 'firstname'             => 'required',
-                'lastname'              => 'required',
+                // 'lastname'              => 'required',
 
-                'birthdate'             => 'required|date_format:Y-m-d',
-                'gender'                => 'required|in:m,f',
-                'address_line1'         => 'required',
-                'city'                  => 'required',
-                'province'              => 'required',
-                'postal_code'           => 'required',
-                'country'               => 'required',
-                'phone'                 => 'required',
+                'birthdate'             => 'date_format:Y-m-d',
+                'gender'                => 'in:m,f',
+                // 'address_line1'         => 'required',
+                // 'city'                  => 'required',
+                // 'province'              => 'required',
+                // 'postal_code'           => 'required',
+                // 'country'               => 'required',
+                // 'phone'                 => 'required',
                 'relationship_status'   => 'in:none,single,in a relationship,engaged,married,divorced,widowed',
                 'number_of_children'    => 'numeric|min:0',
                 'education_level'       => 'in:none,junior high school,high school,diploma,bachelor,master,ph.d,doctor,other',
@@ -679,9 +686,12 @@ class UserAPIController extends ControllerAPI
                 $updateduser->user_lastname = $lastname;
             });
 
-            OrbitInput::post('status', function($status) use ($updateduser) {
-                $updateduser->status = $status;
-            });
+            // User cannot update their own status
+            if ((string)$user->user_id !== (string)$updateduser->user_id) {
+                OrbitInput::post('status', function($status) use ($updateduser) {
+                    $updateduser->status = $status;
+                });
+            }
 
             OrbitInput::post('role_id', function($role_id) use ($updateduser) {
                 $updateduser->user_role_id = $role_id;
@@ -783,15 +793,105 @@ class UserAPIController extends ControllerAPI
                 $updateduser->userdetail->company_name = $company;
             });
 
-            OrbitInput::post('personal_interests', function($interests) use ($updateduser) {
-                $updateduser->interests()->sync($interests);
+            // OrbitInput::post('personal_interests', function($interests) use ($updateduser) {
+            //     $updateduser->interests()->sync($interests);
+            // });
+
+            // additions
+            OrbitInput::post('mobile_phone', function($phone) use ($updateduser) {
+                $updateduser->userdetail->phone = $phone;
             });
 
-            // Flag for deleting all personal interests which belongs to this user
+            OrbitInput::post('mobile_phone2', function($phone3) use ($updateduser) {
+                $updateduser->userdetail->phone3 = $phone3;
+            });
+
+            OrbitInput::post('work_phone', function($phone) use ($updateduser) {
+                $updateduser->userdetail->phone2 = $phone;
+            });
+
+            OrbitInput::post('idcard', function($data) use ($updateduser) {
+                $updateduser->userdetail->idcard = $data;
+            });
+
+            OrbitInput::post('idcard_number', function($data) use ($updateduser) {
+                $updateduser->userdetail->idcard = $data;
+            });
+
+            OrbitInput::post('phone', function($phone) use ($updateduser) {
+                $updateduser->userdetail->phone = $phone;
+            });
+
+            OrbitInput::post('phone2', function($phone2) use ($updateduser) {
+                $updateduser->userdetail->phone2 = $phone2;
+            });
+
+            OrbitInput::post('phone3', function($phone3) use ($updateduser) {
+                $updateduser->userdetail->phone3 = $phone3;
+            });
+
+
+            // // Flag for deleting all personal interests which belongs to this user
+            // OrbitInput::post('personal_interests_delete_all', function($delete) use ($updateduser) {
+            //     if ($delete === 'yes') {
+            //         $updateduser->interests()->detach();
+            //     }
+            // });
+
+            // save user categories
             OrbitInput::post('personal_interests_delete_all', function($delete) use ($updateduser) {
-                if ($delete === 'yes') {
-                    $updateduser->interests()->detach();
+                if ($delete == 'yes') {
+                    $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
+                                                                ->where('object_type', 'interest')
+                                                                ->get(array('personal_interest_id'))
+                                                                ->toArray();
+                    $updateduser->interests()->detach($deleted_category_ids);
+                    $updateduser->load('interests');
                 }
+            });
+
+            OrbitInput::post('personal_interests', function($category_ids) use ($updateduser) {
+                // validate category_ids
+                $category_ids = (array) $category_ids;
+                foreach ($category_ids as $category_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'category_id'   => $category_id_check,
+                        ),
+                        array(
+                            'category_id'   => 'numeric',
+                        )
+                    );
+
+                    Event::fire('orbit.user.postupdateuser.before.categoryvalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.user.postupdateuser.after.categoryvalidation', array($this, $validator));
+                }
+                // sync new set of category ids
+                $pivotData = array_fill(0, count($category_ids), ['object_type' => 'interest']);
+                $syncData = array_combine($category_ids, $pivotData);
+
+                $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
+                                                            ->where('object_type', 'interest')
+                                                            ->get(array('personal_interest_id'))
+                                                            ->toArray();
+
+                // detach old relation
+                if (sizeof($deleted_category_ids) > 0) {
+                    $updateduser->interests()->detach($deleted_category_ids);
+                }
+
+                // attach new relation
+                $updateduser->interests()->attach($syncData);
+
+                // reload interests relation
+                $updateduser->load('interests');
             });
 
             $updateduser->modified_by = $this->api->user->user_id;
@@ -949,6 +1049,8 @@ class UserAPIController extends ControllerAPI
      * @param integer  `take`                  (optional) - limit
      * @param integer  `skip`                  (optional) - limit offset
      * @param array    `with`                  (optional) -
+     * @param datetime      `created_begin_date`        (optional) - Created begin date. Example: 2015-05-12 00:00:00
+     * @param datetime      `created_end_date`          (optional) - Created end date. Example: 2014-05-12 23:59:59
      * @return Illuminate\Support\Facades\Response
      */
 
@@ -1042,7 +1144,7 @@ class UserAPIController extends ControllerAPI
                         ->select('users.*')
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                        ->with(array('userDetail', 'userDetail.lastVisitedShop'))
+                        ->with(array('userDetail', 'interestsShop', 'userDetail.lastVisitedShop'))
                         ->excludeDeleted('users');
 
             // Filter user by Ids
@@ -1093,6 +1195,18 @@ class UserAPIController extends ControllerAPI
             // Filter user by their role id
             OrbitInput::get('role_id', function ($roleId) use ($users) {
                 $users->whereIn('users.user_role_id', $roleId);
+            });
+
+            // Filter user by created_at for begin_date
+            OrbitInput::get('created_begin_date', function($begindate) use ($users)
+            {
+                $users->where('users.created_at', '>=', $begindate);
+            });
+
+            // Filter user by created_at for end_date
+            OrbitInput::get('created_end_date', function($enddate) use ($users)
+            {
+                $users->where('users.created_at', '<=', $enddate);
             });
 
             // Filter user by their role id
@@ -1221,6 +1335,7 @@ class UserAPIController extends ControllerAPI
     /**
      * GET - Search Consumer (currently only basic info)
      *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
      * @author Kadek Bagus <kadek@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
      *
@@ -1243,6 +1358,10 @@ class UserAPIController extends ControllerAPI
      * @param integer       `take`              (optional) - limit
      * @param integer       `skip`              (optional) - limit offset
      * @param integer       `details`           (optional) - Include detailed issued coupon and lucky draw number
+     * @param datetime      `created_begin_date`        (optional) - Created begin date. Example: 2015-05-12 00:00:00
+     * @param datetime      `created_end_date`          (optional) - Created end date. Example: 2014-05-12 23:59:59
+     * @param datetime      `last_visit_begin_date`     (optional) - Last visit begin date. Example: 2015-05-12 00:00:00
+     * @param datetime      `last_visit_end_date`       (optional) - Last visit end date. Example: 2015-05-12 23:59:59
      * @return Illuminate\Support\Facades\Response
      */
     public function getConsumerListing()
@@ -1290,7 +1409,7 @@ class UserAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,membership_since,created_at,updated_at',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1373,16 +1492,18 @@ class UserAPIController extends ControllerAPI
             });
 
             if ($user->isRoleName('consumer')) {
-                // Filter user by Ids
-                OrbitInput::get('user_id', function ($userIds) use ($users, $user) {
-                    $users->whereIn('users.user_id', $user->user_id);
-                });
+                $users->whereIn('users.user_id', (array)$user->user_id);
             } else {
                 // Filter user by Ids
                 OrbitInput::get('user_id', function ($userIds) use ($users) {
                     $users->whereIn('users.user_id', $userIds);
                 });
             }
+
+            // Filter user by external_user_id
+            OrbitInput::get('external_user_id', function ($data) use ($users) {
+                $users->whereIn('users.external_user_id', $data);
+            });
 
             // Filter user by username
             OrbitInput::get('username', function ($username) use ($users) {
@@ -1397,6 +1518,11 @@ class UserAPIController extends ControllerAPI
             // Filter user by their firstname
             OrbitInput::get('firstname', function ($firstname) use ($users) {
                 $users->whereIn('users.user_firstname', $firstname);
+            });
+
+            // Filter retailer by name_like (first_name last_name)
+            OrbitInput::get('name_like', function($data) use ($users) {
+                $users->where(DB::raw('CONCAT(user_firstname, " ", user_lastname)'), 'like', "%$data%");
             });
 
             // Filter user by their firstname pattern
@@ -1419,19 +1545,124 @@ class UserAPIController extends ControllerAPI
                 $users->whereIn('users.user_email', $email);
             });
 
-            // Filter user by their email
-            OrbitInput::get('membership_number_like', function ($membershipnumber) use ($users) {
-                $users->where('users.membership_number', 'like', "%$membershipnumber%");
-            });
-
             // Filter user by their email pattern
             OrbitInput::get('email_like', function ($email) use ($users) {
                 $users->where('users.user_email', 'like', "%$email%");
             });
 
+            // Filter user by gender
+            OrbitInput::get('gender', function ($gender) use ($users) {
+                $users->whereHas('userdetail', function ($q) use ($gender) {
+                    $q->whereIn('gender', $gender);
+                });
+            });
+
+            // Filter user by membership number
+            OrbitInput::get('membership_number', function ($data) use ($users) {
+                $users->whereIn('users.membership_number', $data);
+            });
+
+            // Filter user by membership number
+            OrbitInput::get('membership_number_like', function ($membershipnumber) use ($users) {
+                $users->where('users.membership_number', 'like', "%$membershipnumber%");
+            });
+
+            // Filter user by created_at for begin_date
+            OrbitInput::get('created_begin_date', function($begindate) use ($users)
+            {
+                $users->where('users.created_at', '>=', $begindate);
+            });
+
+            // Filter user by created_at for end_date
+            OrbitInput::get('created_end_date', function($enddate) use ($users)
+            {
+                $users->where('users.created_at', '<=', $enddate);
+            });
+
             // Filter user by their status
             OrbitInput::get('status', function ($status) use ($users) {
                 $users->whereIn('users.status', $status);
+            });
+
+            // Filter user by created_at from date
+            OrbitInput::get('created_at_from', function ($from) use ($users)
+            {
+                $users->where('users.created_at', '>=', $from);
+            });
+
+            // Filter user by created_at to date
+            OrbitInput::get('created_at_to', function ($to) use ($users)
+            {
+                $users->where('users.created_at', '<=', $to);
+            });
+
+            // Filter user by updated_at from date
+            OrbitInput::get('updated_at_from', function ($from) use ($users)
+            {
+                $users->where('users.updated_at', '>=', $from);
+            });
+
+            // Filter user by updated_at to date
+            OrbitInput::get('updated_at_to', function ($to) use ($users)
+            {
+                $users->where('users.updated_at', '<=', $to);
+            });
+
+            // Filter user by membership number
+            OrbitInput::get('is_member', function ($isMember) use ($users)
+            {
+                if ($isMember === 'yes') {
+                    $users->where('users.membership_number', '!=', '');
+                } elseif ($isMember === 'no') {
+                    $users->where(function ($q) {
+                        $q->where('users.membership_number', '=', '')
+                          ->orWhereNull('users.membership_number');
+                    });
+                }
+            });
+
+            // Filter by created_at date
+            OrbitInput::get('created_at_after', function($data) use ($users) {
+                $users->where('users.created_at', '>=', $data);
+            });
+
+            // Filter by created_at date
+            OrbitInput::get('created_at_before', function($data) use ($users) {
+                $users->where('users.created_at', '<=', $data);
+            });
+
+            // Filter by updated_at date
+            OrbitInput::get('updated_at_after', function($data) use ($users) {
+                $users->where('users.updated_at', '>=', $data);
+            });
+
+            // Filter by updated_at date
+            OrbitInput::get('updated_at_before', function($data) use ($users) {
+                $users->where('users.updated_at', '<=', $data);
+            });
+
+            // Filter user by last_visit_begin_date
+            OrbitInput::get('last_visit_begin_date', function($begindate) use ($users)
+            {
+                $users->whereHas('userdetail', function ($q) use ($begindate) {
+                    $q->where('last_visit_any_shop', '>=', $begindate);
+                });
+            });
+
+            // Filter user by last_visit_end_date
+            OrbitInput::get('last_visit_end_date', function($enddate) use ($users)
+            {
+                $users->whereHas('userdetail', function ($q) use ($enddate) {
+                    $q->where('last_visit_any_shop', '<=', $enddate);
+                });
+            });
+
+            // Filter user by idcard
+            OrbitInput::get('idcard', function($data) use ($users)
+            {
+                $users->whereHas('userdetail', function ($q) use ($data) {
+                    $q->whereIn('idcard', $data);
+                });
             });
 
             // Clone the query builder which still does not include the take,

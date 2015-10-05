@@ -27,7 +27,10 @@ return array(
         'search_limit' => 300,
 
         // Notification polling interval, in seconds.
-        'poll_interval' => 8
+        'poll_interval' => 8,
+
+        // config to validate if membership number have to be unique or not
+        'membership_number_unique_check' => false
     ),
 
     // General contact data
@@ -180,6 +183,18 @@ return array(
 
         // Lucky Draw
         'lucky_draw' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Lucky Draw Number Receipt
+        'lucky_draw_number_receipt' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Lucky Draw Number
+        'lucky_draw_number' => array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
@@ -1498,8 +1513,8 @@ return array(
                 'crop'          => array(
                     // Profile name
                     'default' => array(
-                        'width'     => 100,
-                        'height'    => 100,
+                        'width'     => 500,
+                        'height'    => 500,
                     )
                 ),
 

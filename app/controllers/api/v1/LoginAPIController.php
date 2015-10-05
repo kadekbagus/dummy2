@@ -157,6 +157,20 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Login Mall Consumer
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginCustomer()
+    {
+        return $this->postLoginRole(['Consumer']);
+    }
+
+    /**
      * POST - Logout user
      *
      * @author Tian <tian@dominopos.com>
@@ -232,6 +246,7 @@ class LoginAPIController extends ControllerAPI
             $newuser->status = 'pending';
             $newuser->user_role_id = $customerRole->role_id;
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
+            $newuser->external_user_id = 0;
 
             $newuser->save();
 
@@ -254,49 +269,6 @@ class LoginAPIController extends ControllerAPI
             $newuser->setRelation('apikey', $apikey);
             $newuser->apikey = $apikey;
 
-            // Token expiration, fallback to 30 days
-            $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
-
-            // Token Settings
-            $token = new Token();
-            $token->token_name = 'user_registration_mobile';
-            $token->token_value = $token->generateToken($email);
-            $token->status = 'active';
-            $token->email = $email;
-            $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
-            $token->ip_address = $_SERVER['REMOTE_ADDR'];
-            $token->user_id = $newuser->user_id;
-            $token->save();
-
-            // URL Activation link
-            $baseUrl = Config::get('orbit.registration.mobile.activation_base_url');
-            $tokenUrl = sprintf($baseUrl, $token->token_value);
-            $contactInfo = Config::get('orbit.contact_information.customer_service');
-
-            $data = array(
-                'token'             => $token->token_value,
-                'email'             => $email,
-                'token_url'         => $tokenUrl,
-                'shop_name'         => $retailer->name,
-                'cs_phone'          => $contactInfo['phone'],
-                'cs_email'          => $contactInfo['email'],
-                'cs_office_hour'    => $contactInfo['office_hour']
-            );
-            $mailviews = array(
-                'html' => 'emails.registration.activation-html',
-                'text' => 'emails.registration.activation-text'
-            );
-            Mail::send($mailviews, $data, function($message)
-            {
-                $emailconf = Config::get('orbit.registration.mobile.sender');
-                $from = $emailconf['email'];
-                $name = $emailconf['name'];
-
-                $email = OrbitInput::post('email');
-                $message->from($from, $name)->subject('You are almost in Orbit!');
-                $message->to($email);
-            });
-
             $this->response->data = $newuser;
 
             // Commit the changes
@@ -310,6 +282,11 @@ class LoginAPIController extends ControllerAPI
                      ->setActivityNameLong('Sign Up')
                      ->setModuleName('Application')
                      ->responseOK();
+
+            // Send email process to the queue
+            Queue::push('Orbit\\Queue\\RegistrationMail', [
+                'user_id' => $newuser->user_id
+            ]);
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -615,7 +592,7 @@ class LoginAPIController extends ControllerAPI
                         ->first();
 
             if (! is_object($user)) {
-                $message = Lang::get('validation.orbit.access.loginfailed');
+                $message = Lang::get('validation.orbit.access.inactiveuser');
                 ACL::throwAccessForbidden($message);
             }
 

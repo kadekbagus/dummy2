@@ -1135,6 +1135,345 @@ class EventAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * GET - Search Event - List By Retailer
+     *
+     * @author Tian <tian@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string   `sortby`                (optional) - column order by. Valid value: retailer_name, registered_date, event_name, event_type, description, begin_date, end_date, is_permanent, status.
+     * @param string   `sortmode`              (optional) - asc or desc
+     * @param integer  `take`                  (optional) - limit
+     * @param integer  `skip`                  (optional) - limit offset
+     * @param integer  `event_id`              (optional) - Event ID
+     * @param integer  `merchant_id`           (optional) - Merchant ID
+     * @param string   `event_name`            (optional) - Event name
+     * @param string   `event_name_like`       (optional) - Event name like
+     * @param string   `event_type`            (optional) - Event type. Valid value: informative, link.
+     * @param string   `description`           (optional) - Description
+     * @param string   `description_like`      (optional) - Description like
+     * @param datetime `begin_date`            (optional) - Begin date. Example: 2015-1-31 13:00:00
+     * @param datetime `end_date`              (optional) - End date. Example: 2015-1-31 13:00:00
+     * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
+     * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param string   `link_object_type`      (optional) - Link object type. Valid value: product, family, promotion, widget.
+     * @param integer  `link_object_id1`       (optional) - Link object ID1 (product_id or category_id1 or promotion_id or widget_id).
+     * @param integer  `link_object_id2`       (optional) - Link object ID2 (category_id2).
+     * @param integer  `link_object_id3`       (optional) - Link object ID3 (category_id3).
+     * @param integer  `link_object_id4`       (optional) - Link object ID4 (category_id4).
+     * @param integer  `link_object_id5`       (optional) - Link object ID5 (category_id5).
+     * @param string   `widget_object_type`    (optional) - Widget object type.
+     * @param string   `city`                  (optional) - City name
+     * @param string   `city_like`             (optional) - City name like
+     * @param integer  `retailer_id`           (optional) - Retailer IDs
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getSearchEventByRetailer()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.event.getsearcheventbyretailer.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.event.getsearcheventbyretailer.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.event.getsearcheventbyretailer.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('view_event')) {
+                Event::fire('orbit.event.getsearcheventbyretailer.authz.notallowed', array($this, $user));
+                $viewEventLang = Lang::get('validation.orbit.actionlist.view_event');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewEventLang));
+                ACL::throwAccessForbidden($message);
+            }
+            Event::fire('orbit.event.getsearcheventbyretailer.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sortby');
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:retailer_name,registered_date,event_name,event_type,description,begin_date,end_date,is_permanent,status',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.event_by_retailer_sortby'),
+                )
+            );
+
+            Event::fire('orbit.event.getsearcheventbyretailer.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.event.getsearcheventbyretailer.after.validation', array($this, $validator));
+
+            // Get the maximum record
+            $maxRecord = (int)Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 20;
+            }
+
+            // Builder object
+            $events = DB::table('events')
+                ->join('merchants', 'events.merchant_id', '=', 'merchants.merchant_id')
+                ->select('merchants.name AS retailer_name', 'events.*')
+                // ->where('events.status', '!=', 'deleted');
+                ->where('events.status', '=', 'active');
+
+            // Filter event by Ids
+            OrbitInput::get('event_id', function($eventIds) use ($events)
+            {
+                $events->whereIn('events.event_id', $eventIds);
+            });
+
+            // Filter event by merchant Ids
+            OrbitInput::get('merchant_id', function ($merchantIds) use ($events) {
+                $events->whereIn('events.merchant_id', $merchantIds);
+            });
+
+            // Filter event by event name
+            OrbitInput::get('event_name', function($eventname) use ($events)
+            {
+                $events->whereIn('events.event_name', $eventname);
+            });
+
+            // Filter event by matching event name pattern
+            OrbitInput::get('event_name_like', function($eventname) use ($events)
+            {
+                $events->where('events.event_name', 'like', "%$eventname%");
+            });
+
+            // Filter event by event type
+            OrbitInput::get('event_type', function($eventTypes) use ($events)
+            {
+                $events->whereIn('events.event_type', $eventTypes);
+            });
+
+            // Filter event by description
+            OrbitInput::get('description', function($description) use ($events)
+            {
+                $events->whereIn('events.description', $description);
+            });
+
+            // Filter event by matching description pattern
+            OrbitInput::get('description_like', function($description) use ($events)
+            {
+                $events->where('events.description', 'like', "%$description%");
+            });
+
+            // Filter event by begin date
+            OrbitInput::get('begin_date', function($begindate) use ($events)
+            {
+                $events->where('events.begin_date', '<=', $begindate);
+            });
+
+            // Filter event by end date
+            OrbitInput::get('end_date', function($enddate) use ($events)
+            {
+                $events->where('events.end_date', '>=', $enddate);
+            });
+
+            // Filter event by is permanent
+            OrbitInput::get('is_permanent', function ($ispermanent) use ($events) {
+                $events->whereIn('events.is_permanent', $ispermanent);
+            });
+
+            // Filter event by status
+            OrbitInput::get('status', function ($statuses) use ($events) {
+                $events->whereIn('events.status', $statuses);
+            });
+
+            // Filter event by link object type
+            OrbitInput::get('link_object_type', function ($linkObjectTypes) use ($events) {
+                $events->whereIn('events.link_object_type', $linkObjectTypes);
+            });
+
+            // Filter event by link object id1
+            OrbitInput::get('link_object_id1', function ($linkObjectId1s) use ($events) {
+                $events->whereIn('events.link_object_id1', $linkObjectId1s);
+            });
+
+            // Filter event by link object id2
+            OrbitInput::get('link_object_id2', function ($linkObjectId2s) use ($events) {
+                $events->whereIn('events.link_object_id2', $linkObjectId2s);
+            });
+
+            // Filter event by link object id3
+            OrbitInput::get('link_object_id3', function ($linkObjectId3s) use ($events) {
+                $events->whereIn('events.link_object_id3', $linkObjectId3s);
+            });
+
+            // Filter event by link object id4
+            OrbitInput::get('link_object_id4', function ($linkObjectId4s) use ($events) {
+                $events->whereIn('events.link_object_id4', $linkObjectId4s);
+            });
+
+            // Filter event by link object id5
+            OrbitInput::get('link_object_id5', function ($linkObjectId5s) use ($events) {
+                $events->whereIn('events.link_object_id5', $linkObjectId5s);
+            });
+
+            // Filter event by widget object type
+            OrbitInput::get('widget_object_type', function ($widgetObjectTypes) use ($events) {
+                $events->whereIn('events.widget_object_type', $widgetObjectTypes);
+            });
+
+            // Filter event by city
+            OrbitInput::get('city', function($city) use ($events)
+            {
+                $events->whereIn('merchants.city', $city);
+            });
+
+            // Filter event by matching city pattern
+            OrbitInput::get('city_like', function($city) use ($events)
+            {
+                $events->where('merchants.city', 'like', "%$city%");
+            });
+
+            // Filter event by retailer Ids
+            OrbitInput::get('retailer_id', function ($retailerIds) use ($events) {
+                $events->whereIn('event_retailer.retailer_id', $retailerIds);
+            });
+
+            // Clone the query builder which still does not include the take,
+            // skip, and order by
+            $_events = clone $events;
+
+            // Get the take args
+            if (trim(OrbitInput::get('take')) === '') {
+                $take = $maxRecord;
+            } else {
+                OrbitInput::get('take', function($_take) use (&$take, $maxRecord)
+                {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                });
+            }
+            if ($take > 0) {
+                $events->take($take);
+            }
+
+            $skip = 0;
+            OrbitInput::get('skip', function($_skip) use (&$skip, $events)
+            {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            });
+            if (($take > 0) && ($skip > 0)) {
+                $events->skip($skip);
+            }
+
+            // Default sort by
+            $sortBy = 'retailer_name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'retailer_name'     => 'retailer_name',
+                    'registered_date'   => 'events.created_at',
+                    'event_name'        => 'events.event_name',
+                    'event_type'        => 'events.event_type',
+                    'description'       => 'events.description',
+                    'begin_date'        => 'events.begin_date',
+                    'end_date'          => 'events.end_date',
+                    'is_permanent'      => 'events.is_permanent',
+                    'status'            => 'events.status'
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $events->orderBy($sortBy, $sortMode);
+
+            $totalEvents = $_events->count();
+            $listOfEvents = $events->get();
+
+            $data = new stdclass();
+            $data->total_records = $totalEvents;
+            $data->returned_records = count($listOfEvents);
+            $data->records = $listOfEvents;
+
+            if ($totalEvents === 0) {
+                $data->records = NULL;
+                $this->response->message = Lang::get('statuses.orbit.nodata.event');
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.event.getsearcheventbyretailer.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.event.getsearcheventbyretailer.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.event.getsearcheventbyretailer.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.event.getsearcheventbyretailer.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.event.getsearcheventbyretailer.before.render', array($this, &$output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         // Check the existance of event id

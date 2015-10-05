@@ -13,7 +13,7 @@ class User extends Eloquent implements UserInterface
 
     protected $table = 'users';
 
-    protected $hidden = array('user_password');
+    protected $hidden = array('user_password', 'apikey', 'api_key');
 
     public function role()
     {
@@ -56,6 +56,12 @@ class User extends Eloquent implements UserInterface
     }
 
     public function interests()
+    {
+        return $this->belongsToMany('PersonalInterest', 'user_personal_interest', 'user_id', 'personal_interest_id')
+                    ->where('object_type', 'interest');
+    }
+
+    public function interestsShop()
     {
         return $this->belongsToMany('PersonalInterest', 'user_personal_interest', 'user_id', 'personal_interest_id')
                     ->where('object_type', 'interest');

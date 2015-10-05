@@ -105,7 +105,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">CRM Data List</h2>
+    <h2 style="margin-bottom:0.5em;">CRM Analytics</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -128,6 +128,7 @@
             <th style="text-align:left;">Action</th>
             <th style="text-align:left;">Tenant</th>
             <th style="text-align:left;">News</th>
+            <th style="text-align:left;">Events</th>
             <th style="text-align:left;">Promotions</th>
             <th style="text-align:left;">Coupons</th>
         </thead>
@@ -141,6 +142,7 @@
                 <td><?php echo ($row->activity_name_long); ?></td>
                 <td><?php echo $me->printUtf8($row->retailer_name); ?></td>
                 <td><?php echo $me->printUtf8($row->news_name); ?></td>
+                <td><?php echo $me->printUtf8($row->event_name); ?></td>
                 <td><?php echo $me->printUtf8($row->promotion_news_name); ?></td>
                 <td><?php echo $me->printUtf8($row->coupon_name); ?></td>
             </tr>

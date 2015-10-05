@@ -22,3 +22,17 @@ Route::post('/app/v1/mall-setting/update', 'IntermediateAuthController@Setting_p
  * List/Search mall setting
  */
 Route::get('/app/v1/mall-setting/list', 'IntermediateAuthController@Setting_getSearchMallSetting');
+
+Route::group(['before' => 'orbit-settings'], function() {
+
+    /**
+     * Get agreement setting
+     */
+    Route::get('/app/v1/agreement', ['as' => 'get-app-agreement', 'uses' => 'IntermediateLoginController@Setting_getAgreement']);
+
+    /**
+     * Create/update agreement setting
+     */
+    Route::post('/app/v1/agreement', ['as' => 'post-app-agreement', 'uses' => 'IntermediateLoginController@Setting_postUpdateAgreement']);
+
+});

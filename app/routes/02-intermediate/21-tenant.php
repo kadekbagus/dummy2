@@ -6,7 +6,7 @@
 /**
  * Create new tenant
  */
-Route::post('/app/v1/tenant/new', 'IntermediateAuthController@Tenant_postNewTenant');
+Route::post('/app/v1/tenant/new', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@Tenant_postNewTenant']);
 
 /**
  * Delete tenant

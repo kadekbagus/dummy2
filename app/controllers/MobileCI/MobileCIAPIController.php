@@ -54,6 +54,7 @@ use Orbit\Helper\Security\Encrypter;
 use Redirect;
 use Cookie;
 use \Inbox;
+use Event;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -271,6 +272,9 @@ class MobileCIAPIController extends ControllerAPI
 
             $this->commit();
 
+            // @param: Controller, User, Mall/Retailer
+            Event::fire('orbit.postlogininshop.login.done', [$this, $user, $retailer]);
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -400,6 +404,31 @@ class MobileCIAPIController extends ControllerAPI
                 ->groupBy('widget_type')
                 ->take(5)
                 ->get();
+
+            $widget_singles = new stdclass();
+            $widget_singles->tenant = NULL;
+            $widget_singles->promotion = NULL;
+            $widget_singles->news = NULL;
+            $widget_singles->coupon = NULL;
+            $widget_singles->luckydraw = NULL;
+
+            foreach ($widgets as $widget) {
+                if ($widget->widget_type == 'tenant') {
+                    $widget_singles->tenant = $widget;
+                }
+                if ($widget->widget_type == 'promotion') {
+                    $widget_singles->promotion = $widget;
+                }
+                if ($widget->widget_type == 'news') {
+                    $widget_singles->news = $widget;
+                }
+                if ($widget->widget_type == 'coupon') {
+                    $widget_singles->coupon = $widget;
+                }
+                if ($widget->widget_type == 'lucky_draw') {
+                    $widget_singles->luckydraw = $widget;
+                }
+            }
 
             $widget_flags = new stdclass();
             $widget_flags->enable_coupon = $this->getObjFromArray($retailer->settings, 'enable_coupon');
@@ -2287,14 +2316,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            $view_data = array(
-                'page_title' => Lang::get('mobileci.page_title.promotions'),
-                'retailer' => $retailer,
-                'data' => $data,
-                'cartitems' => $cartitems,
-                'active_user' => ($user->status === 'active'),
-            );
-            return View::make('mobile-ci.promotion-list', $view_data);
+            return View::make('mobile-ci.promotion-list', array('page_title' => Lang::get('mobileci.page_title.promotions'), 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems));
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
             $activityPage->setUser($user)
@@ -6220,7 +6242,6 @@ class MobileCIAPIController extends ControllerAPI
             $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
             $config->setConfig('session_origin.query_string.name', 'orbit_session');
             $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
-
             $this->session = new Session($config);
             $this->session->start();
         }
@@ -7726,7 +7747,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.tenant-list', array('retailer' => $retailer, 'data' => $data, 'subfamilies' => $subfamilies, 'cartitems' => $cartitems));
+            return View::make('mobile-ci.tenant-list', array('user' => $user, 'retailer' => $retailer, 'data' => $data, 'subfamilies' => $subfamilies, 'cartitems' => $cartitems));
 
         } catch (Exception $e) {
             $activityCategoryNotes = sprintf('Category viewed: %s', $family_id);
@@ -7804,6 +7825,8 @@ class MobileCIAPIController extends ControllerAPI
             if ($maxRecord <= 0) {
                 $maxRecord = 300;
             }
+
+            $floorList = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->groupBy('floor')->orderBy('floor')->lists('floor');
 
             $products = Retailer::with('mediaLogo', 'categories')
                 ->whereHas('categories', function($q) {
@@ -8037,6 +8060,7 @@ class MobileCIAPIController extends ControllerAPI
                 'cartitems' => $cartitems,
                 'categories' => $categories,
                 'active_user' => ($user->status === 'active'),
+                'floorList' => $floorList
             );
             return View::make('mobile-ci.catalogue-tenant', $view_data);
 
@@ -8127,7 +8151,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'retailer' => $retailer, 'product' => $product));
+            return View::make('mobile-ci.tenant', array('page_title' => strtoupper($product->name), 'user' => $user, 'retailer' => $retailer, 'product' => $product));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Detail Page, tenant ID: ' . $product_id);
@@ -8167,10 +8191,28 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
             $luckydraw = LuckyDraw::active()->where('mall_id', $retailer->merchant_id)->first();
 
+            if (empty($luckydraw)) {
+                return View::make('mobile-ci.luckydraw', [
+                                'page_title'    => 'LUCKY DRAW',
+                                'user'          => $user,
+                                'retailer'      => $retailer,
+                                'luckydraw'     => null,
+                                'numbers'       => [],
+                                'total_number'  => null,
+                                'prev_url'      => null,
+                                'next_url'      => null,
+                                'total_pages'   => null,
+                                'current_page'  => null,
+                                'per_page'      => null,
+                                'servertime'    => null,
+                ]);
+            }
+
             // Pass information to the API
             $_GET['user_id'] = $user->user_id;
             $_GET['apikey'] = $user->apikey->api_key;
             $_GET['apitimestamp'] = time();
+            $_GET['lucky_draw_id'] = (array) $luckydraw->lucky_draw_id;
 
             $currentPage = (int)OrbitInput::get('page', 1);
             $take = 100;
@@ -8225,6 +8267,7 @@ class MobileCIAPIController extends ControllerAPI
 
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
+                                'user'          => $user,
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
                                 'numbers'       => $numbers,
@@ -8346,7 +8389,7 @@ class MobileCIAPIController extends ControllerAPI
             $coupons = DB::select(
                 DB::raw(
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y"
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                 WHERE ic.expired_date >= "' . Carbon::now(). '"
                     AND p.merchant_id = :merchantid
@@ -8510,7 +8553,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'cso_exists' => $cso_exists));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'cso_exists' => $cso_exists));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -8614,6 +8657,7 @@ class MobileCIAPIController extends ControllerAPI
                 'page_title' => $pagetitle,
                 'retailer' => $retailer,
                 'data' => $data,
+                'user' => $user,
                 'active_user' => ($user->status === 'active'),
             );
             return View::make('mobile-ci.mall-promotion-list', $view_data);
@@ -8677,7 +8721,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons, 'user' => $user));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
@@ -8780,6 +8824,7 @@ class MobileCIAPIController extends ControllerAPI
                 'page_title'=>$pagetitle,
                 'retailer' => $retailer,
                 'data' => $data,
+                'user' => $user,
                 'active_user' => ($user->status === 'active'),
             );
 
@@ -8844,7 +8889,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons, 'user' => $user));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);

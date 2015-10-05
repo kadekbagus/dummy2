@@ -73,7 +73,7 @@ class MerchantDataSeeder extends Seeder
         $this->command->info('    Create retailer record on user_details.');
 
         // Record for apikeys table
-        $merchantUser->createApiKey();
+        $retailerUser->createApiKey();
 
         // Data for merchant
         $merchantData = [
