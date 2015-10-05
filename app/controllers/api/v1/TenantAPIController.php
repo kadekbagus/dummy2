@@ -2299,26 +2299,28 @@ class TenantAPIController extends ControllerAPI
      */
     private function validateAndSaveLinkToTenant($tenant, $tenant_id)
     {
-        $validator = Validator::make(
-            array(
-                'tenant_id'     => $tenant_id,
-            ),
-            array(
-                'tenant_id'     => 'orbit.exists.tenant_id',
-            )
-        );
-
-        Event::fire('orbit.tenant.before.retailertenantvalidation', array($this, $validator));
-
-        if ($validator->fails()) {
-            $errorMessage = $validator->messages()->first();
-            OrbitShopAPI::throwInvalidArgument($errorMessage);
-        }
-
-        Event::fire('orbit.tenant.after.retailertenantvalidation', array($this, $validator));
-
         $retailertenant = RetailerTenant::where('retailer_id', $tenant->merchant_id)
                 ->first();
+
+        if ($retailertenant->tenant_id !== $tenant_id) {
+            $validator = Validator::make(
+                array(
+                    'tenant_id'     => $tenant_id,
+                ),
+                array(
+                    'tenant_id'     => 'orbit.exists.tenant_id',
+                )
+            );
+
+            Event::fire('orbit.tenant.before.retailertenantvalidation', array($this, $validator));
+
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            Event::fire('orbit.tenant.after.retailertenantvalidation', array($this, $validator));
+        }
 
         if (! empty($retailertenant)) {
             $retailertenant->tenant_id = $tenant_id;
