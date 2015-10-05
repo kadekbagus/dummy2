@@ -230,6 +230,8 @@ return array(
     'File_ASN1' => $vendorDir . '/phpseclib/phpseclib/phpseclib/File/ASN1.php',
     'File_ASN1_Element' => $vendorDir . '/phpseclib/phpseclib/phpseclib/File/ASN1.php',
     'File_X509' => $vendorDir . '/phpseclib/phpseclib/phpseclib/File/X509.php',
+    'FixMerchantLocationId' => $baseDir . '/app/database/migrations/2015_10_05_061005_fix_merchant_location_id.php',
+    'FixRetailerTenantIds' => $baseDir . '/app/database/migrations/2015_10_05_061004_fix_retailer_tenant_ids.php',
     'Helper\\EloquentRecordCounter' => $baseDir . '/app/models/Helper/EloquentRecordCounter.php',
     'HomeController' => $baseDir . '/app/controllers/HomeController.php',
     'IlluminateQueueClosure' => $vendorDir . '/laravel/framework/src/Illuminate/Queue/IlluminateQueueClosure.php',
