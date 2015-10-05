@@ -8,7 +8,7 @@ class TakashimayaGuestSeeder extends Seeder
 {
     public function run()
     {
-        $role = Role::where('role_name', 'Guest')->first();
+        $role = Role::where('role_name', 'Guest')->firstOrFail();
 
         $this->command->info('Seeding users, user_details, and apikeys table...');
 
