@@ -53,6 +53,12 @@ class Retailer extends Eloquent
         return $this->merchant();
     }
 
+    public function merchant_as_parent()
+    {
+        return $this->merchant()
+                    ->select('merchant_id', 'name');
+    }
+
     /**
      * A Retailer has many and belongs to an employee
      */
