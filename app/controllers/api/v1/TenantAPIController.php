@@ -516,8 +516,6 @@ class TenantAPIController extends ControllerAPI
 
             $newtenant->save();
 
-
-            // add validation id_language_default for translation
             // save merchant categories
             $categoryMerchants = array();
             foreach ($category_ids as $category_id) {
@@ -529,9 +527,16 @@ class TenantAPIController extends ControllerAPI
             }
             $newtenant->categories = $categoryMerchants;
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            // save RetailerTenant - link to tenant
+            OrbitInput::post('tenant_id', function($tenant_id) use ($newtenant) {
+                $this->validateAndSaveLinkToTenant($newtenant, $tenant_id);
+            });
+
             Event::fire('orbit.tenant.postnewtenant.after.save', array($this, $newtenant));
 
             // @author Irianto Pratama <irianto@dominopos.com>
+            // save default_translation
             $default_translation = [
                 $id_language_default => [
                     'description' => $newtenant->description
@@ -947,6 +952,12 @@ class TenantAPIController extends ControllerAPI
 
             OrbitInput::post('box_url', function($box_url) use ($updatedtenant) {
                 $updatedtenant->box_url = $box_url;
+            });
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            // save RetailerTenant - link to tenant
+            OrbitInput::post('tenant_id', function($tenant_id) use ($updatedtenant) {
+                $this->validateAndSaveLinkToTenant($updatedtenant, $tenant_id);
             });
 
             // @author Irianto Pratama <irianto@dominopos.com>
@@ -2063,6 +2074,20 @@ class TenantAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        // @author Irianto Pratama <irianto@dominopos.com>
+        // Check if tenant_id is not exist.
+        Validator::extend('orbit.exists.tenant_id', function ($attribute, $value, $parameters) {
+            $retailertenant = RetailerTenant::where('tenant_id', $value)
+                            ->first();
+            if (! empty($retailertenant)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.exists.tenant_id', $retailertenant);
+
+            return TRUE;
+        });
     }
 
     /**
@@ -2263,4 +2288,45 @@ class TenantAPIController extends ControllerAPI
         }
     }
 
+    /**
+     * @param Retailer $tenant
+     * @param string $tenant_id
+     * @throws InvalidArgsException
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     */
+    private function validateAndSaveLinkToTenant($tenant, $tenant_id)
+    {
+        $validator = Validator::make(
+            array(
+                'tenant_id'     => $tenant_id,
+            ),
+            array(
+                'tenant_id'     => 'orbit.exists.tenant_id',
+            )
+        );
+
+        Event::fire('orbit.tenant.before.retailertenantvalidation', array($this, $validator));
+
+        if ($validator->fails()) {
+            $errorMessage = $validator->messages()->first();
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
+
+        Event::fire('orbit.tenant.after.retailertenantvalidation', array($this, $validator));
+
+        $retailertenant = RetailerTenant::where('retailer_id', $tenant->merchant_id)
+                ->first();
+
+        if (! empty($retailertenant)) {
+            $retailertenant->tenant_id = $tenant_id;
+            $retailertenant->save();
+        } else {
+            $retailertenant = new RetailerTenant();
+            $retailertenant->retailer_id = $tenant->merchant_id;
+            $retailertenant->tenant_id = $tenant_id;
+            $retailertenant->save();
+        }
+        $tenant->setRelation('link_to_tenant', $retailertenant);
+    }
 }
