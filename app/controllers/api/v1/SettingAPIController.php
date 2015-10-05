@@ -307,6 +307,8 @@ class SettingAPIController extends ControllerAPI
 
             // Catch the supported language for mall
             $supportedMallLanguageIds = OrbitInput::post('mall_supported_language_ids');
+            // $language_ids = OrbitInput::post('language_id');
+
 
 
             $validator = Validator::make(
@@ -447,16 +449,58 @@ class SettingAPIController extends ControllerAPI
                 $startButtonSetting->save();
             });
 
-            // Update mall supported language by calling dedicated controller
-            // Simulate post data that required by controller
-            $_POST['merchant_id'] = $mall->merchant_id;
-            $_POST['language_id'] = $supportedMallLanguageIds;
-            $updateLanguageResponse = LanguageAPIController::create('raw')
-                                                          ->postAddMerchantLanguage();
 
-            if ($updateLanguageResponse->code !== 0)
-            {
-                throw new \Exception($updateLanguageResponse->message, $updateLanguageResponse->code);
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $mall->merchant_id,
+                    'language_id'   => $supportedMallLanguageIds,
+                ),
+                array(
+                    'merchant_id'   => 'required|orbit.empty.merchant',
+                    'language_id'   => 'required',
+                )
+            );
+
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            foreach ($supportedMallLanguageIds as $language_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'language_id'   => $language_id_check,
+                    ),
+                    array(
+                        'language_id'   => 'required|orbit.empty.language',
+                    )
+                );
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+            Event::fire('orbit.news.postlanguage.before.validation', array($this, $validator));
+
+            $merchant = App::make('orbit.empty.merchant');
+            $language = App::make('orbit.empty.language');
+
+            // delete all merchant for handling update data before save
+            $merchantLanguageExisting = MerchantLanguage::where('merchant_id', $mall->merchant_id);
+            $merchantLanguageExisting->delete();
+
+            // save all language
+            $data_merchant_language = NULL;
+            foreach ($supportedMallLanguageIds as $key => $value) {
+                $merchant_language = new MerchantLanguage();
+                $merchant_language->merchant_id = $mall->merchant_id;
+                $merchant_language->language_id = $value;
+                $merchant_language->language_id = $value;
+                $merchant_language->save();
+                $data_merchant_language[$key] = $merchant_language;
             }
 
 
@@ -464,7 +508,8 @@ class SettingAPIController extends ControllerAPI
                 'landing_page'      => $landingPageSetting,
                 'background'        => $backgroundSetting,
                 'mall'              => $mall,
-                'start_button'      => $startButtonSetting
+                'start_button'      => $startButtonSetting,
+                'merchant_language' => $data_merchant_language
             ];
 
             // Commit the changes
@@ -1068,8 +1113,7 @@ class SettingAPIController extends ControllerAPI
         // @Todo: Refactor by adding allowedForUser for mall
         $user = $this->api->user;
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
-            $merchant = Mall::excludeDeleted()
-                        ->isMall('yes')
+            $merchant = Mall::excludeDeleted()                        
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1081,5 +1125,34 @@ class SettingAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+
+        // $user = $this->api->user;
+        Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
+            $merchant = Mall::excludeDeleted()
+                /* ->allowedForUser($user) */
+                ->where('merchant_id', $value)
+                /* ->where('is_mall', 'yes') */
+                ->first();
+
+            if (empty($merchant)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.merchant', $merchant);
+
+            return true;
+        });
+
+
+        Validator::extend('orbit.empty.language', function ($attribute, $value, $parameters) {
+            $language = Language::where('language_id', $value)->first();
+            if (empty($language)) {
+                return false;
+            }
+            App::instance('orbit.empty.language', $language);
+            return true;
+        });
+
     }
 }

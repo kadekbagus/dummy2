@@ -24,10 +24,18 @@ class LanguageAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-
             $this->checkAuth();
-            $all_languages = Language::all();
+
+            $status = Input::get('status');
+
+            if($status != ""){
+                $all_languages = Language::where('status', '=', $status)->get();
+            } else{
+                $all_languages = Language::all();
+            }
+
             $count = count($all_languages);
+
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = $count;
@@ -147,201 +155,6 @@ class LanguageAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
-    }
-
-    /**
-     * Adds a language to a merchant and returns it. Does not create if already exists.
-     *
-     * Parameters: merchant_id, language_id (global language id)
-     *
-     * Possible errors: no such merchant, no such language
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function postAddMerchantLanguage()
-    {
-        $activity = Activity::portal()
-            ->setActivityType('create');
-        $user = NULL;
-        $merchant = NULL;
-
-        $httpCode = 200;
-
-        try {
-
-            $this->checkAuth();
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-
-            if (! ACL::create($user)->isAllowed('update_mall')) {
-                $updateMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateMerchantLang));
-                ACL::throwAccessForbidden($message);
-            }
-
-            $this->registerCustomValidation();
-            $merchant_id = OrbitInput::post('merchant_id');
-            $language_ids = OrbitInput::post('language_id');
-
-            $validator = Validator::make(
-                array(
-                    'merchant_id'   => $merchant_id,
-                    'language_id'   => $language_ids,
-                ),
-                array(
-                    'merchant_id'   => 'required|orbit.empty.merchant',
-                    'language_id'   => 'required',
-                )
-            );
-
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            foreach ($language_ids as $language_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'language_id'   => $language_id_check,
-                    ),
-                    array(
-                        'language_id'   => 'required|orbit.empty.language',
-                    )
-                );
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
-
-            Event::fire('orbit.news.postlanguage.before.validation', array($this, $validator));
-
-            $merchant = App::make('orbit.empty.merchant');
-            $language = App::make('orbit.empty.language');
-
-            // delete all merchant for handling update data before save
-            $merchant_language_existing = MerchantLanguage::where('merchant_id', $merchant->merchant_id);
-            $merchant_language_existing->delete();
-
-            // save all language
-            foreach ($language_ids as $key => $value) {
-                $merchant_language = new MerchantLanguage();
-                $merchant_language->merchant_id = $merchant_id;
-                $merchant_language->language_id = $value;
-                $merchant_language->language_id = $value;
-                $merchant_language->save();
-            }
-
-            $this->response->data = $merchant_language;
-
-            if($this->response->code === 0){
-                $merchant_languages = MerchantLanguage::excludeDeleted()->where('merchant_id', '=',$merchant_id)->with('language')->get();
-                $count = count($merchant_languages);
-                $this->response->data = new stdClass();
-                $this->response->data->total_records = $count;
-                $this->response->data->returned_records = $count;
-                $this->response->data->records = $merchant_languages;
-            }else{
-                $this->response->data = $merchant_language;
-            }
-
-            $activityNotes = sprintf('Merchant updated: %s - added language %s', $merchant->name, $language->name);
-            $activity->setUser($user)
-                ->setActivityName('add_merchant_language')
-                ->setActivityNameLong('Add Merchant Language OK')
-                ->setObject($merchant_language)
-                ->setNotes($activityNotes)
-                ->responseOK();
-
-        } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.merchant.postupdatemerchant.access.forbidden', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Failed Update
-            $activity->setUser($user)
-                ->setActivityName('add_merchant_language')
-                ->setActivityNameLong('Add Merchant Language Failed')
-                ->setNotes($e->getMessage())
-                ->responseFailed();
-        } catch
-        (InvalidArgsException $e) {
-            Event::fire('orbit.merchant.postupdatemerchant.invalid.arguments', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Failed Update
-            $activity->setUser($user)
-                ->setActivityName('add_merchant_language')
-                ->setActivityNameLong('Add Merchant Language Failed')
-                ->setNotes($e->getMessage())
-                ->responseFailed();
-        } catch (QueryException $e) {
-            Event::fire('orbit.merchant.postupdatemerchant.query.error', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Failed Update
-            $activity->setUser($user)
-                ->setActivityName('add_merchant_language')
-                ->setActivityNameLong('Add Merchant Language Failed')
-                ->setNotes($e->getMessage())
-                ->responseFailed();
-        } catch (Exception $e) {
-            $httpCode = 500;
-            Event::fire('orbit.merchant.postupdatemerchant.general.exception', array($this, $e));
-
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Failed Update
-            $activity->setUser($user)
-                ->setActivityName('add_merchant_language')
-                ->setActivityNameLong('Add Merchant Language Failed')
-                ->setNotes($e->getMessage())
-                ->responseFailed();
-        }
-
-        // Save activity
-        $activity->save();
-
-        return $this->render($httpCode);
     }
 
     /**

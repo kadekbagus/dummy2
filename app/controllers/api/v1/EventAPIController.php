@@ -1636,9 +1636,8 @@ class EventAPIController extends ControllerAPI
             $link_object_type = trim($parameters[0]);
 
             if ($link_object_type === 'retailer') {
-                $linkObject = Mall::excludeDeleted()
+                $linkObject = Tenant::excludeDeleted()
                             ->where('merchant_id', $value)
-                            ->where('is_mall', 'no')
                             ->first();
             } elseif ($link_object_type === 'retailer_category') {
                 $linkObject = Category::excludeDeleted()
