@@ -1554,8 +1554,9 @@ class LuckyDrawAPIController extends ControllerAPI
                                         //           DB::raw("'deleted' and ({$prefix}lucky_draw_numbers.user_id is not null and {$prefix}lucky_draw_numbers.user_id != 0)"));
                                         $join->on('lucky_draw_numbers.status', '=',
                                                   DB::raw("'active' and ({$prefix}lucky_draw_numbers.user_id is not null and {$prefix}lucky_draw_numbers.user_id != 0)"));
-                                        $join->on('lucky_draw_numbers.user_id', 'in', DB::raw('(' . $user->user_id . ')'));
+                                     //   $join->where('lucky_draw_numbers.user_id', 'in' , DB::raw("('$user->user_id')"));
                                     })
+                                    ->whereIn('lucky_draw_numbers.user_id', [$user->user_id])
                                     ->groupBy('lucky_draws.lucky_draw_id');
             }
 
