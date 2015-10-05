@@ -97,17 +97,17 @@ class LuckyDraw extends Eloquent
                 $query->whereRaw("{$prefix}lucky_draws.mall_id in (select er.retailer_id from {$prefix}employees e
                                  join {$prefix}employee_retailer er on er.employee_id=e.employee_id and e.user_id=? and e.status != ?)", [$user->user_id, 'deleted']);
             });
+        } else {
+            // This should be mall owner or the mall group
+            // Mall group should be able to see all lucky draws belongs to his mall group and
+            // mall owner should be able to see only lucky draws on his mall
+            $builder->where(function($query) {
+                $query->whereRaw("{$prefix}lucky_draws.mall_id in (select m.merchant_id from {$prefix}merchants m
+                                  where is_mall='yes' and m.status != 'deleted' and (m.user_id=? or m.parent_id in (
+                                  select m2.merchant_id from {$prefix}merchants m2
+                                  where m2.user_id=? and m.is_mall='yes' and m.status != ?))", [$user->user_id, $user->user_id, 'deleted']);
+            });
         }
-
-        // This should be mall owner or the mall group
-        // Mall group should be able to see all lucky draws belongs to his mall group and
-        // mall owner should be able to see only lucky draws on his mall
-        $builder->where(function($query) {
-            $query->whereRaw("{$prefix}lucky_draws.mall_id in (select m.merchant_id from {$prefix}merchants m
-                              where is_mall='yes' and m.status != 'deleted' and (m.user_id=? or m.parent_id in (
-                              select m2.merchant_id from {$prefix}merchants m2
-                              where m2.user_id=? and m.is_mall='yes' and m.status != ?))", [$user->user_id, $user->user_id, 'deleted']);
-        });
 
         return $builder;
     }
