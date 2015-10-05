@@ -18,11 +18,11 @@
                             @endif
                         </div>
                         <div class="col-xs-6">
-                            <h4>{{ $product->promotion_name }}</h4>
-                            @if (strlen($product->description) > 120)
-                            <p>{{{ substr($product->description, 0, 120) }}} [<a href="{{ url('customer/mallcoupon?id='.$product->issued_coupon_id) }}">...</a>] </p>
+                            <h4>{{ $coupon->promotion_name }}</h4>
+                            @if (strlen($coupon->description) > 120)
+                            <p>{{{ substr($coupon->description, 0, 120) }}} [<a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">...</a>] </p>
                             @else
-                            <p>{{{ $product->description }}}</p>
+                            <p>{{{ $coupon->description }}}</p>
                             @endif
                         </div>
                         <div class="col-xs-3" style="margin-top:20px">
