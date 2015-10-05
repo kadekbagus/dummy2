@@ -31,7 +31,7 @@ class TakashimayaDatabaseSeeder extends Seeder
         $this->call('TakashimayaLanguageSeeder'); // done
         $this->call('PersonalInterestTableSeeder');
         $this->call('TakashimayaCategorySeeder'); // done?
-        $this->call('SettingTableSeeder');
+        $this->call('TakashimayaSettingTableSeeder');
         $this->call('TakashimayaTenantSeeder'); // done - cs?
         $this->call('TakashimayaBankSeeder'); // done - limited number of banks
 

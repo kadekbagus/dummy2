@@ -2297,6 +2297,7 @@ return array(
     'TakashimayaDatabaseSeeder' => $baseDir . '/app/database/seeds/TakashimayaDatabaseSeeder.php',
     'TakashimayaLanguageSeeder' => $baseDir . '/app/database/seeds/TakashimayaLanguageSeeder.php',
     'TakashimayaMerchantSeeder' => $baseDir . '/app/database/seeds/TakashimayaMerchantSeeder.php',
+    'TakashimayaSettingTableSeeder' => $baseDir . '/app/database/seeds/TakashimayaSettingTableSeeder.php',
     'TakashimayaTenantSeeder' => $baseDir . '/app/database/seeds/TakashimayaTenantSeeder.php',
     'TakashimayaWidgetSettingTableSeeder' => $baseDir . '/app/database/seeds/TakashimayaWidgetSettingTableSeeder.php',
     'Tenant' => $baseDir . '/app/models/Tenant.php',
