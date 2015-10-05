@@ -1077,7 +1077,8 @@ class RetailerAPIController extends ControllerAPI
                                  ->select('merchants.*', DB::raw('m.name as merchant_name'))
                                  ->join('merchants AS m', DB::raw('m.merchant_id'), '=', 'merchants.parent_id');
 
-            // Filter retailer by name
+            // @author Irianto Pratama <irianto@dominopos.com>
+            // Filter retailer by location id
             OrbitInput::get('merchant_by_location_id', function($merchant_by_location_id) use ($retailers)
             {
                 $retailers->with('merchant_as_parent')

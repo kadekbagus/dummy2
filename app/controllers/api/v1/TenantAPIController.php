@@ -1282,12 +1282,14 @@ class TenantAPIController extends ControllerAPI
             // if flag limit is true then show only merchant_id and name to make the frontend life easier
             // TODO : remove this with something like is_all_retailer just like on orbit-shop
             if ($limit) {
-                 $tenants = Tenant::select('merchant_id', 'name')
+                $tenants = Tenant::with('link_to_tenant')
+                                 ->select('merchant_id', 'name')
                                  ->excludeDeleted('merchants');
             } else {
-                $tenants = Tenant::select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
+                $tenants = Tenant::with('link_to_tenant')
+                                 ->select('merchants.*', DB::raw('CONCAT(floor, " - ", unit) AS location'))
                                  ->excludeDeleted('merchants');
-            }           
+            }
 
             // Filter tenant by Ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($tenants)
