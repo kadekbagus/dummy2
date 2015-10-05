@@ -24,9 +24,24 @@ class OrbitMySqlSchemaGrammar extends \Illuminate\Database\Schema\Grammars\MySql
      */
     function __construct()
     {
-        // must be added in this order
-        $this->modifiers[] = "CharacterSet";
-        $this->modifiers[] = "Collation";
+        // put "CharacterSet" and "Collation" before "After"
+
+        $added = false;
+        $modifiers = $this->modifiers;
+        $this->modifiers = [];
+        foreach ($modifiers as $mod) {
+            if ($mod === 'After') {
+                $added = true;
+                // must be added in this order
+                $this->modifiers[] = "CharacterSet";
+                $this->modifiers[] = "Collation";
+            }
+            $this->modifiers[] = $mod;
+        }
+        if (!$added) {
+            $this->modifiers[] = "CharacterSet";
+            $this->modifiers[] = "Collation";
+        }
     }
 
     /**
