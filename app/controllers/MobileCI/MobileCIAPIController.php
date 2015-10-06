@@ -176,8 +176,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
-                    function ($q) {
-                        $q->where('begin_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
+                    function ($q) use ($retailer) {
+                        $q->where('begin_date', '<=', Carbon::now($retailer->timezone->timezone_offset))->where('end_date', '>=', Carbon::now($retailer->timezone->timezone_offset));
                     }
                 );
 
@@ -758,8 +758,8 @@ class MobileCIAPIController extends ControllerAPI
 
                 $coupon = Coupon::whereHas(
                     'issuedcoupons',
-                    function ($q) use ($user, $value) {
-                        $q->where('issued_coupons.user_id', $user->user_id)->where('issued_coupons.issued_coupon_id', $value)->where('expired_date', '>=', Carbon::now());
+                    function ($q) use ($user, $value, $retailer) {
+                        $q->where('issued_coupons.user_id', $user->user_id)->where('issued_coupons.issued_coupon_id', $value)->where('expired_date', '>=', Carbon::now($retailer->timezone->timezone_offset));
                     }
                 )
                 ->whereHas(
@@ -1627,7 +1627,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $numbers = empty($apiResponse->data->records) ? array() : $apiResponse->data->records;
 
-            $servertime = Carbon::now();
+            $servertime = Carbon::now($retailer->timezone->timezone_offset);
 
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
@@ -1756,7 +1756,7 @@ class MobileCIAPIController extends ControllerAPI
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now(). '"
+                WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_offset). '"
                     AND p.merchant_id = :merchantid
                     AND ic.user_id = :userid'
                 ),
@@ -1855,42 +1855,20 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
             $issued_coupon_id = trim(OrbitInput::get('id'));
 
-            // $coupons = Coupon::select(
-            //     DB::raw(
-            //         'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-            //     inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
-            //     inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-            //     WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '" AND ic.issued_coupon_id = :issuedid'
-            //     ),
-            //     array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id, 'issuedid' => $issued_coupon_id)
-            // );
-
-            $coupons = Coupon::with(array('couponRule', 'issuedCoupons' => function($q) use($issued_coupon_id, $user){
-                $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
-                $q->where('issued_coupons.user_id', $user->user_id);
-                $q->where('issued_coupons.expired_date', '>=', Carbon::now());
-                $q->where('issued_coupons.status', 'active');
-            }))
+            $coupons = Coupon::with(array(
+                'couponRule',
+                'issuedCoupons' => function($q) use ($issued_coupon_id, $user, $retailer) {
+                    $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
+                    $q->where('issued_coupons.user_id', $user->user_id);
+                    $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_offset));
+                    $q->where('issued_coupons.status', 'active');
+                })
+            )
             ->where('merchant_id', $retailer->merchant_id)
-            // ->active()
-            // ->where(function($q){
-            //     $q->where(function($q2){
-            //         $q2->where('begin_date', '<=', Carbon::now());
-            //         $q2->where('end_date', '>=',  Carbon::now());
-            //     });
-            //     $q->orWhere(function($q2){
-            //         $q2->where('begin_date', '<=', Carbon::now());
-            //         $q2->whereNull('end_date');
-            //     });
-            //     $q->orWhere(function($q2){
-            //         $q2->whereNull('begin_date');
-            //         $q2->where('end_date', '>=',  Carbon::now());
-            //     });
-            // })
-            ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user) {
+            ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user, $retailer) {
                 $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                 $q->where('issued_coupons.user_id', $user->user_id);
-                $q->where('issued_coupons.expired_date', '>=', Carbon::now());
+                $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_offset));
                 $q->where('issued_coupons.status', 'active');
             })->first();
 
@@ -2933,7 +2911,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
             $user_detail->last_visit_shop_id = $retailer->merchant_id;
-            $user_detail->last_visit_any_shop = Carbon::now();
+            $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_offset);
             $user_detail->save();
 
             $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
