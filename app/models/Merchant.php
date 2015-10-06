@@ -45,6 +45,11 @@ class Merchant extends Eloquent
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
 
+    public function timezone()
+    {
+        return $this->belongsTo('Timezone', 'timezone_id', 'timezone_id');
+    }
+
     public function retailers()
     {
         return $this->hasMany('Retailer', 'parent_id', 'merchant_id')->excludeDeleted();
