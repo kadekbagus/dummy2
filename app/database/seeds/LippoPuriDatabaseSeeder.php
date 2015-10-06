@@ -27,7 +27,10 @@ class LippoPuriDatabaseSeeder extends Seeder
         $this->call('LippoPuriBankSeeder');
         $this->call('LippoPuriWidgetSettingTableSeeder');
         $this->call('LippoPuriTenantSeeder2');
+        $this->call('LippoPuriTenantSeeder3');
+        $this->call('LippoPuriTenantSeeder4');
         $this->call('LippoPuriCSSeeder');
+        // $this->call('LippoPuriCSSeeder2');
 
         DB::connection()->getPdo()->commit();
     }
