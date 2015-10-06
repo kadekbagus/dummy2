@@ -6,8 +6,6 @@
  */
 class Timezone extends Eloquent
 {
-    use GeneratedUuidTrait;
-
     protected $primaryKey = 'timezone_id';
     protected $table = 'timezones';
 }
