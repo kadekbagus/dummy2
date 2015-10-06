@@ -44,7 +44,7 @@ class Tenant extends Eloquent
     // @author Irianto Pratama <irianto@dominopos.com>
     public function link_to_tenant()
     {
-        return $this->hasMany('RetailerTenant', 'retailer_id', 'merchant_id');
+        return $this->hasOne('RetailerTenant', 'retailer_id', 'merchant_id');
     }
 
     public function parent()
