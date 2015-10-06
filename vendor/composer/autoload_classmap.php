@@ -134,6 +134,8 @@ return array(
     'CreateTableLuckyDrawWinners' => $baseDir . '/app/database/migrations/2015_04_12_094146_create_table_lucky_draw_winners.php',
     'CreateTableLuckyDraws' => $baseDir . '/app/database/migrations/2015_04_12_085805_create_table_lucky_draws.php',
     'CreateTableMacAddresses' => $baseDir . '/app/database/migrations/2015_04_16_030911_create_table_mac_addresses.php',
+    'CreateTableMembershipNumbers' => $baseDir . '/app/database/migrations/2015_10_06_094143_create_table_membership_numbers.php',
+    'CreateTableMemberships' => $baseDir . '/app/database/migrations/2015_10_06_091502_create_table_memberships.php',
     'CreateTableMerchantLanguages' => $baseDir . '/app/database/migrations/2015_08_13_024947_create_table_merchant_languages.php',
     'CreateTableMerchantTranslations' => $baseDir . '/app/database/migrations/2015_08_13_025017_create_table_merchant_translations.php',
     'CreateTableNews' => $baseDir . '/app/database/migrations/2015_04_15_092339_create_table_news.php',
