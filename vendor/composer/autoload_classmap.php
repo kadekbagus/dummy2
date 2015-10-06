@@ -141,6 +141,7 @@ return array(
     'CreateTableObjects' => $baseDir . '/app/database/migrations/2015_04_27_102237_create_table_objects.php',
     'CreateTablePromotionTranslations' => $baseDir . '/app/database/migrations/2015_09_08_080114_create_table_promotion_translations.php',
     'CreateTableRetailerTenant' => $baseDir . '/app/database/migrations/2015_10_02_061947_create_table_retailer_tenant.php',
+    'CreateTableTimezones' => $baseDir . '/app/database/migrations/2015_10_05_085530_create_table_timezones.php',
     'CreateUserAcquisitionsTable' => $baseDir . '/app/database/migrations/2015_10_02_032052_create_user_acquisitions_table.php',
     'Crypt_AES' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/AES.php',
     'Crypt_Base' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Base.php',
