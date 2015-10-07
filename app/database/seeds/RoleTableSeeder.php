@@ -76,6 +76,11 @@ class RoleTableSeeder extends Seeder
                 'role_name'     => 'Mall Customer Service',
                 'role_order'    => 11
             ],
+            'Tenant Owner'  => [
+                'role_id'       => 12,
+                'role_name'     => 'Tenant Owner',
+                'role_order'    => 12
+            ],
         ];
 
         $this->command->info('Seeding roles table...');
