@@ -265,7 +265,8 @@ class LanguageAPIController extends ControllerAPI
                 // deleted merchant language
                 if ($value->status === 'inactive') {
                     foreach ($supported_language->merchantLanguage as $merchantLanguage) {
-                        $merchantLanguage->delete();
+                        $merchantLanguage->status = "deleted";
+                        $merchantLanguage->save();
                     }
                 }else if($value->status === 'active'){
                     foreach ($supported_language->merchantLanguage as $merchantLanguage) {
