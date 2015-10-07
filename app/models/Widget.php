@@ -86,4 +86,14 @@ class Widget extends Eloquent
                     ->join('widget_retailer', 'widget_retailer.widget_id', '=', 'widgets.widget_id')
                     ->groupBy('widgets.widget_id');
     }
+
+
+    /**
+     * A start button may have many translations.
+     */
+    public function translations()
+    {
+        return $this->hasMany('WidgetTranslation', 'widget_id', 'widget_id')->excludeDeleted();
+    }
+
 }

@@ -1417,14 +1417,31 @@ class WidgetAPIController extends ControllerAPI
                 }
                 $operations[] = ['delete', $existing_translation];
             } else {
+
+
                 foreach ($translations as $field => $value) {
+// print_r($valid_fields);
+// echo "<br>";
+// echo $field;
+// die();
                     if (!in_array($field, $valid_fields, TRUE)) {
+                        print_r($valid_fields);
+                        echo "<br>";
+                        echo $field;
+                        echo "<br>";
+                        echo "<br>";
+                        
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
                     }
                     if ($value !== null && !is_string($value)) {
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
                     }
                 }
+
+//                 echo "<pre>";
+//                 print_r($existing_translation);
+// die();
+//                 dd($existing_translation);
                 if (empty($existing_translation)) {
                     $operations[] = ['create', $merchant_language_id, $translations];
                 } else {
