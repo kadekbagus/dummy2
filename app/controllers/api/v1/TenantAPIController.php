@@ -331,7 +331,10 @@ class TenantAPIController extends ControllerAPI
 
             $password = OrbitInput::post('password');
             $user_id = OrbitInput::post('user_id');
-            $email = OrbitInput::post('email');
+
+            // tenants do not have emails, but email is required in merchants table so cannot simply be null
+            $email = '';
+
             $name = OrbitInput::post('name');
             $description = OrbitInput::post('description');
             $address_line1 = OrbitInput::post('address_line1');
@@ -447,28 +450,6 @@ class TenantAPIController extends ControllerAPI
 
             Event::fire('orbit.tenant.postnewtenant.after.validation', array($this, $validator));
 
-            $roleTenant = Role::where('role_name', 'tenant owner')->first();
-            if (empty($roleTenant)) {
-                OrbitShopAPI::throwInvalidArgument('Could not find role named "Tenant Owner".');
-            }
-
-            $newuser = new User();
-            $newuser->username = $email;
-            $newuser->user_email = $email;
-            OrbitInput::post('password', function ($password) use ($newuser) {
-                $newuser->user_password = Hash::make($password);
-            });
-            $newuser->status = $status;
-            $newuser->user_role_id = $roleTenant->role_id;
-            $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
-            $newuser->modified_by = $user->user_id;
-            $newuser->save();
-
-            $newuser->createAPiKey();
-
-            $userdetail = new UserDetail();
-            $userdetail = $newuser->userdetail()->save($userdetail);
-
             $countryName = '';
             $countryObject = Country::find($country);
             if (is_object($countryObject)) {
@@ -476,7 +457,6 @@ class TenantAPIController extends ControllerAPI
             }
 
             $newtenant = new Tenant();
-            $newtenant->user_id = $newuser->user_id;
             $newtenant->omid = '';
             $newtenant->orid = '';
             $newtenant->email = $email;
