@@ -873,7 +873,7 @@ class SettingAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mallId = OrbitInput::post('merchant_id');
+            $mallId = OrbitInput::get('merchant_id');
 
             $validator = Validator::make(
                 array(
