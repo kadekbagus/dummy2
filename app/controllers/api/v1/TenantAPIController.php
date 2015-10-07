@@ -408,7 +408,7 @@ class TenantAPIController extends ControllerAPI
                     'box_url'              => 'orbit.formaterror.url.web',
                     'external_object_id'   => 'required',
                     'status'               => 'orbit.empty.tenant_status',
-                    'parent_id'            => 'orbit.empty.mall',
+                    'parent_id'            => 'required|orbit.empty.mall',
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
                     'id_language_default' => 'required|orbit.empty.language_default',
