@@ -693,15 +693,21 @@ class EventAPIController extends ControllerAPI
 
             $event_id = OrbitInput::post('event_id');
             $password = OrbitInput::post('password');
+            $mall_id = OrbitInput::post('merchant_id');
 
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $mall_id,
                     'event_id' => $event_id,
                     'password' => $password,
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'event_id' => 'required|orbit.empty.event',
-                    'password' => 'required|orbit.masterpassword.delete',
+                    'password'    => [
+                        'required',
+                        ['orbit.masterpassword.delete', $mall_id]
+                    ],
                 ),
                 array(
                     'required.password'             => 'The master is password is required.',
@@ -1519,7 +1525,23 @@ class EventAPIController extends ControllerAPI
     }
 
     protected function registerCustomValidation()
-    {
+    {   
+        // Check the existance of mall id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user){
+            $mall = Mall::excludeDeleted()
+                        ->allowedForUser($user)
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $news = MerchantLanguage::excludeDeleted()
@@ -1667,7 +1689,7 @@ class EventAPIController extends ControllerAPI
         // News deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
             // Current Mall location
-            $currentMall = Config::get('orbit.shop.id');
+            $currentMall = $parameters[0];
 
             // Get the master password from settings table
             $masterPassword = Setting::getMasterPasswordFor($currentMall);
