@@ -7,6 +7,20 @@ if (isset($_GET['base']))
     $baseUrl = $baseUrl . $_GET['base'] . '/';
 }
 
+$allowedMime =  [
+    'png'  => 'image/png',
+    'jpe'  => 'image/jpeg',
+    'jpeg' => 'image/jpeg',
+    'jpg'  => 'image/jpeg',
+    'gif'  => 'image/gif',
+    'bmp'  => 'image/bmp',
+    'ico'  => 'image/vnd.microsoft.icon',
+    'tiff' => 'image/tiff',
+    'tif'  => 'image/tiff',
+    'svg'  => 'image/svg+xml',
+    'svgz' => 'image/svg+xml',
+];
+
 $ch  = curl_init($baseUrl . $path);
 
 if (strtolower($_SERVER['REQUEST_METHOD']) == 'post')
@@ -23,8 +37,12 @@ curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
 list( $headers, $contents ) = preg_split('/([\r\n][\r\n])\\1/', curl_exec( $ch ), 2);
 
 $status = curl_getinfo($ch);
-
+$contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
 curl_close($ch);
+
+$contentTypes = explode(";", $contentType, 2);
+
+$mime = $contentTypes[0];
 
 $header_list = preg_split( '/[\r\n]+/', $headers );
 
@@ -35,7 +53,7 @@ foreach ($header_list as $header)
     }
 }
 
-if (in_array($status['http_code'], ['200', '301']))
+if (in_array($mime, $allowedMime) && in_array($status['http_code'], ['200', '301']))
 {
     $filename = __DIR__ . $path;
     ob_start();
@@ -49,4 +67,3 @@ if (in_array($status['http_code'], ['200', '301']))
 }
 
 print $contents;
-
