@@ -2313,7 +2313,7 @@ class TenantAPIController extends ControllerAPI
         $retailertenant = RetailerTenant::where('retailer_id', $tenant->merchant_id)
                 ->first();
 
-        if ($retailertenant->tenant_id !== $tenant_id) {
+        if (empty($retailertenant) || $retailertenant->tenant_id !== $tenant_id) {
             $validator = Validator::make(
                 array(
                     'tenant_id'     => $tenant_id,
