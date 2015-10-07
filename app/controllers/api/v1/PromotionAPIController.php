@@ -83,7 +83,7 @@ class PromotionAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
@@ -434,7 +434,7 @@ class PromotionAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $promotion_id = OrbitInput::post('promotion_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
             $rule_type = OrbitInput::post('rule_type');

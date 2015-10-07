@@ -122,7 +122,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $images = OrbitInput::files('images');
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -337,7 +337,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $validator = Validator::make(
                 array(
@@ -3350,7 +3350,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -3562,7 +3562,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $validator = Validator::make(
                 array(
@@ -3741,7 +3741,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.three' => Lang::get('validation.max.array', array(
@@ -3964,7 +3964,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $picture_index = OrbitInput::post('picture_index');
 
             $validator = Validator::make(
@@ -4154,7 +4154,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -4366,7 +4366,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $validator = Validator::make(
                 array(
@@ -4545,7 +4545,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -4764,7 +4764,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $validator = Validator::make(
                 array(

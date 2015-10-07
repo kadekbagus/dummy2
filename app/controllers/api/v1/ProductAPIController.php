@@ -92,7 +92,7 @@ class ProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $product_id = OrbitInput::post('product_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             // product_code is the same as SKU
             $product_code = OrbitInput::post('product_code');
@@ -1147,7 +1147,7 @@ class ProductAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             // This product_code is the same as SKU
             $product_code = OrbitInput::post('product_code');

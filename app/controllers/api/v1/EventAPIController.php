@@ -76,7 +76,7 @@ class EventAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $event_name = OrbitInput::post('event_name');
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
@@ -353,7 +353,7 @@ class EventAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $event_id = OrbitInput::post('event_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
@@ -693,7 +693,7 @@ class EventAPIController extends ControllerAPI
 
             $event_id = OrbitInput::post('event_id');
             $password = OrbitInput::post('password');
-            $mall_id = OrbitInput::post('merchant_id');
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $validator = Validator::make(
                 array(

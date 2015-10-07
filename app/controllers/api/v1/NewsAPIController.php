@@ -76,7 +76,7 @@ class NewsAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = OrbitInput::post('mall_id');
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $news_name = OrbitInput::post('news_name');
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
@@ -364,7 +364,7 @@ class NewsAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $news_id = OrbitInput::post('news_id');
-            $mall_id = OrbitInput::post('mall_id');
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');

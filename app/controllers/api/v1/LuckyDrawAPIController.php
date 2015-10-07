@@ -68,7 +68,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mall_id = OrbitInput::post('mall_id');
+            $mall_id = OrbitInput::post('mall_id', OrbitInput::post('merchant_id'));
             if (trim($mall_id) === '') {
                 // if not being sent, then set to current box mall id
                 $mall_id = Config::get('orbit.shop.id');
@@ -322,7 +322,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mall_id = OrbitInput::post('mall_id');
+            $mall_id = OrbitInput::post('mall_id', OrbitInput::post('merchant_id'));
             if (trim($mall_id) === '') {
                 // if not being sent, then set to current box mall id
                 $mall_id = Config::get('orbit.shop.id');

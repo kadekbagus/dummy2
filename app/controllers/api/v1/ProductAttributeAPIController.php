@@ -297,7 +297,7 @@ class ProductAttributeAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $attributeName = OrbitInput::post('attribute_name');
             $attributeValue = OrbitInput::post('attribute_value');
 
@@ -516,7 +516,7 @@ class ProductAttributeAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $attributeId = OrbitInput::post('product_attribute_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $attributeName = OrbitInput::post('attribute_name');
             $is_validation = OrbitInput::post('is_validation');
 

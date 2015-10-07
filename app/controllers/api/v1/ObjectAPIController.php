@@ -68,7 +68,7 @@ class ObjectAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $object_name = OrbitInput::post('object_name');
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
@@ -271,7 +271,7 @@ class ObjectAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $object_id = OrbitInput::post('object_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
 
@@ -498,15 +498,18 @@ class ObjectAPIController extends ControllerAPI
 
             $object_id = OrbitInput::post('object_id');
             $password = OrbitInput::post('password');
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'=> $mall_id,
                     'object_id'  => $object_id,
                     'password'   => $password,
                 ),
                 array(
+                    'merchant_id'=> 'required|orbit.empty.mall',
                     'object_id'  => 'required|orbit.empty.object',
-                    'password'   => 'required|orbit.masterpassword.delete',
+                    'password'   => 'required|orbit.masterpassword.delete:' . $mall_id,
                 ),
                 array(
                     'required.password'             => 'The master is password is required.',
@@ -995,7 +998,7 @@ class ObjectAPIController extends ControllerAPI
         // Object deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
             // Current Mall location
-            $currentMall = Config::get('orbit.shop.id');
+            $currentMall = $parameters[0];
 
             // Get the master password from settings table
             $masterPassword = Setting::getMasterPasswordFor($currentMall);
@@ -1010,6 +1013,21 @@ class ObjectAPIController extends ControllerAPI
                 $message = 'The master password is incorrect.';
                 ACL::throwAccessForbidden($message);
             }
+
+            return TRUE;
+        });
+
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
 
             return TRUE;
         });

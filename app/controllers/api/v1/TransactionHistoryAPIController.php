@@ -269,7 +269,7 @@ class TransactionHistoryAPIController extends ControllerAPI
             Event::fire('orbit.transactionhistory.getretailerlist.after.authz', array($this, $user));
 
             $sort_by = OrbitInput::get('sortby');
-            $merchant_id = OrbitInput::get('merchant_id');
+            $merchant_id = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
             $validator = Validator::make(
                 array(
                     'sort_by'       => $sort_by,

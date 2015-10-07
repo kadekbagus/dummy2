@@ -66,7 +66,7 @@ Event::listen('orbit.postlogininshop.login.done', function($controller, $user, $
  * @param UserAPIController $controller - The instance of the UserAPIController or its subclass
  * @param User $customer - Instance of object User
  */
-Event::listen('orbit.user.postupdatemembership.after.save', function($controller, $customer)
+Event::listen('orbit.user.postupdatemembership.after.save', function($controller, $customer, $retailerId)
 {
     // This event always executed when there is call to update membership
     // So we need to distinguish the call from an form interface such as CS Portal or
@@ -79,9 +79,6 @@ Event::listen('orbit.user.postupdatemembership.after.save', function($controller
     if ($doNotify !== 'yes') {
         return NULL;
     }
-
-    // @Todo the Retailer object should comes from parameter
-    $retailerId = App::make('orbitSetting')->getSetting('current_retailer', 0);
 
     // No need to run the notify if the setting value is not 'yes'
     $setting = Setting::excludeDeleted()
@@ -124,7 +121,7 @@ Event::listen('orbit.user.postupdatemembership.after.save', function($controller
  * @param UserAPIController $controller - The instance of the UserAPIController or its subclass
  * @param User $customer - Instance of object User
  */
-Event::listen('orbit.user.postupdatemembership.after.commit', function($controller, $customer)
+Event::listen('orbit.user.postupdatemembership.after.commit', function($controller, $customer, $retailerId)
 {
     // This event always executed when there is call to update membership
     // So we need to distinguish the call from an form interface such as CS Portal or
@@ -137,9 +134,6 @@ Event::listen('orbit.user.postupdatemembership.after.commit', function($controll
     if ($doNotify !== 'yes') {
         return NULL;
     }
-
-    // @Todo the Retailer object should comes from parameter
-    $retailerId = App::make('orbitSetting')->getSetting('current_retailer', 0);
 
     // No need to run the notify if the setting value is not 'yes'
     $setting = Setting::excludeDeleted()
@@ -173,7 +167,7 @@ Event::listen('orbit.user.postupdatemembership.after.commit', function($controll
  * @param UserAPIController $controller - The instance of the UserAPIController or its subclass
  * @param User $customer - Instance of object User
  */
-Event::listen('orbit.user.postnewmembership.after.commit', function($controller, $customer)
+Event::listen('orbit.user.postnewmembership.after.commit', function($controller, $customer, $retailerId)
 {
     // Send email after registration to the queue
     Queue::push('Orbit\\Queue\\RegistrationMail', [
@@ -191,9 +185,6 @@ Event::listen('orbit.user.postnewmembership.after.commit', function($controller,
     if ($doNotify !== 'yes') {
         return NULL;
     }
-
-    // @Todo the Retailer object should comes from parameter
-    $retailerId = App::make('orbitSetting')->getSetting('current_retailer', 0);
 
     // No need to run the notify if the setting value is not 'yes'
     $setting = Setting::excludeDeleted()

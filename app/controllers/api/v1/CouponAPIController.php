@@ -100,7 +100,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
@@ -545,7 +545,7 @@ class CouponAPIController extends ControllerAPI
 
 
             $promotion_id = OrbitInput::post('promotion_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
             $rule_type = OrbitInput::post('rule_type');
@@ -1056,7 +1056,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $promotion_id = OrbitInput::post('promotion_id');
             $password = OrbitInput::post('password');
 
@@ -1770,7 +1770,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = OrbitInput::post('merchant_id');
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
