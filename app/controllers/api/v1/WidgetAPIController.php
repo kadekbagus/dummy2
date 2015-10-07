@@ -29,6 +29,7 @@ class WidgetAPIController extends ControllerAPI
      * @param string    `slogan`                (required) - Widget slogan
      * @param integer   `widget_order`          (required) - Order of the widget
      * @param array     `images`                (optional)
+     * @param integer   `id_language_default`   (required) - ID language default
      * @return Illuminate\Support\Facades\Response
      */
     public function postNewWidget()
@@ -73,6 +74,7 @@ class WidgetAPIController extends ControllerAPI
             $animation = OrbitInput::post('animation');
             $widgetOrder = OrbitInput::post('widget_order');
             $images = OrbitInput::files('images');
+            $idLanguageDefault = OrbitInput::post('id_language_default');
 
             $validator = Validator::make(
                 array(
@@ -84,6 +86,7 @@ class WidgetAPIController extends ControllerAPI
                     'animation'             => $animation,
                     'widget_order'          => $widgetOrder,
                     // 'images'                => $images
+                    'id_language_default'   => $idLanguageDefault,
                 ),
                 array(
                     'object_id'             => 'required',
@@ -93,7 +96,8 @@ class WidgetAPIController extends ControllerAPI
                     'animation'             => 'in:none,horizontal,vertical',
                     'widget_order'          => 'required|numeric',
                     // 'images'                => 'required_if:animation,none',
-                    'retailer_ids'          => 'array|orbit.empty.retailer'
+                    'retailer_ids'          => 'array|orbit.empty.retailer',
+                    'id_language_default'   => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'orbit.exists.widget_type' => Lang::get('validation.orbit.exists.widget_type'),
@@ -142,6 +146,20 @@ class WidgetAPIController extends ControllerAPI
             // }
 
             Event::fire('orbit.widget.postnewwidget.after.save', array($this, $widget));
+
+            if ($slogan != NULL) {
+                $default_translation = [
+                    $idLanguageDefault => [
+                        'widget_slogan' => $widget->widget_slogan,
+                    ]
+                ];
+                $this->validateAndSaveTranslations($widget, json_encode($default_translation), 'create');
+            }
+
+            OrbitInput::post('translations', function($translation_json_string) use ($widget) {
+                $this->validateAndSaveTranslations($widget, $translation_json_string, 'create');
+            });
+
             $this->response->data = $widget;
 
             // Commit the changes
@@ -308,6 +326,7 @@ class WidgetAPIController extends ControllerAPI
             $animation = OrbitInput::post('animation');
             $widgetOrder = OrbitInput::post('widget_order');
             $images = OrbitInput::files('images');
+            $idLanguageDefault = OrbitInput::files('id_language_default');
 
             $validator = Validator::make(
                 array(
@@ -319,7 +338,8 @@ class WidgetAPIController extends ControllerAPI
                     // 'slogan'                => $slogan,
                     'animation'             => $animation,
                     'widget_order'          => $widgetOrder,
-                    // 'images'                => $images
+                    // 'images'                => $images,
+                    'id_language_default'   => $idLanguageDefault,
                 ),
                 array(
                     'widget_id'             => 'required|orbit.empty.widget',
@@ -330,6 +350,7 @@ class WidgetAPIController extends ControllerAPI
                     // 'images'                => 'required_if:animation,none',
                     'widget_order'          => 'numeric',
                     'retailer_ids'          => 'array|orbit.empty.retailer',
+                    'id_language_default'   => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'orbit.exists.widget_type_but_me' => Lang::get('validation.orbit.exists.widget_type'),
@@ -377,6 +398,17 @@ class WidgetAPIController extends ControllerAPI
                 // disable animation
                 // $widget->animation = $animation;
                 $widget->animation = 'none';
+            });
+
+            $default_translation = [
+                $idLanguageDefault => [
+                    'widget_slogan' => $widget->widget_slogan
+                ]
+            ];
+            $this->validateAndSaveTranslations($widget, json_encode($default_translation), 'update');
+
+            OrbitInput::post('translations', function($translation_json_string) use ($widget) {
+                $this->validateAndSaveTranslations($widget, $translation_json_string, 'update');
             });
 
             Event::fire('orbit.widget.postupdatewidget.before.save', array($this, $widget));
@@ -1151,6 +1183,21 @@ class WidgetAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $news = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+        
+            if (empty($news)) {
+                return FALSE;
+            }
+        
+            App::instance('orbit.empty.language_default', $news);
+        
+            return TRUE;
+        });
+
         // Check the existance of widget id
         $user = $this->api->user;
         Validator::extend('orbit.empty.widget', function ($attribute, $value, $parameters) use ($user) {
@@ -1172,7 +1219,7 @@ class WidgetAPIController extends ControllerAPI
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
             $merchant = Mall::excludeDeleted()
                         ->allowedForUser($user)
-                        ->isMall()
+                        // ->isMall()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1272,4 +1319,106 @@ class WidgetAPIController extends ControllerAPI
             return TRUE;
         });
     }
+
+    /**
+     * @param EventModel $event
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslations($event, $translations_json_string, $scenario = 'create')
+    {
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where WidgetTranslation object is object with keys:
+         *   widget_slogan
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['widget_slogan'];
+        $user = $this->api->user;
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+        foreach ($data as $merchant_language_id => $translations) {
+            $language = MerchantLanguage::excludeDeleted()
+                ->allowedForUser($user)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            }
+            $existing_translation = WidgetTranslation::excludeDeleted()
+                ->where('widget_id', '=', $event->widget_id)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $merchant_language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+                $new_translation = new WidgetTranslation();
+                $new_translation->widget_id = $event->widget_id;
+                $new_translation->merchant_language_id = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $new_translation->{$field} = $value;
+                }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
+                $new_translation->save();
+
+                $event->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
+            }
+            elseif ($op === 'update') {
+
+                /** @var WidgetTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->save();
+
+                $event->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
+            }
+            elseif ($op === 'delete') {
+                /** @var WidgetTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->delete();
+            }
+        }
+    }
+
 }
