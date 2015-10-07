@@ -24,9 +24,9 @@ class CreateTableMemberships extends Migration {
             $table->string('membership_name', 255);
             $table->string('description', 2000)->nullable();
             $table->string('status', 15);
-            $table->primary('membership_id');
             $table->encodedId('created_by')->nullable();
             $table->encodedId('modified_by')->nullable();
+            $table->primary('membership_id');
             $table->timestamps();
 
             $table->index(array('merchant_id'), 'merchant_id_idx');

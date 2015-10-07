@@ -3,8 +3,6 @@
 class Membership extends Eloquent
 {
 
-    use GeneratedUuidTrait;
-
     /**
      * Membership Model
      *

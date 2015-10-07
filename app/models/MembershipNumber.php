@@ -3,8 +3,6 @@
 class MembershipNumber extends Eloquent
 {
 
-    use GeneratedUuidTrait;
-
     /**
      * MembershipNumber Model
      *
@@ -29,6 +27,16 @@ class MembershipNumber extends Eloquent
     public function issuerMerchant()
     {
         return $this->belongsTo('Merchant', 'issuer_merchant_id', 'merchant_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo('User', 'created_by', 'user_id');
+    }
+
+    public function modifier()
+    {
+        return $this->belongsTo('User', 'modified_by', 'user_id');
     }
 
 }
