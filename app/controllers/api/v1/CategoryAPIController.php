@@ -819,7 +819,7 @@ class CategoryAPIController extends ControllerAPI
 
             // Filter category by merchant Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($categories) {
-                $categories->whereIn('categories.merchant_id', $merchantIds);
+                $categories->whereIn('categories.merchant_id', (array)$merchantIds);
             });
 
             // Filter category by category name
