@@ -2261,7 +2261,7 @@ class UploadAPIController extends ControllerAPI
      * @param file|array `images`                       (required) - Images of the user photo
      * @return Illuminate\Support\Facades\Response
      */
-    public function postUploadWidgetImage()
+    public function postUploadWidgetImage($widgetType)
     {
         try {
             $httpCode = 200;
@@ -2294,7 +2294,8 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $widget_id = OrbitInput::post('widget_id');
-            $images = OrbitInput::files('images');
+            $images = OrbitInput::files('images_'.$widgetType);
+
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
                     'max' => 1

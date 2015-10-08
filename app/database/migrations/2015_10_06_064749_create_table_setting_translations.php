@@ -13,7 +13,7 @@ class CreateTableSettingTranslations extends Migration {
 	public function up()
 	{
         Schema::create('setting_translations', function (Blueprint $table) {
-            $table->increments('setting_translation_id');
+            $table->char('setting_translation_id',16);
             $table->char('setting_id',16);
             $table->char('merchant_language_id',16);
             $table->string('setting_value', 255)->nullable();

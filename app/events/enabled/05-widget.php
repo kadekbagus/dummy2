@@ -23,7 +23,8 @@ Event::listen('orbit.widget.postnewwidget.after.save', function($controller, $wi
         return;
     }
 
-    $files = OrbitInput::files('images');
+    $files = OrbitInput::files('image_'.$widget->widget_type);
+
     if (! $files) {
         return;
     }
@@ -31,7 +32,7 @@ Event::listen('orbit.widget.postnewwidget.after.save', function($controller, $wi
     $_POST['widget_id'] = $widget->widget_id;
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('widget.new')
-                                   ->postUploadWidgetImage();
+                                   ->postUploadWidgetImage($widget->widget_type);
 
     if ($response->code !== 0)
     {
@@ -60,7 +61,7 @@ Event::listen('orbit.widget.postupdatewidget.after.save', function($controller, 
         return;
     }
 
-    $files = OrbitInput::files('images');
+    $files = OrbitInput::files('widget');
     if (! $files) {
         return;
     }
@@ -68,7 +69,7 @@ Event::listen('orbit.widget.postupdatewidget.after.save', function($controller, 
     $_POST['widget_id'] = $widget->widget_id;
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('widget.update')
-                                   ->postUploadWidgetImage();
+                                   ->postUploadWidgetImage($widget->widget_type);
 
     if ($response->code !== 0)
     {

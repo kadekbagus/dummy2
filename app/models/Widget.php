@@ -89,7 +89,7 @@ class Widget extends Eloquent
 
 
     /**
-     * A start button may have many translations.
+     * A widget may have many translations.
      */
     public function translations()
     {
