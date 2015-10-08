@@ -1091,15 +1091,18 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $coupons = OrbitInput::post('coupon_ids');
             $userId = OrbitInput::post('user_id');
+            $mallId = OrbitInput::post('merchant_id');
 
             $validator = Validator::make(
                 array(
                     'coupon_ids'       => $coupons,
                     'user_id'          => $userId,
+                    'merchant_id'      => $mallId,
                 ),
                 array(
                     'coupon_ids'        => 'array|required',
                     'user_id'           => 'required|orbit.empty.user',
+                    'merchant_id'       => 'required|orbit.empty.mall',
                 ),
                 array(
                     'user_id.required'      => 'Please select customer first',

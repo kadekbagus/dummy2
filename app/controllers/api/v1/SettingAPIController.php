@@ -881,7 +881,7 @@ class SettingAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id' => 'required|orbit.empty.mall'
-                ),
+                )
             );
 
             Event::fire('orbit.setting.getagreement.before.validation', array($this, $validator));
@@ -979,7 +979,7 @@ class SettingAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id' => 'required|orbit.empty.mall'
-                ),
+                )
             );
 
             Event::fire('orbit.setting.getagreement.before.validation', array($this, $validator));

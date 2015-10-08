@@ -11,37 +11,37 @@
 |
 */
 
-App::before(function($request)
-{
-    $allowedRoutes = ['api/v1/agreement', 'app/v1/agreement'];
+// App::before(function($request)
+// {
+//     $allowedRoutes = ['api/v1/agreement', 'app/v1/agreement'];
 
-    // If: request route is agreement then allowed
-    // else: check agreement setting
-    if (! in_array($request->path(), $allowedRoutes)) {
+//     // If: request route is agreement then allowed
+//     // else: check agreement setting
+//     if (! in_array($request->path(), $allowedRoutes)) {
 
-        // set mall id
-        $mallId = App::make('orbitSetting')->getSetting('current_retailer');
+//         // set mall id
+//         $mallId = App::make('orbitSetting')->getSetting('current_retailer');
 
-        // Builder object
-        $settings = Setting::excludeDeleted()
-                           ->where('object_type', 'merchant')
-                           ->where('object_id', $mallId)
-                           ->where('setting_name', 'agreement')
-                           ->where('status', 'active')
-                           ->first();
+//         // Builder object
+//         $settings = Setting::excludeDeleted()
+//                            ->where('object_type', 'merchant')
+//                            ->where('object_id', $mallId)
+//                            ->where('setting_name', 'agreement')
+//                            ->where('status', 'active')
+//                            ->first();
 
-        if (empty($settings)) {
-            $agreement = 'no';
-        } else {
-            $agreement = $settings->setting_value;
-        }
+//         if (empty($settings)) {
+//             $agreement = 'no';
+//         } else {
+//             $agreement = $settings->setting_value;
+//         }
 
-        if ($agreement !== 'yes') {
-            return DummyAPIController::create()->unsupported();
-        }
+//         if ($agreement !== 'yes') {
+//             return DummyAPIController::create()->unsupported();
+//         }
 
-    }
-});
+//     }
+// });
 
 
 App::after(function($request, $response)

@@ -1283,9 +1283,9 @@ class TenantAPIController extends ControllerAPI
             }
 
             // Filter tenant by Ids
-            OrbitInput::get('merchant_id', function($merchantIds) use ($tenants)
+            OrbitInput::get('tenant_id', function($tenantIds) use ($tenants)
             {
-                $tenants->whereIn('merchants.merchant_id', $merchantIds);
+                $tenants->whereIn('merchants.merchant_id', $tenantIds);
             });
 
             // Filter tenant by Ids
@@ -1497,9 +1497,9 @@ class TenantAPIController extends ControllerAPI
             });
 
             // Filter tenant by parent_id
-            OrbitInput::get('parent_id', function($parentIds) use ($tenants)
+            OrbitInput::get('merchant_id', function($parentIds) use ($tenants)
             {
-                $tenants->whereIn('merchants.parent_id', $parentIds);
+                $tenants->whereIn('merchants.parent_id', (array)$parentIds);
             });
 
             // Filter tenant by floor
