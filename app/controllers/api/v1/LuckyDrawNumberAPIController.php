@@ -85,11 +85,12 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             $popup = OrbitInput::post('popup', 'no');
 
             // Mall ID
-            $currentMallId = Config::get('orbit.shop.id');
+            $currentMallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $mallId = OrbitInput::post('mall_id', $currentMallId);
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'               => $currentMallId,
                     'user_id'                   => $userId,
                     'lucky_draw_id'             => $luckyDrawId,
                     'lucky_draw_number_start'   => $luckyDrawNumberStart,
@@ -97,6 +98,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                     'receipts'                  => $receipts
                 ),
                 array(
+                    'merchant_id'               => 'required|orbit.empty.mall',
                     'user_id'                   => 'required|orbit.user.exists',
                     'lucky_draw_id'             => 'required|orbit.lucky_draw.exists',
                     'lucky_draw_number_start'   => 'required|numeric|orbit.number_start_greater_than_or_equal_to_min_number:' . $luckyDrawId . '|orbit.number_unused:' . $luckyDrawId,

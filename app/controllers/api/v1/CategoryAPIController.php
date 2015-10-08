@@ -73,7 +73,7 @@ class CategoryAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $category_name = OrbitInput::post('category_name');
             $category_level = OrbitInput::post('category_level');
             $category_order = OrbitInput::post('category_order');
@@ -303,7 +303,7 @@ class CategoryAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $category_id = OrbitInput::post('category_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $category_name = OrbitInput::post('category_name');
             $category_level = OrbitInput::post('category_level');
             $category_order = OrbitInput::post('category_order');

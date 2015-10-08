@@ -69,24 +69,28 @@ class UserAPIController extends ControllerAPI
             $is_new_consumer_from_captive = OrbitInput::post('new_consumer_from_captive', 'N') === 'Y';
 
             if ($is_new_consumer_from_captive) {
+                $mallId = Config::get('orbit.shop.id');
                 $validator = Validator::make(
                     array(
                         'email'     => $email,
                     ),
                     array(
-                        'email'     => 'required|email|orbit.email.exists',
+                        'email'     => 'required|email|orbit.email.exists:' . $mallId,
                     )
                 );
             } else {
+                $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
                 $validator = Validator::make(
                     array(
+                        'merchant_id' => $mallId,
                         'email'     => $email,
                         'password'  => $password,
                         'password_confirmation' => $password2,
                         'role_id' => $user_role_id,
                     ),
                     array(
-                        'email'     => 'required|email|orbit.email.exists',
+                        'merchant_id' => 'required|orbit.empty.mall',
+                        'email'     => 'required|email|orbit.email.exists:' . $mallId,
                         'password'  => 'required|min:5|confirmed',
                         'role_id' => 'required|orbit.empty.role',
                     )
@@ -2012,7 +2016,7 @@ class UserAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mallId = Config::get('orbit.shop.id');
+            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
@@ -2065,6 +2069,7 @@ class UserAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'           => $mallId,
                     'external_user_id'      => $external_user_id,
                     'email'                 => $email,
                     'firstname'             => $firstname,
@@ -2083,14 +2088,15 @@ class UserAPIController extends ControllerAPI
                     'date_of_work'          => $dateofwork,
                 ),
                 array(
+                    'merchant_id'           => 'required|orbit.empty.mall',
                     'external_user_id'      => 'required',
-                    'email'                 => 'required|email|orbit.email.exists',
+                    'email'                 => 'required|email|orbit.email.exists:' . $mallId,
                     'firstname'             => 'required',
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'membership_since'      => 'date_format:Y-m-d',
-                    'membership_number'     => 'orbit.membership.exists',
+                    'membership_number'     => 'orbit.membership.exists:' . $mallId,
                     'status'                => 'in:active,inactive,pending',
                     'category_ids'          => 'array',
                     'bank_object_ids'       => 'array',
@@ -2195,7 +2201,7 @@ class UserAPIController extends ControllerAPI
             $userdetail->merchant_acquired_date = date('Y-m-d H:i:s');
 
             // get current mall id and its mall group
-            $currentRetailerId = Config::get('orbit.shop.id');
+            $currentRetailerId = $mallId;
             $retailer = Retailer::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
                                 ->where('object_type', 'retailer')
@@ -2263,7 +2269,7 @@ class UserAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.user.postnewmembership.after.commit', array($this, $newuser));
+            Event::fire('orbit.user.postnewmembership.after.commit', array($this, $newuser, $mallId));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.user.postnewmembership.access.forbidden', array($this, $e));
 
@@ -2408,7 +2414,7 @@ class UserAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mallId = Config::get('orbit.shop.id');
+            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
@@ -2449,6 +2455,7 @@ class UserAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'           => $mallId,
                     'email'                 => $email,
                     'firstname'             => $firstname,
                     'lastname'              => $lastname,
@@ -2465,13 +2472,14 @@ class UserAPIController extends ControllerAPI
                     'user_id'               => $userId,
                 ),
                 array(
+                    'merchant_id'           => 'required|orbit.empty.mall',
                     'email'                 => 'email|email_exists_but_me',
                     'firstname'             => '',
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'membership_since'      => 'date_format:Y-m-d',
-                    'membership_number'     => 'orbit.membership.exists_but_me',
+                    'membership_number'     => 'orbit.membership.exists_but_me' . $mallId,
                     'status'                => 'in:active,inactive,pending',
                     'idcard'                => 'numeric',
                     'mobile_phone'          => '',
@@ -2700,7 +2708,7 @@ class UserAPIController extends ControllerAPI
                 $updateduser->load('banks');
             });
 
-            Event::fire('orbit.user.postupdatemembership.after.save', array($this, $updateduser));
+            Event::fire('orbit.user.postupdatemembership.after.save', array($this, $updateduser, $mallId));
             $this->response->data = $updateduser;
 
             // Commit the changes
@@ -2715,7 +2723,7 @@ class UserAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.user.postupdatemembership.after.commit', array($this, $updateduser));
+            Event::fire('orbit.user.postupdatemembership.after.commit', array($this, $updateduser, $mallId));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.user.postupdatemembership.access.forbidden', array($this, $e));
 
@@ -2858,6 +2866,7 @@ class UserAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $user_id = OrbitInput::post('user_id');
             $password = OrbitInput::post('password');
 
@@ -2868,12 +2877,14 @@ class UserAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $mallId,
                     'user_id'   => $user_id,
                     'password'  => $password,
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'user_id'   => 'required|orbit.empty.membership|no_delete_themself',
-                    'password'  => 'required|orbit.masterpassword.delete',
+                    'password'  => 'required|orbit.masterpassword.delete:' . $mallId,
                 ),
                 array(
                     'no_delete_themself'            => $message,
@@ -3035,7 +3046,7 @@ class UserAPIController extends ControllerAPI
         Validator::extend('orbit.email.exists', function ($attribute, $value, $parameters) {
 
             // get current mall id and its mall group
-            $currentRetailerId = Config::get('orbit.shop.id');
+            $currentRetailerId = $parameters[0];
             $retailer = Retailer::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
                                 ->where('object_type', 'retailer')
@@ -3065,7 +3076,7 @@ class UserAPIController extends ControllerAPI
             $check = Config::get('orbit.shop.membership_number_unique_check');
 
             // get current mall id and its mall group
-            $currentRetailerId = Config::get('orbit.shop.id');
+            $currentRetailerId = $parameters[0];
             $retailer = Retailer::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
                                 ->where('object_type', 'retailer')
@@ -3098,7 +3109,7 @@ class UserAPIController extends ControllerAPI
             $check = Config::get('orbit.shop.membership_number_unique_check');
 
             // get current mall id and its mall group
-            $currentRetailerId = Config::get('orbit.shop.id');
+            $currentRetailerId = $parameters[0];
             $retailer = Retailer::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
                                 ->where('object_type', 'retailer')
@@ -3271,7 +3282,7 @@ class UserAPIController extends ControllerAPI
         // Membership deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
             // Current Mall location
-            $currentMall = Config::get('orbit.shop.id');
+            $currentMall = $parameters[0];
 
             // Get the master password from settings table
             $masterPassword = Setting::getMasterPasswordFor($currentMall);
@@ -3327,5 +3338,19 @@ class UserAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
     }
 }

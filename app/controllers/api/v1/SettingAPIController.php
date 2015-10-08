@@ -870,8 +870,27 @@ class SettingAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
+            $this->registerCustomValidation();
+
             // set mall id
-            $mallId = Config::get('orbit.shop.id');
+            $mallId = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $mallId
+                ),
+                array(
+                    'merchant_id' => 'required|orbit.empty.mall'
+                ),
+            );
+
+            Event::fire('orbit.setting.getagreement.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             // Builder object
             $settings = Setting::excludeDeleted()
@@ -949,8 +968,27 @@ class SettingAPIController extends ControllerAPI
         try {
             $httpCode=200;
 
+            $this->registerCustomValidation();
+
             // set mall id
-            $mallId = Config::get('orbit.shop.id');
+            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $mallId
+                ),
+                array(
+                    'merchant_id' => 'required|orbit.empty.mall'
+                ),
+            );
+
+            Event::fire('orbit.setting.getagreement.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $setting_name = 'agreement';
             $setting_value = 'yes';

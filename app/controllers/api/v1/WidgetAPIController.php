@@ -67,7 +67,7 @@ class WidgetAPIController extends ControllerAPI
 
             $widgetType = OrbitInput::post('widget_type');
             $widgetObjectId = OrbitInput::post('object_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $retailerIds = OrbitInput::post('retailer_ids');
             $slogan = OrbitInput::post('slogan');
             $animation = OrbitInput::post('animation');
@@ -302,7 +302,7 @@ class WidgetAPIController extends ControllerAPI
             $widgetId = OrbitInput::post('widget_id');
             $widgetType = OrbitInput::post('widget_type');
             $widgetObjectId = OrbitInput::post('object_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $retailerIds = OrbitInput::post('retailer_ids');
             $slogan = OrbitInput::post('slogan');
             $animation = OrbitInput::post('animation');

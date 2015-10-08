@@ -66,21 +66,29 @@ class TenantAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $retailer_id = OrbitInput::post('retailer_id');
+            
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            
             /* for next version
             $password = OrbitInput::post('password');
             */
 
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $mall_id,
                     'retailer_id' => $retailer_id,
                     /* for next version
                     'password'    => $password,
                     */
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'retailer_id' => 'required|orbit.empty.tenant',//|orbit.exists.deleted_tenant_is_box_current_retailer',
                     /* for next version
-                    'password'    => 'required|orbit.masterpassword.delete',
+                    'password'    => [
+                        'required',
+                        ['orbit.masterpassword.delete', $mall_id]
+                    ],
                     */
                 )
                 /* for next version
@@ -323,7 +331,10 @@ class TenantAPIController extends ControllerAPI
 
             $password = OrbitInput::post('password');
             $user_id = OrbitInput::post('user_id');
-            $email = OrbitInput::post('email');
+
+            // tenants do not have emails, but email is required in merchants table so cannot simply be null
+            $email = '';
+
             $name = OrbitInput::post('name');
             $description = OrbitInput::post('description');
             $address_line1 = OrbitInput::post('address_line1');
@@ -370,7 +381,7 @@ class TenantAPIController extends ControllerAPI
             $sector_of_activity = OrbitInput::post('sector_of_activity');
 
             // set user mall id
-            $parent_id = OrbitInput::post('parent_id');//Config::get('orbit.shop.id');
+            $parent_id = OrbitInput::post('parent_id');
 
             $url = OrbitInput::post('url');
             $box_url = OrbitInput::post('box_url');
@@ -400,7 +411,7 @@ class TenantAPIController extends ControllerAPI
                     'box_url'              => 'orbit.formaterror.url.web',
                     'external_object_id'   => 'required',
                     'status'               => 'orbit.empty.tenant_status',
-                    'parent_id'            => 'orbit.empty.mall',
+                    'parent_id'            => 'required|orbit.empty.mall',
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
                     'id_language_default' => 'required|orbit.empty.language_default',
@@ -439,28 +450,6 @@ class TenantAPIController extends ControllerAPI
 
             Event::fire('orbit.tenant.postnewtenant.after.validation', array($this, $validator));
 
-            $roleTenant = Role::where('role_name', 'tenant owner')->first();
-            if (empty($roleTenant)) {
-                OrbitShopAPI::throwInvalidArgument('Could not find role named "Tenant Owner".');
-            }
-
-            $newuser = new User();
-            $newuser->username = $email;
-            $newuser->user_email = $email;
-            OrbitInput::post('password', function ($password) use ($newuser) {
-                $newuser->user_password = Hash::make($password);
-            });
-            $newuser->status = $status;
-            $newuser->user_role_id = $roleTenant->role_id;
-            $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
-            $newuser->modified_by = $user->user_id;
-            $newuser->save();
-
-            $newuser->createAPiKey();
-
-            $userdetail = new UserDetail();
-            $userdetail = $newuser->userdetail()->save($userdetail);
-
             $countryName = '';
             $countryObject = Country::find($country);
             if (is_object($countryObject)) {
@@ -468,7 +457,6 @@ class TenantAPIController extends ControllerAPI
             }
 
             $newtenant = new Tenant();
-            $newtenant->user_id = $newuser->user_id;
             $newtenant->omid = '';
             $newtenant->orid = '';
             $newtenant->email = $email;
@@ -739,6 +727,7 @@ class TenantAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $retailer_id = OrbitInput::post('retailer_id');
             $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
@@ -755,6 +744,7 @@ class TenantAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'       => $mall_id,
                     'retailer_id'       => $retailer_id,
                     'user_id'           => $user_id,
                     'email'             => $email,
@@ -767,13 +757,14 @@ class TenantAPIController extends ControllerAPI
                     'id_language_default'   => $id_language_default,
                 ),
                 array(
+                    'merchant_id'       => 'required|orbit.empty.mall',
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.tenant_status',
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id,
+                    'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id . ',' . $mall_id,
                     'category_ids'      => 'required|array'
                 ),
                 array(
@@ -2034,7 +2025,7 @@ class TenantAPIController extends ControllerAPI
         // Tenant deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
             // Current Mall location
-            $currentMall = Config::get('orbit.shop.id');
+            $currentMall = $parameters[0];
 
             // Get the master password from settings table
             $masterPassword = Setting::getMasterPasswordFor($currentMall);
@@ -2057,7 +2048,7 @@ class TenantAPIController extends ControllerAPI
         // Check if the merchant verification number is unique
         Validator::extend('orbit_unique_verification_number', function ($attribute, $value, $parameters) {
             // Current Mall location
-            $currentMall = Config::get('orbit.shop.id');
+            $currentMall = $parameters[1];
 
             // Check the tenants which has verification number posted
             $tenant = Retailer::excludeDeleted()
@@ -2302,7 +2293,7 @@ class TenantAPIController extends ControllerAPI
         $retailertenant = RetailerTenant::where('retailer_id', $tenant->merchant_id)
                 ->first();
 
-        if ($retailertenant->tenant_id !== $tenant_id) {
+        if (empty($retailertenant) || $retailertenant->tenant_id !== $tenant_id) {
             $validator = Validator::make(
                 array(
                     'tenant_id'     => $tenant_id,

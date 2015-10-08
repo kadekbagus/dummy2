@@ -62,7 +62,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $order = OrbitInput::post('product_order');
 
             $retailerId = OrbitInput::post('retailer_id');
@@ -269,7 +269,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $order = OrbitInput::post('product_order');
 
             $retailerId = OrbitInput::post('retailer_id');
@@ -479,7 +479,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $retailerId = OrbitInput::post('retailer_id');
             // @TODO should not be here for next version.

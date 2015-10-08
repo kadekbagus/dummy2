@@ -100,7 +100,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
@@ -545,7 +545,7 @@ class CouponAPIController extends ControllerAPI
 
 
             $promotion_id = OrbitInput::post('promotion_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
             $rule_type = OrbitInput::post('rule_type');
@@ -1008,7 +1008,9 @@ class CouponAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `promotion_id`                  (required) - ID of the coupon
+     * @param string    `promotion_id`                 (required) - ID of the coupon
+     * @param string    `merchant_id`                  (required) - ID of the mall
+     * @param string    `password`                     (required) - Password for deletion
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1054,17 +1056,23 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $promotion_id = OrbitInput::post('promotion_id');
             $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'   => $merchant_id,
                     'promotion_id'  => $promotion_id,
                     'password'      => $password
                 ),
                 array(
+                    'merchant_id'   => 'required|orbit.empty.merchant',
                     'promotion_id'  => 'required|orbit.empty.coupon|orbit.issuedcoupon.exists',
-                    'password'      => 'required|orbit.masterpassword.delete'
+                    'password'      => [
+                        'required',
+                        ['orbit.masterpassword.delete', $merchant_id]
+                    ],
                 )
             );
 
@@ -1713,7 +1721,8 @@ class CouponAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer     `promotion_id`                    (required) - ID of the coupon
+     * @param string      `promotion_id`                    (required) - ID of the coupon
+     * @param string      `merchant_id`                     (required) - ID of the mall
      * @param string      `merchant_verification_number`    (required) - Merchant/Tenant verification number
      *
      * @return Illuminate\Support\Facades\Response
@@ -1761,17 +1770,19 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = Config::get('orbit.shop.id');
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
 
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $mall_id,
                     'issued_coupon_id' => $issuedCouponId,
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
+                    'merchant_id'                   => 'required|orbit.empty.merchant',
                     'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required'
                 )
@@ -2262,8 +2273,8 @@ class CouponAPIController extends ControllerAPI
 
         // Mall deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
-            // Current Mall location
-            $currentMall = Config::get('orbit.shop.id');
+            // Current Mall ID
+            $currentMall = $parameters[0];
 
             // Get the master password from settings table
             $masterPassword = Setting::getMasterPasswordFor($currentMall);

@@ -67,6 +67,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $tenants = OrbitInput::post('tenants');
             $amounts = OrbitInput::post('amounts');
             $receipts = OrbitInput::post('receipts');
@@ -79,6 +80,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'   => $mallId,
                     'tenants'       => $tenants,
                     'amounts'       => $amounts,
                     'receipts'      => $receipts,
@@ -90,6 +92,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'lucky_number'  => $userLuckyNumber
                 ),
                 array(
+                    'merchant_id'   => 'required|orbit.empty.mall',
                     'tenants'       => 'array|required',
                     'amounts'       => 'array|required',
                     'receipts'      => 'array|required',
@@ -205,7 +208,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Save each receipt numbers
             // @Todo: remove query inside loop
-            $mallId = Config::get('orbit.shop.id');
             foreach ($receipts as $i=>$receipt) {
                 $luckyDrawReceipt = new LuckyDrawReceipt();
                 $luckyDrawReceipt->mall_id = $mallId;
@@ -426,6 +428,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $tenants = OrbitInput::post('tenants');
             $amounts = OrbitInput::post('amounts');
             $receipts = OrbitInput::post('receipts');
@@ -438,6 +441,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'   => $mallId,
                     'tenants'       => $tenants,
                     'amounts'       => $amounts,
                     'receipts'      => $receipts,
@@ -449,6 +453,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'lucky_number'  => $userLuckyNumber
                 ),
                 array(
+                    'merchant_id'   => 'required|orbit.empty.mall',
                     'tenants'       => 'array|required',
                     'amounts'       => 'array|required',
                     'receipts'      => 'array|required',
@@ -519,7 +524,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Save each receipt numbers
             // @Todo: remove query inside loop
-            $mallId = Config::get('orbit.shop.id');
 
             // hash for receipt group
             $hash = LuckyDrawReceipt::genReceiptGroup($mallId);
@@ -749,6 +753,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $tenants = OrbitInput::post('tenants');
             $amounts = OrbitInput::post('amounts');
             $receipts = OrbitInput::post('receipts');
@@ -758,6 +763,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'   => $mallId,
                     'tenants'       => $tenants,
                     'amounts'       => $amounts,
                     'receipts'      => $receipts,
@@ -766,6 +772,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'user_id'       => $userId,
                 ),
                 array(
+                    'merchant_id'   => 'required|orbit.empty.mall',
                     'tenants'       => 'array|required',
                     'amounts'       => 'array|required',
                     'receipts'      => 'array|required',
@@ -864,7 +871,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Save each receipt numbers
             // @Todo: remove query inside loop
-            $mallId = Config::get('orbit.shop.id');
 
             foreach ($receipts as $i=>$receipt) {
                 $luckyDrawReceipt = new LuckyDrawReceipt();
@@ -927,7 +933,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->response->data = $data;
 
             // Insert to alert system
-            $this->insertCouponInbox($userId, $issuedCoupons);
+            $this->insertCouponInbox($userId, $issuedCoupons, $mallId);
 
             // Commit the changes
             $this->commit();
@@ -1175,7 +1181,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Insert to alert system
             $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
-            $this->insertCouponInbox($userId, $issuedCoupons, $issuedCouponNames);
+            $this->insertCouponInbox($userId, $issuedCoupons, $issuedCouponNames, $mallId);
 
             // Commit the changes
             $this->commit();
@@ -1327,6 +1333,21 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             return TRUE;
         });
+        
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
     }
 
     /**
@@ -1443,7 +1464,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
      * @param array $couponNames - Issued Coupons with name based
      * @return void
      */
-    protected function insertCouponInbox($userId, $coupons, $couponNames)
+    protected function insertCouponInbox($userId, $coupons, $couponNames, $mallId)
     {
         $user = User::find($userId);
 
@@ -1466,7 +1487,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
         $inbox->is_read = 'N';
         $inbox->save();
 
-        $retailerId = Config::get('orbit.shop.id');
+        $retailerId = $mallId;
         $retailer = Mall::isMall()->where('merchant_id', $retailerId)->first();
         $data = [
             'fullName'          => $name,
