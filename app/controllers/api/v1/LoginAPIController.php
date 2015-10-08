@@ -575,7 +575,11 @@ class LoginAPIController extends ControllerAPI
             $mall = NULL;
 
             if (in_array($from, ['mall', 'cs-portal'])) {
-                $mall = Mall::excludeDeleted()->where('user_id', $user->user_id)->first();
+                if ($from === 'mall') {
+                    $mall = Mall::excludeDeleted()->where('user_id', $user->user_id)->first();
+                } elseif ($from === 'cs-portal') {
+                    $mall = $user->employee->retailers[0];
+                }
             }
             $user->mall = $mall;
 
