@@ -926,7 +926,7 @@ class MallAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
@@ -1384,7 +1384,7 @@ class MallAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $password = OrbitInput::post('password');
 
             $validator = Validator::make(
@@ -1581,7 +1581,7 @@ class MallAPIController extends ControllerAPI
 
         // Check user email address, it should not exists (for update)
         Validator::extend('email_exists_but_me', function ($attribute, $value, $parameters) {
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $mall = Mall::excludeDeleted()
                         ->where('email', $value)
                         ->where('merchant_id', '!=', $merchant_id)
@@ -1598,7 +1598,7 @@ class MallAPIController extends ControllerAPI
 
         // Check ORID, it should not exists (for update)
         Validator::extend('orid_exists_but_me', function ($attribute, $value, $parameters) {
-            $mall_id = OrbitInput::post('merchant_id');
+            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
             $mall = Mall::excludeDeleted()
                         ->where('orid', $value)
                         ->where('merchant_id', '!=', $mall_id)

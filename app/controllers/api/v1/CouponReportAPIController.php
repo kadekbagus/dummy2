@@ -109,11 +109,18 @@ class CouponReportAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+
+            $configMallId = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
+
+            $this->registerCustomValidation();
+
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $configMallId,
                     'sort_by' => $sort_by,
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,retailer_name,total_redeemed,total_issued,coupon_status,status',
                 ),
                 array(
@@ -148,8 +155,6 @@ class CouponReportAPIController extends ControllerAPI
                     $perPage = 20;
                 }
             }
-
-            $configMallId = Config::get('orbit.shop.id');
 
             // Builder object
             $now = date('Y-m-d H:i:s');
@@ -459,13 +464,17 @@ class CouponReportAPIController extends ControllerAPI
             Event::fire('orbit.couponreport.getcouponsummaryreport.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
+            
+            $configMallId = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
 
             $sort_by = OrbitInput::get('sortby');
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $configMallId,
                     'sort_by' => $sort_by,
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,total_redeemed,total_issued,coupon_status',
                 ),
                 array(
@@ -500,8 +509,6 @@ class CouponReportAPIController extends ControllerAPI
                     $perPage = 20;
                 }
             }
-
-            $configMallId = Config::get('orbit.shop.id');
 
             // create date filter
             $summaryBeginDate = trim(OrbitInput::get('summary_begin_date'));
@@ -827,11 +834,15 @@ class CouponReportAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
 
+            $configMallId = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
+
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $configMallId,
                     'sort_by' => $sort_by
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'sort_by' => 'in:redeem_retailer_name,total_redeemed,issued_coupon_code,user_email,redeemed_date,redeem_verification_code',
                 ),
                 array(
@@ -866,8 +877,6 @@ class CouponReportAPIController extends ControllerAPI
                     $perPage = 20;
                 }
             }
-
-            $configMallId = Config::get('orbit.shop.id');
 
             // Builder object
             $now = date('Y-m-d H:i:s');
@@ -1149,11 +1158,15 @@ class CouponReportAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
 
+            $configMallId = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
+
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $configMallId,
                     'sort_by' => $sort_by
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,user_email,issued_coupon_code,redeemed_date,redeem_verification_code,total_issued,total_redeemed',
                 ),
                 array(
@@ -1188,8 +1201,6 @@ class CouponReportAPIController extends ControllerAPI
                     $perPage = 20;
                 }
             }
-
-            $configMallId = Config::get('orbit.shop.id');
 
             // Builder object
             $now = date('Y-m-d H:i:s');
@@ -1479,11 +1490,15 @@ class CouponReportAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
 
+            $configMallId = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
+
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $configMallId,
                     'sort_by' => $sort_by
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,user_email,issued_coupon_code,issued_date,total_issued,maximum_issued_coupon,coupon_status,status',
                 ),
                 array(
@@ -1518,8 +1533,6 @@ class CouponReportAPIController extends ControllerAPI
                     $perPage = 20;
                 }
             }
-
-            $configMallId = Config::get('orbit.shop.id');
 
             // Builder object
             $now = date('Y-m-d H:i:s');
@@ -1828,5 +1841,20 @@ class CouponReportAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check the existance of mall id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user){
+            $mall = Mall::excludeDeleted()
+                        ->allowedForUser($user)
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
     }
 }

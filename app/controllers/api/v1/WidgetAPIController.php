@@ -66,6 +66,7 @@ class WidgetAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+
             $widgetbatch = OrbitInput::post('widget');
 
             $validator = Validator::make(
@@ -105,7 +106,7 @@ class WidgetAPIController extends ControllerAPI
                         'object_id'             => $widgetObjectId,
                         'merchant_id'           => $merchantId,
                         'widget_type'           => $widgetType,
-                        'retailer_ids'          => $retailerIds,
+                        // 'retailer_ids'          => $retailerIds,
                         // 'slogan'                => $slogan,
                         'animation'             => $animation,
                         'widget_order'          => $widgetOrder,
@@ -120,7 +121,7 @@ class WidgetAPIController extends ControllerAPI
                         'animation'             => 'in:none,horizontal,vertical',
                         'widget_order'          => 'required|numeric',
                         // 'images'                => 'required_if:animation,none',
-                        'retailer_ids'          => 'array|orbit.empty.retailer',
+                        // 'retailer_ids'          => 'array|orbit.empty.retailer',
                         'id_language_default'   => 'required|orbit.empty.language_default',
                     ),
                     array(
@@ -372,14 +373,14 @@ class WidgetAPIController extends ControllerAPI
                 $widgetOrder = $value['widget_order'];
                 $images = OrbitInput::files('widget');
                 $idLanguageDefault = $value['id_language_default'];
-                // dd($slogan);
+                                
                 $validator = Validator::make(
                     array(
                         'widget_id'             => $widgetId,
                         'object_id'             => $widgetObjectId,
                         'merchant_id'           => $merchantId,
                         'widget_type'           => $widgetType,
-                        'retailer_ids'          => $retailerIds,
+                        // 'retailer_ids'          => $retailerIds,
                         // 'slogan'                => $slogan,
                         'animation'             => $animation,
                         'widget_order'          => $widgetOrder,
@@ -394,7 +395,7 @@ class WidgetAPIController extends ControllerAPI
                         'animation'             => 'in:none,horizontal,vertical',
                         // 'images'                => 'required_if:animation,none',
                         'widget_order'          => 'numeric',
-                        'retailer_ids'          => 'array|orbit.empty.retailer',
+                        // 'retailer_ids'          => 'array|orbit.empty.retailer',
                         'id_language_default'   => 'required|orbit.empty.language_default',
                     ),
                     array(
