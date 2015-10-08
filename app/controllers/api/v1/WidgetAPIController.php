@@ -93,7 +93,7 @@ class WidgetAPIController extends ControllerAPI
                 $widgetType = $value['widget_type'];
                 $widgetObjectId = $value['object_id'];
                 $merchantId = $value['merchant_id'];
-                $retailerIds = $value['retailer_ids'];
+                // $retailerIds = $value['retailer_ids'];
                 $slogan = $value['slogan'];
                 $animation = $value['animation'];
                 $widgetOrder = $value['widget_order'];
@@ -367,7 +367,7 @@ class WidgetAPIController extends ControllerAPI
                 $widgetType = $value['widget_type'];
                 $widgetObjectId = $value['object_id'];
                 $merchantId = $value['merchant_id'];
-                $retailerIds = $value['retailer_ids'];
+                // $retailerIds = $value['retailer_ids'];
                 $slogan = $value['slogan'];
                 $animation = $value['animation'];
                 $widgetOrder = $value['widget_order'];
@@ -449,9 +449,9 @@ class WidgetAPIController extends ControllerAPI
                 $updatedwidget->save();
 
                 // Insert attribute values if specified by the caller
-                if ($retailerIds != NULL) {
+                // if ($retailerIds != NULL) {
                     $updatedwidget->retailers()->sync(array($merchantId));
-                }
+                // }
 
                 // If widget is empty then it should be applied to all retailers
                 // if (empty(OrbitInput::post('retailer_ids', NULL))) {

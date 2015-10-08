@@ -2294,7 +2294,7 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $widget_id = OrbitInput::post('widget_id');
-            $images = OrbitInput::files('images_'.$widgetType);
+            $images = OrbitInput::files('image_'.$widgetType);
 
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(

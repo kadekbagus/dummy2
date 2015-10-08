@@ -17,14 +17,13 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  */
 Event::listen('orbit.widget.postnewwidget.after.save', function($controller, $widget)
 {
+
     // No need to upload if the animation are set to NOT "none"
-    $animation = OrbitInput::post('animation');
-    if ($animation !== 'none') {
+    if ($widget->animation !== 'none') {
         return;
     }
 
     $files = OrbitInput::files('image_'.$widget->widget_type);
-
     if (! $files) {
         return;
     }
@@ -33,7 +32,6 @@ Event::listen('orbit.widget.postnewwidget.after.save', function($controller, $wi
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('widget.new')
                                    ->postUploadWidgetImage($widget->widget_type);
-
     if ($response->code !== 0)
     {
         throw new \Exception($response->message, $response->code);
@@ -56,12 +54,11 @@ Event::listen('orbit.widget.postnewwidget.after.save', function($controller, $wi
 Event::listen('orbit.widget.postupdatewidget.after.save', function($controller, $widget)
 {
     // No need to upload if the animation are set to NOT "none"
-    $animation = OrbitInput::post('animation');
-    if ($animation !== 'none') {
+    if ($widget->animation !== 'none') {
         return;
     }
 
-    $files = OrbitInput::files('widget');
+    $files = OrbitInput::files('image_'.$widget->widget_type);
     if (! $files) {
         return;
     }
