@@ -66,9 +66,9 @@ class TenantAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $retailer_id = OrbitInput::post('retailer_id');
-            
+
             $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
-            
+
             /* for next version
             $password = OrbitInput::post('password');
             */
@@ -381,7 +381,7 @@ class TenantAPIController extends ControllerAPI
             $sector_of_activity = OrbitInput::post('sector_of_activity');
 
             // set user mall id
-            $parent_id = OrbitInput::post('parent_id');
+            $parent_id = OrbitInput::post('parent_id', OrbitInput::post('merchant_id'));
 
             $url = OrbitInput::post('url');
             $box_url = OrbitInput::post('box_url');
