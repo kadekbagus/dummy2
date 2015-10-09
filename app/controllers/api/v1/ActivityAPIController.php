@@ -1101,6 +1101,179 @@ class ActivityAPIController extends ControllerAPI
         return $output;
     }
 
+    public function getConnectedNowStatistics()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.activity.getactivity.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.activity.getactivity.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.activity.getactivity.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.activity.getactivity.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_ids'  => OrbitInput::get('merchant_ids'),
+                    'start_date'    => $start_date,
+                    'end_date'      => $end_date,
+                ),
+                array(
+                    'merchant_ids'  => 'orbit.check.merchants',
+                    'start_date'    => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'      => 'required|date_format:Y-m-d H:i:s'
+                )
+            );
+
+            Event::fire('orbit.activity.getactivity.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.activity.getactivity.after.validation', array($this, $validator));
+
+            // Only shows activities which belongs to this merchant
+            $locationIds = [];
+            if (false && $user->isSuperAdmin() !== TRUE) {
+                // Filter by user location id
+                $locationIds = $this->getLocationIdsForUser($user);
+                if (count($locationIds) === 0) {
+                    // not authorized for any locations?
+                    $filterLocationIds = 'AND 1 = 0';
+                } else {
+                    $filterLocationIds = 'AND a.location_id IN (';
+                    $filterLocationIds .= join(',', array_fill(0, count($filterLocationIds), '?'));
+                    $filterLocationIds .= ')';
+                }
+            } else {
+                // by default allow all
+                $filterLocationIds = 'AND 1 = 1';
+                // except if filtered explicitly
+                OrbitInput::get('location_ids', function($paramLocationIds) use (&$filterLocationIds, &$locationIds) {
+                    $paramLocationIds = (array)$paramLocationIds;
+                    if (count($paramLocationIds) === 0) {
+                        $filterLocationIds = 'AND 1 = 0';
+                    } else {
+                        $filterLocationIds = 'AND a.location_id IN (';
+                        $filterLocationIds .= join(',', array_fill(0, count($paramLocationIds), '?'));
+                        $filterLocationIds .= ')';
+                    }
+                    $locationIds = $paramLocationIds;
+                });
+            }
+
+            // "connected now" = last login/logout activity within the period was login
+            $tablePrefix = DB::getTablePrefix();
+            $activities = DB::select("
+                select a2.activity_type, count(*) as num
+                from
+                    {$tablePrefix}activities a2
+                inner join (
+                    select
+                    user_id, max(activity_id) activity_id
+                    from {$tablePrefix}activities a
+                    where a.module_name = 'Application'
+                        and a.`group` = 'mobile-ci'
+                        and a.activity_type in ('login', 'logout')
+                        and a.activity_name in ('login_ok', 'logout_ok')
+                        and a.created_at >= ?
+                        and a.created_at <= ?
+                        {$filterLocationIds}
+                    group by 1
+                ) a3
+                on (a2.activity_id = a3.activity_id)
+                group by 1
+            ", array_merge([$start_date, $end_date], $locationIds));
+
+            $login = 0;
+            foreach ($activities as $activity) {
+                if ($activity->activity_type === 'login') {
+                    $login = (int)$activity->num;
+                }
+            }
+
+            $this->response->data = [
+                'start_date' => $start_date,
+                'end_date' => $end_date,
+                'connected_now' => $login
+            ];
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.activity.getactivity.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.activity.getactivity.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.activity.getactivity.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.activity.getactivity.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.activity.getactivity.before.render', array($this, &$output));
+
+        return $output;
+    }
+
     public function getUserAgeStatistics()
     {
         $httpCode = 200;

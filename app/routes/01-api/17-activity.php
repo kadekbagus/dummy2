@@ -66,3 +66,11 @@ Route::get('/api/v1/activity/captive-report', function()
 {
     return ActivityAPIController::create()->getCaptivePortalReport();
 });
+
+/**
+ * Get "connected now" user statistics for several period
+ */
+Route::get('/api/v1/activity/connected-now-statistics', function()
+{
+    return ActivityAPIController::create()->getConnectedNowStatistics();
+});

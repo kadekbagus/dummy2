@@ -14,3 +14,4 @@ Route::get('/app/v1/activity/age-statistics', 'IntermediateAuthController@Activi
 Route::get('/app/v1/activity/active-user-statistics', 'IntermediateAuthController@Activity_getActiveUserStatistics');
 Route::get('/app/v1/activity/new-returning-statistics', 'IntermediateAuthController@Activity_getNewAndReturningUserStatistics');
 Route::get('/app/v1/activity/captive-report', 'IntermediateAuthController@Activity_getCaptivePortalReport');
+Route::get('/app/v1/activity/connected-now-statistics', 'IntermediateAuthController@Activity_getConnectedNowStatistics');
