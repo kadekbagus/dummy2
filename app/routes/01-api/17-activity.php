@@ -36,6 +36,14 @@ Route::get('/api/v1/activity/gender-statistics', function()
 });
 
 /**
+ * Get age statistics (sign-in only) for a period
+ */
+Route::get('/api/v1/activity/age-statistics', function()
+{
+    return ActivityAPIController::create()->getUserAgeStatistics();
+});
+
+/**
  * Get active user statistics (from unique sign-ins) for several period
  */
 Route::get('/api/v1/activity/active-user-statistics', function()
