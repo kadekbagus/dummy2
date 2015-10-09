@@ -21,6 +21,7 @@ class WidgetAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
+     * @param array     `widget`                (required) - Array of parameter collection
      * @param string    `type`                  (required) - Widget type, 'catalogue', 'new_product', 'promotion', 'coupon'
      * @param integer   `object_id`             (required) - The object ID
      * @param integer   `merchant_id`           (required) - Merchant ID
@@ -28,7 +29,8 @@ class WidgetAPIController extends ControllerAPI
      * @param string    `animation`             (required) - Animation type, 'none', 'horizontal', 'vertical'
      * @param string    `slogan`                (required) - Widget slogan
      * @param integer   `widget_order`          (required) - Order of the widget
-     * @param array     `images`                (optional)
+     * @param array     `image_widget_type`     (optional) - Widget_type is 'catalogue', 'new_product', 'promotion', 'coupon' example image_promotion
+     * @param integer   `id_language_default`   (required) - ID language default
      * @return Illuminate\Support\Facades\Response
      */
     public function postNewWidget()
@@ -65,38 +67,15 @@ class WidgetAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $widgetType = OrbitInput::post('widget_type');
-            $widgetObjectId = OrbitInput::post('object_id');
-            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
-            $retailerIds = OrbitInput::post('retailer_ids');
-            $slogan = OrbitInput::post('slogan');
-            $animation = OrbitInput::post('animation');
-            $widgetOrder = OrbitInput::post('widget_order');
-            $images = OrbitInput::files('images');
+
+            $widgetbatch = OrbitInput::post('widget');
 
             $validator = Validator::make(
                 array(
-                    'object_id'             => $widgetObjectId,
-                    'merchant_id'           => $merchantId,
-                    'widget_type'           => $widgetType,
-                    'retailer_ids'          => $retailerIds,
-                    // 'slogan'                => $slogan,
-                    'animation'             => $animation,
-                    'widget_order'          => $widgetOrder,
-                    // 'images'                => $images
+                    'widget' => $widgetbatch,
                 ),
                 array(
-                    'object_id'             => 'required',
-                    'merchant_id'           => 'required|orbit.empty.merchant',
-                    'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type:' . $merchantId,
-                    // 'slogan'                => 'required',
-                    'animation'             => 'in:none,horizontal,vertical',
-                    'widget_order'          => 'required|numeric',
-                    // 'images'                => 'required_if:animation,none',
-                    'retailer_ids'          => 'array|orbit.empty.retailer'
-                ),
-                array(
-                    'orbit.exists.widget_type' => Lang::get('validation.orbit.exists.widget_type'),
+                    'widget' => 'required|array',
                 )
             );
 
@@ -107,42 +86,104 @@ class WidgetAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.widget.postnewwidget.after.validation', array($this, $validator));
-
-            $mall = Mall::find($merchantId);
 
             // Begin database transaction
             $this->beginTransaction();
 
-            $widget = new Widget();
-            $widget->widget_type = $widgetType;
-            $widget->widget_object_id = $widgetObjectId;
-            $widget->widget_slogan = $slogan;
-            $widget->widget_order = $widgetOrder;
-            $widget->merchant_id = $mall->parent_id;
-            // $widget->animation = $animation;
-            $widget->animation = 'none';
-            $widget->status = 'active';
-            $widget->created_by = $user->user_id;
+            foreach ($widgetbatch as $key => $value) {
+                $widgetType = $value['widget_type'];
+                $widgetObjectId = $value['object_id'];
+                $merchantId = $value['merchant_id'];
+                // $retailerIds = $value['retailer_ids'];
+                $slogan = $value['slogan'];
+                $animation = $value['animation'];
+                $widgetOrder = $value['widget_order'];
+                $images = OrbitInput::files('widget');
+                $idLanguageDefault = $value['id_language_default'];
+                // $translations = $value['translation'];
 
-            Event::fire('orbit.widget.postnewwidget.before.save', array($this, $widget));
+                $validator = Validator::make(
+                    array(
+                        'object_id'             => $widgetObjectId,
+                        'merchant_id'           => $merchantId,
+                        'widget_type'           => $widgetType,
+                        // 'retailer_ids'          => $retailerIds,
+                        // 'slogan'                => $slogan,
+                        'animation'             => $animation,
+                        'widget_order'          => $widgetOrder,
+                        // 'images'                => $images
+                        'id_language_default'   => $idLanguageDefault,
+                    ),
+                    array(
+                        'object_id'             => 'required',
+                        'merchant_id'           => 'required|orbit.empty.merchant',
+                        'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type:' . $merchantId,
+                        // 'slogan'                => 'required',
+                        'animation'             => 'in:none,horizontal,vertical',
+                        'widget_order'          => 'required|numeric',
+                        // 'images'                => 'required_if:animation,none',
+                        // 'retailer_ids'          => 'array|orbit.empty.retailer',
+                        'id_language_default'   => 'required|orbit.empty.language_default',
+                    ),
+                    array(
+                        'orbit.exists.widget_type' => Lang::get('validation.orbit.exists.widget_type'),
+                    )
+                );
 
-            $widget->save();
+                Event::fire('orbit.widget.postnewwidget.before.validation', array($this, $validator));
 
-            // Insert attribute values if specified by the caller
-            // OrbitInput::post('retailer_ids', function($retailerIds) use ($widget) {
-            $widget->retailers()->sync(array($merchantId));
-            // });
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                Event::fire('orbit.widget.postnewwidget.after.validation', array($this, $validator));
 
-            // // If widget is empty then it should be applied to all retailers
-            // if (empty(OrbitInput::post('retailer_ids', NULL))) {
-            //     $merchant = App::make('orbit.empty.merchant');
-            //     $listOfRetailerIds = $merchant->getMyRetailerIds();
-            //     $widget->retailers()->sync($listOfRetailerIds);
-            // }
+                $mall = Mall::find($merchantId);
 
-            Event::fire('orbit.widget.postnewwidget.after.save', array($this, $widget));
-            $this->response->data = $widget;
+                $widget = new Widget();
+                $widget->widget_type = $widgetType;
+                $widget->widget_object_id = $widgetObjectId;
+                $widget->widget_slogan = $slogan;
+                $widget->widget_order = $widgetOrder;
+                $widget->merchant_id = $mall->parent_id;
+                // $widget->animation = $animation;
+                $widget->animation = 'none';
+                $widget->status = 'active';
+                $widget->created_by = $user->user_id;
+
+                Event::fire('orbit.widget.postnewwidget.before.save', array($this, $widget));
+
+                $widget->save();
+
+                $widget->retailers()->sync(array($merchantId));
+
+                // // If widget is empty then it should be applied to all retailers
+                // if (empty(OrbitInput::post('retailer_ids', NULL))) {
+                //     $merchant = App::make('orbit.empty.merchant');
+                //     $listOfRetailerIds = $merchant->getMyRetailerIds();
+                //     $widget->retailers()->sync($listOfRetailerIds);
+                // }
+
+                Event::fire('orbit.widget.postnewwidget.after.save', array($this, $widget));
+
+                if ($slogan != NULL) {
+                    $default_translation = [
+                        $idLanguageDefault => [
+                            'widget_slogan' => $widget->widget_slogan,
+                        ]
+                    ];
+                    $this->validateAndSaveTranslations($widget, json_encode($default_translation), 'create');
+                }
+
+                if (isset($widgetbatch[$widgetType]['translation']) && $widgetbatch[$widgetType]['translation'] != NULL){
+                    $this->validateAndSaveTranslations($widget, $widgetbatch[$widgetType]['translation'], 'create');
+                }
+
+                $dataResponse[$widgetType] = $widget;
+            }
+
+            $this->response->data = $dataResponse;
 
             // Commit the changes
             $this->commit();
@@ -254,15 +295,16 @@ class WidgetAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer   `wiget_id`              (required) - The Widget ID
-     * @param string    `type`                  (optional) - Widget type, 'catalogue', 'new_product', 'promotion', 'coupon'
-     * @param integer   `object_id`             (optional) - The object ID
-     * @param integer   `merchant_id`           (optional) - Merchant ID
-     * @param integer   `retailer_ids`          (optional) - Retailer IDs
-     * @param string    `animation`             (optional) - Animation type, 'none', 'horizontal', 'vertical'
-     * @param string    `slogan`                (optional) - Widget slogan
-     * @param integer   `widget_order`          (optional) - Order of the widget
-     * @param array     `images`                (optional)
+     * @param array     `widget`                (required) - Array of parameter collection
+     * @param string    `type`                  (required) - Widget type, 'catalogue', 'new_product', 'promotion', 'coupon'
+     * @param integer   `object_id`             (required) - The object ID
+     * @param integer   `merchant_id`           (required) - Merchant ID
+     * @param integer   `retailer_ids`          (required) - Retailer IDs
+     * @param string    `animation`             (required) - Animation type, 'none', 'horizontal', 'vertical'
+     * @param string    `slogan`                (required) - Widget slogan
+     * @param integer   `widget_order`          (required) - Order of the widget
+     * @param array     `image_widget_type`     (optional) - Widget_type is 'catalogue', 'new_product', 'promotion', 'coupon' example image_promotion
+     * @param integer   `id_language_default`   (required) - ID language default
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateWidget()
@@ -295,124 +337,166 @@ class WidgetAPIController extends ControllerAPI
 
                 ACL::throwAccessForbidden($message);
             }
+
             Event::fire('orbit.widget.postupdatewidget.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
-            $widgetId = OrbitInput::post('widget_id');
-            $widgetType = OrbitInput::post('widget_type');
-            $widgetObjectId = OrbitInput::post('object_id');
-            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
-            $retailerIds = OrbitInput::post('retailer_ids');
-            $slogan = OrbitInput::post('slogan');
-            $animation = OrbitInput::post('animation');
-            $widgetOrder = OrbitInput::post('widget_order');
-            $images = OrbitInput::files('images');
+            $widgetbatch = OrbitInput::post('widget');
 
             $validator = Validator::make(
                 array(
-                    'widget_id'             => $widgetId,
-                    'object_id'             => $widgetObjectId,
-                    'merchant_id'           => $merchantId,
-                    'widget_type'           => $widgetType,
-                    'retailer_ids'          => $retailerIds,
-                    // 'slogan'                => $slogan,
-                    'animation'             => $animation,
-                    'widget_order'          => $widgetOrder,
-                    // 'images'                => $images
+                    'widget' => $widgetbatch,
                 ),
                 array(
-                    'widget_id'             => 'required|orbit.empty.widget',
-                    'object_id'             => '',
-                    'merchant_id'           => 'orbit.empty.merchant',
-                    'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
-                    'animation'             => 'in:none,horizontal,vertical',
-                    // 'images'                => 'required_if:animation,none',
-                    'widget_order'          => 'numeric',
-                    'retailer_ids'          => 'array|orbit.empty.retailer',
-                ),
-                array(
-                    'orbit.exists.widget_type_but_me' => Lang::get('validation.orbit.exists.widget_type'),
+                    'widget' => 'required|array',
                 )
             );
 
-            Event::fire('orbit.widget.postupdatewidget.before.validation', array($this, $validator));
+            Event::fire('orbit.widget.postnewwidget.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.widget.postupdatewidget.after.validation', array($this, $validator));
 
             // Begin database transaction
             $this->beginTransaction();
-            
-            $mall = Mall::find($merchantId);
 
-            $widget = App::make('orbit.empty.widget');
+            foreach ($widgetbatch as $key => $value) {
+                $widgetId = $value['widget_id'];
+                $widgetType = $value['widget_type'];
+                $widgetObjectId = $value['object_id'];
+                $merchantId = $value['merchant_id'];
+                // $retailerIds = $value['retailer_ids'];
+                $slogan = $value['slogan'];
+                $animation = $value['animation'];
+                $widgetOrder = $value['widget_order'];
+                $images = OrbitInput::files('widget');
+                $idLanguageDefault = $value['id_language_default'];
+                                
+                $validator = Validator::make(
+                    array(
+                        'widget_id'             => $widgetId,
+                        'object_id'             => $widgetObjectId,
+                        'merchant_id'           => $merchantId,
+                        'widget_type'           => $widgetType,
+                        // 'retailer_ids'          => $retailerIds,
+                        // 'slogan'                => $slogan,
+                        'animation'             => $animation,
+                        'widget_order'          => $widgetOrder,
+                        // 'images'                => $images,
+                        'id_language_default'   => $idLanguageDefault,
+                    ),
+                    array(
+                        'widget_id'             => 'required|orbit.empty.widget',
+                        'object_id'             => '',
+                        'merchant_id'           => 'orbit.empty.merchant',
+                        'widget_type'           => 'required|in:tenant,lucky_draw,promotion,coupon,news|orbit.exists.widget_type_but_me:' . $merchantId . ', ' . $widgetId,
+                        'animation'             => 'in:none,horizontal,vertical',
+                        // 'images'                => 'required_if:animation,none',
+                        'widget_order'          => 'numeric',
+                        // 'retailer_ids'          => 'array|orbit.empty.retailer',
+                        'id_language_default'   => 'required|orbit.empty.language_default',
+                    ),
+                    array(
+                        'orbit.exists.widget_type_but_me' => Lang::get('validation.orbit.exists.widget_type'),
+                    )
+                );
 
-            OrbitInput::post('widget_type', function($type) use ($widget) {
-                $widget->widget_type = $type;
-            });
+                $updatedwidget = Widget::where('widget_id', $widgetId)->first();
 
-            OrbitInput::post('object_id', function($objectId) use ($widget) {
-                $widget->widget_object_id = $objectId;
-            });
+                Event::fire('orbit.widget.postupdatewidget.before.validation', array($this, $validator));
 
-            OrbitInput::post('merchant_id', function($merchantId) use ($widget, $mall) {
-                // $widget->merchant_id = $merchantId;
-                $widget->merchant_id = $mall->parent_id;
-            });
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                Event::fire('orbit.widget.postupdatewidget.after.validation', array($this, $validator));
 
-            OrbitInput::post('slogan', function($slogan) use ($widget) {
-                $widget->widget_slogan = $slogan;
-            });
+                $mall = Mall::find($merchantId);
 
-            OrbitInput::post('widget_order', function($order) use ($widget) {
-                $widget->widget_order = $order;
-            });
+                // $widget = App::make('orbit.empty.widget');
 
-            OrbitInput::post('animation', function($animation) use ($widget) {
-                // disable animation
-                // $widget->animation = $animation;
-                $widget->animation = 'none';
-            });
+                if ($widgetType != NULL) {
+                    $updatedwidget->widget_type = $widgetType;
+                }
 
-            Event::fire('orbit.widget.postupdatewidget.before.save', array($this, $widget));
+                if ($widgetObjectId != NULL) {
+                    $updatedwidget->widget_object_id = $widgetObjectId;
+                }
 
-            $widget->modified_by = $user->user_id;
-            $widget->save();
+                if ($merchantId != NULL) {
+                    $updatedwidget->merchant_id = $merchantId;
+                }
 
-            // Insert attribute values if specified by the caller
-            OrbitInput::post('retailer_ids', function($retailerIds) use ($widget, $merchantId) {
-                // $widget->retailers()->sync($retailerIds);
-                $widget->retailers()->sync(array($merchantId));
-            });
+                if ($slogan != NULL) {
+                    $updatedwidget->widget_slogan = $slogan;
+                }
 
-            // If widget is empty then it should be applied to all retailers
-            // if (empty(OrbitInput::post('retailer_ids', NULL))) {
-            //     $merchant = App::make('orbit.empty.merchant');
-            //     $listOfRetailerIds = $merchant->getMyRetailerIds();
-            //     $widget->retailers()->sync($listOfRetailerIds);
-            // }
+                if ($widgetOrder != NULL) {
+                    $updatedwidget->widget_order = $widgetOrder;
+                }
 
-            Event::fire('orbit.widget.postupdatewidget.after.save', array($this, $widget));
-            $this->response->data = $widget;
+                if ($animation != NULL) {
+                    $updatedwidget->animation = 'none';
+                }
+
+                Event::fire('orbit.widget.postupdatewidget.before.save', array($this, $updatedwidget));
+
+                $updatedwidget->modified_by = $user->user_id;
+
+                $updatedwidget->save();
+
+                // Insert attribute values if specified by the caller
+                // if ($retailerIds != NULL) {
+                    $updatedwidget->retailers()->sync(array($merchantId));
+                // }
+
+                // If widget is empty then it should be applied to all retailers
+                // if (empty(OrbitInput::post('retailer_ids', NULL))) {
+                //     $merchant = App::make('orbit.empty.merchant');
+                //     $listOfRetailerIds = $merchant->getMyRetailerIds();
+                //     $updatedwidget->retailers()->sync($listOfRetailerIds);
+                // }
+
+                Event::fire('orbit.widget.postnewwidget.after.save', array($this, $updatedwidget));                
+
+                // Default translation
+                if ($slogan != NULL) {
+                    $default_translation = [
+                        $idLanguageDefault => [
+                            'widget_slogan' => $updatedwidget->widget_slogan,
+                        ]
+                    ];
+                    $this->validateAndSaveTranslations($updatedwidget, json_encode($default_translation), 'update');
+                }
+
+                // Save translations
+                if (isset($widgetbatch[$widgetType]['translation']) && $widgetbatch[$widgetType]['translation'] != NULL){
+                    $this->validateAndSaveTranslations($updatedwidget, $widgetbatch[$widgetType]['translation'], 'update');
+                }
+
+                $dataResponse[$widgetType] = $updatedwidget;
+            }
+
+            $this->response->data = $dataResponse;
 
             // Commit the changes
             $this->commit();
 
             // Successfull Update
-            $activityNotes = sprintf('Widget updated: %s', $widget->widget_slogan);
+            $activityNotes = sprintf('Widget updated: %s', $updatedwidget->widget_slogan);
             $activity->setUser($user)
                     ->setActivityName('update_widget')
                     ->setActivityNameLong('Update Widget OK')
-                    ->setObject($widget)
+                    ->setObject($updatedwidget)
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.widget.postupdatewidget.after.commit', array($this, $widget));
+            Event::fire('orbit.widget.postupdatewidget.after.commit', array($this, $updatedwidget));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.widget.postupdatewidget.access.forbidden', array($this, $e));
 
@@ -1151,6 +1235,21 @@ class WidgetAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $news = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+        
+            if (empty($news)) {
+                return FALSE;
+            }
+        
+            App::instance('orbit.empty.language_default', $news);
+        
+            return TRUE;
+        });
+
         // Check the existance of widget id
         $user = $this->api->user;
         Validator::extend('orbit.empty.widget', function ($attribute, $value, $parameters) use ($user) {
@@ -1172,7 +1271,7 @@ class WidgetAPIController extends ControllerAPI
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
             $merchant = Mall::excludeDeleted()
                         ->allowedForUser($user)
-                        ->isMall()
+                        // ->isMall()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1272,4 +1371,107 @@ class WidgetAPIController extends ControllerAPI
             return TRUE;
         });
     }
+
+    /**
+     * @param Widget $widget
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslations($widget, $translations_json_string, $scenario = 'create')
+    {
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where WidgetTranslation object is object with keys:
+         *   widget_slogan
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['widget_slogan'];
+        $user = $this->api->user;
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+        foreach ($data as $merchant_language_id => $translations) {
+            $language = MerchantLanguage::excludeDeleted()
+                ->allowedForUser($user)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            }
+            $existing_translation = WidgetTranslation::excludeDeleted()
+                ->where('widget_id', '=', $widget->widget_id)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $merchant_language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+                $new_translation = new WidgetTranslation();
+                $new_translation->widget_id = $widget->widget_id;
+                $new_translation->merchant_language_id = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $new_translation->{$field} = $value;
+                }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
+                $new_translation->save();
+
+                $widget->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
+            }
+            elseif ($op === 'update') {
+
+                /** @var WidgetTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->save();
+
+                $widget->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
+            }
+            elseif ($op === 'delete') {
+                /** @var WidgetTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->delete();
+            }
+        }
+    }
+
 }
