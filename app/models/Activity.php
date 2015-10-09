@@ -539,6 +539,14 @@ class Activity extends Eloquent
     }
 
     /**
+     * An activity could belongs to an Widget
+     */
+    public function widget()
+    {
+        return $this->belongsToObject('Widget', 'object_id', 'widget_id');
+    }
+
+    /**
      * Activity has many children.
      *
      */
@@ -738,5 +746,43 @@ class Activity extends Eloquent
     protected static function getRequestUri()
     {
         return isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'Activity: Unknown request Uri';
+    }
+
+    /**
+     * scope to consider activity from users
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $builder
+     * @param array $merchantIds
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public function scopeConsiderCustomer($builder, array $merchantIds = [])
+    {
+        $builder->whereNotIn('group', array('pos', 'portal'));
+
+        if (! empty($merchantIds)) {
+            $this->scopeMerchantIds_widget_click($builder, $merchantIds);
+        }
+
+        return $builder;
+    }
+
+    /**
+     * Scope to filter based on merchant ids in widget click
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $builder
+     * @param array $merchantIds
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeMerchantIds_widget_click($builder, array $merchantIds)
+    {
+        // need to rename this so it does not conflict if used with scopeJoinRetailer
+        return $builder->select('activities.*')
+                       ->join('widgets', 'widgets.widget_id', '=', 'activities.object_id' )
+                       ->join('merchants as ' . DB::getTablePrefix() .  'mall', 'mall.parent_id', '=', 'widgets.merchant_id')
+                       ->whereIn('mall.merchant_id', $merchantIds)
+                       ->where('mall.status', 'active')
+                       ->where('mall.object_type', 'mall');
     }
 }
