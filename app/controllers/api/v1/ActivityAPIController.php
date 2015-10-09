@@ -1015,10 +1015,10 @@ class ActivityAPIController extends ControllerAPI
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
             $activities = DB::table('activities')
-                ->join('user_details', 'activities.user_id', '=', 'user_details.user_id')
+                ->leftJoin('user_details', 'activities.user_id', '=', 'user_details.user_id')
                 ->select(
                     'user_details.gender',
-                    DB::raw('COUNT(*) as count')
+                    DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'activities.user_id) as count')
                 )
                 ->where('activities.module_name', '=', 'Application')
                 ->where('activities.group', '=', 'mobile-ci')
