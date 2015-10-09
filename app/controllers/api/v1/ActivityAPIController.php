@@ -1201,7 +1201,7 @@ class ActivityAPIController extends ControllerAPI
                 35 => 0,
                 45 => 0,
                 65 => 0,
-                null => 0
+                0 => 0
             ];
             $unknown = 0;
 
@@ -1209,7 +1209,7 @@ class ActivityAPIController extends ControllerAPI
                 foreach ($buckets as $limit => $count) {
                     if ($age->age === null) {
                         $unknown += (int)$age->count;
-                    } elseif ($limit === null) {
+                    } elseif ($limit === 0) {
                         $buckets[$limit] += (int)$age->count;
                     } elseif ((int)$age->age < $limit) {
                         $buckets[$limit] += (int)$age->count;
@@ -1220,12 +1220,13 @@ class ActivityAPIController extends ControllerAPI
             $result = [];
             $prev = 0;
             foreach ($buckets as $limit => $count) {
-                if ($limit === null) {
+                if ($limit === 0) {
                     $key = sprintf('%d+', $prev);
                 } else {
-                    $key = sprintf('%d - %d', $prev, $limit);
+                    $key = sprintf('%d - %d', $prev, $limit - 1);
                 }
                 $result[$key] = $count;
+                $prev = $limit;
             }
             $result['unknown'] = $unknown;
 
