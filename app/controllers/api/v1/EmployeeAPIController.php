@@ -454,7 +454,7 @@ class EmployeeAPIController extends ControllerAPI
             $retailerIds = array_merge($retailerIds, (array)$myRetailerIds);
 
             if ($retailerIds) {
-                $newEmployee->retailers()->sync($retailerIds);
+                $newEmployee->malls()->sync($retailerIds);
             }
 
             Event::fire('orbit.employee.postnewemployee.after.save', array($this, $newUser));
@@ -1005,7 +1005,7 @@ class EmployeeAPIController extends ControllerAPI
             $retailerIds = array_merge($retailerIds, (array)$myRetailerIds);
 
             if ($retailerIds) {
-                $employee->retailers()->sync($retailerIds);
+                $employee->malls()->sync($retailerIds);
             }
 
             Event::fire('orbit.employee.postupdateemployee.after.save', array($this, $updatedUser));
@@ -2034,6 +2034,9 @@ class EmployeeAPIController extends ControllerAPI
                 // $joined = TRUE;
                 // $users->employeeMerchantIds($retailerIds);
                 $listOfMerchantIds = (array)$merchantIds;
+                $users->whereHas('malls', function ($q) use($merchantIds) {
+                    $q->whereIn('employee_retailer.retailer_id', $merchantIds);
+                });
             });
 
             // Filter user by username
