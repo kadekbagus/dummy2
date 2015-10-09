@@ -31,7 +31,7 @@ class Employee extends Eloquent
     /**
      * Employee could belongs to and has many retailers
      */
-    public function malls()
+    public function retailers()
     {
         return $this->belongsToMany('Mall', 'employee_retailer', 'employee_id', 'retailer_id');
     }

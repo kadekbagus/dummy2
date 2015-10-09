@@ -454,7 +454,7 @@ class EmployeeAPIController extends ControllerAPI
             $retailerIds = array_merge($retailerIds, (array)$myRetailerIds);
 
             if ($retailerIds) {
-                $newEmployee->malls()->sync($retailerIds);
+                $newEmployee->retailers()->sync($retailerIds);
             }
 
             Event::fire('orbit.employee.postnewemployee.after.save', array($this, $newUser));
@@ -1005,7 +1005,7 @@ class EmployeeAPIController extends ControllerAPI
             $retailerIds = array_merge($retailerIds, (array)$myRetailerIds);
 
             if ($retailerIds) {
-                $employee->malls()->sync($retailerIds);
+                $employee->retailers()->sync($retailerIds);
             }
 
             Event::fire('orbit.employee.postupdateemployee.after.save', array($this, $updatedUser));
