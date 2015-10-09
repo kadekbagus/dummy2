@@ -21,6 +21,7 @@ class WidgetAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
+     * @param array     `widget`                (required) - Array of parameter collection
      * @param string    `type`                  (required) - Widget type, 'catalogue', 'new_product', 'promotion', 'coupon'
      * @param integer   `object_id`             (required) - The object ID
      * @param integer   `merchant_id`           (required) - Merchant ID
@@ -28,7 +29,7 @@ class WidgetAPIController extends ControllerAPI
      * @param string    `animation`             (required) - Animation type, 'none', 'horizontal', 'vertical'
      * @param string    `slogan`                (required) - Widget slogan
      * @param integer   `widget_order`          (required) - Order of the widget
-     * @param array     `images`                (optional)
+     * @param array     `image_widget_type`     (optional) - Widget_type is 'catalogue', 'new_product', 'promotion', 'coupon' example image_promotion
      * @param integer   `id_language_default`   (required) - ID language default
      * @return Illuminate\Support\Facades\Response
      */
@@ -294,15 +295,16 @@ class WidgetAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer   `wiget_id`              (required) - The Widget ID
-     * @param string    `type`                  (optional) - Widget type, 'catalogue', 'new_product', 'promotion', 'coupon'
-     * @param integer   `object_id`             (optional) - The object ID
-     * @param integer   `merchant_id`           (optional) - Merchant ID
-     * @param integer   `retailer_ids`          (optional) - Retailer IDs
-     * @param string    `animation`             (optional) - Animation type, 'none', 'horizontal', 'vertical'
-     * @param string    `slogan`                (optional) - Widget slogan
-     * @param integer   `widget_order`          (optional) - Order of the widget
-     * @param array     `images`                (optional)
+     * @param array     `widget`                (required) - Array of parameter collection
+     * @param string    `type`                  (required) - Widget type, 'catalogue', 'new_product', 'promotion', 'coupon'
+     * @param integer   `object_id`             (required) - The object ID
+     * @param integer   `merchant_id`           (required) - Merchant ID
+     * @param integer   `retailer_ids`          (required) - Retailer IDs
+     * @param string    `animation`             (required) - Animation type, 'none', 'horizontal', 'vertical'
+     * @param string    `slogan`                (required) - Widget slogan
+     * @param integer   `widget_order`          (required) - Order of the widget
+     * @param array     `image_widget_type`     (optional) - Widget_type is 'catalogue', 'new_product', 'promotion', 'coupon' example image_promotion
+     * @param integer   `id_language_default`   (required) - ID language default
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateWidget()
