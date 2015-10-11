@@ -151,9 +151,6 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $newluckydraw->save();
 
-            // Generate lucky draw numbers
-            DB::statement(DB::raw('call generate_lucky_draw_number(' . $min_number . ',' . $max_number . ',' . $newluckydraw->lucky_draw_id . ',' . $user->user_id . ');'));
-
             Event::fire('orbit.luckydraw.postnewluckydraw.after.save', array($this, $newluckydraw));
 
             $this->response->data = $newluckydraw;
