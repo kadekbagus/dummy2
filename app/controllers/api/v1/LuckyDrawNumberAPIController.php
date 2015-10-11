@@ -130,6 +130,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             $group = $savedReceipts[0]->receipt_group;
 
             // Save the lucky draw numbers
+            $luckyDraw = $this->cachedValidationResult['orbit.lucky_draw.exists'];
             $number = $luckyDrawNumberEnd - $luckyDrawNumberStart;
             $issueType = 'sequence';
             $luckyNumberDriven = 0;
@@ -137,6 +138,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             $issueDate = date('Y-m-d H:i:s');
             $status = 'active';
             $maxRecordReturned = Config::get('orbit.pagination.lucky_draw.max_record', 50);
+            $minimumNumber = $luckyDraw->min_number;
 
             $storedProcArgs = [
                 $number + 1,        // 1, e.g: 1005 - 1001, it should be 5 numbers not 4
@@ -149,8 +151,9 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 $maxRecordReturned, // 8
                 $group,             // 9
                 $luckyDrawId        // 10
+                $minimumNumber      // 11
             ];
-            $luckyDrawnumbers = DB::select("call issue_lucky_draw_numberv2(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $storedProcArgs);
+            $luckyDrawnumbers = DB::select("call issue_lucky_draw_numberv3(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $storedProcArgs);
 
             // Save each associated receipt and its LD number
             foreach ($savedReceipts as $savedReceipt) {
@@ -175,7 +178,6 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             $this->response->data = $data;
 
             if ($popup === 'yes') {
-                $luckyDraw = $this->cachedValidationResult['orbit.lucky_draw.exists'];
                 $this->insertLuckyDrawNumberInbox($customer, $data, $mallId, $luckyDraw);
             }
 
