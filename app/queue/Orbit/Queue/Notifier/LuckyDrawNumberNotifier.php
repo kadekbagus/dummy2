@@ -128,6 +128,8 @@ class LuckyDrawNumberNotifier
 
             // We are only interesting in 200 OK status
             $httpCode = $this->poster->getTransferInfo('http_code');
+            Log::info('External HTTP Response: ' . $httpBody);
+
             if ((int)$httpCode !== 200) {
                 $errorMessage = sprintf('Unexpected http response code %s, expected 200.', $httpCode);
                 throw new Exception($errorMessage);
@@ -135,7 +137,6 @@ class LuckyDrawNumberNotifier
 
             // Lets try to decode the body
             $httpBody = $this->poster->getResponse();
-            Log::info('External response: ' . $httpBody);
 
             $response = json_decode($httpBody);
 
