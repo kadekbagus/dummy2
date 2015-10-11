@@ -233,9 +233,6 @@ class UserUpdateNotifier
                 DB::connection()->getPdo()->rollBack();
             }
 
-            // Release the job back and give some delay
-            $job->release((int)$notifyData['release_time']);
-
             Log::error($message);
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Notify user-update User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
@@ -245,15 +242,15 @@ class UserUpdateNotifier
                 DB::connection()->getPdo()->rollBack();
             }
 
-            // Release the job back and give some delay
-            $job->release((int)$notifyData['release_time']);
-
             Log::error($message);
 
             if ($data['human_error']) {
                 $message = $e->getMessage();
             }
         }
+
+        $job->delete();
+        Log::error(sprintf('UpdateMember Integration Error PostData: %s', serialize($postData)));
 
         return [
             'status' => 'fail',

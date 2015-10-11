@@ -220,9 +220,6 @@ class UserLoginNotifier
                 DB::connection()->getPdo()->rollBack();
             }
 
-            // Release the job back and give some delay
-            $job->release((int)$notifyData['release_time']);
-
             Log::error($message);
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
@@ -232,11 +229,11 @@ class UserLoginNotifier
                 DB::connection()->getPdo()->rollBack();
             }
 
-            // Release the job back and give some delay
-            $job->release((int)$notifyData['release_time']);
-
             Log::error($message);
         }
+
+        $job->delete();
+        Log::error(sprintf('CheckMember Integration Error PostData: %s', serialize($postData)));
 
         return [
             'status' => 'fail',
