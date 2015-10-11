@@ -247,6 +247,12 @@ class LuckyDrawNumberNotifier
             Log::error($message);
         }
 
+        // There was an error, delete the receipts so it can be re-entered again
+        LuckyDrawReceipt::excludeDeleted()
+                        ->where('user_id', $user->user_id)
+                        ->where('receipt_group', $hash)
+                        ->delete();
+
         $job->delete();
         Log::error(sprintf('LuckyDraw Integration Error PostData: %s', serialize($postData)));
 
