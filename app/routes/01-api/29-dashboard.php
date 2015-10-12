@@ -40,3 +40,6 @@ Route::get('/api/v1/dashboard/customer-merchant-summary', "DashboardAPIControlle
 
 // Get Dashboard general customer view
 Route::get('/api/v1/dashboard/general-customer-view', "DashboardAPIController@getGeneralCustomerView");
+
+// Get Dashboard general customer view
+Route::get('/api/v1/dashboard/top-customer-view', "DashboardAPIController@getTopCustomerView");

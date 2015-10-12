@@ -2683,7 +2683,7 @@ class DashboardAPIController extends ControllerAPI
 
 
 
-        /**
+    /**
      * GET - General Customer View
      *
      * @author kadek <kadek@dominopos.com>
@@ -2740,40 +2740,23 @@ class DashboardAPIController extends ControllerAPI
             }
             Event::fire('orbit.dashboard.getgeneralcustomerview.after.validation', array($this, $validator));
 
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.dashboard.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
-                if ($maxRecord <= 0) {
-                    $maxRecord = 20;
-                }
-            }
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.dashboard.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
-                if ($perPage <= 0) {
-                    $perPage = 20;
-                }
-            }
 
             $tablePrefix = DB::getTablePrefix();
 
-            $news = Activity::select(DB::raw("count(distinct activity_id) as total"))
+            $news = Activity::select(DB::raw("count(distinct activity_id)-1 as total"))
+                            ->where('activities.activity_name', '=', 'view_news')
                             ->where('activities.module_name', '=', 'News')
                             ->where('activities.activity_type', '=', 'view')
                             ->where('activities.role', '=', 'Consumer')
                             ->where('activities.group', '=', 'mobile-ci');
 
-            $events = Activity::select(DB::raw("count(distinct activity_id) as total"))
+            $events = Activity::select(DB::raw("count(distinct activity_id)-1 as total"))
                             ->where('activities.module_name', '=', 'Event')
                             ->where('activities.activity_type', '=', 'view')
                             ->where('activities.role', '=', 'Consumer')
                             ->where('activities.group', '=', 'mobile-ci');
 
-            $promotions = Activity::select(DB::raw("count(distinct activity_id) as total"))
+            $promotions = Activity::select(DB::raw("count(distinct activity_id)-1 as total"))
                             ->where('activities.module_name', '=', 'Promotion')
                             ->where('activities.activity_type', '=', 'view')
                             ->where('activities.role', '=', 'Consumer')
@@ -2815,7 +2798,7 @@ class DashboardAPIController extends ControllerAPI
             $data->news = $news;
             $data->events = $events;
             $data->promotions = $promotions;
-            $data->luck_draws = $lucky_draws;
+            $data->lucky_draws = $lucky_draws;
 
             $this->response->data = $data;
 
@@ -2833,7 +2816,7 @@ class DashboardAPIController extends ControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $result;
+            $this->response->data = null;
             $httpCode = 403;
         } catch (QueryException $e) {
             Event::fire('orbit.dashboard.getgeneralcustomerview.query.error', array($this, $e));
@@ -2864,4 +2847,241 @@ class DashboardAPIController extends ControllerAPI
 
         return $output;
     }
+
+
+    /**
+     * GET - Top 5 Customer View
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`   (optional) - mall id
+     * @param date    `begin_date`    (optional) - filter date begin
+     * @param date    `end_date`      (optional) - filter date end
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getTopCustomerView()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.gettopcustomerview.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.gettopcustomerview.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.gettopcustomerview.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('view_product')) {
+                Event::fire('orbit.dashboard.gettopcustomerview.authz.notallowed', array($this, $user));
+                $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.gettopcustomerview.after.authz', array($this, $user));
+
+            $take = OrbitInput::get('take');
+            $type = OrbitInput::get('type');
+
+            $validator = Validator::make(
+                array(
+                    'take' => $take,
+                ),
+                array(
+                    'take' => 'numeric',
+                )
+            );
+
+            Event::fire('orbit.dashboard.gettopcustomerview.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.gettopcustomerview.after.validation', array($this, $validator));
+
+            if(empty($take)) {
+                $take = 5;
+            }
+
+            $tablePrefix = DB::getTablePrefix();
+
+            switch ($type) {
+
+                // show news
+                case 'news':
+                        $query = News::select(
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
+                                select
+                                    count(ac.activity_id)-1 as total
+                                from
+                                    {$tablePrefix}news ne
+                                        inner join
+                                    {$tablePrefix}activities ac ON ne.news_id = ac.news_id
+                                where ac.module_name = 'News'
+                                and ac.activity_type = 'view'
+                                and ac.role = 'Consumer'
+                                and ac.group = 'mobile-ci'
+                            ) * 100 as percentage"),
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
+                            "news.news_name as name",
+                            "news.news_id as object_id"
+                        )
+                        ->join("activities", function ($join) {
+                            $join->on('news.news_id', '=', 'activities.news_id');
+                            $join->where('news.object_type', '=', 'news'); 
+                            $join->where('activities.activity_name', '=', 'view_news');
+                            $join->where('activities.module_name', '=', 'News');
+                            $join->where('activities.activity_type', '=', 'view');
+                            $join->where('activities.role', '=', 'Consumer');
+                            $join->where('activities.group', '=', 'mobile-ci');
+                        })
+                        ->groupBy('news.news_id')
+                        ->orderBy('score', 'DESC')
+                        ->take($take);
+                        break;
+
+                // show events
+                case 'events':
+                        $query = EventModel::select(
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
+                            "events.event_name as name",
+                            "events.event_id as object_id"
+                        )
+                        ->join("activities", function ($join) {
+                            $join->on('events.event_id', '=', 'activities.event_id');
+                            $join->where('activities.module_name', '=', 'News');
+                            $join->where('activities.activity_type', '=', 'view');
+                            $join->where('activities.role', '=', 'Consumer');
+                            $join->where('activities.group', '=', 'mobile-ci');
+                        })
+                        ->groupBy('events.event_id')
+                        ->orderBy('score', 'DESC')
+                        ->take($take);
+                        break;
+
+                // show promotions
+                case 'promotions':
+                        $query = News::select(
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
+                            "news.news_name as name",
+                            "news.news_id as object_id"
+                        )
+                        ->join("activities", function ($join) {
+                            $join->on('news.news_id', '=', 'activities.news_id');
+                            $join->where('news.object_type', '=', 'promotion'); 
+                            $join->where('activities.module_name', '=', 'Promotion');
+                            $join->where('activities.activity_type', '=', 'view');
+                            $join->where('activities.role', '=', 'Consumer');
+                            $join->where('activities.group', '=', 'mobile-ci');
+                        })
+                        ->groupBy('news.news_id')
+                        ->orderBy('score', 'DESC')
+                        ->take($take);
+                        break;
+
+                // by default show news
+                default:
+                    $query = News::select(
+                        DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
+                            select
+                                count(ac.activity_id)-1 as total
+                            from
+                                {$tablePrefix}news ne
+                                    inner join
+                                {$tablePrefix}activities ac ON ne.news_id = ac.news_id
+                            where ac.module_name = 'News'
+                            and ac.activity_type = 'view'
+                            and ac.role = 'Consumer'
+                            and ac.group = 'mobile-ci'
+                        ) * 100 as percentage"),
+                        DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
+                        "news.news_name as name",
+                        "news.news_id as object_id"
+                    )
+                    ->join("activities", function ($join) {
+                        $join->on('news.news_id', '=', 'activities.news_id');
+                        $join->where('news.object_type', '=', 'news'); 
+                        $join->where('activities.activity_name', '=', 'view_news');
+                        $join->where('activities.module_name', '=', 'News');
+                        $join->where('activities.activity_type', '=', 'view');
+                        $join->where('activities.role', '=', 'Consumer');
+                        $join->where('activities.group', '=', 'mobile-ci');
+                    })
+                    ->groupBy('news.news_id')
+                    ->orderBy('score', 'DESC')
+                    ->take($take);
+            }
+
+            OrbitInput::get('merchant_id', function ($merchant_id) use ($query) {
+                $query->where('activities.location_id', '=', $merchant_id);
+            });
+
+            OrbitInput::get('begin_date', function ($beginDate) use ($query) {
+                $query->where('activities.created_at', '>=', $beginDate);
+            });
+
+            OrbitInput::get('end_date', function ($endDate) use ($query) {
+                $query->where('activities.created_at', '<=', $endDate);
+            });
+
+            $result = $query->get();
+
+            $this->response->data = $result;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.gettopcustomerview.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.gettopcustomerview.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.gettopcustomerview.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.gettopcustomerview.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.gettopcustomerview.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+
 }
