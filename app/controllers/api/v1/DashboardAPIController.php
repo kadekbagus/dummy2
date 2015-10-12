@@ -62,7 +62,7 @@ class DashboardAPIController extends ControllerAPI
                     'take' => $take
                 ),
                 array(
-                    'merchant_id' => 'required|array|min:0',
+                    'merchant_id' => 'array|min:0',
                     'take' => 'numeric'
                 )
             );
