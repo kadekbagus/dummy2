@@ -2030,11 +2030,11 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             // Filter user by Merchant Ids
-            OrbitInput::get('merchant_id', function ($merchantIds) use ($listOfMerchantIds, $joined) {
+            OrbitInput::get('merchant_id', function ($merchantIds) use ($listOfMerchantIds, $joined, $users) {
                 // $joined = TRUE;
                 // $users->employeeMerchantIds($retailerIds);
                 $listOfMerchantIds = (array)$merchantIds;
-                $users->whereHas('malls', function ($q) use($merchantIds) {
+                $users->whereHas('retailers', function ($q) use($merchantIds) {
                     $q->whereIn('employee_retailer.retailer_id', $merchantIds);
                 });
             });
