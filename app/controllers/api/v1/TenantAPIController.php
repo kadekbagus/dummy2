@@ -765,11 +765,10 @@ class TenantAPIController extends ControllerAPI
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id . ',' . $mall_id,
-                    'category_ids'      => 'required|array'
+                    'category_ids'      => 'array'
                 ),
                 array(
                     'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
-                    'category_ids.required' => 'The category is required.',
                     'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
                 //ACL::throwAccessForbidden($message);
                )
