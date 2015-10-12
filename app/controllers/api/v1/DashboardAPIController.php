@@ -15,6 +15,13 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class DashboardAPIController extends ControllerAPI
 {
     /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
+    /**
      * GET - TOP Widget Click
      *
      * @author Irianto Pratama <irianto@dominopos.com>
@@ -667,7 +674,6 @@ class DashboardAPIController extends ControllerAPI
                     'in' => Lang::get('validation.orbit.empty.couponreportgeneral_sortby'),
                 )
             );
-
             Event::fire('orbit.dashboard.getcouponissuedvsreedemed.before.validation', array($this, $validator));
 
             // Run the validation
@@ -731,7 +737,6 @@ class DashboardAPIController extends ControllerAPI
                             DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
 
                             ->join('merchants', 'merchants.merchant_id', '=', DB::raw('redeemed.redeem_retailer_id'));
-
 
             // Filter by mall id
             OrbitInput::get('mall_id', function($mallId) use ($coupons, $configMallId) {

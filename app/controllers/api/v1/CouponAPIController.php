@@ -1797,7 +1797,7 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
-            $tenant = Retailer::active()
+            $tenant = Tenant::active()
                 ->where('parent_id', $mall_id)
                 ->where('masterbox_number', $verificationNumber)
                 ->first();

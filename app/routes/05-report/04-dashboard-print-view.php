@@ -11,4 +11,8 @@ Route::get('/printer/dashboard/user-connect-time', [
     'uses'    => 'Report\DashboardPrinterController@getUserConnectTimePrintView'
 ]);
 
-
+Route::get('/printer/dashboard/coupon-issued-vs-reedemed', [
+    'as'      => 'printer-dashboard-detail-coupon-issued-vs-reedemed',
+    'before'  => 'orbit-settings',
+    'uses'    => 'Report\DashboardPrinterController@getUserCouponIssuedVSReedemedPrintView'
+]);
