@@ -972,6 +972,11 @@ class NewsAPIController extends ControllerAPI
                 $news->whereIn('news.mall_id', (array)$mallIds);
             });
 
+            // Filter news by mall Ids / dupes, same as above
+            OrbitInput::get('merchant_id', function ($mallIds) use ($news) {
+                $news->whereIn('news.mall_id', (array)$mallIds);
+            });
+
             // Filter news by news name
             OrbitInput::get('news_name', function($newsname) use ($news)
             {
