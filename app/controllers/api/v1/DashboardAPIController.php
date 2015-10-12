@@ -2679,4 +2679,189 @@ class DashboardAPIController extends ControllerAPI
 
         return $arr;
     }
+
+
+
+
+        /**
+     * GET - General Customer View
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`   (optional) - mall id
+     * @param date    `begin_date`    (optional) - filter date begin
+     * @param date    `end_date`      (optional) - filter date end
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getGeneralCustomerView()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getgeneralcustomerview.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getgeneralcustomerview.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getgeneralcustomerview.before.authz', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('view_product')) {
+                Event::fire('orbit.dashboard.getgeneralcustomerview.authz.notallowed', array($this, $user));
+                $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getgeneralcustomerview.after.authz', array($this, $user));
+
+            $take = OrbitInput::get('take');
+            $validator = Validator::make(
+                array(
+                    'take' => $take
+                ),
+                array(
+                    'take' => 'numeric'
+                )
+            );
+
+            Event::fire('orbit.dashboard.getgeneralcustomerview.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getgeneralcustomerview.after.validation', array($this, $validator));
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.dashboard.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.dashboard.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
+            }
+
+            $tablePrefix = DB::getTablePrefix();
+
+            $news = Activity::select(DB::raw("count(distinct activity_id) as total"))
+                            ->where('activities.module_name', '=', 'News')
+                            ->where('activities.activity_type', '=', 'view')
+                            ->where('activities.role', '=', 'Consumer')
+                            ->where('activities.group', '=', 'mobile-ci');
+
+            $events = Activity::select(DB::raw("count(distinct activity_id) as total"))
+                            ->where('activities.module_name', '=', 'Event')
+                            ->where('activities.activity_type', '=', 'view')
+                            ->where('activities.role', '=', 'Consumer')
+                            ->where('activities.group', '=', 'mobile-ci');
+
+            $promotions = Activity::select(DB::raw("count(distinct activity_id) as total"))
+                            ->where('activities.module_name', '=', 'Promotion')
+                            ->where('activities.activity_type', '=', 'view')
+                            ->where('activities.role', '=', 'Consumer')
+                            ->where('activities.group', '=', 'mobile-ci');
+
+            // for now lucky draws is not count
+            $empty_lucky_draws = new stdclass();
+            $empty_lucky_draws->total = 0;
+            $lucky_draws = $empty_lucky_draws;
+
+            OrbitInput::get('merchant_id', function ($merchant_id) use ($news, $promotions, $events) {
+                $news->where('activities.location_id', '=', $merchant_id);
+                $promotions->where('activities.location_id', '=', $merchant_id);
+                $events->where('activities.location_id', '=', $merchant_id);
+            });
+
+            OrbitInput::get('begin_date', function ($beginDate) use ($news, $promotions, $events) {
+                $news->where('activities.created_at', '>=', $beginDate);
+                $promotions->where('activities.created_at', '>=', $beginDate);
+                $events->where('activities.created_at', '>=', $beginDate);
+            });
+
+            OrbitInput::get('end_date', function ($endDate) use ($news, $promotions, $events) {
+                $news->where('activities.created_at', '<=', $endDate);
+                $promotions->where('activities.created_at', '<=', $endDate);
+                $events->where('activities.created_at', '<=', $endDate);
+            });
+
+            $news = $news->first();
+            $events = $events->first();
+            $promotions = $promotions->first();
+
+            $news->label = 'News';
+            $events->label = 'Events';
+            $promotions->label = 'Promotions';
+            $lucky_draws->label = 'Lucky Draws';
+
+            $data = new stdclass();
+            $data->news = $news;
+            $data->events = $events;
+            $data->promotions = $promotions;
+            $data->luck_draws = $lucky_draws;
+
+            $this->response->data = $data;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getgeneralcustomerview.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getgeneralcustomerview.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getgeneralcustomerview.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getgeneralcustomerview.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getgeneralcustomerview.before.render', array($this, &$output));
+
+        return $output;
+    }
 }
