@@ -1,8 +1,10 @@
 <?php
 
+// Get Dashboard top tenant
+Route::get('/app/v1/dashboard/top-tenants', "IntermediateAuthController@Dashboard_getTopTenant");
+
 // Get Dashboard top product
 Route::get('/app/v1/dashboard/top-product', "IntermediateAuthController@Dashboard_getTopProduct");
-
 
 // Get Dashboard top product attribute
 Route::get('/app/v1/dashboard/top-product-attribute', "IntermediateAuthController@Dashboard_getTopProductAttribute");

@@ -1,8 +1,10 @@
 <?php
 
+// Get Dashboard top tenant
+Route::get('/api/v1/dashboard/top-tenants', "DashboardAPIController@getTopTenant");
+
 // Get Dashboard top product
 Route::get('/api/v1/dashboard/top-product', "DashboardAPIController@getTopProduct");
-
 
 // Get Dashboard top product attribute
 Route::get('/api/v1/dashboard/top-product-attribute', "DashboardAPIController@getTopProductAttribute");

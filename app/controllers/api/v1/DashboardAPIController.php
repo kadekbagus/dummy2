@@ -14,6 +14,187 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class DashboardAPIController extends ControllerAPI
 {
+
+    /**
+     * GET - TOP Tenant , Default data is 14 days before today
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`              (optional) - limit by merchant id
+     * @param date    `start_date`               (optional) - filter date begin
+     * @param date    `end_date`                 (optional) - filter date end
+     * @param date    `previous_start_date`      (optional) - filter date end
+     * @return Illuminate\Support\Facades\Response
+     */
+
+    public function getTopTenant()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.activity.gettopten.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.activity.gettopten.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.activity.gettopten.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.activity.gettopten.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+            
+            $merchant_id = OrbitInput::get('merchant_id');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+            $previous_start_date = OrbitInput::get('previous_start_date');
+            $tomorrow = date('Y-m-d H:i:s', strtotime('tomorrow'));
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id'         => $merchant_id,
+                    'start_date'          => $start_date,
+                    'end_date'            => $end_date,
+                    'previous_start_date' => $previous_start_date,
+                ),
+                array(
+                    'merchant_id'         => 'orbit.empty.merchant',
+                    'start_date'          => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'            => 'required|date_format:Y-m-d H:i:s',
+                    'previous_start_date' => 'required|date_format:Y-m-d H:i:s',
+                )
+            );
+
+            Event::fire('orbit.activity.gettopten.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.activity.gettopten.after.validation', array($this, $validator));
+
+            // registrations from start to end grouped by date part and activity name long.
+            // activity name long should include source.
+            $tablePrefix = DB::getTablePrefix();
+
+            $activities = DB::table('activities')
+                ->join('merchants', "activities.object_id", '=', "merchants.merchant_id")
+                ->select(
+                    DB::raw("{$tablePrefix}activities.object_id as tenant_id"),                    
+                    DB::raw("COUNT({$tablePrefix}activities.activity_id) as score"),
+                    DB::raw("{$tablePrefix}merchants.name as tenant_name"),
+                    DB::raw("
+                                count({$tablePrefix}activities.activity_id) / (
+                                        SELECT count({$tablePrefix}activities.activity_id) FROM {$tablePrefix}activities
+                                    where 1=1
+                                    and activity_name = 'view_retailer' 
+                                    and activity_type = 'view' 
+                                    and object_name = 'Tenant' 
+                                    and `group` = 'mobile-ci' 
+                                    and role = 'Consumer' 
+                                    and location_id = '" . $merchant_id . "'
+                                    and created_at >= '" . $start_date . "'
+                                    and created_at <= '" . $end_date . "'
+                                )*100 as percentage
+                        ")
+                )
+                ->where("activities.activity_name", '=', 'view_retailer')
+                ->where("activities.activity_type", '=', 'view')
+                ->where("activities.object_name", '=', 'Tenant')
+                ->where("activities.group", '=', 'mobile-ci')
+                ->where("activities.role", '=', 'Consumer')
+                ->where("activities.location_id", '=', $merchant_id)
+                ->where("activities.created_at", '>=', $start_date)
+                ->where("activities.created_at", '<=', $end_date)
+                ->groupBy("activities.object_id")
+                ->orderBy("activities.object_id");
+
+            $tenants = $activities->get();
+
+            $this->response->data = [
+                'this_period' => [
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'tenants' => $tenants,
+                ]
+            ];
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.activity.gettopten.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.activity.gettopten.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.activity.gettopten.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.activity.gettopten.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.activity.gettopten.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+
+
+
+
+
+
+
+
     /**
      * GET - TOP Product
      *
@@ -2864,4 +3045,27 @@ class DashboardAPIController extends ControllerAPI
 
         return $output;
     }
+
+
+    protected function registerCustomValidation()
+    {
+        Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
+            $merchant = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->where('is_mall', 'yes')
+                        ->first();
+
+            if (empty($merchant)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.merchant', $merchant);
+
+            return TRUE;
+        });
+    }
+
+
 }
+
+
