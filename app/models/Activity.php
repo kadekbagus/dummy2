@@ -284,10 +284,6 @@ class Activity extends Eloquent
     public function setLocation($location)
     {
         if (is_object($location)) {
-            if (TRUE === ($location instanceof Retailer)) {
-                $location->parent;
-            }
-
             $this->location_id = $location->merchant_id;
             $this->location_name = $location->name;
             $this->metadata_location = $location->toJSON();
@@ -623,10 +619,9 @@ class Activity extends Eloquent
     {
         // need to rename this so it does not conflict if used with scopeJoinRetailer
         return $builder->select('activities.*')
-                       ->join('merchants as ' . DB::getTablePrefix() .  'retailers', 'retailers.merchant_id', '=', 'activities.location_id')
-                       ->whereIn('retailers.parent_id', $merchantIds)
-                       ->where('retailers.status', 'active')
-                       ->where('retailers.object_type', 'retailer');
+                       ->join('merchants as ' . DB::getTablePrefix() .  'malls', 'malls.merchant_id', '=', 'activities.location_id')
+                       ->where('malls.status', 'active')
+                       ->where('malls.object_type', 'mall');
     }
 
     /**
@@ -761,7 +756,7 @@ class Activity extends Eloquent
         $builder->whereNotIn('group', array('pos', 'portal'));
 
         if (! empty($merchantIds)) {
-            $this->scopeMerchantIds_widget_click($builder, $merchantIds);
+            $this->scopeMerchantIds($builder, $merchantIds);
         }
 
         return $builder;

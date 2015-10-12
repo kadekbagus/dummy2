@@ -618,6 +618,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityNameLong('Widget Click ' . ucwords(str_replace('_', ' ', $widget->widget_type)))
                 ->setObject($widget)
                 ->setModuleName('Widget')
+                ->setLocation($retailer)
                 ->setNotes($activityNotes)
                 ->responseOK()
                 ->save();

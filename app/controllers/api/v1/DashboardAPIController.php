@@ -103,6 +103,7 @@ class DashboardAPIController extends ControllerAPI
                     "widgets.widget_type",
                     DB::raw("count(distinct {$tablePrefix}activities.activity_id) as click_count")
                 )
+                ->join('widgets', 'widgets.widget_id', '=', 'activities.object_id' )
                 ->groupBy('widgets.widget_type');
 
             $isReport = $this->builderOnly;
@@ -110,9 +111,9 @@ class DashboardAPIController extends ControllerAPI
                 $isReport = !!$_isReport;
             });
 
-            // OrbitInput::get('merchant_id', function ($merchantId) use ($widgets) {
-            //     $widgets->whereIn('widgets.merchant_id', $this->getArray($merchantId));
-            // });
+            OrbitInput::get('merchant_id', function ($merchantId) use ($widgets) {
+                $widgets->whereIn('activities.location_id', $this->getArray($merchantId));
+            });
 
             OrbitInput::get('begin_date', function ($beginDate) use ($widgets) {
                 $widgets->where('activities.created_at', '>=', $beginDate);
