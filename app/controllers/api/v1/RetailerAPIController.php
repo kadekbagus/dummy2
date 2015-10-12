@@ -7,7 +7,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 
@@ -1082,14 +1082,14 @@ class RetailerAPIController extends ControllerAPI
             OrbitInput::get('merchant_by_location_id', function($merchant_by_location_id) use ($retailers)
             {
                 $retailers->with('merchant_as_parent')
-                          ->where('merchants.location_id', 'like', "%$merchant_by_location_id%")
+                          ->where('merchants.location_id', '=', $merchant_by_location_id)
                           ->select('merchants.merchant_id', 'merchants.name', 'merchants.parent_id');
             });
 
             // Filter retailer by Ids
-            OrbitInput::get('merchant_id', function($merchantIds) use ($retailers)
+            OrbitInput::get('retailer_id', function($retailerIds) use ($retailers)
             {
-                $retailers->whereIn('merchants.merchant_id', $merchantIds);
+                $retailers->whereIn('merchants.merchant_id', $retailerIds);
             });
 
             // Filter retailer by Ids

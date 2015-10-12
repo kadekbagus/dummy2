@@ -66,9 +66,9 @@ class TenantAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $retailer_id = OrbitInput::post('retailer_id');
-            
+
             $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
-            
+
             /* for next version
             $password = OrbitInput::post('password');
             */
@@ -381,7 +381,7 @@ class TenantAPIController extends ControllerAPI
             $sector_of_activity = OrbitInput::post('sector_of_activity');
 
             // set user mall id
-            $parent_id = OrbitInput::post('parent_id');
+            $parent_id = OrbitInput::post('parent_id', OrbitInput::post('merchant_id'));
 
             $url = OrbitInput::post('url');
             $box_url = OrbitInput::post('box_url');
@@ -1283,9 +1283,9 @@ class TenantAPIController extends ControllerAPI
             }
 
             // Filter tenant by Ids
-            OrbitInput::get('merchant_id', function($merchantIds) use ($tenants)
+            OrbitInput::get('tenant_id', function($tenantIds) use ($tenants)
             {
-                $tenants->whereIn('merchants.merchant_id', $merchantIds);
+                $tenants->whereIn('merchants.merchant_id', $tenantIds);
             });
 
             // Filter tenant by Ids
@@ -1497,9 +1497,9 @@ class TenantAPIController extends ControllerAPI
             });
 
             // Filter tenant by parent_id
-            OrbitInput::get('parent_id', function($parentIds) use ($tenants)
+            OrbitInput::get('merchant_id', function($parentIds) use ($tenants)
             {
-                $tenants->whereIn('merchants.parent_id', $parentIds);
+                $tenants->whereIn('merchants.parent_id', (array)$parentIds);
             });
 
             // Filter tenant by floor

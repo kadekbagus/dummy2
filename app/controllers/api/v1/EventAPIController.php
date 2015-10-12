@@ -1526,6 +1526,8 @@ class EventAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {   
+        $user = $this->api->user;
+        
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user){
             $mall = Mall::excludeDeleted()
