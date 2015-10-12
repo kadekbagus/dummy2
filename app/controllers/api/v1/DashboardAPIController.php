@@ -2927,6 +2927,7 @@ class DashboardAPIController extends ControllerAPI
                                         inner join
                                     {$tablePrefix}activities ac ON ne.news_id = ac.news_id
                                 where ac.module_name = 'News'
+                                and ac.activity_name = 'view_news'
                                 and ac.activity_type = 'view'
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
@@ -2952,13 +2953,27 @@ class DashboardAPIController extends ControllerAPI
                 // show events
                 case 'events':
                         $query = EventModel::select(
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
+                                select
+                                    count(ac.activity_id)-1 as total
+                                from
+                                    {$tablePrefix}events ev
+                                        inner join
+                                    {$tablePrefix}activities ac ON ev.event_id = ac.news_id
+                                where ac.module_name = 'Event'
+                                and ac.activity_name = 'event_view'
+                                and ac.activity_type = 'view'
+                                and ac.role = 'Consumer'
+                                and ac.group = 'mobile-ci'
+                            ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "events.event_name as name",
                             "events.event_id as object_id"
                         )
                         ->join("activities", function ($join) {
                             $join->on('events.event_id', '=', 'activities.event_id');
-                            $join->where('activities.module_name', '=', 'News');
+                            $join->where('activities.activity_name', '=', 'event_view');
+                            $join->where('activities.module_name', '=', 'Event');
                             $join->where('activities.activity_type', '=', 'view');
                             $join->where('activities.role', '=', 'Consumer');
                             $join->where('activities.group', '=', 'mobile-ci');
@@ -2971,13 +2986,27 @@ class DashboardAPIController extends ControllerAPI
                 // show promotions
                 case 'promotions':
                         $query = News::select(
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
+                                select
+                                    count(ac.activity_id)-1 as total
+                                from
+                                    {$tablePrefix}news ne
+                                        inner join
+                                    {$tablePrefix}activities ac ON ne.news_id = ac.news_id
+                                where ac.module_name = 'Promotion'
+                                and ac.activity_name = 'view_promotion'
+                                and ac.activity_type = 'view'
+                                and ac.role = 'Consumer'
+                                and ac.group = 'mobile-ci'
+                            ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "news.news_name as name",
                             "news.news_id as object_id"
                         )
                         ->join("activities", function ($join) {
                             $join->on('news.news_id', '=', 'activities.news_id');
-                            $join->where('news.object_type', '=', 'promotion'); 
+                            $join->where('news.object_type', '=', 'promotion');
+                            $join->where('activities.activity_name', '=', 'view_promotion'); 
                             $join->where('activities.module_name', '=', 'Promotion');
                             $join->where('activities.activity_type', '=', 'view');
                             $join->where('activities.role', '=', 'Consumer');
@@ -2999,6 +3028,7 @@ class DashboardAPIController extends ControllerAPI
                                     inner join
                                 {$tablePrefix}activities ac ON ne.news_id = ac.news_id
                             where ac.module_name = 'News'
+                            and ac.activity_name = 'view_news'
                             and ac.activity_type = 'view'
                             and ac.role = 'Consumer'
                             and ac.group = 'mobile-ci'
