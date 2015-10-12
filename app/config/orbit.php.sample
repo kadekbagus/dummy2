@@ -1523,8 +1523,7 @@ return array(
                 // Callback after saving the file
                 'after_saving'  => NULL,
             ),
-        ),
-
+            
             'translation' => array(
                 // Allowed Extension
                 'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
@@ -1592,6 +1591,7 @@ return array(
                 // Callback after saving the file
                 'after_saving'  => NULL,
             ),
+        ),
 
         // -------------------------------------------------------------------//
         // Event Related Uploads
