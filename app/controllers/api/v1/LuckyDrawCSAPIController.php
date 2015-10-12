@@ -67,7 +67,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mallId = OrbitInput::post('current_mall');;
             $tenants = OrbitInput::post('tenants');
             $amounts = OrbitInput::post('amounts');
             $receipts = OrbitInput::post('receipts');
@@ -80,7 +80,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'   => $mallId,
+                    'current_mall'  => $mallId,
                     'tenants'       => $tenants,
                     'amounts'       => $amounts,
                     'receipts'      => $receipts,
@@ -92,7 +92,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'lucky_number'  => $userLuckyNumber
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.mall',
+                    'current_mall'  => 'required|orbit.empty.mall',
                     'tenants'       => 'array|required',
                     'amounts'       => 'array|required',
                     'receipts'      => 'array|required',
@@ -428,7 +428,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mallId = OrbitInput::post('current_mall');;
             $tenants = OrbitInput::post('tenants');
             $amounts = OrbitInput::post('amounts');
             $receipts = OrbitInput::post('receipts');
@@ -441,7 +441,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'   => $mallId,
+                    'current_mall'  => $mallId,
                     'tenants'       => $tenants,
                     'amounts'       => $amounts,
                     'receipts'      => $receipts,
@@ -453,7 +453,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'lucky_number'  => $userLuckyNumber
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.mall',
+                    'current_mall'  => 'required|orbit.empty.mall',
                     'tenants'       => 'array|required',
                     'amounts'       => 'array|required',
                     'receipts'      => 'array|required',
@@ -753,7 +753,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mallId = OrbitInput::post('current_mall');;
             $tenants = OrbitInput::post('tenants');
             $amounts = OrbitInput::post('amounts');
             $receipts = OrbitInput::post('receipts');
@@ -763,7 +763,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'   => $mallId,
+                    'current_mall'  => $mallId,
                     'tenants'       => $tenants,
                     'amounts'       => $amounts,
                     'receipts'      => $receipts,
@@ -772,7 +772,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'user_id'       => $userId,
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.mall',
+                    'current_mall'  => 'required|orbit.empty.mall',
                     'tenants'       => 'array|required',
                     'amounts'       => 'array|required',
                     'receipts'      => 'array|required',

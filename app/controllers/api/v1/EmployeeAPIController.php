@@ -350,7 +350,7 @@ class EmployeeAPIController extends ControllerAPI
             $employeeRole = OrbitInput::post('employee_role');
             $retailerIds = OrbitInput::post('retailer_ids', []);
             $empStatus = OrbitInput::post('status', 'active');
-            $myRetailerIds = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $myRetailerIds = OrbitInput::post('current_mall');;
 
             $errorMessage = [
                 'orbit.empty.employee.role' => Lang::get('validation.orbit.empty.employee.role', array(
@@ -360,7 +360,7 @@ class EmployeeAPIController extends ControllerAPI
             $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
             $validator = Validator::make(
                 array(
-                    'merchant_id'           => $myRetailerIds,
+                    'current_mall'          => $myRetailerIds,
                     'firstname'             => $firstName,
                     'lastname'              => $lastName,
                     'birthdate'             => $birthdate,
@@ -374,7 +374,7 @@ class EmployeeAPIController extends ControllerAPI
                     'status'                => $empStatus
                 ),
                 array(
-                    'merchant_id'       => 'required|orbit.empty.mall',
+                    'current_mall'      => 'required|orbit.empty.mall',
                     'firstname'         => 'required',
                     'lastname'          => 'required',
                     'birthdate'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
@@ -901,7 +901,7 @@ class EmployeeAPIController extends ControllerAPI
             $employeeRole = OrbitInput::post('employee_role');
             $retailerIds = OrbitInput::post('retailer_ids', []);
             $status = OrbitInput::post('status');
-            $myRetailerIds = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $myRetailerIds = OrbitInput::post('current_mall');;
 
             $errorMessage = [
                 'orbit.empty.employee.role'         => Lang::get('validation.orbit.empty.employee.role', array(
@@ -912,7 +912,7 @@ class EmployeeAPIController extends ControllerAPI
             $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
             $validator = Validator::make(
                 array(
-                    'merchant_id'           => $myRetailerIds,
+                    'current_mall'          => $myRetailerIds,
                     'user_id'               => $userId,
                     'birthdate'             => $birthdate,
                     'password'              => $password,
@@ -924,7 +924,7 @@ class EmployeeAPIController extends ControllerAPI
                     'status'                => $status
                 ),
                 array(
-                    'merchant_id'           => 'required|orbit.empty.mall',
+                    'current_mall'          => 'required|orbit.empty.mall',
                     'user_id'               => 'required|orbit.empty.user',
                     'birthdate'             => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
                     'password'              => 'min:5|confirmed',
@@ -1363,21 +1363,18 @@ class EmployeeAPIController extends ControllerAPI
 
             $userId = OrbitInput::post('user_id');
             $password = OrbitInput::post('password');
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'    => $mall_id,
+                    'current_mall'   => $mall_id,
                     'user_id'        => $userId,
                     'password'       => $password,
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.mall',
+                    'current_mall'  => 'required|orbit.empty.mall',
                     'user_id'       => 'required|orbit.empty.user',
-                    'password'    => [
-                        'required',
-                        ['orbit.masterpassword.delete', $mall_id]
-                    ],
+                    'password'      => 'required|orbit.masterpassword.delete:' . $mall_id,
                 )
             );
 
@@ -2482,7 +2479,7 @@ class EmployeeAPIController extends ControllerAPI
         // Check the existance of merchant id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $mall = Mall::excludeDeleted()
-                        ->whereIn('merchant_id', $value)
+                        ->whereIn('merchant_id', (array)$value)
                         ->first();
 
             if (empty($mall)) {

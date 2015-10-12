@@ -73,7 +73,7 @@ class CategoryAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $category_name = OrbitInput::post('category_name');
             $category_level = OrbitInput::post('category_level');
             $category_order = OrbitInput::post('category_order');
@@ -83,14 +83,14 @@ class CategoryAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'           => $merchant_id,
+                    'current_mall'           => $merchant_id,
                     'category_name'         => $category_name,
                     'category_level'        => $category_level,
                     'status'                => $status,
                     'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'merchant_id'           => 'required|orbit.empty.merchant',
+                    'current_mall'           => 'required|orbit.empty.merchant',
                     'category_name'         => 'required|orbit.exists.category_name:'.$merchant_id,
                     'category_level'        => 'numeric',
                     'status'                => 'required|orbit.empty.category_status',
@@ -303,7 +303,7 @@ class CategoryAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $category_id = OrbitInput::post('category_id');
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $category_name = OrbitInput::post('category_name');
             $category_level = OrbitInput::post('category_level');
             $category_order = OrbitInput::post('category_order');
@@ -314,7 +314,7 @@ class CategoryAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'category_id'       => $category_id,
-                    'merchant_id'       => $merchant_id,
+                    'current_mall'       => $merchant_id,
                     'category_name'     => $category_name,
                     'category_level'    => $category_level,
                     'status'            => $status,
@@ -322,7 +322,7 @@ class CategoryAPIController extends ControllerAPI
                 ),
                 array(
                     'category_id'       => 'required|orbit.empty.category',
-                    'merchant_id'       => 'orbit.empty.merchant',
+                    'current_mall'      => 'orbit.empty.merchant',
                     'category_name'     => 'category_name_exists_but_me:'.$category_id.','.$merchant_id,
                     'category_level'    => 'numeric',
                     'status'            => 'orbit.empty.category_status',

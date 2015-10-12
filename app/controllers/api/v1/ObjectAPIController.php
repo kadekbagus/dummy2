@@ -68,7 +68,7 @@ class ObjectAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $object_name = OrbitInput::post('object_name');
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
@@ -271,7 +271,7 @@ class ObjectAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $object_id = OrbitInput::post('object_id');
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
 
@@ -498,7 +498,7 @@ class ObjectAPIController extends ControllerAPI
 
             $object_id = OrbitInput::post('object_id');
             $password = OrbitInput::post('password');
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
 
             $validator = Validator::make(
                 array(
@@ -754,7 +754,7 @@ class ObjectAPIController extends ControllerAPI
 
             // Filter object by merchant Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($object) {
-                $object->whereIn('objects.merchant_id', $merchantIds);
+                $object->whereIn('objects.merchant_id', (array)$merchantIds);
             });
 
             // Filter object by object name

@@ -79,20 +79,20 @@ class UserAPIController extends ControllerAPI
                     )
                 );
             } else {
-                $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+                $mallId = OrbitInput::post('current_mall');;
                 $validator = Validator::make(
                     array(
-                        'merchant_id' => $mallId,
-                        'email'     => $email,
-                        'password'  => $password,
+                        'current_mall'  => $mallId,
+                        'email'         => $email,
+                        'password'      => $password,
                         'password_confirmation' => $password2,
-                        'role_id' => $user_role_id,
+                        'role_id'       => $user_role_id,
                     ),
                     array(
-                        'merchant_id' => 'required|orbit.empty.mall',
-                        'email'     => 'required|email|orbit.email.exists:' . $mallId,
-                        'password'  => 'required|min:5|confirmed',
-                        'role_id' => 'required|orbit.empty.role',
+                        'current_mall'  => 'required|orbit.empty.mall',
+                        'email'         => 'required|email|orbit.email.exists:' . $mallId,
+                        'password'      => 'required|min:5|confirmed',
+                        'role_id'       => 'required|orbit.empty.role',
                     )
                 );
             }
@@ -2016,7 +2016,7 @@ class UserAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mallId = OrbitInput::post('current_mall');;
 
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
@@ -2069,7 +2069,7 @@ class UserAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'           => $mallId,
+                    'current_mall'          => $mallId,
                     'external_user_id'      => $external_user_id,
                     'email'                 => $email,
                     'firstname'             => $firstname,
@@ -2088,7 +2088,7 @@ class UserAPIController extends ControllerAPI
                     'date_of_work'          => $dateofwork,
                 ),
                 array(
-                    'merchant_id'           => 'required|orbit.empty.mall',
+                    'current_mall'          => 'required|orbit.empty.mall',
                     'external_user_id'      => 'required',
                     'email'                 => 'required|email|orbit.email.exists:' . $mallId,
                     'firstname'             => 'required',
@@ -2202,12 +2202,11 @@ class UserAPIController extends ControllerAPI
 
             // get current mall id and its mall group
             $currentRetailerId = $mallId;
-            $retailer = Retailer::select('parent_id')
+            $mall = Mall::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
-                                ->where('object_type', 'retailer')
-                                ->where('is_mall', 'yes')
                                 ->first();
-            $userdetail->merchant_id = $retailer->parent_id;
+
+            $userdetail->merchant_id = $mall->parent_id;
             $userdetail->retailer_id = $currentRetailerId;
 
             $userdetail = $newuser->userdetail()->save($userdetail);
@@ -2414,7 +2413,7 @@ class UserAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mallId = OrbitInput::post('current_mall');;
 
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
@@ -2455,7 +2454,7 @@ class UserAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'           => $mallId,
+                    'current_mall'          => $mallId,
                     'email'                 => $email,
                     'firstname'             => $firstname,
                     'lastname'              => $lastname,
@@ -2472,7 +2471,7 @@ class UserAPIController extends ControllerAPI
                     'user_id'               => $userId,
                 ),
                 array(
-                    'merchant_id'           => 'required|orbit.empty.mall',
+                    'current_mall'          => 'required|orbit.empty.mall',
                     'email'                 => 'email|email_exists_but_me',
                     'firstname'             => '',
                     'lastname'              => '',
@@ -2866,7 +2865,7 @@ class UserAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mallId = OrbitInput::post('current_mall');;
             $user_id = OrbitInput::post('user_id');
             $password = OrbitInput::post('password');
 
@@ -2877,12 +2876,12 @@ class UserAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $mallId,
+                    'current_mall' => $mallId,
                     'user_id'   => $user_id,
                     'password'  => $password,
                 ),
                 array(
-                    'merchant_id' => 'required|orbit.empty.mall',
+                    'current_mall' => 'required|orbit.empty.mall',
                     'user_id'   => 'required|orbit.empty.membership|no_delete_themself',
                     'password'  => 'required|orbit.masterpassword.delete:' . $mallId,
                 ),

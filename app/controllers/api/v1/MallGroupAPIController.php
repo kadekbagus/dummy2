@@ -912,7 +912,7 @@ class MallGroupAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
@@ -921,7 +921,7 @@ class MallGroupAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'       => $merchant_id,
+                    'current_mall'      => $merchant_id,
                     'user_id'           => $user_id,
                     'email'             => $email,
                     'status'            => $status,
@@ -929,8 +929,8 @@ class MallGroupAPIController extends ControllerAPI
                     'url'               => $url,
                 ),
                 array(
-                    'merchant_id'       => 'required|numeric|orbit.empty.mallgroup',
-                    'user_id'           => 'numeric|orbit.empty.user',
+                    'current_mall'      => 'required|orbit.empty.mallgroup',
+                    'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.mall_status',
                     'omid'              => 'omid_exists_but_me',
@@ -1277,17 +1277,17 @@ class MallGroupAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('merchant_id');;
             $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $merchant_id,
-                    'password'    => $password,
+                    'merchant_id'  => $merchant_id,
+                    'password'     => $password,
                 ),
                 array(
-                    'merchant_id' => 'required|numeric|orbit.empty.mallgroup|orbit.exists.mallgroup_have_mall',
-                    'password'    => 'required|orbit.access.wrongpassword',
+                    'merchant_id'  => 'required|orbit.empty.mallgroup|orbit.exists.mallgroup_have_mall',
+                    'password'     => 'required|orbit.access.wrongpassword',
                 )
             );
 
@@ -1442,9 +1442,8 @@ class MallGroupAPIController extends ControllerAPI
     {
         // Check the existance of merchant id
         $user = $this->api->user;
-        Validator::extend('orbit.empty.mallgroup', function ($attribute, $value, $parameters) use ($user){
+        Validator::extend('orbit.empty.mallgroup', function ($attribute, $value, $parameters) use ($user) {
             $mall = MallGroup::excludeDeleted()
-                        ->allowedForUser($user)
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1474,10 +1473,10 @@ class MallGroupAPIController extends ControllerAPI
 
         // Check user email address, it should not exists (for update)
         Validator::extend('email_exists_but_me', function ($attribute, $value, $parameters) {
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
             $mall = MallGroup::excludeDeleted()
                         ->where('email', $value)
-                        ->where('merchant_id', '!=', $merchant_id)
+                        ->where('merchant_id', '!=', $mall_id)
                         ->first();
 
             if (! empty($mall)) {
@@ -1491,7 +1490,7 @@ class MallGroupAPIController extends ControllerAPI
 
         // Check OMID, it should not exists (for update)
         Validator::extend('omid_exists_but_me', function ($attribute, $value, $parameters) {
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
             $mall = MallGroup::excludeDeleted()
                         ->where('omid', $value)
                         ->where('merchant_id', '!=', $mall_id)

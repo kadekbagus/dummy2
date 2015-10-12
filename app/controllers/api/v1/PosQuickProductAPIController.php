@@ -62,7 +62,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchantId = OrbitInput::post('current_mall');;
             $order = OrbitInput::post('product_order');
 
             $retailerId = OrbitInput::post('retailer_id');
@@ -269,7 +269,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchantId = OrbitInput::post('current_mall');;
             $order = OrbitInput::post('product_order');
 
             $retailerId = OrbitInput::post('retailer_id');
@@ -479,7 +479,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchantId = OrbitInput::post('current_mall');;
 
             $retailerId = OrbitInput::post('retailer_id');
             // @TODO should not be here for next version.
@@ -903,8 +903,7 @@ class PosQuickProductAPIController extends ControllerAPI
     {
         $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $merchantId, $parameters) use ($user) {
-            $merchant = Merchant::allowedForUser($user)
-                                ->excludeDeleted()
+            $merchant = Merchant::excludeDeleted()
                                 ->where('merchant_id', $merchantId)
                                 ->first();
 

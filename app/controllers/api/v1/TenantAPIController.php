@@ -67,7 +67,7 @@ class TenantAPIController extends ControllerAPI
 
             $retailer_id = OrbitInput::post('retailer_id');
 
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
 
             /* for next version
             $password = OrbitInput::post('password');
@@ -727,7 +727,7 @@ class TenantAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
             $retailer_id = OrbitInput::post('retailer_id');
             $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
@@ -744,7 +744,7 @@ class TenantAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'       => $mall_id,
+                    'current_mall'      => $mall_id,
                     'retailer_id'       => $retailer_id,
                     'user_id'           => $user_id,
                     'email'             => $email,
@@ -757,7 +757,7 @@ class TenantAPIController extends ControllerAPI
                     'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'merchant_id'       => 'required|orbit.empty.mall',
+                    'current_mall'      => 'required|orbit.empty.mall',
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
@@ -1497,7 +1497,7 @@ class TenantAPIController extends ControllerAPI
             });
 
             // Filter tenant by parent_id
-            OrbitInput::get('merchant_id', function($parentIds) use ($tenants)
+            OrbitInput::get('parent_id', function($parentIds) use ($tenants)
             {
                 $tenants->whereIn('merchants.parent_id', (array)$parentIds);
             });

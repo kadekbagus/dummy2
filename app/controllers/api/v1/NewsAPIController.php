@@ -76,7 +76,7 @@ class NewsAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
             $news_name = OrbitInput::post('news_name');
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
@@ -91,7 +91,7 @@ class NewsAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'mall_id'             => $mall_id,
+                    'current_mall'        => $mall_id,
                     'news_name'           => $news_name,
                     'object_type'         => $object_type,
                     'status'              => $status,
@@ -99,7 +99,7 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                 ),
                 array(
-                    'mall_id'             => 'required|orbit.empty.mall',
+                    'current_mall'        => 'required|orbit.empty.mall',
                     'news_name'           => 'required|max:255|orbit.exists.news_name',
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
@@ -364,7 +364,7 @@ class NewsAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $news_id = OrbitInput::post('news_id');
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
@@ -372,7 +372,7 @@ class NewsAPIController extends ControllerAPI
 
             $data = array(
                 'news_id'             => $news_id,
-                'mall_id'             => $mall_id,
+                'current_mall'        => $mall_id,
                 'object_type'         => $object_type,
                 'status'              => $status,
                 'link_object_type'    => $link_object_type,
@@ -388,7 +388,7 @@ class NewsAPIController extends ControllerAPI
                 $data,
                 array(
                     'news_id'             => 'required|orbit.empty.news',
-                    'mall_id'             => 'orbit.empty.mall',
+                    'current_mall'        => 'orbit.empty.mall',
                     'news_name'           => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
@@ -969,7 +969,7 @@ class NewsAPIController extends ControllerAPI
 
             // Filter news by mall Ids
             OrbitInput::get('mall_id', function ($mallIds) use ($news) {
-                $news->whereIn('news.mall_id', $mallIds);
+                $news->whereIn('news.mall_id', (array)$mallIds);
             });
 
             // Filter news by news name
