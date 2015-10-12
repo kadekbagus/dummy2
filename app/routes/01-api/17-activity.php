@@ -36,6 +36,14 @@ Route::get('/api/v1/activity/gender-statistics', function()
 });
 
 /**
+ * Get 'customer today' statistics for a period
+ */
+Route::get('/api/v1/activity/today-statistics', function()
+{
+    return ActivityAPIController::create()->getUserTodayStatistics();
+});
+
+/**
  * Get age statistics (sign-in only) for a period
  */
 Route::get('/api/v1/activity/age-statistics', function()
