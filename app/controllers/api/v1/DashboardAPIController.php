@@ -97,9 +97,7 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            $merchantIds = OrbitInput::get('merchant_id', []);
-
-            $widgets = Activity::considerCustomer($merchantIds)->select(
+            $widgets = Activity::considerCustomer()->select(
                     "widgets.widget_type",
                     DB::raw("count(distinct {$tablePrefix}activities.activity_id) as click_count")
                 )
@@ -956,4 +954,23 @@ class DashboardAPIController extends ControllerAPI
         return $output;
     }
 
+    protected function registerCustomValidation()
+    {
+        $user = $this->api->user;
+        // Check the existance of mall id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user){
+            $mall = Mall::excludeDeleted()
+                        ->allowedForUser($user)
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+    }
 }

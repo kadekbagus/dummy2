@@ -612,10 +612,9 @@ class Activity extends Eloquent
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @param Illuminate\Database\Query\Builder $builder
-     * @param array $merchantIds
      * @return Illuminate\Database\Query\Builder
      */
-    public function scopeMerchantIds($builder, array $merchantIds)
+    public function scopeMerchantIds($builder)
     {
         // need to rename this so it does not conflict if used with scopeJoinRetailer
         return $builder->select('activities.*')
@@ -751,12 +750,12 @@ class Activity extends Eloquent
      * @param array $merchantIds
      * @return \Illuminate\Database\Query\Builder
      */
-    public function scopeConsiderCustomer($builder, array $merchantIds = [])
+    public function scopeConsiderCustomer($builder)
     {
         $builder->whereNotIn('group', array('pos', 'portal'));
 
         if (! empty($merchantIds)) {
-            $this->scopeMerchantIds($builder, $merchantIds);
+            $this->scopeMerchantIds($builder);
         }
 
         return $builder;
