@@ -24,7 +24,7 @@ class EventModel extends Eloquent
 
     public function retailers()
     {
-        return $this->belongsToMany('Mall', 'event_retailer', 'event_id', 'retailer_id')
+        return $this->belongsToMany('Tenant', 'event_retailer', 'event_id', 'retailer_id')
             ->withPivot('object_type')
             ->where('event_retailer.object_type', 'retailer');
     }
