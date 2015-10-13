@@ -36,3 +36,6 @@ Route::get('/app/v1/dashboard/customer-last-visit', "IntermediateAuthController@
 
 // Get Dashboard general customer view
 Route::get('/app/v1/dashboard/general-customer-view', "IntermediateAuthController@Dashboard_getGeneralCustomerView");
+
+// Get Dashboard general customer view
+Route::get('/app/v1/dashboard/top-customer-view', "IntermediateAuthController@Dashboard_getTopCustomerView");
