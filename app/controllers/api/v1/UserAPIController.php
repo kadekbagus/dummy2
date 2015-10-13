@@ -2478,7 +2478,7 @@ class UserAPIController extends ControllerAPI
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'membership_since'      => 'date_format:Y-m-d',
-                    'membership_number'     => 'orbit.membership.exists_but_me' . $mallId,
+                    'membership_number'     => 'orbit.membership.exists_but_me:' . $mallId,
                     'status'                => 'in:active,inactive,pending',
                     'idcard'                => 'numeric',
                     'mobile_phone'          => '',
@@ -3046,10 +3046,8 @@ class UserAPIController extends ControllerAPI
 
             // get current mall id and its mall group
             $currentRetailerId = $parameters[0];
-            $retailer = Retailer::select('parent_id')
+            $retailer = Mall::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
-                                ->where('object_type', 'retailer')
-                                ->where('is_mall', 'yes')
                                 ->first();
             $currentMerchantId = $retailer->parent_id;
 
@@ -3076,10 +3074,8 @@ class UserAPIController extends ControllerAPI
 
             // get current mall id and its mall group
             $currentRetailerId = $parameters[0];
-            $retailer = Retailer::select('parent_id')
+            $retailer = Mall::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
-                                ->where('object_type', 'retailer')
-                                ->where('is_mall', 'yes')
                                 ->first();
             $currentMerchantId = $retailer->parent_id;
 
@@ -3109,10 +3105,8 @@ class UserAPIController extends ControllerAPI
 
             // get current mall id and its mall group
             $currentRetailerId = $parameters[0];
-            $retailer = Retailer::select('parent_id')
+            $retailer = Mall::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
-                                ->where('object_type', 'retailer')
-                                ->where('is_mall', 'yes')
                                 ->first();
             $currentMerchantId = $retailer->parent_id;
 

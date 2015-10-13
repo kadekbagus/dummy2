@@ -359,6 +359,8 @@ class MobileCIAPIController extends ControllerAPI
         $display_name = OrbitInput::get('fname', $display_name);
 
         $languages = [];
+
+        $internet_info = 'no';
         try {
             $retailer = $this->getRetailerInfo();
 
@@ -366,6 +368,13 @@ class MobileCIAPIController extends ControllerAPI
 
             $mall = Mall::with('settings')->where('merchant_id', $retailer->merchant_id)
                 ->first();
+
+            //get internet_info from setting
+            $internet_info_obj = $this->getObjFromArray($retailer->settings, 'internet_info');
+
+            if (is_object($internet_info_obj)) {
+                $internet_info = $internet_info_obj->setting_value;
+            }
 
             $landing_url = $this->getLandingUrl($mall);
 
@@ -387,14 +396,14 @@ class MobileCIAPIController extends ControllerAPI
                 Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
                 Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
 
-                return Redirect::to($landing_url . '?internet_info=yes');
+                return Redirect::to($landing_url . '?internet_info=' . $internet_info );
             }
 
             $viewData = array(
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url . '?internet_info=yes',
+                'landing_url' => $landing_url . '?internet_info=' . $internet_info,
                 'display_name' => $display_name,
                 'languages' => $languages,
             );
@@ -407,7 +416,7 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url . '?internet_info=yes',
+                'landing_url' => $landing_url . '?internet_info=' . $internet_info,
                 'display_name' => $display_name,
                 'languages' => $languages
             );
@@ -3073,7 +3082,7 @@ class MobileCIAPIController extends ControllerAPI
                 $inbox->save();
 
                 $retailerId = Config::get('orbit.shop.id');
-                $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+                $retailer = Mall::where('merchant_id', $retailerId)->first();
                 $data = [
                     'fullName'          => $name,
                     'subject'           => 'Coupon',

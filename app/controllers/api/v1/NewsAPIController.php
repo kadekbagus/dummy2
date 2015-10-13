@@ -1281,7 +1281,7 @@ class NewsAPIController extends ControllerAPI
 
             // Filter promotion by merchant Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($promotions) {
-                $promotions->whereIn('news.merchant_id', $merchantIds);
+                $promotions->whereIn('news.mall_id', $merchantIds);
             });
 
             // Filter promotion by promotion name

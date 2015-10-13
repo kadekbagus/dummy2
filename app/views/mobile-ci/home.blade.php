@@ -189,6 +189,7 @@
             </div>
             @endif
         </div>
+        @if(is_object($widget_flags->enable_lucky_draw_widget) && $widget_flags->enable_lucky_draw_widget->setting_value === 'true')
         <div class="row">
             @if(!is_null($widget_singles->luckydraw))
             <div class="single-widget-container col-xs-12 col-sm-12">
@@ -241,6 +242,7 @@
             @endif
 
         </div>
+        @endif
     </div>
     <div class="row">
         <div class="col-xs-12 text-center merchant-logo">
@@ -528,7 +530,7 @@
                 $.ajax({
                     url: '{{ route('display-event-popup-activity') }}',
                     data: {
-                        eventdata: {{$events->event_id}}
+                        eventdata: '{{$events->event_id}}'
                     },
                     method: 'POST'
                 });
@@ -538,7 +540,7 @@
                 $.ajax({
                     url: '{{ route('display-event-popup-activity') }}',
                     data: {
-                        eventdata: {{$events->event_id}}
+                        eventdata: '{{$events->event_id}}'
                     },
                     method: 'POST'
                 });
