@@ -250,13 +250,13 @@
                     }else{
                         $('#wrongCouponModal').modal();
                         $('#errMsg').text(data.responseJSON.message);
-                    }).always(function(data){
-                        $('#hasCouponModal .modal-content').css('display', 'block');
-                        $('#hasCouponModal .modal-spinner').css('display', 'none');
-                        $('#tenantverify').val('');
-                        $('#hasCouponModal').modal('hide');
-                    });
-                }
+                    }
+                })).always(function(data){
+                    $('#hasCouponModal .modal-content').css('display', 'block');
+                    $('#hasCouponModal .modal-spinner').css('display', 'none');
+                    $('#tenantverify').val('');
+                    $('#hasCouponModal').modal('hide');
+                });
             });
         });
     </script>
