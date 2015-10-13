@@ -197,7 +197,7 @@ LUCKY;
         }
 
         $landingPage->setting_name = 'landing_page';
-        $landingPage->setting_value = 'news';
+        $landingPage->setting_value = 'widget';
         $landingPage->save();
 
         $masterPassword = Setting::where('object_type', 'merchant')
