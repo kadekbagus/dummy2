@@ -68,7 +68,7 @@
     </div>
 
     <div class="col-xs-12 main-theme-mall product-detail where">
-        @if(! empty((float) $product->couponRule->discount_value))
+        @if(! empty((float) $coupon->couponRule->discount_value))
         <div class="row">
             <div class="col-xs-12 text-center">
                 <h4>{{ Lang::get('mobileci.coupon.coupon_value') }}</h4>
