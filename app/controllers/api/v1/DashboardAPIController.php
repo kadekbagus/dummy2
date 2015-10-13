@@ -108,8 +108,8 @@ class DashboardAPIController extends ControllerAPI
                                     and `group` = 'mobile-ci' 
                                     and role = 'Consumer' 
                                     and location_id = '" . $merchant_id . "'
-                                    and created_at >= '" . $start_date . "'
-                                    and created_at <= '" . $end_date . "'
+                                    and DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
+                                    and DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
                                 )*100 as percentage
                         ")
                 )
@@ -122,7 +122,8 @@ class DashboardAPIController extends ControllerAPI
                 ->where("activities.created_at", '>=', $start_date)
                 ->where("activities.created_at", '<=', $end_date)
                 ->groupBy("activities.object_id")
-                ->orderBy("activities.object_id");
+                ->orderBy('score','desc')
+                ->take(10);
 
             $tenants = $activities->get();
 
