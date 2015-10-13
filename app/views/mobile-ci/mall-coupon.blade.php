@@ -222,7 +222,7 @@
                     url: apiPath+'issued-coupon/redeem',
                     method: 'POST',
                     data: {
-                        issued_coupon_id: {{$coupon->issuedCoupons[0]->issued_coupon_id}},
+                        issued_coupon_id: '{{$coupon->issuedCoupons[0]->issued_coupon_id}}',
                         merchant_verification_number: $('#tenantverify').val()
                     }
                 }).done(function(data){
