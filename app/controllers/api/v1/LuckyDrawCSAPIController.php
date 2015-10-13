@@ -1436,7 +1436,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                                ->where('lucky_draw_id', $luckyDraw->lucky_draw_id)
                                                ->count();
 
-        $retailer = Mall::isMall()->where('merchant_id', $retailerId)->first();
+        $retailer = Mall::where('merchant_id', $retailerId)->first();
         $data = [
             'fullName'              => $name,
             'subject'               => 'Lucky Draw',
@@ -1491,7 +1491,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
         $inbox->save();
 
         $retailerId = $mallId;
-        $retailer = Mall::isMall()->where('merchant_id', $retailerId)->first();
+        $retailer = Mall::where('merchant_id', $retailerId)->first();
         $data = [
             'fullName'          => $name,
             'subject'           => 'Coupon',
