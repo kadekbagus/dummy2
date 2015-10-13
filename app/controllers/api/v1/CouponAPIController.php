@@ -100,7 +100,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
@@ -138,7 +138,7 @@ class CouponAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'             => $merchant_id,
+                    'current_mall'            => $merchant_id,
                     'promotion_name'          => $promotion_name,
                     'promotion_type'          => $promotion_type,
                     'begin_date'              => $begin_date,
@@ -150,7 +150,7 @@ class CouponAPIController extends ControllerAPI
                     'id_language_default'     => $id_language_default,
                 ),
                 array(
-                    'merchant_id'             => 'required|orbit.empty.merchant',
+                    'current_mall'            => 'required|orbit.empty.merchant',
                     'promotion_name'          => 'required|max:255|orbit.exists.coupon_name',
                     'promotion_type'          => 'required|orbit.empty.coupon_type',
                     'begin_date'              => 'required|date_format:Y-m-d H:i:s',
@@ -545,7 +545,7 @@ class CouponAPIController extends ControllerAPI
 
 
             $promotion_id = OrbitInput::post('promotion_id');
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
             $rule_type = OrbitInput::post('rule_type');
@@ -575,7 +575,7 @@ class CouponAPIController extends ControllerAPI
 
             $data = array(
                 'promotion_id'            => $promotion_id,
-                'merchant_id'             => $merchant_id,
+                'current_mall'            => $merchant_id,
                 'promotion_type'          => $promotion_type,
                 'status'                  => $status,
                 'begin_date'              => $begin_date,
@@ -595,7 +595,7 @@ class CouponAPIController extends ControllerAPI
                 $data,
                 array(
                     'promotion_id'            => 'required|orbit.empty.coupon',
-                    'merchant_id'             => 'orbit.empty.merchant',
+                    'current_mall'            => 'orbit.empty.merchant',
                     'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
                     'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
@@ -1056,18 +1056,18 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $promotion_id = OrbitInput::post('promotion_id');
             $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'   => $merchant_id,
+                    'current_mall'  => $merchant_id,
                     'promotion_id'  => $promotion_id,
                     'password'      => $password
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.merchant',
+                    'current_mall'  => 'required|orbit.empty.merchant',
                     'promotion_id'  => 'required|orbit.empty.coupon|orbit.issuedcoupon.exists',
                     'password'      => [
                         'required',
@@ -1383,6 +1383,11 @@ class CouponAPIController extends ControllerAPI
 
             // Filter coupon by merchant Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($coupons) {
+                $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
+            });
+
+            // Filter coupon by merchant Ids / dupes, same as above
+            OrbitInput::get('current_mall', function ($merchantIds) use ($coupons) {
                 $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
             });
 
@@ -1770,19 +1775,19 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $mall_id,
+                    'current_mall' => $mall_id,
                     'issued_coupon_id' => $issuedCouponId,
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
-                    'merchant_id'                   => 'required|orbit.empty.merchant',
+                    'current_mall'                  => 'required|orbit.empty.merchant',
                     'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required'
                 )

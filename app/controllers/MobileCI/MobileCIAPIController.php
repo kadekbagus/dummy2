@@ -3073,7 +3073,7 @@ class MobileCIAPIController extends ControllerAPI
                 $inbox->save();
 
                 $retailerId = Config::get('orbit.shop.id');
-                $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+                $retailer = Mall::where('merchant_id', $retailerId)->first();
                 $data = [
                     'fullName'          => $name,
                     'subject'           => 'Coupon',

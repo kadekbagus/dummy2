@@ -312,8 +312,11 @@ class SettingAPIController extends ControllerAPI
             $supportedMallLanguageIds = OrbitInput::post('mall_supported_language_ids');
             $supportedMallLanguageIds_copy = OrbitInput::post('mall_supported_language_ids');
 
+            $mall_id = OrbitInput::post('current_mall');
+
             $validator = Validator::make(
                 array(
+                    'current_mall'          => $mall_id,
                     'language'              => $language,
                     'landing_page'          => $landingPage,
                     'password'              => $password,
@@ -321,6 +324,7 @@ class SettingAPIController extends ControllerAPI
                     'id_language_default'   => $id_language_default,
                 ),
                 array(
+                    'current_mall'        => 'required|orbit.empty.mall',
                     'language'            => 'required',
                     'landing_page'        => 'required|in:widget,news,promotion,tenant',
                     'password'            => 'min:5|confirmed',
@@ -340,13 +344,16 @@ class SettingAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            $setting = Setting::active()->where('setting_name', 'current_retailer')->first();
-            if (empty($setting)) {
-                $errorMessage = 'Could not find current active mall from setting.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
+            // disabled - the current mall id now using current_mall param
+            // $setting = Setting::active()->where('setting_name', 'current_retailer')->first();
+            // if (empty($setting)) {
+            //     $errorMessage = 'Could not find current active mall from setting.';
+            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // }
 
-            $mall = Mall::find($setting->setting_value);
+            $mall = Mall::excludeDeleted()
+                ->where('merchant_id', $mall_id)
+                ->firstOrFail();
 
             $backgroundSetting = NULL;
             $masterPasswordSetting = NULL;
@@ -913,14 +920,14 @@ class SettingAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mallId = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
+            $mallId = OrbitInput::get('current_mall');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $mallId
+                    'current_mall' => $mallId
                 ),
                 array(
-                    'merchant_id' => 'required|orbit.empty.mall'
+                    'current_mall' => 'required|orbit.empty.mall'
                 )
             );
 
@@ -1011,14 +1018,14 @@ class SettingAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mallId = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mallId = OrbitInput::post('current_mall');;
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $mallId
+                    'current_mall' => $mallId
                 ),
                 array(
-                    'merchant_id' => 'required|orbit.empty.mall'
+                    'current_mall' => 'required|orbit.empty.mall'
                 )
             );
 

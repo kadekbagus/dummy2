@@ -76,7 +76,7 @@ class EventAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $event_name = OrbitInput::post('event_name');
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
@@ -91,7 +91,7 @@ class EventAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'         => $merchant_id,
+                    'current_mall'        => $merchant_id,
                     'event_name'          => $event_name,
                     'event_type'          => $event_type,
                     'status'              => $status,
@@ -99,7 +99,7 @@ class EventAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                 ),
                 array(
-                    'merchant_id'         => 'required|orbit.empty.merchant',
+                    'current_mall'        => 'required|orbit.empty.merchant',
                     'event_name'          => 'required|max:255|orbit.exists.event_name',
                     'event_type'          => 'required|orbit.empty.event_type',
                     'status'              => 'required|orbit.empty.event_status',
@@ -353,7 +353,7 @@ class EventAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $event_id = OrbitInput::post('event_id');
-            $merchant_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $merchant_id = OrbitInput::post('current_mall');;
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
@@ -361,7 +361,7 @@ class EventAPIController extends ControllerAPI
 
             $data = array(
                 'event_id'            => $event_id,
-                'merchant_id'         => $merchant_id,
+                'current_mall'        => $merchant_id,
                 'event_type'          => $event_type,
                 'status'              => $status,
                 'link_object_type'    => $link_object_type,
@@ -377,7 +377,7 @@ class EventAPIController extends ControllerAPI
                 $data,
                 array(
                     'event_id'            => 'required|orbit.empty.event',
-                    'merchant_id'         => 'orbit.empty.merchant',
+                    'current_mall'        => 'orbit.empty.merchant',
                     'event_name'          => 'sometimes|required|min:5|max:255|event_name_exists_but_me',
                     'event_type'          => 'orbit.empty.event_type',
                     'status'              => 'orbit.empty.event_status',
@@ -693,16 +693,16 @@ class EventAPIController extends ControllerAPI
 
             $event_id = OrbitInput::post('event_id');
             $password = OrbitInput::post('password');
-            $mall_id = OrbitInput::post('merchant_id', OrbitInput::post('mall_id'));
+            $mall_id = OrbitInput::post('current_mall');;
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $mall_id,
+                    'current_mall' => $mall_id,
                     'event_id' => $event_id,
                     'password' => $password,
                 ),
                 array(
-                    'merchant_id' => 'required|orbit.empty.mall',
+                    'current_mall' => 'required|orbit.empty.mall',
                     'event_id' => 'required|orbit.empty.event',
                     'password'    => [
                         'required',
@@ -1527,11 +1527,10 @@ class EventAPIController extends ControllerAPI
     protected function registerCustomValidation()
     {   
         $user = $this->api->user;
-        
+
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user){
             $mall = Mall::excludeDeleted()
-                        ->allowedForUser($user)
                         ->where('merchant_id', $value)
                         ->first();
 
