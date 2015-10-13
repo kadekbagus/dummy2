@@ -1957,7 +1957,7 @@ class MobileCIAPIController extends ControllerAPI
 
             foreach ($tenants as $tenant) {
                 $cso_flag = 0;
-                foreach ($tenant->retailer->categories as $category) {
+                foreach ($tenant->tenant->categories as $category) {
                     if ($category->category_name !== 'Customer Service') {
                         $cso_exists = TRUE;
                         $cso_flag = 1;
