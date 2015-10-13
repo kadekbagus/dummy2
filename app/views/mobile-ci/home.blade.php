@@ -530,7 +530,7 @@
                 $.ajax({
                     url: '{{ route('display-event-popup-activity') }}',
                     data: {
-                        eventdata: {{$events->event_id}}
+                        eventdata: '{{$events->event_id}}'
                     },
                     method: 'POST'
                 });
@@ -540,7 +540,7 @@
                 $.ajax({
                     url: '{{ route('display-event-popup-activity') }}',
                     data: {
-                        eventdata: {{$events->event_id}}
+                        eventdata: '{{$events->event_id}}'
                     },
                     method: 'POST'
                 });
