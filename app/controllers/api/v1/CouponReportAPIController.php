@@ -198,6 +198,11 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->where('promotions.merchant_id', $mallId);
             });
 
+            // Filter by merchant id / dupes, same as above
+            OrbitInput::get('merchant_id', function($mallId) use ($coupons, $configMallId) {
+                $coupons->where('promotions.merchant_id', $mallId);
+            });
+
             // Filter by Promotion ID
             OrbitInput::get('promotion_id', function($pid) use ($coupons) {
                 $pid = (array)$pid;
@@ -577,6 +582,10 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->where('promotions.merchant_id', $mallId);
             });
 
+            OrbitInput::get('merchant_id', function($mallId) use ($coupons, $configMallId) {
+                $coupons->where('promotions.merchant_id', $mallId);
+            });
+
             // Filter by Promotion ID
             OrbitInput::get('promotion_id', function($pid) use ($coupons) {
                 $pid = (array)$pid;
@@ -913,6 +922,10 @@ class CouponReportAPIController extends ControllerAPI
                 OrbitInput::get('mall_id', function($mallId) use ($coupons) {
                     $coupons->where('promotions.merchant_id', $mallId);
                 });
+
+                OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
+                    $coupons->where('promotions.merchant_id', $mallId);
+                });
             } else {
                 $coupons->where('promotions.merchant_id', $configMallId);
             }
@@ -1235,6 +1248,10 @@ class CouponReportAPIController extends ControllerAPI
             if ($user->isSuperAdmin()) {
                 // Filter by mall id
                 OrbitInput::get('mall_id', function($mallId) use ($coupons) {
+                    $coupons->where('promotions.merchant_id', $mallId);
+                });
+
+                OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
                     $coupons->where('promotions.merchant_id', $mallId);
                 });
             } else {
