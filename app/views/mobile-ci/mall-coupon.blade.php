@@ -60,7 +60,7 @@
                     <li>Customer Service</li>
                     @endif
                     @foreach($tenants as $tenant)
-                        <li>{{ $tenant->retailer->name }}</li>
+                        <li>{{ $tenant->tenant->name }}</li>
                     @endforeach
                 </ul>
             </div>
