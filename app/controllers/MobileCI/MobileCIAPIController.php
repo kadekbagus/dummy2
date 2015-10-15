@@ -359,6 +359,8 @@ class MobileCIAPIController extends ControllerAPI
         $display_name = OrbitInput::get('fname', $display_name);
 
         $languages = [];
+
+        $internet_info = 'no';
         try {
             $retailer = $this->getRetailerInfo();
 
@@ -366,6 +368,13 @@ class MobileCIAPIController extends ControllerAPI
 
             $mall = Mall::with('settings')->where('merchant_id', $retailer->merchant_id)
                 ->first();
+
+            //get internet_info from setting
+            $internet_info_obj = $this->getObjFromArray($retailer->settings, 'internet_info');
+
+            if (is_object($internet_info_obj)) {
+                $internet_info = $internet_info_obj->setting_value;
+            }
 
             $landing_url = $this->getLandingUrl($mall);
 
@@ -387,14 +396,14 @@ class MobileCIAPIController extends ControllerAPI
                 Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
                 Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
 
-                return Redirect::to($landing_url . '?internet_info=yes');
+                return Redirect::to($landing_url . '?internet_info=' . $internet_info );
             }
 
             $viewData = array(
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url . '?internet_info=yes',
+                'landing_url' => $landing_url . '?internet_info=' . $internet_info,
                 'display_name' => $display_name,
                 'languages' => $languages,
             );
@@ -407,7 +416,7 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url . '?internet_info=yes',
+                'landing_url' => $landing_url . '?internet_info=' . $internet_info,
                 'display_name' => $display_name,
                 'languages' => $languages
             );
@@ -1933,8 +1942,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $languages = $this->getListLanguages($retailer);
 
-            $tenants = \CouponRetailer::with('retailer', 'retailer.categories')
-                ->wherehas('retailer', function($q){
+            $tenants = \CouponRetailer::with('tenant', 'tenant.categories')
+                ->wherehas('tenant', function($q){
                     $q->where('merchants.status', 'active');
                 })
                 ->where('promotion_id', $coupon_id)->get();
@@ -1948,7 +1957,7 @@ class MobileCIAPIController extends ControllerAPI
 
             foreach ($tenants as $tenant) {
                 $cso_flag = 0;
-                foreach ($tenant->retailer->categories as $category) {
+                foreach ($tenant->tenant->categories as $category) {
                     if ($category->category_name !== 'Customer Service') {
                         $cso_exists = TRUE;
                         $cso_flag = 1;
