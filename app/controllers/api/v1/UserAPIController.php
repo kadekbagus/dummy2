@@ -2,6 +2,7 @@
 /**
  * An API controller for managing user.
  */
+use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -3037,6 +3038,36 @@ class UserAPIController extends ControllerAPI
         $activity->save();
 
         return $output;
+    }
+
+    /**
+     * Runs on box.
+     *
+     * Returns response of user_id
+     * Passes email, retailer_id, callback_url in parameters
+     *
+     * @param string $email
+     * @param string $current_mall
+     * @return Redirect
+     */
+    public function redirectToCloudGetID() {
+        $this->response->code = 302; // must not be 0
+        $this->response->status = 'success';
+        $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
+        // @todo: move this to config
+        $url = Config::get('orbit.registration.mobile.cloud_login_url');
+        $email = OrbitInput::post('email');
+        $retailer_id = OrbitInput::post('current_mall');
+
+        $values = [
+            'email' => $email,
+            'retailer_id' => $retailer_id,
+            'callback_url' => URL::route('customer-login-callback-show-id'),
+        ];
+        $values = CloudMAC::wrapDataFromBox($values);
+        $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
+
+        return Redirect::to($req->getUri());
     }
 
     protected function registerCustomValidation()
