@@ -310,6 +310,7 @@ class MobileCIAPIController extends ControllerAPI
                 'widgets' => $widgets,
                 'widget_flags' => $widget_flags,
                 'widget_singles' => $widget_singles,
+                'languages' => $languages,
                 'active_user' => ($user->status === 'active'),
             );
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
@@ -2765,7 +2766,7 @@ class MobileCIAPIController extends ControllerAPI
     */
     protected function getListLanguages($mall)
     {
-        $languages = MerchantLanguage::with('language')
+        $languages = MerchantLanguage::with('language')->excludeDeleted()
                                     ->where('merchant_id', $mall->merchant_id)
                                     ->get();
 
