@@ -68,7 +68,7 @@
     </div>
 
     <div class="col-xs-12 main-theme-mall product-detail where">
-        @if(! empty((float) $product->couponRule->discount_value))
+        @if(! empty((float) $coupon->couponRule->discount_value))
         <div class="row">
             <div class="col-xs-12 text-center">
                 <h4>{{ Lang::get('mobileci.coupon.coupon_value') }}</h4>
@@ -222,8 +222,9 @@
                     url: apiPath+'issued-coupon/redeem',
                     method: 'POST',
                     data: {
-                        issued_coupon_id: {{$coupon->issuedCoupons[0]->issued_coupon_id}},
-                        merchant_verification_number: $('#tenantverify').val()
+                        issued_coupon_id: '{{$coupon->issuedCoupons[0]->issued_coupon_id}}',
+                        merchant_verification_number: $('#tenantverify').val(),
+                        current_mall: '{{$retailer->merchant_id}}'
                     }
                 }).done(function(data){
                     if(data.status == 'success'){
@@ -250,13 +251,16 @@
                     }else{
                         $('#wrongCouponModal').modal();
                         $('#errMsg').text(data.responseJSON.message);
-                    }).always(function(data){
-                        $('#hasCouponModal .modal-content').css('display', 'block');
-                        $('#hasCouponModal .modal-spinner').css('display', 'none');
-                        $('#tenantverify').val('');
-                        $('#hasCouponModal').modal('hide');
-                    });
-                }
+                    }
+                }).fail(function(data) {
+                    $('#wrongCouponModal').modal();
+                    $('#errMsg').text(data.responseJSON.message);
+                }).always(function(data){
+                    $('#hasCouponModal .modal-content').css('display', 'block');
+                    $('#hasCouponModal .modal-spinner').css('display', 'none');
+                    $('#tenantverify').val('');
+                    $('#hasCouponModal').modal('hide');
+                });
             });
         });
     </script>

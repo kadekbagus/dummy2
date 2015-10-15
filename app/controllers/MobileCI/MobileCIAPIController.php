@@ -1942,8 +1942,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $languages = $this->getListLanguages($retailer);
 
-            $tenants = \CouponRetailer::with('retailer', 'retailer.categories')
-                ->wherehas('retailer', function($q){
+            $tenants = \CouponRetailer::with('tenant', 'tenant.categories')
+                ->wherehas('tenant', function($q){
                     $q->where('merchants.status', 'active');
                 })
                 ->where('promotion_id', $coupon_id)->get();
