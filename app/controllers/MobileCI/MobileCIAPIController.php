@@ -189,22 +189,22 @@ class MobileCIAPIController extends ControllerAPI
 
             $events = $events->orderBy('events.event_id', 'DESC')->first();
             $event_families = array();
-            if (! empty($event)) {
-                if ($event->link_object_type == 'family') {
-                    if (! empty($event->link_object_id1)) {
-                        $event_families[] = Category::where('category_id', $event->link_object_id1)->active()->first();
+            if (! empty($events)) {
+                if ($events->link_object_type == 'family') {
+                    if (! empty($events->link_object_id1)) {
+                        $event_families[] = Category::where('category_id', $events->link_object_id1)->active()->first();
                     }
-                    if (! empty($event->link_object_id2)) {
-                        $event_families[] = Category::where('category_id', $event->link_object_id2)->active()->first();
+                    if (! empty($events->link_object_id2)) {
+                        $event_families[] = Category::where('category_id', $events->link_object_id2)->active()->first();
                     }
-                    if (! empty($event->link_object_id3)) {
-                        $event_families[] = Category::where('category_id', $event->link_object_id3)->active()->first();
+                    if (! empty($events->link_object_id3)) {
+                        $event_families[] = Category::where('category_id', $events->link_object_id3)->active()->first();
                     }
-                    if (! empty($event->link_object_id4)) {
-                        $event_families[] = Category::where('category_id', $event->link_object_id4)->active()->first();
+                    if (! empty($events->link_object_id4)) {
+                        $event_families[] = Category::where('category_id', $events->link_object_id4)->active()->first();
                     }
-                    if (! empty($event->link_object_id5)) {
-                        $event_families[] = Category::where('category_id', $event->link_object_id5)->active()->first();
+                    if (! empty($events->link_object_id5)) {
+                        $event_families[] = Category::where('category_id', $events->link_object_id5)->active()->first();
                     }
                 }
             }
@@ -217,19 +217,19 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if (! empty($event)) {
-                $event_store[] = $event->event_id;
+            if (! empty($events)) {
+                $event_store[] = $events->event_id;
                 \Cookie::queue('event', $event_store, 1440);
 
                 if (! empty($alternate_language)) {
                     $event_translation = \EventTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
-                        ->where('event_id', $event->event_id)->first();
+                        ->where('event_id', $events->event_id)->first();
 
                     if (! empty($event_translation)) {
                         foreach (['event_name', 'description'] as $field) {
                             if (isset($event_translation->{$field})) {
-                                $event->{$field} = $event_translation->{$field};
+                                $events->{$field} = $event_translation->{$field};
                             }
                         }
 
@@ -238,7 +238,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->first();
 
                         if (isset($media->path)) {
-                            $event->image = $media->path;
+                            $events->image = $media->path;
                         }
                     }
                 }
