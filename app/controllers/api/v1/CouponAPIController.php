@@ -1301,7 +1301,7 @@ class CouponAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value',
+                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value,coupon_status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.coupon_sortby'),
@@ -1337,6 +1337,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             $table_prefix = DB::getTablePrefix();
+            $now = date('Y-m-d H:i:s');
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
@@ -1355,7 +1356,18 @@ class CouponAPIController extends ControllerAPI
                     END AS 'display_discount_value',
                     {$table_prefix}merchants.name as retailer_name
                     "),
-                    DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'")
+                    DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
+                    DB::raw("CASE WHEN {$table_prefix}promotions.end_date IS NOT NULL THEN
+                        CASE WHEN
+                            DATE_FORMAT({$table_prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$table_prefix}promotions.status
+                        WHEN
+                            {$table_prefix}promotions.end_date < '{$now}' THEN 'expired'
+                        ELSE
+                            {$table_prefix}promotions.status
+                        END
+                    ELSE
+                        {$table_prefix}promotions.status
+                    END as 'coupon_status'")
                 )
                 ->joinPromotionRules()
                 ->joinPromotionRetailer()
@@ -1619,7 +1631,7 @@ class CouponAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotions.promotion_name';
+            $sortBy = 'promotions.coupon_status';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -1638,7 +1650,8 @@ class CouponAPIController extends ControllerAPI
                     'rule_type'                => 'rule_type',
                     'tenant_name'              => 'tenant_name',
                     'is_auto_issuance'         => 'is_auto_issue_on_signup',
-                    'display_discount_value'   => 'display_discount_value'
+                    'display_discount_value'   => 'display_discount_value',
+                    'coupon_status'            => 'coupon_status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
