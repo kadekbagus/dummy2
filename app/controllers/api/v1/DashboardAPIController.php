@@ -1118,21 +1118,10 @@ class DashboardAPIController extends ControllerAPI
                 $coupons->where('promotions.merchant_id', $mallId);
             });
 
-            // Filter by Promotion ID
-            OrbitInput::get('promotion_id', function($pid) use ($coupons) {
-                $pid = (array)$pid;
-                $coupons->whereIn('promotions.promotion_id', $pid);
-            });
-
             // Filter by is coupon flag
             OrbitInput::get('is_coupon', function($isCoupon) use ($coupons) {
                 $isCoupon = (array)$isCoupon;
                 $coupons->whereIn('promotions.is_coupon', $isCoupon);
-            });
-
-            // Filter by Promotion Name
-            OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
-                $coupons->where('promotions.promotion_name', 'like', "%$name%");
             });
 
             // Filter by Retailer name
@@ -1242,7 +1231,7 @@ class DashboardAPIController extends ControllerAPI
                     'total_redeemed'            => 'total_redeemed',
                     'coupon_status'             => 'coupon_status',
                     'status'                    => 'promotions.status',
-                    'all_redeemed'                    => 'all_redeemed'
+                    'all_redeemed'              => 'all_redeemed'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
