@@ -3059,6 +3059,25 @@ class UserAPIController extends ControllerAPI
         $email = OrbitInput::post('email');
         $retailer_id = OrbitInput::post('current_mall');
 
+        $this->registerCustomValidation();
+
+        $validator = Validator::make(
+            array(
+                'current_mall'          => $retailer_id,
+                'email'                 => $email,
+            ),
+            array(
+                'current_mall'          => 'required|orbit.empty.mall',
+                'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
+            )
+        );
+
+        // Run the validation
+        if ($validator->fails()) {
+            $errorMessage = $validator->messages()->first();
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
+
         $values = [
             'email' => $email,
             'retailer_id' => $retailer_id,
@@ -3080,6 +3099,11 @@ class UserAPIController extends ControllerAPI
             $retailer = Mall::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
                                 ->first();
+            if (! is_object($retailer)) {
+                $errorMessage = 'Mall is not found.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $currentMerchantId = $retailer->parent_id;
 
             $user = User::excludeDeleted()
