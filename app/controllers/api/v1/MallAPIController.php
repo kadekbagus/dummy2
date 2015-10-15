@@ -782,7 +782,10 @@ class MallAPIController extends ControllerAPI
                 if ( $startButtonTranslation === 'on' && count($listOfRec[0]->settings) > 0){
                     foreach ($listOfRec[0]->settings as $key => $value) {
                         if ($value->setting_name === 'start_button_label') {
-                            $listOfRec[0]->start_button_translations = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')->get();
+                            $listOfRec[0]->start_button_translations = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
+                                                                            ->whereHas('language', function($has) {
+                                                                            $has->where('merchant_languages.status', 'active');
+                                                                        })->get();                            
                         }
                     }
                 }
