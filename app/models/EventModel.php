@@ -67,7 +67,9 @@ class EventModel extends Eloquent
      */
     public function translations()
     {
-        return $this->hasMany('EventTranslation', 'event_id', 'event_id')->excludeDeleted();
+        return $this->hasMany('EventTranslation', 'event_id', 'event_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
     }
 
     /**

@@ -40,7 +40,7 @@ class CreateTableSettingTranslations extends Migration {
    */
   public function down()
   {
-    Schema::drop('setting_stranslations');      
+    Schema::drop('setting_translations');      
   }
 
 }
