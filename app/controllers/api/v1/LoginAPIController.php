@@ -546,6 +546,56 @@ class LoginAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // check for superadmin login as user
+            $loginFromSuperadmin = false;
+            // superadmin@domain logs in as user@domain using an email of this format:
+            // superadmin@domain-----user--AT--domain
+            $emailDelimiter = '-----';
+            $emailAtReplacement = '--AT--';
+            if (strpos($email, $emailDelimiter) !== FALSE) {
+                $parts = explode($emailDelimiter, $email);
+                if (count($parts) !== 2) {
+                    // something odd?
+                    $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $adminEmail = $parts[0];
+                $loginAsEmail = $parts[1];
+                if (strpos($loginAsEmail, $emailAtReplacement) === FALSE) {
+                    // no --AT-- in second part
+                    $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // check for super admin user first
+                $superAdminUser = User::with('role')
+                    ->active()
+                    ->where('user_email', $adminEmail)
+                    ->first();
+
+                if (! is_object($superAdminUser)) {
+                    $message = Lang::get('validation.orbit.access.inactiveuser');
+                    ACL::throwAccessForbidden($message);
+                }
+
+                if (! Hash::check($password, $superAdminUser->user_password)) {
+                    $message = Lang::get('validation.orbit.access.loginfailed');
+                    ACL::throwAccessForbidden($message);
+                }
+
+                $roleIds = Role::roleIdsByName(['Super Admin']);
+                if (! in_array($superAdminUser->user_role_id, $roleIds)) {
+                    $message = Lang::get('validation.orbit.access.forbidden', [
+                        'action' => 'Login (Role Denied) ' . implode(', ', $roleIds) . ' ' . $superAdminUser->user_role_id
+                    ]);
+                    ACL::throwAccessForbidden($message);
+                }
+
+                // then if the superadmin checks pass, use the user email specified
+                $email = str_replace($emailAtReplacement, '@', $loginAsEmail);
+                $loginFromSuperadmin = true;
+            }
+
             $user = User::with('role')
                         ->active()
                         ->where('user_email', $email)
@@ -556,7 +606,7 @@ class LoginAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            if (! Hash::check($password, $user->user_password)) {
+            if (! $loginFromSuperadmin && ! Hash::check($password, $user->user_password)) {
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
             }

@@ -12,13 +12,15 @@ class CreateTableSettingTranslations extends Migration {
    */
   public function up()
   {
-    $builder = DB::connection()->getSchemaBuilder();
+    $conn = DB::connection();
+    OrbitMySqlSchemaGrammar::useFor($conn);
+    $builder = $conn->getSchemaBuilder();
     $builder->blueprintResolver(function ($table, $callback) {
       return new OrbitBlueprint($table, $callback);
     });
     $builder->create('setting_translations', function(OrbitBlueprint $table)
     {
-      $table->encodedId('setting_translation_id');
+      $table->encodedId('setting_translation_id')->primary();
       $table->encodedId('setting_id');
       $table->encodedId('merchant_language_id');
       $table->string('setting_value', 255)->nullable();
@@ -30,7 +32,7 @@ class CreateTableSettingTranslations extends Migration {
       $table->encodedId('modified_by')->nullable();
       $table->index(['created_by'], 'created_by_idx');
       $table->index(['modified_by'], 'modified_by_idx');
-    }); 
+    });
   }
 
   /**
@@ -40,7 +42,7 @@ class CreateTableSettingTranslations extends Migration {
    */
   public function down()
   {
-    Schema::drop('setting_translations');      
+    Schema::drop('setting_translations');
   }
 
 }

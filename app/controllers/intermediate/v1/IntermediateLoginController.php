@@ -237,11 +237,9 @@ class IntermediateLoginController extends IntermediateBaseController
      *
      * This should insert the user and associated objects using the given email and ids.
      *
-     * After the user is inserted this performs the same logic as the regular mobile CI POST login, then directly
-     * redirects to the landing url.
-     *
+     * Returns [true, user_id, user_email] or [false, string_error]
      */
-    public function getCloudLoginCallback()
+    private function internalCloudLoginCallback()
     {
         $email = OrbitInput::get('user_email', '');
         $user_id = OrbitInput::get('user_id', '');
@@ -258,9 +256,9 @@ class IntermediateLoginController extends IntermediateBaseController
                 'status' => $status,
                 'message' => $message,
             ])) {
-                return $this->displayValidationError();
+                return [false, $this->displayValidationError()];
             }
-            return $this->displayError($message);
+            return [false, $this->displayError($message)];
         }
 
         // else success
@@ -272,7 +270,7 @@ class IntermediateLoginController extends IntermediateBaseController
             'user_detail_id' => $user_detail_id,
             'apikey_id' => $apikey_id,
         ])) {
-            return $this->displayValidationError();
+            return [false, $this->displayValidationError()];
         }
 
         $user = NULL;
@@ -300,10 +298,64 @@ class IntermediateLoginController extends IntermediateBaseController
             }
 
             $pdo->commit();
+            return [true, $user->user_id, $email];
         } catch (Exception $e) {
             $pdo->rollBack();
             throw $e; // TODO display error?
         }
+    }
+
+    /**
+     * Cloud login callback function.
+     *
+     * User is redirected to here by cloud after cloud determines user id for given email.
+     *
+     * Common logic (validate parameters, insert if not found) in internalCloudLoginCallback
+     *
+     * After the user is inserted this returns the user ID as JSON.
+     *
+     */
+    public function getCloudLoginCallbackShowId()
+    {
+        $callback_result = $this->internalCloudLoginCallback();
+        if ($callback_result[0] === false) {
+            // error, returns [false, string_error]
+            // we return response
+            $response = new ResponseProvider();
+            $response->code = Status::UNKNOWN_ERROR;
+            $response->status = 'error';
+            $response->message = $callback_result[1];
+            return $this->render($response);
+        }
+        // else ok return [true, user_id, user_email]
+        $response = new ResponseProvider();
+        $response->code = 0;
+        $response->status = 'ok';
+        $response->data = ['user_id' => $callback_result[1]];
+        return $this->render($response);
+    }
+
+    /**
+     * Cloud login callback function.
+     *
+     * User is redirected to here by cloud after cloud determines user id for given email.
+     *
+     * Common logic (validate parameters, insert if not found) in internalCloudLoginCallback
+     *
+     * After the user is inserted this performs the same logic as the regular mobile CI POST login, then directly
+     * redirects to the landing url.
+     *
+     */
+    public function getCloudLoginCallback()
+    {
+        $callback_result = $this->internalCloudLoginCallback();
+        if ($callback_result[0] === false) {
+            // error, returns [false, string_error]
+            // we return the error as is
+            return $callback_result[1];
+        }
+        // else ok return [true, user_id, user_email]
+        $email = $callback_result[2];
 
         // do the usual login stuff
         $_POST['email'] = $email;

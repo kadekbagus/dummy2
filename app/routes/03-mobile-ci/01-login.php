@@ -150,6 +150,7 @@ Route::group(
         Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
         Route::get('/app/v1/customer/cloud-login', 'IntermediateLoginController@getCloudLogin');
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
+        Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
 
         Route::get('/customer/logout', 'IntermediateLoginController@getLogoutMobileCI');
 
