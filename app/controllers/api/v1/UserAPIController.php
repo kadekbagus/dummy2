@@ -3056,8 +3056,8 @@ class UserAPIController extends ControllerAPI
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
         // @todo: move this to config
         $url = Config::get('orbit.registration.mobile.cloud_login_url');
-        $email = OrbitInput::post('email');
-        $retailer_id = OrbitInput::post('current_mall');
+        $email = OrbitInput::get('email');
+        $retailer_id = OrbitInput::get('current_mall');
 
         $this->registerCustomValidation();
 

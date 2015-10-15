@@ -8,7 +8,7 @@ Route::group(['before' => 'orbit-settings'], function()
     /**
      * Issue lucky draw to customer
      */
-    Route::post('/api/v1/cs/membership/check-email', function()
+    Route::get('/api/v1/cs/membership/check-email', function()
     {
         return UserAPIController::create()->redirectToCloudGetID();
     });
@@ -16,5 +16,5 @@ Route::group(['before' => 'orbit-settings'], function()
     /**
      * Intermediate.
      */
-    Route::post('/app/v1/cs/membership/check-email', 'IntermediateAuthController@User_redirectToCloudGetID');
+    Route::get('/app/v1/cs/membership/check-email', 'IntermediateAuthController@User_redirectToCloudGetID');
 });
