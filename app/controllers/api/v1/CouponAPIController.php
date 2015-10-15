@@ -1631,7 +1631,7 @@ class CouponAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotions.coupon_status';
+            $sortBy = 'coupon_status';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -1657,8 +1657,9 @@ class CouponAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
+            // sort by status first
+            if ($sortBy !== 'coupon_status') {
+                $coupons->orderBy('coupon_status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
