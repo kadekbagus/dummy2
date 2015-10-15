@@ -3085,8 +3085,11 @@ class UserAPIController extends ControllerAPI
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
-
-        return Redirect::to($req->getUri());
+        $this->response->data = [
+            'url' => $req->getUri(),
+        ];
+        return $this->render();
+        // return Redirect::to($req->getUri());
     }
 
     protected function registerCustomValidation()
