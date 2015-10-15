@@ -74,8 +74,10 @@ class Promotion extends Eloquent
      * Promotion strings can be translated to many languages.
      */
     public function translations()
-    {
-        return $this->hasMany('PromotionTranslation', 'promotion_id', 'promotion_id')->excludeDeleted();
+    {        
+        return $this->hasMany('PromotionTranslation', 'promotion_id', 'promotion_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
     }
 
     /**

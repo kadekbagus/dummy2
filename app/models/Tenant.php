@@ -62,7 +62,10 @@ class Tenant extends Eloquent
      */
     public function translations()
     {
-        return $this->hasMany('MerchantTranslation', 'merchant_id', 'merchant_id')->excludeDeleted();
+        return $this->hasMany('MerchantTranslation', 'merchant_id', 'merchant_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
+
     }
 
     public function newsPromotions()
