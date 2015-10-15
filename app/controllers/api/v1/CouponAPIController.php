@@ -1301,7 +1301,7 @@ class CouponAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status',
+                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.coupon_sortby'),
@@ -1637,7 +1637,8 @@ class CouponAPIController extends ControllerAPI
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
                     'tenant_name'              => 'tenant_name',
-                    'is_auto_issuance'         => 'is_auto_issue_on_signup'
+                    'is_auto_issuance'         => 'is_auto_issue_on_signup',
+                    'display_discount_value'   => 'display_discount_value'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -1802,7 +1803,7 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
-            $tenant = Retailer::active()
+            $tenant = Tenant::active()
                 ->where('parent_id', $mall_id)
                 ->where('masterbox_number', $verificationNumber)
                 ->first();

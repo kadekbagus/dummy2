@@ -223,7 +223,8 @@
                     method: 'POST',
                     data: {
                         issued_coupon_id: '{{$coupon->issuedCoupons[0]->issued_coupon_id}}',
-                        merchant_verification_number: $('#tenantverify').val()
+                        merchant_verification_number: $('#tenantverify').val(),
+                        current_mall: '{{$retailer->merchant_id}}'
                     }
                 }).done(function(data){
                     if(data.status == 'success'){
