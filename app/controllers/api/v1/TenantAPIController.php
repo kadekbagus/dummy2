@@ -2298,7 +2298,7 @@ class TenantAPIController extends ControllerAPI
                     'tenant_id'     => $tenant_id,
                 ),
                 array(
-                    'tenant_id'     => 'orbit.exists.tenant_id',
+                    'tenant_id'     => 'required|orbit.exists.tenant_id',
                 )
             );
 
