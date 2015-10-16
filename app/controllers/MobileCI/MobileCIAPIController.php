@@ -1947,7 +1947,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->wherehas('tenant', function($q){
                     $q->where('merchants.status', 'active');
                 })
-                ->where('promotion_id', $coupon_id)->get();
+                ->where('promotion_id', $coupon_id)->get();   
 
             // -- START hack
             // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
@@ -1958,13 +1958,18 @@ class MobileCIAPIController extends ControllerAPI
 
             foreach ($tenants as $tenant) {
                 $cso_flag = 0;
-                foreach ($tenant->tenant->categories as $category) {
-                    if ($category->category_name !== 'Customer Service') {
-                        $cso_exists = TRUE;
-                        $cso_flag = 1;
+                
+                if (count($tenant->tenant->categories) > 0) { // check if tenant has category
+                    foreach ($tenant->tenant->categories as $category) {
+                        if ($category->category_name !== 'Customer Service') {
+                            $cso_exists = TRUE;
+                            $cso_flag = 1;
+                        }
                     }
-                }
-                if($cso_flag === 1) {
+                    if($cso_flag === 1) {
+                        $pure_tenants[] = $tenant;
+                    }
+                } else { // if not, add it right away
                     $pure_tenants[] = $tenant;
                 }
             }
