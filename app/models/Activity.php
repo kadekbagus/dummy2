@@ -595,10 +595,9 @@ class Activity extends Eloquent
 
         return $builder->addSelect(DB::raw($prefix . 'merchants.name as retailer_name'))
                        ->leftJoin('merchants', function ($join) {
-                            $join->on('activities.object_name', '=', DB::raw('"Retailer"'));
+                            $join->on('activities.object_name', '=', DB::raw('"Tenant"'));
                             $join->on('merchants.merchant_id', '=', 'activities.object_id');
-                            $join->on('merchants.object_type', '=', DB::raw('"retailer"'));
-                            $join->on('merchants.is_mall', '=', DB::raw('"no"'));
+                            $join->on('merchants.object_type', '=', DB::raw('"tenant"'));
                             $join->on('merchants.status', '!=', DB::raw('"deleted"'));
                        });
     }
