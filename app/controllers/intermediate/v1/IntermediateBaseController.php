@@ -15,7 +15,7 @@ use DominoPOS\OrbitSession\SessionConfig;
 class IntermediateBaseController extends Controller
 {
     /**
-     * Array of custome headers which sent to client
+     * Array of custom headers which sent to client
      *
      * @var array
      */
@@ -105,6 +105,42 @@ class IntermediateBaseController extends Controller
     }
 
     /**
+     * @return array
+     */
+    protected function getCORSHeaders()
+    {
+        // Allow Cross-Domain Request
+        // http://enable-cors.org/index.html
+        $headers = [];
+        $headers['Access-Control-Allow-Origin'] = '*';
+        $headers['Access-Control-Allow-Methods'] = 'GET, POST';
+        $headers['Access-Control-Allow-Credentials'] = 'true';
+
+        $angularTokenName = Config::get('orbit.security.csrf.angularjs.header_name');
+        $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+        $allowHeaders = array(
+            'Origin',
+            'Content-Type',
+            'Accept',
+            'Authorization',
+            'X-Request-With',
+            'X-Orbit-Signature',
+            'Cookie',
+            'Set-Cookie',
+            $sessionHeader,
+            'Set-' . $sessionHeader
+        );
+        if (! empty($angularTokenName)) {
+            $allowHeaders[] = $angularTokenName;
+        }
+
+        $headers['Access-Control-Allow-Headers'] = implode(',', $allowHeaders);
+        $headers['Access-Control-Expose-Headers'] = implode(',', $allowHeaders);
+
+        return $headers;
+    }
+
+    /**
      * Render the output
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -130,32 +166,7 @@ class IntermediateBaseController extends Controller
 
                 $output = json_encode($json);
 
-                // Allow Cross-Domain Request
-                // http://enable-cors.org/index.html
-                $this->customHeaders['Access-Control-Allow-Origin'] = '*';
-                $this->customHeaders['Access-Control-Allow-Methods'] = 'GET, POST';
-                $this->customHeaders['Access-Control-Allow-Credentials'] = 'true';
-
-                $angularTokenName = Config::get('orbit.security.csrf.angularjs.header_name');
-                $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
-                $allowHeaders = array(
-                    'Origin',
-                    'Content-Type',
-                    'Accept',
-                    'Authorization',
-                    'X-Request-With',
-                    'X-Orbit-Signature',
-                    'Cookie',
-                    'Set-Cookie',
-                    $sessionHeader,
-                    'Set-' . $sessionHeader
-                );
-                if (! empty($angularTokenName)) {
-                    $allowHeaders[] = $angularTokenName;
-                }
-
-                $this->customHeaders['Access-Control-Allow-Headers'] = implode(',', $allowHeaders);
-                $this->customHeaders['Access-Control-Expose-Headers'] = implode(',', $allowHeaders);
+                $this->customHeaders = $this->customHeaders + $this->getCORSHeaders();
         }
 
         $headers = array('Content-Type' => $this->contentType) + $this->customHeaders;
