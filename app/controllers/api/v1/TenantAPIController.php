@@ -363,7 +363,7 @@ class TenantAPIController extends ControllerAPI
             $currency_symbol = OrbitInput::post('currency_symbol');
             $tax_code1 = OrbitInput::post('tax_code1');
             $tax_code2 = OrbitInput::post('tax_code2');
-            $tax_code3 = OrbitInput::post('tax_code3');@
+            $tax_code3 = OrbitInput::post('tax_code3');
             $slogan = OrbitInput::post('slogan');
 
             // default value for vat_included is 'yes'
@@ -1811,21 +1811,6 @@ class TenantAPIController extends ControllerAPI
             $tenant = Tenant::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
-
-            if (empty($tenant)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.tenant', $tenant);
-
-            return TRUE;
-        });
-
-        // Check the existance of retailer id
-        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
-            $tenant = Tenant::where('merchant_id', $value)
-                                ->excludeDeleted()
-                                ->first();
 
             if (empty($tenant)) {
                 return FALSE;
