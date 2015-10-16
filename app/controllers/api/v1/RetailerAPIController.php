@@ -1672,12 +1672,21 @@ class RetailerAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.retailer.getcitylist.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_retailer')) {
-                Event::fire('orbit.retailer.getcitylist.authz.notallowed', array($this, $user));
-                $viewRetailerLang = Lang::get('validation.orbit.actionlist.view_retailer');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewRetailerLang));
+            // if (! ACL::create($user)->isAllowed('view_retailer')) {
+            //     Event::fire('orbit.retailer.getcitylist.authz.notallowed', array($this, $user));
+            //     $viewRetailerLang = Lang::get('validation.orbit.actionlist.view_retailer');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewRetailerLang));
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
+
             Event::fire('orbit.retailer.getcitylist.after.authz', array($this, $user));
 
             $retailers = Retailer::excludeDeleted()
