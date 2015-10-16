@@ -779,13 +779,15 @@ class MallAPIController extends ControllerAPI
 
             // Get start button translations 
             OrbitInput::get('startbuttontranslation', function ($startButtonTranslation) use (&$listOfRec) {
-                if ( $startButtonTranslation === 'on' && count($listOfRec[0]->settings) > 0){
-                    foreach ($listOfRec[0]->settings as $key => $value) {
-                        if ($value->setting_name === 'start_button_label') {
-                            $listOfRec[0]->start_button_translations = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
-                                                                            ->whereHas('language', function($has) {
-                                                                            $has->where('merchant_languages.status', 'active');
-                                                                        })->get();                            
+                if (isset($listOfRec[0])) {
+                    if ( $startButtonTranslation === 'on' && count($listOfRec[0]->settings) > 0){
+                        foreach ($listOfRec[0]->settings as $key => $value) {
+                            if ($value->setting_name === 'start_button_label') {
+                                $listOfRec[0]->start_button_translations = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
+                                                                                ->whereHas('language', function($has) {
+                                                                                $has->where('merchant_languages.status', 'active');
+                                                                            })->get();                            
+                            }
                         }
                     }
                 }
