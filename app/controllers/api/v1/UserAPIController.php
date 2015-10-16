@@ -3051,43 +3051,75 @@ class UserAPIController extends ControllerAPI
      * @return Redirect
      */
     public function redirectToCloudGetID() {
-        $this->response->code = 302; // must not be 0
-        $this->response->status = 'success';
-        $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
-        // @todo: move this to config
-        $url = Config::get('orbit.registration.mobile.cloud_login_url');
-        $email = OrbitInput::get('email');
-        $retailer_id = OrbitInput::get('current_mall');
+        try {
+            $this->response->code = 302; // must not be 0
+            $this->response->status = 'success';
+            $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
 
-        $this->registerCustomValidation();
+            $url = Config::get('orbit.registration.mobile.cloud_login_url');
+            $email = OrbitInput::get('email');
+            $retailer_id = OrbitInput::get('current_mall');
 
-        $validator = Validator::make(
-            array(
-                'current_mall'          => $retailer_id,
-                'email'                 => $email,
-            ),
-            array(
-                'current_mall'          => 'required|orbit.empty.mall',
-                'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
-            )
-        );
+            $this->registerCustomValidation();
 
-        // Run the validation
-        if ($validator->fails()) {
-            $errorMessage = $validator->messages()->first();
-            OrbitShopAPI::throwInvalidArgument($errorMessage);
+            $validator = Validator::make(
+                array(
+                    'current_mall'          => $retailer_id,
+                    'email'                 => $email,
+                ),
+                array(
+                    'current_mall'          => 'required|orbit.empty.mall',
+                    'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $values = [
+                'email' => $email,
+                'retailer_id' => $retailer_id,
+                'callback_url' => URL::route('customer-login-callback-show-id'),
+            ];
+            $values = CloudMAC::wrapDataFromBox($values);
+            $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
+            $this->response->data = [
+                'url' => $req->getUri(),
+            ];
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
         }
 
-        $values = [
-            'email' => $email,
-            'retailer_id' => $retailer_id,
-            'callback_url' => URL::route('customer-login-callback-show-id'),
-        ];
-        $values = CloudMAC::wrapDataFromBox($values);
-        $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
-        $this->response->data = [
-            'url' => $req->getUri(),
-        ];
         return $this->render();
         // return Redirect::to($req->getUri());
     }
