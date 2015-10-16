@@ -2358,7 +2358,7 @@ class CouponAPIController extends ControllerAPI
                         ->first();
 
             if (empty($issuedCoupon)) {
-                $errorMessage = 'Merchant verification number is incorrect.';
+                $errorMessage = Lang::get('mobileci.coupon.wrong_verification_number');
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
