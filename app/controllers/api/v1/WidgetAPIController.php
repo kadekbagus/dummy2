@@ -167,14 +167,12 @@ class WidgetAPIController extends ControllerAPI
 
                 Event::fire('orbit.widget.postnewwidget.after.save', array($this, $widget));
 
-                if ($slogan != NULL) {
-                    $default_translation = [
-                        $idLanguageDefault => [
-                            'widget_slogan' => $widget->widget_slogan,
-                        ]
-                    ];
-                    $this->validateAndSaveTranslations($widget, json_encode($default_translation), 'create');
-                }
+                $default_translation = [
+                    $idLanguageDefault => [
+                        'widget_slogan' => $widget->widget_slogan,
+                    ]
+                ];
+                $this->validateAndSaveTranslations($widget, json_encode($default_translation), 'create');
 
                 if (isset($widgetbatch[$widgetType]['translation']) && $widgetbatch[$widgetType]['translation'] != NULL){
                     $this->validateAndSaveTranslations($widget, $widgetbatch[$widgetType]['translation'], 'create');
