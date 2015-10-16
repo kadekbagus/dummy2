@@ -168,6 +168,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
 
+
             if (empty(\Cookie::get('event'))) {
                 $event_store = array();
             } else {
@@ -268,18 +269,89 @@ class MobileCIAPIController extends ControllerAPI
             foreach ($widgets as $widget) {
                 if ($widget->widget_type == 'tenant') {
                     $widget_singles->tenant = $widget;
+                    // cek if any language active
+                    if (!empty($alternate_language) && !empty($widget_singles->tenant)) {
+                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('widget_id', $widget_singles->tenant->widget_id)->first();
+                            // dd($widget_singles_tenant );
+                        if (!empty($widget_singles_tenant)) {
+                            foreach (['widget_slogan'] as $field) {
+                                if (isset($widget_singles_tenant->{$field})) {
+                                    $widget_singles->tenant->{$field} = $widget_singles_tenant->{$field};
+                                }
+                            }
+
+                        }
+                    }
                 }
                 if ($widget->widget_type == 'promotion') {
                     $widget_singles->promotion = $widget;
+                    // cek if any language active
+                    if (!empty($alternate_language) && !empty($widget_singles->promotion)) {
+                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('widget_id', $widget_singles->promotion->widget_id)->first();
+                            // dd($widget_singles_tenant );
+                        if (!empty($widget_singles_tenant)) {
+                            foreach (['widget_slogan'] as $field) {
+                                if (isset($widget_singles_tenant->{$field})) {
+                                    $widget_singles->promotion->{$field} = $widget_singles_tenant->{$field};
+                                }
+                            }
+                        }
+                    }                    
                 }
                 if ($widget->widget_type == 'news') {
                     $widget_singles->news = $widget;
+                    // cek if any language active
+                    if (!empty($alternate_language) && !empty($widget_singles->news)) {
+                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('widget_id', $widget_singles->news->widget_id)->first();
+                            // dd($widget_singles_tenant );
+                        if (!empty($widget_singles_tenant)) {
+                            foreach (['widget_slogan'] as $field) {
+                                if (isset($widget_singles_tenant->{$field})) {
+                                    $widget_singles->news->{$field} = $widget_singles_tenant->{$field};
+                                }
+                            }
+                        }
+                    }                    
                 }
                 if ($widget->widget_type == 'coupon') {
                     $widget_singles->coupon = $widget;
+                    // cek if any language active
+                    if (!empty($alternate_language) && !empty($widget_singles->coupon)) {
+                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('widget_id', $widget_singles->coupon->widget_id)->first();
+                            // dd($widget_singles_tenant );
+                        if (!empty($widget_singles_tenant)) {
+                            foreach (['widget_slogan'] as $field) {
+                                if (isset($widget_singles_tenant->{$field})) {
+                                    $widget_singles->coupon->{$field} = $widget_singles_tenant->{$field};
+                                }
+                            }
+                        }
+                    }                    
                 }
                 if ($widget->widget_type == 'lucky_draw') {
                     $widget_singles->luckydraw = $widget;
+                    // cek if any language active
+                    if (!empty($alternate_language) && !empty($widget_singles->luckydraw)) {
+                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('widget_id', $widget_singles->luckydraw->widget_id)->first();
+                            // dd($widget_singles_tenant );
+                        if (!empty($widget_singles_tenant)) {
+                            foreach (['widget_slogan'] as $field) {
+                                if (isset($widget_singles_tenant->{$field})) {
+                                    $widget_singles->luckydraw->{$field} = $widget_singles_tenant->{$field};
+                                }
+                            }
+                        }
+                    }                    
                 }
             }
 
