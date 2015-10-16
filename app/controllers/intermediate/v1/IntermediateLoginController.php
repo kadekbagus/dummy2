@@ -225,7 +225,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
         // we use this to assemble a normalized URL.
         $req = \Symfony\Component\HttpFoundation\Request::create($callback_url, 'GET', $params);
-        return Redirect::away($req->getUri());
+        return Redirect::away($req->getUri(), 302, $this->getCORSHeaders());
     }
 
     /**
