@@ -363,7 +363,7 @@ class TenantAPIController extends ControllerAPI
             $currency_symbol = OrbitInput::post('currency_symbol');
             $tax_code1 = OrbitInput::post('tax_code1');
             $tax_code2 = OrbitInput::post('tax_code2');
-            $tax_code3 = OrbitInput::post('tax_code3');@
+            $tax_code3 = OrbitInput::post('tax_code3');
             $slogan = OrbitInput::post('slogan');
 
             // default value for vat_included is 'yes'
@@ -1825,21 +1825,6 @@ class TenantAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // Check the existance of retailer id
-        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
-            $tenant = Tenant::where('merchant_id', $value)
-                                ->excludeDeleted()
-                                ->first();
-
-            if (empty($tenant)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.tenant', $tenant);
-
-            return TRUE;
-        });
-
         // Check user email address, it should not exists
         Validator::extend('orbit.exists.email', function ($attribute, $value, $parameters) {
             $tenant = Tenant::excludeDeleted()
@@ -2111,12 +2096,21 @@ class TenantAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.tenant.getcitylist.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_tenant')) {
-                Event::fire('orbit.tenant.getcitylist.authz.notallowed', array($this, $user));
-                $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
+            // if (! ACL::create($user)->isAllowed('view_tenant')) {
+            //     Event::fire('orbit.tenant.getcitylist.authz.notallowed', array($this, $user));
+            //     $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
+
             Event::fire('orbit.retailer.getcitylist.after.authz', array($this, $user));
 
             $tenants = Tenant::excludeDeleted()
