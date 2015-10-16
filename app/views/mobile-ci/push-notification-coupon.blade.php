@@ -8,19 +8,22 @@
             </div>
             <div class="modal-body">
                 <div class="row ">
-                    <div class="col-xs-12 vertically-spaced">
-                        <h4 style="color:#d9534f">Halo {{ $fullName }},</h4>
+                    <div class="col-xs-12">
+                        <h4 style="color:#d9534f">Hello {{ $fullName }},</h4>
                         <p>{{ Lang::get('mobileci.coupon.congratulations_you_get') }} {{ $numberOfCoupon }} {{ Lang::get('mobileci.coupon.coupon_here_is_coupon_you') }}:
                         </p>
-
-                        <ol>
-                        @foreach ($coupons as $couponName=>$couponNumbers)
-                            <li><strong>{{ $couponName }}</strong></li>
-                        @endforeach
-                        </ol>
-
-                        <p style="margin-top:1em">
-                            {{ Lang::get('mobileci.coupon.happy_shopping') }}</br>
+                        <div class="row">
+                            <ol style="padding-left:16px">
+                            @foreach ($coupons as $couponName=>$couponNumbers)
+                                <li><strong>{{ $couponName }}</strong></li>
+                            @endforeach
+                            </ol>
+                        </div>
+                        <p>
+                            <strong>{{ Lang::get('mobileci.coupon.check_coupon') }}</strong>
+                        </p>
+                        <p>
+                            {{ Lang::get('mobileci.coupon.happy_shopping') }}</br></br>
                             <strong>{{ $mallName }}</strong>
                         </p>
                     </div>
