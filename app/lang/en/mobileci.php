@@ -218,13 +218,14 @@ return array(
         'successful'                       => 'Successful',
         'please_communicate'               => 'Please communicate the following number to tenant employee',
         'congratulations_you_get'          => 'Congratulations you get',
-        'coupon_here_is_coupon_you'        => 'coupon. Here is a coupon for you',
+        'coupon_here_is_a_coupon_you'      => 'coupon. Here is a coupon for you',
+        'coupon_here_is_coupons_you'       => 'coupons. Here is coupons for you',
         'happy_shopping'                   => 'Happy shopping!',
         'close'                            => 'Close',
         'my_coupon'                        => 'My Coupon',
         'use'                              => 'Use',
         'next_time'                        => 'Next time',
-        'check_coupon'                     => 'You can check your coupons in Home Page -> Coupons',
+        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
     ),
 
     'coupon_list' => array(

@@ -10,7 +10,7 @@
                 <div class="row ">
                     <div class="col-xs-12">
                         <h4 style="color:#d9534f">Hello {{ $fullName }},</h4>
-                        <p>{{ Lang::get('mobileci.coupon.congratulations_you_get') }} {{ $numberOfCoupon }} {{ Lang::get('mobileci.coupon.coupon_here_is_coupon_you') }}:
+                        <p>{{ Lang::get('mobileci.coupon.congratulations_you_get') }} {{ $numberOfCoupon }} @if ($numberOfCoupon > 1) {{ Lang::get('mobileci.coupon.coupon_here_is_coupons_you') }} @else {{ Lang::get('mobileci.coupon.coupon_here_is_a_coupon_you') }} @endif:
                         </p>
                         <div class="row">
                             <ol style="padding-left:16px">
