@@ -962,6 +962,7 @@ class WidgetAPIController extends ControllerAPI
      * @param array         `widget_ids`            (optional) - List of widget IDs
      * @param array         `widget_type`           (optional) - Type of the widget, e.g: 'catalogue', 'new_product', 'promotion', 'coupon'
      * @param array         `merchant_ids`          (optional) - List of Merchant IDs
+     * @param array         `merchant_id`           (optional) - Merchant ID
      * @param array         `retailer_ids`          (optional) - List of Retailer IDs
      * @param array         `animations`            (optional) - Filter by animation
      * @param array         `types`                 (optional) - Filter by widget types
@@ -1077,6 +1078,10 @@ class WidgetAPIController extends ControllerAPI
             // Filter by animation
             OrbitInput::get('animations', function($animation) use ($widgets) {
                 $widgets->whereIn('widgets.animation', $animation);
+            });            
+
+            OrbitInput::get('merchant_id', function($merchant_id) use ($widgets) {
+                $widgets->whereIn('widgets.merchant_id', $merchant_id);
             });
 
             // Filter by widget type

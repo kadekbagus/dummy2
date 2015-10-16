@@ -779,13 +779,15 @@ class MallAPIController extends ControllerAPI
 
             // Get start button translations 
             OrbitInput::get('startbuttontranslation', function ($startButtonTranslation) use (&$listOfRec) {
-                if ( $startButtonTranslation === 'on' && count($listOfRec[0]->settings) > 0){
-                    foreach ($listOfRec[0]->settings as $key => $value) {
-                        if ($value->setting_name === 'start_button_label') {
-                            $listOfRec[0]->start_button_translations = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
-                                                                            ->whereHas('language', function($has) {
-                                                                            $has->where('merchant_languages.status', 'active');
-                                                                        })->get();                            
+                if (isset($listOfRec[0])) {
+                    if ( $startButtonTranslation === 'on' && count($listOfRec[0]->settings) > 0){
+                        foreach ($listOfRec[0]->settings as $key => $value) {
+                            if ($value->setting_name === 'start_button_label') {
+                                $listOfRec[0]->start_button_translations = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
+                                                                                ->whereHas('language', function($has) {
+                                                                                $has->where('merchant_languages.status', 'active');
+                                                                            })->get();                            
+                            }
                         }
                     }
                 }
@@ -1825,5 +1827,113 @@ class MallAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+
+    /**
+     * GET - Mall City List
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     */
+    public function getCityList()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.mall.getcitylist.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.mall.getcitylist.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.mall.getcitylist.before.authz', array($this, $user));
+
+            // if (! ACL::create($user)->isAllowed('view_tenant')) {
+            //     Event::fire('orbit.mall.getcitylist.authz.notallowed', array($this, $user));
+            //     $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.mall.getcitylist.after.authz', array($this, $user));
+
+            $tenants = Mall::excludeDeleted()
+                ->select('city')
+                ->whereNotNull('city')
+                ->orderBy('city', 'asc')
+                ->groupBy('city')
+                ->get();
+
+            $data = new stdclass();
+            $data->records = $tenants;
+
+            if ($tenants->count() === 0) {
+                $data->records = NULL;
+                $this->response->message = Lang::get('statuses.orbit.nodata.city');
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.mall.getcitylist.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.mall.getcitylist.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.mall.getcitylist.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.mall.getcitylist.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.mall.getcitylist.before.render', array($this, &$output));
+
+        return $output;
     }
 }

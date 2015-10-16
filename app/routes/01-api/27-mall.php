@@ -35,4 +35,14 @@ Route::get('/api/v1/mall/{search}', function()
     return MallAPIController::create()->getSearchMall();
 })->where('search', '(list|search)');
 
+
+/**
+ * Tenant city list
+ */
+Route::get('/api/v1/mall/city', function()
+{
+    return MallAPIController::create()->getCityList();
+});
+
+
 ?>

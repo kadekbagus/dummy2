@@ -928,6 +928,10 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->slavebox_number = $slavebox_number;
             });
 
+            OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedtenant) {
+                $updatedtenant->masterbox_number = $masterbox_number;
+            });
+
             OrbitInput::post('floor', function($floor) use ($updatedtenant) {
                 $updatedtenant->floor = $floor;
             });
@@ -2092,12 +2096,21 @@ class TenantAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.tenant.getcitylist.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_tenant')) {
-                Event::fire('orbit.tenant.getcitylist.authz.notallowed', array($this, $user));
-                $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
+            // if (! ACL::create($user)->isAllowed('view_tenant')) {
+            //     Event::fire('orbit.tenant.getcitylist.authz.notallowed', array($this, $user));
+            //     $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
+
             Event::fire('orbit.retailer.getcitylist.after.authz', array($this, $user));
 
             $tenants = Tenant::excludeDeleted()
