@@ -928,6 +928,10 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->slavebox_number = $slavebox_number;
             });
 
+            OrbitInput::post('masterbox_number', function($masterbox_number) use ($updatedtenant) {
+                $updatedtenant->masterbox_number = $masterbox_number;
+            });
+
             OrbitInput::post('floor', function($floor) use ($updatedtenant) {
                 $updatedtenant->floor = $floor;
             });
