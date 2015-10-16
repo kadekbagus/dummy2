@@ -24,4 +24,10 @@ Route::post('/app/v1/mall/update', 'IntermediateAuthController@Mall_postUpdateMa
  */
 Route::get('/app/v1/mall/{search}', 'IntermediateAuthController@Mall_getSearchMall')->where('search', '(list|search)');
 
+
+/**
+ * Tenant city list
+ */
+Route::get('/app/v1/mall/city', 'IntermediateAuthController@Tenant_getCityList');
+
 ?>
