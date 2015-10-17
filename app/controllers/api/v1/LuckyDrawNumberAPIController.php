@@ -150,7 +150,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 $status,            // 7
                 $maxRecordReturned, // 8
                 $group,             // 9
-                $luckyDrawId        // 10
+                $luckyDrawId,       // 10
                 $minimumNumber      // 11
             ];
             $luckyDrawnumbers = DB::select("call issue_lucky_draw_numberv3(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $storedProcArgs);
