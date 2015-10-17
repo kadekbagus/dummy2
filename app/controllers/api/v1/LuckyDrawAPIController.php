@@ -109,7 +109,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 ),
                 array(
                     'mall_id'                  => 'required|numeric|orbit.empty.mall',
-                    'lucky_draw_name'          => 'required|max:255|orbit.exists.lucky_draw_name',
+                    'lucky_draw_name'          => 'required|max:255|orbit.exists.lucky_draw_name:' . $mall_id,
                     'description'              => 'required',
                     'start_date'               => 'required|date_format:Y-m-d H:i:s',
                     'end_date'                 => 'required|date_format:Y-m-d H:i:s',
@@ -118,7 +118,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'max_number'               => 'required|numeric',
                     'external_lucky_draw_id'   => 'required',
                     'grace_period_date'        => 'date_format:Y-m-d H:i:s',
-                    'status'                   => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active:' . $mall_id,
+                    'status'                   => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_drawn_active:' . $mall_id,
                 )
             );
 
@@ -1734,6 +1734,7 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check the existance of lucky_draw id
         Validator::extend('orbit.empty.lucky_draw', function ($attribute, $value, $parameters) {
             $lucky_draw = LuckyDraw::excludeDeleted()
+                                   ->where('mall_id', $parameters[0])
                                    ->where('lucky_draw_id', $value)
                                    ->first();
 
@@ -1765,6 +1766,7 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check lucky draw name, it should not exists
         Validator::extend('orbit.exists.lucky_draw_name', function ($attribute, $value, $parameters) {
             $lucky_draw = LuckyDraw::excludeDeleted()
+                                   ->where('mall_id', $parameters[0])
                                    ->where('lucky_draw_name', $value)
                                    ->first();
 
