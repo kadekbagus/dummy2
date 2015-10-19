@@ -247,7 +247,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $widgets = Widget::with('media')
                 ->active()
-                ->where('merchant_id', $retailer->parent->merchant_id)
+                ->where('merchant_id', $retailer->merchant_id)
                 ->whereHas(
                     'retailers',
                     function ($q) use ($retailer) {
