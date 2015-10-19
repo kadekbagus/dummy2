@@ -218,12 +218,14 @@ return array(
         'successful'                       => '成功した',
         'please_communicate'               => '以下の数をテナント従業員に 伝えてください.',
         'congratulations_you_get'          => 'おめでとう、あなたが得る',
-        'coupon_here_is_coupon_you'        => 'クーポン。こちらはあなたのクーポンです。',
+        'here_is_your_coupon'              => 'クーポン。こちらはあなたのクーポンです。',
+        'here_are_your_coupons'              => 'クーポン。こちらはあなたのクーポンです。',
         'happy_shopping'                   => 'どうぞ買い物してください',
         'close'                            => '閉じる',
         'my_coupon'                        => '私のクーポン',
         'use'                              => '使用',
-        'next_time'                        => '次回',        
+        'next_time'                        => '次回',
+        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
     ),
 
     'coupon_list' => array(
