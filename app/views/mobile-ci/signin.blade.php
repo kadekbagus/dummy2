@@ -139,6 +139,68 @@
         </div>
     </div>
 </div>
+
+<!-- Privacy Policy -->
+<div class="modal fade" id="privacyModal" tabindex="-1" role="dialog" aria-labelledby="privacyModalLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{{ $closeModalText or 'OK' }}}</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel">Privacy Policy</h4>
+            </div>
+            <div class="modal-body">
+                <iframe src="{{{ Config::get('orbit.contact_information.privacy_policy_url') }}}" style="zoom:0.60" frameborder="0" height="55%" width="99.6%"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{{ $closeModalText or 'OK' }}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Term and Condition -->
+<div class="modal fade" id="tosModal" tabindex="-1" role="dialog" aria-labelledby="tosModalLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{{ $closeModalText or 'OK' }}}</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel">Terms and Conditions</h4>
+            </div>
+            <div class="modal-body">
+                <iframe src="{{{ Config::get('orbit.contact_information.terms_of_service_url') }}}" style="zoom:0.60" frameborder="0" height="55%" width="99.6%"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{{ $closeModalText or 'OK' }}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ask to Accept Privacy Policy -->
+<div class="modal fade" id="acceptTnCModal" tabindex="-1" role="dialog" aria-labelledby="acceptTnCModalLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">{{{ $closeModalText or 'Close' }}}</span>
+                </button>
+                <h4 class="modal-title" id="acceptTnCModalTitle">Info</h4>
+            </div>
+            <div class="modal-body">
+                <p id="emailModalText">{{ trans('mobileci.signin.must_accept_terms') }}.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{{  trans('mobileci.signin.accept_modal_button_text') }}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @stop
 
 @section('ext_script_bot')
@@ -150,6 +212,32 @@
      * @var boolean
      */
     var orbit_login_processing = false;
+    var no_ajax = false;
+    var term_accepted = false;
+
+    $('#agree_to_terms').click(function (e) {
+        term_accepted = this.checked;
+    });
+
+    $('#orbit-privacy-policy-anchor').click(function (e) {
+        e.preventDefault();
+        $('#privacyModal').modal();
+    });
+
+    $('#orbit-tos-anchor').click(function (e) {
+        e.preventDefault();
+        $('#tosModal').modal();
+    });
+
+    $('#btn-login-form-fb').click(function(e) {
+        if (! term_accepted) {
+            e.preventDefault();
+            $('#acceptTnCModal').modal();
+            return false;
+        }
+        this.innerHTML = '<i class="fa fa-facebook"></i> ' + {{  json_encode(trans('mobileci.signin.connecting_to_facebook')); }};
+    });
+
 
     /**
      * Get Query String from the URL
@@ -200,6 +288,12 @@
      */
     function callLoginAPI()
     {
+        if (term_accepted == false && no_ajax == false) {
+            $('#acceptTnCModal').modal();
+
+            return false;
+        }
+
         if (orbit_login_processing) {
             return;
         }
