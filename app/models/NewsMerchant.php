@@ -21,6 +21,6 @@ class NewsMerchant extends Eloquent
 
     public function tenant()
     {
-        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id');
+        return $this->belongsTo('Tenant', 'merchant_id', 'merchant_id');
     }
 }

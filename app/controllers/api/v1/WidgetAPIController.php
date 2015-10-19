@@ -140,13 +140,13 @@ class WidgetAPIController extends ControllerAPI
                 Event::fire('orbit.widget.postnewwidget.after.validation', array($this, $validator));
 
                 $mall = Mall::find($merchantId);
-
+                
                 $widget = new Widget();
                 $widget->widget_type = $widgetType;
                 $widget->widget_object_id = $widgetObjectId;
                 $widget->widget_slogan = $slogan;
                 $widget->widget_order = $widgetOrder;
-                $widget->merchant_id = $mall->parent_id;
+                $widget->merchant_id = $mall->merchant_id;
                 // $widget->animation = $animation;
                 $widget->animation = 'none';
                 $widget->status = 'active';

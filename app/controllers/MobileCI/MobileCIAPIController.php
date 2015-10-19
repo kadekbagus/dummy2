@@ -247,7 +247,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $widgets = Widget::with('media')
                 ->active()
-                ->where('merchant_id', $retailer->parent->merchant_id)
+                ->where('merchant_id', $retailer->merchant_id)
                 ->whereHas(
                     'retailers',
                     function ($q) use ($retailer) {
@@ -1511,7 +1511,6 @@ class MobileCIAPIController extends ControllerAPI
                 'news',
                 'newsPromotions')
                 ->active('merchants')
-                ->where('is_mall', 'no')
                 ->where('parent_id', $retailer->merchant_id)
                 ->where('merchants.merchant_id', $product_id);
             $tenant->select('merchants.*');
@@ -3293,7 +3292,10 @@ class MobileCIAPIController extends ControllerAPI
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
                 $acq->save();
-                $user->touch();
+                // cannot use $user as $user has extra properties added and would fail
+                // if we saved it.
+                $dup_user = User::find($user->user_id);
+                $dup_user->touch();
             }
 
 

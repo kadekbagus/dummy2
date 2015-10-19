@@ -250,11 +250,11 @@
                         });
                     }else{
                         $('#wrongCouponModal').modal();
-                        $('#errMsg').text({{Lang::get('mobileci.coupon.wrong_verification_number')}});
+                        $('#errMsg').text("{{Lang::get('mobileci.coupon.wrong_verification_number')}}");
                     }
                 }).fail(function(data) {
                     $('#wrongCouponModal').modal();
-                    $('#errMsg').text({{Lang::get('mobileci.coupon.wrong_verification_number')}});
+                    $('#errMsg').text("{{Lang::get('mobileci.coupon.wrong_verification_number')}}");
                 }).always(function(data){
                     $('#hasCouponModal .modal-content').css('display', 'block');
                     $('#hasCouponModal .modal-spinner').css('display', 'none');
