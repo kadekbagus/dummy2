@@ -1460,6 +1460,7 @@ class UserAPIController extends ControllerAPI
             $users = User::Consumers()
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
+                        ->join('activities', 'activities.user_id', '=', 'users.user_id')
                         ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
                         ->excludeDeleted('users')
                         ->groupBy('users.user_id');
@@ -1486,8 +1487,8 @@ class UserAPIController extends ControllerAPI
 
             // Filter by merchant ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                // $users->merchantIds($merchantIds);
-                $listOfMerchantIds = (array)$merchantIds;
+                $users->whereIn('activities.location_id', $merchantIds);
+                // $listOfMerchantIds = (array)$merchantIds;
             });
 
             // Filter by retailer (shop) ids
