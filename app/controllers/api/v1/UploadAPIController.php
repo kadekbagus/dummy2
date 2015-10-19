@@ -122,7 +122,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
             $images = OrbitInput::files('images');
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -337,7 +337,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
 
             $validator = Validator::make(
                 array(
@@ -3351,7 +3351,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -3563,7 +3563,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
 
             $validator = Validator::make(
                 array(
@@ -3742,7 +3742,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.three' => Lang::get('validation.max.array', array(
@@ -3965,7 +3965,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
             $picture_index = OrbitInput::post('picture_index');
 
             $validator = Validator::make(
@@ -4155,7 +4155,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -4367,7 +4367,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
 
             $validator = Validator::make(
                 array(
@@ -4546,7 +4546,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
             $images = OrbitInput::files($elementName);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -4765,7 +4765,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $merchant_id = OrbitInput::post('merchant_id');;
+            $merchant_id = OrbitInput::post('merchant_id');
 
             $validator = Validator::make(
                 array(
@@ -5948,8 +5948,7 @@ class UploadAPIController extends ControllerAPI
 
             // @Todo: Refactor by adding allowedForUser for tenant
             Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) use ($user) {
-                $merchant = Mall::excludeDeleted()
-                            ->isMall('no')
+                $merchant = Tenant::excludeDeleted()
                             ->where('merchant_id', $value)
                             ->first();
 
@@ -5965,7 +5964,6 @@ class UploadAPIController extends ControllerAPI
             // @Todo: Refactor by adding allowedForUser for mall
             Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
                 $merchant = Mall::excludeDeleted()
-                            ->isMall('yes')
                             ->where('merchant_id', $value)
                             ->first();
 
