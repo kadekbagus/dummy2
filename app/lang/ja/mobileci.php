@@ -136,6 +136,11 @@ return array(
         'loading_orbit'     => 'オービットをロードすると、待機してください...',
         'start_button_mall' => 'モールを入力してください',
         'register'          => '登録',
+        'login_via_facebook' => 'Login via Facebook',
+        'or_between_email_and_fb' => 'OR',
+        'agree_to_terms' => 'I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
+        'privacy_policy_url' => '',
+        'terms_of_service_url' => '',
     ),
 
     'catalogue' => array(

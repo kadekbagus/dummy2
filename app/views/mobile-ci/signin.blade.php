@@ -49,6 +49,26 @@
                 <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
             </div>
         </form>
+        <div id="social-wrapper">
+            <div class="row vertically-spaced">
+                <div class="col-xs-12 text-center">
+                    <p style="position:relative;top:12px;">{{{ trans('mobileci.signin.or_between_email_and_fb') }}}</p>
+                </div>
+            </div>
+
+            <form class="row" name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
+                <div class="form-group">
+                    <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}" />
+                    <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}" value="{{{ $orbitToFacebookOriginValue }}}" />
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-info btn-block submit-btn" id="btn-login-form-fb"><i class="fa fa-facebook"></i> {{{ trans('mobileci.signin.login_via_facebook') }}}</button>
+                </div>
+                <div class="checkbox">
+                    <label><input type="checkbox" id="agree_to_terms" name="agree_to_terms" value="yes" /> {{ $agreeToTermsLabel  }}</label>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 <div class="row top-space" id="signedIn">

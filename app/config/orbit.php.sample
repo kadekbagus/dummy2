@@ -2194,4 +2194,11 @@ return array(
             'path'  => '/home/orbitadmin/scripts/helpers/screen-display.sh'
         )
     ),
+    'social_login' => [
+        'facebook' => [
+            'app_id'        => '',
+            'app_secret'    => '',
+            'version'       => 'v2.4'
+        ],
+    ],
 );
