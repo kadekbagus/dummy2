@@ -1019,6 +1019,14 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * @return string
+     */
+    protected function getPayloadEncryptionKey()
+    {
+        return md5('--orbit-mall--');
+    }
+
+    /**
      * String manipulation blocks
      * @param string $str - string value
      * @return string
@@ -2725,7 +2733,7 @@ class MobileCIAPIController extends ControllerAPI
         $payload = $_POST['payload_login'];
 
         // Decrypt the payload
-        $key = md5('--orbit-mall--');
+        $key = $this->getPayloadEncryptionKey();
         $payload = (new Encrypter($key))->decrypt($payload);
 
         // The data is in url encoded
