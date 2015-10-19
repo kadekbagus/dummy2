@@ -136,6 +136,12 @@ return array(
         'loading_orbit'     => '轨道加载中，请稍候...',
         'start_button_mall' => '进入商城',
         'register'          => '定位',
+        'login_via_facebook' => 'Login via Facebook',
+        'or_between_email_and_fb' => 'OR',
+        'agree_to_terms' => 'I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
+        'must_accept_terms' => 'You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
+        'accept_modal_button_text' => 'OK',
+        'connecting_to_facebook' => 'Connecting to Facebook...',
     ),
 
     'catalogue' => array(

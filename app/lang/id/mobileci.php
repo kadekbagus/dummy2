@@ -112,6 +112,12 @@ return array(
         'click_here'        => 'klik disini',
         'email_not_valid'   => 'Alamat email tidak valid',
         'logging_in_button' => 'Sedang login. Harap tunggu...',
+        'login_via_facebook' => 'Login via Facebook',
+        'or_between_email_and_fb' => 'ATAU',
+        'agree_to_terms' => 'Saya setuju dengan <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> dan <a href="%s" id="orbit-tos-anchor">Syarat dan Ketentuan</a>',
+        'must_accept_terms' => 'Anda harus menyetujui <strong>Privacy Policy</strong> dan <strong>Syarat dan Ketentuan</strong> Orbit sebelum anda bisa login',
+        'accept_modal_button_text' => 'OK',
+        'connecting_to_facebook' => 'Menghubungi Facebook...',
     ),
 
     'catalogue'         => array(

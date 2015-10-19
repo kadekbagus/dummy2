@@ -41,7 +41,9 @@ return array(
             'phone' => '+62123456789',
             'fax'   => '+62123456789',
             'office_hour'   => '9am - 6pm'
-        )
+        ),
+        'privacy_policy_url' => '',
+        'terms_of_service_url' => '',
     ),
 
     // Default Pagination
@@ -2194,4 +2196,11 @@ return array(
             'path'  => '/home/orbitadmin/scripts/helpers/screen-display.sh'
         )
     ),
+    'social_login' => [
+        'facebook' => [
+            'app_id'        => '',
+            'app_secret'    => '',
+            'version'       => 'v2.4'
+        ],
+    ],
 );

@@ -434,6 +434,18 @@ class MobileCIAPIController extends ControllerAPI
         $languages = [];
 
         $internet_info = 'no';
+
+        $viewData = [
+            'orbitTime' => time(),
+            'orbitOriginName' => 'orbit_origin',
+            'orbitOriginValue' => 'default',
+            'orbitToFacebookOriginValue' => 'redirect_to_facebook',
+            'agreeToTermsLabel' => sprintf(
+                Lang::get('mobileci.signin.agree_to_terms'),
+                htmlspecialchars(Config::get('orbit.contact_information.privacy_policy_url')),
+                htmlspecialchars(Config::get('orbit.contact_information.terms_of_service_url')))
+        ];
+
         try {
             $retailer = $this->getRetailerInfo();
 
@@ -472,30 +484,140 @@ class MobileCIAPIController extends ControllerAPI
                 return Redirect::to($landing_url . '?internet_info=' . $internet_info );
             }
 
-            $viewData = array(
+            $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
                 'landing_url' => $landing_url . '?internet_info=' . $internet_info,
                 'display_name' => $display_name,
                 'languages' => $languages,
-            );
+            ));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
 
             $user_email = OrbitInput::get('email', $cookie_email);
 
-            $viewData = array(
+            $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
                 'landing_url' => $landing_url . '?internet_info=' . $internet_info,
                 'display_name' => $display_name,
                 'languages' => $languages
-            );
+            ));
         }
 
         return View::make('mobile-ci.signin', $viewData);
+    }
+
+    /**
+     * Handles social login POST
+     */
+    public function postSocialLoginView()
+    {
+        $agree_to_terms = \Input::get('agree_to_terms', 'no');
+        if ($agree_to_terms !== 'yes') {
+            return Redirect::route('mobile-ci.signin', ['error' => Lang::get('captive-portal.signin.must_accept_terms')]);
+        }
+
+        $this->prepareSession();
+
+        $fb = new \Facebook\Facebook([
+            'persistent_data_handler' => new \Orbit\FacebookSessionAdapter($this->session),
+            'app_id' => Config::get('orbit.social_login.facebook.app_id'),
+            'app_secret' => Config::get('orbit.social_login.facebook.app_secret'),
+            'default_graph_version' => Config::get('orbit.social_login.facebook.version')
+        ]);
+
+        $helper = $fb->getRedirectLoginHelper();
+        $permissions = ['email'];
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook']);
+
+        // This is to re-popup the permission on login in case some of the permissions revoked by user
+        $rerequest = '&auth_type=rerequest';
+
+        $url = $helper->getLoginUrl($facebookCallbackUrl, $permissions) . $rerequest;
+
+        // No need to grant temporary https access anymore, we are using dnsmasq --ipset features for walled garden
+        // $this->grantInternetAcces('social');
+
+        return Redirect::to($url);
+    }
+
+    protected function getFacebookError()
+    {
+        // error=access_denied&
+        // error_code=200&
+        // error_description=Permissions+error
+        // &error_reason=user_denied
+        // &state=28d0463ac4dc53131ae19826476bff74#_=_
+        $fbError = 'Unknown Error';
+
+        $errorDesc = \Input::get('error_description', NULL);
+        if (! is_null($errorDesc)) {
+            $fbError = $errorDesc;
+        }
+
+        $errorMessage = 'Facebook Error: ' . $fbError;
+        return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+    }
+
+    public function getSocialLoginCallbackView()
+    {
+        $recognized = \Input::get('recognized', 'none');
+        // error=access_denied&
+        // error_code=200&
+        // error_description=Permissions+error
+        // &error_reason=user_denied
+        // &state=28d0463ac4dc53131ae19826476bff74#_=_
+        $error = \Input::get('error', NULL);
+
+        if (! is_null($error)) {
+            return $this->getFacebookError();
+        }
+
+        $this->prepareSession();
+        $fb = new \Facebook\Facebook([
+            'persistent_data_handler' => new \Orbit\FacebookSessionAdapter($this->session),
+            'app_id' => Config::get('orbit.social_login.facebook.app_id'),
+            'app_secret' => Config::get('orbit.social_login.facebook.app_secret'),
+            'default_graph_version' => Config::get('orbit.social_login.facebook.version')
+        ]);
+
+        $helper = $fb->getRedirectLoginHelper();
+        $accessToken = $helper->getAccessToken();
+
+        $response = $fb->get('/me?fields=email,name,first_name,last_name,gender', $accessToken->getValue());
+        $user = $response->getGraphUser();
+
+        $userEmail = isset($user['email']) ? $user['email'] : '';
+        $firstName = isset($user['first_name']) ? $user['first_name'] : '';
+        $lastName = isset($user['last_name']) ? $user['last_name'] : '';
+        $gender = isset($user['gender']) ? $user['gender'] : '';
+        $data = [
+            'email' => $userEmail,
+            'fname' => $firstName,
+            'lname' => $lastName,
+            'gender' => $gender,
+            'login_from'  => 'facebook',
+            'mac' => '',
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'is_captive' => 'yes',
+            'recognized' => $recognized
+        ];
+
+        // There is a chance that user not 'grant' his email while approving our app
+        // so we double check it here
+        if (empty($userEmail)) {
+            return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.']);
+        }
+
+        $key = $this->getPayloadEncryptionKey();
+        $payload = (new Encrypter($key))->encrypt(http_build_query($data));
+        $query = ['payload' => $payload, 'email' => $userEmail, 'from_captive' => 'yes', 'auto_login' => 'yes'];
+
+        // todo can we not do this directly
+        return Redirect::route('mobile-ci.signin', $query);
     }
 
     /**
@@ -1016,6 +1138,14 @@ class MobileCIAPIController extends ControllerAPI
                 break;
         }
         return $landing_url;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getPayloadEncryptionKey()
+    {
+        return md5('--orbit-mall--');
     }
 
     /**
@@ -2725,7 +2855,7 @@ class MobileCIAPIController extends ControllerAPI
         $payload = $_POST['payload_login'];
 
         // Decrypt the payload
-        $key = md5('--orbit-mall--');
+        $key = $this->getPayloadEncryptionKey();
         $payload = (new Encrypter($key))->decrypt($payload);
 
         // The data is in url encoded
