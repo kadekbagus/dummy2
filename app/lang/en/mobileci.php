@@ -32,7 +32,8 @@ return array(
         'coupons'           => 'COUPONS',
         'promotions'        => 'PROMOTIONS',
         'news'              => 'NEWS',
-        'membership'        => 'MEMBERSHIP'
+        'membership'        => 'MEMBERSHIP',
+        'orbit_tour'        => 'ORBIT TOUR',
     ),
 
     'widgets' => array(
@@ -96,12 +97,12 @@ return array(
         'do_not_show_label'      => 'Do not show this message again',
         'new_product_price'      => 'New price',
         'okay'                   => 'OK',
-        
+
         'membership_notfound'    => 'Membership Not Found',
         'membership_want_member' => 'Want to be a member?',
         'membership_great_deal'  => 'To get special great deals from us',
         'membership_contact_our' => 'Please, contact our customer service to get your membership number',
-        
+
         'enjoy_free'             => 'ENJOY FREE',
         'unlimited'              => 'UNLIMITED',
         'minutes'                => 'MINUTES',
@@ -351,6 +352,51 @@ return array(
         'lucky_draw_total_info_5'   => 'lucky draw number. It sorted by highest to lowest number.',
         'lucky_draw_total_info_6'   => 'Your download should be started automatically. If it doesnt try to click button below.',
         'download_image'            => 'Download Image',
+    ),
+
+    'tour' => array(
+        'home' => array(
+            'title'   => 'Home Page',
+            'content' => 'Here you browse through our widgets to see what is happening inside the mall. <br/><br/> <i>Tap on this button to directly go to home page from any page in Orbit</i>'
+        ),
+        'back' => array(
+            'title'   => 'Back',
+            'content' => 'Tap on back button to go back to the previous page you have accessed.'
+        ),
+        'search' => array(
+            'title'   => 'Looking for a store?',
+            'content' => 'We will find it for you! Here you can search for a store by entering store keywords such as name, categories (e.g. health, beauty, food), location (e.g. UG, L1, L2) or description.'
+        ),
+        'directory' => array(
+            'title'   => 'Store Directory',
+            'content' => 'Access our list of stores from the palm of your hand!'
+        ),
+        'setting' => array(
+            'title'   => 'Settings',
+            'content' => 'You can change your language preferences or log out from Orbit app from here.'
+        ),
+        'news' => array(
+            'title'   => 'News',
+            'content' => 'Want to know what are the latest news from us? See our list of news here!'
+        ),
+        'promotion' => array(
+            'title'   => 'Promotions',
+            'content' => 'Check out our promotions for great money-saving deals.'
+        ),
+        'coupon' => array(
+            'title'   => 'My Coupons',
+            'content' => 'See the list of shopping coupons that you have obtained. Redeem them now!'
+        ),
+        'end' => array(
+            'title'   => '',
+            'content' => 'You can access <b>Orbit Tour</b> anytime by tapping on <b>Settings > Orbit Tour</b>'
+        ),
+        'modal' => array(
+            'title'        => '<i class="fa fa-lightbulb-o"></i> <b>Orbit Tour</b>',
+            'content'      => 'Hi, welcome to Orbit!<br/><br/>We would like to show you what you can do with Orbit.<br/><br/><b>Do you want to start the tour?</b>',
+            'end_button'   => 'Not now',
+            'start_button' => 'Yes, please!'
+        ),
     ),
 
 );

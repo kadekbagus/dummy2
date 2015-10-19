@@ -18,5 +18,6 @@
         @yield('ext_script_bot')
         @include('mobile-ci.commonscripts')
         @include('mobile-ci.push-notification-script')
+        @include('mobile-ci.orbit-tour')
     </body>
 </html>
