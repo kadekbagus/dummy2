@@ -492,6 +492,145 @@ class LoginAPIController extends ControllerAPI
         return $this->render();
     }
 
+    /**
+     * POST - Activate Account
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `first_name`     (required) - first name
+     * @param string    `last_name`      (required) - last name
+     * @param string    `birthdate`      (required) - date of birth date
+     * @param string    `gender`         (required) - gender 'm','f','unknown'
+     * @param string    `token`          (required) - Token to be check
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postActivateAccount()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('activation');
+        try {
+            $this->registerCustomValidation();
+
+            $first_name = OrbitInput::post('first_name');
+            $last_name = OrbitInput::post('last_name');
+            $birthdate = OrbitInput::post('birthdate');
+            $gender = OrbitInput::post('gender');
+            $token = trim(OrbitInput::post('token'));
+
+            $validator = Validator::make(
+                array(
+                    'first_name'     => $first_name,
+                    'last_name'      => $last_name,
+                    'birthdate'      => $birthdate,
+                    'gender'         => $gender,
+                    'token'          => $token,
+                ),
+                array(
+                    'first_name'     => 'required|min:3',
+                    'last_name'      => 'required|min:3',
+                    'birthdate'      => 'required|date_format:Y-m-d H:i:s',
+                    'gender'         => 'required|in:m,f',
+                    'token'          => 'required|orbit.empty.token',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $token = App::make('orbit.empty.token');
+            $user = User::with('userdetail')
+                        ->excludeDeleted()
+                        ->where('user_id', $token->user_id)
+                        ->first();
+
+            if (! is_object($token) || ! is_object($user)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // update the token status so it cannot be use again
+            $token->status = 'deleted';
+            $token->save();
+
+            // Update user activate them
+            $user->status = 'active';
+            $user->save();
+
+            $this->response->message = Lang::get('statuses.orbit.activate.account');
+            $this->response->data = $user;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull activation
+            $activity->setUser($user)
+                     ->setActivityName('activation_ok')
+                     ->setActivityNameLong('Account Activation')
+                     ->setModuleName('Application')
+                     ->responseOK();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render();
+    }
+
     protected function registerCustomValidation()
     {
         // Check user email address, it should not exists
@@ -778,165 +917,4 @@ class LoginAPIController extends ControllerAPI
         return [$new_user, $user_detail, $apikey];
     }
 
-    /**
-     * POST - Activate Account
-     *
-     * @author Irianto Pratama <irianto@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param string    `first_name`     (required) - first name
-     * @param string    `last_name`      (required) - last name
-     * @param string    `birthdate`      (required) - date of birth date
-     * @param string    `gender`         (required) - gender 'm','f','unknown'
-     * @param string    `token`          (required) - Token to be check
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function postActivateAccount()
-    {
-        $activity = Activity::portal()
-                            ->setActivityType('activation');
-        try {
-            $this->registerCustomValidation();
-
-            $first_name = OrbitInput::post('first_name');
-            $last_name = OrbitInput::post('last_name');
-            $birthdate = OrbitInput::post('birthdate');
-            $gender = OrbitInput::post('gender');
-            $token = trim(OrbitInput::post('token'));
-
-            $validator = Validator::make(
-                array(
-                    'first_name'     => $first_name,
-                    'last_name'      => $last_name,
-                    'birthdate'      => $birthdate,
-                    'gender'         => $gender,
-                    'token'          => $token,
-                ),
-                array(
-                    'first_name'     => 'required|min:3',
-                    'last_name'      => 'required|min:3',
-                    'birthdate'      => 'required|date_format:Y-m-d H:i:s',
-                    'gender'         => 'required|in:m,f,unknown',
-                    'token'          => 'required|orbit.empty.token',
-                )
-            );
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            $token = App::make('orbit.empty.token');
-            $user = User::with('userdetail')
-                        ->excludeDeleted()
-                        ->where('user_id', $token->user_id)
-                        ->first();
-
-            if (! is_object($token) || ! is_object($user)) {
-                $message = Lang::get('validation.orbit.access.loginfailed');
-                ACL::throwAccessForbidden($message);
-            }
-
-            // Begin database transaction
-            $this->beginTransaction();
-
-            // update the token status so it cannot be use again
-            $token->status = 'deleted';
-            $token->save();
-
-            // Update user activate them
-            $user->status = 'active';
-            $user->save();
-
-            $this->response->message = Lang::get('statuses.orbit.activate.account');
-            $this->response->data = $user;
-
-            if (Config::get('orbit.registration.mobile.send_welcome_email') === TRUE) {
-                // Sign page link
-                $signinUrl = Config::get('orbit.registration.mobile.signin_url');
-
-                $data = array(
-                    'email'         => $user->user_email,
-                    'signin_url'    => $signinUrl
-                );
-                $mailviews = array(
-                    'html' => 'emails.registration.activated-html',
-                    'text' => 'emails.registration.activated-text'
-                );
-                Mail::send($mailviews, $data, function($message) use ($user)
-                {
-                    $emailconf = Config::get('orbit.registration.mobile.sender');
-                    $from = $emailconf['email'];
-                    $name = $emailconf['name'];
-
-                    $message->from($from, $name)->subject('Your Account on Orbit has been Activated!');
-                    $message->to($user->user_email);
-                });
-            }
-
-            // Commit the changes
-            $this->commit();
-
-            // Successfull activation
-            $activity->setUser($user)
-                     ->setActivityName('activation_ok')
-                     ->setActivityNameLong('Account Activation')
-                     ->setModuleName('Application')
-                     ->responseOK();
-        } catch (ACLForbiddenException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Failed Activation
-            $activity->setUser('guest')
-                     ->setActivityName('activation_failed')
-                     ->setActivityNameLong('Account Activation Failed')
-                     ->setModuleName('Application')
-                     ->responseFailed();
-        } catch (InvalidArgsException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Failed Activation
-            $activity->setUser('guest')
-                     ->setActivityName('activation_failed')
-                     ->setActivityNameLong('Account Activation Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
-        } catch (Exception $e) {
-            $this->response->code = Status::UNKNOWN_ERROR;
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-
-            // Rollback the changes
-            $this->rollBack();
-
-            // Failed Activation
-            $activity->setUser('guest')
-                     ->setActivityName('activation_failed')
-                     ->setActivityNameLong('Account Activation Failed')
-                     ->setModuleName('Application')
-                     ->setNotes($e->getMessage())
-                     ->responseFailed();
-        }
-
-        // Save the activity
-        $activity->save();
-
-        return $this->render();
-    }
 }
