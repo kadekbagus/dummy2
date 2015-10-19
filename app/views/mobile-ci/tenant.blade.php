@@ -81,7 +81,7 @@
                                     @if(!empty($promotions->image))
                                     <a href="{{ asset($promotions->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($promotions->image) }}"></a>
                                     @else
-                                    <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                     @endif
                                 </div>
                                 <div class="col-xs-6">
@@ -117,7 +117,7 @@
                                     @if(!empty($news->image))
                                     <a href="{{ asset($news->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($news->image) }}"></a>
                                     @else
-                                    <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                     @endif
                                 </div>
                                 <div class="col-xs-6">

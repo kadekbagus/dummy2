@@ -1511,7 +1511,6 @@ class MobileCIAPIController extends ControllerAPI
                 'news',
                 'newsPromotions')
                 ->active('merchants')
-                ->where('is_mall', 'no')
                 ->where('parent_id', $retailer->merchant_id)
                 ->where('merchants.merchant_id', $product_id);
             $tenant->select('merchants.*');

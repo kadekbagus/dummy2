@@ -54,7 +54,7 @@ class Tenant extends Eloquent
 
     public function news()
     {
-        return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'merchant_id')->where('news.object_type', 'news')->active();
+        return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')->where('news.object_type', 'news')->active();
     }
 
     /**
@@ -70,7 +70,7 @@ class Tenant extends Eloquent
 
     public function newsPromotions()
     {
-        return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'merchant_id')->where('news.object_type', 'promotion')->active();
+        return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')->where('news.object_type', 'promotion')->active();
     }
 
     /**
