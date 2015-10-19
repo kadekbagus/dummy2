@@ -3293,6 +3293,7 @@ class MobileCIAPIController extends ControllerAPI
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
                 $acq->save();
+                $user->touch();
             }
 
 

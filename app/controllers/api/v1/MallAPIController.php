@@ -1874,7 +1874,7 @@ class MallAPIController extends ControllerAPI
 
             $tenants = Mall::excludeDeleted()
                 ->select('city')
-                ->whereNotNull('city')
+                ->where('city', '!=', 'null')
                 ->orderBy('city', 'asc')
                 ->groupBy('city')
                 ->get();

@@ -2115,7 +2115,7 @@ class TenantAPIController extends ControllerAPI
 
             $tenants = Tenant::excludeDeleted()
                 ->select('city')
-                ->whereNotNull('city')
+                ->where('city', '!=', 'null')
                 ->orderBy('city', 'asc')
                 ->groupBy('city')
                 ->get();

@@ -28,6 +28,6 @@ Route::get('/app/v1/mall/{search}', 'IntermediateAuthController@Mall_getSearchMa
 /**
  * Tenant city list
  */
-Route::get('/app/v1/mall/city', 'IntermediateAuthController@Tenant_getCityList');
+Route::get('/app/v1/mall/city', 'IntermediateAuthController@Mall_getCityList');
 
 ?>
