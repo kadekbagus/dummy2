@@ -70,6 +70,8 @@ return array(
             ),
             'retailer' => array(
                 'logo'  => 'Retailer logo has been successfully uploaded.',
+                'delete_logo'   => 'Retailer logo has been successfully deleted.',
+                'delete_image'  => 'Retailer images has been successfully deleted.'
             ),
             'mall' => array(
                 'background'         => 'Background image has been successfully uploaded.',
