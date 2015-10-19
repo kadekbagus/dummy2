@@ -442,8 +442,8 @@ class MobileCIAPIController extends ControllerAPI
             'orbitToFacebookOriginValue' => 'redirect_to_facebook',
             'agreeToTermsLabel' => sprintf(
                 Lang::get('mobileci.signin.agree_to_terms'),
-                htmlspecialchars(Lang::get('mobileci.signin.privacy_policy_url')),
-                htmlspecialchars(Lang::get('mobileci.signin.terms_of_service_url')))
+                htmlspecialchars(Config::get('orbit.contact_information.privacy_policy_url')),
+                htmlspecialchars(Config::get('orbit.contact_information.terms_of_service_url')))
         ];
 
         try {
