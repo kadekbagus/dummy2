@@ -3023,6 +3023,8 @@ class MobileCIAPIController extends ControllerAPI
             $user_detail->last_visit_any_shop = Carbon::now();
             $user_detail->save();
 
+            // @author Irianto Pratama <irianto@dominopos.com>
+            // send email if user status pending
             if ($user->status === 'pending') {
                 // Send email process to the queue
                 \Queue::push('Orbit\\Queue\\RegistrationMail', [

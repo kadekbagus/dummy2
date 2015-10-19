@@ -81,3 +81,11 @@ Route::get('/api/v1/token/list', function()
 {
     return TokenAPIController::create()->getSearchToken();
 });
+
+/**
+ * Token List
+ */
+Route::post('/api/v1/activate-account', function()
+{
+    return LoginAPIController::create()->postActivateAccount();
+});

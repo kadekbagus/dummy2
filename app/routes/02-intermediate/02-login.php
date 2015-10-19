@@ -45,3 +45,8 @@ Route::post('/app/v1/user/activate', 'IntermediateLoginController@postRegisterTo
  * Token List
  */
 Route::get('/app/v1/token/list', 'IntermediateLoginController@getTokenList');
+
+/**
+ * Token List
+ */
+Route::post('/app/v1/activate-account', 'IntermediateLoginController@Login_postActivateAccount');
