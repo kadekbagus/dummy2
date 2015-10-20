@@ -1254,6 +1254,13 @@ class MobileCIAPIController extends ControllerAPI
                 'cid',
                 function ($cid) use ($tenants) {
                     if (! empty($cid)) {
+                        $category = Category::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('category_id', $pid)
+                            ->first();
+                        if (!is_object($category)) {
+                            return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                        }
                         $tenants->where(
                             function ($q) use ($cid) {
                                 $q->whereHas('categories', function ($q2) use ($cid) {
@@ -1269,6 +1276,13 @@ class MobileCIAPIController extends ControllerAPI
                 'promotion_id',
                 function ($pid) use ($tenants) {
                     if (! empty($pid)) {
+                        $news = News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'promotion')
+                            ->where('news_id', $pid)->first();
+                        if (!is_object($news)) {
+                            return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                        }
                         $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
                             $q->where('news_id', $pid);
                         })->whereHas('news', function($q2) {
@@ -1284,6 +1298,13 @@ class MobileCIAPIController extends ControllerAPI
                 'news_id',
                 function ($pid) use ($tenants) {
                     if (! empty($pid)) {
+                        $news = News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'news')
+                            ->where('news_id', $pid)->first();
+                        if (!is_object($news)) {
+                            return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                        }
                         $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
                             $q->where('news_id', $pid);
                         })->whereHas('news', function($q2) {
@@ -1298,6 +1319,13 @@ class MobileCIAPIController extends ControllerAPI
                 'event_id',
                 function ($pid) use ($tenants) {
                     if (! empty($pid)) {
+                        $event = EventModel::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('event_id', $pid)
+                            ->first();
+                        if (!is_object($event)) {
+                            return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                        }
                         $retailers = \EventRetailer::whereHas('retailer', function($q) use($pid) {
                             $q->where('event_id', $pid);
                         })->get()->lists('retailer_id');
