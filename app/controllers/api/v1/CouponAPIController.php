@@ -1584,15 +1584,23 @@ class CouponAPIController extends ControllerAPI
                 $coupons->where('merchants.merchant_name', 'like', "%$name%");
             });
 
+            $from_cs = OrbitInput::get('from_cs', 'no');
+
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($coupons) {
+            OrbitInput::get('with', function ($with) use ($coupons, $from_cs) {
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
                     if ($relation === 'mall') {
                         $coupons->with('mall');
                     } elseif ($relation === 'tenants') {
-                        $coupons->with('tenants');
+                        if ($from_cs === 'yes') {
+                            $coupons->with('tenants', function($q) {
+                                $q->where('merchants.status', 'active');
+                            });
+                        } else {
+                            $coupons->with('tenants');
+                        }
                     } elseif ($relation === 'translations') {
                         $coupons->with('translations');
                     } elseif ($relation === 'translations.media') {
