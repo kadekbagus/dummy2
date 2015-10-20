@@ -486,6 +486,32 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="userActivationModal" tabindex="-1" role="dialog" aria-labelledby="usreActivationModalLabel" aria-hidden="true">
+    <div class="modal-dialog orbit-modal">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
+                <h4 class="modal-title" id="userActivationModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.promotion.info') }}</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-xs-12 text-center">
+                        <p style="font-size:15px;">
+                            {{ Lang::get('mobileci.modals.message_user_activation') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="row">
+                    <div class="col-xs-12 text-center">
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('ext_script_bot')
@@ -511,51 +537,65 @@
     }
 
     $(document).ready(function() {
-        var displayModal = false;
-
-        // Override the content of displayModal
-        if (get('internet_info') == 'yes') {
-            displayModal = true;
-        }
-
+        $('#verifyModal').on('hidden.bs.modal', function () {
+            if ($('#verifyModalCheck')[0].checked) {
+                $.cookie(cookie_dismiss_name, 't', {expires: 3650});
+            }
+        });
         @if(! is_null($events))
-            if(!$.cookie(cookie_dismiss_name) && displayModal) {
-                $('#verifyModal').on('hidden.bs.modal', function () {
-                    if ($('#verifyModalCheck')[0].checked) {
-                        $.cookie(cookie_dismiss_name, 't', {expires: 3650});
-                    }
-                }).modal();
-            } else {
-                $('#promoModal').modal();
-                $.ajax({
-                    url: '{{ route('display-event-popup-activity') }}',
-                    data: {
-                        eventdata: '{{$events->event_id}}'
-                    },
-                    method: 'POST'
-                });
-            }
-            $('#verifyModal').on('hide.bs.modal', function(e){
-                $('#promoModal').modal();
-                $.ajax({
-                    url: '{{ route('display-event-popup-activity') }}',
-                    data: {
-                        eventdata: '{{$events->event_id}}'
-                    },
-                    method: 'POST'
-                });
+        $('#promoModal').on('show.bs.modal', function() {
+            $.ajax({
+                url: '{{ route('display-event-popup-activity') }}',
+                data: {
+                    eventdata: '{{$events->event_id}}'
+                },
+                method: 'POST'
             });
-        @else
-        if (!$.cookie(cookie_dismiss_name)) {
-            if (displayModal) {
-                $('#verifyModal').on('hidden.bs.modal', function () {
-                    if ($('#verifyModalCheck')[0].checked) {
-                        $.cookie(cookie_dismiss_name, 't', {expires: 3650});
+        });
+        @endif
+        {{-- a sequence of modals... --}}
+        var modals = [
+            {
+                selector: '#verifyModal',
+                display: get('internet_info') == 'yes' && !$.cookie(cookie_dismiss_name)
+            },
+@if(! is_null($events))
+            {
+                selector: '#promoModal',
+                display: true
+            },
+@endif
+            {
+                selector: '#userActivationModal',
+                display: get('activation_popup') == 'yes'
+            }
+        ];
+        var modalIndex;
+
+        for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
+            {{-- for each displayable modal, after it is hidden try and display the next displayable modal --}}
+            if (modals[modalIndex].display) {
+                $(modals[modalIndex].selector).on('hidden.bs.modal', (function(myIndex) {
+                    return function() {
+                        for (var i = myIndex + 1; i < modals.length; i++) {
+                            if (modals[i].display) {
+                                $(modals[i].selector).modal();
+                                return;
+                            }
+                        }
                     }
-                }).modal();
+                })(modalIndex));
             }
         }
-        @endif
+
+        {{-- display the first displayable modal --}}
+        for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
+            if (modals[modalIndex].display) {
+                $(modals[modalIndex].selector).modal();
+                break;
+            }
+        }
+
         $('#emptyCoupon').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
           $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_coupon') }}');
