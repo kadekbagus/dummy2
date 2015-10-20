@@ -1257,7 +1257,7 @@ class MobileCIAPIController extends ControllerAPI
                     if (! empty($cid)) {
                         $category = Category::active()
                             ->where('merchant_id', $retailer->merchant_id)
-                            ->where('category_id', $pid)
+                            ->where('category_id', $cid)
                             ->first();
                         if (!is_object($category)) {
                             $notfound = TRUE;
