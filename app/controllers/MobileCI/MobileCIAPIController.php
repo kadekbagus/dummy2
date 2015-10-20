@@ -1228,6 +1228,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternate_language);
 
+            $notfound = FALSE;
             // Filter product by name pattern
             OrbitInput::get(
                 'keyword',
@@ -1252,8 +1253,15 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'cid',
-                function ($cid) use ($tenants) {
+                function ($cid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($cid)) {
+                        $category = \Category::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('category_id', $cid)
+                            ->first();
+                        if (!is_object($category)) {
+                            $notfound = TRUE;
+                        }
                         $tenants->where(
                             function ($q) use ($cid) {
                                 $q->whereHas('categories', function ($q2) use ($cid) {
@@ -1267,8 +1275,15 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'promotion_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
+                        $news = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'promotion')
+                            ->where('news_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
                         $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
                             $q->where('news_id', $pid);
                         })->whereHas('news', function($q2) {
@@ -1282,8 +1297,15 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'news_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
+                        $news = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'news')
+                            ->where('news_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
                         $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
                             $q->where('news_id', $pid);
                         })->whereHas('news', function($q2) {
@@ -1296,8 +1318,15 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'event_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
+                        $event = \EventModel::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('event_id', $pid)
+                            ->first();
+                        if (!is_object($event)) {
+                            $notfound = TRUE;
+                        }
                         $retailers = \EventRetailer::whereHas('retailer', function($q) use($pid) {
                             $q->where('event_id', $pid);
                         })->get()->lists('retailer_id');
@@ -1305,6 +1334,10 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
             );
+
+            if ($notfound) {
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
 
             OrbitInput::get(
                 'fid',

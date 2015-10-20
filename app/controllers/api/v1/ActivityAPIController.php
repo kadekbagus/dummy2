@@ -238,7 +238,7 @@ class ActivityAPIController extends ControllerAPI
 
             // Filter by merchant ids
             OrbitInput::get('merchant_ids', function($merchantIds) use ($activities) {
-                $activities->merchantIds($merchantIds);
+                $activities->whereIn('activities.location_id', $merchantIds);
             });
 
             // Filter by retailer ids
