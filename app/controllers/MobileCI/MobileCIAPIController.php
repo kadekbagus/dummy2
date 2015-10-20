@@ -2033,8 +2033,9 @@ class MobileCIAPIController extends ControllerAPI
                 if (count($tenant->tenant->categories) > 0) { // check if tenant has category
                     foreach ($tenant->tenant->categories as $category) {
                         if ($category->category_name !== 'Customer Service') {
-                            $cso_exists = TRUE;
                             $cso_flag = 1;
+                        } else {
+                            $cso_exists = TRUE;
                         }
                     }
                     if($cso_flag === 1) {
