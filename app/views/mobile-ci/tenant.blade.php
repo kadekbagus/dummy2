@@ -49,7 +49,7 @@
             </div>
             <div class="col-xs-12">
                 <p>{{ $tenant->name }} at</p>
-                <p>{{ $retailer->name }} - {{ $tenant->floor }} - {{ $tenant->unit }}</p>
+                <p>{{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p>
                 <p>Phone : {{ $tenant->phone }}</p>
                 <p>{{ $tenant->url }}</p>
 
