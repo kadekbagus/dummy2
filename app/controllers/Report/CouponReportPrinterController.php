@@ -227,7 +227,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $row->user_email,
                             $this->printDateTime($row->issued_date, 'd M Y H:i'),
                             '1 / ' . $this->printUnlimitedFormatter($row->maximum_issued_coupon),
-                            $row->coupon_status
+                            $row->status
                     );
                     $count++;
                 }
