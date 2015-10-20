@@ -640,8 +640,12 @@ class LoginAPIController extends ControllerAPI
                                                    ->first();
 
                         if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
-                            $message = Lang::get('validation.orbit.access.loginfailed');
-                            ACL::throwAccessForbidden($message);
+                            $this->response->code = 302;
+                            $this->response->status = 'redirect';
+                            $this->response->message = 'Agreement is not accepted yet';
+                            $this->response->data = 'config.agreement.url';
+
+                            return $this->render();
                         }
                     }
                 } elseif ($from === 'cs-portal') {
