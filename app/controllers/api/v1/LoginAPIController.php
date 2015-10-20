@@ -629,7 +629,20 @@ class LoginAPIController extends ControllerAPI
                     if (strtolower($user->role->role_name) === 'mall admin') {
                         $mall = $user->employee->retailers[0];
                     } else {
-                        $mall = Mall::excludeDeleted()->where('user_id', $user->user_id)->first();
+                        $mall = Mall::with('settings')->excludeDeleted()->where('user_id', $user->user_id)->first();
+
+                        // @author Irianto Pratama <irianto@dominopos.com>
+                        $agreement_accepted = $mall->settings()
+                                                   ->where('setting_name', 'agreement_accepted')
+                                                   ->where('setting_value', 'true')
+                                                   ->where('object_id', $mall->merchant_id)
+                                                   ->where('object_type', 'merchant')
+                                                   ->first();
+
+                        if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
+                            $message = Lang::get('validation.orbit.access.loginfailed');
+                            ACL::throwAccessForbidden($message);
+                        }
                     }
                 } elseif ($from === 'cs-portal') {
                     $mall = $user->employee->retailers[0];
