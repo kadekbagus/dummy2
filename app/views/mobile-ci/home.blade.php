@@ -486,7 +486,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="userActivationModal" tabindex="-1" role="dialog" aria-labelledby="usreActivationModalLabel" aria-hidden="true">
+<div class="modal fade" id="userActivationModal" tabindex="-1" role="dialog" aria-labelledby="userActivationModalLabel" aria-hidden="true">
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
