@@ -78,7 +78,7 @@
                     <div class="row">
                         <div class="col-xs-9">
                             <h4>{{ $product->name }} at</h4>
-                            <h3>{{ $retailer->name }} - {{ $product->floor }} - {{ $product->unit }}</h3>
+                            <h3>{{ $retailer->name }}{{{ !empty($product->floor) ? ' - ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
                             <h5 class="tenant-category">
                             @foreach($product->categories as $cat)
                                 <span>{{$cat->category_name}}</span>
