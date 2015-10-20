@@ -33,7 +33,7 @@ return array(
         'promotions'         => '促销活动',
         'news'               => '信息',
         'membership'         => '会员',
-        'orbit_tour'         => 'orbit巡视',
+        'orbit_tour'         => 'ORBIT巡视',
     ),
 
     'widgets' => array(
@@ -357,7 +357,7 @@ return array(
     'tour' => array(
         'home' => array(
             'title'   => '主页',
-            'content' => '这里您会翻看我们的上下文菜单任何事件在我们的购物场和店铺<br/><br/> <i>点击这个按键直接回去主页从任何页面在orbit</i>'
+            'content' => '这里您会翻看我们的上下文菜单任何事件在我们的购物场和店铺<br/><br/> <i>点击这个按键直接回去主页从任何页面在Orbit</i>'
         ),
         'back' => array(
             'title'   => '回',
@@ -373,7 +373,7 @@ return array(
         ),
         'setting' => array(
             'title'   => '设定',
-            'content' => '检查您的购物场会员，改语言设定或orbit软件推出'
+            'content' => '检查您的购物场会员，改语言设定或Orbit软件推出'
         ),
         'news' => array(
             'title'   => '消息',
@@ -389,13 +389,13 @@ return array(
         ),
         'end' => array(
             'title'   => '',
-            'content' => '您会看这个巡视任何事件，点"orbit巡视" 在设定',
+            'content' => '您会看这个巡视任何事件，点"Orbit巡视" 在设定',
             'check'   => '不要再显示此消息',
             'button'  => '巡视完'
         ),
         'modal' => array(
             'title'        => '',
-            'content'      => '您好，orbit欢迎您<br/><br/>我们想显示任何orbit使用<br/><br/><b>您想开始巡视？</b>',
+            'content'      => '您好，Orbit欢迎您<br/><br/>我们想显示任何Orbit使用<br/><br/><b>您想开始巡视？</b>',
             'end_button'   => '以后',
             'start_button' => '是'
         ),

@@ -658,8 +658,10 @@
                     $.cookie("hide-orbit-tour", true, { expires : 60 });
                 }
 
+                if (!$.cookie('orbit-tour')) {
+                    loadModal();
+                }
                 $.cookie("orbit-tour", true, { expires : 60 });
-                loadModal();
             },
             steps: [{
                 element: '#orbit-tour-profile',
@@ -715,7 +717,10 @@
                     $('.headed-layout.content-container').css({
                         'padding-top': '4.8em'
                     });
-                    loadModal();
+
+                    if (!$.cookie('orbit-tour')) {
+                        loadModal();
+                    }
                 }
             },
             steps: [{
