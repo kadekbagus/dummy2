@@ -515,13 +515,12 @@ class LoginAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'token_value'   => $tokenValue,
                     'first_name'      => $first_name,
-                    'password_confirmation' => $password2
+                    'last_name' => $last_name
                 ),
                 array(
-                    'token_value'   => 'required|orbit.empty.token',
-                    'password'      => 'required|min:5|confirmed',
+                    'first_name'      => 'required|min:3',
+                    'last_name'      => 'required|min:3',
                 )
             );
 
@@ -529,17 +528,6 @@ class LoginAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            $token = App::make('orbit.empty.token');
-            $user = User::with('userdetail')
-                        ->excludeDeleted()
-                        ->where('user_id', $token->user_id)
-                        ->first();
-
-            if (! is_object($token) || ! is_object($user)) {
-                $message = Lang::get('validation.orbit.access.loginfailed');
-                ACL::throwAccessForbidden($message);
             }
 
             // Begin database transaction

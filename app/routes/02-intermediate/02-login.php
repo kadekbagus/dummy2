@@ -37,6 +37,11 @@ Route::post('/app/v1/user/register/mobile', 'IntermediateLoginController@Login_p
 Route::post('/app/v1/user/token/check', 'IntermediateLoginController@postRegisterTokenCheck');
 
 /**
+ * Update Service Agreement
+ */
+Route::post('/app/v1/service-agreement/update', 'IntermediateLoginController@Login_postUpdateServiceAgreement');
+
+/**
  * Alias for check token
  */
 Route::post('/app/v1/user/activate', 'IntermediateLoginController@postRegisterTokenCheck');
