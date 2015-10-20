@@ -1485,14 +1485,13 @@ class UserAPIController extends ControllerAPI
             }
 
             // join to user_acquisitions if the request come from mall portal
-            OrbitInput::get('from_cs', function($from_cs) use ($users) {
-                if ($from_cs !== 'yes') {
-                    $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
-                    OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                        $users->whereIn('user_acquisitions.acquirer_id', $merchantIds);
-                    });
-                }
-            });
+            $from_cs = OrbitInput::get('from_cs');
+            if(empty($from_cs)) {
+                $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+                OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
+                    $users->whereIn('user_acquisitions.acquirer_id', $merchantIds);
+                });
+            }
 
             // Filter by merchant ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
