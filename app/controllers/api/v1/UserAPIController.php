@@ -1490,7 +1490,7 @@ class UserAPIController extends ControllerAPI
                     $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
                     OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
                         $users->whereIn('user_acquisitions.acquirer_id', $merchantIds);
-                    }
+                    });
                 }
             });
 
