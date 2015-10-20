@@ -1595,9 +1595,9 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('mall');
                     } elseif ($relation === 'tenants') {
                         if ($from_cs === 'yes') {
-                            $coupons->with('tenants', function($q) {
+                            $coupons->with(array('tenants' => function($q) {
                                 $q->where('merchants.status', 'active');
-                            });
+                            }));
                         } else {
                             $coupons->with('tenants');
                         }
