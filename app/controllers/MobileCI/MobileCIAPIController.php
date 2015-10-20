@@ -1255,7 +1255,7 @@ class MobileCIAPIController extends ControllerAPI
                 'cid',
                 function ($cid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($cid)) {
-                        $category = Category::active()
+                        $category = \Category::active()
                             ->where('merchant_id', $retailer->merchant_id)
                             ->where('category_id', $cid)
                             ->first();
@@ -1277,7 +1277,7 @@ class MobileCIAPIController extends ControllerAPI
                 'promotion_id',
                 function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
-                        $news = News::active()
+                        $news = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
                             ->where('news_id', $pid)->first();
@@ -1299,7 +1299,7 @@ class MobileCIAPIController extends ControllerAPI
                 'news_id',
                 function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
-                        $news = News::active()
+                        $news = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'news')
                             ->where('news_id', $pid)->first();
@@ -1320,7 +1320,7 @@ class MobileCIAPIController extends ControllerAPI
                 'event_id',
                 function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
-                        $event = EventModel::active()
+                        $event = \EventModel::active()
                             ->where('merchant_id', $retailer->merchant_id)
                             ->where('event_id', $pid)
                             ->first();
