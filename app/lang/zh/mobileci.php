@@ -361,7 +361,7 @@ return array(
         ),
         'back' => array(
             'title'   => '回',
-            'content' => 'ZH: Tap on back button to go back to the previous page you have accessed.'
+            'content' => '点击后退按钮返回到您访问的前一页'
         ),
         'search' => array(
             'title'   => '搜索店铺',

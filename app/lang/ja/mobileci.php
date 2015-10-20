@@ -361,7 +361,7 @@ return array(
         ),
         'back' => array(
             'title'   => '戻る',
-            'content' => 'JA: Tap on back button to go back to the previous page you have accessed.'
+            'content' => 'あなたがアクセスした前のページに戻るには[戻る]ボタンをタップします'
         ),
         'search' => array(
             'title'   => '店を探しますか？',
