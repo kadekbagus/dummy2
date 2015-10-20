@@ -1252,7 +1252,7 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'cid',
-                function ($cid) use ($tenants) {
+                function ($cid) use ($tenants, $retailer) {
                     if (! empty($cid)) {
                         $category = Category::active()
                             ->where('merchant_id', $retailer->merchant_id)
@@ -1274,7 +1274,7 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'promotion_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer) {
                     if (! empty($pid)) {
                         $news = News::active()
                             ->where('mall_id', $retailer->merchant_id)
@@ -1296,7 +1296,7 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'news_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer) {
                     if (! empty($pid)) {
                         $news = News::active()
                             ->where('mall_id', $retailer->merchant_id)
@@ -1317,7 +1317,7 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'event_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer) {
                     if (! empty($pid)) {
                         $event = EventModel::active()
                             ->where('merchant_id', $retailer->merchant_id)
