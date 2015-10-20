@@ -110,6 +110,8 @@ return array(
         'check_out_our'          => 'チェックアウト',
         'do_not_display'         => '今後このメッセージを表示しません',
         'and'                    => 'アンド',
+
+        'message_user_activation' => 'Please activate your account',
     ),
 
     //tenant catalogue

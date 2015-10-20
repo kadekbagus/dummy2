@@ -434,6 +434,7 @@ class MobileCIAPIController extends ControllerAPI
         $languages = [];
 
         $internet_info = 'no';
+        $activation_popup = 'no';
         try {
             $retailer = $this->getRetailerInfo();
 
@@ -460,6 +461,8 @@ class MobileCIAPIController extends ControllerAPI
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
+            $activation_popup = ($loggedUser->status === 'pending') ? 'yes' : 'no';
+
             // Captive Portal Apple CNA Window
             // -------------------------------
             // Payload login is set and the user is logged in, no need to ask user log in again
@@ -469,14 +472,14 @@ class MobileCIAPIController extends ControllerAPI
                 Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
                 Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
 
-                return Redirect::to($landing_url . '?internet_info=' . $internet_info );
+                return Redirect::to($this->addParamsToUrl($landing_url, $internet_info, $activation_popup));
             }
 
             $viewData = array(
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url . '?internet_info=' . $internet_info,
+                'landing_url' => $this->addParamsToUrl($landing_url, $internet_info, $activation_popup),
                 'display_name' => $display_name,
                 'languages' => $languages,
             );
@@ -489,7 +492,7 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url . '?internet_info=' . $internet_info,
+                'landing_url' => $this->addParamsToUrl($landing_url, $internet_info, $activation_popup),
                 'display_name' => $display_name,
                 'languages' => $languages
             );
@@ -1016,6 +1019,17 @@ class MobileCIAPIController extends ControllerAPI
                 break;
         }
         return $landing_url;
+    }
+
+    /**
+     * @param string $landing_url
+     * @param string $internet_info
+     * @param string $activation_popup
+     * @return string
+     */
+    protected function addParamsToUrl($landing_url, $internet_info = 'no', $activation_popup = 'no')
+    {
+        return $landing_url . '?internet_info=' . $internet_info . '&activation_popup=' . $activation_popup;
     }
 
     /**
