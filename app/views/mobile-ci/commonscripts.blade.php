@@ -134,6 +134,9 @@
         $('#backBtn').click(function(){
             window.history.back()
         });
+        $('.backBtn404').click(function(){
+            window.history.back()
+        });
         $('#search-tool-btn').click(function(){
             $('#search-tool').toggle();
         });
