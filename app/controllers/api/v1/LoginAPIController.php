@@ -543,8 +543,7 @@ class LoginAPIController extends ControllerAPI
             }
 
             $token = App::make('orbit.empty.token');
-            $user = User::with('userdetail')
-                        ->excludeDeleted()
+            $user = User::excludeDeleted()
                         ->where('user_id', $token->user_id)
                         ->first();
 
@@ -560,9 +559,20 @@ class LoginAPIController extends ControllerAPI
             $token->status = 'deleted';
             $token->save();
 
-            // Update user activate them
+            // Update user first, last name and status
+            $user->user_firstname = $first_name;
+            $user->user_lastname = $last_name;
             $user->status = 'active';
             $user->save();
+
+            // Update user detail birthdate and gender
+            $user_detail = UserDetail::where('user_id', $user->user_id)
+                                     ->first();
+            $user_detail->birthdate = $birthdate;
+            $user_detail->gender = $gender;
+
+            // Save the user details
+            $user_detail->save();
 
             $this->response->message = Lang::get('statuses.orbit.activate.account');
             $this->response->data = $user;

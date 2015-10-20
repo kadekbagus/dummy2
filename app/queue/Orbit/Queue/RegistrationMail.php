@@ -4,6 +4,7 @@
  * contains activation link.
  *
  * @author Rio Astamal <me@rioastamal.net>
+ * @author Irianto Pratama <irianto@dominopos.com>
  */
 use User;
 use Mail;
@@ -65,7 +66,7 @@ class RegistrationMail
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $message->from($from, $name)->subject('You are almost in Orbit!');
+            $message->from($from, $name)->subject('Activate My Orbit Account');
             $message->to($user->user_email);
         });
 
