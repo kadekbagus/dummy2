@@ -337,10 +337,11 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
-     * GET - Register Token Check
+     * POST - Setup Password By Token
      *
      * @author Kadek <kadek@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto Pratama <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -349,7 +350,7 @@ class LoginAPIController extends ControllerAPI
      * @param string    `password_confirmation`     (required) - Confirmation
      * @return Illuminate\Support\Facades\Response
      */
-    public function postRegisterTokenCheck()
+    public function postSetupPasswordByToken()
     {
         $activity = Activity::portal()
                             ->setActivityType('activation');
@@ -573,6 +574,15 @@ class LoginAPIController extends ControllerAPI
 
             // Save the user details
             $user_detail->save();
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            // send email if user status active
+            if ($user->status === 'active') {
+                // Send email process to the queue
+                \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                    'user_id' => $user->user_id
+                ]);
+            }
 
             $this->response->message = Lang::get('statuses.orbit.activate.account');
             $this->response->data = $user;

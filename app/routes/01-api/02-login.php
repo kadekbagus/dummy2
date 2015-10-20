@@ -67,11 +67,11 @@ Route::post('/api/v1/user/register/mobile', function()
 });
 
 /**
- * URL to check the token
+ * URL to setup new password
  */
-Route::get('/api/v1/user/token/check', function()
+Route::post('/api/v1/user/setup-new-password', function()
 {
-    return LoginAPIController::create()->getRegisterTokenCheck();
+    return LoginAPIController::create()->postSetupPasswordByToken();
 });
 
 /**

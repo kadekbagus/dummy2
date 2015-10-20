@@ -43,7 +43,7 @@ class NewPasswordMail
         $token->save();
 
         // URL Activation link
-        $baseUrl = Config::get('orbit.registration.mobile.activation_base_url');
+        $baseUrl = Config::get('orbit.registration.mobile.setup_new_password_url');
         $tokenUrl = sprintf($baseUrl, $token->token_value);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
@@ -58,8 +58,8 @@ class NewPasswordMail
             'cs_office_hour'    => $contactInfo['office_hour']
         );
         $mailviews = array(
-            'html' => 'emails.registration.activation-html',
-            'text' => 'emails.registration.activation-text'
+            'html' => 'emails.registration.setpassword-html',
+            'text' => 'emails.registration.setpassword-text'
         );
         Mail::send($mailviews, $data, function($message) use ($user)
         {
