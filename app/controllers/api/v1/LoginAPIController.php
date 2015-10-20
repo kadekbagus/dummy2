@@ -533,15 +533,7 @@ class LoginAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            // update the token status so it cannot be use again
-            $token->status = 'deleted';
-            $token->save();
-
-            // Update user password and activate them
-            $user->user_password = Hash::make($password);
-            $user->status = 'active';
-            $user->save();
-
+            $
             $this->response->message = Lang::get('statuses.orbit.updated.your_password');
             $this->response->data = $user;
 
@@ -770,24 +762,7 @@ class LoginAPIController extends ControllerAPI
                     if (strtolower($user->role->role_name) === 'mall admin') {
                         $mall = $user->employee->retailers[0];
                     } else {
-                        $mall = Mall::with('settings')->excludeDeleted()->where('user_id', $user->user_id)->first();
-
-                        // @author Irianto Pratama <irianto@dominopos.com>
-                        $agreement_accepted = $mall->settings()
-                                                   ->where('setting_name', 'agreement_accepted')
-                                                   ->where('setting_value', 'true')
-                                                   ->where('object_id', $mall->merchant_id)
-                                                   ->where('object_type', 'merchant')
-                                                   ->first();
-
-                        if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
-                            $this->response->code = 302;
-                            $this->response->status = 'redirect';
-                            $this->response->message = Lang::get('validation.orbit.access.agreement');
-                            $this->response->data = Config::get('orbit.agreement.url');
-
-                            return $this->render();
-                        }
+                        $mall = Mall::excludeDeleted()->where('user_id', $user->user_id)->first();
                     }
                 } elseif ($from === 'cs-portal') {
                     $mall = $user->employee->retailers[0];
@@ -802,6 +777,21 @@ class LoginAPIController extends ControllerAPI
                      ->responseOK();
 
             $this->response->data = $user;
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $agreement_accepted = $mall->settings()
+                                       ->where('setting_name', 'agreement_accepted')
+                                       ->where('setting_value', 'true')
+                                       ->where('object_id', $mall->merchant_id)
+                                       ->where('object_type', 'merchant')
+                                       ->first();
+
+            if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
+                $this->response->code = 302;
+                $this->response->status = 'redirect';
+                $this->response->message = Lang::get('validation.orbit.access.agreement');
+                $this->response->data = Config::get('orbit.agreement.url');
+            }
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
