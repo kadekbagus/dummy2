@@ -109,6 +109,8 @@ return array(
         'check_out_our'          => '看看我们',
         'do_not_display'         => '不要再显示此消息',
         'and'                    => '与',
+
+        'message_user_activation' => 'Please activate your account',
     ),
 
     //tenant catalogue

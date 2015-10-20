@@ -94,6 +94,8 @@ return array(
         'do_not_show_label'     => 'Jangan tunjukkan pesan ini lagi',
         'new_product_price'     => 'Harga baru',
         'okay'                  => 'OK',
+
+        'message_user_activation' => 'Harap aktifkan akun anda',
     ),
 
     //tenant catalogue
