@@ -665,7 +665,7 @@
             },
             steps: [{
                 element: '#orbit-tour-profile',
-                placement: 'left',
+                placement: 'bottom',
                 animation: true,
                 backdrop: true,
                 backdropContainer: 'body',
@@ -759,7 +759,7 @@
                 arrowClass: 'top-right'
             }, {
                 element: '#orbit-tour-profile',
-                placement: 'left',
+                placement: 'bottom',
                 animation: true,
                 backdrop: true,
                 title: '{{ Lang::get('mobileci.tour.setting.title') }}',
