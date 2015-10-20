@@ -11,9 +11,7 @@
                 <ul class="dropdown-menu" role="menu">
                     <li class="complimentary-bg"><a id="membership-card"><span><span class="glyphicon glyphicon-credit-card"></span> {{ Lang::get('mobileci.page_title.membership') }}</span></a></li>
                     <li class="complimentary-bg"><a id="multi-language"><span><span class="glyphicon glyphicon-globe"></span> {{ Lang::get('mobileci.page_title.language') }}</span></a></li>
-                    @if (Request::is('customer/home'))
-                        <li class="complimentary-bg"><a id="orbit-tour-setting"><span><span class="glyphicon glyphicon-info-sign"></span> {{ Lang::get('mobileci.page_title.orbit_tour') }}</span></a></li>
-                    @endif
+                    <li class="complimentary-bg"><a href="{{ url('/customer/home?show_tour=yes') }}" id="orbit-tour-setting"><span><span class="glyphicon glyphicon-info-sign"></span> {{ Lang::get('mobileci.page_title.orbit_tour') }}</span></a></li>
                     <li class="complimentary-bg"><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off"></span> {{ Lang::get('mobileci.page_title.logout') }}</span></a></li>
                 </ul>
             </li>

@@ -486,6 +486,22 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="tour-confirmation" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><i class="fa fa-lightbulb-o"></i> {{ Lang::get('mobileci.page_title.orbit_tour') }}</h4>
+            </div>
+            <div class="modal-body">
+                {{ Lang::get('mobileci.tour.modal.content') }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="modal-end-tour" class="btn btn-danger">{{ Lang::get('mobileci.tour.modal.end_button') }}</button>
+                <button type="button" id="modal-start-tour" class="btn btn-primary">{{ Lang::get('mobileci.tour.modal.start_button') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('ext_script_bot')
@@ -512,50 +528,322 @@
 
     $(document).ready(function() {
         var displayModal = false;
+        var displayTutorial = false;
 
         // Override the content of displayModal
         if (get('internet_info') == 'yes') {
             displayModal = true;
         }
 
-        @if(! is_null($events))
-            if(!$.cookie(cookie_dismiss_name) && displayModal) {
-                $('#verifyModal').on('hidden.bs.modal', function () {
-                    if ($('#verifyModalCheck')[0].checked) {
-                        $.cookie(cookie_dismiss_name, 't', {expires: 3650});
-                    }
-                }).modal();
-            } else {
-                $('#promoModal').modal();
-                $.ajax({
-                    url: '{{ route('display-event-popup-activity') }}',
-                    data: {
-                        eventdata: '{{$events->event_id}}'
-                    },
-                    method: 'POST'
+        // Override the content of displayTutorial
+        if (get('show_tour') == 'yes') {
+            displayTutorial = true;
+        }
+
+        var loadModal = function () {
+            orbitIsViewing = false;
+            @if(! is_null($events))
+                if(!$.cookie(cookie_dismiss_name) && displayModal) {
+                    $('#verifyModal').on('hidden.bs.modal', function () {
+                        if ($('#verifyModalCheck')[0].checked) {
+                            $.cookie(cookie_dismiss_name, 't', {expires: 3650});
+                        }
+                    }).modal();
+                } else {
+                    $('#promoModal').modal();
+                    $.ajax({
+                        url: '{{ route('display-event-popup-activity') }}',
+                        data: {
+                            eventdata: '{{$events->event_id}}'
+                        },
+                        method: 'POST'
+                    });
+                }
+                $('#verifyModal').on('hide.bs.modal', function(e){
+                    $('#promoModal').modal();
+                    $.ajax({
+                        url: '{{ route('display-event-popup-activity') }}',
+                        data: {
+                            eventdata: '{{$events->event_id}}'
+                        },
+                        method: 'POST'
+                    });
                 });
+            @else
+            if (!$.cookie(cookie_dismiss_name)) {
+                if (displayModal) {
+                    $('#verifyModal').on('hidden.bs.modal', function () {
+                        if ($('#verifyModalCheck')[0].checked) {
+                            $.cookie(cookie_dismiss_name, 't', {expires: 3650});
+                        }
+                    }).modal();
+                }
             }
-            $('#verifyModal').on('hide.bs.modal', function(e){
-                $('#promoModal').modal();
-                $.ajax({
-                    url: '{{ route('display-event-popup-activity') }}',
-                    data: {
-                        eventdata: '{{$events->event_id}}'
-                    },
-                    method: 'POST'
+            @endif
+        }
+
+        // Instance the tour
+        var endTour = new Tour({
+            name: 'end',
+            storage: false,
+            template:   '<div class="popover" role="tooltip">' +
+                            '<div class="arrow"></div>' +
+                            '<h3 class="popover-title"></h3>' +
+                            '<div class="popover-content"></div>' +
+                            '<div class="popover-navigation">' +
+                                '<div class="row">' +
+                                    '<div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">' +
+                                        '<div class="checkbox">'+
+                                            '<label>'+
+                                                '<input id="hide_tour" type="checkbox"> <small>{{ Lang::get('mobileci.tour.end.check') }}</small>'+
+                                            '</label>'+
+                                        '</div>'+
+                                    '</div>' +
+                                    '<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">' +
+                                        '<button class="btn btn-primary btn-block main-end" data-role="end">{{ Lang::get('mobileci.modals.ok') }}</button>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>',
+            onEnd: function (tour) {
+                $('.mobile-ci.ci-header.header-container').css({
+                    'position': 'fixed'
                 });
-            });
-        @else
-        if (!$.cookie(cookie_dismiss_name)) {
-            if (displayModal) {
-                $('#verifyModal').on('hidden.bs.modal', function () {
-                    if ($('#verifyModalCheck')[0].checked) {
-                        $.cookie(cookie_dismiss_name, 't', {expires: 3650});
+
+                $('.headed-layout.content-container').css({
+                    'padding-top': '4.8em'
+                });
+
+                if ($('#hide_tour').is(':checked')) {
+                    $.cookie("hide-orbit-tour", true, { expires : 60 });
+                }
+
+                $.cookie("orbit-tour", true, { expires : 60 });
+                loadModal();
+            },
+            steps: [{
+                element: '#orbit-tour-profile',
+                placement: 'left',
+                animation: true,
+                backdrop: true,
+                backdropContainer: 'body',
+                title: '{{ Lang::get('mobileci.tour.end.title') }}',
+                content: '{{ Lang::get('mobileci.tour.end.content') }}',
+                arrowClass: 'top-right'
+            }]
+        });
+
+        // Initialize the tour configuration
+        endTour.init();
+
+        // Instance the tour
+        var homeTour = new Tour({
+            name: 'start',
+            storage: false,
+            template:   '<div class="popover" role="tooltip">' +
+                            '<div class="arrow"></div>' +
+                            '<a href="#" class="fa fa-times close-orbit" data-role="end"></a>' +
+                            '<h3 class="popover-title"></h3>' +
+                            '<div class="popover-content"></div>' +
+                            '<div class="popover-navigation">' +
+                                '<div class="row">' +
+                                    '<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">' +
+                                        '<button class="btn btn-primary btn-block" data-role="prev"><i class="fa fa-chevron-left"></i></button>' +
+                                    '</div>' +
+                                    '<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">' +
+                                        '<button class="btn btn-primary btn-block" data-role="next"><i class="fa fa-chevron-right"></i></button>' +
+                                    '</div>' +
+                                    '<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">' +
+                                        '<button class="btn btn-primary btn-block main-end" data-role="end">{{ Lang::get('mobileci.tour.end.button') }}</button>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>',
+            onEnd: function (tour) {
+                // Start the tour
+                if (!$.cookie('hide-orbit-tour')) {
+                    if (endTour.ended()) {
+                        endTour.restart();
+                    } else{
+                        endTour.start();
                     }
-                }).modal();
+                } else {
+                    $('.mobile-ci.ci-header.header-container').css({
+                        'position': 'fixed'
+                    });
+
+                    $('.headed-layout.content-container').css({
+                        'padding-top': '4.8em'
+                    });
+                    loadModal();
+                }
+            },
+            steps: [{
+                element: '#orbit-tour-home',
+                placement: 'bottom',
+                animation: true,
+                backdrop: true,
+                backdropContainer: 'body',
+                title: '{{ Lang::get('mobileci.tour.home.title') }}',
+                content: '{{ Lang::get('mobileci.tour.home.content') }}',
+                arrowClass: 'top-left'
+            }, {
+                element: '#orbit-tour-back',
+                placement: 'bottom',
+                animation: true,
+                backdrop: true,
+                title: '{{ Lang::get('mobileci.tour.back.title') }}',
+                content: '{{ Lang::get('mobileci.tour.back.content') }}',
+                arrowClass: 'top-left'
+            }, {
+                element: '#orbit-tour-search',
+                placement: 'bottom',
+                animation: true,
+                backdrop: true,
+                title: '{{ Lang::get('mobileci.tour.search.title') }}',
+                content: '{{ Lang::get('mobileci.tour.search.content') }}',
+                arrowClass: 'top-right'
+            }, {
+                element: '.single-widget-container:eq(0)',
+                placement: 'bottom',
+                animation: true,
+                backdrop: true,
+                classToFocus: ['#orbit-tour-tenant'],
+                title: '{{ Lang::get('mobileci.tour.directory.title') }}',
+                content: '{{ Lang::get('mobileci.tour.directory.content') }}',
+                arrowClass: 'top-right'
+            }, {
+                element: '#orbit-tour-profile',
+                placement: 'left',
+                animation: true,
+                backdrop: true,
+                title: '{{ Lang::get('mobileci.tour.setting.title') }}',
+                content: '{{ Lang::get('mobileci.tour.setting.content') }}',
+                arrowClass: 'top-right'
+            }, {
+            //     element: '#orbit-tour-connection',
+            //     placement: 'left',
+            //     animation: true,
+            //     backdrop: true,
+            //     title: '{{ Lang::get('mobileci.tour.home.title') }}',
+            //     content: '{{ Lang::get('mobileci.tour.home.content') }}',
+            //     arrowClass: 'top-right'
+            // }, {
+            //     element: '.single-widget-container:eq(0)',
+            //     placement: 'bottom',
+            //     animation: true,
+            //     backdrop: true,
+            //     backdropContainer: 'body',
+            //     title: {{ Lang::get('mobileci.tour.home.title') }}',
+            //     content: {{ Lang::get('mobileci.tour.home.content') }}',
+            //     arrowClass: 'top-left'
+            // }, {
+                element: '.single-widget-container:eq(1)',
+                placement: 'bottom',
+                animation: true,
+                backdrop: true,
+                backdropContainer: 'body',
+                title: '{{ Lang::get('mobileci.tour.promotion.title') }}',
+                content: '{{ Lang::get('mobileci.tour.promotion.content') }}',
+                arrowClass: 'top-right'
+            }, {
+                element: '.single-widget-container:eq(2)',
+                placement: 'top',
+                animation: true,
+                backdrop: true,
+                backdropContainer: 'body',
+                title: '{{ Lang::get('mobileci.tour.news.title') }}',
+                content: '{{ Lang::get('mobileci.tour.news.content') }}',
+                arrowClass: 'bottom-left'
+            }, {
+            //     element: '.single-widget-container:eq(5)',
+            //     placement: 'top',
+            //     animation: true,
+            //     backdrop: true,
+            //     backdropContainer: 'body',
+            //     title: '{{ Lang::get('mobileci.tour.home.title') }}',
+            //     content: '{{ Lang::get('mobileci.tour.home.content') }}',
+            //     arrowClass: 'bottom-right'
+            // }, {
+                element: '.single-widget-container:eq(3)',
+                placement: 'top',
+                animation: true,
+                backdrop: true,
+                backdropContainer: 'body',
+                title: '{{ Lang::get('mobileci.tour.coupon.title') }}',
+                content: '{{ Lang::get('mobileci.tour.coupon.content') }}',
+                arrowClass: 'bottom-right'
+            }]
+        });
+
+        // function to prepare the header for the tour
+        var prepareHeader = function () {
+            $('.mobile-ci.ci-header.header-container').css({
+                'position': 'static'
+            });
+
+            $('.headed-layout.content-container').css({
+                'padding-top': '0'
+            });
+        }
+
+        // Initialize the tour configuration
+        homeTour.init();
+
+        var loadTutorial = function () {
+            orbitIsViewing = true;
+            if (!$.cookie('orbit-tour')) {
+
+                $('#tour-confirmation').modal('show');
+
+                $('#modal-end-tour').on('click', function(event) {
+                    event.preventDefault();
+                    $('#tour-confirmation').modal('hide');
+                    prepareHeader();
+
+                    // Start the tour
+                    if (endTour.ended()) {
+                        endTour.restart();
+                    } else{
+                        endTour.start();
+                    }
+                });
+                $('#modal-start-tour').on('click', function(event) {
+                    event.preventDefault();
+                    $('#tour-confirmation').modal('hide');
+                    prepareHeader();
+
+                    // Start the tour
+                    if (homeTour.ended()) {
+                        homeTour.restart();
+                    } else{
+                        homeTour.start();
+                    }
+                });
+            } else {
+                prepareHeader();
+
+                // Start the tour
+                if (homeTour.ended()) {
+                    homeTour.restart();
+                } else{
+                    homeTour.start();
+                }
             }
         }
-        @endif
+
+        // Event click for the tour from the settings
+        $('#orbit-tour-setting').on('click', function(event) {
+            event.preventDefault();
+            loadTutorial();
+        });
+
+        if (displayTutorial || !$.cookie('orbit-tour')) {
+            loadTutorial();
+        } else {
+            loadModal();
+        }
+
         $('#emptyCoupon').click(function(){
           $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
           $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_coupon') }}');
@@ -592,7 +880,7 @@
             });
             return false; //for good measure
         });
-        $("#slider1").responsiveSlides({
+        $('#slider1').responsiveSlides({
           auto: true,
           pager: false,
           nav: true,
@@ -600,7 +888,7 @@
           nextText: '<i class="fa fa-chevron-right"></i>',
           speed: 500
         });
-        $("#slider2").responsiveSlides({
+        $('#slider2').responsiveSlides({
           auto: true,
           pager: false,
           nav: true,
@@ -608,7 +896,7 @@
           nextText: '<i class="fa fa-chevron-right"></i>',
           speed: 500
         });
-        $("#slider3").responsiveSlides({
+        $('#slider3').responsiveSlides({
           auto: true,
           pager: false,
           nav: true,
@@ -616,7 +904,7 @@
           nextText: '<i class="fa fa-chevron-right"></i>',
           speed: 500
         });
-        $("#slider4").responsiveSlides({
+        $('#slider4').responsiveSlides({
           auto: true,
           pager: false,
           nav: true,

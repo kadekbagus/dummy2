@@ -16,9 +16,9 @@
 </div>
 <script type="text/javascript">
 $(function() {
-    // Instance the tour
     @if (Request::is('customer/home'))
 
+        // Instance the tour
         var endTour = new Tour({
             name: 'end',
             storage: false,
@@ -59,8 +59,10 @@ $(function() {
             }]
         });
 
+        // Initialize the tour configuration
         endTour.init();
 
+        // Instance the tour
         var homeTour = new Tour({
             name: 'start',
             storage: false,
@@ -118,7 +120,7 @@ $(function() {
                 arrowClass: 'top-right'
             }, {
                 element: "#orbit-tour-tenant",
-                placement: "left",
+                placement: "bottom",
                 animation: true,
                 backdrop: true,
                 classToFocus: ['.single-widget-container:eq(0)'],
@@ -189,18 +191,33 @@ $(function() {
             }]
         });
 
-        if (!$.cookie('orbit-tour')) {
-            homeTour.init();
+        // function to prepare the header for the tour
+        var prepareHeader = function () {
+            $('.mobile-ci.ci-header.header-container').css({
+                'position': 'static'
+            });
 
-            var prepareHeader = function () {
-                $('.mobile-ci.ci-header.header-container').css({
-                    'position': 'static'
-                });
+            $('.headed-layout.content-container').css({
+                'padding-top': '0'
+            });
+        }
 
-                $('.headed-layout.content-container').css({
-                    'padding-top': '0'
-                });
+        // Initialize the tour configuration
+        homeTour.init();
+
+        // Event click for the tour from the settings
+        $('#orbit-tour-setting').on('click', function(event) {
+            event.preventDefault();
+            prepareHeader();
+
+            // Start the tour
+            if (homeTour.ended()) {
+                homeTour.restart();
+            } else{
+                homeTour.start();
             }
+        });
+        if (!$.cookie('orbit-tour')) {
 
             $('#tour-confirmation').modal('show');
 
@@ -228,18 +245,6 @@ $(function() {
                     homeTour.start();
                 }
             });
-            $('#orbit-tour-setting').on('click', function(event) {
-                event.preventDefault();
-                prepareHeader();
-
-                // Start the tour
-                if (homeTour.ended()) {
-                    homeTour.restart();
-                } else{
-                    homeTour.start();
-                }
-            });
-
         }
 
     @endif

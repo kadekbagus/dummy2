@@ -32,7 +32,8 @@ return array(
         'coupons'            => 'クーポン',
         'promotions'         => '販促',
         'news'               => 'ニュース',
-        'membership'         => '会員'
+        'membership'         => '会員',
+        'orbit_tour'         => 'ORBIT ツアー',
     ),
 
     'widgets' => array(
@@ -190,7 +191,7 @@ return array(
         'or_want_to_follow_the_lucky_draw' => 'または抽選をフォローしたいです',
         'open_your_email_and_verify_now'   => 'あなたの電子メールを開いて、今すぐ確認します',
         'validity'                         => '効力',
-    ), 
+    ),
 
     'promotion_list' => array(
         'no_promo'       => '今日のための販促がありません。',
@@ -223,7 +224,7 @@ return array(
         'close'                            => '閉じる',
         'my_coupon'                        => '私のクーポン',
         'use'                              => '使用',
-        'next_time'                        => '次回',        
+        'next_time'                        => '次回',
     ),
 
     'coupon_list' => array(
@@ -262,7 +263,7 @@ return array(
         'done_button'       => '完了',
         'back_button'       => 'バック',
     ),
- 
+
     'payment' => array(
         'total_to_pay_label'        => 'トータル',
         'name_label'                => '名前',
@@ -310,8 +311,8 @@ return array(
         'new_password'     => '新しいパスワード',
         'fill_password'    => 'パスワード（5-20文字）を入力してください',
         'confirm_password' => 'パスワードを認証する',
-    ), 
-     
+    ),
+
     'lucky_draw' => array(
         'hello'                     => 'こんにちは。',
         'goodluck'                  => '頑張ってください',
@@ -324,7 +325,7 @@ return array(
         'lucky_draw_info_5'         => 'ラッキーナンバー引き、あなたは全てのページ番号を見ることができます',
         'lucky_draw'                => '幸運な抽選',
         'close'                     => '閉じる.',
-        
+
         'no_ongoing_lucky_draws'    => '現在、進行中の幸運な抽選がありません。.',
         'winner_number_will_appear' => 'あなたがモールにいる間、勝者番号はここに現れます.',
         'winning_number'            => '当選番号',
@@ -341,7 +342,7 @@ return array(
         'of'                        => 'の',
         'prev'                      => '前へ',
         'next'                      => '次へ',
-        
+
         'lucky_draw_total_info_1'   => 'あなたの合計は',
         'lucky_draw_total_info_2'   => '幸運な抽選。合計は…',
         'lucky_draw_total_info_3'   => '画像は、ダウンロードします',
@@ -349,6 +350,53 @@ return array(
         'lucky_draw_total_info_5'   => '抽選番号.これは、最小の番号に最高でソート.',
         'lucky_draw_total_info_6'   => 'あなたのダウンロードは、自動的に始まらなければなりません。それがしようとしない場合、以下のボタンをクリックしてみてください',
         'download_image'            => 'ダウンロードイメージ',
+    ),
+
+    'tour' => array(
+        'home' => array(
+            'title'   => 'のホームページ',
+            'content' => 'ここでは、我々の装置によって閲覧して、あなたは、モールと店内で何があるのかについて見ることができます。 <br/><br/> <i>Orbitにおけるどんなページからでも直接ホームページへ行くために、このボタンをクリックしてください。</i>'
+        ),
+        'back' => array(
+            'title'   => '戻る',
+            'content' => 'JA: Tap on back button to go back to the previous page you have accessed.'
+        ),
+        'search' => array(
+            'title'   => '店を探しますか？',
+            'content' => '我々は、あなたのためにそれを見つけます！名前、カテゴリー（例えば健康、美しさ、食物）、場所（例えば地下、一階、二階）のような店のキーワードまたは説明を入力することによる店を検索。'
+        ),
+        'directory' => array(
+            'title'   => '店のディレクトリ',
+            'content' => '我々の店のリストをアクセスして、あなたの手の掌から彼らの場所を分かってください！'
+        ),
+        'setting' => array(
+            'title'   => '設定',
+            'content' => 'あなたはモールのメンバーシップを見ることができて、言語好みを変えることができて、又はここにOrbitアプリからログアウトすることができます。'
+        ),
+        'news' => array(
+            'title'   => 'ニュース',
+            'content' => '我々の最新ニュースを知りたいですか？我々のニュースのリストをここに見てください！'
+        ),
+        'promotion' => array(
+            'title'   => '販促',
+            'content' => '大きなお得な取引のために我々の販促をチェックしてください。'
+        ),
+        'coupon' => array(
+            'title'   => '私のクーポン',
+            'content' => 'あなたが取得したショッピングクーポンのリストをご覧ください。すぐに交換しください！'
+        ),
+        'end' => array(
+            'title'   => '',
+            'content' => 'あなたは、設定で「Orbit ツアー」を選ぶことによって、いつでもこのツアーを見ることができます',
+            'check'   => 'JA: Do not show this message again',
+            'button'  => 'エンドツアー'
+        ),
+        'modal' => array(
+            'title'        => '',
+            'content'      => 'こんにちは、Orbit へようこそ！<br/><br/>あなたにOrbitで何ができることを見せたいです<br/><br/><b>あなたは、ツアーを始まりますか。</b>',
+            'end_button'   => '今ではない',
+            'start_button' => 'はい、お願いします'
+        ),
     ),
 
 );

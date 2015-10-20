@@ -357,31 +357,31 @@ return array(
     'tour' => array(
         'home' => array(
             'title'   => 'Home Page',
-            'content' => 'Here you browse through our widgets to see what is happening inside the mall. <br/><br/> <i>Tap on this button to directly go to home page from any page in Orbit</i>'
+            'content' => 'Browse through widgets to see what is happening inside the mall. <br/><br/> <i>Tap on this button to directly go to home page from any page in Orbit</i>'
         ),
         'back' => array(
             'title'   => 'Back',
             'content' => 'Tap on back button to go back to the previous page you have accessed.'
         ),
         'search' => array(
-            'title'   => 'Looking for a store?',
-            'content' => 'We will find it for you! Here you can search for a store by entering store keywords such as name, categories (e.g. health, beauty, food), location (e.g. UG, L1, L2) or description.'
+            'title'   => 'Looking for a tenant?',
+            'content' => 'Search for a tenant by entering tenant keywords such as name, categories (e.g. health, beauty, food), location (e.g. UG, L1, L2) or description.'
         ),
         'directory' => array(
-            'title'   => 'Store Directory',
-            'content' => 'Access our list of stores from the palm of your hand!'
+            'title'   => 'Tenant Directory',
+            'content' => 'Access list of tenants from the palm of your hand!'
         ),
         'setting' => array(
             'title'   => 'Settings',
-            'content' => 'You can change your language preferences or log out from Orbit app from here.'
+            'content' => 'Change language preferences or log out from Orbit app.'
         ),
         'news' => array(
             'title'   => 'News',
-            'content' => 'Want to know what are the latest news from us? See our list of news here!'
+            'content' => 'Want to know what are the latest news? See list of news here!'
         ),
         'promotion' => array(
             'title'   => 'Promotions',
-            'content' => 'Check out our promotions for great money-saving deals.'
+            'content' => 'Check out promotions for great money-saving deals.'
         ),
         'coupon' => array(
             'title'   => 'My Coupons',
@@ -389,10 +389,12 @@ return array(
         ),
         'end' => array(
             'title'   => '',
-            'content' => 'You can access <b>Orbit Tour</b> anytime by tapping on <b>Settings > Orbit Tour</b>'
+            'content' => 'Access <b>Orbit Tour</b> anytime by tapping on <b>Settings > Orbit Tour</b>',
+            'check'   => 'Do not show this message again',
+            'button'  => 'END'
         ),
         'modal' => array(
-            'title'        => '<i class="fa fa-lightbulb-o"></i> <b>Orbit Tour</b>',
+            'title'        => '',
             'content'      => 'Hi, welcome to Orbit!<br/><br/>We would like to show you what you can do with Orbit.<br/><br/><b>Do you want to start the tour?</b>',
             'end_button'   => 'Not now',
             'start_button' => 'Yes, please!'

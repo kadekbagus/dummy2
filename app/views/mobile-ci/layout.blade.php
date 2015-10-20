@@ -15,9 +15,13 @@
             </div>
         </footer>
         @yield('modals')
+        <script type="text/javascript">
+            var orbitIsViewing = true;
+        </script>
         @yield('ext_script_bot')
         @include('mobile-ci.commonscripts')
         @include('mobile-ci.push-notification-script')
-        @include('mobile-ci.orbit-tour')
+        {{-- @include('mobile-ci.orbit-tour') --}}
+
     </body>
 </html>

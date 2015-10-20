@@ -10,7 +10,13 @@
     position: absolute!important;
     z-index: 1102;
     background-color: transparent;
-    border-radius: 6px;
+    border-radius: 0;
+}
+.tour-step-background-sub {
+    position: absolute!important;
+    z-index: 1102;
+    background-color: transparent;
+    border-radius: 0;
 }
 
 .popover[class*=tour-] {
@@ -19,6 +25,7 @@
     -webkit-box-shadow: none;
     box-shadow: none;
     z-index: 1103;
+    min-width: 320px;
 
     // &.top-left {
     //     border-top-left-radius: 0px;
@@ -64,8 +71,6 @@
         line-height: 20px;
         color: #000;
         text-shadow: 0 1px 0 #fff;
-        opacity: .2;
-        filter: alpha(opacity=20);
         text-decoration: none;
         &:hover {
             opacity: 1;

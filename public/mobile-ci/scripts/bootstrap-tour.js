@@ -266,6 +266,7 @@
                     if (step.classToFocus) {
                         $.each(step.classToFocus, function(index, val) {
                             $(val).removeClass('tour-step-backdrop');
+                            $('.tour-step-background-sub').remove();
                         });
                     }
                     if (step.onHidden != null) {
@@ -344,6 +345,17 @@
                         $.each(step.classToFocus, function(index, val) {
                             /* iterate through array or object */
                             $(val).addClass('tour-step-backdrop');
+
+                            var bgSub = $('<div>', {
+                                "class": 'tour-step-background-sub'
+                            });
+                            var elementDataSub = {
+                                width: $(val).innerWidth(),
+                                height: $(val).innerHeight(),
+                                offset: $(val).offset()
+                            };
+                            bgSub.appendTo('body');
+                            bgSub.width(elementDataSub.width).height(elementDataSub.height).offset(elementDataSub.offset);
                         });
                     }
                     if (step.autoscroll) {
@@ -539,6 +551,7 @@
             $navigation = $template.find('.popover-navigation');
             $prev = $navigation.find('[data-role="prev"]');
             $next = $navigation.find('[data-role="next"]');
+            $close = $template.find('.close-orbit');
             $end = $navigation.find('.main-end');
             $resume = $navigation.find('[data-role="pause-resume"]');
             if (this._isOrphan(step)) {
@@ -555,7 +568,6 @@
                 $prev.css({
                     'display': 'none'
                 });
-                $prev.parent().hide();
             }
             if (step.next < 0) {
                 /**
@@ -567,6 +579,7 @@
                 $next.css({
                     'display': 'none'
                 });
+                $close.hide();
                 $next.parent().hide();
             } else {
                 $end.css({
