@@ -20,6 +20,7 @@ return array(
     'AlterTableInboxesChangeFromNameToVarchar' => $baseDir . '/app/database/migrations/2015_09_11_151842_alter_table_inboxes_change_from_name_to_varchar.php',
     'AlterTableInboxesChangeInboxType' => $baseDir . '/app/database/migrations/2015_04_19_113408_alter_table_inboxes_change_inbox_type.php',
     'AlterTableIssuedCouponsAddColumns' => $baseDir . '/app/database/migrations/2015_08_21_070729_alter_table_issued_coupons_add_columns.php',
+    'AlterTableIssuedCouponsChangeRedeemRetailerIdToUuid' => $baseDir . '/app/database/migrations/2015_10_06_080341_alter_table_issued_coupons_change_redeem_retailer_id_to_uuid.php',
     'AlterTableLanguageAddNameLogAndIndex' => $baseDir . '/app/database/migrations/2015_08_25_132645_alter_table_language_add_name_log_and_index.php',
     'AlterTableLanguagesAddNativeNameAndStatus' => $baseDir . '/app/database/migrations/2015_09_23_065804_alter_table_languages_add_native_name_and_status.php',
     'AlterTableLuckyDrawNumbersAddColumnHash' => $baseDir . '/app/database/migrations/2015_04_13_090851_alter_table_lucky_draw_numbers_add_column_hash.php',

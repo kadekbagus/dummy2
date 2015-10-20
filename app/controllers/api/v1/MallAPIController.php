@@ -473,7 +473,6 @@ class MallAPIController extends ControllerAPI
             }
 
             $malls = Mall::excludeDeleted('merchants')
-                                ->allowedForUser($user)
                                 ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'))
                                 ->leftJoin('merchants AS tenant', function($join) {
                                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
@@ -777,7 +776,7 @@ class MallAPIController extends ControllerAPI
             $totalRec = RecordCounter::create($_malls)->count();
             $listOfRec = $malls->get();
 
-            // Get start button translations 
+            // Get start button translations
             OrbitInput::get('startbuttontranslation', function ($startButtonTranslation) use (&$listOfRec) {
                 if (isset($listOfRec[0])) {
                     if ( $startButtonTranslation === 'on' && count($listOfRec[0]->settings) > 0){
@@ -786,7 +785,7 @@ class MallAPIController extends ControllerAPI
                                 $listOfRec[0]->start_button_translations = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
                                                                                 ->whereHas('language', function($has) {
                                                                                 $has->where('merchant_languages.status', 'active');
-                                                                            })->get();                            
+                                                                            })->get();
                             }
                         }
                     }

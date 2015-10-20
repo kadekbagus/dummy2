@@ -95,7 +95,10 @@ class NewsAPIController extends ControllerAPI
                     'news_name'           => $news_name,
                     'object_type'         => $object_type,
                     'status'              => $status,
+                    'begin_date'          => $begin_date,
+                    'end_date'            => $end_date,
                     'link_object_type'    => $link_object_type,
+                    'id_language_default' => $id_language_default,
                     'id_language_default' => $id_language_default,
                 ),
                 array(
@@ -104,6 +107,8 @@ class NewsAPIController extends ControllerAPI
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
+                    'begin_date'          => 'required|date',
+                    'end_date'            => 'required|date',                    
                     'id_language_default' => 'required|orbit.empty.language_default',
                 )
             );
@@ -368,6 +373,7 @@ class NewsAPIController extends ControllerAPI
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
+            $end_date = OrbitInput::post('end_date');
             $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
@@ -376,6 +382,7 @@ class NewsAPIController extends ControllerAPI
                 'object_type'         => $object_type,
                 'status'              => $status,
                 'link_object_type'    => $link_object_type,
+                'end_date'            => $end_date,
                 'id_language_default' => $id_language_default,
             );
 
@@ -393,6 +400,7 @@ class NewsAPIController extends ControllerAPI
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
+                    'end_date'            => 'date',
                     'id_language_default' => 'required|orbit.empty.language_default',
                 ),
                 array(

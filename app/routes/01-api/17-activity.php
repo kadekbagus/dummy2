@@ -36,6 +36,22 @@ Route::get('/api/v1/activity/gender-statistics', function()
 });
 
 /**
+ * Get 'customer today' statistics for a period
+ */
+Route::get('/api/v1/activity/today-statistics', function()
+{
+    return ActivityAPIController::create()->getUserTodayStatistics();
+});
+
+/**
+ * Get age statistics (sign-in only) for a period
+ */
+Route::get('/api/v1/activity/age-statistics', function()
+{
+    return ActivityAPIController::create()->getUserAgeStatistics();
+});
+
+/**
  * Get active user statistics (from unique sign-ins) for several period
  */
 Route::get('/api/v1/activity/active-user-statistics', function()
@@ -57,4 +73,12 @@ Route::get('/api/v1/activity/new-returning-statistics', function()
 Route::get('/api/v1/activity/captive-report', function()
 {
     return ActivityAPIController::create()->getCaptivePortalReport();
+});
+
+/**
+ * Get "connected now" user statistics for several period
+ */
+Route::get('/api/v1/activity/connected-now-statistics', function()
+{
+    return ActivityAPIController::create()->getConnectedNowStatistics();
 });

@@ -445,7 +445,7 @@ class SettingAPIController extends ControllerAPI
                 $mall->setRelation('mediaBackground', $response->data);
                 $mall->media_background = $response->data;
             });
-            
+
             OrbitInput::post('start_button', function($label) use (&$startButtonSetting, $mall, $user) {
                 // Start button label setting
                 if (is_null($startButtonSetting)) {
@@ -463,7 +463,7 @@ class SettingAPIController extends ControllerAPI
             // Save the default language setting for start button
             $default_translation = [
                 $id_language_default => [
-                    'setting_value' => $startButtonSetting->setting_value,                        
+                    'setting_value' => $startButtonSetting->setting_value,
                 ]
             ];
             $this->validateAndSaveTranslations($startButtonSetting, json_encode($default_translation), 'create');
@@ -537,7 +537,7 @@ class SettingAPIController extends ControllerAPI
                 }
             }
 
-            // Insert new merchant language            
+            // Insert new merchant language
             if (count($supportedMallLanguageIds) > 0) {
                 foreach ($supportedMallLanguageIds as $key => $value) {
                     $merchantLanguage = new MerchantLanguage();
@@ -1190,13 +1190,13 @@ class SettingAPIController extends ControllerAPI
             $news = MerchantLanguage::excludeDeleted()
                         ->where('merchant_language_id', $value)
                         ->first();
-        
+
             if (empty($news)) {
                 return FALSE;
             }
-        
+
             App::instance('orbit.empty.language_default', $news);
-        
+
             return TRUE;
         });
 
@@ -1214,7 +1214,7 @@ class SettingAPIController extends ControllerAPI
         // @Todo: Refactor by adding allowedForUser for mall
         $user = $this->api->user;
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
-            $merchant = Mall::excludeDeleted()                        
+            $merchant = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -1288,13 +1288,12 @@ class SettingAPIController extends ControllerAPI
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->allowedForUser($user)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
 
             if (empty($language)) {
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-            }
+            };
             $existing_translation = SettingTranslation::excludeDeleted()
                 ->where('setting_id', '=', $event->setting_id)
                 ->where('merchant_language_id', '=', $merchant_language_id)

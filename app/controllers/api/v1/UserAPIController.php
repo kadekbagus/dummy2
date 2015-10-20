@@ -1484,10 +1484,18 @@ class UserAPIController extends ControllerAPI
                 $users->select('users.*');
             }
 
+            // join to user_acquisitions if the request come from mall portal
+            $from_cs = OrbitInput::get('from_cs');
+            if(empty($from_cs)) {
+                $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+                OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
+                    $users->whereIn('user_acquisitions.acquirer_id', $merchantIds);
+                });
+            }
+
             // Filter by merchant ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                // $users->merchantIds($merchantIds);
-                $listOfMerchantIds = (array)$merchantIds;
+                // $listOfMerchantIds = (array)$merchantIds;
             });
 
             // Filter by retailer (shop) ids

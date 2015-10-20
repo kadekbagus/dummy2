@@ -20,7 +20,7 @@
         </div>
     </div>
 </div>
-
+@if(Config::get('orbit.shop.membership'))
 <div class="modal fade bs-example-modal-sm" id="membership-card-popup" tabindex="-1" role="dialog" aria-labelledby="membership-card" aria-hidden="true">
     <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
         <div class="modal-content">
@@ -63,7 +63,7 @@
         </div>
     </div>
 </div>
-
+@endif
 <!-- Language Modal -->
 <div class="modal fade bs-example-modal-sm" id="multi-language-popup" tabindex="-1" role="dialog" aria-labelledby="multi-language" aria-hidden="true">
     <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
@@ -75,7 +75,7 @@
             <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
                 <div class="modal-body">
                     <select class="form-control" name="lang" id="selected-lang">
-                        <option value="{{ 'syslang' }}" @if (! isset($_COOKIE['orbit_preferred_language'])) selected @endif>{{ 'System Language' }}</option>
+                        <option value="{{ 'syslang' }}" @if (! isset($_COOKIE['orbit_preferred_language'])) selected @endif>{{ 'English (default)' }}</option>
                         @if (isset($languages))
                                 @foreach ($languages as $lang)
                                     <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @endif>{{{ $lang->language->name_long }}}</option>
@@ -140,9 +140,11 @@
         if($('#cart-number').attr('data-cart-number') == '0'){
             $('.cart-qty').css('display', 'none');
         }
+        @if(Config::get('orbit.shop.membership'))
         $('#membership-card').click(function(){
             $('#membership-card-popup').modal();
         });
+        @endif
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();
         });

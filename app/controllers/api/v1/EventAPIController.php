@@ -96,6 +96,8 @@ class EventAPIController extends ControllerAPI
                     'event_type'          => $event_type,
                     'status'              => $status,
                     'link_object_type'    => $link_object_type,
+                    'begin_date'          => $begin_date,
+                    'end_date'            => $end_date,
                     'id_language_default' => $id_language_default,
                 ),
                 array(
@@ -104,6 +106,8 @@ class EventAPIController extends ControllerAPI
                     'event_type'          => 'required|orbit.empty.event_type',
                     'status'              => 'required|orbit.empty.event_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
+                    'begin_date'          => 'required|date',
+                    'end_date'            => 'required|date',
                     'id_language_default' => 'required|orbit.empty.language_default',
                 )
             );
@@ -357,6 +361,7 @@ class EventAPIController extends ControllerAPI
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
+            $end_date = OrbitInput::post('end_date');
             $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
@@ -365,6 +370,7 @@ class EventAPIController extends ControllerAPI
                 'event_type'          => $event_type,
                 'status'              => $status,
                 'link_object_type'    => $link_object_type,
+                'end_date'            => $end_date,
                 'id_language_default' => $id_language_default,
             );
 
@@ -382,6 +388,7 @@ class EventAPIController extends ControllerAPI
                     'event_type'          => 'orbit.empty.event_type',
                     'status'              => 'orbit.empty.event_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
+                    'end_date'            => 'date',
                     'id_language_default' => 'required|orbit.empty.language_default',
                 ),
                 array(

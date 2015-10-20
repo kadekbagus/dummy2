@@ -289,7 +289,7 @@
 
         var promo = '';
         @if(!empty(Input::get('promotion_id')))
-            promo = '&promotion_id='+{{Input::get('promotion_id')}};
+            promo = '&promotion_id='+'{{Input::get('promotion_id')}}';
         @endif
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}'+promo;
         $('#dLabel').dropdown();
