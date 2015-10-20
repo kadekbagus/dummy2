@@ -143,6 +143,7 @@ return array(
             'view_personal_interest' => '您没有权限查看个人利益',
             'view_role'              => '您没有权限查看角色',
             'inactiveuser'           => '你没有访问所请求的资源',
+            'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
             'role'                 => ' Role ID 您指定未找到.',

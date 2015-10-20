@@ -20,6 +20,12 @@ return array(
         'blackhole_domain'  => 'orbit.mall'
     ),
 
+    // agreement configuration
+    'agreement' => array(
+        // This should be frontend URL not backend
+        'url'  => 'http://value-of-agreement.url/'
+    ),
+
     'shop' => array(
         // Id of the retailer
         'id'    => NULL,

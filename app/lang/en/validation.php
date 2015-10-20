@@ -148,6 +148,7 @@ return array(
             'inactiveuser'           => 'You do not have access to the requested resource.',
             'missingmasterpassword'  => 'The master password is not set.',
             'wrongmasterpassword'    => 'The master password is incorrect.',
+            'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
             'role'                 => 'The Role ID you specified is not found.',

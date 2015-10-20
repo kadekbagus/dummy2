@@ -143,6 +143,7 @@ return array(
             'view_personal_interest' => 'あなたは個人的な興味を表示するアクセス権を持っていません.',
             'view_role'              => 'あなたは役割を表示するためのアクセス権を持っていません.',
             'inactiveuser'           => 'あなたは、要求されたリソースへのアクセスを持っていません.',
+            'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
             'role'                 => 'Role ID あなたが見つかりません指定され.',

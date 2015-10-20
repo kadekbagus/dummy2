@@ -492,6 +492,159 @@ class LoginAPIController extends ControllerAPI
         return $this->render();
     }
 
+    /**
+     * Post - Update Service Agreement
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `first_name`     (required) - value of first name
+     * @param string    `last_name`      (required) - value of last name
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdateServiceAgreement()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('update_service_agreement');
+        try {
+            $this->registerCustomValidation();
+
+            $first_name = OrbitInput::post('first_name');
+            $last_name = OrbitInput::post('last_name');
+
+            $validator = Validator::make(
+                array(
+                    'token_value'   => $tokenValue,
+                    'first_name'      => $first_name,
+                    'password_confirmation' => $password2
+                ),
+                array(
+                    'token_value'   => 'required|orbit.empty.token',
+                    'password'      => 'required|min:5|confirmed',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $token = App::make('orbit.empty.token');
+            $user = User::with('userdetail')
+                        ->excludeDeleted()
+                        ->where('user_id', $token->user_id)
+                        ->first();
+
+            if (! is_object($token) || ! is_object($user)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // update the token status so it cannot be use again
+            $token->status = 'deleted';
+            $token->save();
+
+            // Update user password and activate them
+            $user->user_password = Hash::make($password);
+            $user->status = 'active';
+            $user->save();
+
+            $this->response->message = Lang::get('statuses.orbit.updated.your_password');
+            $this->response->data = $user;
+
+            if (Config::get('orbit.registration.mobile.send_welcome_email') === TRUE) {
+                // Sign page link
+                $signinUrl = Config::get('orbit.registration.mobile.signin_url');
+
+                $data = array(
+                    'email'         => $user->user_email,
+                    'password'      => $password,
+                    'signin_url'    => $signinUrl
+                );
+                $mailviews = array(
+                    'html' => 'emails.registration.activated-html',
+                    'text' => 'emails.registration.activated-text'
+                );
+                Mail::send($mailviews, $data, function($message) use ($user)
+                {
+                    $emailconf = Config::get('orbit.registration.mobile.sender');
+                    $from = $emailconf['email'];
+                    $name = $emailconf['name'];
+
+                    $message->from($from, $name)->subject('Your Account on Orbit has been Activated!');
+                    $message->to($user->user_email);
+                });
+            }
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull activation
+            $activity->setUser($user)
+                     ->setActivityName('activation_ok')
+                     ->setActivityNameLong('Account Activation')
+                     ->setModuleName('Application')
+                     ->responseOK();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render();
+    }
+
     protected function registerCustomValidation()
     {
         // Check user email address, it should not exists
@@ -642,8 +795,8 @@ class LoginAPIController extends ControllerAPI
                         if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
                             $this->response->code = 302;
                             $this->response->status = 'redirect';
-                            $this->response->message = 'Agreement is not accepted yet';
-                            $this->response->data = 'config.agreement.url';
+                            $this->response->message = Lang::get('validation.orbit.access.agreement');
+                            $this->response->data = Config::get('orbit.agreement.url');
 
                             return $this->render();
                         }
