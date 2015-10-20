@@ -507,7 +507,7 @@ class LoginAPIController extends ControllerAPI
     public function postUpdateServiceAgreement()
     {
         $activity = Activity::portal()
-                            ->setActivityType('update_service_agreement');
+                            ->setActivityType('activation');
         try {
             $this->registerCustomValidation();
 
@@ -528,16 +528,21 @@ class LoginAPIController extends ControllerAPI
                 )
             );
 
-            $token = App::make('orbit.empty.token');
-            $user = User::with('userdetail')
-                        ->excludeDeleted()
-                        ->where('user_id', $token->user_id)
-                        ->first();
-
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $token = App::make('orbit.empty.token');
+            $user  = User::excludeDeleted()
+                        ->where('user_id', $token->user_id)
+                        ->first();
+            $mall = Mall::excludeDeleted()->where('user_id', $token->user_id)->first();
+
+            if (! is_object($token) || ! is_object($user) || ! is_object($mall)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
             }
 
             // Begin database transaction
@@ -547,45 +552,36 @@ class LoginAPIController extends ControllerAPI
             $token->status = 'deleted';
             $token->save();
 
-            // Update user password and activate them
-            $user->user_password = Hash::make($password);
-            $user->status = 'active';
-            $user->save();
+            // Update settings service agreement
+            $settings = $mall->settings()
+                             ->where('object_id', $mall->merchant_id)
+                             ->where('object_type', 'merchant')
+                             ->get();
 
-            $this->response->message = Lang::get('statuses.orbit.updated.your_password');
-            $this->response->data = $user;
-
-            if (Config::get('orbit.registration.mobile.send_welcome_email') === TRUE) {
-                // Sign page link
-                $signinUrl = Config::get('orbit.registration.mobile.signin_url');
-
-                $data = array(
-                    'email'         => $user->user_email,
-                    'password'      => $password,
-                    'signin_url'    => $signinUrl
-                );
-                $mailviews = array(
-                    'html' => 'emails.registration.activated-html',
-                    'text' => 'emails.registration.activated-text'
-                );
-                Mail::send($mailviews, $data, function($message) use ($user)
-                {
-                    $emailconf = Config::get('orbit.registration.mobile.sender');
-                    $from = $emailconf['email'];
-                    $name = $emailconf['name'];
-
-                    $message->from($from, $name)->subject('Your Account on Orbit has been Activated!');
-                    $message->to($user->user_email);
-                });
+            foreach ($settings as $idx => $setting) {
+                if ($setting->setting_name === 'agreement_accepted') {
+                    $setting->setting_value = 'true';
+                }
+                if ($setting->setting_name === 'agreement_acceptor_first_name') {
+                    $setting->setting_value = $first_name;
+                }
+                if ($setting->setting_name === 'agreement_acceptor_last_name') {
+                    $setting->setting_value = $last_name;
+                }
             }
+
+            $mall->setRelation('settings', $settings);
+
+            $this->response->message = Lang::get('statuses.orbit.updated.serviceagreement');
+            $this->response->data = $mall;
 
             // Commit the changes
             $this->commit();
 
             // Successfull activation
             $activity->setUser($user)
-                     ->setActivityName('activation_ok')
-                     ->setActivityNameLong('Account Activation')
+                     ->setActivityName('service_agreement')
+                     ->setActivityNameLong('Update Service Agreement Successfull')
                      ->setModuleName('Application')
                      ->responseOK();
         } catch (ACLForbiddenException $e) {
@@ -598,9 +594,9 @@ class LoginAPIController extends ControllerAPI
             $this->rollBack();
 
             // Failed Activation
-            $activity->setUser('guest')
-                     ->setActivityName('activation_failed')
-                     ->setActivityNameLong('Account Activation Failed')
+            $activity->setUser('mall')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement Failed')
                      ->setModuleName('Application')
                      ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -613,9 +609,9 @@ class LoginAPIController extends ControllerAPI
             $this->rollBack();
 
             // Failed Activation
-            $activity->setUser('guest')
-                     ->setActivityName('activation_failed')
-                     ->setActivityNameLong('Account Activation Failed')
+            $activity->setUser('mall')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement Failed')
                      ->setModuleName('Application')
                      ->setNotes($e->getMessage())
                      ->responseFailed();
@@ -629,9 +625,9 @@ class LoginAPIController extends ControllerAPI
             $this->rollBack();
 
             // Failed Activation
-            $activity->setUser('guest')
-                     ->setActivityName('activation_failed')
-                     ->setActivityNameLong('Account Activation Failed')
+            $activity->setUser('mall')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement Failed')
                      ->setModuleName('Application')
                      ->setNotes($e->getMessage())
                      ->responseFailed();

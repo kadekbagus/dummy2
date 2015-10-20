@@ -31,7 +31,8 @@ return array(
         ),
         'updated'   => array(
             'user'           => 'User has been successfully updated.',
-            'your_password'  => 'Your password has been successfully updated.'
+            'your_password'  => 'Your password has been successfully updated.',
+            'serviceagreement'  => 'Service Agreement has been successfully updated.',
         ),
         'nodata'    => array(
             'user'          => 'There is no user that matched your search criteria.',

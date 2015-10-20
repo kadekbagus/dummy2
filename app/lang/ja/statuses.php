@@ -28,7 +28,8 @@ return array(
         ),
         'updated'   => array(
             'user'           => 'ユーザーが正常に更新されました',
-            'your_password'  => 'あなたのパスワードは更新に成功してきました.'
+            'your_password'  => 'あなたのパスワードは更新に成功してきました.',
+            'serviceagreement'  => 'Service Agreement has been successfully updated.',
         ),
         'nodata'    => array(
             'user'          => '検索条件に一致するユーザはいません.',
