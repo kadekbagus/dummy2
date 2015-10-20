@@ -886,9 +886,7 @@
         if (displayTutorial || !$.cookie('orbit-tour')) {
             loadTutorial();
         } else {
-            if (!$.cookie('orbit-tour')) {
-                loadModal();
-            }
+            loadModal();
         }
 
         $('#emptyCoupon').click(function(){
