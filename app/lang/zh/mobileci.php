@@ -360,7 +360,7 @@ return array(
             'content' => '这里您会翻看我们的上下文菜单任何事件在我们的购物场和店铺<br/><br/> <i>点击这个按键直接回去主页从任何页面在orbit</i>'
         ),
         'back' => array(
-            'title'   => '戻る',
+            'title'   => '回',
             'content' => 'ZH: Tap on back button to go back to the previous page you have accessed.'
         ),
         'search' => array(
@@ -390,7 +390,7 @@ return array(
         'end' => array(
             'title'   => '',
             'content' => '您会看这个巡视任何事件，点"orbit巡视" 在设定',
-            'check'   => 'ZA: Do not show this message again',
+            'check'   => '不要再显示此消息',
             'button'  => '巡视完'
         ),
         'modal' => array(

@@ -390,7 +390,7 @@ return array(
         'end' => array(
             'title'   => '',
             'content' => 'あなたは、設定で「Orbit ツアー」を選ぶことによって、いつでもこのツアーを見ることができます',
-            'check'   => 'JA: Do not show this message again',
+            'check'   => '今後このメッセージを表示しません',
             'button'  => 'エンドツアー'
         ),
         'modal' => array(
