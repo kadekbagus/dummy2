@@ -549,7 +549,10 @@ class SettingAPIController extends ControllerAPI
             }
 
             // Return new merchant language data
-            $dataMerchantLanguage = MerchantLanguage::excludeDeleted()->where('merchant_id','=', $mall->merchant_id)->where('status','=', 'active')->get();
+            $dataMerchantLanguage = MerchantLanguage::with('language')
+                                    ->excludeDeleted()
+                                    ->where('merchant_id','=', $mall->merchant_id)
+                                    ->where('status','=', 'active')->get();
 
             $this->response->data = [
                 'landing_page'      => $landingPageSetting,
