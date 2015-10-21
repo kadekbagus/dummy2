@@ -242,9 +242,9 @@ class ActivityAPIController extends ControllerAPI
             });
 
             // Filter by retailer ids
-            OrbitInput::get('retailer_ids', function($retailerIds) use ($activities) {
-                $activities->whereIn('activities.location_id', $retailerIds);
-            });
+            // OrbitInput::get('retailer_ids', function($retailerIds) use ($activities) {
+            //     $activities->whereIn('activities.location_id', $retailerIds);
+            // });
 
             // Filter by user emails
             OrbitInput::get('user_emails', function($emails) use ($activities) {
