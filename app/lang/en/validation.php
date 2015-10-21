@@ -279,6 +279,7 @@ return array(
             'membership'           => 'The Membership ID you specified is not found.',
             'language' => 'The Language ID you specified is not found.',
             'merchant_language' => 'The Merchant Language ID you specified is not found.',
+            'hour_format'          => 'The :attribute is not a valid date.',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

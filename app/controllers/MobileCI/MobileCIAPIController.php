@@ -300,7 +300,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
                 if ($widget->widget_type == 'news') {
                     $widget_singles->news = $widget;
@@ -317,7 +317,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
                 if ($widget->widget_type == 'coupon') {
                     $widget_singles->coupon = $widget;
@@ -334,7 +334,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
                 if ($widget->widget_type == 'lucky_draw') {
                     $widget_singles->luckydraw = $widget;
@@ -351,7 +351,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
             }
 
@@ -1650,6 +1650,8 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
             $luckydraw = LuckyDraw::active()->where('mall_id', $retailer->merchant_id)->first();
 
+            $languages = $this->getListLanguages($retailer);
+
             if (empty($luckydraw)) {
                 return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
@@ -1737,6 +1739,7 @@ class MobileCIAPIController extends ControllerAPI
                                 'current_page'  => $currentPage,
                                 'per_page'      => $take,
                                 'servertime'    => $servertime,
+                                'languages'     => $languages,
             ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
@@ -2032,7 +2035,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->wherehas('tenant', function($q){
                     $q->where('merchants.status', 'active');
                 })
-                ->where('promotion_id', $coupon_id)->get();   
+                ->where('promotion_id', $coupon_id)->get();
 
             // -- START hack
             // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
@@ -2043,7 +2046,7 @@ class MobileCIAPIController extends ControllerAPI
 
             foreach ($tenants as $tenant) {
                 $cso_flag = 0;
-                
+
                 if (count($tenant->tenant->categories) > 0) { // check if tenant has category
                     foreach ($tenant->tenant->categories as $category) {
                         if ($category->category_name !== 'Customer Service') {
