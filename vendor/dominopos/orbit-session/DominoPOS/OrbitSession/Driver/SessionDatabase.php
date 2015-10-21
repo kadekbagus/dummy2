@@ -73,6 +73,8 @@ class SessionDatabase implements GenericInterface
                 continue;
             }
         }
+
+        $this->cleanupSomeSessions();
     }
 
     /**
@@ -261,18 +263,15 @@ class SessionDatabase implements GenericInterface
     {
         Helper::touch($sessionData, $this->getConfig('expire'));
 
-        $data         = $this->pdo->quote(serialize($sessionData));
-        $id           = $this->pdo->quote($sessionId);
-        $expireAt     = $this->pdo->quote($sessionData->expireAt);
-        $lastActivity = $this->pdo->quote($sessionData->lastActivityAt);
+        $data         = serialize($sessionData);
 
         $query = $this->pdo->prepare("
             UPDATE {$this->getConfig('path')}
             SET
-              session_data   = {$data},
-              last_activity  = {$lastActivity},
-              expire_at      = {$expireAt}
-            WHERE session_id = {$id}
+              session_data   = ?,
+              last_activity  = ?,
+              expire_at      = ?
+            WHERE session_id = ?
         ");
 
         if (FALSE === $query)
@@ -280,7 +279,7 @@ class SessionDatabase implements GenericInterface
             throw new Exception($this->pdo->errorInfo()[2], Session::ERR_UNKNOWN);
         }
 
-        return $query->execute();
+        return $query->execute([$data, $sessionData->lastActivityAt, $sessionData->expireAt, $sessionId]);
     }
 
     /**
@@ -296,15 +295,18 @@ class SessionDatabase implements GenericInterface
 
         $id = $this->pdo->quote($sessionId);
         $cleanStatement = '';
+        $params = [];
+        $params[] = $sessionId;
 
         if ($clean)
         {
-            $cleanStatement = "OR expire_at < {time()}";
+            $cleanStatement = "OR expire_at < ?";
+            $params[] = time();
         }
 
         $query = $this->pdo->prepare("
             DELETE FROM `{$this->getConfig('path')}`
-            WHERE session_id = {$id} {$cleanStatement}
+            WHERE session_id = ? {$cleanStatement}
         ");
 
         if (FALSE === $query)
@@ -312,7 +314,13 @@ class SessionDatabase implements GenericInterface
             throw new Exception($this->pdo->errorInfo()[2], Session::ERR_UNKNOWN);
         }
 
-        return $query->execute();
+        return $query->execute($params);
+    }
+
+    protected function cleanupSomeSessions()
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM `{$this->getConfig('path')}` WHERE expire_at < ? LIMIT 10");
+        $stmt->execute([time()]);
     }
 
     /**
@@ -326,17 +334,14 @@ class SessionDatabase implements GenericInterface
 
         Helper::touch($sessionData, $this->getConfig('expire'));
 
-        $data         = $this->pdo->quote(serialize($sessionData));
-        $id           = $this->pdo->quote($sessionData->id);
-        $expireAt     = $this->pdo->quote($sessionData->expireAt);
-        $lastActivity = $this->pdo->quote($sessionData->lastActivityAt);
+        $data         = serialize($sessionData);
 
         $query =$this->pdo->prepare("
             INSERT INTO `{$this->getConfig('path')}` (session_id, session_data, expire_at, last_activity)
-            VALUES ({$id}, {$data}, {$expireAt}, {$lastActivity})
+            VALUES (?, ?, ?, ?)
         ");
 
-        return $query->execute();
+        return $query->execute([$sessionData->id, $data, $sessionData->expireAt, $sessionData->lastActivityAt]);
     }
 
     /**
