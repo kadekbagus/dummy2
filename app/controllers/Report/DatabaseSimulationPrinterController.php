@@ -114,15 +114,15 @@ class DatabaseSimulationPrinterController extends DataPrinterController
             $activities->where('activities.module_name', 'like', "%{$name}%");
         });
 
-        // Filter by merchant ids
+        // Filter by merchant ids (mall)
         OrbitInput::get('merchant_ids', function($merchantIds) use ($activities) {
-            $activities->merchantIds($merchantIds);
+            $activities->whereIn('activities.location_id', $merchantIds);
         });
 
         // Filter by retailer ids
-        OrbitInput::get('retailer_ids', function($retailerIds) use ($activities) {
-            $activities->whereIn('activities.location_id', $retailerIds);
-        });
+        // OrbitInput::get('retailer_ids', function($retailerIds) use ($activities) {
+        //     $activities->whereIn('activities.location_id', $retailerIds);
+        // });
 
         // Filter by user emails
         OrbitInput::get('user_emails', function($emails) use ($activities) {

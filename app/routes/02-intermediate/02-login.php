@@ -42,6 +42,11 @@ Route::post('/app/v1/user/setup-new-password', 'IntermediateLoginController@Logi
 Route::get('/app/v1/token/list', 'IntermediateLoginController@getTokenList');
 
 /**
+ * Active Account
+ */
+Route::post('/app/v1/activate-account', 'IntermediateLoginController@Login_postActivateAccount');
+
+/**
  * Update Service Agreement
  */
 Route::post('/app/v1/service-agreement/update', 'IntermediateLoginController@Login_postUpdateServiceAgreement');

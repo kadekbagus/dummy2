@@ -242,9 +242,9 @@ class ActivityAPIController extends ControllerAPI
             });
 
             // Filter by retailer ids
-            OrbitInput::get('retailer_ids', function($retailerIds) use ($activities) {
-                $activities->whereIn('activities.location_id', $retailerIds);
-            });
+            // OrbitInput::get('retailer_ids', function($retailerIds) use ($activities) {
+            //     $activities->whereIn('activities.location_id', $retailerIds);
+            // });
 
             // Filter by user emails
             OrbitInput::get('user_emails', function($emails) use ($activities) {
@@ -987,6 +987,7 @@ class ActivityAPIController extends ControllerAPI
 
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
+            $format = OrbitInput::get('format', 'old');
 
             $tomorrow = date('Y-m-d H:i:s', strtotime('tomorrow'));
             $validator = Validator::make(
@@ -1042,11 +1043,33 @@ class ActivityAPIController extends ControllerAPI
                 });
             }
 
-            $this->response->data = [
-                'start_date' => $start_date,
-                'end_date' => $end_date,
-                'gender' => $activities->get()
-            ];
+            if ($format === 'new') {
+                $male = 0;
+                $female = 0;
+                $unknown = 0;
+                foreach ($activities->get() as $r) {
+                    if ($r->gender === 'f' || $r->gender === 'F') {
+                        $female += (int) $r->count;
+                    } elseif  ($r->gender === 'm' || $r->gender === 'M') {
+                        $male += (int) $r->count;
+                    } else {
+                        $unknown += (int) $r->count;
+                    }
+                }
+                $this->response->data = [
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'male' => $male,
+                    'female' => $female,
+                    'unknown' => $unknown,
+                ];
+            } else {
+                $this->response->data = [
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'gender' => $activities->get()
+                ];
+            }
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getactivity.access.forbidden', array($this, $e));
 

@@ -346,6 +346,7 @@
       if (user_em != '') {
         $('#signedIn').show();
         $('#signIn').hide();
+        term_accepted = true; {{-- assume user have accepted since user is known --}}
 
         em = user_em.toLowerCase();
 
