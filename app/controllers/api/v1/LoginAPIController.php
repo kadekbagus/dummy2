@@ -979,7 +979,7 @@ class LoginAPIController extends ControllerAPI
                     $this->response->code = 302;
                     $this->response->status = 'redirect';
                     $this->response->message = Lang::get('validation.orbit.access.agreement');
-                    $this->response->data = Config::get('orbit.agreement.url') . $token->token_value;
+                    $this->response->data = sprintf(Config::get('orbit.agreement.url'), $token->token_value);
                 }
             }
         } catch (ACLForbiddenException $e) {
