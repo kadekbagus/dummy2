@@ -144,7 +144,7 @@ class SessionDatabase implements GenericInterface
     {
         $current    = $this->get($sessionId);
         $current->value[$key]       = $value;
-        $current->value['___dirty'] = true;
+        $current->value['__dirty'] = true;
 
         $this->dirty[$sessionId] = $current;
 
@@ -183,7 +183,7 @@ class SessionDatabase implements GenericInterface
         $current = $this->get($sessionId);
 
         unset($current->value[$key]);
-        $current->value['___dirty'] = true;
+        $current->value['__dirty'] = true;
 
         $this->dirty[$sessionId] = $current;
 
