@@ -114,6 +114,9 @@ class EventAPIController extends ControllerAPI
 
             Event::fire('orbit.event.postnewevent.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -142,9 +145,6 @@ class EventAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.event.postnewevent.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // save Event
             $newevent = new EventModel();
@@ -398,15 +398,15 @@ class EventAPIController extends ControllerAPI
 
             Event::fire('orbit.event.postupdateevent.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.event.postupdateevent.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedevent = EventModel::with('retailers', 'retailerCategories', 'promotions', 'news')->excludeDeleted()->where('event_id', $event_id)->first();
 
@@ -724,15 +724,15 @@ class EventAPIController extends ControllerAPI
 
             Event::fire('orbit.event.postdeleteevent.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.event.postdeleteevent.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deleteevent = EventModel::excludeDeleted()->where('event_id', $event_id)->first();
             $deleteevent->status = 'deleted';

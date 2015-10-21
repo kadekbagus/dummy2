@@ -107,6 +107,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -116,9 +119,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $customer = App::make('orbit.empty.user');
             $userId = $customer->user_id;
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $luckyDraw = App::make('orbit.empty.lucky_draw');
 
@@ -468,6 +468,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -477,9 +480,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $customer = App::make('orbit.empty.user');
             $userId = $customer->user_id;
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $luckyDraw = App::make('orbit.empty.lucky_draw');
 
@@ -784,6 +784,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             Event::fire('orbit.issuecoupon.postnewissuecoupon.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -793,9 +796,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $customer = App::make('orbit.empty.user');
             $userId = $customer->user_id;
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // Loop through tenants to get the amounts
             $totalAmount = 0.0;
@@ -1112,6 +1112,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             Event::fire('orbit.issuecoupon.postnewissuecoupon.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -1121,9 +1124,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             $customer = App::make('orbit.empty.user');
             $userId = $customer->user_id;
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             Event::fire('orbit.issuecoupon.postnewissuecoupon.before.save', array($this, $widget));
 

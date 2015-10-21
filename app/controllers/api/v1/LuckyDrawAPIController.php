@@ -628,15 +628,15 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postdeleteluckydraw.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.luckydraw.postdeleteluckydraw.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deleteluckydraw = LuckyDraw::excludeDeleted()->allowedForUser($user)->where('lucky_draw_id', $lucky_draw_id)->first();
             $deleteluckydraw->status = 'deleted';

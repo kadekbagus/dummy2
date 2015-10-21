@@ -138,6 +138,9 @@ class PromotionAPIController extends ControllerAPI
 
             Event::fire('orbit.promotion.postnewpromotion.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -167,9 +170,6 @@ class PromotionAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.promotion.postnewpromotion.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // save Promotion.
             $newpromotion = new Promotion();
@@ -490,15 +490,15 @@ class PromotionAPIController extends ControllerAPI
 
             Event::fire('orbit.promotion.postupdatepromotion.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.promotion.postupdatepromotion.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedpromotion = Promotion::with('promotionrule', 'retailers')->excludeDeleted()->allowedForUser($user)->where('promotion_id', $promotion_id)->first();
 
@@ -834,15 +834,15 @@ class PromotionAPIController extends ControllerAPI
 
             Event::fire('orbit.promotion.postdeletepromotion.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.promotion.postdeletepromotion.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deletepromotion = Promotion::excludeDeleted()->allowedForUser($user)->where('promotion_id', $promotion_id)->first();
             $deletepromotion->status = 'deleted';

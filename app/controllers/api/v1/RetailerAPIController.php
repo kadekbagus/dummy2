@@ -71,15 +71,15 @@ class RetailerAPIController extends ControllerAPI
 
             Event::fire('orbit.retailer.postdeleteretailer.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.retailer.postdeleteretailer.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // soft delete retailer.
             $deleteretailer = Retailer::excludeDeleted()->allowedForUser($user)->where('merchant_id', $retailer_id)->first();
@@ -355,15 +355,15 @@ class RetailerAPIController extends ControllerAPI
 
             Event::fire('orbit.retailer.postnewretailer.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.retailer.postnewretailer.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $roleRetailer = Role::where('role_name', 'retailer owner')->first();
             if (empty($roleRetailer)) {
@@ -653,15 +653,15 @@ class RetailerAPIController extends ControllerAPI
 
             Event::fire('orbit.retailer.postupdateretailer.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.retailer.postupdateretailer.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedretailer = Retailer::excludeDeleted()->allowedForUser($user)->where('merchant_id', $retailer_id)->first();
 

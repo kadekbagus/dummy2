@@ -218,14 +218,14 @@ class LoginAPIController extends ControllerAPI
                 )
             );
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email);
 
@@ -373,6 +373,9 @@ class LoginAPIController extends ControllerAPI
                 )
             );
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -389,9 +392,6 @@ class LoginAPIController extends ControllerAPI
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
             }
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // update the token status so it cannot be use again
             $token->status = 'deleted';
@@ -529,6 +529,9 @@ class LoginAPIController extends ControllerAPI
                 )
             );
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -545,9 +548,6 @@ class LoginAPIController extends ControllerAPI
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
             }
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // update the token status so it cannot be use again
             $token->status = 'deleted';
@@ -684,6 +684,9 @@ class LoginAPIController extends ControllerAPI
                 )
             );
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -699,9 +702,6 @@ class LoginAPIController extends ControllerAPI
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
             }
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // update the token status so it cannot be use again
             $token->status = 'deleted';

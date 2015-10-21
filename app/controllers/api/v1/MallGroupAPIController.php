@@ -152,15 +152,15 @@ class MallGroupAPIController extends ControllerAPI
 
             Event::fire('orbit.mallgroup.postnewmallgroup.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.mallgroup.postnewmallgroup.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $roleMerchant = Role::where('role_name', 'mall owner')->first();
             if (empty($roleMerchant)) {
@@ -944,15 +944,15 @@ class MallGroupAPIController extends ControllerAPI
 
             Event::fire('orbit.mallgroup.postupdatemallgroup.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.mallgroup.postupdatemallgroup.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedmallgroup = MallGroup::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
 
@@ -1293,15 +1293,15 @@ class MallGroupAPIController extends ControllerAPI
 
             Event::fire('orbit.mallgroup.postdeletemallgroup.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.mallgroup.postdeletemallgroup.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // soft delete merchant.
             $deletemallgroup = MallGroup::excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();

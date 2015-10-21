@@ -90,6 +90,9 @@ class ObjectAPIController extends ControllerAPI
 
             Event::fire('orbit.object.postnewobject.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -97,9 +100,6 @@ class ObjectAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.object.postnewobject.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // save Object.
             $newobject = new Object();
@@ -303,15 +303,15 @@ class ObjectAPIController extends ControllerAPI
 
             Event::fire('orbit.object.postupdateobject.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.object.postupdateobject.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedobject = Object::excludeDeleted()->where('object_id', $object_id)->first();
 
@@ -519,15 +519,15 @@ class ObjectAPIController extends ControllerAPI
 
             Event::fire('orbit.object.postdeleteobject.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.object.postdeleteobject.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deleteobject = Object::excludeDeleted()->where('object_id', $object_id)->first();
             $deleteobject->status = 'deleted';

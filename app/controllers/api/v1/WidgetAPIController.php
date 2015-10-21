@@ -81,14 +81,14 @@ class WidgetAPIController extends ControllerAPI
 
             Event::fire('orbit.widget.postnewwidget.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             foreach ($widgetbatch as $key => $value) {
                 $widgetType = $value['widget_type'];
@@ -353,14 +353,14 @@ class WidgetAPIController extends ControllerAPI
 
             Event::fire('orbit.widget.postnewwidget.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             foreach ($widgetbatch as $key => $value) {
                 $widgetId = $value['widget_id'];
@@ -645,15 +645,15 @@ class WidgetAPIController extends ControllerAPI
 
             Event::fire('orbit.widget.postdeletewiget.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.widget.postdeletewiget.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $widget = App::make('orbit.empty.widget');
             $widget->status = 'deleted';
@@ -826,6 +826,9 @@ class WidgetAPIController extends ControllerAPI
 
             Event::fire('orbit.widget.postdeletewigetimage.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -833,9 +836,6 @@ class WidgetAPIController extends ControllerAPI
             }
             Event::fire('orbit.widget.postdeletewigetimage.after.validation', array($this, $validator));
 
-            // Begin database transaction
-            $this->beginTransaction();
-            
             $imgs = Media::where('object_name', 'widget')->where('object_id', $widgetId)->get();
             // dd($img);
             foreach ($imgs as $img) {

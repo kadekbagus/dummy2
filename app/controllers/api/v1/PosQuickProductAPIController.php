@@ -88,15 +88,15 @@ class PosQuickProductAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postnewposquickproduct.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postnewposquickproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $posQuickProduct = PosQuickProduct::excludeDeleted()
                                               ->where('product_id', $productId)
@@ -295,15 +295,15 @@ class PosQuickProductAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postupdateposquickproduct.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postupdateposquickproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $posQuickProduct = PosQuickProduct::excludeDeleted()
                                               ->where('product_id', $productId)
@@ -502,15 +502,15 @@ class PosQuickProductAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postdeleteposquickproduct.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postdeleteposquickproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $posQuickProduct = PosQuickProduct::excludeDeleted()
                                               ->where('product_id', $productId)
