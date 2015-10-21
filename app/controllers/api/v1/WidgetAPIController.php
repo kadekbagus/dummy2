@@ -1172,7 +1172,6 @@ class WidgetAPIController extends ControllerAPI
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
             $merchant = Mall::excludeDeleted()
                         ->allowedForUser($user)
-                        ->isMall()
                         ->where('merchant_id', $value)
                         ->first();
 

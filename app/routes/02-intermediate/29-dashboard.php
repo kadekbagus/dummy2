@@ -13,9 +13,6 @@ Route::get('/app/v1/dashboard/top-product-attribute', "IntermediateAuthControlle
 // Get Dashboard top product family
 Route::get('/app/v1/dashboard/top-product-family', "IntermediateAuthController@Dashboard_getTopProductFamily");
 
-// Get Dashboard top widget click
-Route::get('/app/v1/dashboard/top-widget', "IntermediateAuthController@Dashboard_getTopWidgetClick");
-
 // Get Dashboard user login by date
 Route::get('/app/v1/dashboard/user-login-by-date', "IntermediateAuthController@Dashboard_getUserLoginByDate");
 
@@ -39,6 +36,9 @@ Route::get('/app/v1/dashboard/general-customer-view', "IntermediateAuthControlle
 
 // Get Dashboard general customer view
 Route::get('/app/v1/dashboard/top-customer-view', "IntermediateAuthController@Dashboard_getTopCustomerView");
+
+// Get Dashboard top widget click
+Route::get('/app/v1/dashboard/top-widget', "IntermediateAuthController@Dashboard_getTopWidgetClick");
 
 // Get Dashboard coupon issued vs redeemed
 Route::get('/app/v1/dashboard/coupon-issued-vs-redeemed', "IntermediateAuthController@Dashboard_getCouponIssuedVSRedeemed");

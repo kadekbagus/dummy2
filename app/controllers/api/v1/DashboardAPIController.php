@@ -14,6 +14,12 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class DashboardAPIController extends ControllerAPI
 {
+    /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
 
     /**
      * GET - TOP Tenant , Default data is 14 days before today
@@ -3991,6 +3997,23 @@ class DashboardAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        $user = $this->api->user;
+        // Check the existance of mall id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user){
+            $mall = Mall::excludeDeleted()
+                        ->allowedForUser($user)
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
             $merchant = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
@@ -4019,5 +4042,3 @@ class DashboardAPIController extends ControllerAPI
         
     }
 }
-
-

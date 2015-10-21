@@ -579,6 +579,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return void
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Irianto Pratama <irianto@dominopos.com>
      */
     public function postClickWidgetActivity()
     {
@@ -593,6 +594,22 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
 
             $widget_id = OrbitInput::post('widgetdata');
+
+            $validator = Validator::make(
+                array(
+                    'widgetdata'             => $widget_id,
+                ),
+                array(
+                    'widgetdata'             => 'required',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $widget = Widget::active()->where('widget_id', $widget_id)->first();
 
             $activityNotes = sprintf('Widget Click. Widget Id : %s', $widget_id);
@@ -601,22 +618,34 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityNameLong('Widget Click ' . ucwords(str_replace('_', ' ', $widget->widget_type)))
                 ->setObject($widget)
                 ->setModuleName('Widget')
+                ->setLocation($retailer)
                 ->setNotes($activityNotes)
                 ->responseOK()
                 ->save();
-        } catch (Exception $e) {
-            $activityNotes = sprintf('Widget Click Failed. Widget Id : %s', $widget_id);
-            $activity->setUser($user)
-                ->setActivityName('widget_click')
-                ->setActivityNameLong('Widget Click Failed')
-                ->setObject(null)
-                ->setModuleName('Widget')
-                ->setNotes($e->getMessage())
-                ->responseFailed()
-                ->save();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
 
-            return $this->redirectIfNotLoggedIn($e);
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = $e->getLine();
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getFile();
+
+            $this->rollback();
         }
+
+        return $this->render();
     }
 
     /**
@@ -827,6 +856,21 @@ class MobileCIAPIController extends ControllerAPI
                 return true;
             }
         );
+
+        // Check the existance of widget id
+        Validator::extend('orbit.empty.widget', function ($attribute, $value, $parameters) {
+            $widget = Widget::excludeDeleted()
+                        ->where('widget_id', $value)
+                        ->first();
+
+            if (empty($widget)) {
+                return FALSE;
+            }
+
+            \App::instance('orbit.empty.widget', $widget);
+
+            return TRUE;
+        });
     }
 
     /**

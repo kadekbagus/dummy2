@@ -284,10 +284,6 @@ class Activity extends Eloquent
     public function setLocation($location)
     {
         if (is_object($location)) {
-            if (TRUE === ($location instanceof Retailer)) {
-                $location->parent;
-            }
-
             $this->location_id = $location->merchant_id;
             $this->location_name = $location->name;
             $this->metadata_location = $location->toJSON();
@@ -539,6 +535,14 @@ class Activity extends Eloquent
     }
 
     /**
+     * An activity could belongs to an Widget
+     */
+    public function widget()
+    {
+        return $this->belongsToObject('Widget', 'object_id', 'widget_id');
+    }
+
+    /**
      * Activity has many children.
      *
      */
@@ -608,17 +612,15 @@ class Activity extends Eloquent
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @param Illuminate\Database\Query\Builder $builder
-     * @param array $merchantIds
      * @return Illuminate\Database\Query\Builder
      */
-    public function scopeMerchantIds($builder, array $merchantIds)
+    public function scopeMerchantIds($builder)
     {
         // need to rename this so it does not conflict if used with scopeJoinRetailer
         return $builder->select('activities.*')
-                       ->join('merchants as ' . DB::getTablePrefix() .  'retailers', 'retailers.merchant_id', '=', 'activities.location_id')
-                       ->whereIn('retailers.parent_id', $merchantIds)
-                       ->where('retailers.status', 'active')
-                       ->where('retailers.object_type', 'retailer');
+                       ->join('merchants as ' . DB::getTablePrefix() .  'malls', 'malls.merchant_id', '=', 'activities.location_id')
+                       ->where('malls.status', 'active')
+                       ->where('malls.object_type', 'mall');
     }
 
     /**
@@ -738,5 +740,43 @@ class Activity extends Eloquent
     protected static function getRequestUri()
     {
         return isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'Activity: Unknown request Uri';
+    }
+
+    /**
+     * scope to consider activity from users
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $builder
+     * @param array $merchantIds
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public function scopeConsiderCustomer($builder)
+    {
+        $builder->whereNotIn('group', array('pos', 'portal'));
+
+        if (! empty($merchantIds)) {
+            $this->scopeMerchantIds($builder);
+        }
+
+        return $builder;
+    }
+
+    /**
+     * Scope to filter based on merchant ids in widget click
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $builder
+     * @param array $merchantIds
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeMerchantIds_widget_click($builder, array $merchantIds)
+    {
+        // need to rename this so it does not conflict if used with scopeJoinRetailer
+        return $builder->select('activities.*')
+                       ->join('widgets', 'widgets.widget_id', '=', 'activities.object_id' )
+                       ->join('merchants as ' . DB::getTablePrefix() .  'mall', 'mall.parent_id', '=', 'widgets.merchant_id')
+                       ->whereIn('mall.merchant_id', $merchantIds)
+                       ->where('mall.status', 'active')
+                       ->where('mall.object_type', 'mall');
     }
 }

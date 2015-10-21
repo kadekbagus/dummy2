@@ -12,9 +12,6 @@ Route::get('/api/v1/dashboard/top-product-attribute', "DashboardAPIController@ge
 // Get Dashboard top product family
 Route::get('/api/v1/dashboard/top-product-family', "DashboardAPIController@getTopProductFamily");
 
-// Get Dashboard top widget clicked
-Route::get('/api/v1/dashboard/top-widget', "DashboardAPIController@getTopWidgetClick");
-
 // Get Dashboard user login by date
 Route::get('/api/v1/dashboard/user-login-by-date', "DashboardAPIController@getUserLoginByDate");
 
@@ -45,6 +42,9 @@ Route::get('/api/v1/dashboard/general-customer-view', "DashboardAPIController@ge
 
 // Get Dashboard general customer view
 Route::get('/api/v1/dashboard/top-customer-view', "DashboardAPIController@getTopCustomerView");
+
+// Get Dashboard top widget clicked
+Route::get('/api/v1/dashboard/top-widget', "DashboardAPIController@getTopWidgetClick");
 
 // Get Dashboard coupon issued vs redeemed
 Route::get('/api/v1/dashboard/coupon-issued-vs-redeemed', "DashboardAPIController@getCouponIssuedVSRedeemed");
