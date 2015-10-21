@@ -34,6 +34,7 @@ class TakashimayaDatabaseSeeder extends Seeder
         $this->call('TakashimayaSettingTableSeeder');
         $this->call('TakashimayaTenantSeeder'); // done - cs?
         $this->call('TakashimayaBankSeeder'); // done - limited number of banks
+        $this->call('TakashimayaFloorSeeder');
 
         DB::connection()->getPdo()->commit();
     }

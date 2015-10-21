@@ -4,6 +4,7 @@
  * the 'Takashimaya Shopping Center'.
  *
  * @author Rio Astamal <me@rioastamal.net>
+ * @author Tian <tian@dominopos.com>
  */
 class TakashimayaCategorySeeder extends Seeder
 {
@@ -15,57 +16,159 @@ class TakashimayaCategorySeeder extends Seeder
     public function run()
     {
         $sources = <<<CATEGORIES
-Beauty & Personal Care
-Books
-Children Related & Education
-Department Store
-Electronics & Gadgets
+ATM
+Chinese Casual Dining
+Confectionery
+Cosmetics & Skincare
 Fashion & Accessories
-Food & Beverages
-Gifts
-Health
-Hobbies & Music
-Home Related
-Jewellery
+Gifts/Hobbies/Toys
+Hair & Beauty
+Japanese Casual Dining
+Korean Cuisine
+Pharmacy, Health & Toiletries
+Shoes Repair & Key Services
+Sports Apparel, Equipment & Accessories
+Western Casual Dining
+Cafe
+Cosmetics, Skincare & Bodycare
+Fashion, Accessories & Shoes
+Gifts/Hobbies/Toys
+Optical Services
+Gourment Confectionery
+International Fashion & Accessories
+International Jewellery, Watches & Writing Instruments
+Leather Goods
+Fine Jewellery & Watches
+Fragrance & Body Care
+Gourment Confectionery
+Hairdressing & Beauty Salon
+International Fashion, Accessories & Shoes
+Leather Goods & Shoes
+Cafe & Bakery
+Fashion Apparel, Accessories & Shoes
+Fine Jewellery & Watches
+Gourment Confectionery
+Money Changer
+Optical Services
 Services
-Sports Related
-Watches & Optics
+Sports
+Travel & Lifestyle
+Chinese Cuisine
+Japanese Cuisine
+Western Cuisine
+Appliances
+Cosmetics, Skincare & Bodycare
+Educational Toys & Enrichment Centres
+Fashionable & Accessories
+Hair & Beauty
+Hairdressing & Beauty Salon
+Home Decorative
+Leather Goods & Shoes
+Restaurants
 CATEGORIES;
 
         $sources_zh = <<<CATEGORIES
-美容及个人护理
-书籍
-相关儿童与教育
-百货商店
-电子及配件
-时装及配饰
-食品和饮料
-礼品
-健康
-爱好与音乐
-家庭关系
-珠宝
-服务
-体育相关
-钟表及光学
+ATM
+Chinese Casual Dining
+Confectionery
+Cosmetics & Skincare
+Fashion & Accessories
+Gifts/Hobbies/Toys
+Hair & Beauty
+Japanese Casual Dining
+Korean Cuisine
+Pharmacy, Health & Toiletries
+Shoes Repair & Key Services
+Sports Apparel, Equipment & Accessories
+Western Casual Dining
+Cafe
+Cosmetics, Skincare & Bodycare
+Fashion, Accessories & Shoes
+Gifts/Hobbies/Toys
+Optical Services
+Gourment Confectionery
+International Fashion & Accessories
+International Jewellery, Watches & Writing Instruments
+Leather Goods
+Fine Jewellery & Watches
+Fragrance & Body Care
+Gourment Confectionery
+Hairdressing & Beauty Salon
+International Fashion, Accessories & Shoes
+Leather Goods & Shoes
+Cafe & Bakery
+Fashion Apparel, Accessories & Shoes
+Fine Jewellery & Watches
+Gourment Confectionery
+Money Changer
+Optical Services
+Services
+Sports
+Travel & Lifestyle
+Chinese Cuisine
+Japanese Cuisine
+Western Cuisine
+Appliances
+Cosmetics, Skincare & Bodycare
+Educational Toys & Enrichment Centres
+Fashionable & Accessories
+Hair & Beauty
+Hairdressing & Beauty Salon
+Home Decorative
+Leather Goods & Shoes
+Restaurants
 CATEGORIES;
 
         $sources_ja = <<<CATEGORIES
-ビューティー＆パーソナルケア
-図書
-子供関連・教育
-デパート
-エレクトロニクス＆ガジェット
-ファッション＆アクセサリー
-食品＆飲料
-ギフト
-健康
-趣味・音楽
-ホーム関連
-ジュエリー
-サービス
-スポーツ関連
-時計＆オプティクス
+ATM
+Chinese Casual Dining
+Confectionery
+Cosmetics & Skincare
+Fashion & Accessories
+Gifts/Hobbies/Toys
+Hair & Beauty
+Japanese Casual Dining
+Korean Cuisine
+Pharmacy, Health & Toiletries
+Shoes Repair & Key Services
+Sports Apparel, Equipment & Accessories
+Western Casual Dining
+Cafe
+Cosmetics, Skincare & Bodycare
+Fashion, Accessories & Shoes
+Gifts/Hobbies/Toys
+Optical Services
+Gourment Confectionery
+International Fashion & Accessories
+International Jewellery, Watches & Writing Instruments
+Leather Goods
+Fine Jewellery & Watches
+Fragrance & Body Care
+Gourment Confectionery
+Hairdressing & Beauty Salon
+International Fashion, Accessories & Shoes
+Leather Goods & Shoes
+Cafe & Bakery
+Fashion Apparel, Accessories & Shoes
+Fine Jewellery & Watches
+Gourment Confectionery
+Money Changer
+Optical Services
+Services
+Sports
+Travel & Lifestyle
+Chinese Cuisine
+Japanese Cuisine
+Western Cuisine
+Appliances
+Cosmetics, Skincare & Bodycare
+Educational Toys & Enrichment Centres
+Fashionable & Accessories
+Hair & Beauty
+Hairdressing & Beauty Salon
+Home Decorative
+Leather Goods & Shoes
+Restaurants
 CATEGORIES;
 
 
