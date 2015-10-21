@@ -1305,18 +1305,16 @@ class ActivityAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $start_date = OrbitInput::get('start_date');
-            $end_date = OrbitInput::get('end_date');
+            $active_minutes = OrbitInput::get('active_minutes');
 
             $validator = Validator::make(
                 array(
                     'merchant_ids'  => OrbitInput::get('merchant_ids'),
-                    'start_date'    => $start_date,
-                    'end_date'      => $end_date,
+                    'active_minutes'    => $active_minutes,
                 ),
                 array(
                     'merchant_ids'  => 'orbit.check.merchants',
-                    'start_date'    => 'required|date_format:Y-m-d H:i:s',
+                    'active_minutes' => 'required|integer'
                 )
             );
 
@@ -1366,9 +1364,9 @@ class ActivityAPIController extends ControllerAPI
                 from
                     {$tablePrefix}activities a
                 where
+                    a.created_at >= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MINUTE)
                     {$filterLocationIds}
-                    and a.created_at >= ?
-            ", array_merge([$start_date], $locationIds));
+            ", array_merge([-1 * (int)$active_minutes], $locationIds));
 
             $users_count = 0;
             foreach ($activities as $activity) {
@@ -1376,8 +1374,7 @@ class ActivityAPIController extends ControllerAPI
             }
 
             $this->response->data = [
-                'start_date' => $start_date,
-                'end_date' => $end_date,
+                'active_minutes' => (int)$active_minutes,
                 'connected_now' => $users_count,
             ];
         } catch (ACLForbiddenException $e) {
