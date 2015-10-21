@@ -3989,12 +3989,6 @@ class DashboardAPIController extends ControllerAPI
         return $arr;
     }
 
-
-
-
-
-
-
     protected function registerCustomValidation()
     {
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
@@ -4024,8 +4018,6 @@ class DashboardAPIController extends ControllerAPI
         });
         
     }
-
-
 }
 
 
