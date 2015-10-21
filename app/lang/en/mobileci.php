@@ -373,7 +373,7 @@ return array(
         ),
         'search' => array(
             'title'   => 'Looking for a tenant?',
-            'content' => 'Search for a tenant by entering tenant keywords such as name, categories (e.g. health, beauty, food), location (e.g. UG, L1, L2) or description.'
+            'content' => 'Search for a tenant by entering tenant keywords such as name, categories, location or description.'
         ),
         'directory' => array(
             'title'   => 'Tenant Directory',
