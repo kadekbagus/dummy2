@@ -77,9 +77,9 @@ class ConsumerPrinterController extends DataPrinterController
         OrbitInput::get('merchant_id', function($merchantIds) use ($users, $listOfMerchantIds) {
             // $users->merchantIds($merchantIds);
             $listOfMerchantIds = (array)$merchantIds;
-            // dd($listOfMerchantIds);
+            $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+            $users->whereIn('user_acquisitions.acquirer_id', $listOfMerchantIds);
         });
-        // dd($listOfMerchantIds);
 
         // @To do: Replace this stupid hacks
         if (! $user->isSuperAdmin()) {
@@ -307,7 +307,7 @@ class ConsumerPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customer', $totalRec, '', '', '', '','','','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'Orbit Join Date', 'Membership Join Date', 'Membership Number', 'Obtained Coupon', 'Redeemed Coupon', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'Orbit Join Date', 'Obtained Coupon', 'Redeemed Coupon', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
@@ -323,9 +323,9 @@ class ConsumerPrinterController extends DataPrinterController
                     $avg_annual_income = $this->printAverageAnnualIncome($row);
                     $avg_monthly_spent = $this->printAverageShopping($row);
 
-                    printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s, %s,\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\"\n", 
+                    printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\"\n", 
                         '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $row->created_at, 
-                        $row->membership_since, ($row->membership_number), $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status));
+                        $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status));
                 }   
                 break;
 
