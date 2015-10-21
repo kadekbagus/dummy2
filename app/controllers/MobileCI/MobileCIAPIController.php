@@ -1696,7 +1696,8 @@ class MobileCIAPIController extends ControllerAPI
 
             // the purpose of this code is for getting image of news and promotions
             // because it's not possible using with relation like above code
-
+            $news = null;
+            $promotions = null;
             $array_news_id = array();
             $array_promotions_id = array();
             foreach ($tenant->news->toArray() as $key => $value) {
