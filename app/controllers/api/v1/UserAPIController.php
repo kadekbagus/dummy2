@@ -1460,7 +1460,6 @@ class UserAPIController extends ControllerAPI
             $users = User::Consumers()
                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                        ->join('activities', 'activities.user_id', '=', 'users.user_id')
                         ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
                         ->excludeDeleted('users')
                         ->groupBy('users.user_id');
@@ -1485,9 +1484,17 @@ class UserAPIController extends ControllerAPI
                 $users->select('users.*');
             }
 
+            // join to user_acquisitions if the request come from mall portal
+            $from_cs = OrbitInput::get('from_cs');
+            if(empty($from_cs)) {
+                $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+                OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
+                    $users->whereIn('user_acquisitions.acquirer_id', $merchantIds);
+                });
+            }
+
             // Filter by merchant ids
             OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                $users->whereIn('activities.location_id', $merchantIds);
                 // $listOfMerchantIds = (array)$merchantIds;
             });
 

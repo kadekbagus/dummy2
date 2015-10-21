@@ -3,7 +3,6 @@
 <div id="orbit-push-notification-wrapper"></div>
 
 <script>
-    var orbitIsViewing = false;
 
     $(document).ready(function() {
         var pushNotificationDelay = 1000 * {{ Config::get('orbit.shop.poll_interval', 5) }}
@@ -20,7 +19,7 @@
                 }
             }).done(function(resp) {
                 // Succeed
-                console.log(resp.data);
+                // console.log(resp.data);
             }).fail(function(resp) {
                 // Fail
             }).always(function(resp) {
@@ -31,7 +30,7 @@
         // Callback function to get the notification
         var getNotif = function() {
             // No need to poll if one is viewing
-            console.log(orbitIsViewing);
+            // console.log(orbitIsViewing);
             if (orbitIsViewing) {
                 return;
             }
@@ -42,7 +41,7 @@
                 data: {}
             }).done(function(resp) {
                 // Succeed
-                console.log(resp.data.records);
+                // console.log(resp.data.records);
 
                 if (resp.data.records) {
                     var notif = resp.data.records[0];
@@ -55,7 +54,7 @@
 
                         // Fire event when the pop up closed
                         $('#orbit-push-modal-' + notif.inbox_id).on('hidden.bs.modal', function(e) {
-                            console.log("closed");
+                            // console.log("closed");
 
                             // Mark this alert as read
                             readNotif(notif.inbox_id);

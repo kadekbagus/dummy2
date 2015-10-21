@@ -60,6 +60,7 @@ use Orbit\Helper\Security\Encrypter;
 use Redirect;
 use Cookie;
 use \Inbox;
+use \News;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -300,7 +301,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
                 if ($widget->widget_type == 'news') {
                     $widget_singles->news = $widget;
@@ -317,7 +318,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
                 if ($widget->widget_type == 'coupon') {
                     $widget_singles->coupon = $widget;
@@ -334,7 +335,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
                 if ($widget->widget_type == 'lucky_draw') {
                     $widget_singles->luckydraw = $widget;
@@ -351,7 +352,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
             }
 
@@ -434,7 +435,7 @@ class MobileCIAPIController extends ControllerAPI
         $languages = [];
 
         $internet_info = 'no';
-
+        $activation_popup = 'no';
         $viewData = [
             'orbitTime' => time(),
             'orbitOriginName' => 'orbit_origin',
@@ -472,6 +473,8 @@ class MobileCIAPIController extends ControllerAPI
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
+            $activation_popup = ($loggedUser->status === 'pending') ? 'yes' : 'no';
+
             // Captive Portal Apple CNA Window
             // -------------------------------
             // Payload login is set and the user is logged in, no need to ask user log in again
@@ -481,14 +484,14 @@ class MobileCIAPIController extends ControllerAPI
                 Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
                 Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
 
-                return Redirect::to($landing_url . '?internet_info=' . $internet_info );
+                return Redirect::to($this->addParamsToUrl($landing_url, $internet_info, $activation_popup));
             }
 
             $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url . '?internet_info=' . $internet_info,
+                'landing_url' => $this->addParamsToUrl($landing_url, $internet_info, $activation_popup),
                 'display_name' => $display_name,
                 'languages' => $languages,
             ));
@@ -501,7 +504,7 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $landing_url . '?internet_info=' . $internet_info,
+                'landing_url' => $this->addParamsToUrl($landing_url, $internet_info, $activation_popup),
                 'display_name' => $display_name,
                 'languages' => $languages
             ));
@@ -1141,6 +1144,17 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * @param string $landing_url
+     * @param string $internet_info
+     * @param string $activation_popup
+     * @return string
+     */
+    protected function addParamsToUrl($landing_url, $internet_info = 'no', $activation_popup = 'no')
+    {
+        return $landing_url . '?internet_info=' . $internet_info . '&activation_popup=' . $activation_popup;
+    }
+
+    /**
      * @return string
      */
     protected function getPayloadEncryptionKey()
@@ -1294,7 +1308,6 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
 
-
             $categories = Category::active('categories')
                 ->where('category_level', 1)
                 ->where('merchant_id', $retailer->merchant_id);
@@ -1344,6 +1357,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $this->maybeJoinWithTranslationsTable($tenants, $alternate_language);
 
+            $notfound = FALSE;
             // Filter product by name pattern
             OrbitInput::get(
                 'keyword',
@@ -1368,8 +1382,15 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'cid',
-                function ($cid) use ($tenants) {
+                function ($cid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($cid)) {
+                        $category = \Category::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('category_id', $cid)
+                            ->first();
+                        if (!is_object($category)) {
+                            $notfound = TRUE;
+                        }
                         $tenants->where(
                             function ($q) use ($cid) {
                                 $q->whereHas('categories', function ($q2) use ($cid) {
@@ -1383,8 +1404,15 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'promotion_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
+                        $news = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'promotion')
+                            ->where('news_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
                         $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
                             $q->where('news_id', $pid);
                         })->whereHas('news', function($q2) {
@@ -1398,8 +1426,15 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'news_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
+                        $news = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'news')
+                            ->where('news_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
                         $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
                             $q->where('news_id', $pid);
                         })->whereHas('news', function($q2) {
@@ -1412,8 +1447,15 @@ class MobileCIAPIController extends ControllerAPI
 
             OrbitInput::get(
                 'event_id',
-                function ($pid) use ($tenants) {
+                function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
+                        $event = \EventModel::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('event_id', $pid)
+                            ->first();
+                        if (!is_object($event)) {
+                            $notfound = TRUE;
+                        }
                         $retailers = \EventRetailer::whereHas('retailer', function($q) use($pid) {
                             $q->where('event_id', $pid);
                         })->get()->lists('retailer_id');
@@ -1421,6 +1463,10 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
             );
+
+            if ($notfound) {
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
 
             OrbitInput::get(
                 'fid',
@@ -1647,6 +1693,60 @@ class MobileCIAPIController extends ControllerAPI
             $this->maybeJoinWithTranslationsTable($tenant, $alternate_language);
             $tenant = $tenant->first();
 
+
+            // the purpose of this code is for getting image of news and promotions
+            // because it's not possible using with relation like above code
+
+            $array_news_id = array();
+            $array_promotions_id = array();
+            foreach ($tenant->news->toArray() as $key => $value) {
+                $array_news_id[] = $value['news_id'];
+            }
+
+            foreach ($tenant->news_promotions->toArray() as $key => $value) {
+                $array_promotions_id[] = $value['news_id'];
+            }
+
+            $id_tenant = $product_id;
+
+            if ( !empty($id_tenant) && !empty($alternate_language) && !empty($array_news_id) ) {
+                $news = News::excludeDeleted('news')
+                             ->leftJoin('news_merchant', function($join){
+                                 $join->on('news_merchant.news_id', '=', 'news.news_id');
+                               })
+                             ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                             ->leftJoin('media', function($join){
+                                      $join->on('media.object_id', '=', 'news_translations.news_translation_id');
+                                      $join->where('media.object_name', '=', 'news_translation');
+                                      $join->where('media.media_name_long', '=', 'news_translation_image_cropped_default');
+                                 })
+                            ->whereIn('news.news_id',$array_news_id)
+                            ->where('news_merchant.merchant_id', '=', $id_tenant)
+                            ->where('news.object_type', '=', 'news')
+                            ->where('news_translations.merchant_language_id','=', $alternate_language->merchant_language_id)
+                            ->groupBy('news.news_id')
+                            ->get();
+            }
+
+            if ( !empty($id_tenant) && !empty($alternate_language) && !empty($array_promotions_id) ) {
+                $promotions = News::excludeDeleted('news')
+                             ->leftJoin('news_merchant', function($join){
+                                 $join->on('news_merchant.news_id', '=', 'news.news_id');
+                               })
+                             ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                             ->leftJoin('media', function($join){
+                                      $join->on('media.object_id', '=', 'news_translations.news_translation_id');
+                                      $join->where('media.object_name', '=', 'news_translation');
+                                      $join->where('media.media_name_long', '=', 'news_translation_image_cropped_default');
+                                 })
+                            ->whereIn('news.news_id',$array_promotions_id)
+                            ->where('news_merchant.merchant_id', '=', $id_tenant)
+                            ->where('news.object_type', '=', 'promotion')
+                            ->where('news_translations.merchant_language_id','=', $alternate_language->merchant_language_id)
+                            ->groupBy('news.news_id')
+                            ->get();
+            }
+
             if (empty($tenant)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
                 return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
@@ -1726,6 +1826,8 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'tenant' => $tenant,
                 'languages' => $languages,
+                'news' => $news,
+                'promotions' => $promotions,
                 'box_url' => $box_url));
 
         } catch (Exception $e) {
@@ -1765,6 +1867,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
             $luckydraw = LuckyDraw::active()->where('mall_id', $retailer->merchant_id)->first();
+
+            $languages = $this->getListLanguages($retailer);
 
             if (empty($luckydraw)) {
                 return View::make('mobile-ci.luckydraw', [
@@ -1853,6 +1957,7 @@ class MobileCIAPIController extends ControllerAPI
                                 'current_page'  => $currentPage,
                                 'per_page'      => $take,
                                 'servertime'    => $servertime,
+                                'languages'     => $languages,
             ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
@@ -2148,7 +2253,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->wherehas('tenant', function($q){
                     $q->where('merchants.status', 'active');
                 })
-                ->where('promotion_id', $coupon_id)->get();   
+                ->where('promotion_id', $coupon_id)->get();
 
             // -- START hack
             // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
@@ -2159,12 +2264,13 @@ class MobileCIAPIController extends ControllerAPI
 
             foreach ($tenants as $tenant) {
                 $cso_flag = 0;
-                
+
                 if (count($tenant->tenant->categories) > 0) { // check if tenant has category
                     foreach ($tenant->tenant->categories as $category) {
                         if ($category->category_name !== 'Customer Service') {
-                            $cso_exists = TRUE;
                             $cso_flag = 1;
+                        } else {
+                            $cso_exists = TRUE;
                         }
                     }
                     if($cso_flag === 1) {
@@ -2855,7 +2961,7 @@ class MobileCIAPIController extends ControllerAPI
         $payload = $_POST['payload_login'];
 
         // Decrypt the payload
-        $key = $this->getPayloadEncryptionKey();
+        $key = md5('--orbit-mall--');
         $payload = (new Encrypter($key))->decrypt($payload);
 
         // The data is in url encoded

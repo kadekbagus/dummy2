@@ -33,6 +33,7 @@ return array(
         'promotions'         => '促销活动',
         'news'               => '信息',
         'membership'         => '会员',
+        'orbit_tour'         => 'ORBIT巡视',
     ),
 
     'widgets' => array(
@@ -109,6 +110,8 @@ return array(
         'check_out_our'          => '看看我们',
         'do_not_display'         => '不要再显示此消息',
         'and'                    => '与',
+
+        'message_user_activation' => 'Please activate your account',
     ),
 
     //tenant catalogue
@@ -196,11 +199,11 @@ return array(
         'or_want_to_follow_the_lucky_draw' => '还是想跟着抽奖?',
         'open_your_email_and_verify_now'   => '打开你的邮件，现在确认!!',
         'validity'                         => '真实性',
-    ), 
+    ),
 
     'promotion_list' => array(
         'no_promo'       => '今天没有促销',
-        'product_label'  => '积',                                
+        'product_label'  => '积',
         'category_label' => '类型',
     ),
 
@@ -315,9 +318,9 @@ return array(
         'error'            => '失误',
         'new_password'     => 'New Password',
         'fill_password'    => 'Please Fill Password (5-20 character)',
-        'confirm_password' => 'Confirm Password',        
-    ), 
-        
+        'confirm_password' => 'Confirm Password',
+    ),
+
     'lucky_draw'  => array(
         'hello'                     => '您好',
         'goodluck'                  => '祝您好运！',
@@ -330,7 +333,7 @@ return array(
         'lucky_draw_info_5'         => '抽奖号码。您会看全号码',
         'lucky_draw'                => '抽奖。',
         'close'                     => '关闭。',
-        
+
         'no_ongoing_lucky_draws'    => '目前没有抽奖事件。',
         'winner_number_will_appear' => '在购物场里赢家号码就出现。',
         'winning_number'            => '中奖号码',
@@ -347,7 +350,7 @@ return array(
         'of'                        => '的',
         'prev'                      => '上一页',
         'next'                      => '下一个',
-        
+
         'lucky_draw_total_info_1'   => '您的余额',
         'lucky_draw_total_info_2'   => '抽奖号码。您拥有',
         'lucky_draw_total_info_3'   => '图片下载，',
@@ -355,6 +358,53 @@ return array(
         'lucky_draw_total_info_5'   => '抽奖号码。它通过高排序，以最低的数字。',
         'lucky_draw_total_info_6'   => '您下载马上自动开始，如不下载，请点击下面按键。',
         'download_image'            => '下载图片',
+    ),
+
+    'tour' => array(
+        'home' => array(
+            'title'   => '主页',
+            'content' => '这里您会翻看我们的上下文菜单任何事件在我们的购物场和店铺<br/><br/> <i>点击这个按键直接回去主页从任何页面在Orbit</i>'
+        ),
+        'back' => array(
+            'title'   => '回',
+            'content' => '点击后退按钮返回到您访问的前一页'
+        ),
+        'search' => array(
+            'title'   => '搜索店铺',
+            'content' => '我们帮您找得到！搜索店铺收入店铺关键字若， 店名， 分类 (若，保健，美妆，食物) 位置 (若。UG, L1, L2)或描述'
+        ),
+        'directory' => array(
+            'title'   => '店铺名单',
+            'content' => '接触我们店铺名单和知店铺位置从您手掌上'
+        ),
+        'setting' => array(
+            'title'   => '设定',
+            'content' => '检查您的购物场会员，改语言设定或Orbit软件推出'
+        ),
+        'news' => array(
+            'title'   => '消息',
+            'content' => '想知道我们最新的信息？看看我们的信息单子'
+        ),
+        'promotion' => array(
+            'title'   => '促销',
+            'content' => '查我们省伟大钱交易促销'
+        ),
+        'coupon' => array(
+            'title'   => '我的优惠券',
+            'content' => '看您取得购物优惠券单子。使用优惠券'
+        ),
+        'end' => array(
+            'title'   => '',
+            'content' => '您会看这个巡视任何事件，点"Orbit巡视" 在设定',
+            'check'   => '不要再显示此消息',
+            'button'  => '巡视完'
+        ),
+        'modal' => array(
+            'title'        => '',
+            'content'      => '您好，Orbit欢迎您<br/><br/>我们想显示任何Orbit使用<br/><br/><b>您想开始巡视？</b>',
+            'end_button'   => '以后',
+            'start_button' => '是'
+        ),
     ),
 
 );

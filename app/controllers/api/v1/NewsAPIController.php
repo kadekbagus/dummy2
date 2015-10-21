@@ -107,8 +107,8 @@ class NewsAPIController extends ControllerAPI
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'begin_date'          => 'required|date',
-                    'end_date'            => 'required|date',                    
+                    'begin_date'          => 'required|date|orbit.empty.hour_format',
+                    'end_date'            => 'required|date|orbit.empty.hour_format',
                     'id_language_default' => 'required|orbit.empty.language_default',
                 )
             );
@@ -400,7 +400,7 @@ class NewsAPIController extends ControllerAPI
                     'object_type'         => 'orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
-                    'end_date'            => 'date',
+                    'end_date'            => 'date||orbit.empty.hour_format',
                     'id_language_default' => 'required|orbit.empty.language_default',
                 ),
                 array(
@@ -1489,13 +1489,27 @@ class NewsAPIController extends ControllerAPI
             $news = MerchantLanguage::excludeDeleted()
                         ->where('merchant_language_id', $value)
                         ->first();
-        
+
             if (empty($news)) {
                 return FALSE;
             }
-        
+
             App::instance('orbit.empty.language_default', $news);
-        
+
+            return TRUE;
+        });
+
+        // Validate the time format for over 23 hour
+        Validator::extend('orbit.empty.hour_format', function ($attribute, $value, $parameters) {
+            // explode the format Y-m-d H:i:s
+            $dateTimeExplode = explode(' ', $value);
+            // explode the format H:i:s
+            $timeExplode = explode(':', $dateTimeExplode[1]);
+            // get the Hour format
+            if($timeExplode[0] > 23){
+                return FALSE;
+            }
+
             return TRUE;
         });
 
