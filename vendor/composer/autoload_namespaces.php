@@ -39,6 +39,7 @@ return array(
     'Jeremeamia\\SuperClosure' => array($vendorDir . '/jeremeamia/SuperClosure/src'),
     'Illuminate' => array($vendorDir . '/laravel/framework/src'),
     'File' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
+    'Facebook' => array($vendorDir . '/facebook/src'),
     'DominoPOS\\OrbitUploader\\' => array($vendorDir . '/dominopos/orbit-uploader'),
     'DominoPOS\\OrbitSession\\' => array($vendorDir . '/dominopos/orbit-session'),
     'DominoPOS\\OrbitAPI\\' => array($vendorDir . '/dominopos/orbit-api'),

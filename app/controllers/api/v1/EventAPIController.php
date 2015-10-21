@@ -357,7 +357,7 @@ class EventAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $event_id = OrbitInput::post('event_id');
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('current_mall');
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
             $link_object_type = OrbitInput::post('link_object_type');
@@ -1532,7 +1532,7 @@ class EventAPIController extends ControllerAPI
     }
 
     protected function registerCustomValidation()
-    {   
+    {
         $user = $this->api->user;
 
         // Check the existance of mall id
@@ -1555,13 +1555,13 @@ class EventAPIController extends ControllerAPI
             $news = MerchantLanguage::excludeDeleted()
                         ->where('merchant_language_id', $value)
                         ->first();
-        
+
             if (empty($news)) {
                 return FALSE;
             }
-        
+
             App::instance('orbit.empty.language_default', $news);
-        
+
             return TRUE;
         });
 

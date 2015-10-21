@@ -143,6 +143,7 @@ return array(
             'view_personal_interest' => 'あなたは個人的な興味を表示するアクセス権を持っていません.',
             'view_role'              => 'あなたは役割を表示するためのアクセス権を持っていません.',
             'inactiveuser'           => 'あなたは、要求されたリソースへのアクセスを持っていません.',
+            'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
             'role'                 => 'Role ID あなたが見つかりません指定され.',
@@ -266,6 +267,7 @@ return array(
             'mall'                 => 'Mall ID あなたが見つかりません指定され.',
             'language' => 'Language ID あなたが見つかりません指定され.',
             'merchant_language' => 'Merchant Language ID あなたが見つかりません指定され.',
+            'hour_format'          => ':attribute 有効な日付ではありません.',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

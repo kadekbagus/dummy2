@@ -139,6 +139,12 @@ return array(
         'loading_orbit'     => 'Loading Orbit, please wait...',
         'start_button_mall' => 'Enter Mall',
         'register'          => 'Daftar',
+        'login_via_facebook' => 'Login via Facebook',
+        'or_between_email_and_fb' => 'OR',
+        'agree_to_terms' => 'I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
+        'must_accept_terms' => 'You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
+        'accept_modal_button_text' => 'OK',
+        'connecting_to_facebook' => 'Connecting to Facebook...',
     ),
 
     'catalogue' => array(
@@ -221,8 +227,8 @@ return array(
         'successful'                       => 'Successful',
         'please_communicate'               => 'Please communicate the following number to tenant employee',
         'congratulations_you_get'          => 'Congratulations you get',
-        'coupon_here_is_a_coupon_you'      => 'coupon. Here is your coupon',
-        'coupon_here_is_coupons_you'       => 'coupons. Here are your coupons',
+        'here_is_your_coupon'              => 'coupon. Here is your coupon',
+        'here_are_your_coupons'            => 'coupons. Here are your coupons',
         'happy_shopping'                   => 'Happy shopping!',
         'close'                            => 'Close',
         'my_coupon'                        => 'My Coupon',

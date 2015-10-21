@@ -28,7 +28,8 @@ return array(
         ),
         'updated'   => array(
             'user'           => '用户已成功更新.',
-            'your_password'  => '您的密码已成功更新.'
+            'your_password'  => '您的密码已成功更新.',
+            'serviceagreement'  => 'Service Agreement has been successfully updated.',
         ),
         'nodata'    => array(
             'user'          => '有符合您的搜索条件没有用户.',
@@ -101,6 +102,9 @@ return array(
                 'main'          => '新闻图片已经上传成功.',
                 'delete_image'  => '新闻图片已经被成功删除.'
             ),
+        ),
+        'activate'   => array(
+            'account'  => 'Your account has been successfully activate.'
         )
     )
 );

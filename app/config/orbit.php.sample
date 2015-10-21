@@ -20,6 +20,12 @@ return array(
         'blackhole_domain'  => 'orbit.mall'
     ),
 
+    // agreement configuration
+    'agreement' => array(
+        // This should be frontend URL not backend
+        'url'  => 'http://value-of-agreement.url/'
+    ),
+
     'shop' => array(
         // Id of the retailer
         'id'    => NULL,
@@ -41,7 +47,9 @@ return array(
             'phone' => '+62123456789',
             'fax'   => '+62123456789',
             'office_hour'   => '9am - 6pm'
-        )
+        ),
+        'privacy_policy_url' => '',
+        'terms_of_service_url' => '',
     ),
 
     // Default Pagination
@@ -216,7 +224,11 @@ return array(
 
             // Activation URL
             // This should be frontend URL not backend
-            'activation_base_url' => 'http://orbit-mall.here/#/activate-account?token=%s',
+            'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
+
+            // Setup Password URL
+            // This should be frontend URL not backend
+            'setup_new_password_url' => 'http://customer.orbit-mall.here/#/setup-new-password?token=%s',
 
             // Number of days the activation link will expires
             'activation_expire' => 365,
@@ -2194,4 +2206,11 @@ return array(
             'path'  => '/home/orbitadmin/scripts/helpers/screen-display.sh'
         )
     ),
+    'social_login' => [
+        'facebook' => [
+            'app_id'        => '',
+            'app_secret'    => '',
+            'version'       => 'v2.4'
+        ],
+    ],
 );

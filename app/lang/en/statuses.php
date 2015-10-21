@@ -31,7 +31,8 @@ return array(
         ),
         'updated'   => array(
             'user'           => 'User has been successfully updated.',
-            'your_password'  => 'Your password has been successfully updated.'
+            'your_password'  => 'Your password has been successfully updated.',
+            'serviceagreement'  => 'Service Agreement has been successfully updated.',
         ),
         'nodata'    => array(
             'user'          => 'There is no user that matched your search criteria.',
@@ -113,6 +114,9 @@ return array(
                 'main'          => 'News image has been successfully uploaded.',
                 'delete_image'  => 'News image has been successfully deleted.'
             ),
+        ),
+        'activate'   => array(
+            'account'  => 'Your account has been successfully activate.'
         )
     )
 );

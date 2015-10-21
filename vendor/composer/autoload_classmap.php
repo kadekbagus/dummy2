@@ -783,6 +783,7 @@ return array(
     'Orbit\\Database\\ObjectID\\InvalidException' => $vendorDir . '/dominopos/orbit-database/Orbit/Database/ObjectID/InvalidException.php',
     'Orbit\\Database\\Relation\\BelongToManyWithObjectID' => $vendorDir . '/dominopos/orbit-database/Orbit/Database/Relation/BelongToManyWithObjectID.php',
     'Orbit\\EncodedUUID' => $baseDir . '/app/helpers/Orbit/EncodedUUID.php',
+    'Orbit\\FacebookSessionAdapter' => $baseDir . '/app/helpers/Orbit/FacebookSessionAdapter.php',
     'Orbit\\FakeJob' => $baseDir . '/app/helpers/Orbit/FakeJob.php',
     'Orbit\\Helper\\Security\\Encrypter' => $baseDir . '/app/helpers/Orbit/Helper/Security/Encrypter.php',
     'Orbit\\OS\\Shutdown' => $baseDir . '/app/helpers/Orbit/OS/Shutdown.php',

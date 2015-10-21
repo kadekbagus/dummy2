@@ -67,11 +67,19 @@ Route::post('/api/v1/user/register/mobile', function()
 });
 
 /**
- * URL to check the token
+ * URL to setup new password
  */
-Route::get('/api/v1/user/token/check', function()
+Route::post('/api/v1/user/setup-new-password', function()
 {
-    return LoginAPIController::create()->getRegisterTokenCheck();
+    return LoginAPIController::create()->postSetupPasswordByToken();
+});
+
+/**
+ * URL to update service agreement
+ */
+Route::get('/api/v1/service-agreement/update', function()
+{
+    return LoginAPIController::create()->postUpdateServiceAgreement();
 });
 
 /**
@@ -80,4 +88,12 @@ Route::get('/api/v1/user/token/check', function()
 Route::get('/api/v1/token/list', function()
 {
     return TokenAPIController::create()->getSearchToken();
+});
+
+/**
+ * Token List
+ */
+Route::post('/api/v1/activate-account', function()
+{
+    return LoginAPIController::create()->postActivateAccount();
 });

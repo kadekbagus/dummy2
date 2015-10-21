@@ -143,6 +143,7 @@ return array(
             'view_personal_interest' => '您没有权限查看个人利益',
             'view_role'              => '您没有权限查看角色',
             'inactiveuser'           => '你没有访问所请求的资源',
+            'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
             'role'                 => ' Role ID 您指定未找到.',
@@ -266,6 +267,8 @@ return array(
             'mall'                 => ' Mall ID 您指定未找到.',
             'language' => ' Language ID 您指定未找到.',
             'merchant_language' => ' Merchant Language ID 您指定未找到.',
+            'hour_format'          => ':attribute 是不是有效日期',
+
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

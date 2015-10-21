@@ -1,8 +1,8 @@
-Hi {{ $email }},
+Hi, {{ $email }}
 
 We hope you had a great shopping experience at "{{ $shop_name }}".
-To complete your registration and obtain great promotion and money saving deals,
-follow the link below:
+To complete your registration, please complete your account information,
+follow this link below:
 
 {{ $token_url }}
 
