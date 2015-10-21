@@ -73,13 +73,13 @@
         <!-- Tab panes -->
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane active" id="promotions">
-                @if(sizeof($tenant->newsPromotions) > 0)
-                    @foreach($tenant->newsPromotions as $promotions)
+                @if(sizeof($promotions) > 0)
+                    @foreach($promotions as $promotions)
                         <div class="main-theme-mall catalogue" id="promotions-{{$promotions->promotion_id}}">
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">
-                                    @if(!empty($promotions->image))
-                                    <a href="{{ asset($promotions->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($promotions->image) }}"></a>
+                                    @if(!empty($promotions->path))
+                                    <a href="{{ asset($promotions->path) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($promotions->path) }}"></a>
                                     @else
                                     <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                     @endif
@@ -109,13 +109,13 @@
                 @endif
             </div>
             <div role="tabpanel" class="tab-pane" id="news">
-                @if(sizeof($tenant->news) > 0)
-                    @foreach($tenant->news as $news)
+                @if(sizeof($news) > 0)
+                    @foreach($news as $news)
                         <div class="main-theme-mall catalogue" id="news-{{$news->promotion_id}}">
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">
-                                    @if(!empty($news->image))
-                                    <a href="{{ asset($news->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($news->image) }}"></a>
+                                    @if(!empty($news->path))
+                                    <a href="{{ asset($news->path) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($news->path) }}"></a>
                                     @else
                                     <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                     @endif
