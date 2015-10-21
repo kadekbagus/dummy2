@@ -144,17 +144,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadmerchantlogo.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('merchant.new, merchant.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadmerchantlogo.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('merchant.new, merchant.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -350,17 +350,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletemerchantlogo.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('merchant.new,merchant.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeletemerchantlogo.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('merchant.new,merchant.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -532,17 +532,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadproductimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('product.new,product.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadproductimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('product.new,product.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -737,17 +737,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeleteproductimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('product.new,product.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeleteproductimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('product.new,product.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -920,17 +920,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadpromotionimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('promotion.new,promotion.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadpromotionimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('promotion.new,promotion.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -1126,17 +1126,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletepromotionimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('promotion.new,promotion.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeletepromotionimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('promotion.new,promotion.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -1316,17 +1316,17 @@ class UploadAPIController extends ControllerAPI
             );
             Event::fire('orbit.upload.postuploadpromotiontranslationimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('promotion.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadpromotiontranslationimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('promotion.translations')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Promotion Translation instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -1534,17 +1534,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploaduserimage.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('user.new, user.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploaduserimage.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('user.new, user.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had User instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -1744,17 +1744,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeleteuserimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('user.new,user.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeleteuserimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('user.new,user.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -1927,17 +1927,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadcouponimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('coupon.new,coupon.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadcouponimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('coupon.new,coupon.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Coupon instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -2133,17 +2133,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletecouponimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('coupon.new,coupon.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeletecouponimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('coupon.new,coupon.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Coupon instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -2316,17 +2316,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadwidgetimage.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('widget.new, widget.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadwidgetimage.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('widget.new, widget.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had User instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -2524,17 +2524,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadeventimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('event.new,event.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadeventimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('event.new,event.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Event instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -2739,17 +2739,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeleteeventimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('event.new,event.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeleteeventimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('event.new,event.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Event instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -2931,17 +2931,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadeventtranslationimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('event.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadeventtranslationimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('event.translations')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Event Translation instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -3154,17 +3154,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadcoupontranslationimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('coupon.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadcoupontranslationimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('coupon.translations')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Coupon Translation instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -3373,17 +3373,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadtenantlogo.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadtenantlogo.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -3576,17 +3576,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletetenantlogo.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeletetenantlogo.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('tenant.new,tenant.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -3764,17 +3764,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadtenantimage.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadtenantimage.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -3981,17 +3981,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletetenantimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeletetenantimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('tenant.new,tenant.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -4177,17 +4177,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.uploadpostuploadtenantmap.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('tenant.new, tenant.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.uploadpostuploadtenantmap.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -4380,17 +4380,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletetenantmap.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('tenant.new,tenant.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeletetenantmap.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('tenant.new,tenant.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -4568,17 +4568,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadmallbackground.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadmallbackground.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('mall.new, mall.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -4778,17 +4778,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletemallbackground.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('mall.new, mall.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeletemallbackground.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('mall.new, mall.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -4977,17 +4977,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadnewsimage.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadnewsimage.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('news.new, news.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had News instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -5187,17 +5187,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletenewsimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('news.new, news.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeletenewsimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('news.new, news.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had News instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -5379,17 +5379,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadnewstranslationimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('news.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadnewstranslationimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('news.translations')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had Event Translation instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -5599,17 +5599,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadluckydrawimage.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadluckydrawimage.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
-                $this->beginTransaction();
-            }
 
             // We already had LuckyDraw instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -5809,17 +5809,17 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeleteluckydrawimage.before.validation', array($this, $validator));
 
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postdeleteluckydrawimage.after.validation', array($this, $validator));
-
-            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
-                // Begin database transaction
-                $this->beginTransaction();
-            }
 
             // We already had LuckyDraw instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
