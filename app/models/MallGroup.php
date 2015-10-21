@@ -39,6 +39,11 @@ class MallGroup extends Eloquent
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
 
+    public function timezone()
+    {
+        return $this->belongsTo('Timezone', 'timezone_id', 'timezone_id');
+    }
+
     public function malls()
     {
         return $this->hasMany('Mall', 'parent_id', 'merchant_id')->excludeDeleted();

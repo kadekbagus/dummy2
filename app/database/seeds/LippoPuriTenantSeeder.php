@@ -414,7 +414,7 @@ LUCKY;
             $newEmployee = $newUser->employee()->save($newEmployee);
 
             // @Todo: Remove this hardcode
-            $retailerIds = [2];
+            $retailerIds = [MerchantDataSeeder::MALL_ID];
             $newEmployee->retailers()->sync($retailerIds);
 
         } catch (Exception $e) {
