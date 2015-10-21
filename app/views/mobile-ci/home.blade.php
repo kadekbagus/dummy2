@@ -658,7 +658,7 @@
                     $.cookie("hide-orbit-tour", true, { expires : 60 });
                 }
 
-                if (!$.cookie('orbit-tour')) {
+                if (displayTutorial) {
                     loadModal();
                 }
                 $.cookie("orbit-tour", true, { expires : 60 });
@@ -718,7 +718,7 @@
                         'padding-top': '4.8em'
                     });
 
-                    if (!$.cookie('orbit-tour')) {
+                    if (displayTutorial) {
                         loadModal();
                     }
                 }
