@@ -115,6 +115,9 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postnewnews.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -143,9 +146,6 @@ class NewsAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.news.postnewnews.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // Reformat sticky order
             $sticky_order = (string)$sticky_order === 'true' && (string)$sticky_order !== '0' ? 1 : 0;
@@ -410,15 +410,15 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postupdatenews.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.news.postupdatenews.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
 
@@ -723,15 +723,15 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postdeletenews.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.news.postdeletenews.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deletenews = News::excludeDeleted()->where('news_id', $news_id)->first();
             $deletenews->status = 'deleted';

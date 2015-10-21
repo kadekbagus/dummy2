@@ -81,15 +81,15 @@ class SettingAPIController extends ControllerAPI
 
             Event::fire('orbit.setting.postupdatesetting.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.setting.postupdatesetting.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedsetting = Setting::excludeDeleted()->where('setting_name', $setting_name)->first();
 
@@ -334,15 +334,15 @@ class SettingAPIController extends ControllerAPI
 
             Event::fire('orbit.setting.postupdatesetting.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.setting.postupdatesetting.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // disabled - the current mall id now using current_mall param
             // $setting = Setting::active()->where('setting_name', 'current_retailer')->first();
@@ -1034,6 +1034,9 @@ class SettingAPIController extends ControllerAPI
 
             Event::fire('orbit.setting.getagreement.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -1044,9 +1047,6 @@ class SettingAPIController extends ControllerAPI
             $setting_value = 'yes';
             $object_type = 'merchant';
             $status = 'active';
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedsetting = Setting::excludeDeleted()
                                      ->where('object_type', $object_type)

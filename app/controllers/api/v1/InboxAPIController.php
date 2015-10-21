@@ -154,15 +154,15 @@ class InboxAPIController extends ControllerAPI
 
             Event::fire('orbit.inbox.postreadalert.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.inbox.postreadalert.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $inbox = App::make('orbit.empty.alert');
             $inbox->is_read = 'Y';

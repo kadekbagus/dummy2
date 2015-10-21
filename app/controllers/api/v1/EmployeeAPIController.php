@@ -114,6 +114,9 @@ class EmployeeAPIController extends ControllerAPI
 
             Event::fire('orbit.employee.postnewemployee.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -124,9 +127,6 @@ class EmployeeAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.employee.postnewemployee.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $role = App::make('orbit.empty.employee.role');
 
@@ -392,6 +392,9 @@ class EmployeeAPIController extends ControllerAPI
 
             Event::fire('orbit.employee.postnewemployee.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -402,9 +405,6 @@ class EmployeeAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.employee.postnewemployee.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $role = App::make('orbit.empty.employee.role');
 
@@ -663,6 +663,9 @@ class EmployeeAPIController extends ControllerAPI
 
             Event::fire('orbit.employee.postupdateemployee.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -673,9 +676,6 @@ class EmployeeAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.employee.postupdateemployee.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedUser = App::make('orbit.empty.user');
 
@@ -942,6 +942,9 @@ class EmployeeAPIController extends ControllerAPI
 
             Event::fire('orbit.employee.postupdateemployee.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -952,9 +955,6 @@ class EmployeeAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.employee.postupdateemployee.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedUser = App::make('orbit.empty.user');
 
@@ -1175,15 +1175,15 @@ class EmployeeAPIController extends ControllerAPI
 
             Event::fire('orbit.employee.postdeleteemployee.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.employee.postdeleteemployee.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deletedUser = App::make('orbit.empty.user');
             $deletedUser->status = 'deleted';
@@ -1380,15 +1380,15 @@ class EmployeeAPIController extends ControllerAPI
 
             Event::fire('orbit.employee.postdeletemallemployee.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.employee.postdeletemallemployee.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deletedUser = App::make('orbit.empty.user');
             $deletedUser->status = 'deleted';

@@ -145,15 +145,15 @@ class ProductAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postupdateproduct.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postupdateproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedproduct = App::make('orbit.empty.product');
             App::instance('memory:current.updated.product', $updatedproduct);
@@ -1214,6 +1214,9 @@ class ProductAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postnewproduct.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -1243,9 +1246,6 @@ class ProductAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.product.postnewproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $newproduct = new Product();
             $newproduct->merchant_id = $merchant_id;
@@ -1532,15 +1532,15 @@ class ProductAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postdeleteproduct.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postdeleteproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deleteproduct = Product::excludeDeleted()->allowedForUser($user)->where('product_id', $product_id)->first();
             $deleteproduct->status = 'deleted';

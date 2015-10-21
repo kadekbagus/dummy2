@@ -173,6 +173,9 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -211,9 +214,6 @@ class CouponAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // save Coupon.
             $newcoupon = new Coupon();
@@ -619,15 +619,15 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postupdatecoupon.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.coupon.postupdatecoupon.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedcoupon = Coupon::with('couponRule', 'tenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
 
@@ -1078,15 +1078,15 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postdeletecoupon.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.coupon.postdeletecoupon.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deletecoupon = Coupon::excludeDeleted()->where('promotion_id', $promotion_id)->first();
             $deletecoupon->status = 'deleted';
@@ -1818,6 +1818,9 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -1835,9 +1838,6 @@ class CouponAPIController extends ControllerAPI
                 $message = 'Tenant is not found.';
                 ACL::throwAccessForbidden($message);
             }
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $issuedcoupon = App::make('orbit.empty.issuedcoupon');
 

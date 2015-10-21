@@ -101,6 +101,9 @@ class UserAPIController extends ControllerAPI
 
             Event::fire('orbit.user.postnewuser.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -117,9 +120,6 @@ class UserAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.user.postnewuser.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $newuser = new User();
             $newuser->username = $email;
@@ -338,15 +338,15 @@ class UserAPIController extends ControllerAPI
 
             Event::fire('orbit.user.postdeleteuser.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.user.postdeleteuser.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deleteuser = User::with(array('apikey'))->find($user_id);
             $deleteuser->status = 'deleted';
@@ -651,15 +651,15 @@ class UserAPIController extends ControllerAPI
 
             Event::fire('orbit.user.postupdateuser.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.user.postupdateuser.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updateduser = User::with('userdetail')
                                ->excludeDeleted()
@@ -1887,15 +1887,15 @@ class UserAPIController extends ControllerAPI
 
             Event::fire('orbit.user.postchangepassword.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.user.postchangepassword.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $passupdateduser = User::excludeDeleted()
                                     ->where('user_id', $user_id)
@@ -2501,15 +2501,15 @@ class UserAPIController extends ControllerAPI
 
             Event::fire('orbit.user.postupdatemembership.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.user.postupdatemembership.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $role = Role::where('role_name', 'consumer')->first();
 
@@ -2902,15 +2902,15 @@ class UserAPIController extends ControllerAPI
 
             Event::fire('orbit.user.postdeletemembership.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.user.postdeletemembership.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deletedUser = App::make('orbit.empty.membership');
             $deletedUser->status = 'deleted';

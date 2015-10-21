@@ -100,6 +100,9 @@ class CategoryAPIController extends ControllerAPI
 
             Event::fire('orbit.category.postnewcategory.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -107,9 +110,6 @@ class CategoryAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.category.postnewcategory.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $newcategory = new Category();
             $newcategory->merchant_id = $merchant_id;
@@ -335,15 +335,15 @@ class CategoryAPIController extends ControllerAPI
 
             Event::fire('orbit.category.postupdatecategory.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.category.postupdatecategory.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedcategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
 
@@ -567,6 +567,9 @@ class CategoryAPIController extends ControllerAPI
 
             Event::fire('orbit.category.postdeletecategory.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -581,9 +584,6 @@ class CategoryAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.category.postdeletecategory.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deletecategory = Category::excludeDeleted()->allowedForUser($user)->where('category_id', $category_id)->first();
             $deletecategory->status = 'deleted';
