@@ -480,7 +480,7 @@ class CouponReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,total_redeemed,total_issued,coupon_status',
+                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,total_redeemed,total_issued,coupon_status,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponsummaryreport_sortby'),
@@ -683,7 +683,7 @@ class CouponReportAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'coupon_status';
+            $sortBy = 'promotions.status';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -701,15 +701,16 @@ class CouponReportAPIController extends ControllerAPI
                     'is_auto_issue_on_signup'   => 'is_auto_issue_on_signup',
                     'total_issued'              => 'total_issued',
                     'total_redeemed'            => 'total_redeemed',
-                    'coupon_status'             => 'coupon_status'
+                    'coupon_status'             => 'coupon_status',
+                    'status'                    => 'promotions.status',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
             // sort by status first
-            if ($sortBy !== 'coupon_status') {
-                $coupons->orderBy('coupon_status', 'asc');
+            if ($sortBy !== 'promotions.status') {
+                $coupons->orderBy('promotions.status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
