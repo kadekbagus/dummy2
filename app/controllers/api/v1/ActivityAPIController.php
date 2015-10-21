@@ -1305,19 +1305,16 @@ class ActivityAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $start_date = OrbitInput::get('start_date');
-            $end_date = OrbitInput::get('end_date');
+            $active_minutes = OrbitInput::get('active_minutes');
 
             $validator = Validator::make(
                 array(
                     'merchant_ids'  => OrbitInput::get('merchant_ids'),
-                    'start_date'    => $start_date,
-                    'end_date'      => $end_date,
+                    'active_minutes'    => $active_minutes,
                 ),
                 array(
                     'merchant_ids'  => 'orbit.check.merchants',
-                    'start_date'    => 'required|date_format:Y-m-d H:i:s',
-                    'end_date'      => 'required|date_format:Y-m-d H:i:s'
+                    'active_minutes' => 'required|integer'
                 )
             );
 
@@ -1363,37 +1360,22 @@ class ActivityAPIController extends ControllerAPI
             // "connected now" = last login/logout activity within the period was login
             $tablePrefix = DB::getTablePrefix();
             $activities = DB::select("
-                select a2.activity_type, count(*) as num
+                select COUNT(DISTINCT user_id) num
                 from
-                    {$tablePrefix}activities a2
-                inner join (
-                    select
-                    user_id, max(activity_id) activity_id
-                    from {$tablePrefix}activities a
-                    where a.module_name = 'Application'
-                        and a.`group` = 'mobile-ci'
-                        and a.activity_type in ('login', 'logout')
-                        and a.activity_name in ('login_ok', 'logout_ok')
-                        and a.created_at >= ?
-                        and a.created_at <= ?
-                        {$filterLocationIds}
-                    group by 1
-                ) a3
-                on (a2.activity_id = a3.activity_id)
-                group by 1
-            ", array_merge([$start_date, $end_date], $locationIds));
+                    {$tablePrefix}activities a
+                where
+                    a.created_at >= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MINUTE)
+                    {$filterLocationIds}
+            ", array_merge([-1 * (int)$active_minutes], $locationIds));
 
-            $login = 0;
+            $users_count = 0;
             foreach ($activities as $activity) {
-                if ($activity->activity_type === 'login') {
-                    $login = (int)$activity->num;
-                }
+                $users_count = (int)$activity->num;
             }
 
             $this->response->data = [
-                'start_date' => $start_date,
-                'end_date' => $end_date,
-                'connected_now' => $login
+                'active_minutes' => (int)$active_minutes,
+                'connected_now' => $users_count,
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getactivity.access.forbidden', array($this, $e));
