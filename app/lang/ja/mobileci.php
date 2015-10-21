@@ -130,7 +130,7 @@ return array(
         'email_placeholder' => 'あなたのメールアドレスを入力してください',
         'login_button'      => '入力',
         'start_button'      => 'スタート　ショッピング',
-        'not'               => '無',
+        'not'               => '無い',
         'click_here'        => 'ここをクリックしてください',
         'email_not_valid'   => 'メール　アドレスは　有効ではありません',
         'logging_in_button' => 'ログインしています.しばらくお待ちください...',
