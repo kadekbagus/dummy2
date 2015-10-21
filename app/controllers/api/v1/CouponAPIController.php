@@ -2689,22 +2689,17 @@ class CouponAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
-// dd($translations_json_string);
-
         $valid_fields = ['promotion_name', 'description', 'long_description'];
         $user = $this->api->user;
         $operations = [];
 
         $data = @json_decode($translations_json_string);
 
-// dd($data);
-
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->allowedForUser($user)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {

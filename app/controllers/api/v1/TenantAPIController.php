@@ -2208,7 +2208,6 @@ class TenantAPIController extends ControllerAPI
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->allowedForUser($user)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {

@@ -140,7 +140,7 @@ class WidgetAPIController extends ControllerAPI
                 Event::fire('orbit.widget.postnewwidget.after.validation', array($this, $validator));
 
                 $mall = Mall::find($merchantId);
-                
+
                 $widget = new Widget();
                 $widget->widget_type = $widgetType;
                 $widget->widget_object_id = $widgetObjectId;
@@ -373,7 +373,7 @@ class WidgetAPIController extends ControllerAPI
                 $widgetOrder = $value['widget_order'];
                 $images = OrbitInput::files('widget');
                 $idLanguageDefault = $value['id_language_default'];
-                                
+
                 $validator = Validator::make(
                     array(
                         'widget_id'             => $widgetId,
@@ -460,7 +460,7 @@ class WidgetAPIController extends ControllerAPI
                 //     $updatedwidget->retailers()->sync($listOfRetailerIds);
                 // }
 
-                Event::fire('orbit.widget.postnewwidget.after.save', array($this, $updatedwidget));                
+                Event::fire('orbit.widget.postnewwidget.after.save', array($this, $updatedwidget));
 
                 // Default translation
                 if ($slogan != NULL) {
@@ -1078,7 +1078,7 @@ class WidgetAPIController extends ControllerAPI
             // Filter by animation
             OrbitInput::get('animations', function($animation) use ($widgets) {
                 $widgets->whereIn('widgets.animation', $animation);
-            });            
+            });
 
             OrbitInput::get('merchant_id', function($merchant_id) use ($widgets) {
                 $widgets->whereIn('widgets.merchant_id', $merchant_id);
@@ -1243,13 +1243,13 @@ class WidgetAPIController extends ControllerAPI
             $news = MerchantLanguage::excludeDeleted()
                         ->where('merchant_language_id', $value)
                         ->first();
-        
+
             if (empty($news)) {
                 return FALSE;
             }
-        
+
             App::instance('orbit.empty.language_default', $news);
-        
+
             return TRUE;
         });
 
@@ -1405,7 +1405,6 @@ class WidgetAPIController extends ControllerAPI
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->allowedForUser($user)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
 

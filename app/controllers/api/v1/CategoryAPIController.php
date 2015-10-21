@@ -1011,13 +1011,13 @@ class CategoryAPIController extends ControllerAPI
             $news = MerchantLanguage::excludeDeleted()
                         ->where('merchant_language_id', $value)
                         ->first();
-        
+
             if (empty($news)) {
                 return FALSE;
             }
-        
+
             App::instance('orbit.empty.language_default', $news);
-        
+
             return TRUE;
         });
 
@@ -1138,7 +1138,6 @@ class CategoryAPIController extends ControllerAPI
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->allowedForUser($user)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {

@@ -56,7 +56,7 @@ class PromotionAPIController extends ControllerAPI
             Event::fire('orbit.promotion.postnewpromotion.before.auth', array($this));
 
             $this->checkAuth();
-            
+
             Event::fire('orbit.promotion.postnewpromotion.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
@@ -647,7 +647,7 @@ class PromotionAPIController extends ControllerAPI
                 // reload retailers relation
                 $updatedpromotion->load('retailers');
             });
-            
+
 
             Event::fire('orbit.promotion.postupdatepromotion.after.save', array($this, $updatedpromotion));
             $this->response->data = $updatedpromotion;
@@ -1898,7 +1898,6 @@ class PromotionAPIController extends ControllerAPI
         }
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->allowedForUser($user)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {
@@ -1968,7 +1967,7 @@ class PromotionAPIController extends ControllerAPI
                 Event::fire('orbit.promotion.after.translation.save', array($this, $existing_translation));
 
                 $promotion->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
-            
+
             }
             elseif ($op === 'delete') {
                 /** @var PromotionTranslation $existing_translation */
