@@ -1681,7 +1681,7 @@ class NewsAPIController extends ControllerAPI
         // translate for mall
         foreach ($data as $merchant_language_id => $translations) {
             $language = MerchantLanguage::excludeDeleted()
-                ->allowedForUser($user)
+                // ->allowedForUser($user)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
             if (empty($language)) {
