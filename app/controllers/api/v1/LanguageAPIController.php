@@ -217,6 +217,9 @@ class LanguageAPIController extends ControllerAPI
                 )
             );
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -282,6 +285,9 @@ class LanguageAPIController extends ControllerAPI
             }
 
             $this->response->data = $data_update;
+
+            // Commit the changes
+            $this->commit();
 
             $activityNotes = sprintf('Supported languages updated');
             $activity->setUser($user)
