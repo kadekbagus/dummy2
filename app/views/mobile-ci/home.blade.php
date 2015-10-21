@@ -658,12 +658,14 @@
                     $.cookie("hide-orbit-tour", true, { expires : 60 });
                 }
 
+                if (!$.cookie('orbit-tour')) {
+                    loadModal();
+                }
                 $.cookie("orbit-tour", true, { expires : 60 });
-                loadModal();
             },
             steps: [{
                 element: '#orbit-tour-profile',
-                placement: 'left',
+                placement: 'bottom',
                 animation: true,
                 backdrop: true,
                 backdropContainer: 'body',
@@ -715,7 +717,10 @@
                     $('.headed-layout.content-container').css({
                         'padding-top': '4.8em'
                     });
-                    loadModal();
+
+                    if (!$.cookie('orbit-tour')) {
+                        loadModal();
+                    }
                 }
             },
             steps: [{
@@ -754,7 +759,7 @@
                 arrowClass: 'top-right'
             }, {
                 element: '#orbit-tour-profile',
-                placement: 'left',
+                placement: 'bottom',
                 animation: true,
                 backdrop: true,
                 title: '{{ Lang::get('mobileci.tour.setting.title') }}',
