@@ -167,7 +167,7 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
 
             if (empty(\Cookie::get('event'))) {
@@ -223,9 +223,9 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store[] = $events->event_id;
                 \Cookie::queue('event', $event_store, 1440);
 
-                if (! empty($alternate_language)) {
+                if (! empty($alternateLanguage)) {
                     $event_translation = \EventTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('event_id', $events->event_id)->first();
 
                     if (! empty($event_translation)) {
@@ -272,9 +272,9 @@ class MobileCIAPIController extends ControllerAPI
                 if ($widget->widget_type == 'tenant') {
                     $widget_singles->tenant = $widget;
                     // cek if any language active
-                    if (!empty($alternate_language) && !empty($widget_singles->tenant)) {
+                    if (!empty($alternateLanguage) && !empty($widget_singles->tenant)) {
                         $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                             ->where('widget_id', $widget_singles->tenant->widget_id)->first();
                         if (!empty($widget_singles_tenant)) {
                             foreach (['widget_slogan'] as $field) {
@@ -290,9 +290,9 @@ class MobileCIAPIController extends ControllerAPI
                 if ($widget->widget_type == 'promotion') {
                     $widget_singles->promotion = $widget;
                     // cek if any language active
-                    if (!empty($alternate_language) && !empty($widget_singles->promotion)) {
+                    if (!empty($alternateLanguage) && !empty($widget_singles->promotion)) {
                         $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                             ->where('widget_id', $widget_singles->promotion->widget_id)->first();
                         if (!empty($widget_singles_tenant)) {
                             foreach (['widget_slogan'] as $field) {
@@ -307,9 +307,9 @@ class MobileCIAPIController extends ControllerAPI
                 if ($widget->widget_type == 'news') {
                     $widget_singles->news = $widget;
                     // cek if any language active
-                    if (!empty($alternate_language) && !empty($widget_singles->news)) {
+                    if (!empty($alternateLanguage) && !empty($widget_singles->news)) {
                         $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                             ->where('widget_id', $widget_singles->news->widget_id)->first();
                         if (!empty($widget_singles_tenant)) {
                             foreach (['widget_slogan'] as $field) {
@@ -324,9 +324,9 @@ class MobileCIAPIController extends ControllerAPI
                 if ($widget->widget_type == 'coupon') {
                     $widget_singles->coupon = $widget;
                     // cek if any language active
-                    if (!empty($alternate_language) && !empty($widget_singles->coupon)) {
+                    if (!empty($alternateLanguage) && !empty($widget_singles->coupon)) {
                         $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                             ->where('widget_id', $widget_singles->coupon->widget_id)->first();
                         if (!empty($widget_singles_tenant)) {
                             foreach (['widget_slogan'] as $field) {
@@ -341,9 +341,9 @@ class MobileCIAPIController extends ControllerAPI
                 if ($widget->widget_type == 'lucky_draw') {
                     $widget_singles->luckydraw = $widget;
                     // cek if any language active
-                    if (!empty($alternate_language) && !empty($widget_singles->luckydraw)) {
+                    if (!empty($alternateLanguage) && !empty($widget_singles->luckydraw)) {
                         $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                             ->where('widget_id', $widget_singles->luckydraw->widget_id)->first();
                         if (!empty($widget_singles_tenant)) {
                             foreach (['widget_slogan'] as $field) {
@@ -1307,14 +1307,14 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $categories = Category::active('categories')
                 ->where('category_level', 1)
                 ->where('merchant_id', $retailer->merchant_id);
 
             $categories->select('categories.*');
-            $this->maybeJoinWithCategoryTranslationsTable($categories, $alternate_language);
+            $this->maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage);
 
             $categories = $categories->get();
 
@@ -1333,12 +1333,12 @@ class MobileCIAPIController extends ControllerAPI
                 ->lists('floor');
 
             $tenants = Tenant::with('mediaLogo');
-            if (!empty($alternate_language)) {
-                $tenants = $tenants->with(['categories' => function ($q) use ($alternate_language) {
+            if (!empty($alternateLanguage)) {
+                $tenants = $tenants->with(['categories' => function ($q) use ($alternateLanguage) {
                     $prefix = DB::getTablePrefix();
-                    $q->leftJoin('category_translations', function ($join) use ($alternate_language) {
+                    $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                         $join->on('categories.category_id', '=', 'category_translations.category_id');
-                        $join->where('category_translations.merchant_language_id', '=', $alternate_language->merchant_language_id);
+                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
                     });
                     $q->select('categories.*');
                     $q->addSelect([
@@ -1356,23 +1356,23 @@ class MobileCIAPIController extends ControllerAPI
 
             $tenants->select('merchants.*');
 
-            $this->maybeJoinWithTranslationsTable($tenants, $alternate_language);
+            $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
 
             $notfound = FALSE;
             // Filter product by name pattern
             OrbitInput::get(
                 'keyword',
-                function ($name) use ($tenants, $alternate_language) {
+                function ($name) use ($tenants, $alternateLanguage) {
                     $name_like = "%$name%";
                     $tenants->where(
-                        function ($q) use ($name_like, $alternate_language) {
+                        function ($q) use ($name_like, $alternateLanguage) {
                             $q->where('merchants.name', 'like', $name_like)
                                 ->orWhere('merchants.description', 'like', $name_like)
                                 ->orWhere('merchants.floor', 'like', $name_like);
                             $q->orWhereHas('categories', function($q2) use ($name_like) {
                                 $q2->where('category_name', 'like', $name_like);
                             });
-                            if (!empty($alternate_language)) {
+                            if (!empty($alternateLanguage)) {
                                 $q->orWhere('merchant_translations.name', 'like', $name_like)
                                     ->orWhere('merchant_translations.description', 'like', $name_like);
                             }
@@ -1535,7 +1535,7 @@ class MobileCIAPIController extends ControllerAPI
                 }
             );
 
-            if (!empty($alternate_language) && $sortBy === 'merchants.name') {
+            if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
                 $prefix = DB::getTablePrefix();
                 $tenants->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
             }
@@ -1677,7 +1677,7 @@ class MobileCIAPIController extends ControllerAPI
             $promo_id = trim(OrbitInput::get('pid'));
             $news_id = trim(OrbitInput::get('nid'));
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $tenant = Tenant::with( // translated
                 'media',
@@ -1690,7 +1690,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('parent_id', $retailer->merchant_id)
                 ->where('merchants.merchant_id', $product_id);
             $tenant->select('merchants.*');
-            $this->maybeJoinWithTranslationsTable($tenant, $alternate_language);
+            $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
 
 
@@ -1710,7 +1710,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $id_tenant = $product_id;
 
-            if ( !empty($id_tenant) && !empty($alternate_language) && !empty($array_news_id) ) {
+            if ( !empty($id_tenant) && !empty($alternateLanguage) && !empty($array_news_id) ) {
                 $news = News::excludeDeleted('news')
                              ->leftJoin('news_merchant', function($join){
                                  $join->on('news_merchant.news_id', '=', 'news.news_id');
@@ -1724,12 +1724,12 @@ class MobileCIAPIController extends ControllerAPI
                             ->whereIn('news.news_id',$array_news_id)
                             ->where('news_merchant.merchant_id', '=', $id_tenant)
                             ->where('news.object_type', '=', 'news')
-                            ->where('news_translations.merchant_language_id','=', $alternate_language->merchant_language_id)
+                            ->where('news_translations.merchant_language_id','=', $alternateLanguage->merchant_language_id)
                             ->groupBy('news.news_id')
                             ->get();
             }
 
-            if ( !empty($id_tenant) && !empty($alternate_language) && !empty($array_promotions_id) ) {
+            if ( !empty($id_tenant) && !empty($alternateLanguage) && !empty($array_promotions_id) ) {
                 $promotions = News::excludeDeleted('news')
                              ->leftJoin('news_merchant', function($join){
                                  $join->on('news_merchant.news_id', '=', 'news.news_id');
@@ -1743,7 +1743,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->whereIn('news.news_id',$array_promotions_id)
                             ->where('news_merchant.merchant_id', '=', $id_tenant)
                             ->where('news.object_type', '=', 'promotion')
-                            ->where('news_translations.merchant_language_id','=', $alternate_language->merchant_language_id)
+                            ->where('news_translations.merchant_language_id','=', $alternateLanguage->merchant_language_id)
                             ->groupBy('news.news_id')
                             ->get();
             }
@@ -1760,9 +1760,9 @@ class MobileCIAPIController extends ControllerAPI
             $languages = $this->getListLanguages($retailer);
 
             // cek if any language active
-            if (!empty($alternate_language) && !empty($tenant)) {
+            if (!empty($alternateLanguage) && !empty($tenant)) {
                     $merchant_translation = \MerchantTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('merchant_id', $tenant->merchant_id)->first();
 
                 if (!empty($merchant_translation)) {
@@ -2059,7 +2059,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
 
@@ -2081,10 +2081,10 @@ class MobileCIAPIController extends ControllerAPI
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );
 
-            if (! empty($alternate_language)) {
+            if (! empty($alternateLanguage)) {
                 foreach ($coupons as $coupon) {
                     $coupon_translation = \CouponTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('promotion_id', $coupon->promotion_id)->first();
 
                     if (! empty($coupon_translation)) {
@@ -2215,11 +2215,11 @@ class MobileCIAPIController extends ControllerAPI
 
             $coupon_id = $coupons->promotion_id;
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            if (! empty($alternate_language)) {
+            if (! empty($alternateLanguage)) {
                 $coupon_translation = \CouponTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('promotion_id', $coupons->promotion_id)->first();
 
                 if (! empty($coupon_translation)) {
@@ -2343,7 +2343,7 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -2386,11 +2386,11 @@ class MobileCIAPIController extends ControllerAPI
                             ->orderBy('created_at', 'desc')
                             ->get();
 
-            if (!empty($alternate_language) && !empty($coupons)) {
+            if (!empty($alternateLanguage) && !empty($coupons)) {
                 foreach ($coupons as $key => $val) {
 
                     $coupon_translation = \NewsTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
 
                     if (!empty($coupon_translation)) {
@@ -2481,7 +2481,7 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $product_id = trim(OrbitInput::get('id'));
 
@@ -2496,9 +2496,9 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
-            if (! empty($alternate_language)) {
+            if (! empty($alternateLanguage)) {
                 $coupon_translation = \NewsTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('news_id', $coupons->news_id)->first();
 
                 if (!empty($coupon_translation)) {
@@ -2570,7 +2570,8 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+            $defaultLanguage = $this->getDefaultLanguage($retailer);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -2612,11 +2613,11 @@ class MobileCIAPIController extends ControllerAPI
                             ->orderBy('created_at', 'desc')
                             ->get();
 
-            if (!empty($alternate_language) && !empty($news)) {
+            if (!empty($alternateLanguage) && !empty($news)) {
                 foreach ($news as $key => $val) {
 
                     $news_translation = \NewsTranslation::excludeDeleted()
-                        ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
 
                     if (!empty($news_translation)) {
@@ -2633,6 +2634,19 @@ class MobileCIAPIController extends ControllerAPI
 
                         if (isset($media->path)) {
                             $val->image = $media->path;
+                        } else {
+                            // if content ranslation not have image, use default image
+                            $newsDefault = \NewsTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('news_id', $val->news_id)->first();
+
+                            $mediaDefault = $newsDefault->find($newsDefault->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefault->path)) {
+                                $val->image = $mediaDefault->path;
+                            }
                         }
 
                     }
@@ -2706,7 +2720,7 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $alternate_language = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $product_id = trim(OrbitInput::get('id'));
 
@@ -2722,9 +2736,9 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             // cek if any language active
-            if (!empty($alternate_language) && !empty($news)) {
+            if (!empty($alternateLanguage) && !empty($news)) {
                 $news_translation = \NewsTranslation::excludeDeleted()
-                    ->where('merchant_language_id', '=', $alternate_language->merchant_language_id)
+                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('news_id', $news->news_id)->first();
 
                 if (!empty($news_translation)) {
@@ -3149,13 +3163,13 @@ class MobileCIAPIController extends ControllerAPI
                 // language returned by method not found
                 continue;
             }
-            $alternate_language = \MerchantLanguage::excludeDeleted()
+            $alternateLanguage = \MerchantLanguage::excludeDeleted()
                 ->where('merchant_id', '=', $mall->merchant_id)
                 ->where('language_id', '=', $selected_language->language_id)
                 ->first();
 
-            if ($alternate_language !== null) {
-                return $alternate_language;
+            if ($alternateLanguage !== null) {
+                return $alternateLanguage;
             }
         }
         // above methods did not result in any selected language, use mall default
@@ -3163,19 +3177,44 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
-     * @param \Illuminate\Database\Eloquent\Builder $tenants
-     * @param \MerchantLanguage $alternate_language
+     * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
+     *
+     * @param \User $user
+     * @param \Mall $mall the mall
+     * @return \MerchantLanguage the language or null if a matching one is not found.
      */
-    private function maybeJoinWithTranslationsTable($tenants, $alternate_language)
+    private function getDefaultLanguage($mall)
     {
-        if (!empty($alternate_language)) {
+        $language = \Language::where('name', '=', $mall->mobile_default_language)->first();
+        if(isset($language) && count($language) > 0){
+            $defaultLanguage = \MerchantLanguage::excludeDeleted()
+                ->where('merchant_id', '=', $mall->merchant_id)
+                ->where('language_id', '=', $language->language_id)
+                ->first();
+
+            if ($defaultLanguage !== null) {
+                return $defaultLanguage;
+            }
+        }
+
+        // above methods did not result in any selected language, use mall default
+        return null;
+    }
+
+    /**
+     * @param \Illuminate\Database\Eloquent\Builder $tenants
+     * @param \MerchantLanguage $alternateLanguage
+     */
+    private function maybeJoinWithTranslationsTable($tenants, $alternateLanguage)
+    {
+        if (!empty($alternateLanguage)) {
             // join to translations table so can use to search, sort, and overwrite fields
             $prefix = DB::getTablePrefix();
 
-            $tenants->leftJoin('merchant_translations', function ($join) use ($alternate_language) {
+            $tenants->leftJoin('merchant_translations', function ($join) use ($alternateLanguage) {
                 $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
                 $join->where('merchant_translations.merchant_language_id', '=',
-                    $alternate_language->merchant_language_id);
+                    $alternateLanguage->merchant_language_id);
             });
 
             // and overwrite fields with alternate language fields if present
@@ -3189,18 +3228,18 @@ class MobileCIAPIController extends ControllerAPI
 
     /**
      * @param \Illuminate\Database\Eloquent\Builder $categories
-     * @param \MerchantLanguage $alternate_language
+     * @param \MerchantLanguage $alternateLanguage
      */
-    private function maybeJoinWithCategoryTranslationsTable($categories, $alternate_language)
+    private function maybeJoinWithCategoryTranslationsTable($categories, $alternateLanguage)
     {
-        if (!empty($alternate_language)) {
+        if (!empty($alternateLanguage)) {
             // join to translations table so can use to search, sort, and overwrite fields
             $prefix = DB::getTablePrefix();
 
-            $categories->leftJoin('category_translations', function ($join) use ($alternate_language) {
+            $categories->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
                 $join->on('categories.category_id', '=', 'category_translations.category_id');
                 $join->where('category_translations.merchant_language_id', '=',
-                    $alternate_language->merchant_language_id);
+                    $alternateLanguage->merchant_language_id);
             });
 
             // and overwrite fields with alternate language fields if present
