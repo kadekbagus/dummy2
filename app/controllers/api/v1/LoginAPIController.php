@@ -961,10 +961,25 @@ class LoginAPIController extends ControllerAPI
                                            ->first();
 
                 if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
+
+                    // Token expiration, fallback to 30 days
+                    $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
+
+                    // Token Settings
+                    $token = new Token();
+                    $token->token_name = 'service_agreement';
+                    $token->token_value = $token->generateToken($user->user_email);
+                    $token->status = 'active';
+                    $token->email = $user->user_email;
+                    $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
+                    $token->ip_address = $user->user_ip;
+                    $token->user_id = $user->user_id;
+                    $token->save();
+
                     $this->response->code = 302;
                     $this->response->status = 'redirect';
                     $this->response->message = Lang::get('validation.orbit.access.agreement');
-                    $this->response->data = Config::get('orbit.agreement.url');
+                    $this->response->data = Config::get('orbit.agreement.url') . $token->token_value;
                 }
             }
         } catch (ACLForbiddenException $e) {
