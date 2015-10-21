@@ -101,6 +101,9 @@ return array(
                 'main'          => 'ニュース画像が正常にアップロードされました.',
                 'delete_image'  => 'ニュース画像が正常に削除されました.'
             ),
+        ),
+        'activate'   => array(
+            'account'  => 'Your account has been successfully activate.'
         )
     )
 );

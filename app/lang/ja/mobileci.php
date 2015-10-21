@@ -110,8 +110,6 @@ return array(
         'check_out_our'          => 'チェックアウト',
         'do_not_display'         => '今後このメッセージを表示しません',
         'and'                    => 'アンド',
-
-        'message_user_activation' => 'Please activate your account',
     ),
 
     //tenant catalogue
@@ -139,12 +137,6 @@ return array(
         'loading_orbit'     => 'オービットをロードすると、待機してください...',
         'start_button_mall' => 'モールを入力してください',
         'register'          => '登録',
-        'login_via_facebook' => 'Login via Facebook',
-        'or_between_email_and_fb' => 'OR',
-        'agree_to_terms' => 'I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
-        'must_accept_terms' => 'You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
-        'accept_modal_button_text' => 'OK',
-        'connecting_to_facebook' => 'Connecting to Facebook...',
     ),
 
     'catalogue' => array(
@@ -227,12 +219,14 @@ return array(
         'successful'                       => '成功した',
         'please_communicate'               => '以下の数をテナント従業員に 伝えてください.',
         'congratulations_you_get'          => 'おめでとう、あなたが得る',
-        'coupon_here_is_coupon_you'        => 'クーポン。こちらはあなたのクーポンです。',
+        'here_is_your_coupon'              => 'クーポン。こちらはあなたのクーポンです。',
+        'here_are_your_coupons'              => 'クーポン。こちらはあなたのクーポンです。',
         'happy_shopping'                   => 'どうぞ買い物してください',
         'close'                            => '閉じる',
         'my_coupon'                        => '私のクーポン',
         'use'                              => '使用',
         'next_time'                        => '次回',
+        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
     ),
 
     'coupon_list' => array(

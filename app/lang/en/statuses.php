@@ -113,6 +113,9 @@ return array(
                 'main'          => 'News image has been successfully uploaded.',
                 'delete_image'  => 'News image has been successfully deleted.'
             ),
+        ),
+        'activate'   => array(
+            'account'  => 'Your account has been successfully activate.'
         )
     )
 );

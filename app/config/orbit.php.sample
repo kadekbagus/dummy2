@@ -218,7 +218,11 @@ return array(
 
             // Activation URL
             // This should be frontend URL not backend
-            'activation_base_url' => 'http://orbit-mall.here/#/activate-account?token=%s',
+            'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
+
+            // Setup Password URL
+            // This should be frontend URL not backend
+            'setup_new_password_url' => 'http://customer.orbit-mall.here/#/setup-new-password?token=%s',
 
             // Number of days the activation link will expires
             'activation_expire' => 365,

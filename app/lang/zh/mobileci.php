@@ -227,12 +227,14 @@ return array(
         'successful'                       => '成功',
         'please_communicate'               => '请联系店雇员关于这号码',
         'congratulations_you_get'          => '恭喜您收',
-        'coupon_here_is_coupon_you'        => '优惠券。您的优惠券',
+        'here_is_your_coupon'              => '优惠券。您的优惠券',
+        'here_are_your_coupons'            => '优惠券。您的优惠券',
         'happy_shopping'                   => '幸福购物!',
         'close'                            => '关闭',
         'my_coupon'                        => '我的优惠券',
         'use'                              => '使',
         'next_time'                        => '下一次',
+        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
     ),
 
     'coupon_list' => array(

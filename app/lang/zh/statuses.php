@@ -101,6 +101,9 @@ return array(
                 'main'          => '新闻图片已经上传成功.',
                 'delete_image'  => '新闻图片已经被成功删除.'
             ),
+        ),
+        'activate'   => array(
+            'account'  => 'Your account has been successfully activate.'
         )
     )
 );

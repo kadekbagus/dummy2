@@ -32,16 +32,16 @@ Route::group(['before' => 'orbit-settings'], function() {
 Route::post('/app/v1/user/register/mobile', 'IntermediateLoginController@Login_postRegisterUserInShop');
 
 /**
- * Check the token
+ * Setup new password by token
  */
-Route::post('/app/v1/user/token/check', 'IntermediateLoginController@postRegisterTokenCheck');
-
-/**
- * Alias for check token
- */
-Route::post('/app/v1/user/activate', 'IntermediateLoginController@postRegisterTokenCheck');
+Route::post('/app/v1/user/setup-new-password', 'IntermediateLoginController@Login_postSetupPasswordByToken');
 
 /**
  * Token List
  */
 Route::get('/app/v1/token/list', 'IntermediateLoginController@getTokenList');
+
+/**
+ * Token List
+ */
+Route::post('/app/v1/activate-account', 'IntermediateLoginController@Login_postActivateAccount');

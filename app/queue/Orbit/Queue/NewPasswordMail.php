@@ -1,7 +1,7 @@
 <?php namespace Orbit\Queue;
 /**
- * Process queue for sending user email after registration. This email
- * contains activation link.
+ * Process queue for sending user email after activate. This email
+ * contains setup user password link.
  *
  * @author Rio Astamal <me@rioastamal.net>
  * @author Irianto Pratama <irianto@dominopos.com>
@@ -11,12 +11,13 @@ use Mail;
 use Config;
 use Token;
 
-class RegistrationMail
+class NewPasswordMail
 {
     /**
      * Laravel main method to fire a job on a queue.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto Pratama <irianto@dominopos.com>
      * @param Job $job
      * @param array $data [user_id => NUM]
      */
@@ -32,7 +33,7 @@ class RegistrationMail
 
         // Token Settings
         $token = new Token();
-        $token->token_name = 'user_registration_mobile';
+        $token->token_name = 'user_setup_password';
         $token->token_value = $token->generateToken($user->user_email);
         $token->status = 'active';
         $token->email = $user->user_email;
@@ -42,7 +43,7 @@ class RegistrationMail
         $token->save();
 
         // URL Activation link
-        $baseUrl = Config::get('orbit.registration.mobile.activation_base_url');
+        $baseUrl = Config::get('orbit.registration.mobile.setup_new_password_url');
         $tokenUrl = sprintf($baseUrl, $token->token_value);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
@@ -57,8 +58,8 @@ class RegistrationMail
             'cs_office_hour'    => $contactInfo['office_hour']
         );
         $mailviews = array(
-            'html' => 'emails.registration.activation-html',
-            'text' => 'emails.registration.activation-text'
+            'html' => 'emails.registration.setpassword-html',
+            'text' => 'emails.registration.setpassword-text'
         );
         Mail::send($mailviews, $data, function($message) use ($user)
         {
@@ -66,7 +67,7 @@ class RegistrationMail
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
-            $message->from($from, $name)->subject('Activate My Orbit Account');
+            $message->from($from, $name)->subject('You are almost in Orbit!');
             $message->to($user->user_email);
         });
 
