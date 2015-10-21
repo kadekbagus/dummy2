@@ -39,3 +39,9 @@ Route::get('/app/v1/dashboard/general-customer-view', "IntermediateAuthControlle
 
 // Get Dashboard general customer view
 Route::get('/app/v1/dashboard/top-customer-view', "IntermediateAuthController@Dashboard_getTopCustomerView");
+
+// Get Dashboard coupon issued vs redeemed
+Route::get('/app/v1/dashboard/coupon-issued-vs-redeemed', "IntermediateAuthController@Dashboard_getCouponIssuedVSRedeemed");
+
+// Get Dashboard top tenant redeem
+Route::get('/app/v1/dashboard/top-tenant-redeem', "IntermediateAuthController@Dashboard_getTopTenantRedeem");
