@@ -28,7 +28,8 @@ return array(
         ),
         'updated'   => array(
             'user'           => '用户已成功更新.',
-            'your_password'  => '您的密码已成功更新.'
+            'your_password'  => '您的密码已成功更新.',
+            'serviceagreement'  => 'Service Agreement has been successfully updated.',
         ),
         'nodata'    => array(
             'user'          => '有符合您的搜索条件没有用户.',

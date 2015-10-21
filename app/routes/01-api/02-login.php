@@ -75,6 +75,14 @@ Route::post('/api/v1/user/setup-new-password', function()
 });
 
 /**
+ * URL to update service agreement
+ */
+Route::get('/api/v1/service-agreement/update', function()
+{
+    return LoginAPIController::create()->postUpdateServiceAgreement();
+});
+
+/**
  * Token List
  */
 Route::get('/api/v1/token/list', function()
