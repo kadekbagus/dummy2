@@ -191,21 +191,21 @@
         </div>
         @if(is_object($widget_flags->enable_lucky_draw_widget) && $widget_flags->enable_lucky_draw_widget->setting_value === 'true')
         <div class="row">
-            @if(!is_null($widget_singles->luckydraw))
+            @if(!is_null($widget_singles->lucky_draw))
             <div class="single-widget-container col-xs-12 col-sm-12">
                 <header class="widget-title">
                     <div><strong>{{ Lang::get('mobileci.widgets.lucky_draw') }}</strong></div>
                 </header>
                 <header class="widget-title widget-subtitle">
-                    <div>{{ !empty($widget_singles->luckydraw->widget_slogan) ? $widget_singles->luckydraw->widget_slogan : '&nbsp;'}}</div>
+                    <div>{{ !empty($widget_singles->lucky_draw->widget_slogan) ? $widget_singles->lucky_draw->widget_slogan : '&nbsp;'}}</div>
                 </header>
                 <section class="widget-single">
                     <div class="callbacks_container">
-                        <ul class="rslides" @if($widget_singles->luckydraw->animation == 'horizontal') id="slider2" @endif>
+                        <ul class="rslides" @if($widget_singles->lucky_draw->animation == 'horizontal') id="slider2" @endif>
                             <li>
-                                <a data-widget="{{ $widget_singles->luckydraw->widget_id }}" class="widget-link" href="{{ url('customer/luckydraw') }}">
-                                    @if(!empty($widget_singles->luckydraw->media()->where('media_name_long', 'home_widget_resized_default')->first()))
-                                    <img class="img-responsive text-center vcenter" src="{{ asset($widget_singles->luckydraw->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
+                                <a data-widget="{{ $widget_singles->lucky_draw->widget_id }}" class="widget-link" href="{{ url('customer/luckydraw') }}">
+                                    @if(!empty($widget_singles->lucky_draw->media()->where('media_name_long', 'home_widget_resized_default')->first()))
+                                    <img class="img-responsive text-center vcenter" src="{{ asset($widget_singles->lucky_draw->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
                                     @else
                                     <img class="img-responsive text-center vcenter" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" />
                                     @endif
