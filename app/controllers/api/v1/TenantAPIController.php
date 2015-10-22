@@ -2036,20 +2036,15 @@ class TenantAPIController extends ControllerAPI
         // Check if the merchant verification number is unique
         Validator::extend('orbit_unique_verification_number', function ($attribute, $value, $parameters) {
             // Current Mall location
-            $currentMall = $parameters[1];
+            $retailer_id = $parameters[0];
 
             // Check the tenants which has verification number posted
-            $tenant = Retailer::excludeDeleted()
-                               ->where('parent_id', $currentMall)
-                               /**
-                                * @Todo
-                                * Use proper field instead of `masterbox_number`
-                                */
-                               ->where('masterbox_number', $value)
-                               ->where('merchant_id', '!=', $parameters[0])
-                               ->first();
+            $tenant = Tenant::excludeDeleted()
+                      ->where('object_type', 'tenant')
+                      ->where('masterbox_number', $value)
+                      ->first();
 
-            if (! empty($tenant)) {
+            if (! empty($tenant) && $tenant->merchant_id !== $retailer_id) {
                 return FALSE;
             }
 
