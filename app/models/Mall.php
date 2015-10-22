@@ -260,7 +260,7 @@ class Mall extends Eloquent
     public function media()
     {
         return $this->hasMany('Media', 'object_id', 'merchant_id')
-                    ->where('object_name', 'merchant');
+                    ->where('object_name', 'mall');
     }
 
     /**
@@ -271,7 +271,7 @@ class Mall extends Eloquent
      */
     public function mediaLogo()
     {
-        return $this->media()->where('media_name_id', 'merchant_logo');
+        return $this->media()->where('media_name_id', 'mall_logo');
     }
 
     /**
