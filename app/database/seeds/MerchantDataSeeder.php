@@ -108,7 +108,7 @@ class MerchantDataSeeder extends Seeder
         $retailerData = [
             'merchant_id'   => static::MALL_ID,
             'omid'          => 'LIPPO-MALL-PURI-01',
-            'user_id'       => $merchantUser->user_id,
+            'user_id'       => $retailerUser->user_id,
             'email'         => 'lippomallpuri@myorbit.com',
             'name'          => 'Lippo Mall Puri',
             'description'   => 'Lippo Mall Puri',
