@@ -366,7 +366,7 @@ class MobileCIAPIController extends ControllerAPI
                             foreach (['widget_slogan'] as $field) {
                                 //if field translation empty or null, value of field back to english (default)
                                 if (isset($widget_singles_tenant->{$field}) && $widget_singles_tenant->{$field} !== '') {
-                                    $widget_singles->lucky_draw->{$field} = $widget_singles_tenant->{$field};
+                                    $widget_singles->luckydraw->{$field} = $widget_singles_tenant->{$field};
                                 }
                             }
                         }
