@@ -217,7 +217,7 @@
 
     $('#agree_to_terms').click(function (e) {
         term_accepted = this.checked;
-    });
+    }).removeAttr('checked'); {{-- in case user got here via back button, always clear the checkbox --}}
 
     $('#orbit-privacy-policy-anchor').click(function (e) {
         e.preventDefault();
