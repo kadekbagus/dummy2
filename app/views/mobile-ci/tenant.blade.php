@@ -18,6 +18,12 @@
             <div class="zoom"><a href="#" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
+            @if(!count($tenant->mediaLogoOrig) > 0)
+            <li data-thumb="{{ asset('mobile-ci/images/default_product.png') }}">
+                <span class="gallery-helper"></span>
+                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+            </li>
+            @endif
             @foreach($tenant->mediaLogoOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
                 <span class="gallery-helper"></span>
@@ -31,6 +37,7 @@
             @endforeach
         </ul>
     </div>
+    
     <div class="col-xs-12 main-theme product-detail">
         <div class="row">
             <div class="col-xs-12">
