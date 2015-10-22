@@ -155,6 +155,7 @@ class MobileCIAPIController extends ControllerAPI
      * GET - Home page
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * @return Illuminate\View\View
      */
@@ -224,24 +225,40 @@ class MobileCIAPIController extends ControllerAPI
                 \Cookie::queue('event', $event_store, 1440);
 
                 if (! empty($alternateLanguage)) {
-                    $event_translation = \EventTranslation::excludeDeleted()
+                    $eventTranslation = \EventTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('event_id', $events->event_id)->first();
 
-                    if (! empty($event_translation)) {
+                    if (! empty($eventTranslation)) {
                         foreach (['event_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
-                            if (isset($event_translation->{$field}) && $event_translation->{$field} !== '') {
-                                $events->{$field} = $event_translation->{$field};
+                            if (isset($eventTranslation->{$field}) && $eventTranslation->{$field} !== '') {
+                                $events->{$field} = $eventTranslation->{$field};
                             }
                         }
 
-                        $media = $event_translation->find($event_translation->event_translation_id)
+                        $media = $eventTranslation->find($eventTranslation->event_translation_id)
                             ->media_orig()
                             ->first();
 
                         if (isset($media->path)) {
                             $events->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            $contentDefaultLanguage = \EventTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                ->where('event_id', $events->event_id)->first();
+
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->event_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $coupons->image = $mediaDefaultLanguage->path;
+                            }
                         }
                     }
                 }
@@ -2062,6 +2079,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return Illuminate\View\View
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function getMallCouponList() {
         $user = null;
@@ -2123,24 +2141,40 @@ class MobileCIAPIController extends ControllerAPI
 
             if (! empty($alternateLanguage)) {
                 foreach ($coupons as $coupon) {
-                    $coupon_translation = \CouponTranslation::excludeDeleted()
+                    $couponTranslation = \CouponTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('promotion_id', $coupon->promotion_id)->first();
 
-                    if (! empty($coupon_translation)) {
+                    if (! empty($couponTranslation)) {
                         foreach (['promotion_name', 'description', 'long_description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
-                            if (isset($coupon_translation->{$field}) && $coupon_translation->{$field} !== '') {
-                                $coupon->{$field} = $coupon_translation->{$field};
+                            if (isset($couponTranslation->{$field}) && $couponTranslation->{$field} !== '') {
+                                $coupon->{$field} = $couponTranslation->{$field};
                             }
                         }
 
-                        $media = $coupon_translation->find($coupon_translation->coupon_translation_id)
+                        $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
                             ->media_orig()
                             ->first();
 
                         if (isset($media->path)) {
                             $coupon->promo_image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                ->where('promotion_id', $coupon->promotion_id)->first();
+
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $coupons->image = $mediaDefaultLanguage->path;
+                            }
                         }
                     }
                 }
@@ -2201,6 +2235,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return Illuminate\View\View
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function getMallCouponDetailView()
     {
@@ -2236,25 +2271,42 @@ class MobileCIAPIController extends ControllerAPI
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             if (! empty($alternateLanguage)) {
-                $coupon_translation = \CouponTranslation::excludeDeleted()
+                $couponTranslation = \CouponTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('promotion_id', $coupons->promotion_id)->first();
 
-                if (! empty($coupon_translation)) {
+                if (! empty($couponTranslation)) {
                     foreach (['promotion_name', 'description', 'long_description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
-                        if (isset($coupon_translation->{$field}) && $coupon_translation->{$field} !== '') {
-                            $coupons->{$field} = $coupon_translation->{$field};
+                        if (isset($couponTranslation->{$field}) && $couponTranslation->{$field} !== '') {
+                            $coupons->{$field} = $couponTranslation->{$field};
                         }
                     }
 
-                    $media = $coupon_translation->find($coupon_translation->coupon_translation_id)
+                    $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
                         ->media_orig()
                         ->first();
 
                     if (isset($media->path)) {
                         $coupons->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        $defaultLanguage = $this->getDefaultLanguage($retailer);
+                        $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('promotion_id', $coupons->promotion_id)->first();
+
+                        // get default image
+                        $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($mediaDefaultLanguage->path)) {
+                            $coupons->image = $mediaDefaultLanguage->path;
+                        }
                     }
+
                 }
             }
 
@@ -2348,6 +2400,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return Illuminate\View\View
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function getMallPromotionList() {
         $user = null;
@@ -2396,7 +2449,7 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $coupons = \News::active()
+            $promotions = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
                             ->whereRaw("NOW() between begin_date and end_date")
@@ -2404,43 +2457,57 @@ class MobileCIAPIController extends ControllerAPI
                             ->orderBy('created_at', 'desc')
                             ->get();
 
-            if (!empty($alternateLanguage) && !empty($coupons)) {
-                foreach ($coupons as $key => $val) {
+            if (!empty($alternateLanguage) && !empty($promotions)) {
+                foreach ($promotions as $key => $val) {
 
-                    $coupon_translation = \NewsTranslation::excludeDeleted()
+                    $promotionTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
 
-                    if (!empty($coupon_translation)) {
+                    if (!empty($promotionTranslation)) {
                         foreach (['news_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
-                            if (isset($coupon_translation->{$field}) && $coupon_translation->{$field} !== '') {
-                                $val->{$field} = $coupon_translation->{$field};
+                            if (isset($promotionTranslation->{$field}) && $promotionTranslation->{$field} !== '') {
+                                $val->{$field} = $promotionTranslation->{$field};
                             }
                         }
 
-                        $media = $coupon_translation->find($coupon_translation->news_translation_id)
+                        $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                             ->media_orig()
                             ->first();
 
                         if (isset($media->path)) {
                             $val->image = $media->path;
-                        }
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('news_id', $val->news_id)->first();
 
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $val->image = $mediaDefaultLanguage->path;
+                            }
+                        }
                     }
                 }
             }
 
-
-            if ($coupons->isEmpty()) {
+            if ($promotions->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = sizeof($coupons);
-                $data->returned_records = sizeof($coupons);
-                $data->records = $coupons;
+                $data->total_records = sizeof($promotions);
+                $data->returned_records = sizeof($promotions);
+                $data->records = $promotions;
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -2487,6 +2554,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return Illuminate\View\View
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function getMallPromotionDetailView()
     {
@@ -2515,26 +2583,41 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (! empty($alternateLanguage)) {
-                $coupon_translation = \NewsTranslation::excludeDeleted()
+                $promotionTranslation = \NewsTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('news_id', $coupons->news_id)->first();
 
-                if (!empty($coupon_translation)) {
+                if (!empty($promotionTranslation)) {
                     foreach (['news_name', 'description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
-                        if (isset($coupon_translation->{$field}) && $coupon_translation->{$field} !== '') {
-                            $coupons->{$field} = $coupon_translation->{$field};
+                        if (isset($promotionTranslation->{$field}) && $promotionTranslation->{$field} !== '') {
+                            $coupons->{$field} = $promotionTranslation->{$field};
                         }
                     }
 
-                    $media = $coupon_translation->find($coupon_translation->news_translation_id)
+                    $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
                         ->media_orig()
                         ->first();
 
                     if (isset($media->path)) {
                         $coupons->image = $media->path;
-                    }
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        $defaultLanguage = $this->getDefaultLanguage($retailer);
+                        $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                            ->where('news_id', $coupons->news_id)->first();
 
+                        // get default image
+                        $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($mediaDefaultLanguage->path)) {
+                            $coupons->image = $mediaDefaultLanguage->path;
+                        }
+                    }
                 }
             }
 
@@ -2575,6 +2658,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return Illuminate\View\View
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function getMallNewsList() {
         $user = null;
@@ -2589,7 +2673,6 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
-            $defaultLanguage = $this->getDefaultLanguage($retailer);
 
             $sort_by = OrbitInput::get('sort_by');
             $keyword = trim(OrbitInput::get('keyword'));
@@ -2634,39 +2717,41 @@ class MobileCIAPIController extends ControllerAPI
             if (!empty($alternateLanguage) && !empty($news)) {
                 foreach ($news as $key => $val) {
 
-                    $news_translation = \NewsTranslation::excludeDeleted()
+                    $newsTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
 
-                    if (!empty($news_translation)) {
+                    if (!empty($newsTranslation)) {
                         foreach (['news_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
-                            if (isset($news_translation->{$field}) && $news_translation->{$field} !== '') {
-                                $val->{$field} = $news_translation->{$field};
+                            if (isset($newsTranslation->{$field}) && $newsTranslation->{$field} !== '') {
+                                $val->{$field} = $newsTranslation->{$field};
                             }
                         }
 
-                        $media = $news_translation->find($news_translation->news_translation_id)
+                        $media = $newsTranslation->find($newsTranslation->news_translation_id)
                             ->media_orig()
                             ->first();
 
                         if (isset($media->path)) {
                             $val->image = $media->path;
                         } else {
-                            // if content ranslation not have image, use default image
-                            $newsDefault = \NewsTranslation::excludeDeleted()
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                 ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                                 ->where('news_id', $val->news_id)->first();
 
-                            $mediaDefault = $newsDefault->find($newsDefault->news_translation_id)
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
                                 ->media_orig()
                                 ->first();
 
-                            if (isset($mediaDefault->path)) {
-                                $val->image = $mediaDefault->path;
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $val->image = $mediaDefaultLanguage->path;
                             }
                         }
-
                     }
                 }
             }
@@ -2726,6 +2811,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return Illuminate\View\View
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function getMallNewsDetailView()
     {
@@ -2755,26 +2841,41 @@ class MobileCIAPIController extends ControllerAPI
 
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($news)) {
-                $news_translation = \NewsTranslation::excludeDeleted()
+                $newsTranslation = \NewsTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('news_id', $news->news_id)->first();
 
-                if (!empty($news_translation)) {
+                if (!empty($newsTranslation)) {
                     foreach (['news_name', 'description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
-                        if (isset($news_translation->{$field}) && $news_translation->{$field} !== '') {
-                            $news->{$field} = $news_translation->{$field};
+                        if (isset($newsTranslation->{$field}) && $newsTranslation->{$field} !== '') {
+                            $news->{$field} = $newsTranslation->{$field};
                         }
                     }
 
-                    $media = $news_translation->find($news_translation->news_translation_id)
+                    $media = $newsTranslation->find($newsTranslation->news_translation_id)
                         ->media_orig()
                         ->first();
 
                     if (isset($media->path)) {
                         $news->image = $media->path;
-                    }
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        $defaultLanguage = $this->getDefaultLanguage($retailer);
+                        $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                            ->where('news_id', $news->news_id)->first();
 
+                        // get default image
+                        $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($mediaDefaultLanguage->path)) {
+                            $news->image = $mediaDefaultLanguage->path;
+                        }
+                    }
                 }
             }
 
@@ -3197,9 +3298,10 @@ class MobileCIAPIController extends ControllerAPI
     /**
      * Returns an appropriate MerchantLanguage (if any) that the user wants and the mall supports.
      *
-     * @param \User $user
      * @param \Mall $mall the mall
      * @return \MerchantLanguage the language or null if a matching one is not found.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     private function getDefaultLanguage($mall)
     {
