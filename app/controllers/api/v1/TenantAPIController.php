@@ -239,6 +239,7 @@ class TenantAPIController extends ControllerAPI
      * POST - Add new tenant
      *
      * @author Tian <tian@dominopos.com>
+     * @author Irianto Pratama <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -404,6 +405,7 @@ class TenantAPIController extends ControllerAPI
                     /* 'country'              => $country, */
                     'url'                  => $url,
                     'id_language_default' => $id_language_default,
+                    'masterbox_number'  => $masterbox_number,
                     'box_url'              => $box_url
                 ),
                 array(
@@ -415,7 +417,12 @@ class TenantAPIController extends ControllerAPI
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
                     'id_language_default' => 'required|orbit.empty.language_default',
-                )
+                    'masterbox_number'  => 'orbit_unique_verification_number:' . ''
+                ),
+                array(
+                    //ACL::throwAccessForbidden($message);
+                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
+               )
             );
 
             Event::fire('orbit.tenant.postnewtenant.before.validation', array($this, $validator));
@@ -640,6 +647,7 @@ class TenantAPIController extends ControllerAPI
      * POST - Update Tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto Pratama <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -764,7 +772,7 @@ class TenantAPIController extends ControllerAPI
                     'status'            => 'orbit.empty.tenant_status',
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id . ',' . $mall_id,
+                    'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id,
                     'category_ids'      => 'array'
                 ),
                 array(
@@ -2036,7 +2044,7 @@ class TenantAPIController extends ControllerAPI
         // Check if the merchant verification number is unique
         Validator::extend('orbit_unique_verification_number', function ($attribute, $value, $parameters) {
             // Current Mall location
-            $retailer_id = $parameters[0];
+            $tenant_id = $parameters[0];
 
             // Check the tenants which has verification number posted
             $tenant = Tenant::excludeDeleted()
@@ -2044,7 +2052,7 @@ class TenantAPIController extends ControllerAPI
                       ->where('masterbox_number', $value)
                       ->first();
 
-            if (! empty($tenant) && $tenant->merchant_id !== $retailer_id) {
+            if (! empty($tenant) && $tenant->merchant_id !== $tenant_id) {
                 return FALSE;
             }
 
