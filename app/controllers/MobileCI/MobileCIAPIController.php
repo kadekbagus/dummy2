@@ -2168,7 +2168,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->where('promotion_id', $coupon->promotion_id)->first();
 
                             // get default image
-                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
                                 ->media_orig()
                                 ->first();
 
@@ -2298,7 +2298,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->where('promotion_id', $coupons->promotion_id)->first();
 
                         // get default image
-                        $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                        $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
                             ->media_orig()
                             ->first();
 
