@@ -361,16 +361,14 @@ class IntermediateLoginController extends IntermediateBaseController
         $_POST['email'] = $email;
         $this->postLoginMobileCI(); // sets cookies & inserts activity - we ignore the JSON result
 
+        /** @var \MobileCI\MobileCIAPIController $mobile_ci */
         $mobile_ci = MobileCIAPIController::create('raw');
 
-        $retailer = $mobile_ci->getRetailerInfo();
+        // hack: we get the landing URL from the sign in view's data so we don't duplicate logic.
+        $view = $mobile_ci->getSignInView();
+        $view_data = $view->getData();
 
-        $mall = Mall::with('settings')->where('merchant_id', $retailer->merchant_id)
-            ->first();
-
-        $landing_url = $mobile_ci->getLandingUrl($mall);
-
-        return Redirect::away($landing_url);
+        return Redirect::away($view_data['landing_url']);
     }
 
     private function displayValidationError()
