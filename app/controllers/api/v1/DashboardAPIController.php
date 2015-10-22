@@ -202,6 +202,8 @@ class DashboardAPIController extends ControllerAPI
      * List Of Parameters
      * ------------------
      * @param integer `merchant_id`   (optional) - mall id
+     * @param integer `take`          (optional) - limit the result
+     * @param string  `type`          (optional) - type of data : news, events, promotions.   
      * @param date    `begin_date`    (optional) - filter date begin
      * @param date    `end_date`      (optional) - filter date end
      * @return Illuminate\Support\Facades\Response
@@ -235,6 +237,8 @@ class DashboardAPIController extends ControllerAPI
             $take = OrbitInput::get('take');
             $type = OrbitInput::get('type');
 
+            $flag_type = false;
+
             $validator = Validator::make(
                 array(
                     'take' => $take,
@@ -266,7 +270,7 @@ class DashboardAPIController extends ControllerAPI
                         $query = News::select(
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
                                 select
-                                    count(ac.activity_id)-1 as total
+                                    count(ac.activity_id) as total
                                 from
                                     {$tablePrefix}news ne
                                         inner join
@@ -293,6 +297,7 @@ class DashboardAPIController extends ControllerAPI
                         ->groupBy('news.news_id')
                         ->orderBy('score', 'DESC')
                         ->take($take);
+                        $flag_type = true;
                         break;
 
                 // show events
@@ -300,11 +305,11 @@ class DashboardAPIController extends ControllerAPI
                         $query = EventModel::select(
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
                                 select
-                                    count(ac.activity_id)-1 as total
+                                    count(ac.activity_id) as total
                                 from
                                     {$tablePrefix}events ev
                                         inner join
-                                    {$tablePrefix}activities ac ON ev.event_id = ac.news_id
+                                    {$tablePrefix}activities ac ON ev.event_id = ac.event_id
                                 where ac.module_name = 'Event'
                                 and ac.activity_name = 'event_view'
                                 and ac.activity_type = 'view'
@@ -326,6 +331,7 @@ class DashboardAPIController extends ControllerAPI
                         ->groupBy('events.event_id')
                         ->orderBy('score', 'DESC')
                         ->take($take);
+                        $flag_type = true;
                         break;
 
                 // show promotions
@@ -333,7 +339,7 @@ class DashboardAPIController extends ControllerAPI
                         $query = News::select(
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
                                 select
-                                    count(ac.activity_id)-1 as total
+                                    count(ac.activity_id) as total
                                 from
                                     {$tablePrefix}news ne
                                         inner join
@@ -360,55 +366,42 @@ class DashboardAPIController extends ControllerAPI
                         ->groupBy('news.news_id')
                         ->orderBy('score', 'DESC')
                         ->take($take);
+                        $flag_type = true;
                         break;
 
-                // by default show news
+                // by default do nothing
                 default:
-                    $query = News::select(
-                        DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
-                            select
-                                count(ac.activity_id)-1 as total
-                            from
-                                {$tablePrefix}news ne
-                                    inner join
-                                {$tablePrefix}activities ac ON ne.news_id = ac.news_id
-                            where ac.module_name = 'News'
-                            and ac.activity_name = 'view_news'
-                            and ac.activity_type = 'view'
-                            and ac.role = 'Consumer'
-                            and ac.group = 'mobile-ci'
-                        ) * 100 as percentage"),
-                        DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
-                        "news.news_name as name",
-                        "news.news_id as object_id"
-                    )
-                    ->join("activities", function ($join) {
-                        $join->on('news.news_id', '=', 'activities.news_id');
-                        $join->where('news.object_type', '=', 'news'); 
-                        $join->where('activities.activity_name', '=', 'view_news');
-                        $join->where('activities.module_name', '=', 'News');
-                        $join->where('activities.activity_type', '=', 'view');
-                        $join->where('activities.role', '=', 'Consumer');
-                        $join->where('activities.group', '=', 'mobile-ci');
-                    })
-                    ->groupBy('news.news_id')
-                    ->orderBy('score', 'DESC')
-                    ->take($take);
+                     $query = null;
+                     $flag_type = false;
             }
 
-            OrbitInput::get('merchant_id', function ($merchant_id) use ($query) {
-                $query->where('activities.location_id', '=', $merchant_id);
+            OrbitInput::get('merchant_id', function ($merchant_id) use ($query, $flag_type) {
+                if ($flag_type) {
+                    $query->where('activities.location_id', '=', $merchant_id);
+                }
             });
 
-            OrbitInput::get('begin_date', function ($beginDate) use ($query) {
-                $query->where('activities.created_at', '>=', $beginDate);
+            OrbitInput::get('begin_date', function ($beginDate) use ($query, $flag_type) {
+                if ($flag_type) {
+                    $query->where('activities.created_at', '>=', $beginDate);
+                }
             });
 
-            OrbitInput::get('end_date', function ($endDate) use ($query) {
-                $query->where('activities.created_at', '<=', $endDate);
+            OrbitInput::get('end_date', function ($endDate) use ($query, $flag_type) {
+                if ($flag_type) {
+                    $query->where('activities.created_at', '<=', $endDate);
+                }
             });
 
-            $result = $query->get();
+            if ($flag_type) {
+                $result = $query->get();
+            } else {
+                $result = null;
+            }
+            
+            if (empty($result)) {
+                $this->response->message = Lang::get('statuses.orbit.nodata.object');
+            }
 
             $this->response->data = $result;
 
@@ -457,7 +450,6 @@ class DashboardAPIController extends ControllerAPI
 
         return $output;
     }
-
     /**
      * GET - General Customer View
      *
@@ -466,6 +458,7 @@ class DashboardAPIController extends ControllerAPI
      * List Of Parameters
      * ------------------
      * @param integer `merchant_id`   (optional) - mall id
+     * @param integer `take`          (optional) - limit the result
      * @param date    `begin_date`    (optional) - filter date begin
      * @param date    `end_date`      (optional) - filter date end
      * @return Illuminate\Support\Facades\Response
@@ -518,20 +511,22 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            $news = Activity::select(DB::raw("count(distinct activity_id)-1 as total"))
+            $news = Activity::select(DB::raw("count(distinct activity_id) as total"))
                             ->where('activities.activity_name', '=', 'view_news')
                             ->where('activities.module_name', '=', 'News')
                             ->where('activities.activity_type', '=', 'view')
                             ->where('activities.role', '=', 'Consumer')
                             ->where('activities.group', '=', 'mobile-ci');
 
-            $events = Activity::select(DB::raw("count(distinct activity_id)-1 as total"))
+            $events = Activity::select(DB::raw("count(distinct activity_id) as total"))
+                            ->where('activities.activity_name', '=', 'event_view')
                             ->where('activities.module_name', '=', 'Event')
                             ->where('activities.activity_type', '=', 'view')
                             ->where('activities.role', '=', 'Consumer')
                             ->where('activities.group', '=', 'mobile-ci');
 
-            $promotions = Activity::select(DB::raw("count(distinct activity_id)-1 as total"))
+            $promotions = Activity::select(DB::raw("count(distinct activity_id) as total"))
+                            ->where('activities.activity_name', '=', 'view_promotion')
                             ->where('activities.module_name', '=', 'Promotion')
                             ->where('activities.activity_type', '=', 'view')
                             ->where('activities.role', '=', 'Consumer')
