@@ -37,7 +37,7 @@
             @endforeach
         </ul>
     </div>
-    
+
     <div class="col-xs-12 main-theme product-detail">
         <div class="row">
             <div class="col-xs-12">
@@ -57,8 +57,8 @@
             <div class="col-xs-12">
                 <p>{{ $tenant->name }} at</p>
                 <p>{{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p>
-                <p>Phone : {{ $tenant->phone }}</p>
-                <p>{{ $tenant->url }}</p>
+                <p>{{ Lang::get('mobileci.tenant.phone') }} : {{{ (($tenant->phone) != '') ? $tenant->phone : '-' }}}</p>
+                <p>{{ Lang::get('mobileci.tenant.website') }} : {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p>
 
                 @if ($box_url)
                 <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>

@@ -125,6 +125,8 @@ return array(
         'promotions'            => '促销活动',
         'see_tenants'           => '看店铺',
         'where'                 => '位置',
+        'phone'                 => 'Phone(zh)',
+        'website'               => 'Website(zh)',
     ),
 
     // page specific lang
