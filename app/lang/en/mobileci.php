@@ -125,6 +125,8 @@ return array(
         'promotions'            => 'Promotions',
         'see_tenants'           => 'See Tenants',
         'where'                 => 'WHERE',
+        'phone'                 => 'Phone',
+        'website'               => 'Website',
     ),
 
     // page specific lang

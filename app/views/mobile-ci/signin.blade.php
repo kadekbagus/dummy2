@@ -46,7 +46,7 @@
                 <input type="text" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
             </div>
             <div class="form-group orbit-auto-login">
-                <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
+                <button type="submit" class="btn btn-info btn-block">{{ $login_start_button }}</button>
             </div>
         </form>
         <div id="social-wrapper">
@@ -89,7 +89,7 @@
                     <input type="hidden" class="form-control orbit-auto-login" name="email" id="emailSigned" value="{{{ $user_email }}}" />
                 </div>
                 <div class="form-group orbit-auto-login">
-                    <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
+                    <button type="submit" class="btn btn-info btn-block">{{ $login_start_button }}</button>
                 </div>
             </form>
         </div>

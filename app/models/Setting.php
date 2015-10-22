@@ -56,4 +56,15 @@ class Setting extends Eloquent
 
         return $return;
     }
+
+    /**
+     * A category may have many translations.
+     * @author Irianto Pratama <irianto@dominopos.com>
+     */
+    public function translations()
+    {
+        return $this->hasMany('SettingTranslation', 'setting_id', 'setting_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
+    }
 }

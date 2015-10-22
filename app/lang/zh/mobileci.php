@@ -111,7 +111,7 @@ return array(
         'do_not_display'         => '不要再显示此消息',
         'and'                    => '与',
 
-        'message_user_activation' => 'Please activate your account',
+        'message_user_activation' => 'zh:Please activate your account',
     ),
 
     //tenant catalogue
@@ -125,6 +125,8 @@ return array(
         'promotions'            => '促销活动',
         'see_tenants'           => '看店铺',
         'where'                 => '位置',
+        'phone'                 => 'Phone(zh)',
+        'website'               => 'Website(zh)',
     ),
 
     // page specific lang
@@ -139,12 +141,12 @@ return array(
         'loading_orbit'     => '轨道加载中，请稍候...',
         'start_button_mall' => '进入商城',
         'register'          => '定位',
-        'login_via_facebook' => 'Login via Facebook',
-        'or_between_email_and_fb' => 'OR',
-        'agree_to_terms' => 'I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
-        'must_accept_terms' => 'You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
-        'accept_modal_button_text' => 'OK',
-        'connecting_to_facebook' => 'Connecting to Facebook...',
+        'login_via_facebook' => 'zh:Login via Facebook',
+        'or_between_email_and_fb' => 'zh:OR',
+        'agree_to_terms' => 'zh:I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
+        'must_accept_terms' => 'zh:You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
+        'accept_modal_button_text' => 'zh:OK',
+        'connecting_to_facebook' => 'zh:Connecting to Facebook...',
     ),
 
     'catalogue' => array(
@@ -234,7 +236,7 @@ return array(
         'my_coupon'                        => '我的优惠券',
         'use'                              => '使',
         'next_time'                        => '下一次',
-        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
+        'check_coupon'                     => 'zh:You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
     ),
 
     'coupon_list' => array(
@@ -318,9 +320,9 @@ return array(
         'activate'         => '激活',
         'close'            => '关闭',
         'error'            => '失误',
-        'new_password'     => 'New Password',
-        'fill_password'    => 'Please Fill Password (5-20 character)',
-        'confirm_password' => 'Confirm Password',
+        'new_password'     => 'zh:New Password',
+        'fill_password'    => 'zh:Please Fill Password (5-20 character)',
+        'confirm_password' => 'zh:Confirm Password',
     ),
 
     'lucky_draw'  => array(
