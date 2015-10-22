@@ -65,7 +65,7 @@ class TokenAPIController extends ControllerAPI
 
             // Builder object
             $tokens = Token::excludeDeleted()
-                           ->whereIn('token_name', array('user_registration_mobile','user_setup_password'))
+                           ->whereIn('token_name', array('user_registration_mobile','user_setup_password','service_agreement'))
                            ->where('token_value', $tokenId)
                            ->active();
 

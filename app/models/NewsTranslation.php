@@ -31,14 +31,14 @@ class NewsTranslation extends Eloquent
     public function language()
     {
         return $this->belongsTo('MerchantLanguage', 'merchant_language_id', 'merchant_language_id');
-    }    
+    }
 
     public function media()
     {
         return $this->hasMany('Media', 'object_id', 'news_translation_id')
                     ->where('object_name', 'news_translation');
     }
-    
+
     public function media_orig()
     {
         return $this->media()->where('media_name_long', '=', 'news_translation_image_orig');
