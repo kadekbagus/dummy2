@@ -67,6 +67,9 @@
                 <div class="main-theme-mall catalogue" id="product-{{$product->product_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-6 catalogue-img">
+                            @if(!count($product->mediaLogo) > 0)
+                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            @endif
                             @foreach($product->mediaLogo as $media)
                             @if($media->media_name_long == 'retailer_logo_orig')
                             <a href="{{ asset($media->path) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($media->path) }}"></a>
