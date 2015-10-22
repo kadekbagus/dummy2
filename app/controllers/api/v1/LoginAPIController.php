@@ -963,7 +963,7 @@ class LoginAPIController extends ControllerAPI
 
             $this->response->data = $user;
 
-            if ($from === 'mall') {
+            if (!empty($mall) && $from === 'mall') {
                 // @author Irianto Pratama <irianto@dominopos.com>
                 $agreement_accepted = $mall->settings()
                                            ->where('setting_name', 'agreement_accepted')
