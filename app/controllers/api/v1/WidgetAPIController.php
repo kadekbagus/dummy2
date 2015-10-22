@@ -18,6 +18,7 @@ class WidgetAPIController extends ControllerAPI
      * POST - Create new widget
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.net>
      *
      * List of API Parameters
      * ----------------------
@@ -290,6 +291,7 @@ class WidgetAPIController extends ControllerAPI
      * POST - Update widget
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.net>
      *
      * List of API Parameters
      * ----------------------
