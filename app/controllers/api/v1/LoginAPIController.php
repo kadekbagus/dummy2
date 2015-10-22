@@ -569,6 +569,7 @@ class LoginAPIController extends ControllerAPI
                 if ($setting->setting_name === 'agreement_acceptor_last_name') {
                     $setting->setting_value = $last_name;
                 }
+                $setting->save();
             }
 
             $mall->setRelation('settings', $settings);
