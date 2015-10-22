@@ -554,25 +554,36 @@ class LoginAPIController extends ControllerAPI
             $token->save();
 
             // Update settings service agreement
-            $settings = $mall->settings()
-                             ->where('object_id', $mall->merchant_id)
-                             ->where('object_type', 'merchant')
-                             ->get();
+            $setting_items = array('agreement_accepted'=>'true',
+                             'agreement_acceptor_first_name'=>$first_name,
+                             'agreement_acceptor_last_name'=>$last_name
+                            );
 
-            foreach ($settings as $idx => $setting) {
-                if ($setting->setting_name === 'agreement_accepted') {
-                    $setting->setting_value = 'true';
+            foreach ($setting_items as $setting_name => $setting_value) {
+                $settings = Setting::excludeDeleted()
+                                   ->where('object_id',$mall->merchant_id)
+                                   ->where('object_type','merchant')
+                                   ->where('setting_name', $setting_name)
+                                   ->first();
+
+                if (empty($settings)) {
+                    // do insert
+                    $settings = new Setting();
+                    $settings->setting_name = $setting_name;
+                    $settings->setting_value = $setting_value;
+                    $settings->object_id = $mall->merchant_id;
+                    $settings->object_type = 'merchant';
+                    $settings->status = 'active';
+                    $settings->modified_by = $user->user_id;
+
+                    $settings->save();
+                } else {
+                    $settings->setting_value = $setting_value;
+
+                    $settings->save();
                 }
-                if ($setting->setting_name === 'agreement_acceptor_first_name') {
-                    $setting->setting_value = $first_name;
-                }
-                if ($setting->setting_name === 'agreement_acceptor_last_name') {
-                    $setting->setting_value = $last_name;
-                }
-                $setting->save();
             }
-
-            $mall->setRelation('settings', $settings);
+            $mall->load('settings');
 
             $this->response->message = Lang::get('statuses.orbit.updated.serviceagreement');
             $this->response->data = $mall;
@@ -952,7 +963,7 @@ class LoginAPIController extends ControllerAPI
 
             $this->response->data = $user;
 
-            if ($from === 'mall') {
+            if (!empty($mall) && $from === 'mall') {
                 // @author Irianto Pratama <irianto@dominopos.com>
                 $agreement_accepted = $mall->settings()
                                            ->where('setting_name', 'agreement_accepted')

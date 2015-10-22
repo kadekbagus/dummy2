@@ -15,7 +15,6 @@ class TimezoneTableSeeder extends Seeder
         } catch (Illuminate\Database\QueryException $e) {
         }
 
-
         $timezones = [];
         $timezone_identifiers = DateTimeZone::listIdentifiers();
         foreach($timezone_identifiers as $i=>$t) {
