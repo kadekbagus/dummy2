@@ -432,21 +432,18 @@ class WidgetAPIController extends ControllerAPI
                     $updatedwidget->merchant_id = $merchantId;
                 }
 
-                if ($slogan != NULL) {
-                    $updatedwidget->widget_slogan = $slogan;
-                }
-
                 if ($widgetOrder != NULL) {
-                    $updatedwidget->widget_order = $widgetOrder;
                 }
 
                 if ($animation != NULL) {
                     $updatedwidget->animation = 'none';
                 }
 
-                Event::fire('orbit.widget.postupdatewidget.before.save', array($this, $updatedwidget));
+                $updatedwidget->widget_order = $widgetOrder;
 
                 $updatedwidget->modified_by = $user->user_id;
+
+                Event::fire('orbit.widget.postupdatewidget.before.save', array($this, $updatedwidget));
 
                 $updatedwidget->save();
 
@@ -465,14 +462,12 @@ class WidgetAPIController extends ControllerAPI
                 Event::fire('orbit.widget.postnewwidget.after.save', array($this, $updatedwidget));
 
                 // Default translation
-                if ($slogan != NULL) {
-                    $default_translation = [
-                        $idLanguageDefault => [
-                            'widget_slogan' => $updatedwidget->widget_slogan,
-                        ]
-                    ];
-                    $this->validateAndSaveTranslations($updatedwidget, json_encode($default_translation), 'update');
-                }
+                $default_translation = [
+                    $idLanguageDefault => [
+                        'widget_slogan' => $updatedwidget->widget_slogan,
+                    ]
+                ];
+                $this->validateAndSaveTranslations($updatedwidget, json_encode($default_translation), 'update');
 
                 // Save translations
                 if (isset($widgetbatch[$widgetType]['translation']) && $widgetbatch[$widgetType]['translation'] != NULL){
