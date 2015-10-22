@@ -560,7 +560,10 @@
         }
 
         var loadModal = function () {
-            orbitIsViewing = false;
+            if (get('from_login') !== 'yes') {
+                return;
+            }
+            orbitIsViewing = false; {{-- declared in layout --}}
             $('#verifyModal').on('hidden.bs.modal', function () {
                 if ($('#verifyModalCheck')[0].checked) {
                     $.cookie(cookie_dismiss_name, 't', {expires: 3650});
@@ -586,12 +589,16 @@
             @if(! is_null($events))
             {
                 selector: '#promoModal',
-                display: true
+                display: get('from_login') === 'yes'
             },
             @endif
             {
                 selector: '#userActivationModal',
-                display: get('activation_popup') === 'yes'
+                @if ($active_user)
+                    display: false
+                @else
+                    display: get('from_login') === 'yes'
+                @endif
             }
             ];
             var modalIndex;
@@ -620,7 +627,7 @@
                 }
             }
 
-        }
+        };
 
         // Instance the tour
         var endTour = new Tour({
@@ -658,10 +665,8 @@
                     $.cookie("hide-orbit-tour", true, { expires : 60 });
                 }
 
-                if (displayTutorial) {
-                    loadModal();
-                }
                 $.cookie("orbit-tour", true, { expires : 60 });
+                loadModal();
             },
             steps: [{
                 element: '#orbit-tour-profile',

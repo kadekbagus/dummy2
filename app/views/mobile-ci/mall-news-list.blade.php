@@ -184,7 +184,11 @@
             },
             {
                 selector: '#userActivationModal',
-                display: get('activation_popup') == 'yes'
+                @if ($active_user)
+                    display: false
+                @else
+                    display: get('from_login') === 'yes'
+                @endif
             }
         ];
         var modalIndex;

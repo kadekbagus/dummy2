@@ -180,7 +180,7 @@ class MobileCIAPIController extends ControllerAPI
             $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
                     function ($q) use ($retailer) {
-                        $q->where('begin_date', '<=', Carbon::now($retailer->timezone->timezone_offset))->where('end_date', '>=', Carbon::now($retailer->timezone->timezone_offset));
+                        $q->where('begin_date', '<=', Carbon::now($retailer->timezone->timezone_name))->where('end_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                     }
                 );
 
@@ -426,7 +426,7 @@ class MobileCIAPIController extends ControllerAPI
      * @author Ahmad Anshori <ahmad@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
      *
-     * @return Illuminate\View\View
+     * @return \Illuminate\View\View
      */
     public function getSignInView()
     {
@@ -453,7 +453,6 @@ class MobileCIAPIController extends ControllerAPI
         $languages = [];
 
         $internet_info = 'no';
-        $activation_popup = 'no';
         $viewData = [
             'orbitTime' => time(),
             'orbitOriginName' => 'orbit_origin',
@@ -491,8 +490,6 @@ class MobileCIAPIController extends ControllerAPI
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
-            $activation_popup = ($loggedUser->status === 'pending') ? 'yes' : 'no';
-
             // Captive Portal Apple CNA Window
             // -------------------------------
             // Payload login is set and the user is logged in, no need to ask user log in again
@@ -502,14 +499,14 @@ class MobileCIAPIController extends ControllerAPI
                 Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
                 Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
 
-                return Redirect::to($this->addParamsToUrl($landing_url, $internet_info, $activation_popup));
+                return Redirect::to($this->addParamsToUrl($landing_url, $internet_info));
             }
 
             $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $this->addParamsToUrl($landing_url, $internet_info, $activation_popup),
+                'landing_url' => $this->addParamsToUrl($landing_url, $internet_info),
                 'display_name' => $display_name,
                 'languages' => $languages,
             ));
@@ -522,7 +519,7 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'user_email' => htmlentities($user_email),
                 'bg' => $bg,
-                'landing_url' => $this->addParamsToUrl($landing_url, $internet_info, $activation_popup),
+                'landing_url' => $this->addParamsToUrl($landing_url, $internet_info),
                 'display_name' => $display_name,
                 'languages' => $languages
             ));
@@ -1013,7 +1010,7 @@ class MobileCIAPIController extends ControllerAPI
                 $coupon = Coupon::whereHas(
                     'issuedcoupons',
                     function ($q) use ($user, $value, $retailer) {
-                        $q->where('issued_coupons.user_id', $user->user_id)->where('issued_coupons.issued_coupon_id', $value)->where('expired_date', '>=', Carbon::now($retailer->timezone->timezone_offset));
+                        $q->where('issued_coupons.user_id', $user->user_id)->where('issued_coupons.issued_coupon_id', $value)->where('expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                     }
                 )
                 ->whereHas(
@@ -1208,12 +1205,11 @@ class MobileCIAPIController extends ControllerAPI
     /**
      * @param string $landing_url
      * @param string $internet_info
-     * @param string $activation_popup
      * @return string
      */
-    protected function addParamsToUrl($landing_url, $internet_info = 'no', $activation_popup = 'no')
+    protected function addParamsToUrl($landing_url, $internet_info = 'no')
     {
-        return $landing_url . '?internet_info=' . $internet_info . '&activation_popup=' . $activation_popup;
+        return $landing_url . '?from_login=yes&internet_info=' . $internet_info;
     }
 
     /**
@@ -2005,7 +2001,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $numbers = empty($apiResponse->data->records) ? array() : $apiResponse->data->records;
 
-            $servertime = Carbon::now($retailer->timezone->timezone_offset);
+            $servertime = Carbon::now($retailer->timezone->timezone_name);
 
             return View::make('mobile-ci.luckydraw', [
                                 'page_title'    => 'LUCKY DRAW',
@@ -2136,7 +2132,7 @@ class MobileCIAPIController extends ControllerAPI
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_offset). '"
+                WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
                     AND p.merchant_id = :merchantid
                     AND ic.user_id = :userid'
                 ),
@@ -2258,7 +2254,7 @@ class MobileCIAPIController extends ControllerAPI
                 'issuedCoupons' => function($q) use ($issued_coupon_id, $user, $retailer) {
                     $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                     $q->where('issued_coupons.user_id', $user->user_id);
-                    $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_offset));
+                    $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                     $q->where('issued_coupons.status', 'active');
                 })
             )
@@ -2266,7 +2262,7 @@ class MobileCIAPIController extends ControllerAPI
             ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user, $retailer) {
                 $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                 $q->where('issued_coupons.user_id', $user->user_id);
-                $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_offset));
+                $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                 $q->where('issued_coupons.status', 'active');
             })->first();
 
@@ -3426,7 +3422,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
             $user_detail->last_visit_shop_id = $retailer->merchant_id;
-            $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_offset);
+            $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
             $user_detail->save();
 
             $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
