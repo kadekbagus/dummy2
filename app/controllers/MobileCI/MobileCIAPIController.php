@@ -436,7 +436,6 @@ class MobileCIAPIController extends ControllerAPI
         $languages = [];
 
         $internet_info = 'no';
-        $activation_popup = 'no';
         $viewData = [
             'orbitTime' => time(),
             'orbitOriginName' => 'orbit_origin',
