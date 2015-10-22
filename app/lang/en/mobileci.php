@@ -85,7 +85,7 @@ return array(
 
         'coupon_use'             => 'Use',
         'coupon_ignore'          => 'Later',
-        'search_label'           => 'Search by Tenant Name, Categories, FLoor or Description',
+        'search_label'           => 'Search by Tenant Name, Categories, Floor or Description',
         'search_placeholder'     => 'Insert keyword(s)',
         'search_button'          => 'Search',
         'cancel_button'          => 'Cancel',
@@ -125,6 +125,8 @@ return array(
         'promotions'            => 'Promotions',
         'see_tenants'           => 'See Tenants',
         'where'                 => 'WHERE',
+        'phone'                 => 'Phone',
+        'website'               => 'Website',
     ),
 
     // page specific lang

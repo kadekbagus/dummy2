@@ -1456,6 +1456,11 @@ class MobileCIAPIController extends ControllerAPI
                                 $q2->where('category_name', 'like', $name_like);
                             });
                             if (!empty($alternateLanguage)) {
+                                $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                    $q2->whereHas('translations', function($q3) use ($name_like) {
+                                        $q3->where('category_translations.category_name', 'like', $name_like);
+                                    });
+                                });
                                 $q->orWhere('merchant_translations.name', 'like', $name_like)
                                     ->orWhere('merchant_translations.description', 'like', $name_like);
                             }

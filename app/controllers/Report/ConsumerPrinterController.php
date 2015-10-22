@@ -307,7 +307,7 @@ class ConsumerPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customer', $totalRec, '', '', '', '','','','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'Orbit Join Date', 'Obtained Coupon', 'Redeemed Coupon', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'Orbit Join Date', 'Issued Coupon', 'Redeemed Coupon', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {

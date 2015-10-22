@@ -125,6 +125,8 @@ return array(
         'promotions'            => '販促',
         'see_tenants'           => 'テナントを見る',
         'where'                 => '場所',
+        'phone'                 => 'Phone(ja)',
+        'website'               => 'Website(ja)',
     ),
 
     // page specific lang
