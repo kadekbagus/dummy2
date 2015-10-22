@@ -431,6 +431,7 @@ class MobileCIAPIController extends ControllerAPI
     public function getSignInView()
     {
         $bg = null;
+        $login_start_button = Config::get('shop.start_button_label');
         if (\Input::get('payload')) {
             // has payload, clear out prev cookies
             $_COOKIE['orbit_firstname'] = '';
@@ -439,6 +440,7 @@ class MobileCIAPIController extends ControllerAPI
         $landing_url = URL::route('ci-customer-home');
         $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : '';
         $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : '';
+        $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
         $display_name = '';
 
         if (! empty($cookie_email)) {
@@ -467,16 +469,37 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $retailer = $this->getRetailerInfo();
 
-            $languages = $this->getListLanguages($retailer);
+            $merchant_language_id = null;
 
-            $mall = Mall::with('settings')->where('merchant_id', $retailer->merchant_id)
+            $languages = $this->getListLanguages($retailer);
+            try {
+                if (! empty($cookie_lang)) {
+                    foreach ($languages as $idx => $language) {
+                        if ($cookie_lang === $language->language->name) {
+                            $merchant_language_id = $language->merchant_language_id;
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+            }
+
+            //dd($merchant_language_id);
+            $mall = Mall::with(array('settings.translations' => function($q) use ($merchant_language_id) {
+                    $q->where('setting_translations.merchant_language_id', $merchant_language_id);
+                }))->where('merchant_id', $retailer->merchant_id)
                 ->first();
 
             //get internet_info from setting
             $internet_info_obj = $this->getObjFromArray($retailer->settings, 'internet_info');
 
+            //get start_button_label from setting
+            $start_button_obj = $this->getObjFromArray($mall->settings, 'start_button_label');
+
             if (is_object($internet_info_obj)) {
                 $internet_info = $internet_info_obj->setting_value;
+            }
+            if (is_object($start_button_obj)) {
+                $start_button_label = $start_button_obj->translations[0]->setting_value;
             }
 
             $landing_url = $this->getLandingUrl($mall);
@@ -501,6 +524,7 @@ class MobileCIAPIController extends ControllerAPI
 
                 return Redirect::to($this->addParamsToUrl($landing_url, $internet_info));
             }
+// dd($start_button_label);
 
             $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,
@@ -509,6 +533,7 @@ class MobileCIAPIController extends ControllerAPI
                 'landing_url' => $this->addParamsToUrl($landing_url, $internet_info),
                 'display_name' => $display_name,
                 'languages' => $languages,
+                'login_start_button' => $start_button_label,
             ));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
@@ -521,7 +546,8 @@ class MobileCIAPIController extends ControllerAPI
                 'bg' => $bg,
                 'landing_url' => $this->addParamsToUrl($landing_url, $internet_info),
                 'display_name' => $display_name,
-                'languages' => $languages
+                'languages' => $languages,
+                'login_start_button' => $start_button_label,
             ));
         }
 

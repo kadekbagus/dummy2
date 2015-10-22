@@ -57,7 +57,7 @@ return array(
     // modal specific lang
     'modals' => array(
         'close'                 => '閉じる',
-        'ok'                    => 'OK',
+        'ok'                    => 'ja:OK',
         'email_error'           => 'まず、あなたのメールを入力してください。',
         'event_title'           => 'イベント',
         'info_title'            => '情報',
@@ -110,6 +110,8 @@ return array(
         'check_out_our'          => 'チェックアウト',
         'do_not_display'         => '今後このメッセージを表示しません',
         'and'                    => 'アンド',
+
+        'message_user_activation' => 'ja:Please activate your account',
     ),
 
     //tenant catalogue
@@ -137,6 +139,12 @@ return array(
         'loading_orbit'     => 'オービットをロードすると、待機してください...',
         'start_button_mall' => 'モールを入力してください',
         'register'          => '登録',
+        'login_via_facebook' => 'ja:Login via Facebook',
+        'or_between_email_and_fb' => 'ja:OR',
+        'agree_to_terms' => 'ja:I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
+        'must_accept_terms' => 'ja:You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
+        'accept_modal_button_text' => 'ja:OK',
+        'connecting_to_facebook' => 'ja:Connecting to Facebook...',
     ),
 
     'catalogue' => array(
@@ -226,7 +234,7 @@ return array(
         'my_coupon'                        => '私のクーポン',
         'use'                              => '使用',
         'next_time'                        => '次回',
-        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
+        'check_coupon'                     => 'ja:You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
     ),
 
     'coupon_list' => array(
