@@ -20,7 +20,7 @@
                         <div class="col-xs-6">
                             <h4>{{ $news->news_name }}</h4>
                             @if (strlen($news->description) > 120)
-                            <p>{{{ substr($news->description, 0, 120) }}} [<a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}">...</a>] </p>
+                            <p>{{{ mb_substr($news->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}">...</a>] </p>
                             @else
                             <p>{{{ $news->description }}}</p>
                             @endif
