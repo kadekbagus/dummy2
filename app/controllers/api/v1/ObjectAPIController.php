@@ -708,7 +708,7 @@ class ObjectAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,object_name,object_type,status',
+                    'sort_by' => 'in:registered_date,object_name,object_type,status,object_order',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.object_sortby'),
@@ -832,6 +832,7 @@ class ObjectAPIController extends ControllerAPI
                     'registered_date'   => 'objects.created_at',
                     'object_name'       => 'objects.object_name',
                     'object_type'       => 'objects.object_type',
+                    'object_order'      => 'objects.object_order',
                     'status'            => 'objects.status'
                 );
 
