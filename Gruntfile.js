@@ -10,7 +10,9 @@ module.exports = function(grunt) {
           optimization: 2
         },
         files: {
-          "./public/mobile-ci/stylesheet/main.css": "./public/mobile-ci/styles-less/main.less"
+          "./public/mobile-ci/stylesheet/main.css": "./public/mobile-ci/styles-less/main.less",
+          "./public/mobile-ci/stylesheet/takashimaya.css": "./public/mobile-ci/styles-less/main-red.less",
+          "./public/mobile-ci/stylesheet/galleria.css": "./public/mobile-ci/styles-less/main-colors-1.less"
         }
       }
     },

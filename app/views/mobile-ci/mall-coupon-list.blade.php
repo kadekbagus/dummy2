@@ -20,7 +20,7 @@
                         <div class="col-xs-6">
                             <h4>{{ $coupon->promotion_name }}</h4>
                             @if (strlen($coupon->description) > 120)
-                            <p>{{{ substr($coupon->description, 0, 120) }}} [<a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">...</a>] </p>
+                            <p>{{{ mb_substr($coupon->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">...</a>] </p>
                             @else
                             <p>{{{ $coupon->description }}}</p>
                             @endif
