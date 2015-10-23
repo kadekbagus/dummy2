@@ -14,9 +14,11 @@
 <!-- product -->
 <div class="row product">
     <div class="col-xs-12 product-img">
+        @if(count($tenant->mediaLogoOrig) > 0)
         <div class="zoom-wrapper">
             <div class="zoom"><a href="#" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
+        @endif
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
             @if(!count($tenant->mediaLogoOrig) > 0)
             <li data-thumb="{{ asset('mobile-ci/images/default_product.png') }}">

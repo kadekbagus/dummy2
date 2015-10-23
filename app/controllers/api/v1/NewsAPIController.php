@@ -1545,9 +1545,28 @@ class NewsAPIController extends ControllerAPI
 
         // Check news name, it should not exists
         Validator::extend('orbit.exists.news_name', function ($attribute, $value, $parameters) {
-            $newsName = News::excludeDeleted()
+
+            // this is for fixing OM-578
+            // can not make promotion if the name has already been used for news
+            $object_type = OrbitInput::post('object_type');
+            
+            if (empty($object_type)) {
+                $object_type = 'news';
+            }
+
+            if ($object_type == 'news') {
+                $newsName = News::excludeDeleted()
                         ->where('news_name', $value)
+                        ->where('object_type', 'news')
                         ->first();
+            }
+
+            if ($object_type == 'promotion') {
+                $newsName = News::excludeDeleted()
+                        ->where('news_name', $value)
+                        ->where('object_type', 'promotion')
+                        ->first();
+            }
 
             if (! empty($newsName)) {
                 return FALSE;

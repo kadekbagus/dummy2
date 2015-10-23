@@ -48,7 +48,7 @@
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel2" id="floor">
                                 @foreach($floorList as $floor)
-                                <li data-floor="{{ $floor }}"><span>{{ $floor }}</span></li>
+                                <li data-floor="{{ $floor->object_name }}"><span>{{ $floor->object_name }}</span></li>
                                 @endforeach
                             </ul>
                         </div>
@@ -137,18 +137,9 @@
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel2" id="floor">
-                                <li data-category=""><span>{{ Lang::get('mobileci.catalogue.all') }}</span></li>
-                                <li data-floor="LG"><span>LG</span></li>
-                                <li data-floor="G"><span>G</span></li>
-                                <li data-floor="UG"><span>UG</span></li>
-                                <li data-floor="L1"><span>L1</span></li>
-                                <li data-floor="L2"><span>L2</span></li>
-                                <!-- Lippo Mall Puri only has floor up to L2
-                                <li data-floor="L3"><span>L3</span></li>
-                                <li data-floor="L4"><span>L4</span></li>
-                                <li data-floor="L5"><span>L5</span></li>
-                                <li data-floor="L6"><span>L6</span></li>
-                                -->
+                                @foreach($floorList as $floor)
+                                <li data-floor="{{ $floor->object_name }}"><span>{{ $floor->object_name }}</span></li>
+                                @endforeach
                             </ul>
                         </div>
                     </div>

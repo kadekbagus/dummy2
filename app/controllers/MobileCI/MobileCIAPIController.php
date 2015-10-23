@@ -61,6 +61,7 @@ use Redirect;
 use Cookie;
 use \Inbox;
 use \News;
+use \Object;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -1407,13 +1408,13 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $floorList = Tenant::with('mediaLogo', 'categories') // no translation needed
+            $floorList = Object::whereHas('mall', function ($q) use ($retailer) {
+                    $q->where('merchants.merchant_id', $retailer->merchant_id);
+                })
                 ->active()
-                ->where('is_mall', 'no')
-                ->where('parent_id', $retailer->merchant_id)
-                ->groupBy('floor')
-                ->orderBy('floor')
-                ->lists('floor');
+                ->where('object_type', 'floor')
+                ->orderBy('object_order', 'asc')
+                ->get();
 
             $tenants = Tenant::with('mediaLogo');
             if (!empty($alternateLanguage)) {

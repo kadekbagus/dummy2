@@ -25,9 +25,11 @@
 @section('content')
 <div class="row product">
     <div class="col-xs-12 product-img">
+        @if(($coupon->image!='mobile-ci/images/default_product.png'))
         <div class="zoom-wrapper">
             <div class="zoom"><a href="{{ asset($coupon->image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
+        @endif
         <a href="{{ asset($coupon->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($coupon->image) }}" ></a>
     </div>
     <div class="col-xs-12 main-theme product-detail">
