@@ -19,105 +19,108 @@ class TakashimayaCategorySeeder extends Seeder
 ATM
 Appliances
 Cafe & Bakery
+Cafe
 Chinese Casual Dining
 Chinese Cuisine
 Confectionery
 Cosmetics & Skincare
 Educational Toys & Enrichment Centres
-Fashion & Accessories
-Fashion Apparel
+Fashion, Accessories & Shoes
 Fine Jewellery & Watches
 Fragrance & Body Care
 Gifts/Hobbies/Toys
 Gourment Confectionery
-Hair & Beauty
 Hairdressing & Beauty Salon
 Home Decorative
-International Jeweller
 Japanese Casual Dining
 Japanese Cuisine
 Korean Cuisine
 Leather Goods & Shoes
 Money Changer
 Optical Services
-Pharmac
 Restaurants
-Services
 Shoes Repair & Key Services
-Sports Apparel
+Sports Apparel, Equipment & Accessories
 Travel & Lifestyle
 Western Casual Dining
 Western Cuisine
+International Fashion & Accessories
+International Fashion, Accessories & Shoes
+International Jewellery, Watches & Writing Instruments
+Pharmacy, Health & Toiletries
+Services
 CATEGORIES;
 
         $sources_zh = <<<CATEGORIES
 ATM
 Appliances
 Cafe & Bakery
+Cafe
 Chinese Casual Dining
 Chinese Cuisine
 Confectionery
 Cosmetics & Skincare
 Educational Toys & Enrichment Centres
-Fashion & Accessories
-Fashion Apparel
+Fashion, Accessories & Shoes
 Fine Jewellery & Watches
 Fragrance & Body Care
 Gifts/Hobbies/Toys
 Gourment Confectionery
-Hair & Beauty
 Hairdressing & Beauty Salon
 Home Decorative
-International Jeweller
 Japanese Casual Dining
 Japanese Cuisine
 Korean Cuisine
 Leather Goods & Shoes
 Money Changer
 Optical Services
-Pharmac
 Restaurants
-Services
 Shoes Repair & Key Services
-Sports Apparel
+Sports Apparel, Equipment & Accessories
 Travel & Lifestyle
 Western Casual Dining
 Western Cuisine
+International Fashion & Accessories
+International Fashion, Accessories & Shoes
+International Jewellery, Watches & Writing Instruments
+Pharmacy, Health & Toiletries
+Services
 CATEGORIES;
 
         $sources_ja = <<<CATEGORIES
 ATM
 Appliances
 Cafe & Bakery
+Cafe
 Chinese Casual Dining
 Chinese Cuisine
 Confectionery
 Cosmetics & Skincare
 Educational Toys & Enrichment Centres
-Fashion & Accessories
-Fashion Apparel
+Fashion, Accessories & Shoes
 Fine Jewellery & Watches
 Fragrance & Body Care
 Gifts/Hobbies/Toys
 Gourment Confectionery
-Hair & Beauty
 Hairdressing & Beauty Salon
 Home Decorative
-International Jeweller
 Japanese Casual Dining
 Japanese Cuisine
 Korean Cuisine
 Leather Goods & Shoes
 Money Changer
 Optical Services
-Pharmac
 Restaurants
-Services
 Shoes Repair & Key Services
-Sports Apparel
+Sports Apparel, Equipment & Accessories
 Travel & Lifestyle
 Western Casual Dining
 Western Cuisine
+International Fashion & Accessories
+International Fashion, Accessories & Shoes
+International Jewellery, Watches & Writing Instruments
+Pharmacy, Health & Toiletries
+Services
 CATEGORIES;
 
 
