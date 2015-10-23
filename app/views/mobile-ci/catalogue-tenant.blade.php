@@ -111,7 +111,7 @@
                                             echo $namex;
                                         ?>
                                     @else
-                                        Category
+                                        {{ Lang::get('mobileci.tenant.category') }}
                                     @endif
                                 </span>
                                 <span class="caret"></span>
@@ -131,7 +131,7 @@
                                     @if(!empty(Input::get('fid')))
                                         {{ Input::get('fid') }}
                                     @else
-                                        Floor
+                                        {{ Lang::get('mobileci.tenant.floor') }}
                                     @endif
                                 </span>
                                 <span class="caret"></span>
