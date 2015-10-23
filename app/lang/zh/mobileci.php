@@ -111,7 +111,7 @@ return array(
         'do_not_display'         => '不要再显示此消息',
         'and'                    => '与',
 
-        'message_user_activation' => 'zh:Please activate your account',
+        'message_user_activation' => '请激活您的帐户',
     ),
 
     //tenant catalogue
@@ -125,8 +125,8 @@ return array(
         'promotions'            => '促销活动',
         'see_tenants'           => '看店铺',
         'where'                 => '位置',
-        'phone'                 => 'zh:Phone',
-        'website'               => 'zh:Website',
+        'phone'                 => '电话号码',
+        'website'               => '网站',
     ),
 
     // page specific lang
@@ -141,12 +141,12 @@ return array(
         'loading_orbit'     => '轨道加载中，请稍候...',
         'start_button_mall' => '进入商城',
         'register'          => '定位',
-        'login_via_facebook' => 'zh:Login via Facebook',
-        'or_between_email_and_fb' => 'zh:OR',
-        'agree_to_terms' => 'zh:I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
-        'must_accept_terms' => 'zh:You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
+        'login_via_facebook' => '通过 Facebook 登录',
+        'or_between_email_and_fb' => '或',
+        'agree_to_terms' => '我同意 Orbit <a href="%s" id="orbit-privacy-policy-anchor">隐私政策</a> 和 <a href="%s" id="orbit-tos-anchor">条款和条件</a>',
+        'must_accept_terms' => '在您能继续登录前，您必须赞成 Orbit <strong>隐私政策</strong> 和 <strong>条款和条件</strong>',
         'accept_modal_button_text' => '是',
-        'connecting_to_facebook' => 'zh:Connecting to Facebook...',
+        'connecting_to_facebook' => '连接到 Facebook...',
     ),
 
     'catalogue' => array(
@@ -236,7 +236,7 @@ return array(
         'my_coupon'                        => '我的优惠券',
         'use'                              => '使',
         'next_time'                        => '下一次',
-        'check_coupon'                     => 'zh:You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
+        'check_coupon'                     => '您能检查您的优惠券在主页 <i class="fa fa-arrow-right"></i> 优惠券',
     ),
 
     'coupon_list' => array(

@@ -111,7 +111,7 @@ return array(
         'do_not_display'         => '今後このメッセージを表示しません',
         'and'                    => 'アンド',
 
-        'message_user_activation' => 'ja:Please activate your account',
+        'message_user_activation' => 'あなたのアカウントを有効にしてください',
     ),
 
     //tenant catalogue
@@ -125,8 +125,8 @@ return array(
         'promotions'            => '販促',
         'see_tenants'           => 'テナントを見る',
         'where'                 => '場所',
-        'phone'                 => 'ja:Phone',
-        'website'               => 'ja:Website',
+        'phone'                 => '電話番号',
+        'website'               => 'ウェブサイト',
     ),
 
     // page specific lang
@@ -141,12 +141,12 @@ return array(
         'loading_orbit'     => 'オービットをロードすると、待機してください...',
         'start_button_mall' => 'モールを入力してください',
         'register'          => '登録',
-        'login_via_facebook' => 'ja:Login via Facebook',
-        'or_between_email_and_fb' => 'ja:OR',
-        'agree_to_terms' => 'ja:I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
-        'must_accept_terms' => 'ja:You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
+        'login_via_facebook' => 'Facebook経由でログイン',
+        'or_between_email_and_fb' => 'または',
+        'agree_to_terms' => '私はOrbit<a href="%s" id="orbit-privacy-policy-anchor">プライバシー規約</a>および<a href="%s" id="orbit-tos-anchor">契約条件</a>に同意する',
+        'must_accept_terms' => 'ログインすることを進むことができる前にOrbit<a href="%s" id="orbit-privacy-policy-anchor">プライバシー規約</a>および<a href="%s" id="orbit-tos-anchor">契約条件</a>に同意しなければならない',
         'accept_modal_button_text' => 'はい',
-        'connecting_to_facebook' => 'ja:Connecting to Facebook...',
+        'connecting_to_facebook' => 'Facebookへの接続...',
     ),
 
     'catalogue' => array(
@@ -236,7 +236,7 @@ return array(
         'my_coupon'                        => '私のクーポン',
         'use'                              => '使用',
         'next_time'                        => '次回',
-        'check_coupon'                     => 'ja:You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
+        'check_coupon'                     => 'あなたは、ホームページ>クーポンであなたのクーポンを確認することができます',
     ),
 
     'coupon_list' => array(
