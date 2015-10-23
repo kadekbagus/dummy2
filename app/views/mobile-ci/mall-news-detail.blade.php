@@ -28,7 +28,11 @@
             <div class="zoom"><a href="{{ asset($product->image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
         @endif
+        @if(($product->image!='mobile-ci/images/default_product.png'))
         <a href="{{ asset($product->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($product->image) }}" ></a>
+        @else
+        <img class="img-responsive" alt="" src="{{ asset($product->image) }}" >
+        @endif
     </div>
     <div class="col-xs-12 main-theme product-detail">
         <div class="row">
