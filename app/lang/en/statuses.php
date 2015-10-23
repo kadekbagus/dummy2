@@ -75,6 +75,8 @@ return array(
                 'delete_image'  => 'Retailer images has been successfully deleted.'
             ),
             'mall' => array(
+                'logo'               => 'Mall logo has been successfully uploaded.',
+                'delete_logo'        => 'Mall logo has been successfully deleted.',
                 'background'         => 'Background image has been successfully uploaded.',
                 'delete_background'  => 'Background image has been successfully deleted.'
             ),

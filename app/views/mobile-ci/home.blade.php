@@ -246,7 +246,7 @@
     </div>
     <div class="row">
         <div class="col-xs-12 text-center merchant-logo">
-            <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" />
+            <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" />
         </div>
     </div>
 </div>

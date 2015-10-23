@@ -264,6 +264,20 @@ class Mall extends Eloquent
     }
 
     /**
+     * Mall has many uploaded media with original type.
+     *
+     * @author Tian <tian@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaOrig()
+    {
+        return $this->hasMany('Media', 'object_id', 'merchant_id')
+                    ->where('object_name', 'mall')
+                    ->where('media_name_long', 'like', '%_orig')
+                    ->orderBy('metadata', 'asc');
+    }
+
+    /**
      * Merchant has many uploaded logo.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -272,6 +286,17 @@ class Mall extends Eloquent
     public function mediaLogo()
     {
         return $this->media()->where('media_name_id', 'mall_logo');
+    }
+
+    /**
+     * Mall has many uploaded logo.
+     *
+     * @author Tian <tian@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaLogoOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'mall_logo');
     }
 
     /**
@@ -344,7 +369,11 @@ class Mall extends Eloquent
     public function getBigLogoAttribute($value)
     {
         if(is_null($value)){
-            return '/mobile-ci/images/default-logo-big.png';
+            if (is_object($this->mediaLogoOrig()->first())) {
+                return $this->mediaLogoOrig()->first()->path;
+            } else {
+                return '/mobile-ci/images/default-logo.png';
+            }
         } else {
             return $value;
         }

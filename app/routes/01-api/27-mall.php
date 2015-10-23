@@ -44,5 +44,20 @@ Route::get('/api/v1/mall/city', function()
     return MallAPIController::create()->getCityList();
 });
 
+/**
+ * Upload mall logo
+ */
+Route::post('/api/v1/mall-logo/upload', function()
+{
+    return UploadAPIController::create()->postUploadMallLogo();
+});
+
+/**
+ * Delete mall logo
+ */
+Route::post('/api/v1/mall-logo/delete', function()
+{
+    return UploadAPIController::create()->postDeleteMallLogo();
+});
 
 ?>

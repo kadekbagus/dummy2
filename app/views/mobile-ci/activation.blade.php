@@ -23,7 +23,7 @@
             </div>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" />
                 </div>
             </div>
         </header>
