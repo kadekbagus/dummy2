@@ -61,6 +61,7 @@ use Redirect;
 use Cookie;
 use \Inbox;
 use \News;
+use \Object;
 
 class MobileCIAPIController extends ControllerAPI
 {
