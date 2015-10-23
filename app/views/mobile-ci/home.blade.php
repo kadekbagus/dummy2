@@ -560,8 +560,10 @@
         }
 
         var loadModal = function () {
+            var onlyEvent = false;
+
             if (get('from_login') !== 'yes') {
-                return;
+                onlyEvent = true;
             }
             orbitIsViewing = false; {{-- declared in layout --}}
             $('#verifyModal').on('hidden.bs.modal', function () {
@@ -589,7 +591,7 @@
             @if(! is_null($events))
             {
                 selector: '#promoModal',
-                display: get('from_login') === 'yes'
+                display: true
             },
             @endif
             {
@@ -597,7 +599,7 @@
                 @if ($active_user)
                     display: false
                 @else
-                    display: get('from_login') === 'yes'
+                    display: onlyEvent === false
                 @endif
             }
             ];
