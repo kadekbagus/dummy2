@@ -433,13 +433,15 @@ class WidgetAPIController extends ControllerAPI
                 }
 
                 if ($widgetOrder != NULL) {
+                    $updatedwidget->widget_slogan = $widgetOrder;
                 }
 
                 if ($animation != NULL) {
                     $updatedwidget->animation = 'none';
                 }
 
-                $updatedwidget->widget_order = $widgetOrder;
+                // slogan can be null or empty string
+                $updatedwidget->widget_slogan = $slogan;
 
                 $updatedwidget->modified_by = $user->user_id;
 

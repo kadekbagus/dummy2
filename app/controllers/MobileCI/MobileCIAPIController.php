@@ -248,7 +248,7 @@ class MobileCIAPIController extends ControllerAPI
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             $contentDefaultLanguage = \EventTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                                 ->where('event_id', $events->event_id)->first();
 
                             // get default image
@@ -257,7 +257,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->first();
 
                             if (isset($mediaDefaultLanguage->path)) {
-                                $coupons->image = $mediaDefaultLanguage->path;
+                                $events->image = $mediaDefaultLanguage->path;
                             }
                         }
                     }
@@ -431,8 +431,7 @@ class MobileCIAPIController extends ControllerAPI
     public function getSignInView()
     {
         $bg = null;
-        $start_button_label = Config::get('shop.start_button_label');
-
+        $login_start_button = Config::get('shop.start_button_label');
         if (\Input::get('payload')) {
             // has payload, clear out prev cookies
             $_COOKIE['orbit_firstname'] = '';
@@ -484,6 +483,7 @@ class MobileCIAPIController extends ControllerAPI
             } catch (Exception $e) {
             }
 
+            //dd($merchant_language_id);
             $mall = Mall::with(array('settings.translations' => function($q) use ($merchant_language_id) {
                     $q->where('setting_translations.merchant_language_id', $merchant_language_id);
                 }))->where('merchant_id', $retailer->merchant_id)
@@ -524,6 +524,7 @@ class MobileCIAPIController extends ControllerAPI
 
                 return Redirect::to($this->addParamsToUrl($landing_url, $internet_info));
             }
+// dd($start_button_label);
 
             $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,
@@ -532,7 +533,7 @@ class MobileCIAPIController extends ControllerAPI
                 'landing_url' => $this->addParamsToUrl($landing_url, $internet_info),
                 'display_name' => $display_name,
                 'languages' => $languages,
-                'start_button_login' => $start_button_label,
+                'login_start_button' => $start_button_label,
             ));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
@@ -546,7 +547,7 @@ class MobileCIAPIController extends ControllerAPI
                 'landing_url' => $this->addParamsToUrl($landing_url, $internet_info),
                 'display_name' => $display_name,
                 'languages' => $languages,
-                'start_button_login' => $start_button_label,
+                'login_start_button' => $start_button_label,
             ));
         }
 
@@ -2194,7 +2195,7 @@ class MobileCIAPIController extends ControllerAPI
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                                 ->where('promotion_id', $coupon->promotion_id)->first();
 
                             // get default image
@@ -2203,7 +2204,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->first();
 
                             if (isset($mediaDefaultLanguage->path)) {
-                                $coupons->image = $mediaDefaultLanguage->path;
+                                $coupon->promo_image = $mediaDefaultLanguage->path;
                             }
                         }
                     }
@@ -2324,7 +2325,7 @@ class MobileCIAPIController extends ControllerAPI
                         // check the system language
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
                         $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                             ->where('promotion_id', $coupons->promotion_id)->first();
 
                         // get default image
