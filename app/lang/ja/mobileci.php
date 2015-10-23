@@ -200,7 +200,7 @@ return array(
         'want_unlimited_browsing'          => '無制限のブラウジングをしたいです',
         'or_want_to_follow_the_lucky_draw' => 'または抽選をフォローしたいです',
         'open_your_email_and_verify_now'   => 'あなたの電子メールを開いて、今すぐ確認します',
-        'validity'                         => '効力',
+        'validity'                         => '有効',
     ),
 
     'promotion_list' => array(

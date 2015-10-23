@@ -43,6 +43,35 @@
 //     }
 // });
 
+App::before(function($request) {
+    App::singleton('style_name', function(){
+        $style = 'main.css';
+        // just testing
+        $mallId = App::make('orbitSetting')->getSetting('current_retailer');
+
+        switch ($mallId) {
+            case 'EXs5F-LMP-------':
+                $style = 'main.css';
+                break;
+
+            case 'EXs5F-TKS-------':
+                $style = 'takashimaya.css';
+                break;
+
+            case 'EXs5F-MBG-------':
+                $style = 'galleria.css';
+                break;
+            
+            default:
+                $style = 'main.css';
+                break;
+        }
+
+        return $style;
+    });
+
+    View::share('style_name', app('style_name'));
+});
 
 App::after(function($request, $response)
 {
