@@ -17,158 +17,107 @@ class TakashimayaCategorySeeder extends Seeder
     {
         $sources = <<<CATEGORIES
 ATM
+Appliances
+Cafe & Bakery
 Chinese Casual Dining
+Chinese Cuisine
 Confectionery
 Cosmetics & Skincare
+Educational Toys & Enrichment Centres
 Fashion & Accessories
-Gifts/Hobbies/Toys
-Hair & Beauty
-Japanese Casual Dining
-Korean Cuisine
-Pharmacy, Health & Toiletries
-Shoes Repair & Key Services
-Sports Apparel, Equipment & Accessories
-Western Casual Dining
-Cafe
-Cosmetics, Skincare & Bodycare
-Fashion, Accessories & Shoes
-Gifts/Hobbies/Toys
-Optical Services
-Gourment Confectionery
-International Fashion & Accessories
-International Jewellery, Watches & Writing Instruments
-Leather Goods
+Fashion Apparel
 Fine Jewellery & Watches
 Fragrance & Body Care
+Gifts/Hobbies/Toys
 Gourment Confectionery
-Hairdressing & Beauty Salon
-International Fashion, Accessories & Shoes
-Leather Goods & Shoes
-Cafe & Bakery
-Fashion Apparel, Accessories & Shoes
-Fine Jewellery & Watches
-Gourment Confectionery
-Money Changer
-Optical Services
-Services
-Sports
-Travel & Lifestyle
-Chinese Cuisine
-Japanese Cuisine
-Western Cuisine
-Appliances
-Cosmetics, Skincare & Bodycare
-Educational Toys & Enrichment Centres
-Fashionable & Accessories
 Hair & Beauty
 Hairdressing & Beauty Salon
 Home Decorative
+International Jeweller
+Japanese Casual Dining
+Japanese Cuisine
+Korean Cuisine
 Leather Goods & Shoes
+Money Changer
+Optical Services
+Pharmac
 Restaurants
+Services
+Shoes Repair & Key Services
+Sports Apparel
+Travel & Lifestyle
+Western Casual Dining
+Western Cuisine
 CATEGORIES;
 
         $sources_zh = <<<CATEGORIES
 ATM
+Appliances
+Cafe & Bakery
 Chinese Casual Dining
+Chinese Cuisine
 Confectionery
 Cosmetics & Skincare
+Educational Toys & Enrichment Centres
 Fashion & Accessories
-Gifts/Hobbies/Toys
-Hair & Beauty
-Japanese Casual Dining
-Korean Cuisine
-Pharmacy, Health & Toiletries
-Shoes Repair & Key Services
-Sports Apparel, Equipment & Accessories
-Western Casual Dining
-Cafe
-Cosmetics, Skincare & Bodycare
-Fashion, Accessories & Shoes
-Gifts/Hobbies/Toys
-Optical Services
-Gourment Confectionery
-International Fashion & Accessories
-International Jewellery, Watches & Writing Instruments
-Leather Goods
+Fashion Apparel
 Fine Jewellery & Watches
 Fragrance & Body Care
+Gifts/Hobbies/Toys
 Gourment Confectionery
-Hairdressing & Beauty Salon
-International Fashion, Accessories & Shoes
-Leather Goods & Shoes
-Cafe & Bakery
-Fashion Apparel, Accessories & Shoes
-Fine Jewellery & Watches
-Gourment Confectionery
-Money Changer
-Optical Services
-Services
-Sports
-Travel & Lifestyle
-Chinese Cuisine
-Japanese Cuisine
-Western Cuisine
-Appliances
-Cosmetics, Skincare & Bodycare
-Educational Toys & Enrichment Centres
-Fashionable & Accessories
 Hair & Beauty
 Hairdressing & Beauty Salon
 Home Decorative
+International Jeweller
+Japanese Casual Dining
+Japanese Cuisine
+Korean Cuisine
 Leather Goods & Shoes
+Money Changer
+Optical Services
+Pharmac
 Restaurants
+Services
+Shoes Repair & Key Services
+Sports Apparel
+Travel & Lifestyle
+Western Casual Dining
+Western Cuisine
 CATEGORIES;
 
         $sources_ja = <<<CATEGORIES
 ATM
+Appliances
+Cafe & Bakery
 Chinese Casual Dining
+Chinese Cuisine
 Confectionery
 Cosmetics & Skincare
+Educational Toys & Enrichment Centres
 Fashion & Accessories
-Gifts/Hobbies/Toys
-Hair & Beauty
-Japanese Casual Dining
-Korean Cuisine
-Pharmacy, Health & Toiletries
-Shoes Repair & Key Services
-Sports Apparel, Equipment & Accessories
-Western Casual Dining
-Cafe
-Cosmetics, Skincare & Bodycare
-Fashion, Accessories & Shoes
-Gifts/Hobbies/Toys
-Optical Services
-Gourment Confectionery
-International Fashion & Accessories
-International Jewellery, Watches & Writing Instruments
-Leather Goods
+Fashion Apparel
 Fine Jewellery & Watches
 Fragrance & Body Care
+Gifts/Hobbies/Toys
 Gourment Confectionery
-Hairdressing & Beauty Salon
-International Fashion, Accessories & Shoes
-Leather Goods & Shoes
-Cafe & Bakery
-Fashion Apparel, Accessories & Shoes
-Fine Jewellery & Watches
-Gourment Confectionery
-Money Changer
-Optical Services
-Services
-Sports
-Travel & Lifestyle
-Chinese Cuisine
-Japanese Cuisine
-Western Cuisine
-Appliances
-Cosmetics, Skincare & Bodycare
-Educational Toys & Enrichment Centres
-Fashionable & Accessories
 Hair & Beauty
 Hairdressing & Beauty Salon
 Home Decorative
+International Jeweller
+Japanese Casual Dining
+Japanese Cuisine
+Korean Cuisine
 Leather Goods & Shoes
+Money Changer
+Optical Services
+Pharmac
 Restaurants
+Services
+Shoes Repair & Key Services
+Sports Apparel
+Travel & Lifestyle
+Western Casual Dining
+Western Cuisine
 CATEGORIES;
 
 
