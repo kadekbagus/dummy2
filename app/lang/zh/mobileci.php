@@ -96,7 +96,7 @@ return array(
         'yes_button'            => '对',
         'do_not_show_label'     => '不要再显示此消息',
         'new_product_price'     => '新价格',
-        'okay'                  => 'OK',
+        'okay'                  => '是',
 
         'membership_notfound'    => '会员不存在',
         'membership_want_member' => '想要成为会员?',
@@ -145,7 +145,7 @@ return array(
         'or_between_email_and_fb' => 'zh:OR',
         'agree_to_terms' => 'zh:I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
         'must_accept_terms' => 'zh:You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
-        'accept_modal_button_text' => 'zh:OK',
+        'accept_modal_button_text' => '是',
         'connecting_to_facebook' => 'zh:Connecting to Facebook...',
     ),
 

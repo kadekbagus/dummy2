@@ -57,7 +57,7 @@ return array(
     // modal specific lang
     'modals' => array(
         'close'                 => '閉じる',
-        'ok'                    => 'ja:OK',
+        'ok'                    => 'はい',
         'email_error'           => 'まず、あなたのメールを入力してください。',
         'event_title'           => 'イベント',
         'info_title'            => '情報',
@@ -145,7 +145,7 @@ return array(
         'or_between_email_and_fb' => 'ja:OR',
         'agree_to_terms' => 'ja:I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
         'must_accept_terms' => 'ja:You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
-        'accept_modal_button_text' => 'ja:OK',
+        'accept_modal_button_text' => 'はい',
         'connecting_to_facebook' => 'ja:Connecting to Facebook...',
     ),
 
@@ -225,7 +225,7 @@ return array(
         'validate'                         => '有効にする',
         'wrong_verification_number'        => '間違った確認番号',
         'please_check_tenant'              => 'テナントの従業員又はモールのカスタマーサービスを確認してください。',
-        'ok'                               => 'OK',
+        'ok'                               => 'はい',
         'successful'                       => '成功した',
         'please_communicate'               => '以下の数をテナント従業員に 伝えてください.',
         'congratulations_you_get'          => 'おめでとう、あなたが得る',
