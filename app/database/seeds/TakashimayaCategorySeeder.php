@@ -130,8 +130,16 @@ CATEGORIES;
         $this->command->info('Seeding categories table...');
 
         try {
-            DB::table('categories')->truncate();
-            DB::table('category_translations')->truncate();
+            // delete category_translations for related mall
+            CategoryTranslation::whereHas('category', function($q) {
+                    $q->where('merchant_id', TakashimayaMerchantSeeder::MALL_ID);
+                })
+                ->delete();
+
+            // delete categories for related mall
+            Category::where('merchant_id', TakashimayaMerchantSeeder::MALL_ID)
+                ->delete();
+
         } catch (Illuminate\Database\QueryException $e) {
         }
 
