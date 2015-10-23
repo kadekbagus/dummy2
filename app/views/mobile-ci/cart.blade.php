@@ -41,7 +41,7 @@
                 {{-- product listing --}}
                 <?php $x=1;?>
                 @foreach($cartdata->cartdetails as $cartdetail)
-                
+
                 <div class="single-item-bodies @if($x % 2 == 0) even-line @endif">
                     <div class="single-body">
                         <p><span class="product-name" data-product="{{ $cartdetail->product->product_id }}"><b>{{ $cartdetail->product->product_name }}</b></span></p>
@@ -77,7 +77,7 @@
                     </div>
                     <div class="single-body">
                         <div class="unique-column-properties">
-                            
+
                         </div>
                     </div>
                     <div class="single-body">
@@ -300,12 +300,12 @@
         </div>
     </div>
     @endif
-    
+
     <div class="cart-page button-group text-center">
         <button id="checkOutBtn" class="btn box-one cart-btn @if(count($cartdata->cartdetails) < 1) disabled @endif" @if(count($cartdata->cartdetails) < 1) disabled @endif>{{ Lang::get('mobileci.cart.checkout_button') }}</button>
         <button id="resetBtn" class="btn btn-danger cart-btn @if(count($cartdata->cartdetails) < 1) disabled @endif" @if(count($cartdata->cartdetails) < 1) disabled @endif>{{ Lang::get('mobileci.cart.reset_button') }}</button>
         <a href="{{ url('customer/home') }}" class="btn box-three cart-btn">{{ Lang::get('mobileci.cart.continue_button') }}</a>
-        <img class="img-responsive img-center img-logo" src="{{ asset($retailer->parent->logo) }}" />
+        <img class="img-responsive img-center img-logo" src="{{ asset($retailer->bigLogo) }}" />
     </div>
 </div>
 @stop
@@ -531,7 +531,7 @@
               }
           }
       });
-      
+
       $('#hasCouponModal').on('change', '.used_coupons', function($event){
         var coupon = $(this).val();
         if($(this).is(':checked')){
@@ -767,7 +767,7 @@
           detail = num.data('detail');
         }
     });
-    
+
     $('.done').click(function(){
         if(is_open) {
           is_open = false;

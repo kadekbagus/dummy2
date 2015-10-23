@@ -49,7 +49,7 @@
 @endif
 <div class="row text-center lucky-number-wrapper">
     <div class="col-xs-12">
-        <img src="{{ asset($retailer->parent->logo) }}" clas="img-responsive">
+        <img src="{{ asset($retailer->bigLogo) }}" clas="img-responsive">
     </div>
     @if(!empty($luckydraw))
     <div class="row">
@@ -210,7 +210,7 @@
                 $('#lddetail').modal();
             })
 
-            $('#clock').countdown({ 
+            $('#clock').countdown({
                 start:new Date('{{$servertime}}'),
                 @if(!empty($luckydraw))
                 until:new Date('{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}'),
@@ -218,7 +218,7 @@
                 @else
                 layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{sl}</span></span></span>'
                 @endif
-            }); 
+            });
 
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
         });
