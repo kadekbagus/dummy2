@@ -836,6 +836,11 @@ class IssuedCouponAPIController extends ControllerAPI
                 // ->where('issued_coupons.status', '!=', 'deleted');
                 ->where('issued_coupons.status', '=', 'active');
 
+            // Filter coupon by merchant Ids
+            OrbitInput::get('merchant_id', function ($merchantIds) use ($issuedcoupons) {
+                $issuedcoupons->whereIn('promotions.merchant_id', $merchantIds);
+            });
+
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($issuedcoupons)
             {
