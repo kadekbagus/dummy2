@@ -285,7 +285,7 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.activity_type = 'view'
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
-                                and ac.location_id = {$merchant_id}
+                                and ac.location_id = '{$merchant_id}'
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "news.news_name as name",
@@ -321,7 +321,7 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.activity_type = 'view'
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
-                                and ac.location_id = {$merchant_id}
+                                and ac.location_id = '{$merchant_id}'
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "events.event_name as name",
@@ -356,7 +356,7 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.activity_type = 'view'
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
-                                and ac.location_id = {$merchant_id}
+                                and ac.location_id = '{$merchant_id}'
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "news.news_name as name",
