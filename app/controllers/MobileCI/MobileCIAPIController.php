@@ -1750,6 +1750,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return Illuminate\View\View
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function getTenantDetailView()
     {
@@ -1782,59 +1783,90 @@ class MobileCIAPIController extends ControllerAPI
             $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
 
+            // News per tenant
+            if (!empty($alternateLanguage) && !empty($tenant->news)) {
+                foreach ($tenant->news as $key => $news) {
 
-            // the purpose of this code is for getting image of news and promotions
-            // because it's not possible using with relation like above code
-            $news = null;
-            $promotions = null;
-            $array_news_id = array();
-            $array_promotions_id = array();
-            foreach ($tenant->news->toArray() as $key => $value) {
-                $array_news_id[] = $value['news_id'];
+                    $newsTranslation = \NewsTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('news_id', $news->news_id)->first();
+
+                    if (!empty($newsTranslation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($newsTranslation->{$field}) && $newsTranslation->{$field} !== '') {
+                                $tenant->news->{$field} = $newsTranslation->{$field};
+                            }
+                        }
+
+                        $media = $newsTranslation->find($newsTranslation->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $news->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('news_id', $news->news_id)->first();
+
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $news->image = $mediaDefaultLanguage->path;
+                            }
+                        }
+                    }
+                }
             }
 
-            foreach ($tenant->news_promotions->toArray() as $key => $value) {
-                $array_promotions_id[] = $value['news_id'];
-            }
+            // Promotions per tenant
+            if (!empty($alternateLanguage) && !empty($tenant->newsPromotions)) {
+                foreach ($tenant->newsPromotions as $key => $news) {
 
-            $id_tenant = $product_id;
+                    $newsTranslation = \NewsTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('news_id', $news->news_id)->first();
 
-            if ( !empty($id_tenant) && !empty($alternateLanguage) && !empty($array_news_id) ) {
-                $news = News::excludeDeleted('news')
-                             ->leftJoin('news_merchant', function($join){
-                                 $join->on('news_merchant.news_id', '=', 'news.news_id');
-                               })
-                             ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                             ->leftJoin('media', function($join){
-                                      $join->on('media.object_id', '=', 'news_translations.news_translation_id');
-                                      $join->where('media.object_name', '=', 'news_translation');
-                                      $join->where('media.media_name_long', '=', 'news_translation_image_cropped_default');
-                                 })
-                            ->whereIn('news.news_id',$array_news_id)
-                            ->where('news_merchant.merchant_id', '=', $id_tenant)
-                            ->where('news.object_type', '=', 'news')
-                            ->where('news_translations.merchant_language_id','=', $alternateLanguage->merchant_language_id)
-                            ->groupBy('news.news_id')
-                            ->get();
-            }
+                    if (!empty($newsTranslation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($newsTranslation->{$field}) && $newsTranslation->{$field} !== '') {
+                                $tenant->newsPromotions->{$field} = $newsTranslation->{$field};
+                            }
+                        }
 
-            if ( !empty($id_tenant) && !empty($alternateLanguage) && !empty($array_promotions_id) ) {
-                $promotions = News::excludeDeleted('news')
-                             ->leftJoin('news_merchant', function($join){
-                                 $join->on('news_merchant.news_id', '=', 'news.news_id');
-                               })
-                             ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
-                             ->leftJoin('media', function($join){
-                                      $join->on('media.object_id', '=', 'news_translations.news_translation_id');
-                                      $join->where('media.object_name', '=', 'news_translation');
-                                      $join->where('media.media_name_long', '=', 'news_translation_image_cropped_default');
-                                 })
-                            ->whereIn('news.news_id',$array_promotions_id)
-                            ->where('news_merchant.merchant_id', '=', $id_tenant)
-                            ->where('news.object_type', '=', 'promotion')
-                            ->where('news_translations.merchant_language_id','=', $alternateLanguage->merchant_language_id)
-                            ->groupBy('news.news_id')
-                            ->get();
+                        $media = $newsTranslation->find($newsTranslation->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $news->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('news_id', $news->news_id)->first();
+
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $news->image = $mediaDefaultLanguage->path;
+                            }
+                        }
+                    }
+                }
             }
 
             if (empty($tenant)) {
@@ -1917,8 +1949,6 @@ class MobileCIAPIController extends ControllerAPI
                 'retailer' => $retailer,
                 'tenant' => $tenant,
                 'languages' => $languages,
-                'news' => $news,
-                'promotions' => $promotions,
                 'box_url' => $box_url));
 
         } catch (Exception $e) {
