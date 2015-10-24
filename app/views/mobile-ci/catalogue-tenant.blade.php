@@ -101,7 +101,7 @@
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 <span class="buttonLabel">
                                     @if(!empty(Input::get('cid')))
                                         <?php
