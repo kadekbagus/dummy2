@@ -239,6 +239,8 @@ class DashboardAPIController extends ControllerAPI
             $take = OrbitInput::get('take');
             $type = OrbitInput::get('type');
             $merchant_id = OrbitInput::get('merchant_id');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
 
             $flag_type = false;
 
@@ -246,10 +248,14 @@ class DashboardAPIController extends ControllerAPI
                 array(
                     'merchant_id' => $merchant_id,
                     'take' => $take,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
                 ),
                 array(
                     'merchant_id' => 'required|orbit.empty.mall',
                     'take' => 'numeric',
+                    'start_date' => 'required',
+                    'end_date' => 'required',
                 )
             );
 
@@ -286,12 +292,14 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
                                 and ac.location_id = '{$merchant_id}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "news.news_name as name",
                             "news.news_id as object_id"
                         )
-                        ->join("activities", function ($join) {
+                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
                             $join->on('news.news_id', '=', 'activities.news_id');
                             $join->where('news.object_type', '=', 'news'); 
                             $join->where('activities.activity_name', '=', 'view_news');
@@ -299,6 +307,9 @@ class DashboardAPIController extends ControllerAPI
                             $join->where('activities.activity_type', '=', 'view');
                             $join->where('activities.role', '=', 'Consumer');
                             $join->where('activities.group', '=', 'mobile-ci');
+                            $join->where('activities.location_id', '=', $merchant_id);
+                            $join->where("activities.created_at", '>=', $start_date);
+                            $join->where("activities.created_at", '<=', $end_date);
                         })
                         ->groupBy('news.news_id')
                         ->orderBy('score', 'DESC')
@@ -322,18 +333,23 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
                                 and ac.location_id = '{$merchant_id}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "events.event_name as name",
                             "events.event_id as object_id"
                         )
-                        ->join("activities", function ($join) {
+                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
                             $join->on('events.event_id', '=', 'activities.event_id');
                             $join->where('activities.activity_name', '=', 'event_view');
                             $join->where('activities.module_name', '=', 'Event');
                             $join->where('activities.activity_type', '=', 'view');
                             $join->where('activities.role', '=', 'Consumer');
                             $join->where('activities.group', '=', 'mobile-ci');
+                            $join->where('activities.location_id', '=', $merchant_id);
+                            $join->where("activities.created_at", '>=', $start_date);
+                            $join->where("activities.created_at", '<=', $end_date);
                         })
                         ->groupBy('events.event_id')
                         ->orderBy('score', 'DESC')
@@ -357,12 +373,14 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
                                 and ac.location_id = '{$merchant_id}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "news.news_name as name",
                             "news.news_id as object_id"
                         )
-                        ->join("activities", function ($join) {
+                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
                             $join->on('news.news_id', '=', 'activities.news_id');
                             $join->where('news.object_type', '=', 'promotion');
                             $join->where('activities.activity_name', '=', 'view_promotion'); 
@@ -370,6 +388,9 @@ class DashboardAPIController extends ControllerAPI
                             $join->where('activities.activity_type', '=', 'view');
                             $join->where('activities.role', '=', 'Consumer');
                             $join->where('activities.group', '=', 'mobile-ci');
+                            $join->where('activities.location_id', '=', $merchant_id);
+                            $join->where("activities.created_at", '>=', $start_date);
+                            $join->where("activities.created_at", '<=', $end_date);
                         })
                         ->groupBy('news.news_id')
                         ->orderBy('score', 'DESC')
@@ -382,24 +403,6 @@ class DashboardAPIController extends ControllerAPI
                      $query = null;
                      $flag_type = false;
             }
-
-            OrbitInput::get('merchant_id', function ($merchant_id) use ($query, $flag_type) {
-                if ($flag_type) {
-                    $query->where('activities.location_id', '=', $merchant_id);
-                }
-            });
-
-            OrbitInput::get('begin_date', function ($beginDate) use ($query, $flag_type) {
-                if ($flag_type) {
-                    $query->where('activities.created_at', '>=', $beginDate);
-                }
-            });
-
-            OrbitInput::get('end_date', function ($endDate) use ($query, $flag_type) {
-                if ($flag_type) {
-                    $query->where('activities.created_at', '<=', $endDate);
-                }
-            });
 
             if ($flag_type) {
                 $result = $query->get();
@@ -551,7 +554,7 @@ class DashboardAPIController extends ControllerAPI
                 $events->where('activities.location_id', '=', $merchant_id);
             });
 
-            OrbitInput::get('begin_date', function ($beginDate) use ($news, $promotions, $events) {
+            OrbitInput::get('start_date', function ($beginDate) use ($news, $promotions, $events) {
                 $news->where('activities.created_at', '>=', $beginDate);
                 $promotions->where('activities.created_at', '>=', $beginDate);
                 $events->where('activities.created_at', '>=', $beginDate);
