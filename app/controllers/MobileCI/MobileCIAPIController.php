@@ -1770,12 +1770,18 @@ class MobileCIAPIController extends ControllerAPI
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
             $tenant = Tenant::with( // translated
-                'media',
-                'mediaLogoOrig',
-                'mediaMapOrig',
-                'mediaImageOrig',
-                'news',
-                'newsPromotions')
+                array(
+                    'media',
+                    'mediaLogoOrig',
+                    'mediaMapOrig',
+                    'mediaImageOrig',
+                    'news' => function($q) {
+                        $q->whereRaw("NOW() between begin_date and end_date");
+                    },
+                    'newsPromotions' => function($q) {
+                        $q->whereRaw("NOW() between begin_date and end_date");
+                    }
+                ))
                 ->active('merchants')
                 ->where('parent_id', $retailer->merchant_id)
                 ->where('merchants.merchant_id', $product_id);
