@@ -916,6 +916,22 @@
           $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
+        $('a.widget-link').click(function(){
+          var link = $(this).attr('href');
+          var widgetdata = $(this).data('widget');
+          event.preventDefault();
+
+          $.ajax({
+            url: '{{ route('click-widget-activity') }}',
+            data: {
+              widgetdata: widgetdata
+            },
+            method: 'POST'
+          }).always(function(){
+            window.location.assign(link);
+          });
+          return false; //for good measure
+        });
         $('#promoModal a').click(function (event){
             var link = $(this).attr('href');
             var eventdata = $(this).data('event');
