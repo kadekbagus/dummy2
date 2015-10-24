@@ -236,14 +236,17 @@ class DashboardAPIController extends ControllerAPI
 
             $take = OrbitInput::get('take');
             $type = OrbitInput::get('type');
+            $merchant_id = OrbitInput::get('merchant_id');
 
             $flag_type = false;
 
             $validator = Validator::make(
                 array(
+                    'merchant_id' => $merchant_id,
                     'take' => $take,
                 ),
                 array(
+                    'merchant_id' => 'required|orbit.empty.mall',
                     'take' => 'numeric',
                 )
             );
@@ -280,6 +283,7 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.activity_type = 'view'
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
+                                and ac.location_id = {$merchant_id}
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "news.news_name as name",
@@ -315,6 +319,7 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.activity_type = 'view'
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
+                                and ac.location_id = {$merchant_id}
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "events.event_name as name",
@@ -349,6 +354,7 @@ class DashboardAPIController extends ControllerAPI
                                 and ac.activity_type = 'view'
                                 and ac.role = 'Consumer'
                                 and ac.group = 'mobile-ci'
+                                and ac.location_id = {$merchant_id}
                             ) * 100 as percentage"),
                             DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
                             "news.news_name as name",
