@@ -208,13 +208,16 @@ class LoginAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $email = OrbitInput::post('email');
+            $mall_id = $this->getRetailerId();
 
             $validator = Validator::make(
                 array(
                     'email'     => $email,
+                    'mall_id'   => $mall_id
                 ),
                 array(
                     'email'     => 'required|email|orbit.email.exists',
+                    'mall_id'   => 'orbit.empty.mall'
                 )
             );
 
@@ -226,6 +229,8 @@ class LoginAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $mall = Mall::where('merchant_id', $mall_id)->first();
 
             list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email);
 
@@ -241,6 +246,7 @@ class LoginAPIController extends ControllerAPI
                      ->setActivityName('registration_ok')
                      ->setActivityNameLong('Sign Up')
                      ->setModuleName('Application')
+                     ->setLocation($mall)
                      ->responseOK();
 
             // Send email process to the queue
@@ -836,6 +842,20 @@ class LoginAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.token', $token);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
 
             return TRUE;
         });
