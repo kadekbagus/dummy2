@@ -234,6 +234,8 @@ class DashboardAPIController extends ControllerAPI
 
             Event::fire('orbit.dashboard.gettopcustomerview.after.authz', array($this, $user));
 
+            $this->registerCustomValidation();
+
             $take = OrbitInput::get('take');
             $type = OrbitInput::get('type');
             $merchant_id = OrbitInput::get('merchant_id');
