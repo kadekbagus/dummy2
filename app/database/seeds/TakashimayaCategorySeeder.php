@@ -18,8 +18,8 @@ class TakashimayaCategorySeeder extends Seeder
         $sources = <<<CATEGORIES
 ATM
 Appliances
-Cafe & Bakery
 Cafe
+Cafe & Bakery
 Chinese Casual Dining
 Chinese Cuisine
 Confectionery
@@ -29,98 +29,101 @@ Fashion, Accessories & Shoes
 Fine Jewellery & Watches
 Fragrance & Body Care
 Gifts/Hobbies/Toys
-Gourment Confectionery
+Gourmet Confectionery
+Hair & Beauty
 Hairdressing & Beauty Salon
 Home Decorative
+International Fashion & Accessories
+International Fashion, Accessories & Shoes
+International Jewellery, Watches & Writing Instruments
 Japanese Casual Dining
 Japanese Cuisine
 Korean Cuisine
 Leather Goods & Shoes
 Money Changer
 Optical Services
+Pharmacy, Health & Toiletries
 Restaurants
+Services
 Shoes Repair & Key Services
 Sports Apparel, Equipment & Accessories
 Travel & Lifestyle
 Western Casual Dining
 Western Cuisine
-International Fashion & Accessories
-International Fashion, Accessories & Shoes
-International Jewellery, Watches & Writing Instruments
-Pharmacy, Health & Toiletries
-Services
 CATEGORIES;
 
         $sources_zh = <<<CATEGORIES
-ATM
-Appliances
-Cafe & Bakery
-Cafe
-Chinese Casual Dining
-Chinese Cuisine
-Confectionery
-Cosmetics & Skincare
-Educational Toys & Enrichment Centres
-Fashion, Accessories & Shoes
-Fine Jewellery & Watches
-Fragrance & Body Care
-Gifts/Hobbies/Toys
-Gourment Confectionery
-Hairdressing & Beauty Salon
-Home Decorative
-Japanese Casual Dining
-Japanese Cuisine
-Korean Cuisine
-Leather Goods & Shoes
-Money Changer
-Optical Services
-Restaurants
-Shoes Repair & Key Services
-Sports Apparel, Equipment & Accessories
-Travel & Lifestyle
-Western Casual Dining
-Western Cuisine
-International Fashion & Accessories
-International Fashion, Accessories & Shoes
-International Jewellery, Watches & Writing Instruments
-Pharmacy, Health & Toiletries
-Services
+zh:ATM
+zh:Appliances
+zh:Cafe
+zh:Cafe & Bakery
+zh:Chinese Casual Dining
+zh:Chinese Cuisine
+zh:Confectionery
+zh:Cosmetics & Skincare
+zh:Educational Toys & Enrichment Centres
+zh:Fashion, Accessories & Shoes
+zh:Fine Jewellery & Watches
+zh:Fragrance & Body Care
+zh:Gifts/Hobbies/Toys
+zh:Gourmet Confectionery
+zh:Hair & Beauty
+zh:Hairdressing & Beauty Salon
+zh:Home Decorative
+zh:International Fashion & Accessories
+zh:International Fashion, Accessories & Shoes
+zh:International Jewellery, Watches & Writing Instruments
+zh:Japanese Casual Dining
+zh:Japanese Cuisine
+zh:Korean Cuisine
+zh:Leather Goods & Shoes
+zh:Money Changer
+zh:Optical Services
+zh:Pharmacy, Health & Toiletries
+zh:Restaurants
+zh:Services
+zh:Shoes Repair & Key Services
+zh:Sports Apparel, Equipment & Accessories
+zh:Travel & Lifestyle
+zh:Western Casual Dining
+zh:Western Cuisine
 CATEGORIES;
 
         $sources_ja = <<<CATEGORIES
-ATM
-Appliances
-Cafe & Bakery
-Cafe
-Chinese Casual Dining
-Chinese Cuisine
-Confectionery
-Cosmetics & Skincare
-Educational Toys & Enrichment Centres
-Fashion, Accessories & Shoes
-Fine Jewellery & Watches
-Fragrance & Body Care
-Gifts/Hobbies/Toys
-Gourment Confectionery
-Hairdressing & Beauty Salon
-Home Decorative
-Japanese Casual Dining
-Japanese Cuisine
-Korean Cuisine
-Leather Goods & Shoes
-Money Changer
-Optical Services
-Restaurants
-Shoes Repair & Key Services
-Sports Apparel, Equipment & Accessories
-Travel & Lifestyle
-Western Casual Dining
-Western Cuisine
-International Fashion & Accessories
-International Fashion, Accessories & Shoes
-International Jewellery, Watches & Writing Instruments
-Pharmacy, Health & Toiletries
-Services
+ja:ATM
+ja:Appliances
+ja:Cafe
+ja:Cafe & Bakery
+ja:Chinese Casual Dining
+ja:Chinese Cuisine
+ja:Confectionery
+ja:Cosmetics & Skincare
+ja:Educational Toys & Enrichment Centres
+ja:Fashion, Accessories & Shoes
+ja:Fine Jewellery & Watches
+ja:Fragrance & Body Care
+ja:Gifts/Hobbies/Toys
+ja:Gourmet Confectionery
+ja:Hair & Beauty
+ja:Hairdressing & Beauty Salon
+ja:Home Decorative
+ja:International Fashion & Accessories
+ja:International Fashion, Accessories & Shoes
+ja:International Jewellery, Watches & Writing Instruments
+ja:Japanese Casual Dining
+ja:Japanese Cuisine
+ja:Korean Cuisine
+ja:Leather Goods & Shoes
+ja:Money Changer
+ja:Optical Services
+ja:Pharmacy, Health & Toiletries
+ja:Restaurants
+ja:Services
+ja:Shoes Repair & Key Services
+ja:Sports Apparel, Equipment & Accessories
+ja:Travel & Lifestyle
+ja:Western Casual Dining
+ja:Western Cuisine
 CATEGORIES;
 
 
