@@ -141,12 +141,12 @@ return array(
         'loading_orbit'     => 'オービットをロードすると、待機してください...',
         'start_button_mall' => 'モールを入力してください',
         'register'          => '登録',
-        'login_via_facebook' => 'Facebook経由でログイン',
-        'or_between_email_and_fb' => 'または',
-        'agree_to_terms' => '私はOrbit<a href="%s" id="orbit-privacy-policy-anchor">プライバシー規約</a>および<a href="%s" id="orbit-tos-anchor">契約条件</a>に同意する',
-        'must_accept_terms' => 'ログインすることを進むことができる前にOrbit<a href="%s" id="orbit-privacy-policy-anchor">プライバシー規約</a>および<a href="%s" id="orbit-tos-anchor">契約条件</a>に同意しなければならない',
-        'accept_modal_button_text' => 'はい',
-        'connecting_to_facebook' => 'Facebookへの接続...',
+        'login_via_facebook'        => 'Facebook経由でログイン',
+        'or_between_email_and_fb'   => 'または',
+        'agree_to_terms'            => '私はOrbit<a href="%s" id="orbit-privacy-policy-anchor">プライバシー規約</a>および<a href="%s" id="orbit-tos-anchor">契約条件</a>に同意する',
+        'must_accept_terms'         => 'ログインすることを進むことができる前にOrbit<a href="%s" id="orbit-privacy-policy-anchor">プライバシー規約</a>および<a href="%s" id="orbit-tos-anchor">契約条件</a>に同意しなければならない',
+        'accept_modal_button_text'  => 'はい',
+        'connecting_to_facebook'    => 'Facebookへの接続...',
     ),
 
     'catalogue' => array(
