@@ -1530,6 +1530,7 @@ class ActivityAPIController extends ControllerAPI
                 25 => 0,
                 35 => 0,
                 45 => 0,
+                55 => 0,
                 65 => 0,
                 0 => 0
             ];
