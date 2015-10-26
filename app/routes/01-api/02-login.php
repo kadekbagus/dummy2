@@ -16,46 +16,45 @@ Route::post('/api/v1/logout', function()
     return DummyAPIController::create()->unsupported();
 });
 
-Route::group(['before' => 'orbit-settings'], function() {
-    Route::post('/api/v1/login/admin', function()
-    {
-        return LoginAPIController::create()->postLoginAdmin();
-    });
 
-    Route::post('/api/v1/logout/admin', function()
-    {
-        return LoginAPIController::create()->postLogout();
-    });
+Route::post('/api/v1/login/admin', function()
+{
+    return LoginAPIController::create()->postLoginAdmin();
+});
 
-    Route::post('/api/v1/login/mall', function()
-    {
-        return LoginAPIController::create()->postLoginMall();
-    });
+Route::post('/api/v1/logout/admin', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
 
-    Route::post('/api/v1/logout/mall', function()
-    {
-        return LoginAPIController::create()->postLogout();
-    });
+Route::post('/api/v1/login/mall', function()
+{
+    return LoginAPIController::create()->postLoginMall();
+});
 
-    Route::post('/api/v1/login/mallcs', function()
-    {
-        return LoginAPIController::create()->postLoginMallCustomerService();
-    });
+Route::post('/api/v1/logout/mall', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
 
-    Route::post('/api/v1/logout/mallcs', function()
-    {
-        return LoginAPIController::create()->postLogout();
-    });
+Route::post('/api/v1/login/mallcs', function()
+{
+    return LoginAPIController::create()->postLoginMallCustomerService();
+});
 
-    Route::post('/api/v1/login/customer', function()
-    {
-        return LoginAPIController::create()->postLoginCustomer();
-    });
+Route::post('/api/v1/logout/mallcs', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
 
-    Route::post('/api/v1/logout/customer', function()
-    {
-        return LoginAPIController::create()->postLogout();
-    });
+Route::post('/api/v1/login/customer', function()
+{
+    return LoginAPIController::create()->postLoginCustomer();
+});
+
+Route::post('/api/v1/logout/customer', function()
+{
+    return LoginAPIController::create()->postLogout();
 });
 
 /**
