@@ -131,6 +131,10 @@ return array(
             'lucky_draw_name'        => 'lucky draw name has already been used.',
             'lucky_draw_active'      => 'Only one lucky draw campaign can be active at the same time.',
             'news_name'              => 'news name has already been used.',
+            'mall_have_tenant'       => 'The mall has one or more tenants linked to it, so it cannot be deleted.',
+            'mallgroup_have_mall'    => 'The mall group has one or more mall linked to it, so it cannot be deleted.',
+            'tenant_id'              => 'The tenant id has already exists.',
+            'tenant_on_inactive_have_linked'    => 'Tenant can not be inactive, because have linked.',
         ),
         'access' => array(
             'forbidden'              => 'あなたがする権限がありません :action.',

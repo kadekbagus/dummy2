@@ -769,7 +769,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status',
+                    'status'            => 'orbit.empty.tenant_status|orbit.exists.tenant_on_inactive_have_linked:' . $retailer_id,
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id,
@@ -777,6 +777,7 @@ class TenantAPIController extends ControllerAPI
                 ),
                 array(
                     'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
+                    'orbit.exists.tenant_on_inactive_have_linked' => Lang::get('validation.orbit.exists.tenant_on_inactive_have_linked'),
                     'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
                 //ACL::throwAccessForbidden($message);
                )
@@ -1932,6 +1933,62 @@ class TenantAPIController extends ControllerAPI
             }
 
             return $valid;
+        });
+
+        // tenant cannot be inactive if have linked to news, promotion, event and coupon.
+        Validator::extend('orbit.exists.tenant_on_inactive_have_linked', function ($attribute, $value, $parameters) {
+            // check if only status is being set to inactive
+            if ($value === 'inactive') {
+                $tenant_id = $parameters[0];
+
+                // check tenant if exists in coupons.
+                $coupon = CouponRetailer::whereHas('coupon', function($q) {
+                        $q->excludeDeleted();
+                    })
+                    ->where('retailer_id',$tenant_id)
+                    ->first();
+
+                if (! empty($coupon)) {
+                    return FALSE;
+                }
+
+                // check tenant if exists in news.
+                $news = NewsMerchant::whereHas('news', function($q) {
+                        $q->excludeDeleted()
+                          ->where('object_type','news');
+                    })
+                    ->where('merchant_id',$tenant_id)
+                    ->first();
+
+                if (! empty($news)) {
+                    return FALSE;
+                }
+
+                // check tenant if exists in promotion.
+                $promotion = NewsMerchant::whereHas('news', function($q) {
+                        $q->excludeDeleted()
+                          ->where('object_type','promotion');
+                    })
+                    ->where('merchant_id',$tenant_id)
+                    ->first();
+
+                if (! empty($promotion)) {
+                    return FALSE;
+                }
+
+                // check tenant if exists in events.
+                $event = EventRetailer::whereHas('event', function($q) {
+                        $q->excludeDeleted();
+                    })
+                    ->where('retailer_id',$tenant_id)
+                    ->first();
+
+                if (! empty($event)) {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
         });
 
         // Check if the password correct
