@@ -249,11 +249,6 @@ class LoginAPIController extends ControllerAPI
                      ->setLocation($mall)
                      ->responseOK();
 
-            // Send email process to the queue
-            Queue::push('Orbit\\Queue\\RegistrationMail', [
-                'user_id' => $newuser->user_id
-            ]);
-
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
