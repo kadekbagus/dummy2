@@ -127,6 +127,7 @@ return array(
         'where'                 => '位置',
         'phone'                 => '电话号码',
         'website'               => '网站',
+        'at'                    => '在',
     ),
 
     // page specific lang
@@ -200,7 +201,7 @@ return array(
         'want_unlimited_browsing'          => '希望限制浏览?',
         'or_want_to_follow_the_lucky_draw' => '还是想跟着抽奖?',
         'open_your_email_and_verify_now'   => '打开你的邮件，现在确认!!',
-        'validity'                         => '有效到',
+        'validity'                         => '真实性',
     ),
 
     'promotion_list' => array(

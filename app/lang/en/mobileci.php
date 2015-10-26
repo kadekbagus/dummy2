@@ -127,6 +127,7 @@ return array(
         'where'                 => 'WHERE',
         'phone'                 => 'Phone',
         'website'               => 'Website',
+        'at'                    => 'at',
     ),
 
     // page specific lang
