@@ -3303,7 +3303,7 @@ class MobileCIAPIController extends ControllerAPI
      */
     private function getAlternateMerchantLanguage($user, $mall)
     {
-        $priority = ['cookie', 'user_preference', 'browser'];
+        $priority = ['cookie', 'mall_setting', 'browser'];
         $getters = [
             'cookie' => function ($user) {
                 // cannot use Cookie:: or Request::cookie, those insist on signed cookies.
@@ -3312,13 +3312,13 @@ class MobileCIAPIController extends ControllerAPI
                 }
                 return $_COOKIE['orbit_preferred_language'];
             },
-            'user_preference' => function ($user) {
-                $details = $user->userdetail;
+            'mall_setting' => function ($mall) {
+                $mobile_default_language = $mall->mobile_default_language;
                 // if user has no preference use default
-                if (empty($details)) {
+                if (empty($mobile_default_language)) {
                     return null;
                 }
-                return $details->preferred_language;
+                return $mobile_default_language;
             },
             'browser' => function ($user) {
                 $lang = \Request::server('HTTP_ACCEPT_LANGUAGE', null);
@@ -3338,7 +3338,6 @@ class MobileCIAPIController extends ControllerAPI
                 // method does not return language, try next one
                 continue;
             }
-
             $selected_language = null;
             if (array_key_exists($name, $language)) {
                 $selected_language = $language[$name];
