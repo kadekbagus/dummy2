@@ -75,7 +75,7 @@
             <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
                 <div class="modal-body">
                     <select class="form-control" name="lang" id="selected-lang">
-                        <option value="{{ 'syslang' }}" @if (! isset($_COOKIE['orbit_preferred_language'])) selected @endif>{{ 'English (default)' }}</option>
+                        <option value="{{ 'syslang' }}" @if (! isset($_COOKIE['orbit_preferred_language'])) selected @endif>{{ 'Default Language (English)' }}</option>
                         @if (isset($languages))
                                 @foreach ($languages as $lang)
                                     <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @endif>{{{ $lang->language->name_long }}}</option>
