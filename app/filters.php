@@ -159,6 +159,7 @@ Route::filter('csrf', function()
 | session does not match the one given in this request, we'll bail.
 |
 */
+
 Route::filter('orbit-settings', function()
 {
     if (! App::make('orbitSetting')->getSetting('current_retailer')) {
@@ -168,20 +169,20 @@ Route::filter('orbit-settings', function()
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
     $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 
+    // Prioroty : 1.cookie 2.mall_setting 3.browser
+
+    // Cek Cookie orbit_preferred_language
     if (array_key_exists('orbit_preferred_language', $_COOKIE)) {
         App::setLocale($_COOKIE['orbit_preferred_language']);
     } else {
-        if (! empty($browserLang) AND in_array($browserLang, Config::get('orbit.languages', ['en']))) {
-            // Set Browser Lang
-            App::setLocale($browserLang);
+        // Cek merchant setting
+        $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
+        if (! empty($merchantLang)) {
+            App::setLocale($merchantLang);
         } else {
-            // Set Merchant Setting Lang
-            $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
-            if (! empty($merchantLang)) {
-                App::setLocale($merchantLang);
-            } else {
-                // Fallback to 'en'
-                App::setLocale('en');
+            // Cek browser language
+            if (! empty($browserLang) AND in_array($browserLang, Config::get('orbit.languages', ['en']))) {
+                App::setLocale($browserLang);
             }
         }
     }
@@ -205,7 +206,7 @@ Route::filter('orbit-settings', function()
 |--------------------------------------------------------------------------
 | Check luckydraw routes based on database setting
 |--------------------------------------------------------------------------
-*/
+
 Route::filter('check-routes-luckydraw', function()
 {
     $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
