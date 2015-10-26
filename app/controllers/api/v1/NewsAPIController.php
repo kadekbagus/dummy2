@@ -1591,6 +1591,7 @@ class NewsAPIController extends ControllerAPI
         // Check news name, it should not exists (for update)
         Validator::extend('news_name_exists_but_me', function ($attribute, $value, $parameters) {
             $news_id = trim(OrbitInput::post('news_id'));
+            $object_type = trim(OrbitInput::post('object_type'));
             $news = News::excludeDeleted()
                         ->where('news_name', $value)
                         ->where('news_id', '!=', $news_id)
