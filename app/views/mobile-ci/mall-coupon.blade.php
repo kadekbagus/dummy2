@@ -78,7 +78,7 @@
         <div class="row">
             <div class="col-xs-12 text-center">
                 <h4>{{ Lang::get('mobileci.coupon.coupon_value') }}</h4>
-                <p>IDR <span class="formatted-numx">{{ $coupon->couponRule->discount_value }}</span></p>
+                <p>SGD <span class="formatted-numx">{{ $coupon->couponRule->discount_value }}</span></p>
             </div>
         </div>
         @endif
