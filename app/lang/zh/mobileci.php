@@ -368,7 +368,7 @@ return array(
     'tour' => array(
         'home' => array(
             'title'   => '主页',
-            'content' => '这里您会翻看我们的上下文菜单任何事件在我们的购物场和店铺<br/><br/> <i>点击这个按键直接回去主页从任何页面在Orbit</i>'
+            'content' => '翻看我们的软件看在商场的事件<br/><br/> <i>点击这个按键直接回去主页从任何页面在Orbit</i>'
         ),
         'back' => array(
             'title'   => '回',
@@ -376,23 +376,23 @@ return array(
         ),
         'search' => array(
             'title'   => '搜索店铺',
-            'content' => '我们帮您找得到！搜索店铺收入店铺关键字若， 店名， 分类 位置 或描述'
+            'content' => '搜索店铺请收入店铺名字，类型，位置，或描述'
         ),
         'directory' => array(
             'title'   => '店铺名单',
-            'content' => '接触我们店铺名单和知店铺位置从您手掌上'
+            'content' => '接触店铺单从您的手掌上'
         ),
         'setting' => array(
             'title'   => '设定',
-            'content' => '检查您的购物场会员，改语言设定或Orbit软件推出'
+            'content' => '改语言或退出从Orbit软件'
         ),
         'news' => array(
             'title'   => '消息',
-            'content' => '想知道我们最新的信息？看看我们的信息单子'
+            'content' => '想知道最新信息？看这里的信息单'
         ),
         'promotion' => array(
             'title'   => '促销',
-            'content' => '查我们省伟大钱交易促销'
+            'content' => '检查我们促销为收伟大省钱的交易'
         ),
         'coupon' => array(
             'title'   => '我的优惠券',
@@ -400,7 +400,7 @@ return array(
         ),
         'end' => array(
             'title'   => '',
-            'content' => '您会看这个巡视任何事件，点"Orbit巡视" 在设定',
+            'content' => '接触<b>Orbit巡视</b>任何时间请点 <b>设定>Orbit巡视</b>',
             'check'   => '不要再显示此消息',
             'button'  => '巡视完'
         ),

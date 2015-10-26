@@ -9,11 +9,7 @@
         <div class="headed-layout content-container">
             @yield('content')
         </div>
-        <footer>
-            <div class="text-center">
-                {{ 'Orbit v' . ORBIT_APP_VERSION }}
-            </div>
-        </footer>
+        @include('mobile-ci.footer')
         @yield('modals')
         <script type="text/javascript">
             var orbitIsViewing = true;

@@ -18,8 +18,8 @@ class TakashimayaCategorySeeder extends Seeder
         $sources = <<<CATEGORIES
 ATM
 Appliances
-Cafe
 Cafe & Bakery
+Cafe
 Chinese Casual Dining
 Chinese Cuisine
 Confectionery
@@ -29,8 +29,7 @@ Fashion, Accessories & Shoes
 Fine Jewellery & Watches
 Fragrance & Body Care
 Gifts/Hobbies/Toys
-Gourmet Confectionery
-Hair & Beauty
+Gourment Confectionery
 Hairdressing & Beauty Salon
 Home Decorative
 International Fashion & Accessories
@@ -53,79 +52,76 @@ Western Cuisine
 CATEGORIES;
 
         $sources_zh = <<<CATEGORIES
-zh:ATM
-zh:Appliances
-zh:Cafe
-zh:Cafe & Bakery
-zh:Chinese Casual Dining
-zh:Chinese Cuisine
-zh:Confectionery
-zh:Cosmetics & Skincare
-zh:Educational Toys & Enrichment Centres
-zh:Fashion, Accessories & Shoes
-zh:Fine Jewellery & Watches
-zh:Fragrance & Body Care
-zh:Gifts/Hobbies/Toys
-zh:Gourmet Confectionery
-zh:Hair & Beauty
-zh:Hairdressing & Beauty Salon
-zh:Home Decorative
-zh:International Fashion & Accessories
-zh:International Fashion, Accessories & Shoes
-zh:International Jewellery, Watches & Writing Instruments
-zh:Japanese Casual Dining
-zh:Japanese Cuisine
-zh:Korean Cuisine
-zh:Leather Goods & Shoes
-zh:Money Changer
-zh:Optical Services
-zh:Pharmacy, Health & Toiletries
-zh:Restaurants
-zh:Services
-zh:Shoes Repair & Key Services
-zh:Sports Apparel, Equipment & Accessories
-zh:Travel & Lifestyle
-zh:Western Casual Dining
-zh:Western Cuisine
+ATM
+电器用品
+咖啡及蛋糕西点
+咖啡馆
+中餐饮
+中餐馆
+糖果西点
+化妆及护肤品
+教育玩具
+时尚衣装、饰品及鞋子
+精致珠宝首饰及手表
+香水及护肤美肤保养品
+礼物/爱好/玩具
+高級甜点
+美发及美容院
+家庭装饰
+国际时装及饰品
+国际时装、饰品及鞋子
+国际珠宝首饰、手表及名笔
+日式餐饮
+日本烹调
+韩食餐馆
+皮革物品&鞋子
+货币兑换商
+光学服务
+西药房及保健美妆品
+餐馆
+服务
+鞋子修理&关键服务
+运动服装，配备及用品
+旅行&生活方式
+西方休闲餐饮
+西餐馆
 CATEGORIES;
 
         $sources_ja = <<<CATEGORIES
-ja:ATM
-ja:Appliances
-ja:Cafe
-ja:Cafe & Bakery
-ja:Chinese Casual Dining
-ja:Chinese Cuisine
-ja:Confectionery
-ja:Cosmetics & Skincare
-ja:Educational Toys & Enrichment Centres
-ja:Fashion, Accessories & Shoes
-ja:Fine Jewellery & Watches
-ja:Fragrance & Body Care
-ja:Gifts/Hobbies/Toys
-ja:Gourmet Confectionery
-ja:Hair & Beauty
-ja:Hairdressing & Beauty Salon
-ja:Home Decorative
-ja:International Fashion & Accessories
-ja:International Fashion, Accessories & Shoes
-ja:International Jewellery, Watches & Writing Instruments
-ja:Japanese Casual Dining
-ja:Japanese Cuisine
-ja:Korean Cuisine
-ja:Leather Goods & Shoes
-ja:Money Changer
-ja:Optical Services
-ja:Pharmacy, Health & Toiletries
-ja:Restaurants
-ja:Services
-ja:Shoes Repair & Key Services
-ja:Sports Apparel, Equipment & Accessories
-ja:Travel & Lifestyle
-ja:Western Casual Dining
-ja:Western Cuisine
+自動支払機
+家電機器
+喫茶店及びパン屋
+喫茶店
+中国のカジュアル ダイニング
+中華料理
+お菓子屋
+化粧品及びスキン ケア
+教育おもちゃ
+ファッション、アクセサリー靴
+良い宝石類及び腕時計
+フレグランス ボディケア
+ギフト/趣味/おもちゃ
+グルメ向きのお菓子屋
+理髪及び美容院
+家の装飾的
+国際的な方法及び付属品
+国際的な方法、付属品及び靴
+国際的な宝石類、腕時計及び執筆器械
+日本の偶然の食事
+日本の料理
+韓国の料理
+革商品及び靴
+お金チェンジャー
+光学サービス
+薬学、健康及び洗面用品
+レストラン
+サービス
+靴は及びキー サービス修理する
+スポーツ服装、装置及び付属品
+旅行及び生活様式
+西部の偶然の食事
+西部の料理
 CATEGORIES;
-
 
 
         $categories = explode("\n", $sources);
