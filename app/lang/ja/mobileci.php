@@ -127,6 +127,7 @@ return array(
         'where'                 => '場所',
         'phone'                 => '電話番号',
         'website'               => 'ウェブサイト',
+        'at'                    => 'で',
     ),
 
     // page specific lang
@@ -249,7 +250,7 @@ return array(
         'exp_coupon'          => 'このクーポンを持っていません.',
         'back_label'          => '戻る',
         'coupon_code_label'   => 'クーポンコード',
-        'validity_label'      => '有効になるまで',
+        'validity_label'      => 'まで有効',
     ),
 
     'search' => array(

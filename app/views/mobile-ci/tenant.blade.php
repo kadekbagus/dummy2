@@ -57,7 +57,7 @@
                 <h4>{{ Lang::get('mobileci.tenant.where') }}</h4>
             </div>
             <div class="col-xs-12">
-                <p>{{ $tenant->name }} at</p>
+                <p>{{ $tenant->name }} {{ Lang::get('mobileci.tenant.at') }}</p>
                 <p>{{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p>
                 <p>{{ Lang::get('mobileci.tenant.phone') }} : {{{ (($tenant->phone) != '') ? $tenant->phone : '-' }}}</p>
                 <p>{{ Lang::get('mobileci.tenant.website') }} : {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p>

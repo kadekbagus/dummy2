@@ -61,7 +61,7 @@ App::before(function($request) {
             case 'EXs5F-MBG-------':
                 $style = 'galleria.css';
                 break;
-            
+
             default:
                 $style = 'main.css';
                 break;
@@ -176,7 +176,7 @@ Route::filter('orbit-settings', function()
             App::setLocale($browserLang);
         } else {
             // Set Merchant Setting Lang
-            $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->parent->mobile_default_language;
+            $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
             if (! empty($merchantLang)) {
                 App::setLocale($merchantLang);
             } else {
