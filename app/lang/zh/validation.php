@@ -131,6 +131,10 @@ return array(
             'lucky_draw_name'        => ' 幸运抽奖的名字已经被使用',
             'lucky_draw_active'      => '只有一个抽奖活动可以在同一时间被激活',
             'news_name'              => ' 消息名称已被使用',
+            'mall_have_tenant'       => 'The mall has one or more tenants linked to it, so it cannot be deleted.',
+            'mallgroup_have_mall'    => 'The mall group has one or more mall linked to it, so it cannot be deleted.',
+            'tenant_id'              => 'The tenant id has already exists.',
+            'tenant_on_inactive_have_linked'    => 'Tenant can not be inactive, because have linked.',
         ),
         'access' => array(
             'forbidden'              => '您没有权限：动作',

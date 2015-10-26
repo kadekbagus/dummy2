@@ -142,19 +142,22 @@ Route::filter('orbit-settings', function()
         throw new Exception (sprintf('You have to setup timezone for %s.', $retailer->name));
     }
 
+    // Priority : 1. Cookie 2. Mall_setting 3. Browser
+
+    // Cek Cookie orbit_preferred_language
     if (array_key_exists('orbit_preferred_language', $_COOKIE)) {
         App::setLocale($_COOKIE['orbit_preferred_language']);
     } else {
-        if (! empty($browserLang) AND in_array($browserLang, Config::get('orbit.languages', ['en']))) {
-            // Set Browser Lang
-            App::setLocale($browserLang);
+        // Cek merchant setting
+        $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
+        if (! empty($merchantLang)) {
+            App::setLocale($merchantLang);
         } else {
-            // Set Merchant Setting Lang
-            $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
-            if (! empty($merchantLang)) {
-                App::setLocale($merchantLang);
+            // Cek browser language
+            if (! empty($browserLang) AND in_array($browserLang, Config::get('orbit.languages', ['en']))) {
+                App::setLocale($browserLang);
             } else {
-                // Fallback to 'en'
+                // Fallback to 'en' -- the last effort, most common one
                 App::setLocale('en');
             }
         }
