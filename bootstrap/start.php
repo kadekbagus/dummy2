@@ -35,6 +35,14 @@ $env = $app->detectEnvironment(function() {
 		return $_SERVER['ORBIT_APP_ENV'];
 	}
 
+	// Check for the host name (domain)
+	if (isset($_SERVER['HTTP_HOST'])) {
+		// Prevent directory travelsal, no?
+		$orbitDomainConf = str_replace('..', '', $_SERVER['HTTP_HOST']);
+
+		return $orbitDomainConf;
+	}
+
 	// Check for a file name orbit.env.php on the root of this app
 	// if it exists use it.
 	$orbitEnvApp = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'orbit.env.php';
