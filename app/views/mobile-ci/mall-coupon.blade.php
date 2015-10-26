@@ -48,7 +48,7 @@
                 <p>{{ $coupon->long_description }}</p>
             </div>
             <div class="col-xs-12">
-                <h4>{{ Lang::get('mobileci.promotion.validity') }}</h4>
+                <h4>{{ Lang::get('mobileci.coupon_detail.validity_label') }}</h4>
                 <p>{{ date('d M Y', strtotime($coupon->coupon_validity_in_date)) }}</p>
             </div>
             <div class="hide col-xs-12">
