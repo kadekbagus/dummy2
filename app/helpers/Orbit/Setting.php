@@ -47,6 +47,13 @@ class Setting
     protected $user = NULL;
 
     /**
+     * Current domain pattern which determine current mall/retailer.
+     *
+     * @var string
+     */
+    public $domainPattern = 'dom:%s';
+
+    /**
      * Constructor
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -130,11 +137,13 @@ class Setting
 
         // There is already config for setting current merchant via Config object.
         // Make sure all the codes does not break by overriding the value
-        $currentRetailer = $this->getSetting('current_retailer', 0);
+        $currentDomain = sprintf($this->domainPattern, $_SERVER['HTTP_HOST']);
+        $currentRetailer = $this->getSetting($currentDomain, 0);
 
         if ($currentRetailer) {
             // There is already config for setting current merchant via Config object.
             // Make sure all the codes does not break by overriding the value
+            $this->settings['current_retailer'] = $currentRetailer;
             Config::set('orbit.shop.id', $currentRetailer);
         }
 
@@ -145,11 +154,17 @@ class Setting
     {
         // Get all settings which does not have object_id or its object id is 0
         // This mostly means global settings not object specific settings
-        $settings = DBSetting::where(function($query) {
+        $me = $this;
+        $settings = DBSetting::where(function($query) use ($me) {
             $query->where('object_id', 0);
             $query->orWhere('object_id', NULL);
-            $query->orWhere('setting_name', 'current_merchant');
-            $query->orWhere('setting_name', 'current_retailer');
+            $query->orWhere(function($q) use ($me) {
+                // Get the current mall/retailer by query settings which has name
+                // dom:DOMAIN_NAME, the value should be the ID of the mall/retailer (from merchants table)
+                $currentDomain = sprintf($me->domainPattern, $_SERVER['HTTP_HOST']);
+
+                $q->where('setting_name', $currentDomain);
+            });
         })->active()->orderBy('created_at', 'desc')->get();
 
         foreach ($settings as $setting) {
