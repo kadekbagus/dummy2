@@ -3312,7 +3312,7 @@ class MobileCIAPIController extends ControllerAPI
                 }
                 return $_COOKIE['orbit_preferred_language'];
             },
-            'mall_setting' => function ($mall) {
+            'mall_setting' => function ($q) use ($mall) {
                 $mobile_default_language = $mall->mobile_default_language;
                 // if user has no preference use default
                 if (empty($mobile_default_language)) {
