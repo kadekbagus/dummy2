@@ -18,8 +18,8 @@ class TakashimayaCategorySeeder extends Seeder
         $sources = <<<CATEGORIES
 ATM
 Appliances
-Cafe
 Cafe & Bakery
+Cafe
 Chinese Casual Dining
 Chinese Cuisine
 Confectionery
@@ -29,8 +29,7 @@ Fashion, Accessories & Shoes
 Fine Jewellery & Watches
 Fragrance & Body Care
 Gifts/Hobbies/Toys
-Gourmet Confectionery
-Hair & Beauty
+Gourment Confectionery
 Hairdressing & Beauty Salon
 Home Decorative
 International Fashion & Accessories
@@ -53,40 +52,39 @@ Western Cuisine
 CATEGORIES;
 
         $sources_zh = <<<CATEGORIES
-zh:ATM
-zh:Appliances
-zh:Cafe
-zh:Cafe & Bakery
-zh:Chinese Casual Dining
-zh:Chinese Cuisine
-zh:Confectionery
-zh:Cosmetics & Skincare
-zh:Educational Toys & Enrichment Centres
-zh:Fashion, Accessories & Shoes
-zh:Fine Jewellery & Watches
-zh:Fragrance & Body Care
-zh:Gifts/Hobbies/Toys
-zh:Gourmet Confectionery
-zh:Hair & Beauty
-zh:Hairdressing & Beauty Salon
-zh:Home Decorative
-zh:International Fashion & Accessories
-zh:International Fashion, Accessories & Shoes
-zh:International Jewellery, Watches & Writing Instruments
-zh:Japanese Casual Dining
-zh:Japanese Cuisine
-zh:Korean Cuisine
-zh:Leather Goods & Shoes
-zh:Money Changer
-zh:Optical Services
-zh:Pharmacy, Health & Toiletries
-zh:Restaurants
-zh:Services
-zh:Shoes Repair & Key Services
-zh:Sports Apparel, Equipment & Accessories
-zh:Travel & Lifestyle
-zh:Western Casual Dining
-zh:Western Cuisine
+ATM
+电器用品
+咖啡及蛋糕西点
+咖啡馆
+中餐饮
+中餐馆
+糖果西点
+化妆及护肤品
+教育玩具
+时尚衣装、饰品及鞋子
+精致珠宝首饰及手表
+香水及护肤美肤保养品
+礼物/爱好/玩具
+高級甜点
+美发及美容院
+家庭装饰
+国际时装及饰品
+国际时装、饰品及鞋子
+国际珠宝首饰、手表及名笔
+日式餐饮
+日本烹调
+韩食餐馆
+皮革物品&鞋子
+货币兑换商
+光学服务
+西药房及保健美妆品
+餐馆
+服务
+鞋子修理&关键服务
+运动服装，配备及用品
+旅行&生活方式
+西方休闲餐饮
+西餐馆
 CATEGORIES;
 
         $sources_ja = <<<CATEGORIES
