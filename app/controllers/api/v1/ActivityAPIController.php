@@ -1364,6 +1364,8 @@ class ActivityAPIController extends ControllerAPI
                 from
                     {$tablePrefix}activities a
                 where
+                    a.activities.module_name = 'Application' and
+                    a.activities.group = 'mobile-ci' and
                     a.created_at >= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MINUTE)
                     {$filterLocationIds}
             ", array_merge([-1 * (int)$active_minutes], $locationIds));
