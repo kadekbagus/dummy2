@@ -890,9 +890,9 @@ class IssuedCouponAPIController extends ControllerAPI
 
                 foreach ($with as $relation) {
                     if ($relation === 'translations') {
-                        $issuedcoupons->with('translations');
+                        $issuedcoupons->with('coupon.translations');
                     } elseif ($relation === 'translations.media') {
-                        $issuedcoupons->with('translations.media');
+                        $issuedcoupons->with('coupon.translations.media');
                     }
                 }
             });
