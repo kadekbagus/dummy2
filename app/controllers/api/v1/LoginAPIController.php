@@ -960,12 +960,12 @@ class LoginAPIController extends ControllerAPI
             if (in_array($from, ['mall', 'cs-portal'])) {
                 if ($from === 'mall') {
                     if (strtolower($user->role->role_name) === 'mall admin') {
-                        $mall = $user->employee->retailers[0];
+                        $mall = $user->employee->retailers[0]->load('timezone');
                     } else {
                         $mall = Mall::with('timezone')->excludeDeleted()->where('user_id', $user->user_id)->first();
                     }
                 } elseif ($from === 'cs-portal') {
-                    $mall = $user->employee->retailers[0];
+                    $mall = $user->employee->retailers[0]->load('timezone');
                 }
             }
             $user->mall = $mall;

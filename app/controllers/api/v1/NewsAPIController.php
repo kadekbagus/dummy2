@@ -1273,9 +1273,8 @@ class NewsAPIController extends ControllerAPI
             }
 
             // Builder object
-            $promotions = DB::table('news')
+            $promotions = News::join('merchants', 'news.mall_id', '=', 'merchants.merchant_id')
                 // ->join('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
-                ->join('merchants', 'news.mall_id', '=', 'merchants.merchant_id')
                 ->select('merchants.name AS retailer_name', 'news.*', 'news.news_name as promotion_name')
                 // ->where('news.object_type', '=', 'promotion')
                 // ->where('news.status', '!=', 'deleted');
@@ -1354,6 +1353,18 @@ class NewsAPIController extends ControllerAPI
             // Filter promotion by retailer Ids
             OrbitInput::get('retailer_id', function ($retailerIds) use ($promotions) {
                 $promotions->whereIn('promotion_retailer.retailer_id', $retailerIds);
+            });
+
+            OrbitInput::get('with', function ($with) use ($promotions) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'translations') {
+                        $promotions->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $promotions->with('translations.media');
+                    }
+                }
             });
 
             // Clone the query builder which still does not include the take,
@@ -1580,6 +1591,7 @@ class NewsAPIController extends ControllerAPI
         // Check news name, it should not exists (for update)
         Validator::extend('news_name_exists_but_me', function ($attribute, $value, $parameters) {
             $news_id = trim(OrbitInput::post('news_id'));
+            $object_type = trim(OrbitInput::post('object_type'));
             $news = News::excludeDeleted()
                         ->where('news_name', $value)
                         ->where('news_id', '!=', $news_id)

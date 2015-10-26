@@ -828,8 +828,7 @@ class IssuedCouponAPIController extends ControllerAPI
             }
 
             // Builder object
-            $issuedcoupons = DB::table('issued_coupons')
-                ->join('promotions', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+            $issuedcoupons = IssuedCoupon::join('promotions', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
                 ->join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
                 ->select('merchants.name AS redeem_retailer_name', 'promotions.*', 'issued_coupons.*')
                 ->where('promotions.promotion_type', 'mall')
@@ -884,6 +883,18 @@ class IssuedCouponAPIController extends ControllerAPI
             // Filter coupon by redeem retailer Ids
             OrbitInput::get('redeem_retailer_id', function ($redeemRetailerIds) use ($issuedcoupons) {
                 $issuedcoupons->whereIn('promotion_retailer_redeem.retailer_id', $redeemRetailerIds);
+            });
+
+            OrbitInput::get('with', function ($with) use ($issuedcoupons) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'translations') {
+                        $issuedcoupons->with('coupon.translations');
+                    } elseif ($relation === 'translations.media') {
+                        $issuedcoupons->with('coupon.translations.media');
+                    }
+                }
             });
 
             // Clone the query builder which still does not include the take,

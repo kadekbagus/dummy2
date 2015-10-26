@@ -1283,8 +1283,7 @@ class EventAPIController extends ControllerAPI
             }
 
             // Builder object
-            $events = DB::table('events')
-                ->join('merchants', 'events.merchant_id', '=', 'merchants.merchant_id')
+            $events = EventModel::join('merchants', 'events.merchant_id', '=', 'merchants.merchant_id')
                 ->select('merchants.name AS retailer_name', 'events.*')
                 // ->where('events.status', '!=', 'deleted');
                 ->where('events.status', '=', 'active');
@@ -1402,6 +1401,18 @@ class EventAPIController extends ControllerAPI
             // Filter event by retailer Ids
             OrbitInput::get('retailer_id', function ($retailerIds) use ($events) {
                 $events->whereIn('event_retailer.retailer_id', $retailerIds);
+            });
+
+            OrbitInput::get('with', function ($with) use ($events) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'translations') {
+                        $events->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $events->with('translations.media');
+                    }
+                }
             });
 
             // Clone the query builder which still does not include the take,

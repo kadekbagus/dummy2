@@ -143,8 +143,10 @@ class Setting
         if ($currentRetailer) {
             // There is already config for setting current merchant via Config object.
             // Make sure all the codes does not break by overriding the value
-            $this->settings['current_retailer'] = $currentRetailer;
             Config::set('orbit.shop.id', $currentRetailer);
+            $this->settings['current_retailer'] = $currentRetailer;
+        } else {
+            $this->settings['current_retailer'] = '-';
         }
 
         return $this;
