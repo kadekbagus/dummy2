@@ -88,40 +88,39 @@ ATM
 CATEGORIES;
 
         $sources_ja = <<<CATEGORIES
-ja:ATM
-ja:Appliances
-ja:Cafe
-ja:Cafe & Bakery
-ja:Chinese Casual Dining
-ja:Chinese Cuisine
-ja:Confectionery
-ja:Cosmetics & Skincare
-ja:Educational Toys & Enrichment Centres
-ja:Fashion, Accessories & Shoes
-ja:Fine Jewellery & Watches
-ja:Fragrance & Body Care
-ja:Gifts/Hobbies/Toys
-ja:Gourmet Confectionery
-ja:Hair & Beauty
-ja:Hairdressing & Beauty Salon
-ja:Home Decorative
-ja:International Fashion & Accessories
-ja:International Fashion, Accessories & Shoes
-ja:International Jewellery, Watches & Writing Instruments
-ja:Japanese Casual Dining
-ja:Japanese Cuisine
-ja:Korean Cuisine
-ja:Leather Goods & Shoes
-ja:Money Changer
-ja:Optical Services
-ja:Pharmacy, Health & Toiletries
-ja:Restaurants
-ja:Services
-ja:Shoes Repair & Key Services
-ja:Sports Apparel, Equipment & Accessories
-ja:Travel & Lifestyle
-ja:Western Casual Dining
-ja:Western Cuisine
+自動支払機
+家電機器
+喫茶店及びパン屋
+喫茶店
+中国のカジュアル ダイニング
+中華料理
+お菓子屋
+化粧品及びスキン ケア
+教育おもちゃ
+ファッション、アクセサリー靴
+良い宝石類及び腕時計
+フレグランス ボディケア
+ギフト/趣味/おもちゃ
+グルメ向きのお菓子屋
+理髪及び美容院
+家の装飾的
+国際的な方法及び付属品
+国際的な方法、付属品及び靴
+国際的な宝石類、腕時計及び執筆器械
+日本の偶然の食事
+日本の料理
+韓国の料理
+革商品及び靴
+お金チェンジャー
+光学サービス
+薬学、健康及び洗面用品
+レストラン
+サービス
+靴は及びキー サービス修理する
+スポーツ服装、装置及び付属品
+旅行及び生活様式
+西部の偶然の食事
+西部の料理
 CATEGORIES;
 
 
