@@ -1329,7 +1329,7 @@ class ActivityAPIController extends ControllerAPI
 
             // Only shows activities which belongs to this merchant
             $locationIds = [];
-            if (false && $user->isSuperAdmin() !== TRUE) {
+            if ($user->isSuperAdmin() !== TRUE) {
                 // Filter by user location id
                 $locationIds = $this->getLocationIdsForUser($user);
                 if (count($locationIds) === 0) {
