@@ -11,38 +11,6 @@
 |
 */
 
-// App::before(function($request)
-// {
-//     $allowedRoutes = ['api/v1/agreement', 'app/v1/agreement'];
-
-//     // If: request route is agreement then allowed
-//     // else: check agreement setting
-//     if (! in_array($request->path(), $allowedRoutes)) {
-
-//         // set mall id
-//         $mallId = App::make('orbitSetting')->getSetting('current_retailer');
-
-//         // Builder object
-//         $settings = Setting::excludeDeleted()
-//                            ->where('object_type', 'merchant')
-//                            ->where('object_id', $mallId)
-//                            ->where('setting_name', 'agreement')
-//                            ->where('status', 'active')
-//                            ->first();
-
-//         if (empty($settings)) {
-//             $agreement = 'no';
-//         } else {
-//             $agreement = $settings->setting_value;
-//         }
-
-//         if ($agreement !== 'yes') {
-//             return DummyAPIController::create()->unsupported();
-//         }
-
-//     }
-// });
-
 App::before(function($request) {
     App::singleton('style_name', function(){
         $style = 'main.css';
@@ -167,6 +135,12 @@ Route::filter('orbit-settings', function()
 
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
     $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
+
+    // Timezone should be set
+    $timezone = $retailer->timezone;
+    if (empty($timezone)) {
+        throw new Exception (sprintf('You have to setup timezone for %s.', $retailer->name));
+    }
 
     if (array_key_exists('orbit_preferred_language', $_COOKIE)) {
         App::setLocale($_COOKIE['orbit_preferred_language']);
