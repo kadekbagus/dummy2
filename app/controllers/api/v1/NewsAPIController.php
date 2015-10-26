@@ -1549,7 +1549,7 @@ class NewsAPIController extends ControllerAPI
             // this is for fixing OM-578
             // can not make promotion if the name has already been used for news
             $object_type = OrbitInput::post('object_type');
-            
+
             if (empty($object_type)) {
                 $object_type = 'news';
             }
@@ -1583,6 +1583,7 @@ class NewsAPIController extends ControllerAPI
             $news = News::excludeDeleted()
                         ->where('news_name', $value)
                         ->where('news_id', '!=', $news_id)
+                        ->where('object_type', '!=', $object_type)
                         ->first();
 
             if (! empty($news)) {
