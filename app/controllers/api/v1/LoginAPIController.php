@@ -962,7 +962,7 @@ class LoginAPIController extends ControllerAPI
                     if (strtolower($user->role->role_name) === 'mall admin') {
                         $mall = $user->employee->retailers[0];
                     } else {
-                        $mall = Mall::excludeDeleted()->where('user_id', $user->user_id)->first();
+                        $mall = Mall::with('timezone')->excludeDeleted()->where('user_id', $user->user_id)->first();
                     }
                 } elseif ($from === 'cs-portal') {
                     $mall = $user->employee->retailers[0];
