@@ -185,7 +185,7 @@
                         <br>
                         <img src="{{ asset($luckydraw->image) }}" class="img-responsive">
                         <p>{{ nl2br($luckydraw->description) }}</p>
-                        <p>Valid until: {{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}</p>
+                        <p>{{ Lang::get('mobileci.coupon_detail.validity_label') }} : {{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}</p>
                     </div>
                 </div>
             </div>
