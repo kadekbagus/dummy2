@@ -515,7 +515,7 @@
 <div class="modal fade" id="tour-confirmation" data-keyboard="false" data-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header orbit-modal-header">
                 <h4 class="modal-title"><i class="fa fa-lightbulb-o"></i> {{ Lang::get('mobileci.page_title.orbit_tour') }}</h4>
             </div>
             <div class="modal-body">
