@@ -6,17 +6,17 @@
 /**
  * Create new tenant
  */
-Route::post('/app/v1/tenant/new', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@Tenant_postNewTenant']);
+Route::post('/app/v1/tenant/new', ['uses' => 'IntermediateAuthController@Tenant_postNewTenant']);
 
 /**
  * Delete tenant
  */
-Route::post('/app/v1/tenant/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@Tenant_postDeleteTenant']);
+Route::post('/app/v1/tenant/delete', ['uses' => 'IntermediateAuthController@Tenant_postDeleteTenant']);
 
 /**
  * Update tenant
  */
-Route::post('/app/v1/tenant/update', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@Tenant_postUpdateTenant']);
+Route::post('/app/v1/tenant/update', ['uses' => 'IntermediateAuthController@Tenant_postUpdateTenant']);
 
 /**
  * List and/or Search tenant

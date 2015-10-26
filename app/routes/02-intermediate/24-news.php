@@ -11,7 +11,7 @@ Route::post('/app/v1/news/new', 'IntermediateAuthController@News_postNewNews');
 /**
  * Delete news
  */
-Route::post('/app/v1/news/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@News_postDeleteNews']);
+Route::post('/app/v1/news/delete', 'IntermediateAuthController@News_postDeleteNews');
 
 /**
  * Update news
