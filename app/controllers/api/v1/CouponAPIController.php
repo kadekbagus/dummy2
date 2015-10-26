@@ -2062,8 +2062,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             // Builder object
-            $coupons = DB::table('promotions')
-                ->join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
+            $coupons = Coupon::join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
                 ->select('merchants.name AS issue_retailer_name', 'promotions.*')
                 ->where('promotions.is_coupon', '=', 'Y')
                 ->where('promotions.promotion_type', 'mall')
@@ -2153,6 +2152,19 @@ class CouponAPIController extends ControllerAPI
             // Filter coupon by issue retailer Ids
             OrbitInput::get('issue_retailer_id', function ($issueRetailerIds) use ($coupons) {
                 $coupons->whereIn('promotion_retailer.retailer_id', $issueRetailerIds);
+            });
+
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($coupons) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'translations') {
+                        $coupons->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $coupons->with('translations.media');
+                    }
+                }
             });
 
             // Clone the query builder which still does not include the take,
