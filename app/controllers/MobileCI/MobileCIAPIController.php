@@ -1791,7 +1791,7 @@ class MobileCIAPIController extends ControllerAPI
 
             // News per tenant
             if (!empty($alternateLanguage) && !empty($tenant->news)) {
-                foreach ($tenant->news as $key => $news) {
+                foreach ($tenant->news as $keyNews => $news) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -1801,7 +1801,7 @@ class MobileCIAPIController extends ControllerAPI
                         foreach (['news_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($newsTranslation->{$field}) && $newsTranslation->{$field} !== '') {
-                                $tenant->news->{$field} = $newsTranslation->{$field};
+                                $tenant->news[$keyNews]->{$field} = $newsTranslation->{$field};
                             }
                         }
 
@@ -1834,33 +1834,33 @@ class MobileCIAPIController extends ControllerAPI
 
             // Promotions per tenant
             if (!empty($alternateLanguage) && !empty($tenant->newsPromotions)) {
-                foreach ($tenant->newsPromotions as $key => $news) {
+                foreach ($tenant->newsPromotions as $keyNewsPromotions => $newsPromotions) {
 
-                    $newsTranslation = \NewsTranslation::excludeDeleted()
+                    $newsPromotionsTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                        ->where('news_id', $news->news_id)->first();
+                        ->where('news_id', $newsPromotions->news_id)->first();
 
-                    if (!empty($newsTranslation)) {
+                    if (!empty($newsPromotionsTranslation)) {
                         foreach (['news_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
-                            if (isset($newsTranslation->{$field}) && $newsTranslation->{$field} !== '') {
-                                $tenant->newsPromotions->{$field} = $newsTranslation->{$field};
+                            if (isset($newsPromotionsTranslation->{$field}) && $newsPromotionsTranslation->{$field} !== '') {
+                                $tenant->newsPromotions[$keyNewsPromotions]->{$field} = $newsPromotionsTranslation->{$field};
                             }
                         }
 
-                        $media = $newsTranslation->find($newsTranslation->news_translation_id)
+                        $media = $newsPromotionsTranslation->find($newsPromotionsTranslation->news_translation_id)
                             ->media_orig()
                             ->first();
 
                         if (isset($media->path)) {
-                            $news->image = $media->path;
+                            $newsPromotions->image = $media->path;
                         } else {
                             // back to default image if in the content multilanguage not have image
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
                             $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                 ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                                ->where('news_id', $news->news_id)->first();
+                                ->where('news_id', $newsPromotions->news_id)->first();
 
                             // get default image
                             $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
@@ -1868,7 +1868,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->first();
 
                             if (isset($mediaDefaultLanguage->path)) {
-                                $news->image = $mediaDefaultLanguage->path;
+                                $newsPromotions->image = $mediaDefaultLanguage->path;
                             }
                         }
                     }
