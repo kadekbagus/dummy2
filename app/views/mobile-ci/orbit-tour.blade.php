@@ -1,7 +1,7 @@
 <div class="modal fade" id="tour-confirmation" data-keyboard="false" data-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header tour-confirmation">
                 <h4 class="modal-title">{{ Lang::get('mobileci.tour.modal.title') }}</h4>
             </div>
             <div class="modal-body">

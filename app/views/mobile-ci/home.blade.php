@@ -515,7 +515,7 @@
 <div class="modal fade" id="tour-confirmation" data-keyboard="false" data-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header orbit-modal-header">
                 <h4 class="modal-title"><i class="fa fa-lightbulb-o"></i> {{ Lang::get('mobileci.page_title.orbit_tour') }}</h4>
             </div>
             <div class="modal-body">
@@ -523,7 +523,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" id="modal-end-tour" class="btn btn-danger">{{ Lang::get('mobileci.tour.modal.end_button') }}</button>
-                <button type="button" id="modal-start-tour" class="btn btn-primary">{{ Lang::get('mobileci.tour.modal.start_button') }}</button>
+                <button type="button" id="modal-start-tour" class="btn btn-info">{{ Lang::get('mobileci.tour.modal.start_button') }}</button>
             </div>
         </div>
     </div>
@@ -649,7 +649,7 @@
                                         '</div>'+
                                     '</div>' +
                                     '<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">' +
-                                        '<button class="btn btn-primary btn-block main-end" data-role="end">{{ Lang::get('mobileci.modals.ok') }}</button>' +
+                                        '<button class="btn btn-info btn-block main-end" data-role="end">{{ Lang::get('mobileci.modals.ok') }}</button>' +
                                     '</div>' +
                                 '</div>' +
                             '</div>' +
@@ -697,13 +697,13 @@
                             '<div class="popover-navigation">' +
                                 '<div class="row">' +
                                     '<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">' +
-                                        '<button class="btn btn-primary btn-block" data-role="prev"><i class="fa fa-chevron-left"></i></button>' +
+                                        '<button class="btn btn-info btn-block" data-role="prev"><i class="fa fa-chevron-left"></i></button>' +
                                     '</div>' +
                                     '<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">' +
-                                        '<button class="btn btn-primary btn-block" data-role="next"><i class="fa fa-chevron-right"></i></button>' +
+                                        '<button class="btn btn-info btn-block" data-role="next"><i class="fa fa-chevron-right"></i></button>' +
                                     '</div>' +
                                     '<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">' +
-                                        '<button class="btn btn-primary btn-block main-end" data-role="end">{{ Lang::get('mobileci.tour.end.button') }}</button>' +
+                                        '<button class="btn btn-info btn-block main-end" data-role="end">{{ Lang::get('mobileci.tour.end.button') }}</button>' +
                                     '</div>' +
                                 '</div>' +
                             '</div>' +
