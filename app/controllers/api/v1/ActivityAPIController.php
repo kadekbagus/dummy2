@@ -1193,7 +1193,7 @@ class ActivityAPIController extends ControllerAPI
             $activities = DB::table('activities')
                 ->select(
                     DB::raw("DATE({$tablePrefix}activities.created_at) as date"),
-                    DB::raw("COUNT({$tablePrefix}activities.activity_id) as count")
+                    DB::raw("COUNT(DISTINCT {$tablePrefix}activities.user_id) as count")
                 )
                 ->where('activities.module_name', '=', 'Application')
                 ->where('activities.group', '=', 'mobile-ci')
@@ -1364,7 +1364,7 @@ class ActivityAPIController extends ControllerAPI
                 from
                     {$tablePrefix}activities a
                 where
-                    a.module_name = 'Application' and
+                    a.user_id != '0' and
                     a.group = 'mobile-ci' and
                     a.created_at >= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MINUTE)
                     {$filterLocationIds}
