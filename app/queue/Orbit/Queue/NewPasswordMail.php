@@ -52,7 +52,6 @@ class NewPasswordMail
             'token'             => $token->token_value,
             'email'             => $user->user_email,
             'first_name'             => $user->user_firstname,
-            'last_name'             => $user->user_lastname,
             'token_url'         => $tokenUrl,
             'shop_name'         => $retailer->name,
             'cs_phone'          => $contactInfo['phone'],

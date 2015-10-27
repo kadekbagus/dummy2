@@ -10,7 +10,7 @@
     </div>
 
     <div id="main" style="width:95%;margin: 0 auto;">
-        <p style="line-height:1.2em;padding-top:1em;padding-bottom:1em;">Hi, <strong style="font-size:18px">{{ $email }}</strong></p>
+        <p style="line-height:1.2em;padding-top:1em;padding-bottom:1em;">Hi <strong style="font-size:18px">{{ $email }},</strong></p>
         <p style="line-height:1.2em;text-align:justify;padding-bottom:1em;">We hope you had a great shopping experience at <b>&quot;{{ $shop_name }}&quot;</b>.
         <p  style="line-height:1.2em;text-align:justify;padding-bottom:1em;">To complete your registration, please complete your account information, follow this link below:</p>
 

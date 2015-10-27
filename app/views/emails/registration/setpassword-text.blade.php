@@ -1,4 +1,4 @@
-Hi, {{ $first_name }}
+Hi {{ $first_name }},
 
 To complete your registration and obtain great promotion and money saving deals,
 follow this link below:
