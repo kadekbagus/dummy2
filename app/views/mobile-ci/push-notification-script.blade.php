@@ -101,6 +101,7 @@
                         new_content = new_content.replace('|#|lucky_draw_info_5|#|', langs.lucky_draw.txt_lucky_draw_info_5);
                         new_content = new_content.replace('|#|lucky_draw|#|', langs.lucky_draw.txt_lucky_draw);
                         new_content = new_content.replace('|#|goodluck|#|', langs.lucky_draw.txt_goodluck);
+                        new_content = new_content.replace('|#|close|#|', langs.coupon.txt_close);
 
                         $('#orbit-push-notification-wrapper').html(new_content);
 
