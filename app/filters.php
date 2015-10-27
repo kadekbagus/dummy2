@@ -1,7 +1,4 @@
 <?php
-
-use Orbit\Helper\Asset\Stylesheet as Stylesheet;
-
 /*
 |--------------------------------------------------------------------------
 | Application & Route Filters
@@ -12,15 +9,6 @@ use Orbit\Helper\Asset\Stylesheet as Stylesheet;
 | application. Here you may also register your custom route filters.
 |
 */
-
-App::before(function($request) {
-    App::singleton('style_name', function(){
-        return Stylesheet::create()->getMallCss();
-    });
-
-    View::share('style_name', app('style_name'));
-});
-
 App::after(function($request, $response)
 {
     //
