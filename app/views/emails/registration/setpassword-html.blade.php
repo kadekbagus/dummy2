@@ -10,7 +10,7 @@
     </div>
 
     <div id="main" style="width:95%;margin: 0 auto;">
-        <p style="line-height:1.2em;padding-top:1em;padding-bottom:1em;">Hi, <strong style="font-size:18px">{{ $email }}</strong></p>
+        <p style="line-height:1.2em;padding-top:1em;padding-bottom:1em;">Hi <strong style="font-size:18px">{{ $first_name }},</strong></p>
         <p  style="line-height:1.2em;text-align:justify;padding-bottom:1em;">To complete your <strong style="font-size:18px">registration</strong> and obtain <strong style="font-size:18px">great promotions</strong>
         and <strong style="font-size:18px;">money saving deals</strong>, follow this link below:</p>
 
@@ -27,7 +27,6 @@
     <div id="contact" style="padding:0.5em 0 0.5em 0;margin-top:3em;border-top:1px dotted #ccc;line-height:18px;width:100%;">
         <p style="width:100%;margin:0 auto;text-align:center;">
             <strong>Orbit Customer Service</strong>
-            <span style="display:block;font-size:12px;">Phone: {{ $cs_phone }} ({{ $cs_office_hour }})</span>
             <span style="display:block;font-size:12px;">Email: {{ $cs_email }}</span>
         </p>
     <div>

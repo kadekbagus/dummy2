@@ -766,7 +766,7 @@ class IntermediateLoginController extends IntermediateBaseController
         if ($captive === 'yes') {
             switch ($from) {
                 case 'facebook':
-                    $activityNameLong = 'Sign In via Facebook (Captive)';
+                    $activityNameLong = 'Sign In via Facebook';
                     break;
 
                 case 'form':

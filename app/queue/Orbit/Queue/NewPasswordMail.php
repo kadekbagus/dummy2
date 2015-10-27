@@ -51,6 +51,7 @@ class NewPasswordMail
         $data = array(
             'token'             => $token->token_value,
             'email'             => $user->user_email,
+            'first_name'             => $user->user_firstname,
             'token_url'         => $tokenUrl,
             'shop_name'         => $retailer->name,
             'cs_phone'          => $contactInfo['phone'],
