@@ -139,7 +139,7 @@ Route::filter('orbit-settings', function()
 
     // Get merchant language
     $alternateLanguage = \MerchantLanguage::excludeDeleted()
-        ->where('merchant_id', '=', 'fefesfesf')
+        ->where('merchant_id', '=', $retailer->merchant_id)
         ->where('language_id', '=', $languageIdMall->language_id)
         ->first();
 
