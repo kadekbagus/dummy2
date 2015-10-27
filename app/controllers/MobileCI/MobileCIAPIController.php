@@ -62,6 +62,7 @@ use Cookie;
 use \Inbox;
 use \News;
 use \Object;
+use \App;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -697,7 +698,7 @@ class MobileCIAPIController extends ControllerAPI
     public function getRetailerInfo()
     {
         try {
-            $retailer_id = Config::get('orbit.shop.id');
+            $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
             $retailer = Mall::with('parent')->where('merchant_id', $retailer_id)->first();
 
             return $retailer;

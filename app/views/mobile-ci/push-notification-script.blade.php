@@ -85,7 +85,7 @@
                         new_content = new_content.replace('|#|coupon_subject|#|', langs.coupon.txt_subject);
                         new_content = new_content.replace('|#|congratulations_you_get|#|', langs.coupon.txt_congrats);
                         new_content = new_content.replace('|#|here_are_your_coupons|#|', langs.coupon.txt_coupons);
-                        new_content = new_content.replace('|#|here_is_your_coupon|#|', langs.coupon.txt_coupons);
+                        new_content = new_content.replace('|#|here_is_your_coupon|#|', langs.coupon.txt_coupon);
                         new_content = new_content.replace('|#|check_coupon|#|', langs.coupon.txt_check);
                         new_content = new_content.replace('|#|happy_shopping|#|', langs.coupon.txt_happy);
                         new_content = new_content.replace('|#|close|#|', langs.coupon.txt_close);

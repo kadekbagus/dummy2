@@ -1,5 +1,4 @@
 <?php
-
 /*
 |--------------------------------------------------------------------------
 | Application & Route Filters
@@ -10,37 +9,6 @@
 | application. Here you may also register your custom route filters.
 |
 */
-
-App::before(function($request) {
-    App::singleton('style_name', function(){
-        $style = 'main.css';
-        // just testing
-        $mallId = App::make('orbitSetting')->getSetting('current_retailer');
-
-        switch ($mallId) {
-            case 'EXs5F-LMP-------':
-                $style = 'main.css';
-                break;
-
-            case 'EXs5F-TKS-------':
-                $style = 'takashimaya.css';
-                break;
-
-            case 'EXs5F-MBG-------':
-                $style = 'galleria.css';
-                break;
-
-            default:
-                $style = 'main.css';
-                break;
-        }
-
-        return $style;
-    });
-
-    View::share('style_name', app('style_name'));
-});
-
 App::after(function($request, $response)
 {
     //
@@ -175,17 +143,19 @@ Route::filter('orbit-settings', function()
         ->where('language_id', '=', $languageIdMall->language_id)
         ->first();
 
-    foreach ($retailer->settings as $value) {
-        if ($value->setting_name == 'start_button_label') {
-            // Get start button translation
-            $startButtonTranslation = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
-                                ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                                ->whereHas('language', function($has) {
-                                $has->where('merchant_languages.status', 'active');
-                            })->get();
+    if ($alternateLanguage !== NULL) {
+        foreach ($retailer->settings as $value) {
+            if ($value->setting_name == 'start_button_label') {
+                // Get start button translation
+                $startButtonTranslation = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
+                                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                    ->whereHas('language', function($has) {
+                                    $has->where('merchant_languages.status', 'active');
+                                })->get();
 
-            if (! empty($startButtonTranslation->setting_value)) {
-                Config::set('shop.start_button_label', $startButtonTranslation->setting_value);
+                if (! empty($startButtonTranslation->setting_value)) {
+                    Config::set('shop.start_button_label', $startButtonTranslation->setting_value);
+                }
             }
         }
     }
