@@ -272,6 +272,8 @@ return array(
             'language' => 'Language ID あなたが見つかりません指定され.',
             'merchant_language' => 'Merchant Language ID あなたが見つかりません指定され.',
             'hour_format'          => ':attribute 有効な日付ではありません.',
+            'tenant_floor'          => 'Floor is required',
+            'tenant_unit'          => 'Unit is required',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

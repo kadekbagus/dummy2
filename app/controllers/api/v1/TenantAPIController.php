@@ -412,7 +412,7 @@ class TenantAPIController extends ControllerAPI
                     'name'                 => 'required',
                     'box_url'              => 'orbit.formaterror.url.web',
                     'external_object_id'   => 'required',
-                    'status'               => 'orbit.empty.tenant_status',
+                    'status'               => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $parent_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
                     'parent_id'            => 'required|orbit.empty.mall',
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
@@ -421,7 +421,9 @@ class TenantAPIController extends ControllerAPI
                 ),
                 array(
                     //ACL::throwAccessForbidden($message);
-                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
+                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.',
+                    'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
+                    'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
                )
             );
 
@@ -746,6 +748,8 @@ class TenantAPIController extends ControllerAPI
             $category_ids = OrbitInput::post('category_ids');
             $box_url = OrbitInput::post('box_url');
             $id_language_default = OrbitInput::post('id_language_default');
+            $floor = OrbitInput::post('floor');
+            $unit = OrbitInput::post('unit');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -769,7 +773,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status|orbit.exists.tenant_on_inactive_have_linked:' . $retailer_id,
+                    'status'            => 'orbit.empty.tenant_status|orbit.exists.tenant_on_inactive_have_linked:' . $retailer_id . '|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id,
@@ -778,6 +782,8 @@ class TenantAPIController extends ControllerAPI
                 array(
                     'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
                     'orbit.exists.tenant_on_inactive_have_linked' => Lang::get('validation.orbit.exists.tenant_on_inactive_have_linked'),
+                    'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
+                    'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
                     'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
                 //ACL::throwAccessForbidden($message);
                )
@@ -1933,6 +1939,36 @@ class TenantAPIController extends ControllerAPI
             }
 
             return $valid;
+        });
+
+        // Check floor
+        Validator::extend('orbit.empty.tenant_floor', function ($attribute, $value, $parameters) {
+            $mall_id = $parameters[0];
+            $floor = $parameters[1];
+            // check if only status is being set to active
+            if ($value === 'active') {
+                $floor_db = Object::excludeDeleted()
+                                  ->where('object_type','floor')
+                                  ->where('merchant_id',$mall_id)
+                                  ->where('object_name',$floor)
+                                  ->first();
+                if (empty($floor_db)) {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
+        });
+
+        // Check unit
+        Validator::extend('orbit.empty.tenant_unit', function ($attribute, $value, $parameters) {
+            $unit = $parameters[0];
+            // check if only status is being set to active
+            if ($value === 'active' && empty($unit)) {
+                return FALSE;
+            }
+
+            return TRUE;
         });
 
         // tenant cannot be inactive if have linked to news, promotion, event and coupon.

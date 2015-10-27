@@ -272,7 +272,8 @@ return array(
             'language' => ' Language ID 您指定未找到.',
             'merchant_language' => ' Merchant Language ID 您指定未找到.',
             'hour_format'          => ':attribute 是不是有效日期',
-
+            'tenant_floor'          => 'Floor is required',
+            'tenant_unit'          => 'Unit is required',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
