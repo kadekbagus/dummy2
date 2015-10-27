@@ -137,7 +137,7 @@
                 <td><?php echo $me->printUtf8($row->user_firstname) . ' ' . $me->printUtf8($row->user_lastname); ?></td>
                 <td><?php echo $me->printGender($row); ?></td>
                 <td><?php echo $me->printUtf8($row->phone); ?></td>
-                <td><?php echo $me->printCustomerSince($row); ?></td>
+                <td><?php echo $me->printCustomerSince($row, $timezone); ?></td>
                 <td><?php echo ($row->total_usable_coupon); ?></td>
                 <td><?php echo ($row->total_redeemed_coupon); ?></td>
                 <td><?php echo ($row->status); ?></td>
