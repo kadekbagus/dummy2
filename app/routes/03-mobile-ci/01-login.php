@@ -163,11 +163,6 @@ Route::group(
             }
         );
 
-        Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
-        Route::get('/app/v1/customer/cloud-login', 'IntermediateLoginController@getCloudLogin');
-        Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
-        Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
-
         Route::get('/customer/logout', 'IntermediateLoginController@getLogoutMobileCI');
 
         // get product listing for families
@@ -477,10 +472,13 @@ Route::group(
 
         // set language from pop up selected language to cookies
         Route::post(
-            '/customer/setlanguage', 
+            '/customer/setlanguage',
             function () {
                 return MobileCI\MobileCIAPIController::create()->postLanguagebySelected();
             }
         );
+
+        Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
+        Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
 );

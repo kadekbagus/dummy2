@@ -2774,10 +2774,11 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 250;
             }
 
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $news = \News::with('translations')->active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'news')
-                            ->whereRaw("NOW() between begin_date and end_date")
+                            ->whereRaw("? between begin_date and end_date", [$mallTime])
                             ->orderBy('sticky_order', 'desc')
                             ->orderBy('created_at', 'desc')
                             ->get();

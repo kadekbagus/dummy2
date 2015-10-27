@@ -11,7 +11,7 @@ Route::post('/app/v1/object/new', 'IntermediateAuthController@Object_postNewObje
 /**
  * Delete object
  */
-Route::post('/app/v1/object/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@Object_postDeleteObject']);
+Route::post('/app/v1/object/delete', 'IntermediateAuthController@Object_postDeleteObject');
 
 /**
  * Update object

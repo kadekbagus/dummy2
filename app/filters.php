@@ -11,38 +11,6 @@
 |
 */
 
-// App::before(function($request)
-// {
-//     $allowedRoutes = ['api/v1/agreement', 'app/v1/agreement'];
-
-//     // If: request route is agreement then allowed
-//     // else: check agreement setting
-//     if (! in_array($request->path(), $allowedRoutes)) {
-
-//         // set mall id
-//         $mallId = App::make('orbitSetting')->getSetting('current_retailer');
-
-//         // Builder object
-//         $settings = Setting::excludeDeleted()
-//                            ->where('object_type', 'merchant')
-//                            ->where('object_id', $mallId)
-//                            ->where('setting_name', 'agreement')
-//                            ->where('status', 'active')
-//                            ->first();
-
-//         if (empty($settings)) {
-//             $agreement = 'no';
-//         } else {
-//             $agreement = $settings->setting_value;
-//         }
-
-//         if ($agreement !== 'yes') {
-//             return DummyAPIController::create()->unsupported();
-//         }
-
-//     }
-// });
-
 App::before(function($request) {
     App::singleton('style_name', function(){
         $style = 'main.css';
@@ -159,7 +127,6 @@ Route::filter('csrf', function()
 | session does not match the one given in this request, we'll bail.
 |
 */
-
 Route::filter('orbit-settings', function()
 {
     if (! App::make('orbitSetting')->getSetting('current_retailer')) {
@@ -169,7 +136,13 @@ Route::filter('orbit-settings', function()
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
     $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 
-    // Prioroty : 1.cookie 2.mall_setting 3.browser
+    // Timezone should be set
+    $timezone = $retailer->timezone;
+    if (empty($timezone)) {
+        throw new Exception (sprintf('You have to setup timezone for %s.', $retailer->name));
+    }
+
+    // Priority : 1. Cookie 2. Mall_setting 3. Browser
 
     // Cek Cookie orbit_preferred_language
     if (array_key_exists('orbit_preferred_language', $_COOKIE)) {
@@ -183,6 +156,9 @@ Route::filter('orbit-settings', function()
             // Cek browser language
             if (! empty($browserLang) AND in_array($browserLang, Config::get('orbit.languages', ['en']))) {
                 App::setLocale($browserLang);
+            } else {
+                // Fallback to 'en' -- the last effort, most common one
+                App::setLocale('en');
             }
         }
     }
@@ -206,7 +182,7 @@ Route::filter('orbit-settings', function()
 |--------------------------------------------------------------------------
 | Check luckydraw routes based on database setting
 |--------------------------------------------------------------------------
-
+*/
 Route::filter('check-routes-luckydraw', function()
 {
     $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();

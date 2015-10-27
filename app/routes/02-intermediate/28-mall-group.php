@@ -6,12 +6,12 @@
 /**
  * Create new mall
  */
-Route::post('/app/v1/mallgroup/new', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@MallGroup_postNewMallGroup']);
+Route::post('/app/v1/mallgroup/new', 'IntermediateAuthController@MallGroup_postNewMallGroup');
 
 /**
  * Delete mall
  */
-Route::post('/app/v1/mallgroup/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@MallGroup_postDeleteMallGroup']);
+Route::post('/app/v1/mallgroup/delete', 'IntermediateAuthController@MallGroup_postDeleteMallGroup');
 
 
 /**

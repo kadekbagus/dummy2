@@ -35,22 +35,18 @@ Route::post('/api/v1/mall-setting/list', function()
     return SettingAPIController::create()->getSearchMallSetting();
 });
 
-Route::group(['before' => 'orbit-settings'], function() {
+/**
+ * Get agreement setting
+ */
+Route::get('/api/v1/agreement', ['as' => 'get-api-agreement', function()
+{
+    return SettingAPIController::create()->getAgreement();
+}]);
 
-    /**
-     * Get agreement setting
-     */
-    Route::get('/api/v1/agreement', ['as' => 'get-api-agreement', function()
-    {
-        return SettingAPIController::create()->getAgreement();
-    }]);
-
-    /**
-     * Create/update agreement setting
-     */
-    Route::post('/api/v1/agreement', ['as' => 'post-api-agreement', function()
-    {
-        return SettingAPIController::create()->postUpdateAgreement();
-    }]);
-
-});
+/**
+ * Create/update agreement setting
+ */
+Route::post('/api/v1/agreement', ['as' => 'post-api-agreement', function()
+{
+    return SettingAPIController::create()->postUpdateAgreement();
+}]);
