@@ -139,21 +139,23 @@ Route::filter('orbit-settings', function()
 
     // Get merchant language
     $alternateLanguage = \MerchantLanguage::excludeDeleted()
-        ->where('merchant_id', '=', $retailer->merchant_id)
+        ->where('merchant_id', '=', 'fefesfesf')
         ->where('language_id', '=', $languageIdMall->language_id)
         ->first();
 
-    foreach ($retailer->settings as $value) {
-        if ($value->setting_name == 'start_button_label') {
-            // Get start button translation
-            $startButtonTranslation = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
-                                ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                                ->whereHas('language', function($has) {
-                                $has->where('merchant_languages.status', 'active');
-                            })->get();
+    if ($alternateLanguage !== NULL) {
+        foreach ($retailer->settings as $value) {
+            if ($value->setting_name == 'start_button_label') {
+                // Get start button translation
+                $startButtonTranslation = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
+                                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                    ->whereHas('language', function($has) {
+                                    $has->where('merchant_languages.status', 'active');
+                                })->get();
 
-            if (! empty($startButtonTranslation->setting_value)) {
-                Config::set('shop.start_button_label', $startButtonTranslation->setting_value);
+                if (! empty($startButtonTranslation->setting_value)) {
+                    Config::set('shop.start_button_label', $startButtonTranslation->setting_value);
+                }
             }
         }
     }
