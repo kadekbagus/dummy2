@@ -1,5 +1,7 @@
 <?php
 
+use Orbit\Helper\Asset\Stylesheet as Stylesheet;
+
 /*
 |--------------------------------------------------------------------------
 | Application & Route Filters
@@ -13,29 +15,7 @@
 
 App::before(function($request) {
     App::singleton('style_name', function(){
-        $style = 'main.css';
-        // just testing
-        $mallId = App::make('orbitSetting')->getSetting('current_retailer');
-
-        switch ($mallId) {
-            case 'EXs5F-LMP-------':
-                $style = 'main.css';
-                break;
-
-            case 'EXs5F-TKS-------':
-                $style = 'takashimaya.css';
-                break;
-
-            case 'EXs5F-MBG-------':
-                $style = 'galleria.css';
-                break;
-
-            default:
-                $style = 'main.css';
-                break;
-        }
-
-        return $style;
+        return Stylesheet::create()->getMallCss();
     });
 
     View::share('style_name', app('style_name'));
