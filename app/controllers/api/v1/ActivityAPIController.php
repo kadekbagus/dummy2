@@ -1539,13 +1539,16 @@ class ActivityAPIController extends ControllerAPI
             $unknown = 0;
 
             foreach ($activities->get() as $age) {
-                foreach ($buckets as $limit => $count) {
-                    if ($age->age === null) {
-                        $unknown += (int)$age->count;
-                    } elseif ($limit === 0) {
-                        $buckets[$limit] += (int)$age->count;
-                    } elseif ((int)$age->age < $limit) {
-                        $buckets[$limit] += (int)$age->count;
+                if ($age->age === null) {
+                    $unknown += (int)$age->count;
+                } else {
+                    foreach ($buckets as $limit => $count) {
+                        if ($limit === 0) {
+                            $buckets[$limit] += (int)$age->count;
+                        } elseif ((int)$age->age < $limit) {
+                            $buckets[$limit] += (int)$age->count;
+                            break;
+                        }
                     }
                 }
             }

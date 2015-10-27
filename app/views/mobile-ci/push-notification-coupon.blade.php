@@ -3,14 +3,14 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.activation.close') }}</span></button>
-                <h4 class="modal-title" id="orbit-push-modal-title">{{{ $subject }}}</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">|#|close|#|</span></button>
+                <h4 class="modal-title" id="orbit-push-modal-title">|#|coupon_subject|#|</h4>
             </div>
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12">
-                        <h4 style="color:#d9534f">Hello {{ $fullName }},</h4>
-                        <p>{{ Lang::get('mobileci.coupon.congratulations_you_get') }} {{ $numberOfCoupon }} @if ($numberOfCoupon > 1) {{ Lang::get('mobileci.coupon.here_are_your_coupons') }} @else {{ Lang::get('mobileci.coupon.here_is_your_coupon') }} @endif:
+                        <h4 style="color:#d9534f">|#|hello|#| {{ $fullName }},</h4>
+                        <p>|#|congratulations_you_get|#| {{ $numberOfCoupon }} @if ($numberOfCoupon > 1) |#|here_are_your_coupons|#| @else |#|here_is_your_coupon|#| @endif:
                         </p>
                         <div class="row">
                             <ol style="padding-left:16px">
@@ -20,10 +20,10 @@
                             </ol>
                         </div>
                         <p>
-                            <strong>{{ Lang::get('mobileci.coupon.check_coupon') }}</strong>
+                            <strong>|#|check_coupon|#|</strong>
                         </p>
                         <p>
-                            {{ Lang::get('mobileci.coupon.happy_shopping') }}</br></br>
+                            |#|happy_shopping|#|</br></br>
                             <strong>{{ $mallName }}</strong>
                         </p>
                     </div>
@@ -32,7 +32,7 @@
             <div class="modal-footer">
                 <div class="row">
                     <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.coupon.close') }}</button>
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">|#|close|#|</button>
                     </div>
                 </div>
             </div>

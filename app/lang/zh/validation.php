@@ -134,7 +134,7 @@ return array(
             'mall_have_tenant'       => 'The mall has one or more tenants linked to it, so it cannot be deleted.',
             'mallgroup_have_mall'    => 'The mall group has one or more mall linked to it, so it cannot be deleted.',
             'tenant_id'              => 'The tenant id has already exists.',
-            'tenant_on_inactive_have_linked'    => 'Tenant can not be inactive, because have linked.',
+            'tenant_on_inactive_have_linked'    => 'Tenant can not be deactivated, because it has links.',
         ),
         'access' => array(
             'forbidden'              => '您没有权限：动作',
@@ -272,7 +272,8 @@ return array(
             'language' => ' Language ID 您指定未找到.',
             'merchant_language' => ' Merchant Language ID 您指定未找到.',
             'hour_format'          => ':attribute 是不是有效日期',
-
+            'tenant_floor'          => 'Floor is required',
+            'tenant_unit'          => 'Unit is required',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

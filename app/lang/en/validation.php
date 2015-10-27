@@ -134,7 +134,7 @@ return array(
             'mall_have_tenant'       => 'The mall has one or more tenants linked to it, so it cannot be deleted.',
             'mallgroup_have_mall'    => 'The mall group has one or more mall linked to it, so it cannot be deleted.',
             'tenant_id'              => 'The tenant id has already exists.',
-            'tenant_on_inactive_have_linked'    => 'Tenant can not be inactive, because have linked.',
+            'tenant_on_inactive_have_linked'    => 'Tenant can not be deactivated, because it has links.',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action.',
@@ -282,6 +282,8 @@ return array(
             'language' => 'The Language ID you specified is not found.',
             'merchant_language' => 'The Merchant Language ID you specified is not found.',
             'hour_format'          => 'The :attribute is not a valid date.',
+            'tenant_floor'          => 'Floor is required',
+            'tenant_unit'          => 'Unit is required',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

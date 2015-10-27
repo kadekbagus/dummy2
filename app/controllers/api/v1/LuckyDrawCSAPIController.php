@@ -1413,7 +1413,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
-        $subject = Lang::get('mobileci.inbox.lucky_draw.subject');
+        $subject = 'Lucky Draw';
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
@@ -1477,7 +1477,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
-        $subject = Lang::get('mobileci.inbox.coupon.subject');
+        $subject = 'Coupon';
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
