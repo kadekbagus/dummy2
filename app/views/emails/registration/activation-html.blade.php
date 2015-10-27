@@ -27,7 +27,6 @@
     <div id="contact" style="padding:0.5em 0 0.5em 0;margin-top:3em;border-top:1px dotted #ccc;line-height:18px;width:100%;">
         <p style="width:100%;margin:0 auto;text-align:center;">
             <strong>Orbit Customer Service</strong>
-            <span style="display:block;font-size:12px;">Phone: {{ $cs_phone }} ({{ $cs_office_hour }})</span>
             <span style="display:block;font-size:12px;">Email: {{ $cs_email }}</span>
         </p>
     <div>

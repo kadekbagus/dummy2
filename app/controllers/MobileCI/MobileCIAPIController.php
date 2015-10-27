@@ -3244,7 +3244,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
-        $subject = Lang::get('mobileci.inbox.coupon.subject');
+        $subject = 'Coupon';
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
@@ -3625,7 +3625,7 @@ class MobileCIAPIController extends ControllerAPI
 
                 $name = $user->getFullName();
                 $name = trim($name) ? trim($name) : $user->user_email;
-                $subject = Lang::get('mobileci.inbox.coupon.subject');
+                $subject = 'Coupon';
 
                 $inbox = new Inbox();
                 $inbox->user_id = $user->user_id;

@@ -42,7 +42,7 @@ return array(
     // General contact data
     'contact_information' => array(
         'customer_service'  => array(
-            'email' => 'cs@myorbit.com',
+            'email' => 'support@myorbit.com',
             'name'  => 'Orbit Customer Service',
             'phone' => '+62123456789',
             'fax'   => '+62123456789',
