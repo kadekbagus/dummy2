@@ -6,7 +6,7 @@
 	        	<span> . <a target="_blank" href="{{ Config::get('orbit.contact_information.privacy_policy_url') }}">Privacy Policy</a></span>
 	        @endif
 	        @if(Config::get('orbit.contact_information.terms_of_service_url'))
-	        	<span> . <a target="_blank" href="{{ Config::get('orbit.contact_information.terms_of_service_url') }}">Term of Service</a></span>
+	        	<span> . <a target="_blank" href="{{ Config::get('orbit.contact_information.terms_of_service_url') }}">Terms and Conditions</a></span>
 	        @endif
 	    </div>
     </div>

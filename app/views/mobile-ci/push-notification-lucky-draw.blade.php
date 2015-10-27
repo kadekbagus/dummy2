@@ -3,15 +3,15 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.lucky_draw.close') }}</span></button>
-                <h4 class="modal-title" id="orbit-push-modal-title">{{{ $subject }}}</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">|#|close|#|</span></button>
+                <h4 class="modal-title" id="orbit-push-modal-title">|#|lucky_draw_subject|#|</h4>
             </div>
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced">
-                        <h4 style="color:#d9534f">{{ Lang::get('mobileci.lucky_draw.hello') }} {{ $fullName }},</h4>
-                        <p>{{ Lang::get('mobileci.lucky_draw.congratulation') }} {{ $numberOfLuckyDraw }} {{ Lang::get('mobileci.lucky_draw.no_lucky_draw') }} <strong>{{ $luckyDrawCampaign }}</strong>.
-                        {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_1') }} {{ $dateIssued }}.
+                        <h4 style="color:#d9534f">|#|hello|#| {{ $fullName }},</h4>
+                        <p>|#|ld_congratulations_you_get|#| {{ $numberOfLuckyDraw }} |#|no_lucky_draw|#| <strong>{{ $luckyDrawCampaign }}</strong>.
+                        |#|lucky_draw_info_1|#| {{ $dateIssued }}.
                         </p>
 
                         <ol>
@@ -22,17 +22,17 @@
 
                         @if ($numberOfLuckyDraw > $maxShown)
                         <p>
-                        {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_2') }} {{ $maxShown }} {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_3') }}.
+                        |#|lucky_draw_info_2|#| {{ $maxShown }} |#|lucky_draw_info_3|#|.
                         </p>
                         @endif
 
                         <p>
-                        {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_4') }} <strong>{{ $totalLuckyDrawNumber }}</strong> {{ Lang::get('mobileci.lucky_draw.lucky_draw_info_5') }}
-                        {{ Lang::get('mobileci.lucky_draw.lucky_draw') }}.
+                        |#|lucky_draw_info_4|#| <strong>{{ $totalLuckyDrawNumber }}</strong> |#|lucky_draw_info_5|#|
+                        |#|lucky_draw|#|
                         </p>
 
                         <p style="margin-top:1em">
-                            {{ Lang::get('mobileci.lucky_draw.goodluck') }}!</br>
+                            |#|goodluck|#|!</br>
                             <strong>{{ $mallName }}</strong>
                         </p>
                     </div>
@@ -41,7 +41,7 @@
             <div class="modal-footer">
                 <div class="row">
                     <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.lucky_draw.close') }}</button>
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">|#|close|#|</button>
                     </div>
                 </div>
             </div>

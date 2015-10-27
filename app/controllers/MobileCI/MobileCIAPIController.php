@@ -171,7 +171,6 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-
             if (empty(\Cookie::get('event'))) {
                 $event_store = array();
             } else {
@@ -248,17 +247,19 @@ class MobileCIAPIController extends ControllerAPI
                             // back to default image if in the content multilanguage not have image
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
-                            $contentDefaultLanguage = \EventTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                                ->where('event_id', $events->event_id)->first();
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \EventTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('event_id', $events->event_id)->first();
 
-                            // get default image
-                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->event_translation_id)
-                                ->media_orig()
-                                ->first();
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->event_translation_id)
+                                    ->media_orig()
+                                    ->first();
 
-                            if (isset($mediaDefaultLanguage->path)) {
-                                $events->image = $mediaDefaultLanguage->path;
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $events->image = $mediaDefaultLanguage->path;
+                                }
                             }
                         }
                     }
@@ -1815,17 +1816,19 @@ class MobileCIAPIController extends ControllerAPI
                             // back to default image if in the content multilanguage not have image
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
-                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                                ->where('news_id', $news->news_id)->first();
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('news_id', $news->news_id)->first();
 
-                            // get default image
-                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                                ->media_orig()
-                                ->first();
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                    ->media_orig()
+                                    ->first();
 
-                            if (isset($mediaDefaultLanguage->path)) {
-                                $news->image = $mediaDefaultLanguage->path;
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $news->image = $mediaDefaultLanguage->path;
+                                }
                             }
                         }
                     }
@@ -1858,17 +1861,19 @@ class MobileCIAPIController extends ControllerAPI
                             // back to default image if in the content multilanguage not have image
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
-                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                                ->where('news_id', $newsPromotions->news_id)->first();
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('news_id', $newsPromotions->news_id)->first();
 
-                            // get default image
-                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                                ->media_orig()
-                                ->first();
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                    ->media_orig()
+                                    ->first();
 
-                            if (isset($mediaDefaultLanguage->path)) {
-                                $newsPromotions->image = $mediaDefaultLanguage->path;
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $newsPromotions->image = $mediaDefaultLanguage->path;
+                                }
                             }
                         }
                     }
@@ -2231,17 +2236,19 @@ class MobileCIAPIController extends ControllerAPI
                             // back to default image if in the content multilanguage not have image
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
-                            $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                                ->where('promotion_id', $coupon->promotion_id)->first();
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('promotion_id', $coupon->promotion_id)->first();
 
-                            // get default image
-                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
-                                ->media_orig()
-                                ->first();
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                    ->media_orig()
+                                    ->first();
 
-                            if (isset($mediaDefaultLanguage->path)) {
-                                $coupon->promo_image = $mediaDefaultLanguage->path;
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $coupon->promo_image = $mediaDefaultLanguage->path;
+                                }
                             }
                         }
                     }
@@ -2361,17 +2368,19 @@ class MobileCIAPIController extends ControllerAPI
                         // back to default image if in the content multilanguage not have image
                         // check the system language
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
-                        $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                            ->where('promotion_id', $coupons->promotion_id)->first();
+                        if ($defaultLanguage !== NULL) {
+                            $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('promotion_id', $coupons->promotion_id)->first();
 
-                        // get default image
-                        $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
-                            ->media_orig()
-                            ->first();
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                ->media_orig()
+                                ->first();
 
-                        if (isset($mediaDefaultLanguage->path)) {
-                            $coupons->image = $mediaDefaultLanguage->path;
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $coupons->image = $mediaDefaultLanguage->path;
+                            }
                         }
                     }
 
@@ -2550,17 +2559,19 @@ class MobileCIAPIController extends ControllerAPI
                             // back to default image if in the content multilanguage not have image
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
-                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                                ->where('news_id', $val->news_id)->first();
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('news_id', $val->news_id)->first();
 
-                            // get default image
-                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                                ->media_orig()
-                                ->first();
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                    ->media_orig()
+                                    ->first();
 
-                            if (isset($mediaDefaultLanguage->path)) {
-                                $val->image = $mediaDefaultLanguage->path;
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $val->image = $mediaDefaultLanguage->path;
+                                }
                             }
                         }
                     }
@@ -2673,17 +2684,19 @@ class MobileCIAPIController extends ControllerAPI
                         // back to default image if in the content multilanguage not have image
                         // check the system language
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
-                        $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                            ->where('news_id', $coupons->news_id)->first();
+                        if ($defaultLanguage !== NULL) {
+                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('news_id', $coupons->news_id)->first();
 
-                        // get default image
-                        $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                            ->media_orig()
-                            ->first();
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
 
-                        if (isset($mediaDefaultLanguage->path)) {
-                            $coupons->image = $mediaDefaultLanguage->path;
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $coupons->image = $mediaDefaultLanguage->path;
+                            }
                         }
                     }
                 }
@@ -2808,17 +2821,19 @@ class MobileCIAPIController extends ControllerAPI
                             // back to default image if in the content multilanguage not have image
                             // check the system language
                             $defaultLanguage = $this->getDefaultLanguage($retailer);
-                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                                ->where('news_id', $val->news_id)->first();
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('news_id', $val->news_id)->first();
 
-                            // get default image
-                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                                ->media_orig()
-                                ->first();
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                    ->media_orig()
+                                    ->first();
 
-                            if (isset($mediaDefaultLanguage->path)) {
-                                $val->image = $mediaDefaultLanguage->path;
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $val->image = $mediaDefaultLanguage->path;
+                                }
                             }
                         }
                     }
@@ -2932,17 +2947,19 @@ class MobileCIAPIController extends ControllerAPI
                         // back to default image if in the content multilanguage not have image
                         // check the system language
                         $defaultLanguage = $this->getDefaultLanguage($retailer);
-                        $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
-                            ->where('news_id', $news->news_id)->first();
+                        if ($defaultLanguage !== NULL) {
+                            $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('news_id', $news->news_id)->first();
 
-                        // get default image
-                        $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
-                            ->media_orig()
-                            ->first();
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                ->media_orig()
+                                ->first();
 
-                        if (isset($mediaDefaultLanguage->path)) {
-                            $news->image = $mediaDefaultLanguage->path;
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $news->image = $mediaDefaultLanguage->path;
+                            }
                         }
                     }
                 }
@@ -3244,7 +3261,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $name = $user->getFullName();
         $name = $name ? $name : $user->email;
-        $subject = Lang::get('mobileci.inbox.coupon.subject');
+        $subject = 'Coupon';
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
@@ -3304,7 +3321,7 @@ class MobileCIAPIController extends ControllerAPI
      */
     private function getAlternateMerchantLanguage($user, $mall)
     {
-        $priority = ['cookie', 'mall_setting', 'browser'];
+        $priority = ['cookie', 'browser', 'mall_setting'];
         $getters = [
             'cookie' => function ($user) {
                 // cannot use Cookie:: or Request::cookie, those insist on signed cookies.
@@ -3313,6 +3330,13 @@ class MobileCIAPIController extends ControllerAPI
                 }
                 return $_COOKIE['orbit_preferred_language'];
             },
+            'browser' => function ($user) {
+                $lang = \Request::server('HTTP_ACCEPT_LANGUAGE', null);
+                if ($lang === null) {
+                    return null;
+                }
+                return substr($lang, 0, 2);
+            },
             'mall_setting' => function ($q) use ($mall) {
                 $mobile_default_language = $mall->mobile_default_language;
                 // if user has no preference use default
@@ -3320,13 +3344,6 @@ class MobileCIAPIController extends ControllerAPI
                     return null;
                 }
                 return $mobile_default_language;
-            },
-            'browser' => function ($user) {
-                $lang = \Request::server('HTTP_ACCEPT_LANGUAGE', null);
-                if ($lang === null) {
-                    return null;
-                }
-                return substr($lang, 0, 2);
             }
         ];
 
@@ -3625,7 +3642,7 @@ class MobileCIAPIController extends ControllerAPI
 
                 $name = $user->getFullName();
                 $name = trim($name) ? trim($name) : $user->user_email;
-                $subject = Lang::get('mobileci.inbox.coupon.subject');
+                $subject = 'Coupon';
 
                 $inbox = new Inbox();
                 $inbox->user_id = $user->user_id;
