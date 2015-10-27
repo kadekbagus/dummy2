@@ -81,7 +81,7 @@
                         var new_content = notif.content;
 
                         // replace text placeholder for coupon popup
-                        new_content = new_content.replace('|#|hello|#|', langs.coupon.hello);
+                        new_content = new_content.replace('|#|hello|#|', langs.coupon.txt_hello);
                         new_content = new_content.replace('|#|coupon_subject|#|', langs.coupon.txt_subject);
                         new_content = new_content.replace('|#|congratulations_you_get|#|', langs.coupon.txt_congrats);
                         new_content = new_content.replace('|#|here_are_your_coupons|#|', langs.coupon.txt_coupons);
