@@ -9,6 +9,8 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Text as OrbitText;
 use User;
 use Role;
+use Mall;
+use Carbon\Carbon as Carbon;
 
 class ConsumerPrinterController extends DataPrinterController
 {
@@ -28,6 +30,21 @@ class ConsumerPrinterController extends DataPrinterController
         $listOfRetailerIds = [];
 
         $details = OrbitInput::get('details');
+        $current_mall = OrbitInput::get('current_mall');
+
+        // get timezone based on current_mall
+        if (!empty($current_mall)) {
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                          ->where('merchants.merchant_id','=', $current_mall)
+                          ->first();
+
+            // if timezone not found
+            if(count($timezone)==0){
+                $timezone = null;
+            } else {
+                $timezone = $timezone->timezone_name; // if timezone found
+            }
+        }
 
         // Builder object
         $users = User::Consumers()
@@ -312,7 +329,7 @@ class ConsumerPrinterController extends DataPrinterController
                 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    $customer_since = $this->printCustomerSince($row);
+                    $customer_since = $this->printCustomerSince($row, $timezone);
                     $gender = $this->printGender($row);
                     $address = $this->printAddress($row);
                     $birthdate = $this->printBirthDate($row);
@@ -324,7 +341,7 @@ class ConsumerPrinterController extends DataPrinterController
                     $avg_monthly_spent = $this->printAverageShopping($row);
 
                     printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\"\n", 
-                        '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $row->created_at, 
+                        '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customer_since, 
                         $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status));
                 }   
                 break;
@@ -443,19 +460,20 @@ class ConsumerPrinterController extends DataPrinterController
      * @param $consumer $consumer
      * @return string
      */
-    public function printCustomerSince($consumer)
+    public function printCustomerSince($consumer, $timezone)
     {
-        if($consumer->created_at==NULL || empty($consumer->created_at) || $consumer->created_at=="0000-00-00 00:00:00"){
+        if ($consumer->created_at==NULL || empty($consumer->created_at) || $consumer->created_at=="0000-00-00 00:00:00") {
             $result = "";
         }
         else {
-            $date = $consumer->created_at;
-            $date = explode(' ',$date);
-            $time = strtotime($date[0]);
-            $newformat = date('d F Y',$time);
-            $result = $newformat;
+            if (!empty($timezone) || $timezone != null) {
+                $date = Carbon::createFromFormat('Y-m-d H:i:s', $consumer->created_at, 'UTC');
+                $date->setTimezone($timezone);
+                $result = $date;
+            } else {
+                $result = $consumer->created_at;
+            }
         }
-
 
         return $result;
     }
