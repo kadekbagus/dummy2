@@ -122,32 +122,50 @@ Route::filter('orbit-settings', function()
         throw new Exception (sprintf('You have to setup timezone for %s.', $retailer->name));
     }
 
-    // Priority : 1. Cookie 2. Mall_setting 3. Browser
+    // Priority : 1. Cookie 2. Browser 3. Mall_setting 4. Fallback to 'en'
 
-    // Cek Cookie orbit_preferred_language
+    // 1. Cek Cookie orbit_preferred_language
     if (array_key_exists('orbit_preferred_language', $_COOKIE)) {
         App::setLocale($_COOKIE['orbit_preferred_language']);
     } else {
-        // Cek merchant setting
-        $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
-        if (! empty($merchantLang)) {
-            App::setLocale($merchantLang);
+        // 2. Cek browser language
+        if (! empty($browserLang) AND in_array($browserLang, Config::get('orbit.languages', ['en']))) {
+            App::setLocale($browserLang);
         } else {
-            // Cek browser language
-            if (! empty($browserLang) AND in_array($browserLang, Config::get('orbit.languages', ['en']))) {
-                App::setLocale($browserLang);
+            // 3. Cek mall / merchant setting
+            $merchantLang = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
+            if (! empty($merchantLang)) {
+                App::setLocale($merchantLang);
             } else {
-                // Fallback to 'en' -- the last effort, most common one
+                // 4. Fallback to 'en'
                 App::setLocale('en');
             }
         }
     }
 
-    // set start_button_label config
-    foreach ($retailer->settings as $setting) {
-        if ($setting->setting_name == 'start_button_label') {
-            if (! empty($setting->setting_value)) {
-                Config::set('shop.start_button_label', $setting->setting_value);
+    $getLocaleLang = App::getLocale();
+
+    // Set start button translation
+    // Get language_id from locale
+    $languageIdMall = \Language::where('name', '=', $getLocaleLang)->first();
+
+    // Get merchant language
+    $alternateLanguage = \MerchantLanguage::excludeDeleted()
+        ->where('merchant_id', '=', $retailer->merchant_id)
+        ->where('language_id', '=', $languageIdMall->language_id)
+        ->first();
+
+    foreach ($retailer->settings as $value) {
+        if ($value->setting_name == 'start_button_label') {
+            // Get start button translation
+            $startButtonTranslation = $value->hasMany('SettingTranslation', 'setting_id', 'setting_id')
+                                ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                                ->whereHas('language', function($has) {
+                                $has->where('merchant_languages.status', 'active');
+                            })->get();
+
+            if (! empty($startButtonTranslation->setting_value)) {
+                Config::set('shop.start_button_label', $startButtonTranslation->setting_value);
             }
         }
     }
@@ -155,7 +173,6 @@ Route::filter('orbit-settings', function()
     if(empty(Config::get('shop.start_button_label'))) {
         Config::set('shop.start_button_label', Lang::get('mobileci.signin.start_button_mall'));
     }
-
 });
 
 /*
