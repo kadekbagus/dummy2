@@ -10,7 +10,7 @@
     </div>
 
     <div id="main" style="width:95%;margin: 0 auto;">
-        <p style="line-height:1.2em;padding-top:1em;padding-bottom:1em;">Hi, <strong style="font-size:18px">{{ $email }}</strong></p>
+        <p style="line-height:1.2em;padding-top:1em;padding-bottom:1em;">Hi, <strong style="font-size:18px">{{ $first_name }}</strong></p>
         <p  style="line-height:1.2em;text-align:justify;padding-bottom:1em;">To complete your <strong style="font-size:18px">registration</strong> and obtain <strong style="font-size:18px">great promotions</strong>
         and <strong style="font-size:18px;">money saving deals</strong>, follow this link below:</p>
 
