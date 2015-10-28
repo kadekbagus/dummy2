@@ -379,7 +379,7 @@ return array(
             'content' => '搜索店铺请收入店铺名字，类型，位置，或描述。'
         ),
         'directory' => array(
-            'title'   => '店铺名单',
+            'title'   => '店铺',
             'content' => '接触店铺单从您的手掌上!'
         ),
         'setting' => array(
