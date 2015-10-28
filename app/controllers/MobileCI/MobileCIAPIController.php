@@ -496,14 +496,8 @@ class MobileCIAPIController extends ControllerAPI
             //get internet_info from setting
             $internet_info_obj = $this->getObjFromArray($retailer->settings, 'internet_info');
 
-            //get start_button_label from setting
-            $start_button_obj = $this->getObjFromArray($mall->settings, 'start_button_label');
-
             if (is_object($internet_info_obj)) {
                 $internet_info = $internet_info_obj->setting_value;
-            }
-            if (is_object($start_button_obj)) {
-                $start_button_label = $start_button_obj->translations[0]->setting_value;
             }
 
             $landing_url = $this->getLandingUrl($mall);
