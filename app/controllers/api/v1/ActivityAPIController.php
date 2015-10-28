@@ -1210,7 +1210,7 @@ class ActivityAPIController extends ControllerAPI
 
                 // Filter by user location id
                 $activities->whereIn('activities.location_id', $locationIds);
-            } else {
+            } elseif ($user->isSuperAdmin()) {
                 // Filter by user location id
                 OrbitInput::get('location_ids', function($locationIds) use ($activities) {
                     $activities->whereIn('activities.location_id', $locationIds);
@@ -2579,12 +2579,19 @@ class ActivityAPIController extends ControllerAPI
                 $malls->whereIn('merchant_id', $locationIds);
             });
             return $malls->lists('merchant_id');
-        } else {
+        } elseif ($user->isMallOwner()) {
             $mall = Mall::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
             if (isset($mall)) {
                 return [$mall->merchant_id];
             } else {
                 return [-1]; // ensure no results
+            }
+        } elseif ($user->isMallAdmin()) {
+            $mall = $user->employee->retailers->first();
+            if (empty($mall)) {
+                return [-1]; // ensure no results
+            } else {
+                return [$mall->merchant_id];
             }
         }
     }

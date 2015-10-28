@@ -39,11 +39,15 @@ class ConsumerPrinterController extends DataPrinterController
                           ->first();
 
             // if timezone not found
-            if(count($timezone)==0){
+            if (count($timezone)==0) {
                 $timezone = null;
-            } else {
+            } 
+            else {
                 $timezone = $timezone->timezone_name; // if timezone found
             }
+        } 
+        else {
+            $timezone = null;    
         }
 
         // Builder object
@@ -317,7 +321,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','','');

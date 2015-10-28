@@ -237,7 +237,7 @@ return array(
         'my_coupon'                        => '我的优惠券',
         'use'                              => '使',
         'next_time'                        => '下一次',
-        'check_coupon'                     => '您能检查您的优惠券在主页 <i class="fa fa-arrow-right"></i> 优惠券',
+        'check_coupon'                     => '您能检查您的优惠券在主页 <i class="fa fa-arrow-right"></i> 我的优惠券',
     ),
 
     'coupon_list' => array(

@@ -260,6 +260,30 @@ trait UserRoleTrait
     }
 
     /**
+     * Mall owner check.
+     *
+     * @return boolean
+     */
+    public function isMallOwner()
+    {
+        $role = 'mall owner';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
+     * Mall admin check.
+     *
+     * @return boolean
+     */
+    public function isMallAdmin()
+    {
+        $role = 'mall admin';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
      * Super admin check.
      *
      * @Todo: Prevent query.
