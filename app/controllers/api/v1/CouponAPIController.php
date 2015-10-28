@@ -100,7 +100,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
@@ -545,7 +545,7 @@ class CouponAPIController extends ControllerAPI
 
 
             $promotion_id = OrbitInput::post('promotion_id');
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('current_mall');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
             $rule_type = OrbitInput::post('rule_type');
@@ -1056,7 +1056,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('current_mall');
             $promotion_id = OrbitInput::post('promotion_id');
             $password = OrbitInput::post('password');
 
@@ -1798,7 +1798,7 @@ class CouponAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = OrbitInput::post('current_mall');;
+            $mall_id = OrbitInput::post('current_mall');
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
@@ -2404,8 +2404,11 @@ class CouponAPIController extends ControllerAPI
 
         // Check coupon name, it should not exists
         Validator::extend('orbit.exists.coupon_name', function ($attribute, $value, $parameters) {
+            $merchant_id = OrbitInput::post('current_mall');
+
             $couponName = Coupon::excludeDeleted()
                         ->where('promotion_name', $value)
+                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($couponName)) {
@@ -2420,9 +2423,12 @@ class CouponAPIController extends ControllerAPI
         // Check coupon name, it should not exists (for update)
         Validator::extend('coupon_name_exists_but_me', function ($attribute, $value, $parameters) {
             $promotion_id = trim(OrbitInput::post('promotion_id'));
+            $merchant_id = OrbitInput::post('current_mall');
+
             $coupon = Coupon::excludeDeleted()
                         ->where('promotion_name', $value)
                         ->where('promotion_id', '!=', $promotion_id)
+                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($coupon)) {

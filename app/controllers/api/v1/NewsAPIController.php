@@ -1560,24 +1560,17 @@ class NewsAPIController extends ControllerAPI
             // this is for fixing OM-578
             // can not make promotion if the name has already been used for news
             $object_type = OrbitInput::post('object_type');
+            $mall_id = OrbitInput::post('current_mall');
 
             if (empty($object_type)) {
                 $object_type = 'news';
             }
 
-            if ($object_type == 'news') {
-                $newsName = News::excludeDeleted()
-                        ->where('news_name', $value)
-                        ->where('object_type', 'news')
-                        ->first();
-            }
-
-            if ($object_type == 'promotion') {
-                $newsName = News::excludeDeleted()
-                        ->where('news_name', $value)
-                        ->where('object_type', 'promotion')
-                        ->first();
-            }
+            $newsName = News::excludeDeleted()
+                    ->where('news_name', $value)
+                    ->where('object_type', $object_type)
+                    ->where('mall_id', $mall_id)
+                    ->first();
 
             if (! empty($newsName)) {
                 return FALSE;
@@ -1592,10 +1585,13 @@ class NewsAPIController extends ControllerAPI
         Validator::extend('news_name_exists_but_me', function ($attribute, $value, $parameters) {
             $news_id = trim(OrbitInput::post('news_id'));
             $object_type = trim(OrbitInput::post('object_type'));
+            $mall_id = OrbitInput::post('current_mall');
+
             $news = News::excludeDeleted()
                         ->where('news_name', $value)
                         ->where('news_id', '!=', $news_id)
-                        ->where('object_type', '!=', $object_type)
+                        ->where('object_type', $object_type)
+                        ->where('mall_id', $mall_id)
                         ->first();
 
             if (! empty($news)) {
