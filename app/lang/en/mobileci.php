@@ -237,7 +237,7 @@ return array(
         'my_coupon'                        => 'My Coupon',
         'use'                              => 'Use',
         'next_time'                        => 'Next time',
-        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> Coupons',
+        'check_coupon'                     => 'You can check your coupons in Home Page <i class="fa fa-arrow-right"></i> My Coupons',
     ),
 
     'coupon_list' => array(
