@@ -392,7 +392,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Analytics', '', '', '', '', '', '', '', '');
@@ -406,8 +406,8 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $gender = $this->printGender($row);
-                    $date = $this->printDateTime($row);
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $row->created_at, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->event_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name));
+                    $date = $this->printDateTime($row, $timezone);
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $date, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->event_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name));
                     $count++;
 
                 }
