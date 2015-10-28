@@ -368,35 +368,35 @@ return array(
     'tour' => array(
         'home' => array(
             'title'   => '主页',
-            'content' => '翻看我们的软件看在商场的事件<br/><br/> <i>点击这个按键直接回去主页从任何页面在Orbit</i>'
+            'content' => '翻看我们的软件看在商场的事件。<br/><br/> <i>点击这个按键直接回去主页从任何页面在Orbit</i>'
         ),
         'back' => array(
             'title'   => '回',
-            'content' => '点击后退按钮返回到您访问的前一页'
+            'content' => '点击后退按钮返回到您访问的前一页。'
         ),
         'search' => array(
             'title'   => '搜索店铺',
-            'content' => '搜索店铺请收入店铺名字，类型，位置，或描述'
+            'content' => '搜索店铺请收入店铺名字，类型，位置，或描述。'
         ),
         'directory' => array(
             'title'   => '店铺名单',
-            'content' => '接触店铺单从您的手掌上'
+            'content' => '接触店铺单从您的手掌上!'
         ),
         'setting' => array(
             'title'   => '设定',
-            'content' => '改语言或退出从Orbit软件'
+            'content' => '改语言或退出从Orbit软件。'
         ),
         'news' => array(
-            'title'   => '消息',
-            'content' => '想知道最新信息？看这里的信息单'
+            'title'   => '信息',
+            'content' => '想知道最新信息？看这里的信息单!'
         ),
         'promotion' => array(
             'title'   => '促销',
-            'content' => '检查我们促销为收伟大省钱的交易'
+            'content' => '检查我们促销为收伟大省钱的交易。'
         ),
         'coupon' => array(
             'title'   => '我的优惠券',
-            'content' => '看您取得购物优惠券单子。使用优惠券'
+            'content' => '看您取得购物优惠券单子。使用优惠券!'
         ),
         'end' => array(
             'title'   => '',
