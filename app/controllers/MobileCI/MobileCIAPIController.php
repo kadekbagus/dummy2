@@ -1788,7 +1788,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('parent_id', $retailer->merchant_id)
                 ->where('merchants.merchant_id', $product_id);
             $tenant->select('merchants.*');
-            $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
+            // $this->maybeJoinWithTranslationsTable($tenant, $alternateLanguage);
             $tenant = $tenant->first();
 
             // News per tenant
