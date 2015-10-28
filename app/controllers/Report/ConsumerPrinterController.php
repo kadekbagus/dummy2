@@ -39,11 +39,15 @@ class ConsumerPrinterController extends DataPrinterController
                           ->first();
 
             // if timezone not found
-            if(count($timezone)==0){
+            if (count($timezone)==0) {
                 $timezone = null;
-            } else {
+            } 
+            else {
                 $timezone = $timezone->timezone_name; // if timezone found
             }
+        } 
+        else {
+            $timezone = null;    
         }
 
         // Builder object
