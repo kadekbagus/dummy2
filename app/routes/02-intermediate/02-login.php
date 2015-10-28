@@ -21,12 +21,13 @@ Route::post('/app/v1/logout/mall', 'IntermediateLoginController@getLogout');
 Route::post('/app/v1/login/mallcs', 'IntermediateLoginController@postLoginMallCustomerService');
 Route::post('/app/v1/logout/mallcs', 'IntermediateLoginController@getLogout');
 
+Route::post('/app/v1/login/customer', 'IntermediateLoginController@postLoginCustomer');
+Route::post('/app/v1/logout/customer', 'IntermediateLoginController@getLogout');
+
 Route::group(['before' => 'orbit-settings'], function() {
-    Route::post('/app/v1/login/customer', 'IntermediateLoginController@postLoginCustomer');
-    Route::post('/app/v1/logout/customer', 'IntermediateLoginController@getLogout');
+    Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
 });
 
-Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
 Route::get('/app/v1/customer/cloud-login', 'IntermediateLoginController@getCloudLogin');
 
 /**
