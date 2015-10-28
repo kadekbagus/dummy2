@@ -322,7 +322,7 @@ return array(
         'close'            => '閉じる',
         'error'            => 'エラー',
         'new_password'     => '新しいパスワード',
-        'fill_password'    => 'パスワード（5-20文字）を入力してください',
+        'fill_password'    => 'パスワード（6-20文字）を入力してください',
         'confirm_password' => 'パスワードを認証する',
     ),
 
