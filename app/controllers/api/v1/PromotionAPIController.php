@@ -83,7 +83,7 @@ class PromotionAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
@@ -434,7 +434,7 @@ class PromotionAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $promotion_id = OrbitInput::post('promotion_id');
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('current_mall');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
             $rule_type = OrbitInput::post('rule_type');
@@ -1695,8 +1695,11 @@ class PromotionAPIController extends ControllerAPI
 
         // Check promotion name, it should not exists
         Validator::extend('orbit.exists.promotion_name', function ($attribute, $value, $parameters) {
+            $merchant_id = OrbitInput::post('current_mall');
+
             $promotionName = Promotion::excludeDeleted()
                         ->where('promotion_name', $value)
+                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($promotionName)) {
@@ -1711,9 +1714,12 @@ class PromotionAPIController extends ControllerAPI
         // Check promotion name, it should not exists (for update)
         Validator::extend('promotion_name_exists_but_me', function ($attribute, $value, $parameters) {
             $promotion_id = trim(OrbitInput::post('promotion_id'));
+            $merchant_id = OrbitInput::post('current_mall');
+
             $promotion = Promotion::excludeDeleted()
                         ->where('promotion_name', $value)
                         ->where('promotion_id', '!=', $promotion_id)
+                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($promotion)) {

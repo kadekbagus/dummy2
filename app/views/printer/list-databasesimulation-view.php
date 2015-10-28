@@ -138,7 +138,7 @@
                 <td><?php echo ($count); ?></td>
                 <td><?php echo ($row->user_email); ?></td>
                 <td><?php echo $me->printGender($row); ?></td>
-                <td><?php echo $me->printDateTime($row); ?></td>
+                <td><?php echo $me->printDateTime($row, $timezone); ?></td>
                 <td><?php echo ($row->activity_name_long); ?></td>
                 <td><?php echo $me->printUtf8($row->retailer_name); ?></td>
                 <td><?php echo $me->printUtf8($row->news_name); ?></td>

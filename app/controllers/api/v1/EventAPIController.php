@@ -76,7 +76,7 @@ class EventAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('current_mall');
             $event_name = OrbitInput::post('event_name');
             $event_type = OrbitInput::post('event_type');
             $status = OrbitInput::post('status');
@@ -700,7 +700,7 @@ class EventAPIController extends ControllerAPI
 
             $event_id = OrbitInput::post('event_id');
             $password = OrbitInput::post('password');
-            $mall_id = OrbitInput::post('current_mall');;
+            $mall_id = OrbitInput::post('current_mall');
 
             $validator = Validator::make(
                 array(
@@ -1609,8 +1609,11 @@ class EventAPIController extends ControllerAPI
 
         // Check event name, it should not exists
         Validator::extend('orbit.exists.event_name', function ($attribute, $value, $parameters) {
+            $merchant_id = OrbitInput::post('current_mall');
+
             $eventName = EventModel::excludeDeleted()
                         ->where('event_name', $value)
+                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($eventName)) {
@@ -1625,9 +1628,12 @@ class EventAPIController extends ControllerAPI
         // Check event name, it should not exists (for update)
         Validator::extend('event_name_exists_but_me', function ($attribute, $value, $parameters) {
             $event_id = trim(OrbitInput::post('event_id'));
+            $merchant_id = OrbitInput::post('current_mall');
+
             $event = EventModel::excludeDeleted()
                         ->where('event_name', $value)
                         ->where('event_id', '!=', $event_id)
+                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($event)) {
