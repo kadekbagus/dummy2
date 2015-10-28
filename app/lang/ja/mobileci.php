@@ -237,7 +237,7 @@ return array(
         'my_coupon'                        => '私のクーポン',
         'use'                              => '使用',
         'next_time'                        => '次回',
-        'check_coupon'                     => 'あなたは、ホームページ>クーポンであなたのクーポンを確認することができます',
+        'check_coupon'                     => 'あなたは、ホームページ>私のクーポンであなたのクーポンを確認することができます',
     ),
 
     'coupon_list' => array(
