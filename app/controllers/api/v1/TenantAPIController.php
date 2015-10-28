@@ -417,7 +417,7 @@ class TenantAPIController extends ControllerAPI
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
                     'id_language_default' => 'required|orbit.empty.language_default',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . ''
+                    'masterbox_number'  => 'orbit_unique_verification_number:' . $parent_id . ',' . '',
                 ),
                 array(
                     //ACL::throwAccessForbidden($message);
@@ -776,7 +776,7 @@ class TenantAPIController extends ControllerAPI
                     'status'            => 'orbit.empty.tenant_status|orbit.exists.tenant_on_inactive_have_linked:' . $retailer_id . '|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . $retailer_id,
+                    'masterbox_number'  => 'orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
                     'category_ids'      => 'array'
                 ),
                 array(
@@ -2136,13 +2136,14 @@ class TenantAPIController extends ControllerAPI
 
         // Check if the merchant verification number is unique
         Validator::extend('orbit_unique_verification_number', function ($attribute, $value, $parameters) {
-            // Current Mall location
-            $tenant_id = $parameters[0];
-
+            // Current Mall
+            $parent_id = $parameters[0];
+            $tenant_id = $parameters[1];
             // Check the tenants which has verification number posted
             $tenant = Tenant::excludeDeleted()
                       ->where('object_type', 'tenant')
                       ->where('masterbox_number', $value)
+                      ->where('parent_id', $parent_id)
                       ->first();
 
             if (! empty($tenant) && $tenant->merchant_id !== $tenant_id) {
