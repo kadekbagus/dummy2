@@ -287,8 +287,6 @@ class Activity extends Eloquent
             $this->location_id = $location->merchant_id;
             $this->location_name = $location->name;
             $this->metadata_location = $location->toJSON();
-        } else {
-            $this->location_id = $location;
         }
 
         return $this;
