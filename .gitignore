@@ -42,3 +42,6 @@ app/storage/orbit-session/**
 
 # Orbit Compiled Routes
 app/routes/orbit-compiled-routes.php
+
+# Trusted proxies config
+app/config/packages/fideloper/proxy/config.php
