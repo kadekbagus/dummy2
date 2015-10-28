@@ -4792,7 +4792,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had Merchant instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.tenant');
+            $merchant = App::make('orbit.empty.mall');
 
             // Delete old merchant image
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
@@ -4816,8 +4816,8 @@ class UploadAPIController extends ControllerAPI
             // Update the `image` field which store the original path of the image
             // This is temporary since right now the business rules actually
             // only allows one image per merchant
-            $merchant->logo = NULL;
-            $merchant->save();
+            // $merchant->logo = NULL;
+            // $merchant->save();
 
             // On table settings, update background_image to null
             $updatedsetting = Setting::active()
