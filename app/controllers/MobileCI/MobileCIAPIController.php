@@ -2521,10 +2521,11 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $promotions = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
-                            ->whereRaw("NOW() between begin_date and end_date")
+                            ->whereRaw("? between begin_date and end_date", [$mallTime])
                             ->orderBy('sticky_order', 'desc')
                             ->orderBy('created_at', 'desc')
                             ->get();
@@ -3539,8 +3540,8 @@ class MobileCIAPIController extends ControllerAPI
                 WHERE pr.rule_type = "auto_issue_on_signup"
                     AND p.merchant_id = :merchantid
                     AND p.is_coupon = "Y" AND p.status = "active"
-                    AND p.begin_date <= "' . $user->created_at . '"
-                    AND p.end_date >= "' . $user->created_at . '"
+                    AND p.begin_date <= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
+                    AND p.end_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
                 HAVING
                     (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
                     OR
@@ -3560,8 +3561,8 @@ class MobileCIAPIController extends ControllerAPI
                     AND p.merchant_id = :merchantid
                     AND ic.user_id = :userid
                     AND p.is_coupon = "Y" AND p.status = "active"
-                    AND p.begin_date <= "' . $user->created_at . '"
-                    AND p.end_date >= "' . $user->created_at . '"
+                    AND p.begin_date <= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
+                    AND p.end_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
                     '
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
