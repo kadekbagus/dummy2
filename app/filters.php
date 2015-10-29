@@ -133,6 +133,20 @@ Route::filter('orbit-settings', function()
 
     $getLocaleLang = App::getLocale();
 
+    // get language label for default mall lang
+    App::singleton('default_lang', function() {
+        $default_lang = 'English';
+
+        $lg = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
+        $lang_str = Language::where('name', $lg)->first()->name_long;
+        if(! empty($lang_str)) {
+            $default_lang = $lang_str;
+        }
+        return $default_lang;
+    });
+
+    View::share('default_lang', app('default_lang'));
+
     // Set start button translation
     // Get language_id from locale
     $languageIdMall = \Language::where('name', '=', $getLocaleLang)->first();
