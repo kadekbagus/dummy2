@@ -322,7 +322,7 @@ return array(
         'close'            => 'Close',
         'error'            => 'Error',
         'new_password'     => 'New Password',
-        'fill_password'    => 'Please Fill Password (5-20 character)',
+        'fill_password'    => 'Please Fill Password (6-20 character)',
         'confirm_password' => 'Confirm Password',
     ),
 

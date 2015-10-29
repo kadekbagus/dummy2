@@ -16,7 +16,8 @@
         "laraeval/laraeval": "dev-master",
         "barryvdh/laravel-debugbar": "1.7.7",
         "pda/pheanstalk": "~2.1.1",
-        "svyatov/curlwrapper": "~1.3"
+        "svyatov/curlwrapper": "~1.3",
+        "fideloper/proxy": "2.1.1"
     },
     "autoload": {
                 "psr-0": {

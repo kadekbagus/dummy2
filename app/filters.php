@@ -133,6 +133,20 @@ Route::filter('orbit-settings', function()
 
     $getLocaleLang = App::getLocale();
 
+    // get language label for default mall lang
+    App::singleton('default_lang', function() {
+        $default_lang = 'en';
+
+        $lg = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
+        $lang_str = Language::where('name', $lg)->first()->name;
+        if(! empty($lang_str)) {
+            $default_lang = $lang_str;
+        }
+        return $default_lang;
+    });
+
+    View::share('default_lang', app('default_lang'));
+
     // Set start button translation
     // Get language_id from locale
     $languageIdMall = \Language::where('name', '=', $getLocaleLang)->first();
@@ -153,8 +167,10 @@ Route::filter('orbit-settings', function()
                                     $has->where('merchant_languages.status', 'active');
                                 })->get();
 
-                if (! empty($startButtonTranslation->setting_value)) {
-                    Config::set('shop.start_button_label', $startButtonTranslation->setting_value);
+                if (! empty($startButtonTranslation)) {
+                    if(! empty($startButtonTranslation[0]->setting_value)) {
+                        Config::set('shop.start_button_label', $startButtonTranslation[0]->setting_value);
+                    }
                 }
             }
         }
