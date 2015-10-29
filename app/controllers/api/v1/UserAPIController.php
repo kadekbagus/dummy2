@@ -1408,7 +1408,7 @@ class UserAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $details = OrbitInput::get('details');
-            $merchantIds = OrbitInput::get('merchant_ids');
+            $merchantIds = OrbitInput::get('merchant_id');
 
             $validator = Validator::make(
                 array(
@@ -1506,7 +1506,7 @@ class UserAPIController extends ControllerAPI
                   ->groupBy('users.user_id');
 
             if (empty($listOfMallIds)) { // invalid mall id
-                $users->whereRaw('1 and 0');
+                $users->whereRaw('0');
             } elseif ($listOfMallIds[0] === 1) { // if super admin
                 // show all users
             } else { // valid mall id

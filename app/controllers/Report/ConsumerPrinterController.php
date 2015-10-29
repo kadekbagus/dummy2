@@ -41,18 +41,29 @@ class ConsumerPrinterController extends DataPrinterController
             // if timezone not found
             if (count($timezone)==0) {
                 $timezone = null;
-            } 
+            }
             else {
                 $timezone = $timezone->timezone_name; // if timezone found
             }
-        } 
+        }
         else {
-            $timezone = null;    
+            $timezone = null;
+        }
+
+        // get user mall_ids
+        $listOfMallIds = $user->getUserMallIds($current_mall);
+
+        if (empty($listOfMallIds)) { // invalid mall id
+            $filterMallIds = 'and 0';
+        } elseif ($listOfMallIds[0] === 1) { // if super admin
+            $filterMallIds = '';
+        } else { // valid mall id
+            $filterMallIds = ' and p.merchant_id in ("' . join('","', $listOfMallIds) . '") ';
         }
 
         // Builder object
         $users = User::Consumers()
-                    ->select('users.*',   
+                    ->select('users.*',
                         'merchants.name as merchant_name',
                         'user_details.city as city',
                         'user_details.birthdate as birthdate',
@@ -72,11 +83,13 @@ class ConsumerPrinterController extends DataPrinterController
                         'user_details.preferred_language as preferred_language',
                         DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                         DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
-                                    where status='active' and cp.user_id={$prefix}users.user_id and
+                                    inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
+                                    where cp.status='active' and cp.user_id={$prefix}users.user_id and
                                     current_date() <= date(cp.expired_date)) as total_usable_coupon,
                                     (select count(cp2.user_id) from {$prefix}issued_coupons cp2
-                                    where status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
-                         
+                                    inner join {$prefix}promotions p on cp2.promotion_id = p.promotion_id {$filterMallIds}
+                                    where cp2.status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
+
                     ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                     ->leftJoin(
                                     // Table
@@ -94,27 +107,19 @@ class ConsumerPrinterController extends DataPrinterController
                     ->excludeDeleted('users')
                     ->groupBy('users.user_id');
 
-        // Filter by merchant ids
-        OrbitInput::get('merchant_id', function($merchantIds) use ($users, $listOfMerchantIds) {
-            // $users->merchantIds($merchantIds);
-            $listOfMerchantIds = (array)$merchantIds;
-            $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
-            $users->whereIn('user_acquisitions.acquirer_id', $listOfMerchantIds);
-        });
+        // join to activities for view user login any mall in ci
+        $users->join('activities', 'activities.user_id', '=', 'users.user_id')
+              ->where('activities.activity_name', 'registration_ok')
+              ->where('activities.activity_type', 'registration')
+              ->where('activities.role', 'Consumer')
+              ->groupBy('users.user_id');
 
-        // @To do: Replace this stupid hacks
-        if (! $user->isSuperAdmin()) {
-            $listOfMerchantIds = $user->getMyMerchantIds();
-
-            if (empty($listOfMerchantIds)) {
-                $listOfMerchantIds = [-1];
-            }
-
-            //$users->merchantIds($listOfMerchantIds);
-        } else {
-            // if (! empty($listOfMerchantIds)) {
-            //     $users->merchantIds($listOfMerchantIds);
-            // }
+        if (empty($listOfMallIds)) { // invalid mall id
+            $users->whereRaw('0');
+        } elseif ($listOfMallIds[0] === 1) { // if super admin
+            // show all users
+        } else { // valid mall id
+            $users->whereIn('activities.location_id', $listOfMallIds);
         }
 
         // Filter by retailer (shop) ids
@@ -330,7 +335,7 @@ class ConsumerPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'Orbit Join Date', 'Issued Coupon', 'Redeemed Coupon', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                
+
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $customer_since = $this->printCustomerSince($row, $timezone, 'no');
@@ -344,10 +349,10 @@ class ConsumerPrinterController extends DataPrinterController
                     $avg_annual_income = $this->printAverageAnnualIncome($row);
                     $avg_monthly_spent = $this->printAverageShopping($row);
 
-                    printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\"\n", 
-                        '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customer_since, 
+                    printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\"\n",
+                        '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customer_since,
                         $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status));
-                }   
+                }
                 break;
 
             case 'print':
@@ -538,7 +543,7 @@ class ConsumerPrinterController extends DataPrinterController
         }
 
         return $result;
-    }   
+    }
 
 
     /**
@@ -551,7 +556,7 @@ class ConsumerPrinterController extends DataPrinterController
     {
         $date = $consumer->last_visit_date;
         if($consumer->last_visit_date==NULL || empty($consumer->last_visit_date)){
-            $result = ""; 
+            $result = "";
         }else {
             $date = explode(' ',$date);
             $time = strtotime($date[0]);
@@ -560,7 +565,7 @@ class ConsumerPrinterController extends DataPrinterController
         }
 
         return $result;
-    } 
+    }
 
     /**
      * Print Last Spent Amount friendly name.
@@ -602,7 +607,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'v':
                 $result = 'Voluntary';
                 break;
-            
+
             case 'u':
                 $result = 'Unemployed';
                 break;
@@ -644,7 +649,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'cm':
                 $result = 'Computer and Mathematical';
                 break;
-            
+
             case 'ae':
                 $result = 'Architecture and Engineering';
                 break;
@@ -668,7 +673,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'ad':
                 $result = 'Arts, Design, Entertainment, Sports, and Media';
                 break;
-            
+
             case 'hp':
                 $result = 'Healthcare Practitioners and Technical';
                 break;
@@ -692,7 +697,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'pc':
                 $result = 'Personal Care and Services';
                 break;
-            
+
             case 'sr':
                 $result = 'Sales and Related';
                 break;
@@ -750,7 +755,7 @@ class ConsumerPrinterController extends DataPrinterController
             case ($avg_income > 50000000 && $avg_income <= 100000000):
                 $result = '50.000.000 - 100.000.000';
                 break;
-            
+
             case ($avg_income > 100000000 && $avg_income <= 200000000):
                 $result = '100.000.000 - 200.000.000';
                 break;
@@ -788,7 +793,7 @@ class ConsumerPrinterController extends DataPrinterController
             case ($avg_monthly_spent > 500000 && $avg_monthly_spent <= 1000000):
                 $result = '500.000 - 1.000.000';
                 break;
-            
+
             case ($avg_monthly_spent > 1000000 && $avg_monthly_spent <= 2000000):
                 $result = '1.000.000 - 2.000.000';
                 break;
