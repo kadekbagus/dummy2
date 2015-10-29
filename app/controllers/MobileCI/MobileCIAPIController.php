@@ -406,6 +406,7 @@ class MobileCIAPIController extends ControllerAPI
                 'widget_singles' => $widget_singles,
                 'languages' => $languages,
                 'active_user' => ($user->status === 'active'),
+                'user_email' => $user->user_email
             );
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
         } catch (Exception $e) {
@@ -1720,6 +1721,7 @@ class MobileCIAPIController extends ControllerAPI
                 'categories' => $categories,
                 'active_user' => ($user->status === 'active'),
                 'floorList' => $floorList,
+                'user_email' => $user->user_email,
                 'languages' => $languages));
 
         } catch (Exception $e) {
@@ -2603,6 +2605,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
+                'user_email' => $user->user_email
             );
             return View::make('mobile-ci.mall-promotion-list', $view_data);
 
@@ -2865,6 +2868,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
+                'user_email' => $user->user_email
             );
             return View::make('mobile-ci.mall-news-list', $view_data);
 
