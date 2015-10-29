@@ -512,6 +512,10 @@ return array(
             'super admin',
         ),
 
+        // list of allowed ip that can access mobile ci
+        // to allow all ip address simply put string '*'
+        'allowed_ips' =>  '*',
+
         'csrf' => array(
             // Use CSRF protection?
             'protect'   => TRUE,
