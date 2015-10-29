@@ -1731,9 +1731,15 @@ class TenantAPIController extends ControllerAPI
                     $sortBy = $sortByMapping[$_sortBy];
                 }
             });
+            
+            // this parameter is intended for tenant listing for tenant dropdown list so it will
+            // ignore the sort by status that will broke alphabetical order.
+            $true_sort = OrbitInput::get('true_sort');
 
             if ($sortBy !== 'merchants.status') {
-                $tenants->orderBy('merchants.status', 'asc');
+                if(empty($true_sort)) {
+                    $tenants->orderBy('merchants.status', 'asc');
+                }
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
