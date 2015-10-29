@@ -1500,21 +1500,18 @@ class UserAPIController extends ControllerAPI
 
             // join to activities for view user login any mall in ci
             $users->join('activities', 'activities.user_id', '=', 'users.user_id')
-                  ->where('activities.activity_name', 'login_ok')
-                  ->where('activities.activity_name_long', 'Sign In')
-                  ->where('activities.activity_type', 'login')
+                  ->where('activities.activity_name', 'registration_ok')
+                  ->where('activities.activity_type', 'registration')
                   ->where('activities.role', 'Consumer')
-                  ->where('activities.group', 'mobile-ci')
-                  ->groupBy('activities.user_email')
-                  ->groupBy('activities.location_id');
-            OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                $users->whereIn('activities.location_id', $merchantIds);
-            });
+                  ->groupBy('users.user_id');
 
-            // Filter by merchant ids
-            OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                // $listOfMerchantIds = (array)$merchantIds;
-            });
+            if (empty($listOfMallIds)) { // invalid mall id
+                $users->whereRaw('1 and 0');
+            } elseif ($listOfMallIds[0] === 1) { // if super admin
+                // show all users
+            } else { // valid mall id
+                $users->whereIn('activities.location_id', $listOfMallIds);
+            }
 
             // Filter by retailer (shop) ids
             OrbitInput::get('retailer_id', function($retailerIds) use ($users) {

@@ -9,6 +9,8 @@
 | application. Here you may also register your custom route filters.
 |
 */
+use Net\Security\RequestAccess;
+
 App::after(function($request, $response)
 {
     //
@@ -99,6 +101,12 @@ Route::filter('orbit-settings', function()
 {
     if (! App::make('orbitSetting')->getSetting('current_retailer')) {
         throw new Exception ('You have to setup current retailer first on Admin Portal.');
+    }
+
+    // checking ip address of the client
+    $ip_address = Request::getClientIp();
+    if (RequestAccess::create()->checkIpAddress($ip_address) === false) {
+        throw new Exception (sprintf('You have no access'));
     }
 
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
