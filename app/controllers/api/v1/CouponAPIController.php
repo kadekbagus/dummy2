@@ -1839,6 +1839,7 @@ class CouponAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $mall = App::make('orbit.empty.merchant');
             $issuedcoupon = App::make('orbit.empty.issuedcoupon');
 
             // The coupon information
@@ -1870,7 +1871,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Redeem Coupon OK')
                     ->setObject($issuedcoupon)
                     ->setNotes($activityNotes)
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseOK();
 

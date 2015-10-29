@@ -322,7 +322,7 @@ return array(
         'close'            => '关闭',
         'error'            => '失误',
         'new_password'     => 'zh:New Password',
-        'fill_password'    => 'zh:Please Fill Password (5-20 character)',
+        'fill_password'    => 'zh:Please Fill Password (6-20 character)',
         'confirm_password' => 'zh:Confirm Password',
     ),
 

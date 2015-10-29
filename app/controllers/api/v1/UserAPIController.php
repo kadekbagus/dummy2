@@ -92,7 +92,7 @@ class UserAPIController extends ControllerAPI
                     array(
                         'current_mall'  => 'required|orbit.empty.mall',
                         'email'         => 'required|email|orbit.email.exists:' . $mallId,
-                        'password'      => 'required|min:5|confirmed',
+                        'password'      => 'required|min:6|confirmed',
                         'role_id'       => 'required|orbit.empty.role',
                     )
                 );
@@ -1484,12 +1484,19 @@ class UserAPIController extends ControllerAPI
                 $users->select('users.*');
             }
 
-            // join to user_acquisitions if the request come from mall portal
+            // join to activities for view user login any mall in ci
             $from_cs = OrbitInput::get('from_cs');
-            if(empty($from_cs)) {
-                $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+            if(!empty($from_cs)) {
+                $users->join('activities', 'activities.user_id', '=', 'users.user_id')
+                      ->where('activities.activity_name', 'login_ok')
+                      ->where('activities.activity_name_long', 'Sign In')
+                      ->where('activities.activity_type', 'login')
+                      ->where('activities.role', 'Consumer')
+                      ->where('activities.group', 'mobile-ci')
+                      ->groupBy('activities.user_email')
+                      ->groupBy('activities.location_id');
                 OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                    $users->whereIn('user_acquisitions.acquirer_id', $merchantIds);
+                    $users->whereIn('activities.location_id', $merchantIds);
                 });
             }
 
@@ -1877,8 +1884,8 @@ class UserAPIController extends ControllerAPI
                 ),
                 array(
                     'user_id'                   => 'required|orbit.empty.user',
-                    'old_password'              => 'required|min:5|valid_user_password:'.$user_id,
-                    'new_password'              => 'required|min:5|confirmed',
+                    'old_password'              => 'required|min:6|valid_user_password:'.$user_id,
+                    'new_password'              => 'required|min:6|confirmed',
                 ),
                 array(
                     'valid_user_password'       => $message,

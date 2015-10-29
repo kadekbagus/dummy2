@@ -153,8 +153,10 @@ Route::filter('orbit-settings', function()
                                     $has->where('merchant_languages.status', 'active');
                                 })->get();
 
-                if (! empty($startButtonTranslation->setting_value)) {
-                    Config::set('shop.start_button_label', $startButtonTranslation->setting_value);
+                if (! empty($startButtonTranslation)) {
+                    if(! empty($startButtonTranslation[0]->setting_value)) {
+                        Config::set('shop.start_button_label', $startButtonTranslation[0]->setting_value);
+                    }
                 }
             }
         }
