@@ -275,10 +275,11 @@ class IntermediateLoginController extends IntermediateBaseController
 
         $user = NULL;
         /** @var PDO $pdo */
-        $pdo = DB::connection()->beginTransaction();
+        $pdo = DB::connection()->getPdo();
         /** @var LoginAPIController $login */
         $login = LoginAPIController::create('raw');
         $login->setUseTransaction(false);
+        $pdo->beginTransaction();
         try {
             // try getting user again, if found do not insert, just use that.
             $user = User::with('apikey', 'userdetail', 'role')
@@ -296,10 +297,10 @@ class IntermediateLoginController extends IntermediateBaseController
                 list($user, $userdetail, $apikey) = $login->createCustomerUser($email, $user_id, $user_detail_id, $apikey_id);
             }
 
-            DB::connection()->commit();
+            $pdo->commit();
             return [true, $user->user_id, $email];
         } catch (Exception $e) {
-            DB::connection()->rollBack();
+            $pdo->rollBack();
             throw $e; // TODO display error?
         }
     }
