@@ -109,8 +109,10 @@ class ConsumerPrinterController extends DataPrinterController
 
         // join to activities for view user login any mall in ci
         $users->join('activities', 'activities.user_id', '=', 'users.user_id')
-              ->where('activities.activity_name', 'registration_ok')
-              ->where('activities.activity_type', 'registration')
+              ->where(function($q) {
+                  $q->where('activities.activity_name', 'registration_ok')
+                    ->orWhere('activities.activity_name', 'login_ok');
+              })
               ->where('activities.role', 'Consumer')
               ->groupBy('users.user_id');
 
