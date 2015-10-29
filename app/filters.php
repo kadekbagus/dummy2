@@ -143,10 +143,10 @@ Route::filter('orbit-settings', function()
 
     // get language label for default mall lang
     App::singleton('default_lang', function() {
-        $default_lang = 'English';
+        $default_lang = 'en';
 
         $lg = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
-        $lang_str = Language::where('name', $lg)->first()->name_long;
+        $lang_str = Language::where('name', $lg)->first()->name;
         if(! empty($lang_str)) {
             $default_lang = $lang_str;
         }

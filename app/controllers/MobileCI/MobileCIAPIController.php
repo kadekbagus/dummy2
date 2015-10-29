@@ -2198,7 +2198,7 @@ class MobileCIAPIController extends ControllerAPI
             $coupons = DB::select(
                 DB::raw(
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y"
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                 WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
                     AND p.merchant_id = :merchantid
