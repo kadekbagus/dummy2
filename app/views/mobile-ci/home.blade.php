@@ -246,7 +246,7 @@
     </div>
     <div class="row">
         <div class="col-xs-12 text-center merchant-logo">
-            <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" />
+            <img class="img-responsive" src="{{ asset($retailer->logo) }}" />
         </div>
     </div>
 </div>
@@ -497,7 +497,7 @@
                 <div class="row">
                     <div class="col-xs-12 text-center">
                         <p style="font-size:15px;">
-                            {{ Lang::get('mobileci.modals.message_user_activation') }}
+                            {{{ sprintf(Lang::get('mobileci.modals.message_user_activation'), $user_email) }}}
                         </p>
                     </div>
                 </div>

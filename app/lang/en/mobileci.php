@@ -112,7 +112,7 @@ return array(
         'do_not_display'         => 'Do not display this message again',
         'and'                    => 'AND',
 
-        'message_user_activation' => 'Please activate your account',
+        'message_user_activation' => 'An email has been sent to &quot;%s&quot;. Please follow the instructions to activate your account. If for some reason you don\'t see an e-mail from us in a couple of hours, please check your Spam or Junk folder',
     ),
 
     //tenant catalogue
