@@ -178,7 +178,7 @@ class User extends Eloquent implements UserInterface
             } else {
                 return [$mall->merchant_id];
             }
-        } elseif ($this->isMallAdmin()) {
+        } elseif ($this->isMallAdmin() || $this->isMallCS()) {
             $mall = $this->employee->retailers->first();
             if (empty($mall)) {
                 return [];

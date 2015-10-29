@@ -296,6 +296,18 @@ trait UserRoleTrait
     }
 
     /**
+     * Mall customer service check.
+     *
+     * @return boolean
+     */
+    public function isMallCS()
+    {
+        $role = 'mall customer service';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
      * Super admin check.
      *
      * @Todo: Prevent query.
