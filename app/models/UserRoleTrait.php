@@ -260,6 +260,18 @@ trait UserRoleTrait
     }
 
     /**
+     * Mall group check.
+     *
+     * @return boolean
+     */
+    public function isMallGroup()
+    {
+        $role = 'mall group';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
      * Mall owner check.
      *
      * @return boolean
