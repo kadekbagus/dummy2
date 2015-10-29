@@ -1144,7 +1144,7 @@ class LoginAPIController extends ControllerAPI
 
         // Send email process to the queue
         \Queue::push('Orbit\\Queue\\NewPasswordMail', [
-            'user_id' => $user->user_id
+            'user_id' => $new_user->user_id
         ]);
         
         return [$new_user, $user_detail, $apikey];
