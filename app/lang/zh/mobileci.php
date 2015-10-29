@@ -71,6 +71,7 @@ return array(
         'reset_cart_title'      => '复位车',
         'membership_title'      => '会员信息',
         'language_title'        => '选语言',
+        'activate_account'      => 'アカウントを有効に',
 
         'message_no_coupon'     => '抱歉，您没有优惠券',
         'message_no_new_product'=> '对不起，今天没有新产品',

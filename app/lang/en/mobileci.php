@@ -71,6 +71,7 @@ return array(
         'reset_cart_title'       => 'Reset Cart',
         'membership_title'       => 'Membership Information',
         'language_title'         => 'Select Language',
+        'activate_account'       => 'Activate Account',
 
         'message_no_coupon'      => 'Sorry, you do not have any coupons yet.',
         'message_no_new_product' => 'Sorry, there are no new products for today.',
