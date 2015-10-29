@@ -71,6 +71,7 @@ return array(
         'reset_cart_title'      => 'リセットカート',
         'membership_title'      => '会員情報',
         'language_title'        => '言語を選ぶ',
+        'activate_account'      => '激活账户',
 
         'message_no_coupon'     => '申し訳ありません、あなたはまだ少しのクーポンも持っていません。',
         'message_no_new_product'=> '申し訳ありませんが、今日のための新製品はありません',

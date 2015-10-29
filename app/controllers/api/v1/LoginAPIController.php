@@ -1141,6 +1141,12 @@ class LoginAPIController extends ControllerAPI
 
         $new_user->setRelation('apikey', $apikey);
         $new_user->apikey = $apikey;
+
+        // Send email process to the queue
+        \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+            'user_id' => $new_user->user_id
+        ]);
+        
         return [$new_user, $user_detail, $apikey];
     }
 }
