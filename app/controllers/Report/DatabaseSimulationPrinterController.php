@@ -406,7 +406,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $gender = $this->printGender($row);
-                    $date = $this->printDateTime($row, $timezone);
+                    $date = $this->printDateTime($row, $timezone, 'no');
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $date, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->event_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name));
                     $count++;
 
@@ -452,23 +452,32 @@ class DatabaseSimulationPrinterController extends DataPrinterController
      * @param $databasesimulation $databasesimulation
      * @return string
      */
-    public function printDateTime($databasesimulation, $timezone)
+    public function printDateTime($databasesimulation, $timezone, $format='yes')
     {
-        if($databasesimulation->created_at==NULL || empty($databasesimulation->created_at)){
+        if ($databasesimulation->created_at==NULL || empty($databasesimulation->created_at)) {
             $result = "";
         }
         else {
-            if (!empty($timezone) || $timezone != null) {
-                $date = Carbon::createFromFormat('Y-m-d H:i:s', $databasesimulation->created_at, 'UTC');
-                $date->setTimezone($timezone);
-                $_date = $date;
-            } else {
-                $_date = $databasesimulation->created_at;
-            }
-            $date = explode(' ',$_date);
-            $time = strtotime($date[0]);
-            $newformat = date('d F Y',$time);
-            $result = $newformat.' '.$date[1];
+                // change to correct timezone
+                if (!empty($timezone) || $timezone != null) {
+                    $date = Carbon::createFromFormat('Y-m-d H:i:s', $databasesimulation->created_at, 'UTC');
+                    $date->setTimezone($timezone);
+                    $_date = $date;
+                } 
+                else {
+                    $_date = $databasesimulation->created_at;
+                }
+
+                // show in format if needed
+                if ($format == 'yes') {
+                    $date = explode(' ',$_date);
+                    $time = strtotime($date[0]);
+                    $newformat = date('d F Y',$time);
+                    $result = $newformat.' '.$date[1];
+                }
+                else {
+                    $result = $_date;
+                }
         }
 
         return $result;
