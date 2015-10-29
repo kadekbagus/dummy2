@@ -32,6 +32,11 @@ class RequestAccess
     {
         $allowed_ips = Config::get('orbit.security.allowed_ips');
 
+        if (! $allowed_ips) {
+            // We have not found the config, so grant the access
+            return true;
+        }
+
         if (is_string($allowed_ips) && $allowed_ips === '*') {
             return true;
         }
