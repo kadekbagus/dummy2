@@ -23,9 +23,9 @@ if (! defined('ORBIT_APP_BUILD_NUMBER')) {
  */
 if (! defined('ORBIT_APP_VERSION')) {
     if (Config::get('app.debug')) {
-        define('ORBIT_APP_VERSION', '1.1-dev b' . ORBIT_APP_BUILD_NUMBER);
+        define('ORBIT_APP_VERSION', '1.2-dev b' . ORBIT_APP_BUILD_NUMBER);
     } else {
-        define('ORBIT_APP_VERSION', '1.1-M');
+        define('ORBIT_APP_VERSION', '1.2-M');
     }
 }
 
@@ -33,7 +33,7 @@ if (! defined('ORBIT_APP_VERSION')) {
  * Constant storing codename.
  */
 if (! defined('ORBIT_APP_CODENAME')) {
-    define('ORBIT_APP_CODENAME', 'Apollo');
+    define('ORBIT_APP_CODENAME', 'Titan');
 }
 
 /**
