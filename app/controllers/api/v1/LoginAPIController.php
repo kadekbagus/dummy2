@@ -208,6 +208,7 @@ class LoginAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $email = OrbitInput::post('email');
+            $payload = OrbitInput::post('payload');
             $mall_id = $this->getRetailerId();
 
             $validator = Validator::make(
@@ -525,8 +526,8 @@ class LoginAPIController extends ControllerAPI
                 ),
                 array(
                     'token_value'   => 'required|orbit.empty.token',
-                    'first_name'    => 'required|min:3',
-                    'last_name'     => 'required|min:3',
+                    'first_name'    => 'required|min:1',
+                    'last_name'     => 'required|min:1',
                 )
             );
 
@@ -689,8 +690,8 @@ class LoginAPIController extends ControllerAPI
                     'token'          => $token,
                 ),
                 array(
-                    'first_name'     => 'required|min:3',
-                    'last_name'      => 'required|min:3',
+                    'first_name'     => 'required|min:1',
+                    'last_name'      => 'required|min:1',
                     'birthdate'      => 'required|date_format:Y-m-d H:i:s',
                     'gender'         => 'required|in:m,f',
                     'token'          => 'required|orbit.empty.token',
