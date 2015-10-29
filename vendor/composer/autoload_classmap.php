@@ -118,6 +118,7 @@ return array(
     'EventModel' => $baseDir . '/app/models/EventModel.php',
     'EventRetailer' => $baseDir . '/app/models/EventRetailer.php',
     'EventTranslation' => $baseDir . '/app/models/EventTranslation.php',
+    'Fideloper\\Proxy\\ProxyServiceProvider' => $vendorDir . '/fideloper/proxy/src/Fideloper/Proxy/ProxyServiceProvider.php',
     'FixMerchantLocationId' => $baseDir . '/app/database/migrations/2015_10_05_061005_fix_merchant_location_id.php',
     'FixRetailerTenantIds' => $baseDir . '/app/database/migrations/2015_10_05_061004_fix_retailer_tenant_ids.php',
     'Helper\\EloquentRecordCounter' => $baseDir . '/app/models/Helper/EloquentRecordCounter.php',

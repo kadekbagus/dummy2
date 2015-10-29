@@ -39,11 +39,11 @@ return array(
     'widgets' => array(
         'catalogue'     => '货目录',
         'new_product'   => '新产品',
-        'promotion'     => '促销',
+        'promotion'     => '促销活动',
         'coupon'        => '我的优惠券',
         'tenant'        => '店铺',
         'lucky_draw'    => '抽奖',
-        'news'          => '信息',
+        'news'          => '消息',
     ),
 
     'greetings' => array(
@@ -387,11 +387,11 @@ return array(
             'content' => '改语言或退出从Orbit软件。'
         ),
         'news' => array(
-            'title'   => '信息',
+            'title'   => '消息',
             'content' => '想知道最新信息？看这里的信息单!'
         ),
         'promotion' => array(
-            'title'   => '促销',
+            'title'   => '促销活动',
             'content' => '检查我们促销为收伟大省钱的交易。'
         ),
         'coupon' => array(

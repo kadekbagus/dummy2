@@ -333,7 +333,7 @@ class ConsumerPrinterController extends DataPrinterController
                 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    $customer_since = $this->printCustomerSince($row, $timezone);
+                    $customer_since = $this->printCustomerSince($row, $timezone, 'no');
                     $gender = $this->printGender($row);
                     $address = $this->printAddress($row);
                     $birthdate = $this->printBirthDate($row);
@@ -464,19 +464,31 @@ class ConsumerPrinterController extends DataPrinterController
      * @param $consumer $consumer
      * @return string
      */
-    public function printCustomerSince($consumer, $timezone)
+    public function printCustomerSince($consumer, $timezone, $format='yes')
     {
         if ($consumer->created_at==NULL || empty($consumer->created_at) || $consumer->created_at=="0000-00-00 00:00:00") {
             $result = "";
         }
         else {
-            if (!empty($timezone) || $timezone != null) {
-                $date = Carbon::createFromFormat('Y-m-d H:i:s', $consumer->created_at, 'UTC');
-                $date->setTimezone($timezone);
-                $result = $date;
-            } else {
-                $result = $consumer->created_at;
-            }
+                // change to correct timezone
+                if (!empty($timezone) || $timezone != null) {
+                    $date = Carbon::createFromFormat('Y-m-d H:i:s', $consumer->created_at, 'UTC');
+                    $date->setTimezone($timezone);
+                    $_date = $date;
+                } else {
+                    $_date = $consumer->created_at;
+                }
+
+                // show in format if needed
+                if ($format == 'yes') {
+                    $date = explode(' ',$_date);
+                    $time = strtotime($date[0]);
+                    $newformat = date('d F Y',$time);
+                    $result = $newformat.' '.$date[1];
+                }
+                else {
+                    $result = $_date;
+                }
         }
 
         return $result;

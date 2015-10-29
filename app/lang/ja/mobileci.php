@@ -39,8 +39,8 @@ return array(
     'widgets' => array(
         'catalogue'     => 'カタログ',
         'new_product'   => '新製品',
-        'promotion'     => 'プロモーション',
-        'coupon'        => 'クーポン',
+        'promotion'     => '販促',
+        'coupon'        => '私のクーポン',
         'tenant'        => 'テナント',
         'lucky_draw'    => '幸運な抽選',
         'news'          => 'ニュース',
@@ -391,11 +391,11 @@ return array(
             'content' => '最新ニュースを知りたいですか。ここにニュースのリストを見てください。'
         ),
         'promotion' => array(
-            'title'   => 'プロモーション',
+            'title'   => '販促',
             'content' => '大きなお金を節約のお得のためにプロモーションをチェックしてください。'
         ),
         'coupon' => array(
-            'title'   => 'クーポン',
+            'title'   => '私のクーポン',
             'content' => 'あなたが取得したショッピングクーポンのリストをご覧ください。すぐに交換しください！'
         ),
         'end' => array(
