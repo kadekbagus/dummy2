@@ -600,8 +600,6 @@ class IntermediateLoginController extends IntermediateBaseController
                      ->setActivityName('login_ok')
                      ->setActivityNameLong('Sign In')
                      ->responseOK();
-
-            static::proceedPayload($activity, $user->registration_activity_id);
         } else {
             // Login Failed
             $activity->setUser('guest')
@@ -611,6 +609,8 @@ class IntermediateLoginController extends IntermediateBaseController
                      ->setNotes($response->message)
                      ->responseFailed();
         }
+
+        static::proceedPayload($activity, $user->registration_activity_id);
 
         // Save the activity
         $activity->setModuleName('Application')->save();
