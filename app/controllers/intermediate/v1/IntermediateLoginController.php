@@ -538,6 +538,8 @@ class IntermediateLoginController extends IntermediateBaseController
         $activity = Activity::mobileci()
                             ->setActivityType('login');
 
+        $user = null;
+
         $response = MobileCIAPIController::create('raw')->postLoginInShop();
         if ($response->code === 0)
         {
