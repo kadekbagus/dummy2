@@ -39,11 +39,11 @@ return array(
     'widgets' => array(
         'catalogue'     => '货目录',
         'new_product'   => '新产品',
-        'promotion'     => '促销',
+        'promotion'     => '促销活动',
         'coupon'        => '我的优惠券',
         'tenant'        => '店铺',
         'lucky_draw'    => '抽奖',
-        'news'          => '信息',
+        'news'          => '消息',
     ),
 
     'greetings' => array(

@@ -39,8 +39,8 @@ return array(
     'widgets' => array(
         'catalogue'     => 'カタログ',
         'new_product'   => '新製品',
-        'promotion'     => 'プロモーション',
-        'coupon'        => 'クーポン',
+        'promotion'     => '販促',
+        'coupon'        => '私のクーポン',
         'tenant'        => 'テナント',
         'lucky_draw'    => '幸運な抽選',
         'news'          => 'ニュース',
