@@ -2507,7 +2507,7 @@ class UserAPIController extends ControllerAPI
                     'membership_since'      => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists_but_me:' . $mallId,
                     'status'                => 'in:active,inactive,pending',
-                    'idcard'                => 'numeric',
+                    'idcard'                => '',
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
