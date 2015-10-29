@@ -208,7 +208,6 @@ class LoginAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $email = OrbitInput::post('email');
-            $payload = OrbitInput::post('payload');
             $mall_id = $this->getRetailerId();
 
             $validator = Validator::make(
