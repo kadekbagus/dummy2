@@ -220,6 +220,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $params['user_detail_id'] = $response->data->user_detail_id;
             $params['apikey_id'] = $response->data->apikey_id;
             $params['user_email'] = $response->data->user_email;
+            $params['payload'] = $payload;
         } else {
             $params['message'] = $response->message;
         }
@@ -247,6 +248,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $user_id = OrbitInput::get('user_id', '');
         $user_detail_id = OrbitInput::get('user_detail_id', '');
         $apikey_id = OrbitInput::get('apikey_id', '');
+        $payload = OrbitInput::get('payload', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -271,6 +273,7 @@ class IntermediateLoginController extends IntermediateBaseController
             'user_id' => $user_id,
             'user_detail_id' => $user_detail_id,
             'apikey_id' => $apikey_id,
+            'payload' => $payload,
         ])) {
             return [false, $this->displayValidationError()];
         }
