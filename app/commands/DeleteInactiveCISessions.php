@@ -35,7 +35,6 @@ class DeleteInactiveCISessions extends Command
     /**
      * Execute the console command.
      *
-     * @return mixed
      */
     public function fire()
     {
@@ -46,7 +45,14 @@ class DeleteInactiveCISessions extends Command
         $macs = null;
         while (true) {
             $ts = time();
-            $this->runSingleIteration($application_id, $inactive_for, $batch_size);
+            DB::connection()->beginTransaction();
+            try {
+                $this->runSingleIteration($application_id, $inactive_for, $batch_size);
+                DB::connection()->commit();
+            } catch (Exception $e) {
+                DB::connection()->rollBack();
+                throw $e;
+            }
             $sleep_until = $ts + $interval;
             while ($sleep_until <= time()) {
                 $sleep_until += $interval;
@@ -135,9 +141,10 @@ class DeleteInactiveCISessions extends Command
 
     private function runSingleIteration($application_id, $inactive_for, $batch_size)
     {
+        $users_logged_out = 0;
         $prefix = DB::getTablePrefix();
         $results = DB::select(
-            'select session_id, session_data from `' . $prefix . 'sessions` where last_activity < UNIX_TIMESTAMP() - ? and application_id = ? ORDER BY last_activity LIMIT ' . $batch_size,
+            'select session_id, session_data from `' . $prefix . 'sessions` where last_activity < UNIX_TIMESTAMP() - ? and application_id = ? ORDER BY last_activity LIMIT ' . $batch_size . ' FOR UPDATE',
             array($inactive_for, $application_id));
         $to_delete = [];
         foreach ($results as $row) {
@@ -147,6 +154,12 @@ class DeleteInactiveCISessions extends Command
                 $to_delete[] = $row->session_id;
                 continue;
             }
+            if (!isset($data->value)) {
+                // no value
+                $to_delete[] = $row->session_id;
+                continue;
+            }
+            $data = $data->value;
             if (!is_array($data)) {
                 // ...
                 $to_delete[] = $row->session_id;
@@ -171,10 +184,12 @@ class DeleteInactiveCISessions extends Command
             $user_id = $data['user_id'];
             $location_id = $data['location_id'];
             $this->logoutUser($user_id, $location_id);
+            $users_logged_out = $users_logged_out + 1;
             $to_delete[] = $row->session_id;
         }
 
         $this->deleteSessions($to_delete);
+        $this->line(sprintf('CI session cleanup: %d users logged out, %d sessions deleted', $users_logged_out, count($to_delete)));
     }
 
     private function logoutUser($user_id, $location_id)
@@ -205,20 +220,15 @@ class DeleteInactiveCISessions extends Command
             ->setModuleName('Application')
             ->setLocation($location)
             ->responseOK();
+        $activity->location_id = $location_id;
         $activity->save();
     }
 
     private function deleteSessions($to_delete)
     {
         $prefix = DB::getTablePrefix();
-        DB::connection()->beginTransaction();
-        try {
-            foreach ($to_delete as $session_id) {
-                DB::delete('DELETE FROM `' . $prefix . 'sessions` WHERE session_id = ?', [$session_id]);
-            }
-            DB::connection()->commit();
-        } catch (Exception $e) {
-            DB::connection()->rollback();
+        foreach ($to_delete as $session_id) {
+            DB::delete('DELETE FROM `' . $prefix . 'sessions` WHERE session_id = ?', [$session_id]);
         }
     }
 
