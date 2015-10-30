@@ -820,6 +820,15 @@ class IntermediateLoginController extends IntermediateBaseController
                     if ($from === 'facebook') {
                         $registration_activity->activity_name_long = 'Facebook Sign Up';
                         $registration_activity->save();
+
+                        // @author Irianto Pratama <irianto@dominopos.com>
+                        // send email if user status active
+                        if ($customer->status === 'active') {
+                            // Send email process to the queue
+                            \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                                'user_id' => $customer->user_id
+                            ]);
+                        }
                     } else if ($from === 'form') {
                         $registration_activity->activity_name_long = 'Email Sign Up';
                         $registration_activity->save();
