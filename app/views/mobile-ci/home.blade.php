@@ -574,7 +574,7 @@
             });
 
             $('#userActivationModal').on('hidden.bs.modal', function () {
-                $.cookie(cookie_dismiss_name_2, 't', {expires: 3650});
+                $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
             });
 
             @if(! is_null($events))
