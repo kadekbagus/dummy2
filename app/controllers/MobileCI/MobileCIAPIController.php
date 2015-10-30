@@ -3530,7 +3530,8 @@ class MobileCIAPIController extends ControllerAPI
              if ($user->status === 'pending') {
                  // Send email process to the queue
                  \Queue::push('Orbit\\Queue\\RegistrationMail', [
-                     'user_id' => $user->user_id
+                     'user_id' => $user->user_id,
+                     'merchant_id' => $retailer->merchant_id
                  ]);
              }
 
