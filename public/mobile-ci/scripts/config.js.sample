@@ -12,5 +12,20 @@ function orbitGetBaseUrl() {
    return host;
 }
 
+function orbitGetDomainName() {
+	var autodetect = true;
+	var baseDomain = 'myorbit.com';
+
+	if (autodetect) {
+        var parts = location.hostname.split('.');
+        var subdomain = parts.shift();
+        var upperleveldomain = parts.join('.');
+        
+        baseDomain = parts.slice(-2).join('.');
+    }
+
+    return baseDomain;
+}
+
 var apiPath = orbitGetBaseUrl() + '/app/v1/';
 var homePath = orbitGetBaseUrl() + '/customer/home';

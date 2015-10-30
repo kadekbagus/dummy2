@@ -134,6 +134,7 @@
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     var cookie_dismiss_name = 'dismiss_verification_popup';
+    var cookie_dismiss_name_2 = 'dismiss_activation_popup';
 
     @if ($active_user)
     cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
@@ -176,6 +177,10 @@
             }
         });
 
+        $('#userActivationModal').on('hidden.bs.modal', function () {
+            $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
+        });
+
         {{-- a sequence of modals... --}}
         var modals = [
             {
@@ -187,7 +192,7 @@
                 @if ($active_user)
                     display: false
                 @else
-                    display: get('from_login') === 'yes'
+                    display: get('from_login') === 'yes' && !$.cookie(cookie_dismiss_name_2)
                 @endif
             }
         ];

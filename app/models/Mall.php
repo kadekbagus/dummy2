@@ -354,27 +354,23 @@ class Mall extends Eloquent
      */
     public function getLogoAttribute($value)
     {
-        if (is_null($value)) {
-            $domain = Request::getHost();
-            // Prevent directory travelsal
-            $domain = str_replace('..', '', $domain);
+        $domain = Request::getHost();
+        // Prevent directory travelsal
+        $domain = str_replace('..', '', $domain);
 
-            // Load the file if exists
-            $relativePath = sprintf('/mobile-ci/images/%s/logo.png', $domain);
-            $footerImage = public_path() . '/' . $relativePath;
+        // Load the file if exists
+        $relativePath = sprintf('/mobile-ci/images/%s/logo.png', $domain);
+        $footerImage = public_path() . '/' . $relativePath;
 
-            if (file_exists($footerImage)) {
-                return $relativePath;
-            }
+        if (file_exists($footerImage)) {
+            return $relativePath;
+        }
 
-            $mallMediaLogo = $this->mediaLogoOrig()->first();
-            if (is_object($mallMediaLogo)) {
-                return $mallMediaLogo->path;
-            } else {
-                return '/mobile-ci/images/default-logo.png';
-            }
+        $mallMediaLogo = $this->mediaLogoOrig()->first();
+        if (is_object($mallMediaLogo)) {
+            return $mallMediaLogo->path;
         } else {
-            return $value;
+            return '/mobile-ci/images/default-logo.png';
         }
     }
 
