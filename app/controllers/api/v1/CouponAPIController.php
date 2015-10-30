@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -1296,12 +1297,16 @@ class CouponAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $currentmall = OrbitInput::get('current_mall');
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
+                    'current_mall' => $currentmall
                 ),
                 array(
                     'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value,coupon_status',
+                    'current_mall' => 'orbit.empty.merchant'
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.coupon_sortby'),
@@ -1337,7 +1342,9 @@ class CouponAPIController extends ControllerAPI
             }
 
             $table_prefix = DB::getTablePrefix();
+
             $now = date('Y-m-d H:i:s');
+
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
@@ -1376,6 +1383,10 @@ class CouponAPIController extends ControllerAPI
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
                 $now = date('Y-m-d H:i:s');
+                if (! empty($currentmall)) {
+                    $mall = App::make('orbit.empty.merchant');
+                    $now = Carbon::now($mall->timezone->timezone_name);
+                }
                 $prefix = DB::getTablePrefix();
                 $coupons->whereRaw("('$now' >= {$prefix}promotions.begin_date and '$now' <= {$prefix}promotions.end_date)");
                 $coupons->whereRaw("(((select count({$prefix}issued_coupons.promotion_id) from {$prefix}issued_coupons
@@ -2390,7 +2401,7 @@ class CouponAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Mall::excludeDeleted()
+            $merchant = Mall::with('timezone')->excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
