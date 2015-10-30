@@ -3,6 +3,7 @@
 /**
  * An API controller for managing Mobile CI.
  */
+use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -87,6 +88,12 @@ class MobileCIAPIController extends ControllerAPI
                 $errorMessage = \Lang::get('validation.required', array('attribute' => 'email'));
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            if (! static::isValidMX($email)) {
+                $errorMessage = \Lang::get('validation.email', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $retailer = $this->getRetailerInfo();
 
             $this->beginTransaction();
@@ -3850,4 +3857,21 @@ class MobileCIAPIController extends ControllerAPI
         return $this->render();
     }
 
+    /**
+     * Check the validity of email check query the MX record
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string $email
+     * @return boolean
+     */
+    public static function isValidMX($email)
+    {
+        $hosts = MXEmailChecker::create($email)->check()->getMXRecords();
+
+        if (empty($hosts)) {
+            return FALSE;
+        }
+
+        return TRUE;
+    }
 }
