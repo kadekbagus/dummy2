@@ -23,13 +23,18 @@ Route::post('/api/v1/box-control/reboot', ['as' => 'api-box-control-shutdown', f
     return ShutdownAPIController::create()->postRebootBox();
 }]);
 
-/**
- * Poll new alert
- */
-Route::post('/api/v1/alert/poll', function()
-{
-    return InboxAPIController::create()->getPollAlert();
-});
+Route::group(
+    array('before' => 'orbit-settings'),
+    function () {
+		/**
+		 * Poll new alert
+		 */
+		Route::post('/api/v1/alert/poll', function()
+		{
+		    return InboxAPIController::create()->getPollAlert();
+		});
+	}
+);
 
 /**
  * Read / flag the alert as read

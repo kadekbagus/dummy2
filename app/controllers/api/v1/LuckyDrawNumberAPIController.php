@@ -772,6 +772,7 @@ class LuckyDrawNumberAPIController extends ControllerAPI
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
+        $inbox->merchant_id = $retailerId;
         $inbox->from_id = 0;
         $inbox->from_name = 'Orbit';
         $inbox->subject = $subject;

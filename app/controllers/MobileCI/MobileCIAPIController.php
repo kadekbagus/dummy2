@@ -3265,8 +3265,11 @@ class MobileCIAPIController extends ControllerAPI
         $name = $name ? $name : $user->email;
         $subject = 'Coupon';
 
+        $retailerId = Config::get('orbit.shop.id');
+
         $inbox = new Inbox();
         $inbox->user_id = $userId;
+        $inbox->merchant_id = $retailerId;
         $inbox->from_id = 0;
         $inbox->from_name = 'Orbit';
         $inbox->subject = $subject;
@@ -3276,7 +3279,6 @@ class MobileCIAPIController extends ControllerAPI
         $inbox->is_read = 'N';
         $inbox->save();
 
-        $retailerId = Config::get('orbit.shop.id');
         $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
         $data = [
             'fullName'          => $name,
@@ -3646,8 +3648,11 @@ class MobileCIAPIController extends ControllerAPI
                 $name = trim($name) ? trim($name) : $user->user_email;
                 $subject = 'Coupon';
 
+                $retailerId = Config::get('orbit.shop.id');
+
                 $inbox = new Inbox();
                 $inbox->user_id = $user->user_id;
+                $inbox->merchant_id = $retailerId;
                 $inbox->from_id = 0;
                 $inbox->from_name = 'Orbit';
                 $inbox->subject = $subject;
@@ -3657,7 +3662,6 @@ class MobileCIAPIController extends ControllerAPI
                 $inbox->is_read = 'N';
                 $inbox->save();
 
-                $retailerId = Config::get('orbit.shop.id');
                 $retailer = Mall::where('merchant_id', $retailerId)->first();
                 $data = [
                     'fullName'          => $name,
