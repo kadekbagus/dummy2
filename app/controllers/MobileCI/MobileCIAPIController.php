@@ -105,13 +105,15 @@ class MobileCIAPIController extends ControllerAPI
 
             // attempt to force cloud login scenario when using single-db
             // if there is no association between the user and this mall
-            $acq = \UserAcquisition::where('user_id', $user->user_id)
-                ->where('acquirer_id', $retailer->merchant_id)
-                ->lockForUpdate()->first();
-            if ($acq === null) {
-                $user = null;
-            }
+            if (is_object($user)) {
+                $acq = \UserAcquisition::where('user_id', $user->user_id)
+                    ->where('acquirer_id', $retailer->merchant_id)
+                    ->lockForUpdate()->first();
+                if ($acq === null) {
+                    $user = null;
+                }
 
+            }
             if (! is_object($user)) {
                 return $this->redirectToCloud($email, $retailer, $payload);
             } else {
