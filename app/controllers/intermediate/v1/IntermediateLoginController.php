@@ -595,8 +595,8 @@ class IntermediateLoginController extends IntermediateBaseController
                 // For login page
                 $expireTime = time() + 3600 * 24 * 365 * 5;
 
-                setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
-                setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);
+                setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             }
 
             // Successfull login
@@ -916,8 +916,8 @@ class IntermediateLoginController extends IntermediateBaseController
             $payload = (new Encrypter($key))->encrypt(http_build_query($query));
             $redirectTo = sprintf('/customer?%s=%s&payload_login=%s', $sessionName, $sessionId, $payload);
 
-            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', NULL, FALSE, FALSE);
-            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', NULL, FALSE, FALSE);
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
             return Redirect::to($redirectTo);
         }
@@ -925,5 +925,20 @@ class IntermediateLoginController extends IntermediateBaseController
         // Catch all
         $response = new ResponseProvider();
         return $this->render($response);
+    }
+
+    /**
+     * Get domain name
+     *
+     * @return mixed
+     */
+    protected function get_domain($url)
+    {
+        $pieces = parse_url($url);
+        $domain = isset($pieces['host']) ? $pieces['host'] : '';
+        if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', $domain, $regs)) {
+            return $regs['domain'];
+        }
+        return false;
     }
 }
