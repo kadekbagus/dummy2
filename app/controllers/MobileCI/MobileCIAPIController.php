@@ -81,6 +81,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         try {
             $email = trim(OrbitInput::post('email'));
+            $payload = OrbitInput::post('payload');
 
             if (trim($email) === '') {
                 $errorMessage = \Lang::get('validation.required', array('attribute' => 'email'));
@@ -103,7 +104,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->first();
 
             if (! is_object($user)) {
-                return $this->redirectToCloud($email, $retailer);
+                return $this->redirectToCloud($email, $retailer, $payload);
             } else {
                 return $this->loginStage2($user, $retailer);
             }
@@ -406,6 +407,7 @@ class MobileCIAPIController extends ControllerAPI
                 'widget_singles' => $widget_singles,
                 'languages' => $languages,
                 'active_user' => ($user->status === 'active'),
+                'user_email' => $user->user_email
             );
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
         } catch (Exception $e) {
@@ -1720,6 +1722,7 @@ class MobileCIAPIController extends ControllerAPI
                 'categories' => $categories,
                 'active_user' => ($user->status === 'active'),
                 'floorList' => $floorList,
+                'user_email' => $user->user_email,
                 'languages' => $languages));
 
         } catch (Exception $e) {
@@ -2198,7 +2201,7 @@ class MobileCIAPIController extends ControllerAPI
             $coupons = DB::select(
                 DB::raw(
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y"
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                 WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
                     AND p.merchant_id = :merchantid
@@ -2603,6 +2606,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
+                'user_email' => $user->user_email
             );
             return View::make('mobile-ci.mall-promotion-list', $view_data);
 
@@ -2865,6 +2869,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
+                'user_email' => $user->user_email
             );
             return View::make('mobile-ci.mall-news-list', $view_data);
 
@@ -3712,7 +3717,7 @@ class MobileCIAPIController extends ControllerAPI
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer) {
+    private function redirectToCloud($email, $retailer, $payload = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
@@ -3721,6 +3726,7 @@ class MobileCIAPIController extends ControllerAPI
             'email' => $email,
             'retailer_id' => $retailer->merchant_id,
             'callback_url' => URL::route('customer-login-callback'),
+            'payload' => $payload,
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);

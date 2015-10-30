@@ -1210,7 +1210,7 @@ class ActivityAPIController extends ControllerAPI
 
                 // Filter by user location id
                 $activities->whereIn('activities.location_id', $locationIds);
-            } elseif ($user->isSuperAdmin()) {
+            } else {
                 // Filter by user location id
                 OrbitInput::get('location_ids', function($locationIds) use ($activities) {
                     $activities->whereIn('activities.location_id', $locationIds);

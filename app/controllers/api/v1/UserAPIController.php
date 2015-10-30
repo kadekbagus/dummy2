@@ -1408,6 +1408,7 @@ class UserAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $details = OrbitInput::get('details');
+            $merchantIds = OrbitInput::get('merchant_id');
 
             $validator = Validator::make(
                 array(
@@ -1455,6 +1456,17 @@ class UserAPIController extends ControllerAPI
             // Available retailer to query
             $listOfRetailerIds = [];
 
+            // get user mall_ids
+            $listOfMallIds = $user->getUserMallIds($merchantIds);
+
+            if (empty($listOfMallIds)) { // invalid mall id
+                $filterMallIds = 'and 0';
+            } elseif ($listOfMallIds[0] === 1) { // if super admin
+                $filterMallIds = '';
+            } else { // valid mall id
+                $filterMallIds = ' and p.merchant_id in ("' . join('","', $listOfMallIds) . '") ';
+            }
+
             // Builder object
             $prefix = DB::getTablePrefix();
             $users = User::Consumers()
@@ -1467,10 +1479,12 @@ class UserAPIController extends ControllerAPI
             if ($details === 'yes') {
                 $users->select('users.*', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
-                                        where status='active' and cp.user_id={$prefix}users.user_id and
+                                        inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
+                                        where cp.status='active' and cp.user_id={$prefix}users.user_id and
                                         current_date() <= date(cp.expired_date)) as total_usable_coupon,
                                         (select count(cp2.user_id) from {$prefix}issued_coupons cp2
-                                        where status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
+                                        inner join {$prefix}promotions p on cp2.promotion_id = p.promotion_id {$filterMallIds}
+                                        where cp2.status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
                                   ->leftJoin(
                                         // Table
                                         DB::raw("(select ldn.user_id from `{$prefix}lucky_draw_numbers` ldn
@@ -1485,25 +1499,21 @@ class UserAPIController extends ControllerAPI
             }
 
             // join to activities for view user login any mall in ci
-            $from_cs = OrbitInput::get('from_cs');
-            if(!empty($from_cs)) {
-                $users->join('activities', 'activities.user_id', '=', 'users.user_id')
-                      ->where('activities.activity_name', 'login_ok')
-                      ->where('activities.activity_name_long', 'Sign In')
-                      ->where('activities.activity_type', 'login')
-                      ->where('activities.role', 'Consumer')
-                      ->where('activities.group', 'mobile-ci')
-                      ->groupBy('activities.user_email')
-                      ->groupBy('activities.location_id');
-                OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                    $users->whereIn('activities.location_id', $merchantIds);
-                });
-            }
+            $users->join('activities', 'activities.user_id', '=', 'users.user_id')
+                  ->where(function($q) {
+                      $q->where('activities.activity_name', 'registration_ok')
+                        ->orWhere('activities.activity_name', 'login_ok');
+                  })
+                  ->where('activities.role', 'Consumer')
+                  ->groupBy('users.user_id');
 
-            // Filter by merchant ids
-            OrbitInput::get('merchant_id', function($merchantIds) use ($users) {
-                // $listOfMerchantIds = (array)$merchantIds;
-            });
+            if (empty($listOfMallIds)) { // invalid mall id
+                $users->whereRaw('0');
+            } elseif ($listOfMallIds[0] === 1) { // if super admin
+                // show all users
+            } else { // valid mall id
+                $users->whereIn('activities.location_id', $listOfMallIds);
+            }
 
             // Filter by retailer (shop) ids
             OrbitInput::get('retailer_id', function($retailerIds) use ($users) {
@@ -2496,7 +2506,7 @@ class UserAPIController extends ControllerAPI
                     'membership_since'      => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists_but_me:' . $mallId,
                     'status'                => 'in:active,inactive,pending',
-                    'idcard'                => 'numeric',
+                    'idcard'                => '',
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
@@ -2616,6 +2626,13 @@ class UserAPIController extends ControllerAPI
 
             OrbitInput::post('date_of_work', function($data) use ($userdetail) {
                 $userdetail->date_of_work = $data;
+            });
+
+            OrbitInput::post('send_email', function($data) use ($updateduser) {
+                // Send email process to the queue
+                \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                    'user_id' => $updateduser->user_id
+                ]);
             });
 
             Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
@@ -3451,4 +3468,5 @@ class UserAPIController extends ControllerAPI
             return TRUE;
         });
     }
+
 }

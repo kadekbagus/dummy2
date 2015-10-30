@@ -246,7 +246,7 @@
     </div>
     <div class="row">
         <div class="col-xs-12 text-center merchant-logo">
-            <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" />
+            <img class="img-responsive" src="{{ asset($retailer->logo) }}" />
         </div>
     </div>
 </div>
@@ -491,13 +491,13 @@
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="userActivationModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.promotion.info') }}</h4>
+                <h4 class="modal-title" id="userActivationModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.modals.activate_account') }}</h4>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-xs-12 text-center">
                         <p style="font-size:15px;">
-                            {{ Lang::get('mobileci.modals.message_user_activation') }}
+                            {{{ sprintf(Lang::get('mobileci.modals.message_user_activation'), $user_email) }}}
                         </p>
                     </div>
                 </div>
@@ -535,6 +535,7 @@
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     var cookie_dismiss_name = 'dismiss_verification_popup';
+    var cookie_dismiss_name_2 = 'dismiss_activation_popup';
 
     @if ($active_user)
     cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
@@ -571,6 +572,11 @@
                     $.cookie(cookie_dismiss_name, 't', {expires: 3650});
                 }
             });
+
+            $('#userActivationModal').on('hidden.bs.modal', function () {
+                $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
+            });
+
             @if(! is_null($events))
             $('#promoModal').on('show.bs.modal', function() {
                 $.ajax({
@@ -599,7 +605,7 @@
                 @if ($active_user)
                     display: false
                 @else
-                    display: onlyEvent === false
+                    display: onlyEvent === false && !$.cookie(cookie_dismiss_name_2)
                 @endif
             }
             ];

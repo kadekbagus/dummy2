@@ -198,6 +198,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $callback_url = OrbitInput::get('callback_url', '');
         $email = OrbitInput::get('email', '');
         $retailer_id = OrbitInput::get('retailer_id', '');
+        $payload = OrbitInput::get('payload', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -205,19 +206,21 @@ class IntermediateLoginController extends IntermediateBaseController
         if (!CloudMAC::validateDataFromBox($mac, $timestamp, [
             'email' => $email,
             'retailer_id' => $retailer_id,
-            'callback_url' => $callback_url
+            'callback_url' => $callback_url,
+            'payload' => $payload,
         ])) {
             return $this->displayValidationError();
         }
 
         $response = MobileCIAPIController::create('raw')->getCloudLogin();
-        $params = ['status' => $response->status];
 
+        $params = ['status' => $response->status];
         if ($response->status === 'success') {
             $params['user_id'] = $response->data->user_id;
             $params['user_detail_id'] = $response->data->user_detail_id;
             $params['apikey_id'] = $response->data->apikey_id;
             $params['user_email'] = $response->data->user_email;
+            $params['payload'] = $payload;
         } else {
             $params['message'] = $response->message;
         }
@@ -245,6 +248,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $user_id = OrbitInput::get('user_id', '');
         $user_detail_id = OrbitInput::get('user_detail_id', '');
         $apikey_id = OrbitInput::get('apikey_id', '');
+        $payload = OrbitInput::get('payload', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -269,17 +273,16 @@ class IntermediateLoginController extends IntermediateBaseController
             'user_id' => $user_id,
             'user_detail_id' => $user_detail_id,
             'apikey_id' => $apikey_id,
+            'payload' => $payload,
         ])) {
             return [false, $this->displayValidationError()];
         }
 
         $user = NULL;
-        /** @var PDO $pdo */
-        $pdo = DB::connection()->getPdo();
+        DB::connection()->beginTransaction();
         /** @var LoginAPIController $login */
         $login = LoginAPIController::create('raw');
         $login->setUseTransaction(false);
-        $pdo->beginTransaction();
         try {
             // try getting user again, if found do not insert, just use that.
             $user = User::with('apikey', 'userdetail', 'role')
@@ -297,10 +300,10 @@ class IntermediateLoginController extends IntermediateBaseController
                 list($user, $userdetail, $apikey) = $login->createCustomerUser($email, $user_id, $user_detail_id, $apikey_id);
             }
 
-            $pdo->commit();
+            DB::connection()->commit();
             return [true, $user->user_id, $email];
         } catch (Exception $e) {
-            $pdo->rollBack();
+            DB::connection()->rollBack();
             throw $e; // TODO display error?
         }
     }
@@ -668,14 +671,24 @@ class IntermediateLoginController extends IntermediateBaseController
         return Redirect::to('/customer')->withCookie($cookie);
     }
 
+    /**
+    * Process payload in $_POST[payload] or $_GET[payload].
+    *
+    * @param $activity Activity|null log in activity so we can change the activity name
+    * @param $registration_activity_id string|null ID of registration activity if present so we can change the activity name
+    */
     public static function proceedPayload($activity, $registration_activity_id = null)
     {
         // The sign-in view put the payload from query string to post body on AJAX call
-        if (! isset($_POST['payload'])) {
+        if (isset($_POST['payload'])) {
+            $payload = $_POST['payload'];
+        } elseif (isset($_GET['payload'])) {
+            // possibly from cloud login callback
+            $payload = $_GET['payload'];
+        } else {
             return;
         }
 
-        $payload = $_POST['payload'];
         Log::info('[PAYLOAD] Payload found -- ' . serialize($payload));
 
         // Decrypt the payload
@@ -789,17 +802,18 @@ class IntermediateLoginController extends IntermediateBaseController
                 default:
                     // do nothing
             }
-
-            $activity->setActivityNameLong($activityNameLong);
+            if (isset($activity)) {
+                $activity->setActivityNameLong($activityNameLong);
+            }
         }
 
         // this is passed up from LoginAPIController::postRegisterUserInShop, to MobileCIAPIController::postLoginInShop
         // to here, so if this login automatically registered the user, we can update this based on where
         // the registration is coming from.
-        if (isset($registration_activity_id)) {
+        if (isset($registration_activity_id) && isset($customer)) {
             $registration_activity = Activity::where('activity_id', '=', $registration_activity_id)
                 ->where('activity_name', '=', 'registration_ok')
-                ->where('user_id', '=', $activity->user_id)
+                ->where('user_id', '=', $customer->user_id)
                 ->first();
             if (isset($registration_activity)) {
                 if (isset($from)) {

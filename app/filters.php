@@ -9,6 +9,8 @@
 | application. Here you may also register your custom route filters.
 |
 */
+use Net\Security\RequestAccess;
+
 App::after(function($request, $response)
 {
     //
@@ -101,6 +103,12 @@ Route::filter('orbit-settings', function()
         throw new Exception ('You have to setup current retailer first on Admin Portal.');
     }
 
+    // checking ip address of the client
+    $ip_address = Request::getClientIp();
+    if (RequestAccess::create()->checkIpAddress($ip_address) === false) {
+        throw new Exception (sprintf('You have no access'));
+    }
+
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
     $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
 
@@ -135,10 +143,10 @@ Route::filter('orbit-settings', function()
 
     // get language label for default mall lang
     App::singleton('default_lang', function() {
-        $default_lang = 'English';
+        $default_lang = 'en';
 
         $lg = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first()->mobile_default_language;
-        $lang_str = Language::where('name', $lg)->first()->name_long;
+        $lang_str = Language::where('name', $lg)->first()->name;
         if(! empty($lang_str)) {
             $default_lang = $lang_str;
         }

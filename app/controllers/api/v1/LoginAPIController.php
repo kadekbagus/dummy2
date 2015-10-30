@@ -332,6 +332,7 @@ class LoginAPIController extends ControllerAPI
         // so the caller can add 'from Facebook' later.
         if ($activity->response_status == Activity::ACTIVITY_REPONSE_OK) {
             $this->response->data->setAttribute('registration_activity_id', $activity->activity_id);
+            IntermediateLoginController::proceedPayload(null, $activity->activity_id);
         }
 
         return $this->render($httpCode);
@@ -525,8 +526,8 @@ class LoginAPIController extends ControllerAPI
                 ),
                 array(
                     'token_value'   => 'required|orbit.empty.token',
-                    'first_name'    => 'required|min:3',
-                    'last_name'     => 'required|min:3',
+                    'first_name'    => 'required|min:1',
+                    'last_name'     => 'required|min:1',
                 )
             );
 
@@ -689,8 +690,8 @@ class LoginAPIController extends ControllerAPI
                     'token'          => $token,
                 ),
                 array(
-                    'first_name'     => 'required|min:3',
-                    'last_name'      => 'required|min:3',
+                    'first_name'     => 'required|min:1',
+                    'last_name'      => 'required|min:1',
                     'birthdate'      => 'required|date_format:Y-m-d H:i:s',
                     'gender'         => 'required|in:m,f',
                     'token'          => 'required|orbit.empty.token',
@@ -1140,6 +1141,7 @@ class LoginAPIController extends ControllerAPI
 
         $new_user->setRelation('apikey', $apikey);
         $new_user->apikey = $apikey;
+        
         return [$new_user, $user_detail, $apikey];
     }
 }

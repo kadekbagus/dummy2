@@ -71,6 +71,7 @@ return array(
         'reset_cart_title'      => 'リセットカート',
         'membership_title'      => '会員情報',
         'language_title'        => '言語を選ぶ',
+        'activate_account'      => '激活账户',
 
         'message_no_coupon'     => '申し訳ありません、あなたはまだ少しのクーポンも持っていません。',
         'message_no_new_product'=> '申し訳ありませんが、今日のための新製品はありません',
@@ -218,7 +219,7 @@ return array(
     'coupon'         => array(
         'tenant_based'                     => 'テナント基づい',
         'mall_based'                       => 'モールベース',
-        'tenant_redeem'                    => 'テナントの取り戻す。',
+        'tenant_redeem'                    => 'テナントの取り戻す',
         'coupon_value'                     => 'クーポンの価値',
         'use_coupon'                       => 'クーポンを使用する',
         'enter_tenant_verification_number' => 'テナント確認番号を入力してください',
@@ -230,9 +231,9 @@ return array(
         'successful'                       => '成功した',
         'please_communicate'               => '以下の数をテナント従業員に 伝えてください.',
         'congratulations_you_get'          => 'おめでとう、あなたが得る',
-        'here_is_your_coupon'              => 'クーポン。こちらはあなたのクーポンです。',
-        'here_are_your_coupons'              => 'クーポン。こちらはあなたのクーポンです。',
-        'happy_shopping'                   => 'どうぞ買い物してください',
+        'here_is_your_coupon'              => 'クーポン。こちらはあなたのクーポンです',
+        'here_are_your_coupons'              => 'クーポン。こちらはあなたのクーポンです',
+        'happy_shopping'                   => 'どうぞ買い物してください!',
         'close'                            => '閉じる',
         'my_coupon'                        => '私のクーポン',
         'use'                              => '使用',
@@ -327,7 +328,7 @@ return array(
     ),
 
     'lucky_draw' => array(
-        'hello'                     => 'こんにちは。',
+        'hello'                     => 'こんにちは',
         'goodluck'                  => '頑張ってください',
         'congratulation'            => 'おめでとう、あなたが得る',
         'no_lucky_draw'             => 'ラッキーナンバー引き',

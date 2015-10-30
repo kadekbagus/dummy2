@@ -71,6 +71,7 @@ return array(
         'reset_cart_title'       => 'Reset Cart',
         'membership_title'       => 'Membership Information',
         'language_title'         => 'Select Language',
+        'activate_account'       => 'Activate Account',
 
         'message_no_coupon'      => 'Sorry, you do not have any coupons yet.',
         'message_no_new_product' => 'Sorry, there are no new products for today.',
@@ -111,7 +112,7 @@ return array(
         'do_not_display'         => 'Do not display this message again',
         'and'                    => 'AND',
 
-        'message_user_activation' => 'Please activate your account',
+        'message_user_activation' => 'An email has been sent to &quot;%s&quot;. Please follow the instructions to activate your account. If for some reason you don\'t see an e-mail from us in a couple of hours, please check your Spam or Junk folder',
     ),
 
     //tenant catalogue

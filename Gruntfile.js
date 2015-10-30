@@ -13,6 +13,7 @@ module.exports = function(grunt) {
           "./public/mobile-ci/stylesheet/main.css": "./public/mobile-ci/styles-less/main.less",
           "./public/mobile-ci/stylesheet/orbit.tks.sym.css": "./public/mobile-ci/styles-less/main-red.less",
           "./public/mobile-ci/stylesheet/orbit.lmp.sym.css": "./public/mobile-ci/styles-less/main-black.less",
+          "./public/mobile-ci/stylesheet/orbit.smv.sym.css": "./public/mobile-ci/styles-less/main-black-gold.less",
           //"./public/mobile-ci/stylesheet/galleria.css": "./public/mobile-ci/styles-less/main-colors-1.less"
         }
       }
