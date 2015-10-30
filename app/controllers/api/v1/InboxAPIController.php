@@ -40,9 +40,8 @@ class InboxAPIController extends ControllerAPI
             $user = $this->api->user;
             $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
 
-            $alerts = Inbox::latestOne($user->user_id)
+            $alerts = Inbox::latestOne($user->user_id, $mall_id)
                             ->where('inbox_type', 'alert')
-                            ->where('merchant_id', $mall_id)
                             ->take(1);
 
             // Clone the query builder which still does not include the take,

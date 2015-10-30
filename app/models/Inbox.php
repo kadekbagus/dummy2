@@ -18,7 +18,7 @@ class Inbox extends Eloquent
     /**
      * Get the latest one.
      */
-    public function scopeLatestOne($query, $userId=NULL)
+    public function scopeLatestOne($query, $userId = NULL, $mallId = NULL)
     {
         $latest =  $query->orderBy('inboxes.created_at', 'asc')
                          ->where('is_read', 'N')
@@ -26,6 +26,10 @@ class Inbox extends Eloquent
 
         if ($userId !== NULL) {
             $latest->where('user_id', $userId);
+        }
+
+        if ($mallId !== NULL) {
+            $latest->where('merchant_id', $mallId);
         }
 
         return $latest;
