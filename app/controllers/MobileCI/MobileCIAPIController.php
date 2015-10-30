@@ -2341,12 +2341,18 @@ class MobileCIAPIController extends ControllerAPI
                 })
             )
             ->where('merchant_id', $retailer->merchant_id)
+            ->where('promotions.status', 'active')
             ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user, $retailer) {
                 $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                 $q->where('issued_coupons.user_id', $user->user_id);
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                 $q->where('issued_coupons.status', 'active');
             })->first();
+
+            if (empty($coupons)) {
+                // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+            }
 
             $coupon_id = $coupons->promotion_id;
 
@@ -2395,11 +2401,6 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $tenants = \CouponRetailer::with('tenant')->where('promotion_id', $coupon_id)->get();
-
-            if (empty($coupons)) {
-                // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
-            }
 
             if (empty($coupons->image)) {
                 $coupons->image = 'mobile-ci/images/default_product.png';
@@ -3273,8 +3274,11 @@ class MobileCIAPIController extends ControllerAPI
         $name = $name ? $name : $user->email;
         $subject = 'Coupon';
 
+        $retailerId = Config::get('orbit.shop.id');
+
         $inbox = new Inbox();
         $inbox->user_id = $userId;
+        $inbox->merchant_id = $retailerId;
         $inbox->from_id = 0;
         $inbox->from_name = 'Orbit';
         $inbox->subject = $subject;
@@ -3284,7 +3288,6 @@ class MobileCIAPIController extends ControllerAPI
         $inbox->is_read = 'N';
         $inbox->save();
 
-        $retailerId = Config::get('orbit.shop.id');
         $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
         $data = [
             'fullName'          => $name,
@@ -3654,8 +3657,11 @@ class MobileCIAPIController extends ControllerAPI
                 $name = trim($name) ? trim($name) : $user->user_email;
                 $subject = 'Coupon';
 
+                $retailerId = Config::get('orbit.shop.id');
+
                 $inbox = new Inbox();
                 $inbox->user_id = $user->user_id;
+                $inbox->merchant_id = $retailerId;
                 $inbox->from_id = 0;
                 $inbox->from_name = 'Orbit';
                 $inbox->subject = $subject;
@@ -3665,7 +3671,6 @@ class MobileCIAPIController extends ControllerAPI
                 $inbox->is_read = 'N';
                 $inbox->save();
 
-                $retailerId = Config::get('orbit.shop.id');
                 $retailer = Mall::where('merchant_id', $retailerId)->first();
                 $data = [
                     'fullName'          => $name,
