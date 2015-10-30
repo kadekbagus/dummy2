@@ -368,7 +368,7 @@
       $.removeCookie('dismiss_activation_popup', { path: '/', domain: window.location.hostname });
 
       $('#notMe').click(function() {
-        var currentDomain = window.location.hostname;
+        var currentDomain = orbitGetDomainName();
 
         $.removeCookie('orbit_email', { path: '/', domain: currentDomain });
         $.removeCookie('orbit_firstname', { path: '/', domain: currentDomain });
