@@ -987,19 +987,6 @@ class TenantAPIController extends ControllerAPI
 
             $updatedtenant->save();
 
-            // update user status
-            OrbitInput::post('status', function($status) use ($updatedtenant) {
-                $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedtenant->user_id);
-                if (is_object($updateuser)) {
-                    if (! $updateuser->isSuperAdmin()) {
-                        $updateuser->status = $status;
-                        $updateuser->modified_by = $this->api->user->user_id;
-
-                        $updateuser->save();
-                    }
-                }
-            });
-
             // save CategoryMerchant
             OrbitInput::post('no_category', function($no_category) use ($updatedtenant) {
                 if ($no_category == 'Y') {
@@ -1731,7 +1718,7 @@ class TenantAPIController extends ControllerAPI
                     $sortBy = $sortByMapping[$_sortBy];
                 }
             });
-            
+
             // this parameter is intended for tenant listing for tenant dropdown list so it will
             // ignore the sort by status that will broke alphabetical order.
             $true_sort = OrbitInput::get('true_sort');
