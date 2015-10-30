@@ -2262,10 +2262,10 @@ class ActivityAPIController extends ControllerAPI
             OrbitInput::get('sign_up_method', function ($sign_up_method) use (&$binds, &$sign_up_method_condition) {
                 if ($sign_up_method === 'facebook') {
                     $sign_up_method_condition = ' and (registration.registration = :sign_up_method) ';
-                    $binds['sign_up_method'] = 'Facebook Sign Up';
+                    $binds['sign_up_method'] = 'Sign Up via Facebook';
                 } else if ($sign_up_method === 'email') {
                     $sign_up_method_condition = ' and ((registration.registration = :sign_up_method_1) OR (registration.registration = :sign_up_method_2))';
-                    $binds['sign_up_method_1'] = 'Email Sign Up';
+                    $binds['sign_up_method_1'] = 'Sign Up with email address';
                     $binds['sign_up_method_2'] = 'Sign Up';
                 }
                 else {

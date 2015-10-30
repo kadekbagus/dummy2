@@ -818,7 +818,7 @@ class IntermediateLoginController extends IntermediateBaseController
             if (isset($registration_activity)) {
                 if (isset($from)) {
                     if ($from === 'facebook') {
-                        $registration_activity->activity_name_long = 'Facebook Sign Up';
+                        $registration_activity->activity_name_long = 'Sign Up via Facebook';
                         $registration_activity->save();
 
                         // @author Irianto Pratama <irianto@dominopos.com>
@@ -830,7 +830,7 @@ class IntermediateLoginController extends IntermediateBaseController
                             ]);
                         }
                     } else if ($from === 'form') {
-                        $registration_activity->activity_name_long = 'Email Sign Up';
+                        $registration_activity->activity_name_long = 'Sign Up with email address';
                         $registration_activity->save();
                     }
                 }
