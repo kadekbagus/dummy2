@@ -3115,6 +3115,7 @@ class UserAPIController extends ControllerAPI
                 'email' => $email,
                 'retailer_id' => $retailer_id,
                 'callback_url' => URL::route('customer-login-callback-show-id'),
+                'payload' => '',
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
