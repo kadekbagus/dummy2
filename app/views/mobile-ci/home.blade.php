@@ -535,6 +535,7 @@
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     var cookie_dismiss_name = 'dismiss_verification_popup';
+    var cookie_dismiss_name_2 = 'dismiss_activation_popup';
 
     @if ($active_user)
     cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
@@ -571,6 +572,11 @@
                     $.cookie(cookie_dismiss_name, 't', {expires: 3650});
                 }
             });
+
+            $('#userActivationModal').on('hidden.bs.modal', function () {
+                $.cookie(cookie_dismiss_name_2, 't', {expires: 3650});
+            });
+
             @if(! is_null($events))
             $('#promoModal').on('show.bs.modal', function() {
                 $.ajax({
@@ -599,7 +605,7 @@
                 @if ($active_user)
                     display: false
                 @else
-                    display: onlyEvent === false
+                    display: onlyEvent === false && !$.cookie(cookie_dismiss_name_2)
                 @endif
             }
             ];

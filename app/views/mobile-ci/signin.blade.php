@@ -365,6 +365,8 @@
         $('.userName').show();
       }
 
+      $.removeCookie('dismiss_activation_popup', { path: '/', domain: currentDomain });
+
       $('#notMe').click(function() {
         var currentDomain = window.location.hostname;
 
