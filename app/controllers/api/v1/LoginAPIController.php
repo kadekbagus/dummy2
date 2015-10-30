@@ -332,6 +332,7 @@ class LoginAPIController extends ControllerAPI
         // so the caller can add 'from Facebook' later.
         if ($activity->response_status == Activity::ACTIVITY_REPONSE_OK) {
             $this->response->data->setAttribute('registration_activity_id', $activity->activity_id);
+            IntermediateLoginController::proceedPayload(null, $activity->activity_id);
         }
 
         return $this->render($httpCode);
