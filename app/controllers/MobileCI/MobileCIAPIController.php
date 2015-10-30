@@ -66,6 +66,7 @@ use \App;
 
 class MobileCIAPIController extends ControllerAPI
 {
+    const APPLICATION_ID = 1;
     protected $session = null;
 
     /**
@@ -1187,7 +1188,7 @@ class MobileCIAPIController extends ControllerAPI
             $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
             $config->setConfig('session_origin.query_string.name', 'orbit_session');
             $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
-
+            $config->setConfig('application_id', MobileCIAPIController::APPLICATION_ID);
             $this->session = new Session($config);
             $this->session->start();
         }
