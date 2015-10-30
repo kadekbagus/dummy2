@@ -10,6 +10,7 @@ use Orbit\Text as OrbitText;
 use Activity;
 use CouponReportAPIController;
 use Response;
+use Mall;
 
 class CouponReportPrinterController extends DataPrinterController
 {
@@ -114,6 +115,10 @@ class CouponReportPrinterController extends DataPrinterController
 
         $tenantName = OrbitInput::get('tenant_name', 'Tenant');
         $mode = OrbitInput::get('export', 'print');
+        $current_mall = OrbitInput::get('current_mall');
+
+        $timezoneCurrentMall = $this->getTimezoneMall($current_mall);
+
         $user = $this->loggedUser;
 
         // Instantiate the CouponReportAPIController to get the query builder of Coupons
@@ -142,7 +147,7 @@ class CouponReportPrinterController extends DataPrinterController
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezoneCurrentMall));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report for ' . $tenantName, '', '', '', '', '');
@@ -179,10 +184,15 @@ class CouponReportPrinterController extends DataPrinterController
 
     public function getPrintIssuedCoupon()
     {
+
         $this->preparePDO();
         $prefix = DB::getTablePrefix();
 
         $mode = OrbitInput::get('export', 'print');
+        $current_mall = OrbitInput::get('current_mall');
+
+        $timezoneCurrentMall = $this->getTimezoneMall($current_mall);
+
         $user = $this->loggedUser;
 
         // Instantiate the CouponReportAPIController to get the query builder of Coupons
@@ -211,7 +221,7 @@ class CouponReportPrinterController extends DataPrinterController
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezoneCurrentMall));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Coupon Report', '', '', '', '', '', '', '');
@@ -298,4 +308,35 @@ class CouponReportPrinterController extends DataPrinterController
 
         return $input;
     }
+
+
+    /**
+     * Get timezone mall
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * @param string $current_mall
+     * @return string
+     */
+
+    public function getTimezoneMall($current_mall){
+        // get timezone based on current_mall
+        if (!empty($current_mall)) {
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                          ->where('merchants.merchant_id','=', $current_mall)
+                          ->first();
+
+            // if timezone not found
+            if (count($timezone)==0) {
+                $timezone = null;
+            } else {
+                $timezone = $timezone->timezone_name; // if timezone found
+            }
+        } else {
+            $timezone = null;
+        }
+
+        return $timezone;
+    }
+
 }
