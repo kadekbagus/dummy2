@@ -10,6 +10,7 @@ use User;
 use Mail;
 use Config;
 use Token;
+use Mall;
 
 class RegistrationMail
 {
