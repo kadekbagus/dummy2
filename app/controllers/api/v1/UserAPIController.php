@@ -2661,7 +2661,7 @@ class UserAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'orbit.empty.category:' . $mallId,
+                            'category_id'   => 'orbit.empty.category',
                         )
                     );
 
@@ -3419,12 +3419,15 @@ class UserAPIController extends ControllerAPI
 
         // Check the existance of category id
         Validator::extend('orbit.empty.category', function ($attribute, $value, $parameters) {
-            $mallId = $parameters[0];
-
             $category = Category::excludeDeleted()
-                                ->where('merchant_id', $mallId)
-                                ->where('category_id', $value)
-                                ->first();
+                                ->where('category_id', $value);
+
+            if (! empty($parameters)) {
+                $mallId = $parameters[0];
+                $category->where('merchant_id', $mallId);
+            }
+
+            $category = $category->first();
 
             if (empty($category)) {
                 return FALSE;
