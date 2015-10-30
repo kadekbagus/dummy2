@@ -2635,7 +2635,7 @@ class UserAPIController extends ControllerAPI
 
             OrbitInput::post('send_email', function($data) use ($updateduser) {
                 // Send email process to the queue
-                \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                \Queue::push('Orbit\\Queue\\RegistrationMail', [
                     'user_id' => $updateduser->user_id
                 ]);
             });
