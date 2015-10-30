@@ -255,7 +255,7 @@ return array(
     ),
 
     'search' => array(
-        'no_item'           => '基準にマッチしているテナントがありません。.',
+        'no_item'           => '基準にマッチしているテナントがありません。',
         'too_much_items'    => '検索結果が広すぎる、それを絞り込むください.',
     ),
 
@@ -340,10 +340,10 @@ return array(
         'lucky_draw'                => '幸運な抽選',
         'close'                     => '閉じる.',
 
-        'no_ongoing_lucky_draws'    => '現在、進行中の幸運な抽選がありません。.',
+        'no_ongoing_lucky_draws'    => '現在、進行中の幸運な抽選がありません。',
         'winner_number_will_appear' => 'あなたがモールにいる間、勝者番号はここに現れます.',
         'winning_number'            => '当選番号',
-        'lucky_draw_got_info_1'     => 'あなたは、幸運な抽選を得ませんでした。.',
+        'lucky_draw_got_info_1'     => 'あなたは、幸運な抽選を得ませんでした。',
         'lucky_draw_got_info_2'     => 'こちらはあなたの幸運な抽選番号です。あなたは …の 幸運な抽選番号を持っています',
         'lucky_draw_got_info_3'     => '幸運な抽選。我々は、あなたの運を祈ります！',
         'lucky_draw_got_info_4'     => 'このリストは1ページにつき... の幸運な抽選番号を示している',
