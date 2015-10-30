@@ -2628,17 +2628,17 @@ class UserAPIController extends ControllerAPI
                 $userdetail->date_of_work = $data;
             });
 
+            Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
+
+            $updateduser->save();
+            $userdetail->save();
+
             OrbitInput::post('send_email', function($data) use ($updateduser) {
                 // Send email process to the queue
                 \Queue::push('Orbit\\Queue\\NewPasswordMail', [
                     'user_id' => $updateduser->user_id
                 ]);
             });
-
-            Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
-
-            $updateduser->save();
-            $userdetail->save();
 
             // save user categories
             OrbitInput::post('no_category', function($no_category) use ($updateduser) {
