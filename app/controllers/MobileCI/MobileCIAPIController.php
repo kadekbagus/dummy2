@@ -81,6 +81,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         try {
             $email = trim(OrbitInput::post('email'));
+            $payload = OrbitInput::post('payload');
 
             if (trim($email) === '') {
                 $errorMessage = \Lang::get('validation.required', array('attribute' => 'email'));
@@ -103,7 +104,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->first();
 
             if (! is_object($user)) {
-                return $this->redirectToCloud($email, $retailer);
+                return $this->redirectToCloud($email, $retailer, $payload);
             } else {
                 return $this->loginStage2($user, $retailer);
             }
@@ -3716,7 +3717,7 @@ class MobileCIAPIController extends ControllerAPI
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer) {
+    private function redirectToCloud($email, $retailer, $payload = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
@@ -3725,6 +3726,7 @@ class MobileCIAPIController extends ControllerAPI
             'email' => $email,
             'retailer_id' => $retailer->merchant_id,
             'callback_url' => URL::route('customer-login-callback'),
+            'payload' => $payload,
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
