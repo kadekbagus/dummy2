@@ -27,7 +27,7 @@
 @stop
 
 @section('content')
-<div class="row top-space" id="signIn">
+<div class="row" id="signIn">
     <div class="col-xs-12">
         <header>
             <div class="row vertically-spaced">

@@ -10,6 +10,7 @@ use User;
 use Mail;
 use Config;
 use Token;
+use Mall;
 
 class RegistrationMail
 {
@@ -46,7 +47,7 @@ class RegistrationMail
         $tokenUrl = sprintf($baseUrl, $token->token_value);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
-        $retailer = $user->userdetail->retailer;
+        $retailer = Mall::find($data['merchant_id']);
         $data = array(
             'token'             => $token->token_value,
             'email'             => $user->user_email,
