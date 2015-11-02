@@ -200,6 +200,7 @@ return array(
     'Orbit\\FacebookSessionAdapter' => $baseDir . '/app/helpers/Orbit/FacebookSessionAdapter.php',
     'Orbit\\FakeJob' => $baseDir . '/app/helpers/Orbit/FakeJob.php',
     'Orbit\\Helper\\Asset\\Stylesheet' => $baseDir . '/app/helpers/Orbit/Helper/Asset/Stylesheet.php',
+    'Orbit\\Helper\\Email\\MXEmailChecker' => $baseDir . '/app/helpers/Orbit/Helper/Email/MXEmailChecker.php',
     'Orbit\\Helper\\Security\\Encrypter' => $baseDir . '/app/helpers/Orbit/Helper/Security/Encrypter.php',
     'Orbit\\OS\\Shutdown' => $baseDir . '/app/helpers/Orbit/OS/Shutdown.php',
     'Orbit\\Setting' => $baseDir . '/app/helpers/Orbit/Setting.php',
