@@ -67,7 +67,8 @@ class TokenAPIController extends ControllerAPI
             $tokens = Token::excludeDeleted()
                            ->whereIn('token_name', array('user_registration_mobile','user_setup_password','service_agreement'))
                            ->where('token_value', $tokenId)
-                           ->active();
+                           ->active()
+                           ->with('user.userdetail');
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
