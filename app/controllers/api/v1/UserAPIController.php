@@ -2633,11 +2633,11 @@ class UserAPIController extends ControllerAPI
             $updateduser->save();
             $userdetail->save();
 
-            OrbitInput::post('send_email', function($data) use ($updateduser) {
+            OrbitInput::post('send_email', function($data) use ($updateduser, $mallId) {
                 // Send email process to the queue
                 \Queue::push('Orbit\\Queue\\RegistrationMail', [
                     'user_id' => $updateduser->user_id,
-                    'merchant_id' => $updateduser->merchant_id,
+                    'merchant_id' => $mallId,
                 ]);
             });
 
