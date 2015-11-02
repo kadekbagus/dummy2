@@ -25,7 +25,7 @@ class RegistrationMail
     {
         // Get data information from the queue
         $userId = $data['user_id'];
-        $user = User::with('userdetail')->excludeDeleted()->find($userId);
+        $user = User::excludeDeleted()->find($userId);
         $email = $user->user_email;
 
         // Token expiration, fallback to 30 days
@@ -53,8 +53,6 @@ class RegistrationMail
             'email'             => $user->user_email,
             'first_name'        => $user->user_firstname,
             'last_name'         => $user->user_lastname,
-            'gender'            => $user->userdetail->gender,
-            'birthdate'         => $user->userdetail->birthdate,
             'token_url'         => $tokenUrl,
             'shop_name'         => $retailer->name,
             'cs_phone'          => $contactInfo['phone'],
