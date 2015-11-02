@@ -555,6 +555,7 @@
 
     $(document).ready(function() {
         var displayTutorial = false;
+        orbitIsViewing = true; {{-- declared in layout --}}
         // Override the content of displayTutorial
         if (get('show_tour') === 'yes') {
             displayTutorial = true;
@@ -566,7 +567,7 @@
             if (get('from_login') !== 'yes') {
                 onlyEvent = true;
             }
-            orbitIsViewing = false; {{-- declared in layout --}}
+            orbitIsViewing = false;
             $('#verifyModal').on('hidden.bs.modal', function () {
                 if ($('#verifyModalCheck')[0].checked) {
                     $.cookie(cookie_dismiss_name, 't', {expires: 3650});
