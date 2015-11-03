@@ -631,7 +631,276 @@ class DashboardAPIController extends ControllerAPI
 
 
 
+    /**
+     * GET - The detail of each item on top 5 Customer View
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`   (optional) - mall id
+     * @param string  `type`          (optional) - type of data : news, events, promotions.
+     * @param string  `object_id`     (optional) - id of news,events or promotion.
+     * @param json    `periods`       (optional) - list of start date and end date    
+     * @param date    `start_date`    (optional) - filter start date
+     * @param date    `end_date`      (optional) - filter end date
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getDetailTopCustomerView()
+    {
+        try {
+            $httpCode = 200;
 
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.before.auth', array($this, $user));
+
+            if (! ACL::create($user)->isAllowed('view_product')) {
+                Event::fire('orbit.dashboard.getdetailtopcustomerview.auth.notallowed', array($this, $user));
+                $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.after.auth', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $multiple_period = false;
+
+            if (OrbitInput::get('periods', null) !== null) {
+                $multiple_period = true;
+                $validator = null;
+                $periods_json = OrbitInput::get('periods', '{}');
+                $periods = @json_decode($periods_json, JSON_OBJECT_AS_ARRAY);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('invalid json for periods');
+                }
+                foreach ($periods as $dates) {
+
+                    $rules = 'required|date_format:Y-m-d H:i:s';
+                    $merchant_id = OrbitInput::get('merchant_id');
+                    $type = OrbitInput::get('type');
+                    $object_id = OrbitInput::get('object_id');
+
+                    $validator = Validator::make(
+                        array(
+                            'merchant_id' => $merchant_id,
+                            'type'        => $type,
+                            'object_id'   => $object_id,
+                            'start_date'  => $dates['start_date'],
+                            'end_date'    => $dates['end_date'],
+                        ),
+                        array(
+                            'merchant_id' => 'required',
+                            'type'        => 'required',
+                            'object_id'   => 'required',
+                            'start_date'  => $rules,
+                            'end_date'    => $rules,
+                        )
+                    );
+                }
+
+            } else {
+                // requesting single period
+                $start_date = OrbitInput::get('start_date');
+                $end_date = OrbitInput::get('end_date');
+                $merchant_id = OrbitInput::get('merchant_id');
+                $type = OrbitInput::get('type');
+                $object_id = OrbitInput::get('object_id');
+
+                $validator = Validator::make(
+                    array(
+                        'merchant_id'   => $merchant_id,
+                        'type'          => $type,
+                        'object_id'     => $object_id,
+                        'start_date'    => $start_date,
+                        'end_date'      => $end_date,
+                    ),
+                    array(
+                        'merchant_id'  => 'required',
+                        'type'         => 'required',
+                        'object_id'    => 'required',
+                        'start_date'   => 'required|date_format:Y-m-d H:i:s',
+                        'end_date'     => 'required|date_format:Y-m-d H:i:s'
+                    )
+                );
+                $periods = [
+                    [
+                        'start_date' => $start_date,
+                        'end_date' => $end_date,
+                    ]
+                ];
+            }
+
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.after.validation', array($this, $validator));
+
+            $tablePrefix = DB::getTablePrefix();
+
+            //dd($periods);
+            $responses = [];
+            switch ($type) {
+
+                // show news
+                case 'news':
+                        foreach ($periods as $period) {
+
+                            $start_date = $period['start_date'];
+                            $end_date = $period['end_date'];
+
+                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
+                                ->where('activities.activity_name', '=', 'view_news')
+                                ->where('activities.module_name', '=', 'News')
+                                ->where('activities.activity_type', '=', 'view')
+                                ->where('activities.role', '=', 'Consumer')
+                                ->where('activities.group', '=', 'mobile-ci')
+                                ->where('activities.location_id', '=', $merchant_id)
+                                ->where('activities.object_id', '=', $object_id)
+                                ->where("activities.created_at", '>=', $start_date)
+                                ->where("activities.created_at", '<=', $end_date)
+                                ->first();
+
+                            $result = (int)$query->score;
+
+                            $responses[] = [
+                                'start_date' => $start_date,
+                                'end_date' => $end_date,
+                                'score' => $result
+                            ];
+                        }
+                        break;
+
+                // show events
+                case 'events':
+                        foreach ($periods as $period) {
+
+                            $start_date = $period['start_date'];
+                            $end_date = $period['end_date'];
+
+                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
+                                ->where('activities.activity_name', '=', 'event_view')
+                                ->where('activities.module_name', '=', 'Event')
+                                ->where('activities.activity_type', '=', 'view')
+                                ->where('activities.role', '=', 'Consumer')
+                                ->where('activities.group', '=', 'mobile-ci')
+                                ->where('activities.location_id', '=', $merchant_id)
+                                ->where('activities.object_id', '=', $object_id)
+                                ->where("activities.created_at", '>=', $start_date)
+                                ->where("activities.created_at", '<=', $end_date)
+                                ->first();
+
+                            $result = (int)$query->score;
+
+                            $responses[] = [
+                                'start_date' => $start_date,
+                                'end_date' => $end_date,
+                                'score' => $result
+                            ];
+                        }
+                        break;
+
+                // show promotions
+                case 'promotions':
+                        foreach ($periods as $period) {
+
+                            $start_date = $period['start_date'];
+                            $end_date = $period['end_date'];
+
+                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
+                                ->where('activities.activity_name', '=', 'view_promotion') 
+                                ->where('activities.module_name', '=', 'Promotion')
+                                ->where('activities.activity_type', '=', 'view')
+                                ->where('activities.role', '=', 'Consumer')
+                                ->where('activities.group', '=', 'mobile-ci')
+                                ->where('activities.location_id', '=', $merchant_id)
+                                ->where('activities.object_id', '=', $object_id)
+                                ->where("activities.created_at", '>=', $start_date)
+                                ->where("activities.created_at", '<=', $end_date)
+                                ->first();
+
+                            $result = (int)$query->score;
+
+                            $responses[] = [
+                                'start_date' => $start_date,
+                                'end_date' => $end_date,
+                                'score' => $result
+                            ];
+                        }
+                        break;
+
+                // by default do nothing
+                default:
+                    $this->response->message = Lang::get('statuses.orbit.nodata.object');
+                    $responses = null;
+            }
+
+
+            if ($multiple_period) {
+                $this->response->data = $responses;
+            } else {
+                $this->response->data = $responses[0];
+            }
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getdetailtopcustomerview.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getdetailtopcustomerview.before.render', array($this, &$output));
+
+        return $output;
+    }
 
 
 
