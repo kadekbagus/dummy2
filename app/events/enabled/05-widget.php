@@ -31,7 +31,7 @@ Event::listen('orbit.widget.postnewwidget.after.save', function($controller, $wi
     $_POST['widget_id'] = $widget->widget_id;
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('widget.new')
-                                   ->postUploadWidgetImage($widget->widget_type);
+                                   ->postUploadWidgetImage($widget->widget_type, $widget->widget_order);
     if ($response->code !== 0)
     {
         throw new \Exception($response->message, $response->code);
@@ -66,7 +66,7 @@ Event::listen('orbit.widget.postupdatewidget.after.save', function($controller, 
     $_POST['widget_id'] = $widget->widget_id;
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('widget.update')
-                                   ->postUploadWidgetImage($widget->widget_type);
+                                   ->postUploadWidgetImage($widget->widget_type, $widget->widget_order);
 
     if ($response->code !== 0)
     {
