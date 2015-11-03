@@ -112,7 +112,7 @@ return array(
         'do_not_display'         => '今後このメッセージを表示しません',
         'and'                    => 'アンド',
 
-        'message_user_activation' => 'あなたのアカウントを有効にしてください',
+        'message_user_activation' => 'メールは &quot;%s&quot; に送信されました。あなたのアカウントを有効にするための指示に従ってください。何かの理由で、2時間以内我々からのメールが見ない場合は、スパムや迷惑メールフォルダーをチェックしてください。',
     ),
 
     //tenant catalogue

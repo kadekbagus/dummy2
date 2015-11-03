@@ -184,7 +184,7 @@ class UserAPIController extends ControllerAPI
                     ->setLocation($captive_location)
                     ->setUser($newuser)
                     ->setActivityName('registration_ok')
-                    ->setActivityNameLong('Email Sign Up')  // todo make this configurable?
+                    ->setActivityNameLong('Sign Up with email address')  // todo make this configurable?
                     ->setModuleName('Application')
                     ->responseOK();
                 $registration_activity->save();
@@ -2633,10 +2633,11 @@ class UserAPIController extends ControllerAPI
             $updateduser->save();
             $userdetail->save();
 
-            OrbitInput::post('send_email', function($data) use ($updateduser) {
+            OrbitInput::post('send_email', function($data) use ($updateduser, $mallId) {
                 // Send email process to the queue
                 \Queue::push('Orbit\\Queue\\RegistrationMail', [
-                    'user_id' => $updateduser->user_id
+                    'user_id' => $updateduser->user_id,
+                    'merchant_id' => $mallId,
                 ]);
             });
 

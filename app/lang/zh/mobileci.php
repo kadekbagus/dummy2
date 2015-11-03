@@ -112,7 +112,7 @@ return array(
         'do_not_display'         => '不要再显示此消息',
         'and'                    => '与',
 
-        'message_user_activation' => '请激活您的帐户',
+        'message_user_activation' => '一封电子邮件已经发送给 &quot;%s&quot; 。请按照激活您的帐户。如果由于某种原因你没有看到的电子邮件，我们在几个小时内，请检查您的垃圾邮件或垃圾邮件文件夹。',
     ),
 
     //tenant catalogue
