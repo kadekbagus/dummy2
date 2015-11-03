@@ -122,7 +122,7 @@ class EmployeeAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
 
                 // WTHell Laravel message wont work!! I need to subtitute manually
-                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('username', 'Email Login', $errorMessage);
                 $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -400,7 +400,7 @@ class EmployeeAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
 
                 // WTHell Laravel message wont work!! I need to subtitute manually
-                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('username', 'Email Login', $errorMessage);
                 $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -671,7 +671,7 @@ class EmployeeAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
 
                 // WTHell Laravel message wont work!! I need to subtitute manually
-                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('username', 'Email Login', $errorMessage);
                 $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -950,7 +950,7 @@ class EmployeeAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
 
                 // WTHell Laravel message wont work!! I need to subtitute manually
-                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('username', 'Email Login', $errorMessage);
                 $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -2283,7 +2283,7 @@ class EmployeeAPIController extends ControllerAPI
             $user = Employee::joinUser()->where('users.username', $value)->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Login ID has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
@@ -2300,7 +2300,7 @@ class EmployeeAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Login ID has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
