@@ -51,3 +51,6 @@ Route::get('/api/v1/dashboard/coupon-issued-vs-redeemed', "DashboardAPIControlle
 
 // Get Dashboard top tenant redeem
 Route::get('/api/v1/dashboard/top-tenant-redeem', "DashboardAPIController@getTopTenantRedeem");
+
+// Get Dashboard detail of top customer view
+Route::get('/api/v1/dashboard/detail-top-customer-view', "DashboardAPIController@getDetailTopCustomerView");
