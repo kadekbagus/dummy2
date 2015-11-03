@@ -200,6 +200,11 @@ class ConsumerPrinterController extends DataPrinterController
             $users->where('users.user_lastname', 'like', "%$lastname%");
         });
 
+        // Filter user by name_like (first_name last_name)
+        OrbitInput::get('name_like', function($data) use ($users) {
+            $users->where(DB::raw('CONCAT(user_firstname, " ", user_lastname)'), 'like', "%$data%");
+        });
+
         // Filter user by their email
         OrbitInput::get('email', function ($email) use ($users) {
             $users->whereIn('users.user_email', $email);
