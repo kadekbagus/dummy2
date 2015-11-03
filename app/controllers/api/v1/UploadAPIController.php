@@ -2261,7 +2261,7 @@ class UploadAPIController extends ControllerAPI
      * @param file|array `images`                       (required) - Images of the user photo
      * @return Illuminate\Support\Facades\Response
      */
-    public function postUploadWidgetImage($widgetType)
+    public function postUploadWidgetImage($widgetType, $widgetOrder = 0)
     {
         try {
             $httpCode = 200;
@@ -2369,9 +2369,12 @@ class UploadAPIController extends ControllerAPI
             $uploader = new Uploader($config, $message);
 
             Event::fire('orbit.upload.postuploadwidgetimage.before.save', array($this, $widget, $uploader));
-
             // Begin uploading the files
-            $uploaded = $uploader->upload($images);
+            if ($widgetOrder !== 0) {
+                $uploaded = $uploader->uploadWidget($images, $widgetOrder);
+            } else {
+                $uploaded = $uploader->upload($images);
+            }
 
             // Save the files metadata
             $object = array(
