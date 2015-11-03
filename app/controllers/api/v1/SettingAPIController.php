@@ -793,6 +793,11 @@ class SettingAPIController extends ControllerAPI
                 $settings->whereIn('settings.status', $status);
             });
 
+            // Filter setting by current_mall
+            OrbitInput::get('current_mall', function ($current_mall) use ($settings) {
+                $settings->whereIn('settings.object_id', $current_mall);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_settings = clone $settings;
