@@ -196,11 +196,8 @@
     {{ HTML::script('mobile-ci/scripts/autoNumeric.js') }}
     <script type="text/javascript">
         $(document).ready(function(){
-            @if($retailer->parent->currency == 'IDR')
-            $('.formatted-numx').text(parseFloat($('.formatted-numx').text()).toFixed(0)).autoNumeric('init', {aSep: ',', aDec: '.', mDec: 0, vMin: -9999999999.99});
-            @else
             $('.formatted-numx').text(parseFloat($('.formatted-numx').text()).toFixed(2)).autoNumeric('init', {aSep: ',', aDec: '.', mDec: 2, vMin: -9999999999.99});
-            @endif
+
             $('#image-gallery').lightSlider({
                 gallery:true,
                 item:1,
