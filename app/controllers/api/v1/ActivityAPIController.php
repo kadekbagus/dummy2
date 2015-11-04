@@ -95,7 +95,7 @@ class ActivityAPIController extends ControllerAPI
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
-            $tomorrow = date('Y-m-d H:i:s', strtotime('tomorrow'));
+            $tomorrow = date('d/m/Y H:i:s', strtotime('tomorrow'));
             $validator = Validator::make(
                 array(
                     'sort_by'       => $sort_by,

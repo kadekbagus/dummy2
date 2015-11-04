@@ -83,7 +83,7 @@ class EmployeeAPIController extends ControllerAPI
                     'role' => $employeeRole
                 ))
             ];
-            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+            $dateOfBirthLimit = date('d/m/Y', strtotime('yesterday'));
             $validator = Validator::make(
                 array(
                     'firstname'             => $firstName,
@@ -357,7 +357,7 @@ class EmployeeAPIController extends ControllerAPI
                     'role' => $employeeRole
                 ))
             ];
-            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+            $dateOfBirthLimit = date('d/m/Y', strtotime('yesterday'));
             $validator = Validator::make(
                 array(
                     'current_mall'          => $myRetailerIds,
@@ -634,7 +634,7 @@ class EmployeeAPIController extends ControllerAPI
                 )),
                 'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
             ];
-            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+            $dateOfBirthLimit = date('d/m/Y', strtotime('yesterday'));
             $validator = Validator::make(
                 array(
                     'user_id'               => $userId,
@@ -909,7 +909,7 @@ class EmployeeAPIController extends ControllerAPI
                 )),
                 'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
             ];
-            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+            $dateOfBirthLimit = date('d/m/Y', strtotime('yesterday'));
             $validator = Validator::make(
                 array(
                     'current_mall'          => $myRetailerIds,
