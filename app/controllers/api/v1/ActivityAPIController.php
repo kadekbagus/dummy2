@@ -2613,10 +2613,34 @@ class ActivityAPIController extends ControllerAPI
                     order by created_at asc
                 ") );
 
+            // Check interval
+            $begin = new DateTime($start_date);
+            $end = new DateTime($end_date);
+
+            // get periode per 1 day
+            $interval = DateInterval::createFromDateString('1 day');
+            $period = new DatePeriod($begin, $interval, $end);
+
+            foreach ( $period as $keyPeriode => $valPeriode ){
+                $defCondition = "";
+                foreach ($activities as $keyAct => $valAct) {
+                    if (  $valPeriode->format( "Y-m-d" ) ==  $valAct->date) {
+                        $activitiesObj[$keyPeriode] = new stdClass();
+                        $activitiesObj[$keyPeriode]->date = $valPeriode->format( "Y-m-d" );
+                        $activitiesObj[$keyPeriode]->total_minutes = $valAct->total_minutes;
+                        break;
+                    } else {
+                        $activitiesObj[$keyPeriode] = new stdClass();
+                        $activitiesObj[$keyPeriode]->date = $valPeriode->format( "Y-m-d" );
+                        $activitiesObj[$keyPeriode]->total_minutes = 0;
+                    }
+                }
+            }
+
             $this->response->data = [
                     'start_date' => $start_date,
                     'end_date' => $end_date,
-                    'connected_time' => $activities,
+                    'connected_time' => $activitiesObj,
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getcustomeraverageconnectedtime.access.forbidden', array($this, $e));
