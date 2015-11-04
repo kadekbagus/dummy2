@@ -34,6 +34,12 @@ class IssuedCoupon extends Eloquent
         return $this->belongsTo('Retailer', 'issuer_retailer_id', 'merchant_id');
     }
 
+    public function redeemretailer()
+    {
+        return $this->belongsTo('Tenant', 'redeem_retailer_id', 'merchant_id');
+    }
+
+
     /**
      * Save issued coupon based on promotion object.
      *

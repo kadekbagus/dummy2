@@ -3991,8 +3991,10 @@ class DashboardAPIController extends ControllerAPI
             // Builder object
             $now = date('Y-m-d H:i:s');
             $prefix = DB::getTablePrefix();
-            $total_all_redeem = IssuedCoupon::where('status', 'redeemed')
-                                            ->count();
+            $total_all_redeem = IssuedCoupon::join('merchants', 'issued_coupons.redeem_retailer_id', '=', 'merchants.merchant_id')
+                                            ->where('issued_coupons.status', 'redeemed')
+                                            ->where('merchants.parent_id', $configMallId);
+
             $coupons = Coupon::select('promotions.merchant_id as mall_id',
                                       'merchants.name as retailer_name',
                                       'merchants.logo as tenant_logo',
