@@ -88,7 +88,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'firstname'             => $firstName,
                     'lastname'              => $lastName,
-                    'birthdate'             => $birthdate,
+                    'date_of_birth'         => $birthdate,
                     'position'              => $position,
                     'employee_id_char'      => $employeeId,
                     'username'              => $loginId,
@@ -100,7 +100,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'firstname'         => 'required',
                     'lastname'          => 'required',
-                    'birthdate'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'     => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
                     'employee_id_char'  => 'orbit.exists.employeeid',
                     'username'          => 'required|orbit.exists.username',
                     'password'          => 'required|min:5|confirmed',
@@ -363,7 +363,7 @@ class EmployeeAPIController extends ControllerAPI
                     'current_mall'          => $myRetailerIds,
                     'firstname'             => $firstName,
                     'lastname'              => $lastName,
-                    'birthdate'             => $birthdate,
+                    'date_of_birth'         => $birthdate,
                     'position'              => $position,
                     'employee_id_char'      => $employeeId,
                     'username'              => $loginId,
@@ -377,7 +377,7 @@ class EmployeeAPIController extends ControllerAPI
                     'current_mall'      => 'required|orbit.empty.mall',
                     'firstname'         => 'required',
                     'lastname'          => 'required',
-                    'birthdate'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'     => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
                     'employee_id_char'  => 'orbit.exists.employeeid',
                     'username'          => 'required|orbit.exists.username.mall',
                     'password'          => 'required|min:5|confirmed',
@@ -638,7 +638,7 @@ class EmployeeAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'user_id'               => $userId,
-                    'birthdate'             => $birthdate,
+                    'date_of_birth'         => $birthdate,
                     'password'              => $password,
                     'password_confirmation' => $password2,
                     'employee_id_char'      => $employeeId,
@@ -648,7 +648,7 @@ class EmployeeAPIController extends ControllerAPI
                 ),
                 array(
                     'user_id'               => 'orbit.empty.user',
-                    'birthdate'             => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
                     'password'              => 'min:5|confirmed',
                     'employee_role'         => 'orbit.empty.employee.role',
                     'employee_id_char'      => 'orbit.exists.employeeid_but_me',
@@ -914,7 +914,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'current_mall'          => $myRetailerIds,
                     'user_id'               => $userId,
-                    'birthdate'             => $birthdate,
+                    'date_of_birth'         => $birthdate,
                     'password'              => $password,
                     'password_confirmation' => $password2,
                     'employee_id_char'      => $employeeId,
@@ -926,7 +926,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
                     'user_id'               => 'required|orbit.empty.user',
-                    'birthdate'             => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
                     'password'              => 'min:5|confirmed',
                     'employee_role'         => 'orbit.empty.employee.role',
                     'username'              => 'orbit.exists.username.mall_but_me',
