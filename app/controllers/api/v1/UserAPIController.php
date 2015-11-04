@@ -1498,21 +1498,14 @@ class UserAPIController extends ControllerAPI
                 $users->select('users.*');
             }
 
-            // join to activities for view user login any mall in ci
-            $users->join('activities', 'activities.user_id', '=', 'users.user_id')
-                  ->where(function($q) {
-                      $q->where('activities.activity_name', 'registration_ok')
-                        ->orWhere('activities.activity_name', 'login_ok');
-                  })
-                  ->where('activities.role', 'Consumer')
-                  ->groupBy('users.user_id');
+            $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
 
             if (empty($listOfMallIds)) { // invalid mall id
                 $users->whereRaw('0');
             } elseif ($listOfMallIds[0] === 1) { // if super admin
                 // show all users
             } else { // valid mall id
-                $users->whereIn('activities.location_id', $listOfMallIds);
+                $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds);
             }
 
             // Filter by retailer (shop) ids
