@@ -1277,6 +1277,11 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // Filter by Retailer name
+            OrbitInput::get('retailer_name_like', function($name) use ($coupons) {
+                $coupons->where('merchants.name', 'like', "%$name%");
+            });
+
+            // Filter by Retailer name
             OrbitInput::get('redeem_retailer_name_like', function($name) use ($coupons) {
                 $coupons->where('merchants.name', 'like', "%$name%");
             });
