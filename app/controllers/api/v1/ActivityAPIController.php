@@ -2539,7 +2539,6 @@ class ActivityAPIController extends ControllerAPI
 
     public function getCustomerAverageConnectedTime()
     {
-        // dd('bandung');
         try {
             $httpCode = 200;
 
