@@ -2614,11 +2614,9 @@ class ActivityAPIController extends ControllerAPI
                 ") );
 
             $this->response->data = [
-                'this_period' => [
                     'start_date' => $start_date,
                     'end_date' => $end_date,
                     'connected_time' => $activities,
-                ]
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getcustomeraverageconnectedtime.access.forbidden', array($this, $e));
