@@ -388,6 +388,8 @@ class IntermediateLoginController extends IntermediateBaseController
      * Clear the session
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
      * @return Response
      */
     public function getLogout()
@@ -431,6 +433,11 @@ class IntermediateLoginController extends IntermediateBaseController
 
             $this->session->destroy();
             $response->data = NULL;
+
+            // Store session id only from mobile-ci login & logout
+            if($from == 'mobile-ci'){
+                $activity->setSessionId($this->session->getSessionId());
+            }
 
             // Successfull logout
             $activity->setUser($user)
@@ -534,6 +541,8 @@ class IntermediateLoginController extends IntermediateBaseController
      * succeed.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
      * @param @see MobileCIAPIController::postLoginInShop()
      * @return Response
      */
@@ -603,6 +612,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $activity->setUser($user)
                      ->setActivityName('login_ok')
                      ->setActivityNameLong('Sign In')
+                     ->setSessionId($this->session->getSessionId())
                      ->responseOK();
 
             static::proceedPayload($activity, $user->registration_activity_id);
