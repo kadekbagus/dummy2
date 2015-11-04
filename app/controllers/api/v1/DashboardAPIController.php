@@ -3993,7 +3993,8 @@ class DashboardAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $total_all_redeem = IssuedCoupon::join('merchants', 'issued_coupons.redeem_retailer_id', '=', 'merchants.merchant_id')
                                             ->where('issued_coupons.status', 'redeemed')
-                                            ->where('merchants.parent_id', $configMallId);
+                                            ->where('merchants.parent_id', $configMallId)
+                                            ->count();
 
             $coupons = Coupon::select('promotions.merchant_id as mall_id',
                                       'merchants.name as retailer_name',
