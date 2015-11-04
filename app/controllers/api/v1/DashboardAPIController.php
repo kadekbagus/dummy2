@@ -63,7 +63,7 @@ class DashboardAPIController extends ControllerAPI
             Event::fire('orbit.activity.gettopten.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
-            
+
             $merchant_id = OrbitInput::get('merchant_id');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
@@ -101,18 +101,18 @@ class DashboardAPIController extends ControllerAPI
             $activities = DB::table('activities')
                 ->join('merchants', "activities.object_id", '=', "merchants.merchant_id")
                 ->select(
-                    DB::raw("{$tablePrefix}activities.object_id as tenant_id"),                    
+                    DB::raw("{$tablePrefix}activities.object_id as tenant_id"),
                     DB::raw("COUNT({$tablePrefix}activities.activity_id) as score"),
                     DB::raw("{$tablePrefix}merchants.name as tenant_name"),
                     DB::raw("
                                 count({$tablePrefix}activities.activity_id) / (
                                         SELECT count({$tablePrefix}activities.activity_id) FROM {$tablePrefix}activities
                                     where 1=1
-                                    and activity_name = 'view_retailer' 
-                                    and activity_type = 'view' 
-                                    and object_name = 'Tenant' 
-                                    and `group` = 'mobile-ci' 
-                                    and role = 'Consumer' 
+                                    and activity_name = 'view_retailer'
+                                    and activity_type = 'view'
+                                    and object_name = 'Tenant'
+                                    and `group` = 'mobile-ci'
+                                    and role = 'Consumer'
                                     and location_id = '" . $merchant_id . "'
                                     and DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
                                     and DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
@@ -203,7 +203,7 @@ class DashboardAPIController extends ControllerAPI
      * ------------------
      * @param integer `merchant_id`   (optional) - mall id
      * @param integer `take`          (optional) - limit the result
-     * @param string  `type`          (optional) - type of data : news, events, promotions.   
+     * @param string  `type`          (optional) - type of data : news, events, promotions.
      * @param date    `begin_date`    (optional) - filter date begin
      * @param date    `end_date`      (optional) - filter date end
      * @return Illuminate\Support\Facades\Response
@@ -301,7 +301,7 @@ class DashboardAPIController extends ControllerAPI
                         )
                         ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
                             $join->on('news.news_id', '=', 'activities.news_id');
-                            $join->where('news.object_type', '=', 'news'); 
+                            $join->where('news.object_type', '=', 'news');
                             $join->where('activities.activity_name', '=', 'view_news');
                             $join->where('activities.module_name', '=', 'News');
                             $join->where('activities.activity_type', '=', 'view');
@@ -383,7 +383,7 @@ class DashboardAPIController extends ControllerAPI
                         ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
                             $join->on('news.news_id', '=', 'activities.news_id');
                             $join->where('news.object_type', '=', 'promotion');
-                            $join->where('activities.activity_name', '=', 'view_promotion'); 
+                            $join->where('activities.activity_name', '=', 'view_promotion');
                             $join->where('activities.module_name', '=', 'Promotion');
                             $join->where('activities.activity_type', '=', 'view');
                             $join->where('activities.role', '=', 'Consumer');
@@ -409,7 +409,7 @@ class DashboardAPIController extends ControllerAPI
             } else {
                 $result = null;
             }
-            
+
             if (empty($result)) {
                 $this->response->message = Lang::get('statuses.orbit.nodata.object');
             }
@@ -641,7 +641,7 @@ class DashboardAPIController extends ControllerAPI
      * @param integer `merchant_id`   (optional) - mall id
      * @param string  `type`          (optional) - type of data : news, events, promotions.
      * @param string  `object_id`     (optional) - id of news,events or promotion.
-     * @param json    `periods`       (optional) - list of start date and end date    
+     * @param json    `periods`       (optional) - list of start date and end date
      * @param date    `start_date`    (optional) - filter start date
      * @param date    `end_date`      (optional) - filter end date
      * @return Illuminate\Support\Facades\Response
@@ -822,7 +822,7 @@ class DashboardAPIController extends ControllerAPI
                             $end_date = $period['end_date'];
 
                             $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'view_promotion') 
+                                ->where('activities.activity_name', '=', 'view_promotion')
                                 ->where('activities.module_name', '=', 'Promotion')
                                 ->where('activities.activity_type', '=', 'view')
                                 ->where('activities.role', '=', 'Consumer')
@@ -4256,6 +4256,6 @@ class DashboardAPIController extends ControllerAPI
 
             return $valid;
         });
-        
+
     }
 }

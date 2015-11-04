@@ -1495,7 +1495,7 @@ class UserAPIController extends ControllerAPI
                                         // ON
                                         'tmp_lucky.user_id', '=', 'users.user_id');
             } else {
-                $users->select('users.*');
+                $users->select('users.*', 'user_acquisitions.created_at as first_visit_date');
             }
 
             $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
@@ -1691,17 +1691,13 @@ class UserAPIController extends ControllerAPI
             // Filter user by first_visit date begin_date
             OrbitInput::get('first_visit_begin_date', function($begindate) use ($users)
             {
-                $users->whereHas('user_acquisitions', function ($q) use ($begindate) {
-                    $q->where('user_acquisitions.created_at', '>=', $begindate);
-                });
+                $users->where('user_acquisitions.created_at', '>=', $begindate);
             });
 
             // Filter user by first visit date end_date
             OrbitInput::get('first_visit_end_date', function($enddate) use ($users)
             {
-                $users->whereHas('user_acquisitions', function ($q) use ($enddate) {
-                    $q->where('user_acquisitions.created_at', '<=', $enddate);
-                });
+                $users->where('user_acquisitions.created_at', '<=', $enddate);
             });
 
             // Clone the query builder which still does not include the take,

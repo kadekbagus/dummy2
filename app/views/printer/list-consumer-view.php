@@ -125,7 +125,7 @@
             <th style="text-align:left;">Name</th>
             <th style="text-align:left;">Gender</th>
             <th style="text-align:left;">Mobile Phone</th>
-            <th style="text-align:left;">Orbit Join Date</th>
+            <th style="text-align:left;">First Visit Date & Time</th>
             <th style="text-align:left;">Issued Coupon</th>
             <th style="text-align:left;">Redeemed Coupon</th>
             <th style="text-align:left;">Status</th>
