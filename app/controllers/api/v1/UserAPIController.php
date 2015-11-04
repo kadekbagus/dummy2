@@ -1415,7 +1415,7 @@ class UserAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,membership_since,created_at,updated_at',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,membership_since,created_at,updated_at,first_visit_date',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1477,7 +1477,7 @@ class UserAPIController extends ControllerAPI
                         ->groupBy('users.user_id');
 
             if ($details === 'yes') {
-                $users->select('users.*', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
+                $users->select('users.*', 'user_acquisitions.created_at as first_visit_date', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
                                         where cp.status='active' and cp.user_id={$prefix}users.user_id and
@@ -1688,6 +1688,22 @@ class UserAPIController extends ControllerAPI
                 });
             });
 
+            // Filter user by first_visit date begin_date
+            OrbitInput::get('first_visit_begin_date', function($begindate) use ($users)
+            {
+                $users->whereHas('user_acquisitions', function ($q) use ($begindate) {
+                    $q->where('user_acquisitions.created_at', '>=', $begindate);
+                });
+            });
+
+            // Filter user by first visit date end_date
+            OrbitInput::get('first_visit_end_date', function($enddate) use ($users)
+            {
+                $users->whereHas('user_acquisitions', function ($q) use ($enddate) {
+                    $q->where('user_acquisitions.created_at', '<=', $enddate);
+                });
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_users = clone $users;
@@ -1742,7 +1758,8 @@ class UserAPIController extends ControllerAPI
                     'last_spent_amount'       => 'user_details.last_spent_any_shop',
                     'total_usable_coupon'     => 'total_usable_coupon',
                     'total_redeemed_coupon'   => 'total_redeemed_coupon',
-                    'total_lucky_draw_number' => 'total_lucky_draw_number'
+                    'total_lucky_draw_number' => 'total_lucky_draw_number',
+                    'first_visit_date'        => 'first_visit_date',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
