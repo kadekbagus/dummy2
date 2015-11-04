@@ -81,6 +81,7 @@ class ConsumerPrinterController extends DataPrinterController
                         'user_details.avg_annual_income1 as avg_annual_income1',
                         'user_details.avg_monthly_spent1 as avg_monthly_spent1',
                         'user_details.preferred_language as preferred_language',
+                        'user_acquisitions.created_at as first_visit_date',
                         DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                         DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                     inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
@@ -107,21 +108,15 @@ class ConsumerPrinterController extends DataPrinterController
                     ->excludeDeleted('users')
                     ->groupBy('users.user_id');
 
-        // join to activities for view user login any mall in ci
-        $users->join('activities', 'activities.user_id', '=', 'users.user_id')
-              ->where(function($q) {
-                  $q->where('activities.activity_name', 'registration_ok')
-                    ->orWhere('activities.activity_name', 'login_ok');
-              })
-              ->where('activities.role', 'Consumer')
-              ->groupBy('users.user_id');
+        // join to user_acquisitions
+        $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
 
         if (empty($listOfMallIds)) { // invalid mall id
             $users->whereRaw('0');
         } elseif ($listOfMallIds[0] === 1) { // if super admin
             // show all users
         } else { // valid mall id
-            $users->whereIn('activities.location_id', $listOfMallIds);
+            $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds);
         }
 
         // Filter by retailer (shop) ids
@@ -278,6 +273,18 @@ class ConsumerPrinterController extends DataPrinterController
             $users->where('users.created_at', '<=', $enddate);
         });
 
+        // Filter user by first_visit date begin_date
+        OrbitInput::get('first_visit_begin_date', function($begindate) use ($users)
+        {
+            $users->where('user_acquisitions.created_at', '>=', $begindate);
+        });
+
+        // Filter user by first visit date end_date
+        OrbitInput::get('first_visit_end_date', function($enddate) use ($users)
+        {
+            $users->where('user_acquisitions.created_at', '<=', $enddate);
+        });
+
         // Clone the query builder which still does not include the take,
         // skip, and order by
         $_users = clone $users;
@@ -305,7 +312,8 @@ class ConsumerPrinterController extends DataPrinterController
                 'last_spent_amount'       => 'user_details.last_spent_any_shop',
                 'total_usable_coupon'     => 'total_usable_coupon',
                 'total_redeemed_coupon'   => 'total_redeemed_coupon',
-                'total_lucky_draw_number' => 'total_lucky_draw_number'
+                'total_lucky_draw_number' => 'total_lucky_draw_number',
+                'first_visit_date'        => 'first_visit_date',
             );
 
             $sortBy = $sortByMapping[$_sortBy];
@@ -340,7 +348,7 @@ class ConsumerPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customer', $totalRec, '', '', '', '','','','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'Orbit Join Date', 'Issued Coupon', 'Redeemed Coupon', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Issued Coupon', 'Redeemed Coupon', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
@@ -478,17 +486,17 @@ class ConsumerPrinterController extends DataPrinterController
      */
     public function printCustomerSince($consumer, $timezone, $format='yes')
     {
-        if ($consumer->created_at==NULL || empty($consumer->created_at) || $consumer->created_at=="0000-00-00 00:00:00") {
+        if ($consumer->first_visit_date==NULL || empty($consumer->first_visit_date) || $consumer->first_visit_date=="0000-00-00 00:00:00") {
             $result = "";
         }
         else {
                 // change to correct timezone
                 if (!empty($timezone) || $timezone != null) {
-                    $date = Carbon::createFromFormat('Y-m-d H:i:s', $consumer->created_at, 'UTC');
+                    $date = Carbon::createFromFormat('Y-m-d H:i:s', $consumer->first_visit_date, 'UTC');
                     $date->setTimezone($timezone);
                     $_date = $date;
                 } else {
-                    $_date = $consumer->created_at;
+                    $_date = $consumer->first_visit_date;
                 }
 
                 // show in format if needed
