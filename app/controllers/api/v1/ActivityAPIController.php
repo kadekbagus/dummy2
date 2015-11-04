@@ -2610,7 +2610,7 @@ class ActivityAPIController extends ControllerAPI
                           GROUP BY session_id
                     ) as A
                     group by date
-                    order by created_at desc
+                    order by created_at asc
                 ") );
 
             $this->response->data = [
