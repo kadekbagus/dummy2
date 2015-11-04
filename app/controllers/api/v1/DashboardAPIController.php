@@ -3995,6 +3995,7 @@ class DashboardAPIController extends ControllerAPI
                                             ->count();
             $coupons = Coupon::select('promotions.merchant_id as mall_id',
                                       'merchants.name as retailer_name',
+                                      'merchants.logo as tenant_logo',
                                       DB::raw("sum(total_redeemed) as all_redeemed, sum(total_redeemed)/{$total_all_redeem}*100 as percentage"),
                                       DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
                                                     CASE WHEN
