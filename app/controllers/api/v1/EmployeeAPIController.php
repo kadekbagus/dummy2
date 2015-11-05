@@ -83,7 +83,7 @@ class EmployeeAPIController extends ControllerAPI
                     'role' => $employeeRole
                 ))
             ];
-            $dateOfBirthLimit = date('d/m/Y', strtotime('yesterday'));
+
             $validator = Validator::make(
                 array(
                     'firstname'             => $firstName,
@@ -100,7 +100,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'firstname'         => 'required',
                     'lastname'          => 'required',
-                    'date_of_birth'     => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'     => 'date_format:Y-m-d',
                     'employee_id_char'  => 'orbit.exists.employeeid',
                     'username'          => 'required|orbit.exists.username',
                     'password'          => 'required|min:5|confirmed',
@@ -357,7 +357,7 @@ class EmployeeAPIController extends ControllerAPI
                     'role' => $employeeRole
                 ))
             ];
-            $dateOfBirthLimit = date('d/m/Y', strtotime('yesterday'));
+
             $validator = Validator::make(
                 array(
                     'current_mall'          => $myRetailerIds,
@@ -377,7 +377,7 @@ class EmployeeAPIController extends ControllerAPI
                     'current_mall'      => 'required|orbit.empty.mall',
                     'firstname'         => 'required',
                     'lastname'          => 'required',
-                    'date_of_birth'     => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'     => 'date_format:Y-m-d',
                     'employee_id_char'  => 'orbit.exists.employeeid',
                     'username'          => 'required|orbit.exists.username.mall',
                     'password'          => 'required|min:5|confirmed',
@@ -634,7 +634,7 @@ class EmployeeAPIController extends ControllerAPI
                 )),
                 'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
             ];
-            $dateOfBirthLimit = date('d/m/Y', strtotime('yesterday'));
+
             $validator = Validator::make(
                 array(
                     'user_id'               => $userId,
@@ -648,7 +648,7 @@ class EmployeeAPIController extends ControllerAPI
                 ),
                 array(
                     'user_id'               => 'orbit.empty.user',
-                    'date_of_birth'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'         => 'date_format:Y-m-d',
                     'password'              => 'min:5|confirmed',
                     'employee_role'         => 'orbit.empty.employee.role',
                     'employee_id_char'      => 'orbit.exists.employeeid_but_me',
@@ -909,7 +909,7 @@ class EmployeeAPIController extends ControllerAPI
                 )),
                 'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
             ];
-            $dateOfBirthLimit = date('d/m/Y', strtotime('yesterday'));
+
             $validator = Validator::make(
                 array(
                     'current_mall'          => $myRetailerIds,
@@ -926,7 +926,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
                     'user_id'               => 'required|orbit.empty.user',
-                    'date_of_birth'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'         => 'date_format:Y-m-d',
                     'password'              => 'min:5|confirmed',
                     'employee_role'         => 'orbit.empty.employee.role',
                     'username'              => 'orbit.exists.username.mall_but_me',
