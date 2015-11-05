@@ -1477,7 +1477,7 @@ class UserAPIController extends ControllerAPI
                         ->groupBy('users.user_id');
 
             if ($details === 'yes') {
-                $users->select('users.*', 'user_acquisitions.created_at as first_visit_date', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
+                $users->select('users.*', DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name','activities.location_id',  DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
                                         where cp.status='active' and cp.user_id={$prefix}users.user_id and
@@ -1495,10 +1495,21 @@ class UserAPIController extends ControllerAPI
                                         // ON
                                         'tmp_lucky.user_id', '=', 'users.user_id');
             } else {
-                $users->select('users.*', 'user_acquisitions.created_at as first_visit_date');
+                $users->select('users.*', DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"));
             }
 
             $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+
+            $current_mall = OrbitInput::get('current_mall');
+            
+            $users->leftJoin('activities', function($join) use($current_mall) {
+                            $join->on('activities.user_id', '=', 'users.user_id')
+                                 ->where('activities.activity_name', '=', 'login_ok')
+                                 ->where('activities.role', '=', 'Consumer')
+                                 ->where('activities.group', '=', 'mobile-ci')
+                                 ->where('activities.location_id', '=', $current_mall)
+                                 ;
+                        });
 
             if (empty($listOfMallIds)) { // invalid mall id
                 $users->whereRaw('0');
@@ -1691,13 +1702,13 @@ class UserAPIController extends ControllerAPI
             // Filter user by first_visit date begin_date
             OrbitInput::get('first_visit_begin_date', function($begindate) use ($users)
             {
-                $users->where('user_acquisitions.created_at', '>=', $begindate);
+                $users->where('activities.created_at', '>=', $begindate);
             });
 
             // Filter user by first visit date end_date
             OrbitInput::get('first_visit_end_date', function($enddate) use ($users)
             {
-                $users->where('user_acquisitions.created_at', '<=', $enddate);
+                $users->where('activities.created_at', '<=', $enddate);
             });
 
             // Clone the query builder which still does not include the take,

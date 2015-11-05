@@ -81,7 +81,7 @@ class ConsumerPrinterController extends DataPrinterController
                         'user_details.avg_annual_income1 as avg_annual_income1',
                         'user_details.avg_monthly_spent1 as avg_monthly_spent1',
                         'user_details.preferred_language as preferred_language',
-                        'user_acquisitions.created_at as first_visit_date',
+                        'activities.created_at as first_visit_date',
                         DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                         DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                     inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
@@ -110,6 +110,17 @@ class ConsumerPrinterController extends DataPrinterController
 
         // join to user_acquisitions
         $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+
+        $current_mall = OrbitInput::get('current_mall');
+        
+        $users->leftJoin('activities', function($join) use($current_mall) {
+                        $join->on('activities.user_id', '=', 'users.user_id')
+                             ->where('activities.activity_name', '=', 'login_ok')
+                             ->where('activities.role', '=', 'Consumer')
+                             ->where('activities.group', '=', 'mobile-ci')
+                             ->where('activities.location_id', '=', $current_mall)
+                             ;
+                    });
 
         if (empty($listOfMallIds)) { // invalid mall id
             $users->whereRaw('0');
@@ -276,13 +287,13 @@ class ConsumerPrinterController extends DataPrinterController
         // Filter user by first_visit date begin_date
         OrbitInput::get('first_visit_begin_date', function($begindate) use ($users)
         {
-            $users->where('user_acquisitions.created_at', '>=', $begindate);
+            $users->where('activities.created_at', '>=', $begindate);
         });
 
         // Filter user by first visit date end_date
         OrbitInput::get('first_visit_end_date', function($enddate) use ($users)
         {
-            $users->where('user_acquisitions.created_at', '<=', $enddate);
+            $users->where('activities.created_at', '<=', $enddate);
         });
 
         // Clone the query builder which still does not include the take,
