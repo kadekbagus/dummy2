@@ -95,7 +95,6 @@ class ActivityAPIController extends ControllerAPI
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
-            $tomorrow = date('d/m/Y H:i:s', strtotime('tomorrow'));
             $validator = Validator::make(
                 array(
                     'sort_by'       => $sort_by,
@@ -106,8 +105,8 @@ class ActivityAPIController extends ControllerAPI
                 array(
                     'sort_by'       => 'in:id,ip_address,created,registered_at,email,full_name,object_name,product_name,coupon_name,promotion_name,news_name,promotion_news_name,event_name,action_name,action_name_long,activity_type,gender,staff_name,module_name,retailer_name',
                     'merchant_ids'  => 'orbit.check.merchants',
-                    'start_date'    => 'date_format:Y-m-d H:i:s|before:' . $tomorrow,
-                    'end_date'      => 'date_format:Y-m-d H:i:s|before:' . $tomorrow,
+                    'start_date'    => 'date_format:Y-m-d H:i:s',
+                    'end_date'      => 'date_format:Y-m-d H:i:s',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.activity_sortby'),
@@ -2522,184 +2521,6 @@ class ActivityAPIController extends ControllerAPI
         return $output;
     }
 
-
-    /**
-     * GET - Cutomer averege connected time , Default data is 14 days before today
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     *
-     * List Of Parameters
-     * ------------------
-     * @param integer `merchant_id`              (optional) - limit by merchant id
-     * @param date    `start_date`               (optional) - filter date begin
-     * @param date    `end_date`                 (optional) - filter date end
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-
-    public function getCustomerAverageConnectedTime()
-    {
-        try {
-            $httpCode = 200;
-
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.before.auth', array($this));
-
-            // Require authentication
-            $this->checkAuth();
-
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.after.auth', array($this));
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.before.authz', array($this, $user));
-
-            // @Todo: Use ACL authentication instead
-            $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
-            if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
-            }
-
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
-
-            $current_mall = OrbitInput::get('current_mall');
-            $start_date = OrbitInput::get('start_date'); //2015-11-20
-            $end_date = OrbitInput::get('end_date'); //2015-11-25
-
-            $validator = Validator::make(
-                array(
-                    'current_mall'        => $current_mall,
-                    'start_date'          => $start_date,
-                    'end_date'            => $end_date,
-                ),
-                array(
-                    'current_mall'        => 'orbit.empty.merchant',
-                    'start_date'          => 'required|date_format:Y-m-d',
-                    'end_date'            => 'required|date_format:Y-m-d',
-                )
-            );
-
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.before.validation', array($this, $validator));
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.after.validation', array($this, $validator));
-
-            // registrations from start to end grouped by date part and activity name long.
-            // activity name long should include source.
-            $tablePrefix = DB::getTablePrefix();
-
-            $activities = DB::select( DB::raw("
-                    SELECT DATE(created_at) as date, ROUND(avg(TIMESTAMPDIFF(MINUTE, mindate, maxdate))) as total_minutes FROM (
-                          SELECT
-                          activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
-                          MIN(created_at) mindate, MAX(created_at) maxdate
-                          FROM {$tablePrefix}activities WHERE 1=1
-                          AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                          AND location_id = '" . $current_mall . "'
-                          AND role = 'Consumer'
-                          AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
-                          AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
-                          GROUP BY session_id
-                    ) as A
-                    group by date
-                    order by created_at asc
-                ") );
-
-            // Check interval
-            $begin = new DateTime($start_date);
-            $endtime = new DateTime($end_date);
-            // Plus one day endtime
-            $end = $endtime->add(new DateInterval('P1D'));
-
-            // get periode per 1 day
-            $interval = DateInterval::createFromDateString('1 day');
-            $period = new DatePeriod($begin, $interval, $end);
-
-            $activitiesObj = null;
-
-            // Check exist data and handling null data
-            foreach ( $period as $keyPeriode => $valPeriode ){
-                foreach ($activities as $keyAct => $valAct) {
-                    if (  $valPeriode->format( "Y-m-d" ) ==  $valAct->date) {
-                        $activitiesObj[$keyPeriode] = new stdClass();
-                        $activitiesObj[$keyPeriode]->date = $valPeriode->format( "Y-m-d" );
-                        $activitiesObj[$keyPeriode]->total_minutes = $valAct->total_minutes;
-                        break;
-                    } else {
-                        $activitiesObj[$keyPeriode] = new stdClass();
-                        $activitiesObj[$keyPeriode]->date = $valPeriode->format( "Y-m-d" );
-                        $activitiesObj[$keyPeriode]->total_minutes = 0;
-                    }
-                }
-            }
-
-            $this->response->data = [
-                    'start_date' => $start_date,
-                    'end_date' => $end_date,
-                    'connected_time' => $activitiesObj,
-            ];
-        } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.access.forbidden', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 403;
-        } catch (InvalidArgsException $e) {
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.invalid.arguments', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
-            $httpCode = 403;
-        } catch (QueryException $e) {
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.query.error', array($this, $e));
-
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-
-            // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
-            $this->response->data = null;
-            $httpCode = 500;
-        } catch (Exception $e) {
-            Event::fire('orbit.activity.getcustomeraverageconnectedtime.general.exception', array($this, $e));
-
-            $this->response->code = $this->getNonZeroCode($e->getCode());
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-
-            if (Config::get('app.debug')) {
-                $this->response->data = $e->__toString();
-            } else {
-                $this->response->data = null;
-            }
-        }
-
-        $output = $this->render($httpCode);
-        Event::fire('orbit.activity.getcustomeraverageconnectedtime.before.render', array($this, &$output));
-
-        return $output;
-    }
-
     protected function registerCustomValidation()
     {
         $user = $this->api->user;
@@ -2721,22 +2542,6 @@ class ActivityAPIController extends ControllerAPI
 
             return TRUE;
         });
-
-        // Check exist merchant
-        Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Mall::excludeDeleted()
-                        ->where('merchant_id', $value)
-                        ->where('is_mall', 'yes')
-                        ->first();
-            if (empty($merchant)) {
-                return FALSE;
-            }
-
-            App::instance('orbit.empty.merchant', $merchant);
-
-            return TRUE;
-        });
-
     }
 
     /**
