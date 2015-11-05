@@ -3670,7 +3670,7 @@ class DashboardAPIController extends ControllerAPI
                             ->join('merchants', 'merchants.merchant_id', '=', DB::raw('redeemed.redeem_retailer_id'));
 
             // Filter by mall id
-            OrbitInput::get('mall_id', function($mallId) use ($coupons, $configMallId) {
+            OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
                 $coupons->where('promotions.merchant_id', $mallId);
             });
 
