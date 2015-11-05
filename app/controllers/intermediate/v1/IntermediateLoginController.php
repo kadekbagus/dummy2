@@ -10,6 +10,7 @@ use MobileCI\MobileCIAPIController;
 use Net\Security\Firewall;
 use Orbit\Helper\Security\Encrypter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
@@ -126,8 +127,52 @@ class IntermediateLoginController extends IntermediateBaseController
      * @return Response
      */
     public function postLoginMallCustomerService()
-    {
-        $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
+    {   
+        // this additional code is for checking url of cs portal to match the cs user on the correct mall
+        // for bug fix OM-685 Takashimaya:Employee Setup(Role:CS) from another mall can login to My CS Portal
+        // note that the url is hardcoded
+
+        $csUrl = URL::to('/');
+        $searchUrl = array("http://cs", "https://cs"); 
+        $replaceUrl = array("dom:", "dom:"); 
+
+        $seetingUrl = str_replace($searchUrl, $replaceUrl, $csUrl);
+        $setting = Setting::where('setting_name', '=', $seetingUrl)->first();
+
+        if (is_object($setting)) {
+            $mallId = $setting->setting_value;
+        } else {
+            $mallId = 0;
+        }
+
+        $email = trim(OrbitInput::post('email'));
+
+        if (trim($email) === '') {
+            $response = new stdclass();
+            $response->code = 14;
+            $response->status = 'error'; 
+            $response->message = Lang::get('validation.required', array('attribute' => 'email'));
+            $response->data = null; 
+        } else {
+            $user = User::excludeDeleted('users')
+                      ->leftJoin('employees','employees.user_id', '=', 'users.user_id')
+                      ->leftJoin('employee_retailer','employee_retailer.employee_id','=','employees.employee_id')
+                      ->where('user_email', '=', $email)
+                      ->where('employee_retailer.retailer_id', '=', $mallId)
+                      ->first();
+
+            if (is_object($user) || $user != null) { 
+                $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
+            } else {
+                $response = new stdclass();
+                $response->code = 13;
+                $response->status = 'error'; 
+                $response->message = Lang::get('validation.orbit.access.loginfailed');
+                $response->data = null; 
+            }
+
+        }
+
         if ($response->code === 0)
         {
             $user = $response->data;
