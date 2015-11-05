@@ -84,9 +84,17 @@ Route::get('/api/v1/activity/connected-now-statistics', function()
 });
 
 /**
- * Get "connected now" user statistics for several period
+ * Get customer average connected time user for several period
  */
 Route::get('/api/v1/activity/customer-average-connected-time', function()
 {
     return ActivityAPIController::create()->getCustomerAverageConnectedTime();
+});
+
+/**
+ * Get customer connected hourly user for several period
+ */
+Route::get('/api/v1/activity/customer-connected-hourly', function()
+{
+    return ActivityAPIController::create()->getCustomerConnectedHourly();
 });
