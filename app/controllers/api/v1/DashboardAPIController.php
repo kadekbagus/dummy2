@@ -3599,7 +3599,7 @@ class DashboardAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:promotion_id,promotion_name,begin_date,end_date,is_auto_issue_on_signup,retailer_name,total_redeemed,total_issued,coupon_status,status',
+                    'sort_by' => 'in:issued_coupon_id,issued_date,redeemed_date,promotion_name,redeem_retailer_id,retailer_name,mall_id,total_issued,total_redeemed',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.couponreportgeneral_sortby'),
@@ -3636,119 +3636,79 @@ class DashboardAPIController extends ControllerAPI
             // Builder object
             $now = date('Y-m-d H:i:s');
             $prefix = DB::getTablePrefix();
-            $coupons = Coupon::select('promotions.promotion_id', 'promotions.merchant_id as mall_id', 'promotions.is_coupon', 'promotions.promotion_name',
-                                      'promotions.begin_date', 'promotions.end_date', 'merchants.name as retailer_name',
-                                      DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
-                                      DB::raw("issued.*"),
-                                      DB::raw("redeemed.*"),
-                                      DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
-                                                    CASE WHEN
-                                                        DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
-                                                    WHEN
-                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
-                                                    ELSE
-                                                        {$prefix}promotions.status
-                                                    END
-                                                ELSE
-                                                    {$prefix}promotions.status
-                                                END as 'coupon_status'"), 'promotions.status')
-                            ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
-                                              from {$prefix}issued_coupons ic
-                                              where ic.status = 'active' or ic.status = 'redeemed'
-                                              group by promotion_id) issued"),
-                            // On
-                            DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
+            $take_top = OrbitInput::get('take_top');
 
-                            ->join(DB::raw("(select promotion_id, redeem_retailer_id, count(promotion_id) as total_redeemed
-                                                from {$prefix}issued_coupons ic
-                                                where ic.status = 'redeemed'
-                                                group by promotion_id, redeem_retailer_id) redeemed"),
-                            // On
-                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
+            if (empty($take_top)) {
+                $take_top = 0;
+            }
 
-                            ->join('merchants', 'merchants.merchant_id', '=', DB::raw('redeemed.redeem_retailer_id'));
-
+            $coupons = DB::table(DB::raw("
+                                (select *
+                                from (select issued_coupon_id,
+                                            issued_date,
+                                            redeemed_date,
+                                            {$prefix}promotions.promotion_name as promotion_name,
+                                            redeem_retailer_id,
+                                            {$prefix}merchants.name as retailer_name,
+                                            {$prefix}merchants.parent_id as mall_id,
+                                            issued.total_issued as total_issued,
+                                            count(redeem_retailer_id) as total_redeemed
+                                    from {$prefix}issued_coupons
+                                        inner join {$prefix}merchants
+                                            on {$prefix}merchants.merchant_id = {$prefix}issued_coupons.redeem_retailer_id
+                                        inner join {$prefix}promotions
+                                            on {$prefix}promotions.promotion_id = {$prefix}issued_coupons.promotion_id
+                                        left join (select ic.promotion_id,
+                                                        count(ic.promotion_id) as total_issued
+                                                    from {$prefix}issued_coupons ic
+                                                    where ic.status = 'active'
+                                                        or ic.status = 'redeemed'
+                                                    group by ic.promotion_id) issued
+                                            on issued.promotion_id = {$prefix}promotions.promotion_id
+                                    where {$prefix}merchants.parent_id = '{$configMallId}'
+                                    group by {$prefix}promotions.promotion_id, redeem_retailer_id
+                                    order by total_redeemed desc
+                                    limit {$take_top}) as issuedredeem) as t
+                            "));
             // Filter by mall id
             OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
-                $coupons->where('promotions.merchant_id', $mallId);
-            });
-
-            // Filter by Promotion ID
-            OrbitInput::get('promotion_id', function($pid) use ($coupons) {
-                $pid = (array)$pid;
-                $coupons->whereIn('promotions.promotion_id', $pid);
-            });
-
-            // Filter by is coupon flag
-            OrbitInput::get('is_coupon', function($isCoupon) use ($coupons) {
-                $isCoupon = (array)$isCoupon;
-                $coupons->whereIn('promotions.is_coupon', $isCoupon);
+                $coupons->where('mall_id', $mallId);
             });
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
-                $coupons->where('promotions.promotion_name', 'like', "%$name%");
+                $coupons->where('promotion_name', 'like', "%$name%");
             });
 
             // Filter by Retailer name
             OrbitInput::get('retailer_name_like', function($name) use ($coupons) {
-                $coupons->where('merchants.name', 'like', "%$name%");
-            });
-
-            // Filter by auto issue on sign up
-            OrbitInput::get('is_auto_issue_on_signup', function($auto) use ($coupons, $prefix) {
-                $auto = (array)$auto;
-                $coupons->whereIn(DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END"), $auto);
-            });
-
-            // Filter by coupon status with expired
-            OrbitInput::get('coupon_status', function($status) use ($coupons, $prefix, $now) {
-                $status = (array)$status;
-                $coupons->whereIn(DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
-                                                    CASE WHEN
-                                                        DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
-                                                    WHEN
-                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
-                                                    ELSE
-                                                        {$prefix}promotions.status
-                                                    END
-                                                ELSE
-                                                    {$prefix}promotions.status
-                                                END"), $status);
-            });
-
-            // Filter by coupon campaign status
-            OrbitInput::get('status', function($status) use ($coupons) {
-                $status = (array)$status;
-                $coupons->whereIn('promotions.status', $status);
+                $coupons->where('retailer_name', 'like', "%$name%");
             });
 
             // Filter by date
             // Less Than Equals
-            OrbitInput::get('begin_date_lte', function($date) use ($coupons) {
-                $coupons->where('promotions.begin_date', '<=', $date);
+            OrbitInput::get('start_date', function($date) use ($coupons) {
+                $coupons->where('issued_date', '>=', $date);
             });
 
             // Greater Than Equals
-            OrbitInput::get('begin_date_gte', function($date) use ($coupons) {
-                $coupons->where('promotions.begin_date', '>=', $date);
+            OrbitInput::get('end_date', function($date) use ($coupons) {
+                $coupons->where('issued_date', '<=', $date);
             });
 
             // Less Than Equals
-            OrbitInput::get('end_date_lte', function($date) use ($coupons) {
-                $coupons->where('promotions.end_date', '<=', $date);
+            OrbitInput::get('start_date', function($date) use ($coupons) {
+                $coupons->where('redeemed_date', '>=', $date);
             });
 
             // Greater Than Equals
-            OrbitInput::get('end_date_gte', function($date) use ($coupons) {
-                $coupons->where('promotions.end_date', '>=', $date);
+            OrbitInput::get('enda_date', function($date) use ($coupons) {
+                $coupons->where('redeemed_date', '<=', $date);
             });
-
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_coupons = clone $coupons;
-            $_coupons->select('promotions.promotion_id');
+            $_coupons->select('issued_coupon_id');
 
             // Get the take args
             $take = $perPage;
@@ -3776,7 +3736,7 @@ class DashboardAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'coupon_status';
+            $sortBy = 'promotion_name';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -3785,28 +3745,21 @@ class DashboardAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'promotion_id'              => 'promotions.promotion_id',
-                    'mall_id'                   => 'mall_id',
-                    'is_coupon'                 => 'is_coupon',
-                    'promotion_name'            => 'promotions.promotion_name',
-                    'begin_date'                => 'promotions.begin_date',
-                    'end_date'                  => 'promotions.end_date',
-                    'is_auto_issue_on_signup'   => 'is_auto_issue_on_signup',
-                    'total_issued'              => 'total_issued',
-                    'redeem_retailer_id'        => 'redeem_retailer_id',
-                    'retailer_name'             => 'retailer_name',
-                    'total_redeemed'            => 'total_redeemed',
-                    'coupon_status'             => 'coupon_status',
-                    'status'                    => 'promotions.status'
+                    'promotion_name'       => 'promotion_name',
+                    'mall_id'              => 'mall_id',
+                    'issued_coupon_id'     => 'issued_coupon_id',
+                    'redeem_retailer_id'   => 'redeem_retailer_id',
+                    'retailer_name'        => 'retailer_name',
+                    'redeemed_date'        => 'redeemed_date',
+                    'issued_date'          => 'issued_date',
+                    'total_issued'         => 'total_issued',
+                    'total_redeemed'       => 'total_redeemed',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            // sort by status first
-            if ($sortBy !== 'coupon_status') {
-                $coupons->orderBy('coupon_status', 'asc');
-            }
+            $coupons->orderBy('promotion_name', 'asc');
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
@@ -3817,17 +3770,7 @@ class DashboardAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
-            // also to sort tenant name
-            if ($sortBy !== 'retailer_name') {
-                $coupons->orderBy('retailer_name', 'asc');
-            }
-
-            // Return the instance of Query Builder
-            if ($this->returnBuilder) {
-                return ['builder' => $coupons, 'count' => RecordCounter::create($_coupons)->count()];
-            }
-
-            $totalCoupons = RecordCounter::create($_coupons)->count();
+            $totalCoupons = $_coupons->count();
             $listOfCoupons = $coupons->get();
 
             $data = new stdclass();

@@ -272,7 +272,7 @@ return array(
             'link_object_id'       => 'The Link Object ID you specified is not found.',
             'bank_object'          => 'The Bank Object ID you specified is not found.',
             'mall'                 => 'The Mall ID you specified is not found.',
-            'couponreportgeneral_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, is_auto_issue_on_signup, retailer_name, total_redeemed, total_issued, coupon_status, status',
+            'couponreportgeneral_sortby' => 'The sort by argument you specified is not valid, the valid values are: issued_date, redeemed_date, promotion_name, redeem_retailer_id, retailer_name, mall_id, total_issued, total_redeemed',
             'couponredeemedreportgeneral_sortby' => 'The sort by argument you specified is not valid, the valid values are: issued_coupon_id, promotion_id, transaction_id, issued_coupon_code, user_id, expired_date, issued_date, redeemed_date, issuer_retailer_id, redeem_retailer_id, redeem_verification_code, status, created_at, updated_at',
             'couponreportbycouponname_sortby' => 'The sort by argument you specified is not valid, the valid values are: redeem_retailer_name, total_redeemed, issued_coupon_code, user_email, redeemed_date, redeem_verification_code',
             'couponreportbytenant_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, user_email, issued_coupon_code, redeemed_date, redeem_verification_code, total_issued, total_redeemed',
