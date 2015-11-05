@@ -2566,18 +2566,18 @@ class ActivityAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::get('merchant_id');
+            $current_mall = OrbitInput::get('current_mall');
             $start_date = OrbitInput::get('start_date'); //2015-11-20
             $end_date = OrbitInput::get('end_date'); //2015-11-25
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'         => $merchant_id,
+                    'current_mall'        => $current_mall,
                     'start_date'          => $start_date,
                     'end_date'            => $end_date,
                 ),
                 array(
-                    'merchant_id'         => 'orbit.empty.merchant',
+                    'current_mall'        => 'orbit.empty.merchant',
                     'start_date'          => 'required|date_format:Y-m-d',
                     'end_date'            => 'required|date_format:Y-m-d',
                 )
@@ -2603,7 +2603,7 @@ class ActivityAPIController extends ControllerAPI
                           MIN(created_at) mindate, MAX(created_at) maxdate
                           FROM {$tablePrefix}activities WHERE 1=1
                           AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                          AND location_id = '" . $merchant_id . "'
+                          AND location_id = '" . $current_mall . "'
                           AND role = 'Consumer'
                           AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
                           AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
@@ -2615,14 +2615,18 @@ class ActivityAPIController extends ControllerAPI
 
             // Check interval
             $begin = new DateTime($start_date);
-            $end = new DateTime($end_date);
+            $endtime = new DateTime($end_date);
+            // Plus one day endtime
+            $end = $endtime->add(new DateInterval('P1D'));
 
             // get periode per 1 day
             $interval = DateInterval::createFromDateString('1 day');
             $period = new DatePeriod($begin, $interval, $end);
 
+            $activitiesObj = null;
+
+            // Check exist data and handling null data
             foreach ( $period as $keyPeriode => $valPeriode ){
-                $defCondition = "";
                 foreach ($activities as $keyAct => $valAct) {
                     if (  $valPeriode->format( "Y-m-d" ) ==  $valAct->date) {
                         $activitiesObj[$keyPeriode] = new stdClass();
