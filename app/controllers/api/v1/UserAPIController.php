@@ -3109,8 +3109,7 @@ class UserAPIController extends ControllerAPI
             $url = Config::get('orbit.registration.mobile.cloud_login_url');
             $email = OrbitInput::get('email');
             $retailer_id = OrbitInput::get('current_mall');
-            // $from = OrbitInput::get('from');
-            $from = 'cs';
+            $from = OrbitInput::get('from');
 
             $this->registerCustomValidation();
 
@@ -3123,7 +3122,7 @@ class UserAPIController extends ControllerAPI
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
                     'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
-                    'from'                  => 'in:cs,mobileci',
+                    'from'                  => 'in:cs',
                 )
             );
 

@@ -270,7 +270,6 @@ class IntermediateLoginController extends IntermediateBaseController
             $params['apikey_id'] = $response->data->apikey_id;
             $params['user_email'] = $response->data->user_email;
             $params['payload'] = $payload;
-            $params['from'] = $from;
         } else {
             $params['message'] = $response->message;
         }
