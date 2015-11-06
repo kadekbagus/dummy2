@@ -4161,7 +4161,6 @@ class DashboardAPIController extends ControllerAPI
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user){
             $mall = Mall::excludeDeleted()
-                        ->allowedForUser($user)
                         ->where('merchant_id', $value)
                         ->first();
 

@@ -2699,6 +2699,198 @@ class ActivityAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * GET - Cutomer averege connected time , Default data is 14 days before today
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `current_mall`              (optional) - limit by merchant id
+     * @param date    `start_date`               (optional) - filter date begin
+     * @param date    `end_date`                 (optional) - filter date end
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+
+    public function getCustomerConnectedHourly()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.activity.getcustomerconnectedhourly.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.activity.getcustomerconnectedhourly.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.activity.getcustomerconnectedhourly.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.activity.getcustomerconnectedhourly.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $start_date = OrbitInput::get('start_date'); // '2015-11-03 00:00:00'
+            $end_date = OrbitInput::get('end_date'); // '2015-11-10 23:59:59'
+
+            $validator = Validator::make(
+                array(
+                    'current_mall'        => $current_mall,
+                    'start_date'          => $start_date,
+                    'end_date'            => $end_date,
+                ),
+                array(
+                    'current_mall'        => 'orbit.empty.merchant',
+                    'start_date'          => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'            => 'required|date_format:Y-m-d H:i:s',
+                )
+            );
+
+            Event::fire('orbit.activity.getcustomerconnectedhourly.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.activity.getcustomerconnectedhourly.after.validation', array($this, $validator));
+
+            // registrations from start to end grouped by date part and activity name long.
+            // activity name long should include source.
+            $tablePrefix = DB::getTablePrefix();
+
+            $activities = DB::select( DB::raw("
+                    SELECT
+                        SUM(case when starthr <= '00' and endhr >= '00' then 1 else 0 end) as '0',
+                        SUM(case when starthr <= '01' and endhr >= '01' then 1 else 0 end) as '1',
+                        SUM(case when starthr <= '02' and endhr >= '02' then 1 else 0 end) as '2',
+                        SUM(case when starthr <= '03' and endhr >= '03' then 1 else 0 end) as '3',
+                        SUM(case when starthr <= '04' and endhr >= '04' then 1 else 0 end) as '4',
+                        SUM(case when starthr <= '05' and endhr >= '05' then 1 else 0 end) as '5',
+                        SUM(case when starthr <= '06' and endhr >= '06' then 1 else 0 end) as '6',
+                        SUM(case when starthr <= '07' and endhr >= '07' then 1 else 0 end) as '7',
+                        SUM(case when starthr <= '08' and endhr >= '08' then 1 else 0 end) as '8',
+                        SUM(case when starthr <= '09' and endhr >= '09' then 1 else 0 end) as '9',
+                        SUM(case when starthr <= '10' and endhr >= '10' then 1 else 0 end) as '10',
+                        SUM(case when starthr <= '11' and endhr >= '11' then 1 else 0 end) as '11',
+                        SUM(case when starthr <= '12' and endhr >= '12' then 1 else 0 end) as '12',
+                        SUM(case when starthr <= '13' and endhr >= '13' then 1 else 0 end) as '13',
+                        SUM(case when starthr <= '14' and endhr >= '14' then 1 else 0 end) as '14',
+                        SUM(case when starthr <= '15' and endhr >= '15' then 1 else 0 end) as '15',
+                        SUM(case when starthr <= '16' and endhr >= '16' then 1 else 0 end) as '16',
+                        SUM(case when starthr <= '17' and endhr >= '17' then 1 else 0 end) as '17',
+                        SUM(case when starthr <= '18' and endhr >= '18' then 1 else 0 end) as '18',
+                        SUM(case when starthr <= '19' and endhr >= '19' then 1 else 0 end) as '19',
+                        SUM(case when starthr <= '20' and endhr >= '20' then 1 else 0 end) as '20',
+                        SUM(case when starthr <= '21' and endhr >= '21' then 1 else 0 end) as '21',
+                        SUM(case when starthr <= '22' and endhr >= '22' then 1 else 0 end) as '22',
+                        SUM(case when starthr <= '23' and endhr >= '23' then 1 else 0 end) as '23'
+                    FROM (
+                        SELECT
+                            activity_name, activity_name_long, activity_type, user_email, role, location_id, session_id,
+                            DATE_FORMAT(MIN(created_at), '%H') starthr, DATE_FORMAT(MAX(created_at), '%H') endhr
+                        FROM {$tablePrefix}activities WHERE 1=1
+                            AND created_at BETWEEN '" . $start_date . "' AND '" . $end_date . "'
+                            AND location_id = '" . $current_mall . "'
+                            AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
+                            AND role = 'Consumer'
+                            AND session_id IS NOT NULL
+                        GROUP BY session_id
+                    )  as A
+                ") );
+
+            $dataArray = array();
+
+            for ($i=0; $i <= 23 ; $i++) {
+                $starttime = $i;
+                $endtime = $i + 1;
+                if ( $starttime < 10 ) {
+                    $starttime = '0'.$i;
+                }
+                if ( $endtime < 10) {
+                    $endtime = '0'.$endtime;
+                }
+                // if ( $endtime == 24 ) {
+                //     $endtime = 00;
+                // }
+                $dataArray[$i]['start_time'] = $starttime.':00';
+                $dataArray[$i]['end_time'] = $endtime.':00';
+                $dataArray[$i]['score'] = $activities[0]->$i;
+            }
+
+            $this->response->data = [
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'hourly_record' => $dataArray,
+            ];
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.activity.getcustomerconnectedhourly.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.activity.getcustomerconnectedhourly.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.activity.getcustomerconnectedhourly.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.activity.getcustomerconnectedhourly.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.activity.getcustomerconnectedhourly.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+
 
     protected function registerCustomValidation()
     {
