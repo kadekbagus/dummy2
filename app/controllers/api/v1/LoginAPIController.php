@@ -200,12 +200,12 @@ class LoginAPIController extends ControllerAPI
      */
     public function postRegisterUserInShop()
     {
-        $activity = Activity::mobileci()
-                            ->setActivityType('registration');
         try {
             $httpCode = 200;
 
             $this->registerCustomValidation();
+
+            $activity = null;
 
             $email = OrbitInput::post('email');
             $from = OrbitInput::post('from');
@@ -246,6 +246,11 @@ class LoginAPIController extends ControllerAPI
 
             if ($from === 'cs') {
                 $signup_from = 'Sign Up via CS';
+                $activity = Activity::csportal()
+                                    ->setActivityType('registration');
+            } else {
+                $activity = Activity::mobileci()
+                    ->setActivityType('registration');
             }
 
             // Successfull registration
