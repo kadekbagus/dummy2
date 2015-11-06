@@ -266,11 +266,13 @@ class ActivityAPIController extends ControllerAPI
                     $activities->whereIn('activities.group', $groups);
                 });
             } else {
-                $activities->whereIn('activities.group', ['mobile-ci', 'pos'])
-                           ->orWhere(function($q) {
-                               $q->where('activities.activity_name', 'registration_ok')
-                                 ->where('activities.group', 'cs-portal');
-                           });
+                $activities->where(function($q) {
+                    $q->whereIn('activities.group', ['mobile-ci', 'pos'])
+                      ->orWhere(function($q) {
+                            $q->where('activities.activity_name', 'registration_ok')
+                              ->where('activities.group', 'cs-portal');
+                      });
+                    });
             }
 
             // Filter by matching group pattern
@@ -2251,7 +2253,7 @@ class ActivityAPIController extends ControllerAPI
             OrbitInput::get('sign_up_method', function ($sign_up_method) use (&$binds, &$sign_up_method_condition) {
                 if ($sign_up_method === 'facebook') {
                     $sign_up_method_condition = ' and (registration.registration = :sign_up_method) ';
-                    $binds['sign_up_method'] = 'Sign Up via Facebook';
+                    $binds['sign_up_method'] = 'Sign up via mobile (Facebook)';
                 } else if ($sign_up_method === 'email') {
                     $sign_up_method_condition = ' and ((registration.registration = :sign_up_method_1) OR (registration.registration = :sign_up_method_2))';
                     $binds['sign_up_method_1'] = 'Sign Up with email address';
