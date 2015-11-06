@@ -1272,7 +1272,7 @@ class WidgetAPIController extends ControllerAPI
         $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
             $merchant = Mall::excludeDeleted()
-                        ->allowedForUser($user)
+                        // ->allowedForUser($user)
                         // ->isMall()
                         ->where('merchant_id', $value)
                         ->first();
@@ -1291,7 +1291,7 @@ class WidgetAPIController extends ControllerAPI
             $expectedNumber = count($value);
             $merchant = App::make('orbit.empty.merchant');
             $retailerNumber = Mall::excludeDeleted()
-                        ->allowedForUser($user)
+                        // ->allowedForUser($user)
                         ->whereIn('merchant_id', $value)
                         ->where('parent_id', $merchant->merchant_id)
                         ->count();
