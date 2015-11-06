@@ -2826,8 +2826,8 @@ class ActivityAPIController extends ControllerAPI
                 // if ( $endtime == 24 ) {
                 //     $endtime = 00;
                 // }
-                $dataArray[$i]['start_time'] = $starttime.'.00';
-                $dataArray[$i]['end_time'] = $endtime.'.00';
+                $dataArray[$i]['start_time'] = $starttime.':00';
+                $dataArray[$i]['end_time'] = $endtime.':00';
                 $dataArray[$i]['score'] = $activities[0]->$i;
             }
 
