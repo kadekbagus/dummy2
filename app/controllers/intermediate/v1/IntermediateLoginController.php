@@ -130,50 +130,49 @@ class IntermediateLoginController extends IntermediateBaseController
     {   
         // this additional code is for checking url of cs portal to match the cs user on the correct mall
         // for bug fix OM-685 Takashimaya:Employee Setup(Role:CS) from another mall can login to My CS Portal
-        // note that the url is hardcoded
 
-        // $csUrl = URL::to('/');
-        // $searchUrl = array("http://cs", "https://cs"); 
-        // $replaceUrl = array("dom:", "dom:"); 
+            $csUrl = trim(OrbitInput::post('url'));
+            $email = trim(OrbitInput::post('email'));
 
-        // $seetingUrl = str_replace($searchUrl, $replaceUrl, $csUrl);
-        // $setting = Setting::where('setting_name', '=', $seetingUrl)->first();
+            $searchUrl = array("http://cs.", "https://cs."); 
+            $replaceUrl = array("dom:", "dom:"); 
 
-        // if (is_object($setting)) {
-        //     $mallId = $setting->setting_value;
-        // } else {
-        //     $mallId = 0;
-        // }
+            $seetingUrl = str_replace($searchUrl, $replaceUrl, $csUrl);
+            $seetingUrl = preg_replace('{/$}', '', $seetingUrl);
 
-        // $email = trim(OrbitInput::post('email'));
+            $setting = Setting::where('setting_name', '=', $seetingUrl)->first();
 
-        // if (trim($email) === '') {
-        //     $response = new stdclass();
-        //     $response->code = 14;
-        //     $response->status = 'error'; 
-        //     $response->message = Lang::get('validation.required', array('attribute' => 'email'));
-        //     $response->data = null; 
-        // } else {
-        //     $user = User::excludeDeleted('users')
-        //               ->leftJoin('employees','employees.user_id', '=', 'users.user_id')
-        //               ->leftJoin('employee_retailer','employee_retailer.employee_id','=','employees.employee_id')
-        //               ->where('user_email', '=', $email)
-        //               ->where('employee_retailer.retailer_id', '=', $mallId)
-        //               ->first();
+            if (is_object($setting)) {
+                $mallId = $setting->setting_value;
+            } else {
+                $mallId = 0;
+            }
 
-        //     if (is_object($user) || $user != null) { 
-        //         $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
-        //     } else {
-        //         $response = new stdclass();
-        //         $response->code = 13;
-        //         $response->status = 'error'; 
-        //         $response->message = Lang::get('validation.orbit.access.loginfailed');
-        //         $response->data = null; 
-        //     }
+        if (trim($email) === '') {
+            $response = new stdclass();
+            $response->code = 14;
+            $response->status = 'error'; 
+            $response->message = Lang::get('validation.required', array('attribute' => 'email'));
+            $response->data = null; 
+        } else {
+            $user = User::excludeDeleted('users')
+                      ->leftJoin('employees','employees.user_id', '=', 'users.user_id')
+                      ->leftJoin('employee_retailer','employee_retailer.employee_id','=','employees.employee_id')
+                      ->where('user_email', '=', $email)
+                      ->where('employee_retailer.retailer_id', '=', $mallId)
+                      ->first();
 
-        // }
+            if (is_object($user) || $user != null) { 
+                $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
+            } else {
+                $response = new stdclass();
+                $response->code = 13;
+                $response->status = 'error'; 
+                $response->message = Lang::get('validation.orbit.access.loginfailed');
+                $response->data = null; 
+            }
 
-        $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
+        }
 
         if ($response->code === 0)
         {
