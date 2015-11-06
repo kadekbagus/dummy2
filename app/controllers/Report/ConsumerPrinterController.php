@@ -287,13 +287,13 @@ class ConsumerPrinterController extends DataPrinterController
         // Filter user by first_visit date begin_date
         OrbitInput::get('first_visit_begin_date', function($begindate) use ($users)
         {
-            $users->where('activities.created_at', '>=', $begindate);
+            $users->having('first_visit_date', '>=', $begindate);
         });
 
         // Filter user by first visit date end_date
         OrbitInput::get('first_visit_end_date', function($enddate) use ($users)
         {
-            $users->where('activities.created_at', '<=', $enddate);
+            $users->having('first_visit_date', '<=', $enddate);
         });
 
         // Clone the query builder which still does not include the take,
