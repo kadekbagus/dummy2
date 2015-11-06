@@ -412,5 +412,17 @@ return array(
             'start_button' => 'Yes, please!'
         ),
     ),
+    
+    'homescreen' => array(
+        'title'     => 'Did you know?',
+        'message'   => 'You can add this web app to your home screen: tap setting and then',
+        'message_firefox'   => 'You can add this web app to your home screen: tap setting > page and then',
+        'add_to'    => '<strong>Add to Home Screen</strong>',
+        'check'     => 'Do not show this message again',
+    ),
 
+    'connect' => array(
+        'header'  => 'Get new digital shopping experience with',
+        'message' => 'Please connect to the Mall Wifi',
+    ),
 );
