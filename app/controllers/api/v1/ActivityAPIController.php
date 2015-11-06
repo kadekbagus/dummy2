@@ -2833,7 +2833,7 @@ class ActivityAPIController extends ControllerAPI
 
                 $dataArray[$i]['start_time'] = $starttime.':00';
                 $dataArray[$i]['end_time'] = $endtime.':00';
-                $dataArray[$i]['score'] = $activities[0]->$i / $totalRangeDays;
+                $dataArray[$i]['score'] = round($activities[0]->$i / $totalRangeDays, 2);
             }
 
             $this->response->data = [
