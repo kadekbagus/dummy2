@@ -2604,6 +2604,7 @@ class ActivityAPIController extends ControllerAPI
                           AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
                           AND location_id = '" . $current_mall . "'
                           AND role = 'Consumer'
+                          AND session_id IS NOT NULL
                           AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
                           AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
                           GROUP BY session_id
@@ -2812,8 +2813,15 @@ class ActivityAPIController extends ControllerAPI
                     )  as A
                 ") );
 
-            $dataArray = array();
+            // Get different times
+            $datetime1 = new DateTime($start_date);
+            $datetime2 = new DateTime($end_date);
 
+            $interval = $datetime1->diff($datetime2);
+            $totalRangeDays = $interval->format('%a') + 1;
+
+            // Re-Format for response result
+            $dataArray = array();
             for ($i=0; $i <= 23 ; $i++) {
                 $starttime = $i;
                 $endtime = $i + 1;
@@ -2823,12 +2831,10 @@ class ActivityAPIController extends ControllerAPI
                 if ( $endtime < 10) {
                     $endtime = '0'.$endtime;
                 }
-                // if ( $endtime == 24 ) {
-                //     $endtime = 00;
-                // }
+
                 $dataArray[$i]['start_time'] = $starttime.':00';
                 $dataArray[$i]['end_time'] = $endtime.':00';
-                $dataArray[$i]['score'] = $activities[0]->$i;
+                $dataArray[$i]['score'] = round($activities[0]->$i / $totalRangeDays, 2);
             }
 
             $this->response->data = [
