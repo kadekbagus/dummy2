@@ -2604,6 +2604,7 @@ class ActivityAPIController extends ControllerAPI
                           AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
                           AND location_id = '" . $current_mall . "'
                           AND role = 'Consumer'
+                          AND session_id IS NOT NULL
                           AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
                           AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
                           GROUP BY session_id
