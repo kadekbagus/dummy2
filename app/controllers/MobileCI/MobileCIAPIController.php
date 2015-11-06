@@ -3741,7 +3741,7 @@ class MobileCIAPIController extends ControllerAPI
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer, $payload = '') {
+    private function redirectToCloud($email, $retailer, $payload = '', $from = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
@@ -3751,6 +3751,7 @@ class MobileCIAPIController extends ControllerAPI
             'retailer_id' => $retailer->merchant_id,
             'callback_url' => URL::route('customer-login-callback'),
             'payload' => $payload,
+            'from' => $from,
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
