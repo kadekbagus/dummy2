@@ -3109,6 +3109,8 @@ class UserAPIController extends ControllerAPI
             $url = Config::get('orbit.registration.mobile.cloud_login_url');
             $email = OrbitInput::get('email');
             $retailer_id = OrbitInput::get('current_mall');
+            // $from = OrbitInput::get('from');
+            $from = 'cs';
 
             $this->registerCustomValidation();
 
@@ -3116,10 +3118,12 @@ class UserAPIController extends ControllerAPI
                 array(
                     'current_mall'          => $retailer_id,
                     'email'                 => $email,
+                    'from'                  => $from,
                 ),
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
                     'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
+                    'from'                  => 'in:cs,mobileci',
                 )
             );
 
@@ -3134,6 +3138,7 @@ class UserAPIController extends ControllerAPI
                 'retailer_id' => $retailer_id,
                 'callback_url' => URL::route('customer-login-callback-show-id'),
                 'payload' => '',
+                'from' => $from,
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);

@@ -246,6 +246,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $email = OrbitInput::get('email', '');
         $retailer_id = OrbitInput::get('retailer_id', '');
         $payload = OrbitInput::get('payload', '');
+        $from = OrbitInput::get('from', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -255,6 +256,7 @@ class IntermediateLoginController extends IntermediateBaseController
             'retailer_id' => $retailer_id,
             'callback_url' => $callback_url,
             'payload' => $payload,
+            'from' => $from,
         ])) {
             return $this->displayValidationError();
         }
@@ -268,6 +270,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $params['apikey_id'] = $response->data->apikey_id;
             $params['user_email'] = $response->data->user_email;
             $params['payload'] = $payload;
+            $params['from'] = $from;
         } else {
             $params['message'] = $response->message;
         }

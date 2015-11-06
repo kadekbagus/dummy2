@@ -208,16 +208,21 @@ class LoginAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $email = OrbitInput::post('email');
+            $from = OrbitInput::post('from');
             $mall_id = $this->getRetailerId();
+
+            $signup_from = 'Sign Up';
 
             $validator = Validator::make(
                 array(
                     'email'     => $email,
                     'mall_id'   => $mall_id
+                    'from'   => $from
                 ),
                 array(
                     'email'     => 'required|email|orbit.email.exists',
                     'mall_id'   => 'orbit.empty.mall'
+                    'from'      => 'in:cs,mobileci'
                 )
             );
 
@@ -241,10 +246,16 @@ class LoginAPIController extends ControllerAPI
                 $this->commit();
             }
 
+            if ($from === 'cs') {
+                $signup_from = 'Sign Up via CS';
+            } else if ($from === 'mobileci') {
+                $signup_from = 'Sign Up with email address';
+            }
+
             // Successfull registration
             $activity->setUser($newuser)
                      ->setActivityName('registration_ok')
-                     ->setActivityNameLong('Sign Up')
+                     ->setActivityNameLong($signup_from)
                      ->setModuleName('Application')
                      ->setLocation($mall)
                      ->responseOK();

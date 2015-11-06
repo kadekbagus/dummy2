@@ -3785,6 +3785,7 @@ class MobileCIAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Retailer not found');
             }
             $email = OrbitInput::get('email');
+            $from = OrbitInput::get('from');
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
@@ -3798,6 +3799,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($user === null) {
                 $_POST['email'] = $email;
+                $_POST['from'] = $from;
                 $response = \LoginAPIController::create('raw')->setRetailerId(OrbitInput::get('retailer_id'))->setUseTransaction(false)->postRegisterUserInShop();
                 if ($response->code !== 0) {
                     throw new Exception($response->message, $response->code);
