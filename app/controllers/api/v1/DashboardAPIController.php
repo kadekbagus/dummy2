@@ -3542,7 +3542,7 @@ class DashboardAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status.
+     * @param string   `sortby`                (optional) - Column order by. Valid value: promotion_name, total_issued, total_redeemed.
      * @param string   `sortmode`              (optional) - ASC or DESC
      * @param integer  `take`                  (optional) - Limit
      * @param integer  `skip`                  (optional) - Limit offset
@@ -3599,10 +3599,10 @@ class DashboardAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:issued_coupon_id,issued_date,redeemed_date,promotion_name,redeem_retailer_id,retailer_name,mall_id,total_issued,total_redeemed',
+                    'sort_by' => 'in:promotion_name,total_issued,total_redeemed',
                 ),
                 array(
-                    'in' => Lang::get('validation.orbit.empty.couponreportgeneral_sortby'),
+                    'in' => Lang::get('validation.orbit.empty.dashboardissuedvsredeemed_sortby'),
                 )
             );
             Event::fire('orbit.dashboard.getcouponissuedvsredeemed.before.validation', array($this, $validator));
@@ -3648,8 +3648,6 @@ class DashboardAPIController extends ControllerAPI
                                             issued_date,
                                             redeemed_date,
                                             {$prefix}promotions.promotion_name as promotion_name,
-                                            redeem_retailer_id,
-                                            {$prefix}merchants.name as retailer_name,
                                             {$prefix}merchants.parent_id as mall_id,
                                             issued.total_issued as total_issued,
                                             count(redeem_retailer_id) as total_redeemed
@@ -3666,7 +3664,7 @@ class DashboardAPIController extends ControllerAPI
                                                     group by ic.promotion_id) issued
                                             on issued.promotion_id = {$prefix}promotions.promotion_id
                                     where {$prefix}merchants.parent_id = '{$configMallId}'
-                                    group by {$prefix}promotions.promotion_id, redeem_retailer_id
+                                    group by {$prefix}promotions.promotion_id
                                     order by total_redeemed desc
                                     limit {$take_top}) as issuedredeem) as t
                             "));
@@ -3746,20 +3744,12 @@ class DashboardAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'promotion_name'       => 'promotion_name',
-                    'mall_id'              => 'mall_id',
-                    'issued_coupon_id'     => 'issued_coupon_id',
-                    'redeem_retailer_id'   => 'redeem_retailer_id',
-                    'retailer_name'        => 'retailer_name',
-                    'redeemed_date'        => 'redeemed_date',
-                    'issued_date'          => 'issued_date',
                     'total_issued'         => 'total_issued',
                     'total_redeemed'       => 'total_redeemed',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
-
-            $coupons->orderBy('promotion_name', 'asc');
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
