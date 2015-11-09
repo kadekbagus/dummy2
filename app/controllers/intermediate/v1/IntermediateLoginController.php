@@ -353,7 +353,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
             $acq = UserAcquisition::where('user_acquisition_id', $user_acquisition_id)
                 ->lockForUpdate()
-                ->get();
+                ->first();
             if (!isset($acq)) {
                 $acq = new \UserAcquisition();
                 $acq->user_acquisition_id = $user_acquisition_id;
