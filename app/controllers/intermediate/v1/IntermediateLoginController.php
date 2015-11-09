@@ -876,7 +876,7 @@ class IntermediateLoginController extends IntermediateBaseController
             if (isset($registration_activity)) {
                 if (isset($from)) {
                     if ($from === 'facebook') {
-                        $registration_activity->activity_name_long = 'Sign Up via Facebook';
+                        $registration_activity->activity_name_long = 'Sign up via Facebook';
                         $registration_activity->save();
 
                         // @author Irianto Pratama <irianto@dominopos.com>
