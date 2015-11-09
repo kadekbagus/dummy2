@@ -211,7 +211,7 @@ class LoginAPIController extends ControllerAPI
             $from = OrbitInput::post('from');
             $mall_id = $this->getRetailerId();
 
-            $signup_from = 'Sign Up with email address';
+            $signup_from = 'Sign up via mobile (email address)';
 
             $validator = Validator::make(
                 array(
@@ -245,7 +245,7 @@ class LoginAPIController extends ControllerAPI
             }
 
             if ($from === 'cs') {
-                $signup_from = 'Sign Up via CS';
+                $signup_from = 'Sign up via customer service';
                 $activity = Activity::csportal()
                                     ->setActivityType('registration');
             } else {
