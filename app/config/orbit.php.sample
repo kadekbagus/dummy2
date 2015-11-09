@@ -23,7 +23,7 @@ return array(
     // agreement configuration
     'agreement' => array(
         // This should be frontend URL not backend
-        'url'  => 'http://value-of-agreement.url/'
+        'url'  => 'http://mall-portal.url/#/service-agreement?token=%s'
     ),
 
     'shop' => array(
