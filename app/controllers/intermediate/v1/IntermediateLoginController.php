@@ -269,6 +269,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $params['apikey_id'] = $response->data->apikey_id;
             $params['user_email'] = $response->data->user_email;
             $params['payload'] = $payload;
+            $params['user_acquisition_id'] = $response->data->user_acquisition_id;
         } else {
             $params['message'] = $response->message;
         }
@@ -297,6 +298,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $user_detail_id = OrbitInput::get('user_detail_id', '');
         $apikey_id = OrbitInput::get('apikey_id', '');
         $payload = OrbitInput::get('payload', '');
+        $user_acquisition_id = OrbitInput::get('user_acquisition_id', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -322,6 +324,7 @@ class IntermediateLoginController extends IntermediateBaseController
             'user_detail_id' => $user_detail_id,
             'apikey_id' => $apikey_id,
             'payload' => $payload,
+            'user_acquisition_id' => $user_acquisition_id,
         ])) {
             return [false, $this->displayValidationError()];
         }
@@ -346,6 +349,17 @@ class IntermediateLoginController extends IntermediateBaseController
 
             if (!isset($user)) {
                 list($user, $userdetail, $apikey) = $login->createCustomerUser($email, $user_id, $user_detail_id, $apikey_id);
+            }
+
+            $acq = UserAcquisition::where('user_acquisition_id', $user_acquisition_id)
+                ->lockForUpdate()
+                ->get();
+            if (!isset($acq)) {
+                $acq = new \UserAcquisition();
+                $acq->user_acquisition_id = $user_acquisition_id;
+                $acq->user_id = $user->user_id;
+                $acq->acquirer_id = Config::get('orbit.shop.id');
+                $acq->save();
             }
 
             DB::connection()->commit();

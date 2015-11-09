@@ -3832,6 +3832,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
+                'user_acquisition_id' => $acq->user_acquisition_id,
             ];
             $this->commit();
         } catch (ACLForbiddenException $e) {
