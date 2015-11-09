@@ -436,25 +436,27 @@ class TenantAPIController extends ControllerAPI
             }
 
             // validate category_ids
-            foreach ($category_ids as $category_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'category_id'   => $category_id_check,
-                    ),
-                    array(
-                        'category_id'   => 'orbit.empty.category:' . $parent_id,
-                    )
-                );
+            if (isset($category_ids) && count($category_ids) > 0) {
+                foreach ($category_ids as $category_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'category_id'   => $category_id_check,
+                        ),
+                        array(
+                            'category_id'   => 'orbit.empty.category:' . $parent_id,
+                        )
+                    );
 
-                Event::fire('orbit.tenant.postnewtenant.before.categoryvalidation', array($this, $validator));
+                    Event::fire('orbit.tenant.postnewtenant.before.categoryvalidation', array($this, $validator));
 
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.tenant.postnewtenant.after.categoryvalidation', array($this, $validator));
                 }
-
-                Event::fire('orbit.tenant.postnewtenant.after.categoryvalidation', array($this, $validator));
             }
 
             Event::fire('orbit.tenant.postnewtenant.after.validation', array($this, $validator));
