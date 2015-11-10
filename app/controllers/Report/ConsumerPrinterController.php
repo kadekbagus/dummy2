@@ -325,6 +325,7 @@ class ConsumerPrinterController extends DataPrinterController
                 'total_redeemed_coupon'   => 'total_redeemed_coupon',
                 'total_lucky_draw_number' => 'total_lucky_draw_number',
                 'first_visit_date'        => 'first_visit_date',
+                'updated_at'              => 'users.updated_at',
             );
 
             $sortBy = $sortByMapping[$_sortBy];
