@@ -83,12 +83,12 @@ class EmployeeAPIController extends ControllerAPI
                     'role' => $employeeRole
                 ))
             ];
-            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+
             $validator = Validator::make(
                 array(
                     'firstname'             => $firstName,
                     'lastname'              => $lastName,
-                    'birthdate'             => $birthdate,
+                    'date_of_birth'         => $birthdate,
                     'position'              => $position,
                     'employee_id_char'      => $employeeId,
                     'username'              => $loginId,
@@ -100,7 +100,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'firstname'         => 'required',
                     'lastname'          => 'required',
-                    'birthdate'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'     => 'date_format:Y-m-d',
                     'employee_id_char'  => 'orbit.exists.employeeid',
                     'username'          => 'required|orbit.exists.username',
                     'password'          => 'required|min:5|confirmed',
@@ -122,7 +122,7 @@ class EmployeeAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
 
                 // WTHell Laravel message wont work!! I need to subtitute manually
-                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('username', 'Email Login', $errorMessage);
                 $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -357,13 +357,13 @@ class EmployeeAPIController extends ControllerAPI
                     'role' => $employeeRole
                 ))
             ];
-            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+
             $validator = Validator::make(
                 array(
                     'current_mall'          => $myRetailerIds,
                     'firstname'             => $firstName,
                     'lastname'              => $lastName,
-                    'birthdate'             => $birthdate,
+                    'date_of_birth'         => $birthdate,
                     'position'              => $position,
                     'employee_id_char'      => $employeeId,
                     'username'              => $loginId,
@@ -377,7 +377,7 @@ class EmployeeAPIController extends ControllerAPI
                     'current_mall'      => 'required|orbit.empty.mall',
                     'firstname'         => 'required',
                     'lastname'          => 'required',
-                    'birthdate'         => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'     => 'date_format:Y-m-d',
                     'employee_id_char'  => 'orbit.exists.employeeid',
                     'username'          => 'required|orbit.exists.username.mall',
                     'password'          => 'required|min:5|confirmed',
@@ -400,7 +400,7 @@ class EmployeeAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
 
                 // WTHell Laravel message wont work!! I need to subtitute manually
-                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('username', 'Email Login', $errorMessage);
                 $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -634,11 +634,11 @@ class EmployeeAPIController extends ControllerAPI
                 )),
                 'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
             ];
-            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+
             $validator = Validator::make(
                 array(
                     'user_id'               => $userId,
-                    'birthdate'             => $birthdate,
+                    'date_of_birth'         => $birthdate,
                     'password'              => $password,
                     'password_confirmation' => $password2,
                     'employee_id_char'      => $employeeId,
@@ -648,7 +648,7 @@ class EmployeeAPIController extends ControllerAPI
                 ),
                 array(
                     'user_id'               => 'orbit.empty.user',
-                    'birthdate'             => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'         => 'date_format:Y-m-d',
                     'password'              => 'min:5|confirmed',
                     'employee_role'         => 'orbit.empty.employee.role',
                     'employee_id_char'      => 'orbit.exists.employeeid_but_me',
@@ -671,7 +671,7 @@ class EmployeeAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
 
                 // WTHell Laravel message wont work!! I need to subtitute manually
-                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('username', 'Email Login', $errorMessage);
                 $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -909,12 +909,12 @@ class EmployeeAPIController extends ControllerAPI
                 )),
                 'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
             ];
-            $dateOfBirthLimit = date('Y-m-d', strtotime('yesterday'));
+
             $validator = Validator::make(
                 array(
                     'current_mall'          => $myRetailerIds,
                     'user_id'               => $userId,
-                    'birthdate'             => $birthdate,
+                    'date_of_birth'         => $birthdate,
                     'password'              => $password,
                     'password_confirmation' => $password2,
                     'employee_id_char'      => $employeeId,
@@ -926,7 +926,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
                     'user_id'               => 'required|orbit.empty.user',
-                    'birthdate'             => 'date_format:Y-m-d|before:' . $dateOfBirthLimit,
+                    'date_of_birth'         => 'date_format:Y-m-d',
                     'password'              => 'min:5|confirmed',
                     'employee_role'         => 'orbit.empty.employee.role',
                     'username'              => 'orbit.exists.username.mall_but_me',
@@ -950,7 +950,7 @@ class EmployeeAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
 
                 // WTHell Laravel message wont work!! I need to subtitute manually
-                $errorMessage = str_replace('username', 'Login ID', $errorMessage);
+                $errorMessage = str_replace('username', 'Email Login', $errorMessage);
                 $errorMessage = str_replace('employee id char', 'Employee ID', $errorMessage);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -2283,7 +2283,7 @@ class EmployeeAPIController extends ControllerAPI
             $user = Employee::joinUser()->where('users.username', $value)->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Login ID has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
@@ -2300,7 +2300,7 @@ class EmployeeAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Login ID has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);

@@ -1879,7 +1879,7 @@ class CouponAPIController extends ControllerAPI
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon OK')
+                    ->setActivityNameLong('Coupon Redemption Successful')
                     ->setObject($issuedcoupon)
                     ->setNotes($activityNotes)
                     ->setLocation($mall)

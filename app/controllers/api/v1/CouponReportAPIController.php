@@ -275,9 +275,31 @@ class CouponReportAPIController extends ControllerAPI
             });
 
             // Clone the query builder which still does not include the take,
-            // skip, and order by
             $_coupons = clone $coupons;
+
+            $_couponsCountReddem = clone $coupons;
+            $_couponsCountIssued = clone $coupons;
+
             $_coupons->select('promotions.promotion_id');
+
+            $_couponsCountReddem = $_couponsCountReddem->get();
+            $_couponsCountIssued = $_couponsCountIssued->groupBy('promotions.promotion_id')->get();
+
+            // Get total reddem
+            $totalRedeemed = 0 ;
+            if (isset($_couponsCountReddem) && count($_couponsCountReddem) > 0){
+                foreach ($_couponsCountReddem as $key => $valReddem) {
+                    $totalRedeemed = $totalRedeemed + $valReddem->total_redeemed;
+                }
+            }
+
+            // Get total issued coupon
+            $totalIssued = 0;
+            if (isset($_couponsCountIssued) && count($_couponsCountIssued) > 0){
+                foreach ($_couponsCountIssued as $key => $valIssued) {
+                    $totalIssued = $totalIssued + $valIssued->total_issued;
+                }
+            }
 
             // Get the take args
             $take = $perPage;
@@ -293,6 +315,7 @@ class CouponReportAPIController extends ControllerAPI
             });
             $coupons->take($take);
 
+            // skip, and order by
             $skip = 0;
             OrbitInput::get('skip', function($_skip) use (&$skip, $coupons)
             {
@@ -363,6 +386,8 @@ class CouponReportAPIController extends ControllerAPI
             $data->total_records = $totalCoupons;
             $data->returned_records = count($listOfCoupons);
             $data->records = $listOfCoupons;
+            $data->total_redeemed = $totalRedeemed;
+            $data->total_issued = $totalIssued;
 
             if ($totalCoupons === 0) {
                 $data->records = NULL;
@@ -657,6 +682,30 @@ class CouponReportAPIController extends ControllerAPI
             $_coupons = clone $coupons;
             $_coupons->select('promotions.promotion_id');
 
+            $_couponsCountReddem = clone $coupons;
+            $_couponsCountIssued = clone $coupons;
+
+            $_coupons->select('promotions.promotion_id');
+
+            $_couponsCountReddem = $_couponsCountReddem->get();
+            $_couponsCountIssued = $_couponsCountIssued->groupBy('promotions.promotion_id')->get();
+
+            // Get total reddem
+            $totalRedeemed = 0 ;
+            if (isset($_couponsCountReddem) && count($_couponsCountReddem) > 0){
+                foreach ($_couponsCountReddem as $key => $valReddem) {
+                    $totalRedeemed = $totalRedeemed + $valReddem->total_redeemed;
+                }
+            }
+
+            // Get total issued coupon
+            $totalIssued = 0;
+            if (isset($_couponsCountIssued) && count($_couponsCountIssued) > 0){
+                foreach ($_couponsCountIssued as $key => $valIssued) {
+                    $totalIssued = $totalIssued + $valIssued->total_issued;
+                }
+            }
+
             // Get the take args
             $take = $perPage;
             OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
@@ -734,6 +783,8 @@ class CouponReportAPIController extends ControllerAPI
             $data->total_records = $totalCoupons;
             $data->returned_records = count($listOfCoupons);
             $data->records = $listOfCoupons;
+            $data->total_redeemed = $totalRedeemed;
+            $data->total_issued = $totalIssued;
 
             if ($totalCoupons === 0) {
                 $data->records = NULL;
@@ -1274,6 +1325,11 @@ class CouponReportAPIController extends ControllerAPI
             OrbitInput::get('redeem_retailer_id', function($data) use ($coupons) {
                 $data = (array)$data;
                 $coupons->whereIn('issued_coupons.redeem_retailer_id', $data);
+            });
+
+            // Filter by Retailer name
+            OrbitInput::get('retailer_name_like', function($name) use ($coupons) {
+                $coupons->where('merchants.name', 'like', "%$name%");
             });
 
             // Filter by Retailer name

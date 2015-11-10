@@ -1415,7 +1415,7 @@ class UserAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,membership_since,created_at,updated_at',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,membership_since,created_at,updated_at,first_visit_date',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1477,7 +1477,7 @@ class UserAPIController extends ControllerAPI
                         ->groupBy('users.user_id');
 
             if ($details === 'yes') {
-                $users->select('users.*', DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
+                $users->select('users.*', DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name','activities.location_id',  DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
                                         where cp.status='active' and cp.user_id={$prefix}users.user_id and
@@ -1495,24 +1495,28 @@ class UserAPIController extends ControllerAPI
                                         // ON
                                         'tmp_lucky.user_id', '=', 'users.user_id');
             } else {
-                $users->select('users.*');
+                $users->select('users.*', DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"));
             }
 
-            // join to activities for view user login any mall in ci
-            $users->join('activities', 'activities.user_id', '=', 'users.user_id')
-                  ->where(function($q) {
-                      $q->where('activities.activity_name', 'registration_ok')
-                        ->orWhere('activities.activity_name', 'login_ok');
-                  })
-                  ->where('activities.role', 'Consumer')
-                  ->groupBy('users.user_id');
+            $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+
+            $current_mall = OrbitInput::get('current_mall');
+            
+            $users->leftJoin('activities', function($join) use($current_mall) {
+                            $join->on('activities.user_id', '=', 'users.user_id')
+                                 ->where('activities.activity_name', '=', 'login_ok')
+                                 ->where('activities.role', '=', 'Consumer')
+                                 ->where('activities.group', '=', 'mobile-ci')
+                                 ->where('activities.location_id', '=', $current_mall)
+                                 ;
+                        });
 
             if (empty($listOfMallIds)) { // invalid mall id
                 $users->whereRaw('0');
             } elseif ($listOfMallIds[0] === 1) { // if super admin
                 // show all users
             } else { // valid mall id
-                $users->whereIn('activities.location_id', $listOfMallIds);
+                $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds);
             }
 
             // Filter by retailer (shop) ids
@@ -1552,7 +1556,7 @@ class UserAPIController extends ControllerAPI
 
             // Filter retailer by name_like (first_name last_name)
             OrbitInput::get('name_like', function($data) use ($users) {
-                $users->where(DB::raw('CONCAT(user_firstname, " ", user_lastname)'), 'like', "%$data%");
+                $users->where(DB::raw('CONCAT(COALESCE(user_firstname, ""), " ", COALESCE(user_lastname, ""))'), 'like', "%$data%");
             });
 
             // Filter user by their firstname pattern
@@ -1695,6 +1699,18 @@ class UserAPIController extends ControllerAPI
                 });
             });
 
+            // Filter user by first_visit date begin_date
+            OrbitInput::get('first_visit_begin_date', function($begindate) use ($users)
+            {
+                $users->having('first_visit_date', '>=', $begindate);
+            });
+
+            // Filter user by first visit date end_date
+            OrbitInput::get('first_visit_end_date', function($enddate) use ($users)
+            {
+                $users->having('first_visit_date', '<=', $enddate);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_users = clone $users;
@@ -1749,7 +1765,8 @@ class UserAPIController extends ControllerAPI
                     'last_spent_amount'       => 'user_details.last_spent_any_shop',
                     'total_usable_coupon'     => 'total_usable_coupon',
                     'total_redeemed_coupon'   => 'total_redeemed_coupon',
-                    'total_lucky_draw_number' => 'total_lucky_draw_number'
+                    'total_lucky_draw_number' => 'total_lucky_draw_number',
+                    'first_visit_date'        => 'first_visit_date',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -3092,6 +3109,7 @@ class UserAPIController extends ControllerAPI
             $url = Config::get('orbit.registration.mobile.cloud_login_url');
             $email = OrbitInput::get('email');
             $retailer_id = OrbitInput::get('current_mall');
+            $from = OrbitInput::get('from');
 
             $this->registerCustomValidation();
 
@@ -3099,10 +3117,12 @@ class UserAPIController extends ControllerAPI
                 array(
                     'current_mall'          => $retailer_id,
                     'email'                 => $email,
+                    'from'                  => $from,
                 ),
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
                     'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
+                    'from'                  => 'in:cs',
                 )
             );
 
@@ -3117,6 +3137,7 @@ class UserAPIController extends ControllerAPI
                 'retailer_id' => $retailer_id,
                 'callback_url' => URL::route('customer-login-callback-show-id'),
                 'payload' => '',
+                'from' => $from,
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);

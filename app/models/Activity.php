@@ -778,4 +778,65 @@ class Activity extends Eloquent
                        ->where('mall.status', 'active')
                        ->where('mall.object_type', 'mall');
     }
+
+
+    /**
+     * Set Session id for certain condition
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @param string $id
+     * @return Activity
+     */
+    public function setSessionId($id) {
+        $this->session_id = $id;
+
+        return $this;
+    }
+
+    /**
+     *  Set Session static to force session field id
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @param $session
+     */
+    public static function setSession($session) {
+        static::$session = $session;
+    }
+
+    /**
+     * Detect Session Id
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @param string $group
+     * @return string
+     */
+    protected static function getSessionId($group)
+    {
+        $session = static::$session;
+        if ($session === null) {
+
+            $config = new SessionConfig(Config::get('orbit.session'));
+
+            if ($group == 'mobile-ci') {
+                $config->setConfig('session_origin.header.name', 'X-Orbit-Mobile-Session');
+                $config->setConfig('session_origin.query_string.name', 'orbit_mobile_session');
+                $config->setConfig('session_origin.cookie.name', 'orbit_mobile_session');
+            }
+
+            $session = new Session($config);
+            // There is possibility that the session are already expired
+            // So we need to catch those
+            try {
+                $session = $session->disableForceNew()->start();
+            } catch (Exception $e) {
+                // do nothing
+            }
+        }
+
+        static::$session = null;
+        return $session->getSessionId();
+    }
+
+
+
 }

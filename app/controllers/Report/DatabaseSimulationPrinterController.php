@@ -158,7 +158,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
 
         // Filter by gender
         OrbitInput::get('genders', function($genders) use ($activities) {
-            $activities->whereIn('activities.gender', $genders);
+            $activities->whereIn('user_details.gender', $genders);
         });
 
         // Filter by groups
@@ -387,7 +387,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'CRM Analytics';
+        $pageTitle = 'CRM Data';
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
@@ -395,8 +395,8 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Analytics', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Analytics Data', $totalRec, '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Data', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Data', $totalRec, '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Events', 'Promotions', 'Coupons');

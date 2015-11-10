@@ -3741,7 +3741,7 @@ class MobileCIAPIController extends ControllerAPI
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer, $payload = '') {
+    private function redirectToCloud($email, $retailer, $payload = '', $from = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
@@ -3751,6 +3751,7 @@ class MobileCIAPIController extends ControllerAPI
             'retailer_id' => $retailer->merchant_id,
             'callback_url' => URL::route('customer-login-callback'),
             'payload' => $payload,
+            'from' => $from,
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
@@ -3785,6 +3786,7 @@ class MobileCIAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Retailer not found');
             }
             $email = OrbitInput::get('email');
+            $from = OrbitInput::get('from');
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
@@ -3798,6 +3800,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($user === null) {
                 $_POST['email'] = $email;
+                $_POST['from'] = $from;
                 $response = \LoginAPIController::create('raw')->setRetailerId(OrbitInput::get('retailer_id'))->setUseTransaction(false)->postRegisterUserInShop();
                 if ($response->code !== 0) {
                     throw new Exception($response->message, $response->code);
@@ -3829,6 +3832,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
+                'user_acquisition_id' => $acq->user_acquisition_id,
             ];
             $this->commit();
         } catch (ACLForbiddenException $e) {

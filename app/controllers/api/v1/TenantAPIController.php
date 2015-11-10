@@ -436,25 +436,27 @@ class TenantAPIController extends ControllerAPI
             }
 
             // validate category_ids
-            foreach ($category_ids as $category_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'category_id'   => $category_id_check,
-                    ),
-                    array(
-                        'category_id'   => 'orbit.empty.category:' . $parent_id,
-                    )
-                );
+            if (isset($category_ids) && count($category_ids) > 0) {
+                foreach ($category_ids as $category_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'category_id'   => $category_id_check,
+                        ),
+                        array(
+                            'category_id'   => 'orbit.empty.category:' . $parent_id,
+                        )
+                    );
 
-                Event::fire('orbit.tenant.postnewtenant.before.categoryvalidation', array($this, $validator));
+                    Event::fire('orbit.tenant.postnewtenant.before.categoryvalidation', array($this, $validator));
 
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.tenant.postnewtenant.after.categoryvalidation', array($this, $validator));
                 }
-
-                Event::fire('orbit.tenant.postnewtenant.after.categoryvalidation', array($this, $validator));
             }
 
             Event::fire('orbit.tenant.postnewtenant.after.validation', array($this, $validator));
@@ -773,7 +775,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status|orbit.exists.tenant_on_inactive_have_linked:' . $retailer_id . '|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
+                    'status'            => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,

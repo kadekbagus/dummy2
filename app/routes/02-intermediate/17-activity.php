@@ -16,3 +16,5 @@ Route::get('/app/v1/activity/active-user-statistics', 'IntermediateAuthControlle
 Route::get('/app/v1/activity/new-returning-statistics', 'IntermediateAuthController@Activity_getNewAndReturningUserStatistics');
 Route::get('/app/v1/activity/captive-report', 'IntermediateAuthController@Activity_getCaptivePortalReport');
 Route::get('/app/v1/activity/connected-now-statistics', 'IntermediateAuthController@Activity_getConnectedNowStatistics');
+Route::get('/app/v1/activity/customer-average-connected-time', 'IntermediateAuthController@Activity_getCustomerAverageConnectedTime');
+Route::get('/app/v1/activity/customer-connected-hourly', 'IntermediateAuthController@Activity_getCustomerConnectedHourly');
