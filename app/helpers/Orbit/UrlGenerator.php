@@ -4,7 +4,7 @@ namespace Orbit;
 
 use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
-
+use Config;
 /**
  * Extends url generator to insert session id in url.
  *
