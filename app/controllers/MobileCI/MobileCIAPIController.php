@@ -1681,7 +1681,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Promotion Tenant')
+                    ->setActivityNameLong('View Promotion Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1695,7 +1695,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: News Tenants List Page, news ID: %s', OrbitInput::get('news_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View News Tenant')
+                    ->setActivityNameLong('View News Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1709,7 +1709,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Events Tenants List Page, event ID: %s', OrbitInput::get('event_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Events Tenant')
+                    ->setActivityNameLong('View Events Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1721,7 +1721,19 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant')
+                    ->setActivityNameLong('View Tenant List')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id'))) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1929,7 +1941,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $tenant->merchant_id . ', promotion ID: '. $promo_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant')
+                    ->setActivityNameLong('View Tenant Promotion Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1941,7 +1953,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from News, tenant ID: ' . $tenant->merchant_id . ', news ID: '. $news_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant')
+                    ->setActivityNameLong('View Tenant News Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1953,7 +1965,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page, tenant ID: ' . $tenant->merchant_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant')
+                    ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -2726,7 +2738,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $product_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_promotion')
-                ->setActivityNameLong('View Promotion')
+                ->setActivityNameLong('View Promotion Detail')
                 ->setObject($coupons)
                 ->setNews($coupons)
                 ->setModuleName('Promotion')
