@@ -646,6 +646,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $data = array(
                 'logged_in' => TRUE,
                 'user_id'   => $user->user_id,
+                'location_id' => Config::get('orbit.shop.id')
             );
 
             /**
@@ -655,6 +656,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $this->session->getSessionConfig()->setConfig('session_origin.header.name', $this->mobileCISessionName['header']);
             $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
             $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
+            $this->session->getSessionConfig()->setConfig('application_id', MobileCIAPIController::APPLICATION_ID);
             $this->session->enableForceNew()->start($data);
 
             // Send the session id via HTTP header

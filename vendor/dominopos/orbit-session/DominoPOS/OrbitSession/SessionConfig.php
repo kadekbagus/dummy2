@@ -52,6 +52,11 @@ class SessionConfig
             'strict' => TRUE,
 
             /**
+             * Application ID for DB filtering.
+             */
+            'application_id' => null,
+
+            /**
              * Session Driver
              */
             'driver' => 'file',
