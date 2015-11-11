@@ -4,10 +4,12 @@
 <meta name="author" content="DominoPOS" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <meta name="format-detection" content="telephone=no">
+@if(! empty($this_mall->mediaIcon))
 <link rel="apple-touch-icon-precomposed" sizes="57x57" href="{{ asset($this_mall->mediaIcon->path) }}" />
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{ asset($this_mall->mediaIcon->path) }}" />
 <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{ asset($this_mall->mediaIcon->path) }}" />
 <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ asset($this_mall->mediaIcon->path) }}" />
+@endif
 <link rel="shortcut icon" type="image/ico" href="{{ asset('mobile-ci/images/favicon.ico') }}"/>
 
 {{ HTML::style('mobile-ci/stylesheet/bootstrap-tour.min.css') }}
