@@ -117,7 +117,7 @@
                         <h4>{{{ Lang::get('mobileci.coupon.enter_tenant_verification_number') }}}</h4>
                         <small>{{{ Lang::get('mobileci.coupon.ask_our_tenant_employee') }}}</small>
                         <div class="form-data">
-                            <input type="text" class="form-control text-center" id="tenantverify" style="font-size:20px;">
+                            <input type="password" class="form-control text-center" id="tenantverify" style="font-size:20px;">
                         </div>
                     </div>
                 </div>

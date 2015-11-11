@@ -976,11 +976,9 @@
                 arrowClass: 'bottom-right'
             }]
         });
-        console.log(homeTour._options.steps);
         if(! jQuery.isEmptyObject(homescreenPopover)) {
             homeTour._options.steps.push(homescreenPopover); 
         }
-        console.log(homeTour._options.steps);
 
         // function to prepare the header for the tour
         var prepareHeader = function () {

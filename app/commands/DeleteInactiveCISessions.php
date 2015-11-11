@@ -183,7 +183,6 @@ class DeleteInactiveCISessions extends Command
             }
             $user_id = $data['user_id'];
             $location_id = $data['location_id'];
-            $session_id = $data['location_id'];
             $this->logoutUser($user_id, $location_id, $row->session_id);
             $users_logged_out = $users_logged_out + 1;
             $to_delete[] = $row->session_id;
