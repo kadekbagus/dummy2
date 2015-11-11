@@ -2692,6 +2692,26 @@ class MobileCIAPIController extends ControllerAPI
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
 
+            // checking if all tenant linked to this promotion inactive or not
+            // so that if all tenant inactive we can disable the 'see tenant' button on the view
+            // for fix bug OM-724 
+            $_tenants = $coupons->tenants;
+            
+            $allTenantInactive = false;
+            
+            $inactiveTenant = 0;
+
+            foreach($_tenants as $key => $value)
+            {
+                if ($value->status === 'inactive') {
+                    $inactiveTenant = $inactiveTenant+1;
+                }
+            }
+
+            if ($inactiveTenant === count($_tenants)) {
+                $allTenantInactive = true;
+            } 
+
             if (! empty($alternateLanguage)) {
                 $promotionTranslation = \NewsTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -2746,7 +2766,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'languages' => $languages));
+            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'languages' => $languages, 'all_tenant_inactive' => $allTenantInactive));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
@@ -2955,6 +2975,26 @@ class MobileCIAPIController extends ControllerAPI
                 $news->image = 'mobile-ci/images/default_product.png';
             }
 
+            // checking if all tenant linked to this news inactive or not
+            // so that if all tenant inactive we can disable the 'see tenant' button on the view
+            // for fix bug OM-724 
+            $_tenants = $news->tenants;
+            
+            $allTenantInactive = false;
+            
+            $inactiveTenant = 0;
+
+            foreach($_tenants as $key => $value)
+            {
+                if ($value->status === 'inactive') {
+                    $inactiveTenant = $inactiveTenant+1;
+                }
+            }
+
+            if ($inactiveTenant === count($_tenants)) {
+                $allTenantInactive = true;
+            } 
+
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($news)) {
                 $newsTranslation = \NewsTranslation::excludeDeleted()
@@ -3010,7 +3050,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-detail', array('page_title' => $news->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $news, 'languages' => $languages));
+            return View::make('mobile-ci.mall-news-detail', array('page_title' => $news->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $news, 'languages' => $languages, 'all_tenant_inactive' => $allTenantInactive));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
