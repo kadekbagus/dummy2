@@ -553,7 +553,140 @@
         return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
     }
 
+    navigator.getBrowser= (function(){
+        var ua = navigator.userAgent, tem,
+            M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+        if(/trident/i.test(M[1])){
+            tem=  /\brv[ :]+(\d+)/g.exec(ua) || [];
+            return 'IE '+(tem[1] || '');
+        }
+        if(M[1]=== 'Chrome'){
+            tem= ua.match(/\b(OPR|Edge)\/(\d+)/);
+            if(tem!= null) return tem.slice(1).join(' ').replace('OPR', 'Opera');
+        }
+        M= M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+        if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
+        return M;
+    })();
+
+    function getMobileOperatingSystem() {
+        var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+        if( userAgent.match( /iPad/i ) || userAgent.match( /iPhone/i ) || userAgent.match( /iPod/i ) ) {
+            return 'ios';
+        } else if( userAgent.match( /Android/i ) ) {
+            return 'android';
+        } else {
+            return 'unknown';
+        }
+    }
+
     $(document).ready(function() {
+        var homescreenPopover = {};
+        function homescreenPopup() {
+            // get the os first
+            if(getMobileOperatingSystem() === 'android' || getMobileOperatingSystem() === 'ios') {
+                $('.ci-header').append('<div class="fake-homescreen"></div>')
+                // android chrome
+                if(navigator.getBrowser[0] === 'Chrome') {
+                    $('.fake-homescreen').css({
+                        position: 'absolute',
+                        right: '22px',
+                        top: '4px',
+                        width: '1px',
+                        height: '1px'
+                    });
+                    homescreenPopover = {
+                        element: '.fake-homescreen',
+                        placement: 'bottom',
+                        animation: true,
+                        backdrop: true,
+                        backdropContainer: 'body',
+                        title: '{{ Lang::get('mobileci.homescreen.title') }}',
+                        content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                        arrowClass: 'top-right'
+                    };
+                } else if(navigator.getBrowser[0] === 'Safari') { // ios safari
+                    if(! navigator.userAgent.match('CriOS') && ! navigator.userAgent.match('MiuiBrowser')) { // check if it's not chrome in ios, chrome in ios doesn't have add to homescreen menu
+                        if(window.orientation == 90 || window.orientation == -90) { // detect safari in landscape
+                            $('.fake-homescreen').css({
+                                position: 'fixed',
+                                top: '4px',
+                                width: '1px',
+                                height: '1px',
+                                right: '120px'
+                            });
+                            homescreenPopover = {
+                                element: '.fake-homescreen',
+                                placement: 'bottom',
+                                animation: true,
+                                backdrop: true,
+                                backdropContainer: 'body',
+                                title: '{{ Lang::get('mobileci.homescreen.title') }}',
+                                content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                                arrowClass: 'top-right'
+                            };
+                        } else if(window.orientation == 0 || window.orientation == 180) { // detect safari in portrait
+                            $('.fake-homescreen').css({
+                                position: 'fixed',
+                                bottom: '4px',
+                                width: '1px',
+                                height: '1px',
+                                left: '50%'
+                            });
+                            homescreenPopover = {
+                                element: '.fake-homescreen',
+                                placement: 'top',
+                                animation: true,
+                                backdrop: true,
+                                backdropContainer: 'body',
+                                title: '{{ Lang::get('mobileci.homescreen.title') }}',
+                                content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                                arrowClass: 'bottom'
+                            };
+                        }
+                    }
+                } else if(navigator.getBrowser[0] === 'Firefox') { // android firefox
+                    $('.fake-homescreen').css({
+                        position: 'absolute',
+                        right: '22px',
+                        top: '4px',
+                        width: '1px',
+                        height: '1px'
+                    });
+                    homescreenPopover = {
+                        element: '.fake-homescreen',
+                        placement: 'bottom',
+                        animation: true,
+                        backdrop: true,
+                        backdropContainer: 'body',
+                        title: '{{ Lang::get('mobileci.homescreen.title') }}',
+                        content: '{{ Lang::get('mobileci.homescreen.message_firefox') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                        arrowClass: 'top-right'
+                    };
+                } else if(navigator.getBrowser[0] === 'Opera' || navigator.getBrowser[0] === 'O') { // android opera
+                    $('.fake-homescreen').css({
+                        position: 'absolute',
+                        left: '18px',
+                        top: '4px',
+                        width: '1px',
+                        height: '1px'
+                    });
+                    homescreenPopover = {
+                        element: '.fake-homescreen',
+                        placement: 'bottom',
+                        animation: true,
+                        backdrop: true,
+                        backdropContainer: 'body',
+                        title: '{{ Lang::get('mobileci.homescreen.title') }}',
+                        content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                        arrowClass: 'top-right'
+                    };
+                }
+            }
+        }
+        homescreenPopup();
+
         var displayTutorial = false;
         orbitIsViewing = true; {{-- declared in layout --}}
         // Override the content of displayTutorial
@@ -691,6 +824,7 @@
 
         // Initialize the tour configuration
         endTour.init();
+
 
         // Instance the tour
         var homeTour = new Tour({
@@ -834,6 +968,11 @@
                 arrowClass: 'bottom-right'
             }]
         });
+        console.log(homeTour._options.steps);
+        if(! jQuery.isEmptyObject(homescreenPopover)) {
+            homeTour._options.steps.push(homescreenPopover); 
+        }
+        console.log(homeTour._options.steps);
 
         // function to prepare the header for the tour
         var prepareHeader = function () {
@@ -956,40 +1095,40 @@
             return false; //for good measure
         });
         $('#slider1').responsiveSlides({
-          auto: true,
-          pager: false,
-          nav: true,
-          prevText: '<i class="fa fa-chevron-left"></i>',
-          nextText: '<i class="fa fa-chevron-right"></i>',
-          speed: 500
+            auto: true,
+            pager: false,
+            nav: true,
+            prevText: '<i class="fa fa-chevron-left"></i>',
+            nextText: '<i class="fa fa-chevron-right"></i>',
+            speed: 500
         });
         $('#slider2').responsiveSlides({
-          auto: true,
-          pager: false,
-          nav: true,
-          prevText: '<i class="fa fa-chevron-left"></i>',
-          nextText: '<i class="fa fa-chevron-right"></i>',
-          speed: 500
+            auto: true,
+            pager: false,
+            nav: true,
+            prevText: '<i class="fa fa-chevron-left"></i>',
+            nextText: '<i class="fa fa-chevron-right"></i>',
+            speed: 500
         });
         $('#slider3').responsiveSlides({
-          auto: true,
-          pager: false,
-          nav: true,
-          prevText: '<i class="fa fa-chevron-left"></i>',
-          nextText: '<i class="fa fa-chevron-right"></i>',
-          speed: 500
+            auto: true,
+            pager: false,
+            nav: true,
+            prevText: '<i class="fa fa-chevron-left"></i>',
+            nextText: '<i class="fa fa-chevron-right"></i>',
+            speed: 500
         });
         $('#slider4').responsiveSlides({
-          auto: true,
-          pager: false,
-          nav: true,
-          prevText: '<i class="fa fa-chevron-left"></i>',
-          nextText: '<i class="fa fa-chevron-right"></i>',
-          speed: 500
+            auto: true,
+            pager: false,
+            nav: true,
+            prevText: '<i class="fa fa-chevron-left"></i>',
+            nextText: '<i class="fa fa-chevron-right"></i>',
+            speed: 500
         });
 
         $.each($('.rslides li'), function(i, v){
-           $(this).css('height', $(this).width());
+            $(this).css('height', $(this).width());
         });
     });
     $(window).resize(function(){

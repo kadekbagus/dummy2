@@ -106,11 +106,16 @@ Route::filter('orbit-settings', function()
     // checking ip address of the client
     $ip_address = Request::getClientIp();
     if (RequestAccess::create()->checkIpAddress($ip_address) === false) {
-        throw new Exception (sprintf('You have no access'));
+        // throw new Exception (sprintf('You have no access'));
+        $retailer = Mall::with('parent', 'mediaIcon')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
+        View::share('this_mall', $retailer);
+        return View::make('mobile-ci.connect');
     }
 
     $browserLang = substr(Request::server('HTTP_ACCEPT_LANGUAGE'), 0, 2);
-    $retailer = Mall::with('parent')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
+    $retailer = Mall::with('parent', 'mediaIcon')->where('merchant_id', Config::get('orbit.shop.id'))->excludeDeleted()->first();
+
+    View::share('this_mall', $retailer);
 
     // Timezone should be set
     $timezone = $retailer->timezone;

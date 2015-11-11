@@ -1,10 +1,20 @@
-<title>Orbit by Dominopos</title>
+<title>{{ $this_mall->name }} Orbit</title>
 <meta charset="utf-8" />
 <meta name="description" content="Orbit app mobile customer interface" />
 <meta name="author" content="DominoPOS" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <meta name="format-detection" content="telephone=no">
-
+@if(! empty($this_mall->mediaIcon))
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="{{ asset($this_mall->mediaIcon->path) }}" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{ asset($this_mall->mediaIcon->path) }}" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{ asset($this_mall->mediaIcon->path) }}" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ asset($this_mall->mediaIcon->path) }}" />
+@else
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="{{ asset('mobile-ci/images/favicon.ico') }}" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{ asset('mobile-ci/images/favicon.ico') }}" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{ asset('mobile-ci/images/favicon.ico') }}" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ asset('mobile-ci/images/favicon.ico') }}" />
+@endif
 <link rel="shortcut icon" type="image/ico" href="{{ asset('mobile-ci/images/favicon.ico') }}"/>
 
 {{ HTML::style('mobile-ci/stylesheet/bootstrap-tour.min.css') }}

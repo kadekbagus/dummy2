@@ -413,4 +413,16 @@ return array(
         ),
     ),
 
+    'homescreen' => array(
+        'title'     => '你知道吗？',
+        'message'   => '您可以添加这个Web应用程序到您的主屏幕：点击设置，然后',
+        'message_firefox'   => '您可以添加这个Web应用程序到您的主屏幕：点击设置 > 页面， 然后',
+        'add_to'    => '<strong>添加到主屏幕</strong>',
+        'check'     => '不要再显示此消息',
+    ),
+
+    'connect' => array(
+        'header'  => '获取新的数字化购物体验',
+        'message' => '请连接到商场的无线网络',
+    ),
 );

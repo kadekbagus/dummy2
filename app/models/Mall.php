@@ -300,6 +300,19 @@ class Mall extends Eloquent
     }
 
     /**
+     * Merchant has one uploaded icon.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaIcon()
+    {
+        return $this->hasOne('Media', 'object_id', 'merchant_id')
+                    ->where('object_name', 'mall')
+                    ->where('media_name_id', 'mall_icon');
+    }
+
+    /**
      * Add Filter merchant based on user who request it.
      *
      * @author Rio Astamal <me@rioastamal.net>
