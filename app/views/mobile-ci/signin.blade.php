@@ -49,7 +49,7 @@
                     <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}" value="{{{ $orbitToFacebookOriginValue }}}" />
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block submit-btn" id="btn-login-form-fb"><i class="fa fa-facebook"></i> {{{ trans('mobileci.signin.login_via_facebook') }}}</button>
+                    <button style="background-color:#3B5998;" type="submit" class="btn btn-info btn-block submit-btn" id="btn-login-form-fb"><i class="fa fa-facebook"></i> {{{ trans('mobileci.signin.login_via_facebook') }}}</button>
                 </div>
                 <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="no" />
             </form>
