@@ -846,6 +846,7 @@ class CouponReportAPIController extends ControllerAPI
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @author Tian <tian@dominopos.com>
+     * @author Irianto Pratama <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -995,6 +996,11 @@ class CouponReportAPIController extends ControllerAPI
 
             // Filter by Retailer name
             OrbitInput::get('redeem_retailer_name_like', function($name) use ($coupons) {
+                $coupons->where('merchants.name', 'like', "%$name%");
+            });
+
+            // Filter by Retailer name
+            OrbitInput::get('retailer_name_like', function($name) use ($coupons) {
                 $coupons->where('merchants.name', 'like', "%$name%");
             });
 
