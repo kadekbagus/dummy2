@@ -314,19 +314,27 @@
                         {{ nl2br($events->description) }}
                         @endif
                     @elseif($events->link_object_type == 'retailer')
-                        @if(! empty($events->image))
+                        @if(count($events->retailers) > 1)
                         <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">
+                            @if(! empty($events->image))
                             <img class="img-responsive" src="{{ asset($events->image) }}">
+                            @else
+                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
+                            @endif
                         </a>
                         <br>
                         <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">{{ $events->event_name }}</a></b> <br>
                         {{ nl2br($events->description) }}
                         @else
-                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">
+                        <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenant?id='.$events->retailers[0]->merchant_id) }}">
+                            @if(! empty($events->image))
+                            <img class="img-responsive" src="{{ asset($events->image) }}">
+                            @else
                             <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
+                            @endif
                         </a>
                         <br>
-                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">{{ $events->event_name }}</a></b> <br>
+                        <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenant?id='.$events->retailers[0]->merchant_id) }}">{{ $events->event_name }}</a></b> <br>
                         {{ nl2br($events->description) }}
                         @endif
                     @elseif($events->link_object_type == 'widget')
@@ -968,11 +976,9 @@
                 arrowClass: 'bottom-right'
             }]
         });
-        console.log(homeTour._options.steps);
         if(! jQuery.isEmptyObject(homescreenPopover)) {
             homeTour._options.steps.push(homescreenPopover); 
         }
-        console.log(homeTour._options.steps);
 
         // function to prepare the header for the tour
         var prepareHeader = function () {

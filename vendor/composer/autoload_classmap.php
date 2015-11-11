@@ -110,6 +110,7 @@ return array(
     'CustomPermission' => $baseDir . '/app/models/CustomPermission.php',
     'DashboardAPIController' => $baseDir . '/app/controllers/api/v1/DashboardAPIController.php',
     'DatabaseSeeder' => $baseDir . '/app/database/seeds/DatabaseSeeder.php',
+    'DeleteInactiveCISessions' => $baseDir . '/app/commands/DeleteInactiveCISessions.php',
     'DeleteUser' => $baseDir . '/app/commands/DeleteUser.php',
     'DummyAPIController' => $baseDir . '/app/controllers/api/v1/DummyAPIController.php',
     'Employee' => $baseDir . '/app/models/Employee.php',
