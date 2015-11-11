@@ -319,14 +319,14 @@ class SessionDatabase implements GenericInterface
 
     protected function cleanupSomeSessions()
     {
-        $stmt = $this->pdo->prepare("DELETE FROM `{$this->getConfig('path')}` WHERE expire_at < ? LIMIT 10");
+        $stmt = $this->pdo->prepare("DELETE FROM `{$this->getConfig('path')}` WHERE expire_at < ? ORDER BY expire_at LIMIT 10");
         $stmt->execute([time()]);
     }
 
     /**
      * Insert Initial Session to Database
      *
-     * @param \DominoPOS\OrbitSession\SessionData
+     * @param \DominoPOS\OrbitSession\SessionData $sessionData
      * @return bool
      */
     protected function __insertSession($sessionData)
@@ -337,11 +337,11 @@ class SessionDatabase implements GenericInterface
         $data         = serialize($sessionData);
 
         $query =$this->pdo->prepare("
-            INSERT INTO `{$this->getConfig('path')}` (session_id, session_data, expire_at, last_activity)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO `{$this->getConfig('path')}` (session_id, session_data, expire_at, last_activity, application_id)
+            VALUES (?, ?, ?, ?, ?)
         ");
 
-        return $query->execute([$sessionData->id, $data, $sessionData->expireAt, $sessionData->lastActivityAt]);
+        return $query->execute([$sessionData->id, $data, $sessionData->expireAt, $sessionData->lastActivityAt, $sessionData->applicationId]);
     }
 
     /**
