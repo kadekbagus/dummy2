@@ -55,13 +55,20 @@ class SessionData
      */
     public $ipAddress = '';
 
+    /**
+     * Application ID or null
+     * @var int
+     */
+    public $applicationId = null;
+
 
     /**
      * Constructor
      */
-    public function __construct(array $value)
+    public function __construct(array $value, $applicationId = null)
     {
         $this->id = $this->genSessionId();
+        $this->applicationId = $applicationId;
         $this->userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown UA/?';
         $this->ipAddress = $_SERVER['REMOTE_ADDR'];
         $this->value = $value;

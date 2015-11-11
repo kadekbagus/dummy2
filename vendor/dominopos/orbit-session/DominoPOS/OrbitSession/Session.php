@@ -82,6 +82,8 @@ class Session
         $queryStringName = $this->config->getConfig('session_origin.query_string.name');
         $cookieName = $this->config->getConfig('session_origin.cookie.name');
 
+        $applicationId = $this->config->getConfig('application_id');
+
         if (array_key_exists('header', $availabilities)
             && $availabilities['header'] === TRUE
             && isset($_SERVER[$headerName])) {
@@ -114,7 +116,7 @@ class Session
                 throw new Exception ('No session found.', static::ERR_SESS_NOT_FOUND);
             }
 
-            $sessionData = new SessionData($data);
+            $sessionData = new SessionData($data, $applicationId);
             $sessionData->createdAt = $now;
             $this->driver->start($sessionData);
 

@@ -29,6 +29,9 @@ Artisan::add(new configDiffFromSample);
 // Insert or delete agreement on settings table
 Artisan::add(new ConfigAgreement);
 
+// Delete Inactive CI sessions
+Artisan::add(new DeleteInactiveCISessions);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
