@@ -27,40 +27,40 @@
     <div class="col-xs-12 product-img">
         @if(($coupon->image!='mobile-ci/images/default_product.png'))
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{ asset($coupon->image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
+            <div class="zoom"><a href="{{{ asset($coupon->image) }}}" data-featherlight="image"><img alt="" src="{{{ asset('mobile-ci/images/product-zoom.png') }}}" ></a></div>
         </div>
         @endif
         @if(($coupon->image!='mobile-ci/images/default_product.png'))
-        <a href="{{ asset($coupon->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($coupon->image) }}" ></a>
+        <a href="{{{ asset($coupon->image) }}}" data-featherlight="image"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
         @else
-        <img class="img-responsive" alt="" src="{{ asset($coupon->image) }}" >
+        <img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" >
         @endif
     </div>
     <div class="col-xs-12 main-theme product-detail">
         <div class="row">
             <div class="col-xs-12">
-                <h3>{{ $coupon->promotion_name }}</h3>
+                <h3>{{{ $coupon->promotion_name }}}</h3>
             </div>
             <div class="col-xs-12">
-                <p>{{ $coupon->description }}</p>
+                <p>{{{ $coupon->description }}}</p>
             </div>
             <div class="col-xs-12">
-                <p>{{ $coupon->long_description }}</p>
+                <p>{{{ $coupon->long_description }}}</p>
             </div>
             <div class="col-xs-12">
-                <h4>{{ Lang::get('mobileci.coupon_detail.validity_label') }}</h4>
-                <p>{{ date('d M Y', strtotime($coupon->coupon_validity_in_date)) }}</p>
+                <h4>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</h4>
+                <p>{{{ date('d M Y', strtotime($coupon->coupon_validity_in_date)) }}}</p>
             </div>
             <div class="hide col-xs-12">
                 <h4>Coupon Type</h4>
                 @if($coupon->promotion_type == 'tenant')
-                    <p>{{ Lang::get('mobileci.coupon.tenant_based') }}</p>
+                    <p>{{{ Lang::get('mobileci.coupon.tenant_based') }}}</p>
                 @elseif($coupon->promotion_type == 'mall')
-                    <p>{{ Lang::get('mobileci.coupon.mall_based') }}</p>
+                    <p>{{{ Lang::get('mobileci.coupon.mall_based') }}}</p>
                 @endif
             </div>
             <div class="col-xs-12">
-                <h4>{{ Lang::get('mobileci.coupon.tenant_redeem') }}</h4>
+                <h4>{{{ Lang::get('mobileci.coupon.tenant_redeem') }}}</h4>
                 <ul class="tenant-list">
                     @if($cso_exists)
                     <li>Customer Service</li>
@@ -68,6 +68,9 @@
                     @foreach($tenants as $tenant)
                         <li>{{ $tenant->tenant->name }}</li>
                     @endforeach
+                    @if(count($tenants) <=0)
+                        <li> - </li>
+                    @endif
                 </ul>
             </div>
         </div>
@@ -77,15 +80,18 @@
         @if(! empty((float) $coupon->couponRule->discount_value))
         <div class="row">
             <div class="col-xs-12 text-center">
-                <h4>{{ Lang::get('mobileci.coupon.coupon_value') }}</h4>
-                <p>{{ $retailer->currency }} <span class="formatted-numx">{{ $coupon->couponRule->discount_value }}</span></p>
+                <h4>{{{ Lang::get('mobileci.coupon.coupon_value') }}}</h4>
+                <p>{{{ $retailer->currency }}} <span class="formatted-numx">{{{ $coupon->couponRule->discount_value }}}</span></p>
             </div>
         </div>
         @endif
         <div class="row">
+            @if(count($tenants) <=0)
+            @else
             <div class="col-xs-12 text-center">
-                <button class="btn btn-info btn-block" id="useBtn">{{ Lang::get('mobileci.modals.coupon_use') }}</button>
+                <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.modals.coupon_use') }}}</button>
             </div>
+            @endif
         </div>
     </div>
 </div>
@@ -102,14 +108,14 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.coupon.close') }}</span></button>
-                <h4 class="modal-title" id="hasCouponLabel">{{ Lang::get('mobileci.coupon.use_coupon') }}</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{{ Lang::get('mobileci.coupon.close') }}}</span></button>
+                <h4 class="modal-title" id="hasCouponLabel">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</h4>
             </div>
             <div class="modal-body">
                 <div class="row select-tenant">
                     <div class="col-xs-12 vertically-spaced text-center">
-                        <h4>{{ Lang::get('mobileci.coupon.enter_tenant_verification_number') }}</h4>
-                        <small>{{ Lang::get('mobileci.coupon.ask_our_tenant_employee') }}</small>
+                        <h4>{{{ Lang::get('mobileci.coupon.enter_tenant_verification_number') }}}</h4>
+                        <small>{{{ Lang::get('mobileci.coupon.ask_our_tenant_employee') }}}</small>
                         <div class="form-data">
                             <input type="text" class="form-control text-center" id="tenantverify" style="font-size:20px;">
                         </div>
@@ -125,7 +131,7 @@
                 <div class="row">
                     <input type="hidden" name="detail" id="detail" value="">
                     <div class="col-xs-12">
-                        <button type="button" id="applyCoupon" class="btn btn-info btn-block">{{ Lang::get('mobileci.coupon.validate') }}</button>
+                        <button type="button" id="applyCoupon" class="btn btn-info btn-block">{{{ Lang::get('mobileci.coupon.validate') }}}</button>
                     </div>
                 </div>
             </div>
@@ -137,21 +143,21 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.coupon.close') }}</span></button>
-                <h4 class="modal-title" id="hasCouponLabel">{{ Lang::get('mobileci.coupon.use_coupon') }}</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{{ Lang::get('mobileci.coupon.close') }}}</span></button>
+                <h4 class="modal-title" id="hasCouponLabel">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</h4>
             </div>
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced text-center">
-                        <h4 style="color:#d9534f" id="errMsg">{{ Lang::get('mobileci.coupon.wrong_verification_number') }}</h4>
-                        <small>"{{ Lang::get('mobileci.coupon.please_check_tenant') }}"</small>
+                        <h4 style="color:#d9534f" id="errMsg">{{{ Lang::get('mobileci.coupon.wrong_verification_number') }}}</h4>
+                        <small>"{{{ Lang::get('mobileci.coupon.please_check_tenant') }}}"</small>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <div class="row">
                     <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.coupon.ok') }}</button>
+                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{{ Lang::get('mobileci.coupon.ok') }}}</button>
                     </div>
                 </div>
             </div>
@@ -163,14 +169,14 @@
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.coupon.close') }}</span></button>
-                <h4 class="modal-title" id="hasCouponLabel">{{ Lang::get('mobileci.coupon.use_coupon') }}</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{{ Lang::get('mobileci.coupon.close') }}}</span></button>
+                <h4 class="modal-title" id="hasCouponLabel">{{{ Lang::get('mobileci.coupon.use_coupon') }}}</h4>
             </div>
             <div class="modal-body">
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced text-center">
-                        <h4 style="color:#33cc99">{{ Lang::get('mobileci.coupon.successful') }}</h4>
-                        <small>"{{ Lang::get('mobileci.coupon.please_communicate') }}"</small>
+                        <h4 style="color:#33cc99">{{{ Lang::get('mobileci.coupon.successful') }}}</h4>
+                        <small>"{{{ Lang::get('mobileci.coupon.please_communicate') }}}"</small>
                         <div class="form-data">
                             <input id="issuecouponno" type="text" class="form-control text-center" style="font-size:20px;" value="" disabled>
                         </div>
@@ -180,7 +186,7 @@
             <div class="modal-footer">
                 <div class="row">
                     <div class="col-xs-12">
-                        <button type="button" id="denyCoupon" class="btn btn-info btn-block" data-dismiss="modal" disabled>{{ Lang::get('mobileci.coupon.ok') }}</button>
+                        <button type="button" id="denyCoupon" class="btn btn-info btn-block" data-dismiss="modal" disabled>{{{ Lang::get('mobileci.coupon.ok') }}}</button>
                     </div>
                 </div>
             </div>
