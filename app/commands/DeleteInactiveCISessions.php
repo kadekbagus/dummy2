@@ -183,7 +183,7 @@ class DeleteInactiveCISessions extends Command
             }
             $user_id = $data['user_id'];
             $location_id = $data['location_id'];
-            $this->logoutUser($user_id, $location_id);
+            $this->logoutUser($user_id, $location_id, $row->session_id);
             $users_logged_out = $users_logged_out + 1;
             $to_delete[] = $row->session_id;
         }
@@ -192,10 +192,11 @@ class DeleteInactiveCISessions extends Command
         $this->line(sprintf('CI session cleanup: %d users logged out, %d sessions deleted', $users_logged_out, count($to_delete)));
     }
 
-    private function logoutUser($user_id, $location_id)
+    private function logoutUser($user_id, $location_id, $session_id)
     {
         $prefix = DB::getTablePrefix();
         $rows = DB::select('SELECT object_type FROM `' . $prefix . 'merchants` WHERE merchant_id = ?', [$location_id]);
+
         $location_type = null;
         foreach ($rows as $row) {
             $location_type = $row->object_type;
@@ -219,6 +220,7 @@ class DeleteInactiveCISessions extends Command
             ->setActivityNameLong('Sign out')
             ->setModuleName('Application')
             ->setLocation($location)
+            ->setSessionId($session_id)
             ->responseOK();
         $activity->location_id = $location_id;
         $activity->save();
