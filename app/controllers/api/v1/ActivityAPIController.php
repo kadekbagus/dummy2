@@ -1919,6 +1919,13 @@ class ActivityAPIController extends ControllerAPI
                 }
                 Event::fire('orbit.activity.getactivity.after.validation', array($this, $validator));
 
+                // Only shows activities which belongs to this merchant
+                if ($user->isSuperAdmin() !== TRUE) {
+                    $locationIds = $this->getLocationIdsForUser($user);
+                } else {
+                    $locationIds = OrbitInput::get('locationIds');
+                }
+
                 $responses = [];
                 foreach ($periods as $period) {
 
@@ -1941,7 +1948,14 @@ class ActivityAPIController extends ControllerAPI
                         ->where('activity_type', '=', 'login')
                         ->where('activity_name', '=', 'login_ok')
                         ->where('created_at', '>=', $start_date)
-                        ->where('created_at', '<=', $end_date);
+                        ->where('created_at', '<=', $end_date)
+                        ->whereNotIn('user_id', function ($q) use ($locationIds, $start_date, $end_date) {
+                            $q->select('user_id')
+                                ->from('user_acquisitions')
+                                ->whereIn('acquirer_id', $locationIds)
+                                ->where('created_at', '>=', $start_date)
+                                ->where('created_at', '<=', $end_date);
+                        });
 
                     // Only shows activities which belongs to this merchant
                     if ($user->isSuperAdmin() !== TRUE) {
@@ -1965,7 +1979,7 @@ class ActivityAPIController extends ControllerAPI
                         'start_date' => $start_date,
                         'end_date' => $end_date,
                         'new' => $sign_up_count,
-                        'returning' => max(0, $returning_sign_in_count - $sign_up_count)
+                        'returning' => $returning_sign_in_count
                     ];
                 }
 
