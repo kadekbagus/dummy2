@@ -1721,18 +1721,6 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            if (! empty(OrbitInput::get('event_id')) && ! empty(OrbitInput::get('promotion_id'))) {
-                $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
-                $activityPage->setUser($user)
-                    ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant List')
-                    ->setObject(null)
-                    ->setModuleName('Tenant')
-                    ->setNotes($activityPageNotes)
-                    ->responseOK()
-                    ->save();
-            }
-
             if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id'))) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
                 $activityPage->setUser($user)
