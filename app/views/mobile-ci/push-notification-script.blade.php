@@ -129,5 +129,9 @@
         setInterval(function() {
             getNotif()
         }, pushNotificationDelay);
+
+        $(document).on('hidden.bs.modal', '.modal', function () {
+            $('.modal:visible').length && $(document.body).addClass('modal-open');
+        });
     });
 </script>
