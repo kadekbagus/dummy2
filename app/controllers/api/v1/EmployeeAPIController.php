@@ -378,7 +378,7 @@ class EmployeeAPIController extends ControllerAPI
                     'firstname'         => 'required',
                     'lastname'          => 'required',
                     'date_of_birth'     => 'date_format:Y-m-d',
-                    'employee_id_char'  => 'orbit.exists.employeeid',
+                    'employee_id_char'  => 'orbit.exists.employeeid:' . $myRetailerIds,
                     'username'          => 'required|orbit.exists.username.mall',
                     'password'          => 'required|min:5|confirmed',
                     'employee_role'     => 'required|orbit.empty.employee.role',
@@ -2408,8 +2408,12 @@ class EmployeeAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.exists.employeeid', function ($attribute, $value, $parameters) {
+            $mall_id = $parameters[0];
+
             $employee = Employee::excludeDeleted()
+                                ->join('employee_retailer', 'employee_retailer.employee_id', '=', 'employees.employee_id')
                                 ->where('employee_id_char', $value)
+                                ->where('employee_retailer.retailer_id', $mall_id)
                                 ->first();
 
             if (! empty($employee)) {
