@@ -200,24 +200,27 @@ class LoginAPIController extends ControllerAPI
      */
     public function postRegisterUserInShop()
     {
-        $activity = Activity::mobileci()
-                            ->setActivityType('registration');
         try {
             $httpCode = 200;
 
             $this->registerCustomValidation();
 
+            $activity = null;
+
             $email = OrbitInput::post('email');
+            $from = OrbitInput::post('from');
             $mall_id = $this->getRetailerId();
+
+            $signup_from = 'Sign up via mobile (email address)';
 
             $validator = Validator::make(
                 array(
                     'email'     => $email,
-                    'mall_id'   => $mall_id
+                    'mall_id'   => $mall_id,
                 ),
                 array(
                     'email'     => 'required|email|orbit.email.exists',
-                    'mall_id'   => 'orbit.empty.mall'
+                    'mall_id'   => 'orbit.empty.mall',
                 )
             );
 
@@ -241,10 +244,19 @@ class LoginAPIController extends ControllerAPI
                 $this->commit();
             }
 
+            if ($from === 'cs') {
+                $signup_from = 'Sign up via customer service';
+                $activity = Activity::csportal()
+                                    ->setActivityType('registration');
+            } else {
+                $activity = Activity::mobileci()
+                    ->setActivityType('registration');
+            }
+
             // Successfull registration
             $activity->setUser($newuser)
                      ->setActivityName('registration_ok')
-                     ->setActivityNameLong('Sign Up')
+                     ->setActivityNameLong($signup_from)
                      ->setModuleName('Application')
                      ->setLocation($mall)
                      ->responseOK();

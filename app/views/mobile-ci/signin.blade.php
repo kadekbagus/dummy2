@@ -41,24 +41,26 @@
                 </div>
             </div>
         </header>
-        
-        <div id="social-wrapper">
 
+        <div id="social-wrapper">
             <form class="row" name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                 <div class="form-group">
                     <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}" />
                     <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}" value="{{{ $orbitToFacebookOriginValue }}}" />
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block submit-btn" id="btn-login-form-fb"><i class="fa fa-facebook"></i> {{{ trans('mobileci.signin.login_via_facebook') }}}</button>
+                    <button style="background-color:#3B5998;" type="submit" class="btn btn-info btn-block submit-btn" id="btn-login-form-fb"><i class="fa fa-facebook"></i> {{{ trans('mobileci.signin.login_via_facebook') }}}</button>
                 </div>
+                <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="no" />
             </form>
-        </div>
-        <div class="row vertically-spaced">
-            <div class="col-xs-12 text-center">
-                <p style="position:relative;top:12px;">{{{ trans('mobileci.signin.or_between_email_and_fb') }}}</p>
+
+            <div class="row vertically-spaced">
+                <div class="col-xs-12 text-center">
+                    <p>{{{ trans('mobileci.signin.or_between_email_and_fb') }}}</p>
+                </div>
             </div>
         </div>
+
         <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
             <div class="form-group">
                 <input type="text" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
@@ -66,10 +68,13 @@
             <div class="form-group orbit-auto-login">
                 <button type="submit" class="btn btn-info btn-block">{{ $start_button_login }}</button>
             </div>
-            <div class="checkbox">
-                <label><input type="checkbox" id="agree_to_terms" name="agree_to_terms" value="yes" /> {{ $agreeToTermsLabel  }}</label>
-            </div>
+
+            <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="no" />
         </form>
+
+        <div class="checkbox">
+            <label><input type="checkbox" id="agree_to_terms" value="yes" /> {{ $agreeToTermsLabel  }}</label>
+        </div>
     </div>
 </div>
 <div class="row top-space" id="signedIn">
@@ -216,8 +221,12 @@
     var no_ajax = false;
     var term_accepted = false;
 
+    // Default state is always no (back button?)
+    $('.agree_to_terms').value = 'no';
+
     $('#agree_to_terms').click(function (e) {
         term_accepted = this.checked;
+        $('.agree_to_terms').val('yes');
     }).removeAttr('checked'); {{-- in case user got here via back button, always clear the checkbox --}}
 
     $('#orbit-privacy-policy-anchor').click(function (e) {

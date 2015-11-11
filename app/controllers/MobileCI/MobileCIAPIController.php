@@ -1681,7 +1681,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Promotion Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Promotion Tenant')
+                    ->setActivityNameLong('View Promotion Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1695,7 +1695,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: News Tenants List Page, news ID: %s', OrbitInput::get('news_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View News Tenant')
+                    ->setActivityNameLong('View News Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1709,7 +1709,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Events Tenants List Page, event ID: %s', OrbitInput::get('event_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Events Tenant')
+                    ->setActivityNameLong('View Events Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1721,7 +1721,19 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant')
+                    ->setActivityNameLong('View Tenant List')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id'))) {
+                $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1929,7 +1941,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $tenant->merchant_id . ', promotion ID: '. $promo_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant')
+                    ->setActivityNameLong('View Tenant Promotion Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1941,7 +1953,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from News, tenant ID: ' . $tenant->merchant_id . ', news ID: '. $news_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant')
+                    ->setActivityNameLong('View Tenant News Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -1953,7 +1965,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page, tenant ID: ' . $tenant->merchant_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant')
+                    ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -2726,7 +2738,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityPageNotes = sprintf('Page viewed: Promotion Detail, promotion Id: %s', $product_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_promotion')
-                ->setActivityNameLong('View Promotion')
+                ->setActivityNameLong('View Promotion Detail')
                 ->setObject($coupons)
                 ->setNews($coupons)
                 ->setModuleName('Promotion')
@@ -3561,7 +3573,8 @@ class MobileCIAPIController extends ControllerAPI
                     'SELECT *, p.image AS promo_image,
                     (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
                           where ic.promotion_id = p.promotion_id
-                          and ic.status!="deleted") as total_issued_coupon
+                          and ic.status!="deleted"
+                          and ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '") as total_issued_coupon
                 FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
                 WHERE pr.rule_type = "auto_issue_on_signup"
@@ -3569,6 +3582,7 @@ class MobileCIAPIController extends ControllerAPI
                     AND p.is_coupon = "Y" AND p.status = "active"
                     AND p.begin_date <= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
                     AND p.end_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
+                    AND p.coupon_validity_in_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
                 HAVING
                     (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
                     OR
@@ -3741,7 +3755,7 @@ class MobileCIAPIController extends ControllerAPI
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer, $payload = '') {
+    private function redirectToCloud($email, $retailer, $payload = '', $from = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
@@ -3751,6 +3765,7 @@ class MobileCIAPIController extends ControllerAPI
             'retailer_id' => $retailer->merchant_id,
             'callback_url' => URL::route('customer-login-callback'),
             'payload' => $payload,
+            'from' => $from,
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
@@ -3785,6 +3800,7 @@ class MobileCIAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Retailer not found');
             }
             $email = OrbitInput::get('email');
+            $from = OrbitInput::get('from');
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
@@ -3798,6 +3814,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($user === null) {
                 $_POST['email'] = $email;
+                $_POST['from'] = $from;
                 $response = \LoginAPIController::create('raw')->setRetailerId(OrbitInput::get('retailer_id'))->setUseTransaction(false)->postRegisterUserInShop();
                 if ($response->code !== 0) {
                     throw new Exception($response->message, $response->code);
@@ -3829,6 +3846,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
+                'user_acquisition_id' => $acq->user_acquisition_id,
             ];
             $this->commit();
         } catch (ACLForbiddenException $e) {

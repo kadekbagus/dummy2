@@ -167,7 +167,13 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 $activities->whereIn('activities.group', $groups);
             });
         } else {
-            $activities->whereIn('activities.group', ['mobile-ci', 'pos']);
+            $activities->where(function($q) {
+                $q->whereIn('activities.group', ['mobile-ci', 'pos'])
+                  ->orWhere(function($q) {
+                        $q->where('activities.activity_name', 'registration_ok')
+                          ->where('activities.group', 'cs-portal');
+                  });
+                });
         }
 
         // Filter by matching group pattern

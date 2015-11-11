@@ -583,11 +583,11 @@
 
     $(document).ready(function() {
         var homescreenPopover = {};
-        // popover for add to homescreen
         function homescreenPopup() {
-            alert(navigator.getBrowser[0]);
-            if(getMobileOperatingSystem() === 'android' || getMobileOperatingSystem() === 'ios' || getMobileOperatingSystem() === 'unknown' ) {
+            // get the os first
+            if(getMobileOperatingSystem() === 'android' || getMobileOperatingSystem() === 'ios') {
                 $('.ci-header').append('<div class="fake-homescreen"></div>')
+                // android chrome
                 if(navigator.getBrowser[0] === 'Chrome') {
                     $('.fake-homescreen').css({
                         position: 'absolute',
@@ -606,45 +606,47 @@
                         content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
                         arrowClass: 'top-right'
                     };
-                } else if(navigator.getBrowser[0] === 'Safari') {
-                    if(window.orientation == 90 || window.orientation == -90) {
-                        $('.fake-homescreen').css({
-                            position: 'fixed',
-                            top: '4px',
-                            width: '1px',
-                            height: '1px',
-                            right: '120px'
-                        });
-                        homescreenPopover = {
-                            element: '.fake-homescreen',
-                            placement: 'bottom',
-                            animation: true,
-                            backdrop: true,
-                            backdropContainer: 'body',
-                            title: '{{ Lang::get('mobileci.homescreen.title') }}',
-                            content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
-                            arrowClass: 'top-right'
-                        };
-                    } else if(window.orientation == 0 || window.orientation == 180) {
-                        $('.fake-homescreen').css({
-                            position: 'fixed',
-                            bottom: '4px',
-                            width: '1px',
-                            height: '1px',
-                            left: '50%'
-                        });
-                        homescreenPopover = {
-                            element: '.fake-homescreen',
-                            placement: 'top',
-                            animation: true,
-                            backdrop: true,
-                            backdropContainer: 'body',
-                            title: '{{ Lang::get('mobileci.homescreen.title') }}',
-                            content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
-                            arrowClass: 'bottom'
-                        };
+                } else if(navigator.getBrowser[0] === 'Safari') { // ios safari
+                    if(! navigator.userAgent.match('CriOS') && ! navigator.userAgent.match('MiuiBrowser')) { // check if it's not chrome in ios, chrome in ios doesn't have add to homescreen menu
+                        if(window.orientation == 90 || window.orientation == -90) { // detect safari in landscape
+                            $('.fake-homescreen').css({
+                                position: 'fixed',
+                                top: '4px',
+                                width: '1px',
+                                height: '1px',
+                                right: '120px'
+                            });
+                            homescreenPopover = {
+                                element: '.fake-homescreen',
+                                placement: 'bottom',
+                                animation: true,
+                                backdrop: true,
+                                backdropContainer: 'body',
+                                title: '{{ Lang::get('mobileci.homescreen.title') }}',
+                                content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                                arrowClass: 'top-right'
+                            };
+                        } else if(window.orientation == 0 || window.orientation == 180) { // detect safari in portrait
+                            $('.fake-homescreen').css({
+                                position: 'fixed',
+                                bottom: '4px',
+                                width: '1px',
+                                height: '1px',
+                                left: '50%'
+                            });
+                            homescreenPopover = {
+                                element: '.fake-homescreen',
+                                placement: 'top',
+                                animation: true,
+                                backdrop: true,
+                                backdropContainer: 'body',
+                                title: '{{ Lang::get('mobileci.homescreen.title') }}',
+                                content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                                arrowClass: 'bottom'
+                            };
+                        }
                     }
-                } else if(navigator.getBrowser[0] === 'Firefox') {
+                } else if(navigator.getBrowser[0] === 'Firefox') { // android firefox
                     $('.fake-homescreen').css({
                         position: 'absolute',
                         right: '22px',
@@ -662,7 +664,7 @@
                         content: '{{ Lang::get('mobileci.homescreen.message_firefox') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
                         arrowClass: 'top-right'
                     };
-                } else if(navigator.getBrowser[0] === 'Opera' || navigator.getBrowser[0] === 'O') {
+                } else if(navigator.getBrowser[0] === 'Opera' || navigator.getBrowser[0] === 'O') { // android opera
                     $('.fake-homescreen').css({
                         position: 'absolute',
                         left: '18px',
@@ -964,9 +966,13 @@
                 title: '{{ Lang::get('mobileci.tour.coupon.title') }}',
                 content: '{{ Lang::get('mobileci.tour.coupon.content') }}',
                 arrowClass: 'bottom-right'
-            }, homescreenPopover]
+            }]
         });
-        
+        console.log(homeTour._options.steps);
+        if(! jQuery.isEmptyObject(homescreenPopover)) {
+            homeTour._options.steps.push(homescreenPopover); 
+        }
+        console.log(homeTour._options.steps);
 
         // function to prepare the header for the tour
         var prepareHeader = function () {
