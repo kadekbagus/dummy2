@@ -198,7 +198,10 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store = \Cookie::get('event');
             }
 
-            $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
+            $events = EventModel::with(array('retailers' => function ($q) {
+                    $q->where('merchants.status', 'active');
+                }))
+                ->active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
                     function ($q) use ($retailer) {
                         $q->where('begin_date', '<=', Carbon::now($retailer->timezone->timezone_name))->where('end_date', '>=', Carbon::now($retailer->timezone->timezone_name));
