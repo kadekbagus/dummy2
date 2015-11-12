@@ -1074,7 +1074,7 @@
           $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
-        $('a.widget-link').click(function(){
+        $('a.widget-link').click(function(event){
           var link = $(this).attr('href');
           var widgetdata = $(this).data('widget');
           event.preventDefault();
