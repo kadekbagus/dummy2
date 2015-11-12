@@ -429,9 +429,6 @@
                     @endif
                 </p>
             </div>
-            <div class="modal-footer">
-                <div class="pull-right"><button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button></div>
-            </div>
         </div>
     </div>
 </div>
@@ -1077,7 +1074,7 @@
           $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
           $('#noModal').modal();
         });
-        $('a.widget-link').click(function(){
+        $('a.widget-link').click(function(event){
           var link = $(this).attr('href');
           var widgetdata = $(this).data('widget');
           event.preventDefault();
