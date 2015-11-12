@@ -1434,6 +1434,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->active()
                 ->where('object_type', 'floor')
                 ->orderBy('object_order', 'asc')
+                ->groupBy('object_name')
                 ->get();
 
             $tenants = Tenant::with('mediaLogo');
