@@ -429,9 +429,6 @@
                     @endif
                 </p>
             </div>
-            <div class="modal-footer">
-                <div class="pull-right"><button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button></div>
-            </div>
         </div>
     </div>
 </div>
