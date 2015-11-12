@@ -26,7 +26,11 @@
             @if(is_null($page_title))
             {{ 'ORBIT' }}
             @else
-            {{ $page_title }}
+                @if(strlen($page_title) >= 30)
+                {{ substr($page_title, 0, 30) . '...' }}
+                @else
+                {{ $page_title }}
+                @endif
             @endif
         </span>
         <div id="orbit-tour-connection" class="text-center pull-right">
