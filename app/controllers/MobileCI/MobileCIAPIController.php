@@ -198,7 +198,10 @@ class MobileCIAPIController extends ControllerAPI
                 $event_store = \Cookie::get('event');
             }
 
-            $events = EventModel::active()->where('merchant_id', $retailer->merchant_id)
+            $events = EventModel::with(array('retailers' => function ($q) {
+                    $q->where('merchants.status', 'active');
+                }))
+                ->active()->where('merchant_id', $retailer->merchant_id)
                 ->where(
                     function ($q) use ($retailer) {
                         $q->where('begin_date', '<=', Carbon::now($retailer->timezone->timezone_name))->where('end_date', '>=', Carbon::now($retailer->timezone->timezone_name));
@@ -1711,18 +1714,6 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Events Tenant List')
-                    ->setObject(null)
-                    ->setModuleName('Tenant')
-                    ->setNotes($activityPageNotes)
-                    ->responseOK()
-                    ->save();
-            }
-
-            if (! empty(OrbitInput::get('event_id')) && ! empty(OrbitInput::get('promotion_id'))) {
-                $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
-                $activityPage->setUser($user)
-                    ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)

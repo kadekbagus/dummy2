@@ -325,7 +325,7 @@
                         <br>
                         <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenants?event_id='.$events->event_id) }}">{{ $events->event_name }}</a></b> <br>
                         {{ nl2br($events->description) }}
-                        @else
+                        @elseif(count($events->retailers) == 1)
                         <a data-event="{{ $events->event_id }}" href="{{ url('customer/tenant?id='.$events->retailers[0]->merchant_id) }}">
                             @if(! empty($events->image))
                             <img class="img-responsive" src="{{ asset($events->image) }}">
@@ -335,6 +335,15 @@
                         </a>
                         <br>
                         <b><a data-event="{{ $events->event_id }}" href="{{ url('customer/tenant?id='.$events->retailers[0]->merchant_id) }}">{{ $events->event_name }}</a></b> <br>
+                        {{ nl2br($events->description) }}
+                        @else
+                        @if(! empty($events->image))
+                        <img class="img-responsive" src="{{ asset($events->image) }}">
+                        @else
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_event.png') }}">
+                        @endif
+                        <br>
+                        <b>{{ $events->event_name }}</b> <br>
                         {{ nl2br($events->description) }}
                         @endif
                     @elseif($events->link_object_type == 'widget')
