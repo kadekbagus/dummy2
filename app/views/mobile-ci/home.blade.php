@@ -986,7 +986,7 @@
             }]
         });
         if(! jQuery.isEmptyObject(homescreenPopover)) {
-            homeTour._options.steps.push(homescreenPopover); 
+            homeTour._options.steps.push(homescreenPopover);
         }
 
         // function to prepare the header for the tour

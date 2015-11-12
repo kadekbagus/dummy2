@@ -840,6 +840,51 @@ class MobileCIAPIController extends ControllerAPI
         }
     }
 
+
+    /**
+     * POST - Coupon pop up display activity
+     *
+     * @param integer    `eventdata`        (optional) - The event ID
+     *
+     * @return void
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    public function postDisplayCouponPopUpActivity()
+    {
+        $activity = Activity::mobileci()
+                            ->setActivityType('view');
+        $user = null;
+
+        try {
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+            $activity->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List (Pop Up)')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+        } catch (Exception $e) {
+            $this->rollback();
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
+            $activity->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List Failed (Pop Up')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
     /**
      * POST - Widget click activity
      *
@@ -2687,11 +2732,11 @@ class MobileCIAPIController extends ControllerAPI
 
             // checking if all tenant linked to this promotion inactive or not
             // so that if all tenant inactive we can disable the 'see tenant' button on the view
-            // for fix bug OM-724 
+            // for fix bug OM-724
             $_tenants = $coupons->tenants;
-            
+
             $allTenantInactive = false;
-            
+
             $inactiveTenant = 0;
 
             foreach($_tenants as $key => $value)
@@ -2703,7 +2748,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($inactiveTenant === count($_tenants)) {
                 $allTenantInactive = true;
-            } 
+            }
 
             if (! empty($alternateLanguage)) {
                 $promotionTranslation = \NewsTranslation::excludeDeleted()
@@ -2970,11 +3015,11 @@ class MobileCIAPIController extends ControllerAPI
 
             // checking if all tenant linked to this news inactive or not
             // so that if all tenant inactive we can disable the 'see tenant' button on the view
-            // for fix bug OM-724 
+            // for fix bug OM-724
             $_tenants = $news->tenants;
-            
+
             $allTenantInactive = false;
-            
+
             $inactiveTenant = 0;
 
             foreach($_tenants as $key => $value)
@@ -2986,7 +3031,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($inactiveTenant === count($_tenants)) {
                 $allTenantInactive = true;
-            } 
+            }
 
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($news)) {

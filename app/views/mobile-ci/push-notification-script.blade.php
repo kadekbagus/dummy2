@@ -115,6 +115,13 @@
                             orbitIsViewing = false;
                         });
                         $('#orbit-push-modal-' + notif.inbox_id).modal();
+
+                        // Post data to activity
+                        $.ajax({
+                            url: '{{ route('display-coupon-popup-activity') }}',
+                            method: 'POST',
+                        });
+
                     } else {
                         orbitIsViewing = false;
                     }

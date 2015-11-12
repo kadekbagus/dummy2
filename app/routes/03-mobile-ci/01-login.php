@@ -320,6 +320,17 @@ Route::group(
             })
         );
 
+        // track coupon popup display activity
+        Route::post(
+            '/app/v1/customer/displaycouponpopupactivity',
+            array(
+            'as' => 'display-coupon-popup-activity',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->postDisplayCouponPopUpActivity();
+            })
+        );
+
         // track widget click activity
         Route::post(
             '/app/v1/customer/widgetclickactivity',
