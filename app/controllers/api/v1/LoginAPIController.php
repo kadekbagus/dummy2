@@ -249,6 +249,12 @@ class LoginAPIController extends ControllerAPI
                 $activity = Activity::csportal()
                                     ->setActivityType('registration');
             } else {
+                 // Send email process to the queue
+                 \Queue::push('Orbit\\Queue\\RegistrationMail', [
+                     'user_id' => $newuser->user_id,
+                     'merchant_id' => $mall_id
+                 ]);
+
                 $activity = Activity::mobileci()
                     ->setActivityType('registration');
             }
@@ -260,12 +266,6 @@ class LoginAPIController extends ControllerAPI
                      ->setModuleName('Application')
                      ->setLocation($mall)
                      ->responseOK();
-
-             // Send email process to the queue
-             \Queue::push('Orbit\\Queue\\RegistrationMail', [
-                 'user_id' => $newuser->user_id,
-                 'merchant_id' => $mall_id
-             ]);
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
