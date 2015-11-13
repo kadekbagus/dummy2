@@ -123,9 +123,15 @@ class MobileCIAPIController extends ControllerAPI
                 if ($acq === null) {
                     $user = null;
                 }
-
             }
-            if (! is_object($user)) {
+
+            // if not from cloud callback we redirect to cloud if pending so cloud
+            // can resend activation email.
+            // if from cloud callback we do not redirect to cloud again
+            // cloud callback sends apikey_id (and other ids) in GET
+            $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
+
+            if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
                 return $this->redirectToCloud($email, $retailer, $payload);
             } else {
                 return $this->loginStage2($user, $retailer);
