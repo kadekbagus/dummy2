@@ -39,6 +39,16 @@ class IssuedCoupon extends Eloquent
         return $this->belongsTo('Tenant', 'redeem_retailer_id', 'merchant_id');
     }
 
+    /**
+     * Redeem Retailer has many uploaded media.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function redeemRetailerMedia()
+    {
+        return $this->hasMany('Media', 'object_id', 'redeem_retailer_id')
+                    ->where('object_name', 'retailer');
+    }
 
     /**
      * Save issued coupon based on promotion object.
