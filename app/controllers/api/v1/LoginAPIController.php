@@ -244,12 +244,6 @@ class LoginAPIController extends ControllerAPI
                 $this->commit();
             }
 
-            // Send email process to the queue
-            \Queue::push('Orbit\\Queue\\RegistrationMail', [
-             'user_id' => $newuser->user_id,
-             'merchant_id' => $mall_id
-            ]);
-
             if ($from === 'cs') {
                 $signup_from = 'Sign up via customer service';
                 $activity = Activity::csportal()
