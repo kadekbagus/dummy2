@@ -113,7 +113,10 @@ class MobileCIAPIController extends ControllerAPI
 
             // attempt to force cloud login scenario when using single-db
             // if there is no association between the user and this mall
-            if (is_object($user)) {
+            //
+            // for guests do not do this, guest users do not have UserAcquisition
+            // and are synced to every box even if acquisition not present.
+            if (is_object($user) && strtolower($user->role->role_name) != 'guest') {
                 $acq = \UserAcquisition::where('user_id', $user->user_id)
                     ->where('acquirer_id', $retailer->merchant_id)
                     ->lockForUpdate()->first();
@@ -3622,16 +3625,6 @@ class MobileCIAPIController extends ControllerAPI
             $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
             $user_detail->save();
 
-             // @author Irianto Pratama <irianto@dominopos.com>
-             // send email if user status pending
-             if ($user->status === 'pending') {
-                 // Send email process to the queue
-                 \Queue::push('Orbit\\Queue\\RegistrationMail', [
-                     'user_id' => $user->user_id,
-                     'merchant_id' => $retailer->merchant_id
-                 ]);
-             }
-
             $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
             if (is_null($cart)) {
                 $cart = new Cart();
@@ -3886,6 +3879,8 @@ class MobileCIAPIController extends ControllerAPI
                     'role',
                     function ($query) {
                         $query->where('role_name', 'Consumer');
+                        // guest not included here because guest logins should be seeded in initial sync
+                        // and there should be no need to go to cloud for guest login
                     }
                 )->sharedLock()
                 ->first();
