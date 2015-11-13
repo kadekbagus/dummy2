@@ -342,6 +342,8 @@ class IntermediateLoginController extends IntermediateBaseController
                     'role',
                     function ($query) {
                         $query->where('role_name', 'Consumer');
+                        // guest not included here because guest logins should be seeded in initial sync
+                        // and there should be no need to go to cloud for guest login
                     }
                 )->sharedLock()
                 ->first();
