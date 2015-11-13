@@ -139,9 +139,6 @@
             <div class="modal-body">
                 <p id="errorModalText"></p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button>
-            </div>
         </div>
     </div>
 </div>
@@ -159,9 +156,6 @@
             <div class="modal-body">
                 <iframe src="{{{ Config::get('orbit.contact_information.privacy_policy_url') }}}" style="zoom:0.60" frameborder="0" height="55%" width="99.6%"></iframe>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{{{ $closeModalText or 'OK' }}}</button>
-            </div>
         </div>
     </div>
 </div>
@@ -178,9 +172,6 @@
             </div>
             <div class="modal-body">
                 <iframe src="{{{ Config::get('orbit.contact_information.terms_of_service_url') }}}" style="zoom:0.60" frameborder="0" height="55%" width="99.6%"></iframe>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{{{ $closeModalText or 'OK' }}}</button>
             </div>
         </div>
     </div>
