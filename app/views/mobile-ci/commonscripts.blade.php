@@ -151,4 +151,66 @@
             $('#multi-language-popup').modal();
         });
     });
+    
+    // pinch zoom using hammerjs
+    $(document).on('click', '.zoomer', function(){
+        setTimeout(function(){
+            var el = $('.featherlight-content').get(0).getElementsByTagName("img")[0];
+            el.addEventListener('touchstart', function (e) {
+                e.preventDefault()
+            });
+
+            var mc = new Hammer.Manager(el);
+            var pinch = new Hammer.Pinch();
+            var pan = new Hammer.Pan();
+            var tap = new Hammer.Tap();
+
+            pinch.recognizeWith(pan);
+            mc.add([pinch, pan, tap]);
+
+            var initialScale = 1;
+            var initialDeltaX = 0;
+            var initialDeltaY = 0;
+            
+            var adjustScale = 1;
+            var adjustDeltaX = 0;
+            var adjustDeltaY = 0;
+
+            var currentScale = null;
+            var currentDeltaX = null;
+            var currentDeltaY = null;
+
+            mc.on("pinch pan tap", function(ev) {
+                var transforms = [];
+
+                // Adjusting the current pinch/pan event properties using the previous ones set when they finished touching
+                currentScale = adjustScale * ev.scale;
+                currentDeltaX = adjustDeltaX + (ev.deltaX / currentScale);
+                currentDeltaY = adjustDeltaY + (ev.deltaY / currentScale);
+
+                // Concatenating and applying parameters.
+                transforms.push('scale('+currentScale+')');
+                transforms.push('translate('+currentDeltaX+'px,'+currentDeltaY+'px)');
+                $('.featherlight-content img').css("transform", transforms.join(' '));
+            });
+
+            mc.on("panend pinchend", function (ev) {
+                var transforms = [];
+                var afterScale = adjustScale * ev.scale;
+                if(afterScale > initialScale) { // Saving the final transforms for adjustment next time the user interacts.
+                    adjustScale = currentScale;
+                    adjustDeltaX = currentDeltaX;
+                    adjustDeltaY = currentDeltaY;
+                } else { // reset image to initial state if zoomed out smaller than initial scale
+                    adjustScale = initialScale;
+                    adjustDeltaX = initialDeltaX;
+                    adjustDeltaY = initialDeltaY;
+                    transforms.push('scale('+initialScale+')');
+                    transforms.push('translate('+initialDeltaX+'px,'+initialDeltaY+'px)');
+                    $('.featherlight-content img').css("transform", transforms.join(' '));
+                }
+            });
+
+        }, 300);
+    });
 </script>
