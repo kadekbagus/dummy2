@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class EventAPIController extends ControllerAPI
 {
@@ -1287,6 +1288,11 @@ class EventAPIController extends ControllerAPI
                 ->select('merchants.name AS retailer_name', 'events.*')
                 // ->where('events.status', '!=', 'deleted');
                 ->where('events.status', '=', 'active');
+
+            $mallTime = Carbon::now();
+            if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
+                $events->whereRaw("? between begin_date and end_date", [$mallTime]);
+            }
 
             // Filter event by Ids
             OrbitInput::get('event_id', function($eventIds) use ($events)
