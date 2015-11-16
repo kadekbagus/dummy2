@@ -113,7 +113,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Customer</td>
+            <td>Total Customers</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
