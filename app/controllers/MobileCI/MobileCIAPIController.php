@@ -98,15 +98,16 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
 
             $this->beginTransaction();
-
             $user = User::with('apikey', 'userdetail', 'role')
                         ->excludeDeleted()
                         ->where('user_email', $email)
                         ->whereHas(
                             'role',
                             function ($query) {
-                                $query->where('role_name', 'Consumer');
-                                $query->orWhere('role_name', 'Guest');
+                                $query->where(function ($q) {
+                                    $q->where('role_name', 'Consumer');
+                                    $q->orWhere('role_name', 'Guest');
+                                });
                             }
                         )->sharedLock()
                         ->first();

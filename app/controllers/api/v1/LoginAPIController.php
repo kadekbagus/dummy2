@@ -219,7 +219,7 @@ class LoginAPIController extends ControllerAPI
                     'mall_id'   => $mall_id,
                 ),
                 array(
-                    'email'     => 'required|email|orbit.email.exists',
+                    'email'     => 'required|email|orbit.emailrole.exists',
                     'mall_id'   => 'orbit.empty.mall',
                 )
             );
@@ -830,6 +830,23 @@ class LoginAPIController extends ControllerAPI
         Validator::extend('orbit.email.exists', function ($attribute, $value, $parameters) {
             $user = User::excludeDeleted()
                         ->where('user_email', $value)
+                        ->first();
+
+            if (! empty($user)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.user', $user);
+
+            return TRUE;
+        });
+
+        // Check user email address, it should not exists
+        Validator::extend('orbit.emailrole.exists', function ($attribute, $value, $parameters) {
+            $user = User::excludeDeleted()
+                        ->join('roles', 'roles.role_id', '=', 'users.user_role_id')
+                        ->where('users.user_email', $value)
+                        ->where('roles.role_name', 'Consumer')
                         ->first();
 
             if (! empty($user)) {
