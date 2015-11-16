@@ -142,7 +142,7 @@ class Widget extends Eloquent
         // table also to determine whether this employee are allowable to access or not
         if (in_array($userRole, $employeeRoles)) {
             $builder->where(function($query) use ($user, $prefix) {
-            $query->whereRaw("{$prefix}widget.merchant_id in (select er.retailer_id from {$prefix}employees e
+            $query->whereRaw("{$prefix}widgets.merchant_id in (select er.retailer_id from {$prefix}employees e
                 join {$prefix}employee_retailer er on er.employee_id=e.employee_id and e.user_id=? and e.status != ?)", [$user->user_id, "deleted"]);
             });
         } else {
@@ -150,7 +150,7 @@ class Widget extends Eloquent
         // Mall group should be able to see all widgets belongs to his mall group and
         // mall owner should be able to see only widgets on his mall
         $builder->where(function($query) use ($user, $prefix) {
-            $query->whereRaw("{$prefix}widget.merchant_id in (select m.merchant_id from {$prefix}merchants m
+            $query->whereRaw("{$prefix}widgets.merchant_id in (select m.merchant_id from {$prefix}merchants m
             where m.object_type='mall' and m.status != 'deleted' and (m.user_id=? or m.parent_id in (
                 select m2.merchant_id from {$prefix}merchants m2
                 where m2.user_id=? and m2.object_type='mall_group' and m2.status != ?)))", [$user->user_id, $user->user_id, "deleted"]);
