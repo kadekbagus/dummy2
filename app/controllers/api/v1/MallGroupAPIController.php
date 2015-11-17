@@ -19,12 +19,14 @@ class MallGroupAPIController extends ControllerAPI
      *
      * @author Kadek <kadek@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Tian <tian@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `user_id`                 (required) - User id for the merchant
      * @param string     `email`                   (required) - Email address of the merchant
-     * @param string     `name`                    (optional) - Name of the merchant
+     * @param string     `name`                    (required) - Name of the merchant
+     * @param string     `status`                  (required) - Status of the merchant
+     * @param string     `country`                 (required) - Country ID
      * @param string     `description`             (optional) - Merchant description
      * @param string     `address_line1`           (optional) - Address 1
      * @param string     `address_line2`           (optional) - Address 2
@@ -32,14 +34,10 @@ class MallGroupAPIController extends ControllerAPI
      * @param integer    `postal_code`             (optional) - Postal code
      * @param integer    `city_id`                 (optional) - City id
      * @param string     `city`                    (optional) - Name of the city
-     * @param integer    `country_id`              (optional) - Country id
-     * @param string     `country`                 (optional) - Name of the country
      * @param string     `phone`                   (optional) - Phone of the merchant
      * @param string     `fax`                     (optional) - Fax of the merchant
      * @param string     `start_date_activity`     (optional) - Start date activity of the merchant
      * @param string     `end_date_activity`       (optional) - End date activity of the merchant
-     * @param string     `status`                  (required) - Status of the merchant
-     * @param string     `logo`                    (optional) - Logo of the merchant
      * @param string     `currency`                (optional) - Currency used by the merchant
      * @param string     `currency_symbol`         (optional) - Currency symbol
      * @param string     `tax_code1`               (optional) - Tax code 1
@@ -59,7 +57,6 @@ class MallGroupAPIController extends ControllerAPI
      * @param string     `slavebox_number`         (optional) - Slavebox number
      * @param string     `mobile_default_language` (optional) - Mobile default language
      * @param string     `pos_language`            (optional) - POS language
-     * @param file       `images`                  (optional) - Merchant logo
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -105,14 +102,12 @@ class MallGroupAPIController extends ControllerAPI
             $postal_code = OrbitInput::post('postal_code');
             $city_id = OrbitInput::post('city_id');
             $city = OrbitInput::post('city');
-            $country_id = OrbitInput::post('country_id');
             $country = OrbitInput::post('country');
             $phone = OrbitInput::post('phone');
             $fax = OrbitInput::post('fax');
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
             $status = OrbitInput::post('status');
-            $logo = OrbitInput::post('logo');
             $currency = OrbitInput::post('currency');
             $currency_symbol = OrbitInput::post('currency_symbol');
             $tax_code1 = OrbitInput::post('tax_code1');
@@ -145,7 +140,7 @@ class MallGroupAPIController extends ControllerAPI
                     'email'         => 'required|email|orbit.exists.email',
                     'name'          => 'required',
                     'status'        => 'required|orbit.empty.mall_status',
-                    'country'       => 'required|numeric',
+                    'country'       => 'required',
                     'url'           => 'orbit.formaterror.url.web'
                 )
             );
@@ -211,7 +206,6 @@ class MallGroupAPIController extends ControllerAPI
             $newmallgroup->start_date_activity = $start_date_activity;
             $newmallgroup->end_date_activity = $end_date_activity;
             $newmallgroup->status = $status;
-            $newmallgroup->logo = $logo;
             $newmallgroup->currency = $currency;
             $newmallgroup->currency_symbol = $currency_symbol;
             $newmallgroup->tax_code1 = $tax_code1;
@@ -350,13 +344,13 @@ class MallGroupAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string            `sort_by`                       (optional) - column order by
+     * @param string            `sort_by`                       (optional) - Column order by. Valid value: merchant_omid, registered_date, merchant_name, merchant_email, merchant_userid, merchant_description, merchantid, merchant_address1, merchant_address2, merchant_address3, merchant_cityid, merchant_city, merchant_countryid, merchant_country, merchant_phone, merchant_fax, merchant_status, merchant_currency, start_date_activity, total_mall.
      * @param string            `sort_mode`                     (optional) - asc or desc
      * @param integer           `take`                          (optional) - limit
      * @param integer           `skip`                          (optional) - limit offset
-     * @param integer           `merchant_id`                   (optional)
+     * @param string            `merchant_id`                   (optional)
      * @param string            `omid`                          (optional)
-     * @param integer           `user_id`                       (optional)
+     * @param string            `user_id`                       (optional)
      * @param string            `email`                         (optional)
      * @param string            `name`                          (optional)
      * @param string            `description`                   (optional)
@@ -842,8 +836,9 @@ class MallGroupAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `merchant_id`              (required) - ID of the merchant
+     * @param integer    `current_mall`             (required) - Mall group ID
      * @param string     `email`                    (optional) - Email address of the merchant
+     * @param string     `omid`                     (optional) - OMID
      * @param string     `name`                     (optional) - Name of the merchant
      * @param string     `description`              (optional) - Merchant description
      * @param string     `address_line1`            (optional) - Address 1
@@ -852,14 +847,12 @@ class MallGroupAPIController extends ControllerAPI
      * @param integer    `postal_code`              (optional) - Postal code
      * @param integer    `city_id`                  (optional) - City id
      * @param string     `city`                     (optional) - Name of the city
-     * @param integer    `country_id`               (optional) - Country id
-     * @param string     `country`                  (optional) - Name of the country
+     * @param string     `country`                  (optional) - Country ID
      * @param string     `phone`                    (optional) - Phone of the merchant
      * @param string     `fax`                      (optional) - Fax of the merchant
      * @param string     `start_date_activity`      (optional) - Start date activity of the merchant
      * @param string     `end_date_activity`        (optional) - End date activity of the merchant
      * @param string     `status`                   (optional) - Status of the merchant
-     * @param string     `logo`                     (optional) - Logo of the merchant
      * @param string     `currency`                 (optional) - Currency used by the merchant
      * @param string     `currency_symbol`          (optional) - Currency symbol
      * @param string     `tax_code1`                (optional) - Tax code 1
@@ -874,7 +867,9 @@ class MallGroupAPIController extends ControllerAPI
      * @param string     `contact_person_phone2`    (optional) - Contact person phone2
      * @param string     `contact_person_email`     (optional) - Contact person email
      * @param string     `sector_of_activity`       (optional) - Sector of activity
-     * @param file       `images`                   (optional) - Merchant logo
+     * @param string     `url`                      (optional) - URL
+     * @param string     `masterbox_number`         (optional) - Masterbox number
+     * @param string     `slavebox_number`          (optional) - Slavebox number
      * @param string     `mobile_default_language`  (optional) - Mobile default language
      * @param string     `pos_language`             (optional) - POS language
      *
@@ -1240,7 +1235,7 @@ class MallGroupAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `merchant_id`                 (required) - ID of the merchant
+     * @param integer    `merchant_id`                 (required) - Mall group ID
      * @param string     `password`                    (required) - Password of the user for confirmation
      *
      * @return Illuminate\Support\Facades\Response
