@@ -1038,7 +1038,7 @@ class PromotionAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status,rule_type,display_discount_value',
+                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,updated_at,is_permanent,status,rule_type,display_discount_value',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.promotion_sortby'),
@@ -1277,6 +1277,7 @@ class PromotionAPIController extends ControllerAPI
                     'description'              => 'promotions.description',
                     'begin_date'               => 'promotions.begin_date',
                     'end_date'                 => 'promotions.end_date',
+                    'updated_at'               => 'promotions.updated_at',
                     'is_permanent'             => 'promotions.is_permanent',
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
@@ -1424,7 +1425,7 @@ class PromotionAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,updated_at,is_permanent,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.promotion_by_retailer_sortby'),
@@ -1583,6 +1584,7 @@ class PromotionAPIController extends ControllerAPI
                     'description'       => 'promotions.description',
                     'begin_date'        => 'promotions.begin_date',
                     'end_date'          => 'promotions.end_date',
+                    'updated_at'        => 'promotions.updated_at',
                     'is_permanent'      => 'promotions.is_permanent',
                     'status'            => 'promotions.status'
                 );

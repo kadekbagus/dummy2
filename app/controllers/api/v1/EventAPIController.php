@@ -933,7 +933,7 @@ class EventAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,event_name,event_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:registered_date,event_name,event_type,description,begin_date,end_date,updated_at,is_permanent,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.event_sortby'),
@@ -1111,6 +1111,7 @@ class EventAPIController extends ControllerAPI
                     'description'       => 'events.description',
                     'begin_date'        => 'events.begin_date',
                     'end_date'          => 'events.end_date',
+                    'updated_at'        => 'events.updated_at',
                     'is_permanent'      => 'events.is_permanent',
                     'status'            => 'events.status'
                 );
@@ -1261,7 +1262,7 @@ class EventAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:retailer_name,registered_date,event_name,event_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:retailer_name,registered_date,event_name,event_type,description,begin_date,end_date,updated_at,is_permanent,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.event_by_retailer_sortby'),
@@ -1470,6 +1471,7 @@ class EventAPIController extends ControllerAPI
                     'description'       => 'events.description',
                     'begin_date'        => 'events.begin_date',
                     'end_date'          => 'events.end_date',
+                    'updated_at'        => 'events.updated_at',
                     'is_permanent'      => 'events.is_permanent',
                     'status'            => 'events.status'
                 );
