@@ -1577,7 +1577,7 @@ class EmployeeAPIController extends ControllerAPI
                     'with'      => OrbitInput::get('with')
                 ),
                 array(
-                    'sort_by'   => 'in:username,firstname,lastname,registered_date,employee_id_char,position',
+                    'sort_by'   => 'in:username,firstname,lastname,registered_date,updated_at,employee_id_char,position',
                     'role_ids'  => 'array|orbit.employee.role.limited',
                     'with'      => 'array|min:1'
                 ),
@@ -1788,6 +1788,7 @@ class EmployeeAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'   => 'users.created_at',
+                    'updated_at'        => 'users.updated_at',
                     'username'          => 'users.username',
                     'employee_id_char'  => 'employees.employee_id_char',
                     'lastname'          => 'users.user_lastname',
@@ -1951,7 +1952,7 @@ class EmployeeAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id' => 'required|orbit.empty.mall',
-                    'sort_by'   => 'in:username,firstname,lastname,registered_date,employee_id_char,position,role_name',
+                    'sort_by'   => 'in:username,firstname,lastname,registered_date,updated_at,employee_id_char,position,role_name',
                     'role_ids'  => 'array|orbit.employee.role.limited',
                     'with'      => 'array|min:1'
                 ),
@@ -2148,6 +2149,7 @@ class EmployeeAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'registered_date'   => 'users.created_at',
                     'create_at'         => 'users.created_at',
+                    'updated_at'        => 'users.updated_at',
                     'username'          => 'users.username',
                     'login_id'          => 'users.username',
                     'employee_id_char'  => 'employees.employee_id_char',
