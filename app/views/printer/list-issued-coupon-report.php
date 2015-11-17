@@ -112,7 +112,7 @@
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                 <td><?php echo (++$rowCounter); ?></td>
                 <td><?php echo htmlentities(($row->promotion_name)); ?></td>
-                <td><?php echo $me->printDateTime($row->begin_date, $timezoneCurrentMall) . ' - ' . $me->printDateTime($row->end_date, $timezoneCurrentMall); ?></td>
+                <td><?php echo $me->printDateTime($row->begin_date, null) . ' - ' . $me->printDateTime($row->end_date, null); ?></td>
                 <td><?php echo $me->printYesNoFormatter($row->is_auto_issue_on_signup); ?></td>
                 <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
                 <td><?php echo htmlentities($row->user_email); ?></td>
