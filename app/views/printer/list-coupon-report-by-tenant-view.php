@@ -111,7 +111,7 @@
                 <td><?php printf('%s / %s', '1', $row->total_issued); ?></td>
                 <td><?php echo htmlentities($row->user_email); ?></td>
                 <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
-                <td><?php echo $me->printDateTime($row->redeemed_date, 'd M Y H:i'); ?></td>
+                <td><?php echo $me->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i'); ?></td>
                 <td><?php echo htmlentities($row->redeem_verification_code); ?></td>
             </tr>
         <?php endwhile; ?>
