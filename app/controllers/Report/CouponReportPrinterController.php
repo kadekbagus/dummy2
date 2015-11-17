@@ -98,7 +98,7 @@ class CouponReportPrinterController extends DataPrinterController
                             '1 / ' . $row->total_issued,
                             $row->issued_coupon_code,
                             $row->user_email,
-                            $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i'),
+                            $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'no'),
                             $row->redeem_verification_code
                     );
                     $count++;
@@ -172,7 +172,7 @@ class CouponReportPrinterController extends DataPrinterController
                             '1 / ' . $row->total_issued,
                             $row->user_email,
                             $row->issued_coupon_code,
-                            $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i'),
+                            $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'no'),
                             $row->redeem_verification_code
                     );
                     $count++;
@@ -249,7 +249,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $this->printYesNoFormatter($row->is_auto_issue_on_signup),
                             $row->issued_coupon_code,
                             $row->user_email,
-                            $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'd M Y H:i'),
+                            $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'no'),
                             '1 / ' . $this->printUnlimitedFormatter($row->maximum_issued_coupon),
                             $row->status
                     );
@@ -288,8 +288,13 @@ class CouponReportPrinterController extends DataPrinterController
             }
         }
 
-        $time = strtotime($datetime);
-        $result = date($format, $time);
+        // format the datetime if needed
+        if ($format == 'no') {
+            $result = $datetime;
+        } else {
+            $time = strtotime($datetime);
+            $result = date($format, $time);
+        }
 
         return $result;
     }

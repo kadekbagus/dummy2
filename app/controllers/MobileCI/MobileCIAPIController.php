@@ -3651,7 +3651,7 @@ class MobileCIAPIController extends ControllerAPI
                     'SELECT *, p.image AS promo_image,
                     (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
                           where ic.promotion_id = p.promotion_id
-                          and ic.status!="deleted"
+                          and ic.status != "deleted"
                           and ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '") as total_issued_coupon
                 FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
@@ -3660,7 +3660,7 @@ class MobileCIAPIController extends ControllerAPI
                     AND p.is_coupon = "Y" AND p.status = "active"
                     AND p.begin_date <= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
                     AND p.end_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
-                    AND p.coupon_validity_in_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
+                    AND p.coupon_validity_in_date >= "' . Carbon::now($retailer->timezone->timezone_name) . '"
                 HAVING
                     (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
                     OR
