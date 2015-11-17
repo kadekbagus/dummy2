@@ -2617,17 +2617,17 @@ class ActivityAPIController extends ControllerAPI
 
             $activities = DB::select( DB::raw("
                     SELECT DATE(created_at) as date, ROUND(avg(TIMESTAMPDIFF(MINUTE, mindate, maxdate))) as total_minutes FROM (
-                          SELECT
-                          activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
-                          MIN(created_at) mindate, MAX(created_at) maxdate
-                          FROM {$tablePrefix}activities WHERE 1=1
-                          AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                          AND location_id = '" . $current_mall . "'
-                          AND role = 'Consumer'
-                          AND session_id IS NOT NULL
-                          AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
-                          AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
-                          GROUP BY session_id
+                        SELECT
+                            activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
+                            MIN(created_at) mindate, MAX(created_at) maxdate
+                        FROM {$tablePrefix}activities WHERE 1=1
+                            AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
+                            AND location_id = '" . $current_mall . "'
+                            AND (role = 'Consumer' OR role = 'Guest')
+                            AND session_id IS NOT NULL
+                            AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
+                            AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
+                        GROUP BY session_id
                     ) as A
                     group by date
                     order by created_at asc
@@ -2827,7 +2827,7 @@ class ActivityAPIController extends ControllerAPI
                             AND created_at BETWEEN '" . $start_date . "' AND '" . $end_date . "'
                             AND location_id = '" . $current_mall . "'
                             AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                            AND role = 'Consumer'
+                            AND (role = 'Consumer' OR role = 'Guest')
                             AND session_id IS NOT NULL
                         GROUP BY session_id
                     )  as A
