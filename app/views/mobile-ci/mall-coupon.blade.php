@@ -255,7 +255,7 @@
                             }, 1000);
                         });
                         $('#successCouponModal').on('hide.bs.modal', function($event){
-                            window.location.replace('mallcoupons');
+                            window.location.replace({{ json_encode(url('customer/mallcoupons')) }});
                         });
                     }else{
                         $('#wrongCouponModal').modal();
