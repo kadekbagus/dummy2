@@ -1501,7 +1501,12 @@ class ActivityAPIController extends ControllerAPI
                 ->leftJoin('user_details', 'activities.user_id', '=', 'user_details.user_id')
                 ->select(
                     DB::raw(
-                        $this_year . ' - EXTRACT(YEAR FROM birthdate)
+                        $this_year . '
+                     -
+                    CASE
+                      WHEN EXTRACT(YEAR FROM birthdate) = 00000 THEN NULL
+                      ELSE EXTRACT(YEAR FROM birthdate)
+                    END
                      -
                     CASE
                       WHEN EXTRACT(MONTH FROM birthdate) > ' . $this_month . ' THEN 1
@@ -1511,9 +1516,15 @@ class ActivityAPIController extends ControllerAPI
                     DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'activities.user_id) as count')
                 )
                 ->where('activities.module_name', '=', 'Application')
-                ->where('activities.group', '=', 'mobile-ci')
-                ->where('activities.activity_type', '=', 'login')
-                ->where('activities.activity_name', '=', 'login_ok')
+                ->where(function($q) {
+                    $q->where('activities.group', 'mobile-ci')
+                      ->where('activities.activity_type', '=', 'login')
+                      ->where('activities.activity_name', '=', 'login_ok')
+                      ->orWhere(function($q) {
+                            $q->where('activities.activity_name', 'registration_ok')
+                              ->where('activities.group', 'cs-portal');
+                      });
+                })
                 ->where('activities.created_at', '>=', $start_date)
                 ->where('activities.created_at', '<=', $end_date)
                 ->groupBy(DB::raw('1'))
