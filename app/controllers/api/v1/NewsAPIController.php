@@ -932,7 +932,7 @@ class NewsAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,news_name,object_type,description,begin_date,end_date,status',
+                    'sort_by' => 'in:registered_date,news_name,object_type,description,begin_date,end_date,updated_at,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.news_sortby'),
@@ -1109,6 +1109,7 @@ class NewsAPIController extends ControllerAPI
                     'description'       => 'news.description',
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
+                    'updated_at'        => 'news.updated_at',
                     'status'            => 'news.status'
                 );
 
@@ -1251,7 +1252,7 @@ class NewsAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,updated_at,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.promotion_by_retailer_sortby'),
@@ -1422,6 +1423,7 @@ class NewsAPIController extends ControllerAPI
                     'description'       => 'news.description',
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
+                    'updated_at'        => 'news.updated_at',
                     'status'            => 'news.status'
                 );
 

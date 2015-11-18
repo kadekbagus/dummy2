@@ -12,6 +12,7 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \View;
 use \User;
+use \Token;
 use \UserDetail;
 use \Role;
 use \Lang;
@@ -3651,7 +3652,7 @@ class MobileCIAPIController extends ControllerAPI
                     'SELECT *, p.image AS promo_image,
                     (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
                           where ic.promotion_id = p.promotion_id
-                          and ic.status!="deleted"
+                          and ic.status != "deleted"
                           and ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '") as total_issued_coupon
                 FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
@@ -3660,7 +3661,7 @@ class MobileCIAPIController extends ControllerAPI
                     AND p.is_coupon = "Y" AND p.status = "active"
                     AND p.begin_date <= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
                     AND p.end_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
-                    AND p.coupon_validity_in_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
+                    AND p.coupon_validity_in_date >= "' . Carbon::now($retailer->timezone->timezone_name) . '"
                 HAVING
                     (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
                     OR
@@ -3906,11 +3907,27 @@ class MobileCIAPIController extends ControllerAPI
             // @author Irianto Pratama <irianto@dominopos.com>
             // send email if user status pending
             if ($user->status === 'pending') {
-                // Send email process to the queue
-                \Queue::push('Orbit\\Queue\\RegistrationMail', [
-                    'user_id' => $user->user_id,
-                    'merchant_id' => $retailer->merchant_id
-                ]);
+
+                $mall_time = Carbon::now($retailer->timezone->timezone_name);
+                $pending_date = $mall_time;
+
+                $token = Token::where('status', 'active')
+                              ->where('token_name','user_registration_mobile')
+                              ->where('user_id', $user->user_id)
+                              ->orderBy('created_at', 'desc')
+                              ->first();
+
+                if (! empty($token)) {
+                    $pending_date = date('Y-m-d', date(strtotime("+1 day", strtotime($token->created_at))));
+                }
+
+                if (empty($token) || ($pending_date <= $mall_time)) {
+                    // Send email process to the queue
+                    \Queue::push('Orbit\\Queue\\RegistrationMail', [
+                        'user_id' => $user->user_id,
+                        'merchant_id' => $retailer->merchant_id
+                    ]);
+                }
             }
 
             $acq = \UserAcquisition::where('user_id', $user->user_id)

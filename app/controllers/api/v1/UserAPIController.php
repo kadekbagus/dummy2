@@ -1103,7 +1103,7 @@ class UserAPIController extends ControllerAPI
                     'with'      => OrbitInput::get('with')
                 ),
                 array(
-                    'sort_by'   => 'in:username,email,firstname,lastname,registered_date',
+                    'sort_by'   => 'in:username,email,firstname,lastname,registered_date,updated_at',
                     'with'      => 'array|min:0'
                 ),
                 array(
@@ -1258,6 +1258,7 @@ class UserAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'   => 'users.created_at',
+                    'updated_at'        => 'users.updated_at',
                     'username'          => 'users.username',
                     'email'             => 'users.user_email',
                     'lastname'          => 'users.user_lastname',
@@ -1500,7 +1501,7 @@ class UserAPIController extends ControllerAPI
             $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
 
             $current_mall = OrbitInput::get('current_mall');
-            
+
             $users->leftJoin('activities', function($join) use($current_mall) {
                             $join->on('activities.user_id', '=', 'users.user_id')
                                  ->where('activities.activity_name', '=', 'login_ok')
@@ -2643,6 +2644,11 @@ class UserAPIController extends ControllerAPI
             OrbitInput::post('date_of_work', function($data) use ($userdetail) {
                 $userdetail->date_of_work = $data;
             });
+
+            // Save updated by
+            $updateduser->modified_by = $this->api->user->user_id;
+            $userdetail->modified_by = $this->api->user->user_id;
+
 
             Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
 

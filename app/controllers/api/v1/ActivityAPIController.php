@@ -1501,7 +1501,12 @@ class ActivityAPIController extends ControllerAPI
                 ->leftJoin('user_details', 'activities.user_id', '=', 'user_details.user_id')
                 ->select(
                     DB::raw(
-                        $this_year . ' - EXTRACT(YEAR FROM birthdate)
+                        $this_year . '
+                     -
+                    CASE
+                      WHEN EXTRACT(YEAR FROM birthdate) = 00000 THEN NULL
+                      ELSE EXTRACT(YEAR FROM birthdate)
+                    END
                      -
                     CASE
                       WHEN EXTRACT(MONTH FROM birthdate) > ' . $this_month . ' THEN 1
@@ -1511,9 +1516,15 @@ class ActivityAPIController extends ControllerAPI
                     DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'activities.user_id) as count')
                 )
                 ->where('activities.module_name', '=', 'Application')
-                ->where('activities.group', '=', 'mobile-ci')
-                ->where('activities.activity_type', '=', 'login')
-                ->where('activities.activity_name', '=', 'login_ok')
+                ->where(function($q) {
+                    $q->where('activities.group', 'mobile-ci')
+                      ->where('activities.activity_type', '=', 'login')
+                      ->where('activities.activity_name', '=', 'login_ok')
+                      ->orWhere(function($q) {
+                            $q->where('activities.activity_name', 'registration_ok')
+                              ->where('activities.group', 'cs-portal');
+                      });
+                })
                 ->where('activities.created_at', '>=', $start_date)
                 ->where('activities.created_at', '<=', $end_date)
                 ->groupBy(DB::raw('1'))
@@ -2617,17 +2628,17 @@ class ActivityAPIController extends ControllerAPI
 
             $activities = DB::select( DB::raw("
                     SELECT DATE(created_at) as date, ROUND(avg(TIMESTAMPDIFF(MINUTE, mindate, maxdate))) as total_minutes FROM (
-                          SELECT
-                          activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
-                          MIN(created_at) mindate, MAX(created_at) maxdate
-                          FROM {$tablePrefix}activities WHERE 1=1
-                          AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                          AND location_id = '" . $current_mall . "'
-                          AND role = 'Consumer'
-                          AND session_id IS NOT NULL
-                          AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
-                          AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
-                          GROUP BY session_id
+                        SELECT
+                            activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
+                            MIN(created_at) mindate, MAX(created_at) maxdate
+                        FROM {$tablePrefix}activities WHERE 1=1
+                            AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
+                            AND location_id = '" . $current_mall . "'
+                            AND (role = 'Consumer' OR role = 'Guest')
+                            AND session_id IS NOT NULL
+                            AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
+                            AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
+                        GROUP BY session_id
                     ) as A
                     group by date
                     order by created_at asc
@@ -2827,7 +2838,7 @@ class ActivityAPIController extends ControllerAPI
                             AND created_at BETWEEN '" . $start_date . "' AND '" . $end_date . "'
                             AND location_id = '" . $current_mall . "'
                             AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                            AND role = 'Consumer'
+                            AND (role = 'Consumer' OR role = 'Guest')
                             AND session_id IS NOT NULL
                         GROUP BY session_id
                     )  as A
