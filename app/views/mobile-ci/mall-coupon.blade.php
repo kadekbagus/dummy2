@@ -250,7 +250,7 @@
                                     clearInterval(wait);
                                 }
                                 $('#denyCoupon').prop("disabled", false);
-                                $('#denyCoupon').html("Ok");
+                                $('#denyCoupon').html("OK");
                                 y--;
                             }, 1000);
                         });
