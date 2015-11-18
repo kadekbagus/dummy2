@@ -224,7 +224,7 @@ return array(
         'use_coupon'                       => 'Use Coupon',
         'enter_tenant_verification_number' => 'Enter Tenant Verification Number',
         'ask_our_tenant_employee'          => '(Ask our tenant employee)',
-        'validate'                         => 'Validate',
+        'validate'                         => 'Enter',
         'wrong_verification_number'        => 'Wrong Verification Number',
         'please_check_tenant'              => 'Please check the tenant employee or mall customer service',
         'ok'                               => 'Ok',
@@ -412,7 +412,7 @@ return array(
             'start_button' => 'Yes, please!'
         ),
     ),
-    
+
     'homescreen' => array(
         'title'     => 'Did you know?',
         'message'   => 'You can add this web app to your home screen: tap setting and then',
