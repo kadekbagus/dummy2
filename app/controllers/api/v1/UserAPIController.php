@@ -2645,6 +2645,11 @@ class UserAPIController extends ControllerAPI
                 $userdetail->date_of_work = $data;
             });
 
+            // Save updated by
+            $updateduser->modified_by = $this->api->user->user_id;
+            $userdetail->modified_by = $this->api->user->user_id;
+
+
             Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
 
             $updateduser->save();
