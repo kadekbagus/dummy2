@@ -85,12 +85,10 @@ class ConsumerPrinterController extends DataPrinterController
                         DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                         DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                     inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
-                                    where cp.status='active' and cp.user_id={$prefix}users.user_id and
-                                    current_date() <= date(cp.expired_date)) as total_usable_coupon,
+                                    where cp.user_id={$prefix}users.user_id) as total_usable_coupon,
                                     (select count(cp2.user_id) from {$prefix}issued_coupons cp2
                                     inner join {$prefix}promotions p on cp2.promotion_id = p.promotion_id {$filterMallIds}
                                     where cp2.status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
-
                     ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                     ->leftJoin(
                                     // Table
