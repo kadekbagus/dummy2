@@ -1691,6 +1691,11 @@ class CouponAPIController extends ControllerAPI
 
             $coupons->orderBy($sortBy, $sortMode);
 
+            // also to sort coupon name
+            if ($sortBy !== 'promotion_name') {
+                $coupons->orderBy('promotion_name', 'asc');
+            }
+
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
 
