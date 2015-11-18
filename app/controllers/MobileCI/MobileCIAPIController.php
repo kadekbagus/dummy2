@@ -12,6 +12,7 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \View;
 use \User;
+use \Token;
 use \UserDetail;
 use \Role;
 use \Lang;
@@ -3906,11 +3907,27 @@ class MobileCIAPIController extends ControllerAPI
             // @author Irianto Pratama <irianto@dominopos.com>
             // send email if user status pending
             if ($user->status === 'pending') {
-                // Send email process to the queue
-                \Queue::push('Orbit\\Queue\\RegistrationMail', [
-                    'user_id' => $user->user_id,
-                    'merchant_id' => $retailer->merchant_id
-                ]);
+
+                $mall_time = Carbon::now($retailer->timezone->timezone_name);
+                $pending_date = $mall_time;
+
+                $token = Token::where('status', 'active')
+                              ->where('token_name','user_registration_mobile')
+                              ->where('user_id', $user->user_id)
+                              ->orderBy('created_at', 'desc')
+                              ->first();
+
+                if (! empty($token)) {
+                    $pending_date = date('Y-m-d', date(strtotime("+1 day", strtotime($token->created_at))));
+                }
+
+                if (empty($token) || ($pending_date <= $mall_time)) {
+                    // Send email process to the queue
+                    \Queue::push('Orbit\\Queue\\RegistrationMail', [
+                        'user_id' => $user->user_id,
+                        'merchant_id' => $retailer->merchant_id
+                    ]);
+                }
             }
 
             $acq = \UserAcquisition::where('user_id', $user->user_id)
