@@ -227,7 +227,7 @@ return array(
         'validate'                         => 'Enter',
         'wrong_verification_number'        => 'Wrong Verification Number',
         'please_check_tenant'              => 'Please check the tenant employee or mall customer service',
-        'ok'                               => 'Ok',
+        'ok'                               => 'OK',
         'successful'                       => 'Successful',
         'please_communicate'               => 'Please communicate the following number to tenant employee',
         'congratulations_you_get'          => 'Congratulations you get',
