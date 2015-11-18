@@ -2081,6 +2081,11 @@ class CouponAPIController extends ControllerAPI
                 // ->where('promotions.status', '!=', 'deleted');
                 ->where('promotions.status', '=', 'active');
 
+            $mallTime = Carbon::now();
+            if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
+                $coupons->whereRaw("? between begin_date and end_date", [$mallTime]);
+            }
+
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($coupons)
             {
@@ -2790,6 +2795,7 @@ class CouponAPIController extends ControllerAPI
                 foreach ($data as $field => $value) {
                     $existing_translation->{$field} = $value;
                 }
+                $existing_translation->status = $coupon->status;
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
 

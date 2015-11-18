@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class IssuedCouponAPIController extends ControllerAPI
 {
@@ -830,10 +831,14 @@ class IssuedCouponAPIController extends ControllerAPI
             // Builder object
             $issuedcoupons = IssuedCoupon::join('promotions', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
                 ->join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
-                ->select('merchants.name AS redeem_retailer_name', 'promotions.*', 'issued_coupons.*')
+                ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                ->select('merchants.name AS redeem_retailer_name', 'promotions.*', 'issued_coupons.*', 'timezones.timezone_name')
                 ->where('promotions.promotion_type', 'mall')
+                ->where('promotions.status', 'active')
                 // ->where('issued_coupons.status', '!=', 'deleted');
-                ->where('issued_coupons.status', '=', 'active');
+                ->where('issued_coupons.status', '=', 'active')
+                ->where('issued_coupons.expired_date', '>=', Carbon::now());
+
 
             // Filter coupon by merchant Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($issuedcoupons) {

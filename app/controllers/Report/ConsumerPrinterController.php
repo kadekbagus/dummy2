@@ -112,7 +112,7 @@ class ConsumerPrinterController extends DataPrinterController
         $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
 
         $current_mall = OrbitInput::get('current_mall');
-        
+
         $users->leftJoin('activities', function($join) use($current_mall) {
                         $join->on('activities.user_id', '=', 'users.user_id')
                              ->where('activities.activity_name', '=', 'login_ok')
@@ -357,7 +357,7 @@ class ConsumerPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customer', $totalRec, '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customers', $totalRec, '', '', '', '','','','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Issued Coupon', 'Redeemed Coupon', 'Status');

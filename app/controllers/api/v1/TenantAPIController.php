@@ -2355,6 +2355,7 @@ class TenantAPIController extends ControllerAPI
                 foreach ($data as $field => $value) {
                     $existing_translation->{$field} = $value;
                 }
+                $existing_translation->status = $tenant->status;
                 $existing_translation->modified_by = $this->api->user->user_id;
                 $existing_translation->save();
 

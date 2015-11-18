@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class NewsAPIController extends ControllerAPI
 {
@@ -1279,6 +1280,11 @@ class NewsAPIController extends ControllerAPI
                 // ->where('news.object_type', '=', 'promotion')
                 // ->where('news.status', '!=', 'deleted');
                 ->where('news.status', '=', 'active');
+
+            $mallTime = Carbon::now();
+            if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
+                $promotions->whereRaw("? between begin_date and end_date", [$mallTime]);
+            }
 
             // Filter promotion by Ids
             OrbitInput::get('news_id', function($promotionIds) use ($promotions)

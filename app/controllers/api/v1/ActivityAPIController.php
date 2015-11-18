@@ -2833,28 +2833,27 @@ class ActivityAPIController extends ControllerAPI
                     )  as A
                 ") );
 
-            // Get different times
-            $datetime1 = new DateTime($start_date);
-            $datetime2 = new DateTime($end_date);
-
-            $interval = $datetime1->diff($datetime2);
-            $totalRangeDays = $interval->format('%a') + 1;
-
             // Re-Format for response result
             $dataArray = array();
+            $score = 0;
             for ($i=0; $i <= 23 ; $i++) {
                 $starttime = $i;
                 $endtime = $i + 1;
-                if ( $starttime < 10 ) {
+                if ($starttime < 10) {
                     $starttime = '0'.$i;
                 }
-                if ( $endtime < 10) {
+                if ($endtime < 10) {
                     $endtime = '0'.$endtime;
+                }
+
+                // handling null score
+                if ($activities[0]->$i !== null) {
+                    $score = $activities[0]->$i;
                 }
 
                 $dataArray[$i]['start_time'] = $starttime.':00';
                 $dataArray[$i]['end_time'] = $endtime.':00';
-                $dataArray[$i]['score'] = round($activities[0]->$i / $totalRangeDays, 2);
+                $dataArray[$i]['score'] = $score;
             }
 
             $this->response->data = [

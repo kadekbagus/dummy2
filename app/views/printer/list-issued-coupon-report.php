@@ -84,12 +84,12 @@
 
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
-            <td style="width:150px"></td>
+            <td style="width:200px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Coupon</td>
+            <td>Total Issued Coupons</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
         </tr>

@@ -3934,6 +3934,7 @@ class DashboardAPIController extends ControllerAPI
                                                     'merchants.name as retailer_name',
                                                     'merchants.logo as tenant_logo',
                                                     DB::raw("count(redeem_retailer_id) as total_redeemed, count(redeem_retailer_id)/{$total_all_redeem}*100 as percentage"))
+                                             ->with('redeemRetailerMedia')
                                              ->join('merchants', 'merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id')
                                              ->groupBy('issued_coupons.redeem_retailer_id');
 

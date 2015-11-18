@@ -11,46 +11,42 @@
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="buttonLabel">
-                                    @if(!empty(Input::get('cid')))
-                                        <?php
-                                            $namex = $categories->filter(function ($item) {
-                                                return $item->category_id == Input::get('cid');
-                                            })->first()->category_name;
-                                            echo $namex;
-                                        ?>
+                            <label class="select-label">
+                                <select class="select" id="category">
+                                    @if(empty(Input::get('cid')))
+                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
                                     @else
-                                        {{ Lang::get('mobileci.tenant.category') }}
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
                                     @endif
-                                </span>
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="category">
-                                <li data-category=""><span>{{ Lang::get('mobileci.tenant.all') }}</span></li>
-                                @foreach($categories as $category)
-                                <li data-category="{{ $category->category_id }}"><span>{{ $category->category_name }}</span></li>
-                                @endforeach
-                            </ul>
+                                    @foreach($categories as $category)
+                                    @if($category->category_id == Input::get('cid'))
+                                    <option value="{{ $category->category_id }}" selected="selected">{{ $category->category_name }}</option>
+                                    @else
+                                    <option value="{{ $category->category_id }}">{{ $category->category_name }}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
                     </div>
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel2" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="buttonLabel">
-                                    @if(!empty(Input::get('fid')))
-                                        {{ Input::get('fid') }}
+                            <label class="select-label">
+                                <select class="select" id="floor">
+                                    @if(empty(Input::get('fid')))
+                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
                                     @else
-                                        {{ Lang::get('mobileci.tenant.floor') }}
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
                                     @endif
-                                </span>
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel2" id="floor">
-                                @foreach($floorList as $floor)
-                                <li data-floor="{{ $floor->object_name }}"><span>{{ $floor->object_name }}</span></li>
-                                @endforeach
-                            </ul>
+                                    @foreach($floorList as $floor)
+                                    @if($floor->object_name == Input::get('fid'))
+                                    <option value="{{ $floor->object_name }}" selected="selected">{{ $floor->object_name }}</option>
+                                    @else
+                                    <option value="{{ $floor->object_name }}">{{ $floor->object_name }}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
@@ -101,46 +97,42 @@
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <span class="buttonLabel">
-                                    @if(!empty(Input::get('cid')))
-                                        <?php
-                                            $namex = $categories->filter(function ($item) {
-                                                return $item->category_id == Input::get('cid');
-                                            })->first()->category_name;
-                                            echo $namex;
-                                        ?>
+                            <label class="select-label">
+                                <select class="select" id="category">
+                                    @if(empty(Input::get('cid')))
+                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
                                     @else
-                                        {{ Lang::get('mobileci.tenant.category') }}
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
                                     @endif
-                                </span>
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="category">
-                                <li data-category=""><span>{{ Lang::get('mobileci.catalogue.all') }}</span></li>
-                                @foreach($categories as $category)
-                                <li data-category="{{ $category->category_id }}"><span>{{ $category->category_name }}</span></li>
-                                @endforeach
-                            </ul>
+                                    @foreach($categories as $category)
+                                    @if($category->category_id == Input::get('cid'))
+                                    <option value="{{ $category->category_id }}" selected="selected">{{ $category->category_name }}</option>
+                                    @else
+                                    <option value="{{ $category->category_id }}">{{ $category->category_name }}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
                     </div>
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel2" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="buttonLabel">
-                                    @if(!empty(Input::get('fid')))
-                                        {{ Input::get('fid') }}
+                            <label class="select-label">
+                                <select class="select" id="floor">
+                                    @if(empty(Input::get('fid')))
+                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
                                     @else
-                                        {{ Lang::get('mobileci.tenant.floor') }}
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
                                     @endif
-                                </span>
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel2" id="floor">
-                                @foreach($floorList as $floor)
-                                <li data-floor="{{ $floor->object_name }}"><span>{{ $floor->object_name }}</span></li>
-                                @endforeach
-                            </ul>
+                                    @foreach($floorList as $floor)
+                                    @if($floor->object_name == Input::get('fid'))
+                                    <option value="{{ $floor->object_name }}" selected="selected">{{ $floor->object_name }}</option>
+                                    @else
+                                    <option value="{{ $floor->object_name }}">{{ $floor->object_name }}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
@@ -348,19 +340,21 @@
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
 
-        $('#category>li').click(function(){
-            if(!$(this).data('category')) {
-                $(this).data('category', '');
+        $('#category').change(function(){
+            var val = '';
+            if($('#category > option:selected').attr('value')) {
+                val = $('#category > option:selected').attr('value');
             }
-            path = updateQueryStringParameter(path, 'cid', $(this).data('category'));
+            path = updateQueryStringParameter(path, 'cid', val);
             console.log(path);
             window.location.replace(path);
         });
-        $('#floor>li').click(function(){
-            if(!$(this).data('floor')) {
-                $(this).data('floor', '');
+        $('#floor').change(function(){
+            var val = '';
+            if($('#floor > option:selected').attr('value')) {
+                val = $('#floor > option:selected').attr('value');
             }
-            path = updateQueryStringParameter(path, 'fid', $(this).data('floor'));
+            path = updateQueryStringParameter(path, 'fid', val);
             console.log(path);
             window.location.replace(path);
         });

@@ -320,6 +320,17 @@ Route::group(
             })
         );
 
+        // track coupon popup display activity
+        Route::post(
+            '/app/v1/customer/displaycouponpopupactivity',
+            array(
+            'as' => 'display-coupon-popup-activity',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->postDisplayCouponPopUpActivity();
+            })
+        );
+
         // track widget click activity
         Route::post(
             '/app/v1/customer/widgetclickactivity',
@@ -479,7 +490,8 @@ Route::group(
         );
 
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
+        Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
 );
 
-Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
+

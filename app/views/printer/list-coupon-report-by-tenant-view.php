@@ -88,7 +88,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Redeemed Coupon</td>
+            <td>Total Redeemed Coupons</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
         </tr>

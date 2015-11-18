@@ -98,31 +98,41 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
 
             $this->beginTransaction();
-
             $user = User::with('apikey', 'userdetail', 'role')
                         ->excludeDeleted()
                         ->where('user_email', $email)
                         ->whereHas(
                             'role',
                             function ($query) {
-                                $query->where('role_name', 'Consumer');
-                                $query->orWhere('role_name', 'Guest');
+                                $query->where(function ($q) {
+                                    $q->where('role_name', 'Consumer');
+                                    $q->orWhere('role_name', 'Guest');
+                                });
                             }
                         )->sharedLock()
                         ->first();
 
             // attempt to force cloud login scenario when using single-db
             // if there is no association between the user and this mall
-            if (is_object($user)) {
+            //
+            // for guests do not do this, guest users do not have UserAcquisition
+            // and are synced to every box even if acquisition not present.
+            if (is_object($user) && strtolower($user->role->role_name) != 'guest') {
                 $acq = \UserAcquisition::where('user_id', $user->user_id)
                     ->where('acquirer_id', $retailer->merchant_id)
                     ->lockForUpdate()->first();
                 if ($acq === null) {
                     $user = null;
                 }
-
             }
-            if (! is_object($user)) {
+
+            // if not from cloud callback we redirect to cloud if pending so cloud
+            // can resend activation email.
+            // if from cloud callback we do not redirect to cloud again
+            // cloud callback sends apikey_id (and other ids) in GET
+            $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
+
+            if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
                 return $this->redirectToCloud($email, $retailer, $payload);
             } else {
                 return $this->loginStage2($user, $retailer);
@@ -840,6 +850,51 @@ class MobileCIAPIController extends ControllerAPI
         }
     }
 
+
+    /**
+     * POST - Coupon pop up display activity
+     *
+     * @param integer    `eventdata`        (optional) - The event ID
+     *
+     * @return void
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    public function postDisplayCouponPopUpActivity()
+    {
+        $activity = Activity::mobileci()
+                            ->setActivityType('view');
+        $user = null;
+
+        try {
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+            $activity->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List (Pop Up)')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+        } catch (Exception $e) {
+            $this->rollback();
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
+            $activity->setUser($user)
+                ->setActivityName('view_coupon_list')
+                ->setActivityNameLong('View Coupon List Failed (Pop Up')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
     /**
      * POST - Widget click activity
      *
@@ -1434,6 +1489,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->active()
                 ->where('object_type', 'floor')
                 ->orderBy('object_order', 'asc')
+                ->groupBy('object_name')
                 ->get();
 
             $tenants = Tenant::with('mediaLogo');
@@ -2686,11 +2742,11 @@ class MobileCIAPIController extends ControllerAPI
 
             // checking if all tenant linked to this promotion inactive or not
             // so that if all tenant inactive we can disable the 'see tenant' button on the view
-            // for fix bug OM-724 
+            // for fix bug OM-724
             $_tenants = $coupons->tenants;
-            
+
             $allTenantInactive = false;
-            
+
             $inactiveTenant = 0;
 
             foreach($_tenants as $key => $value)
@@ -2702,7 +2758,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($inactiveTenant === count($_tenants)) {
                 $allTenantInactive = true;
-            } 
+            }
 
             if (! empty($alternateLanguage)) {
                 $promotionTranslation = \NewsTranslation::excludeDeleted()
@@ -2969,11 +3025,11 @@ class MobileCIAPIController extends ControllerAPI
 
             // checking if all tenant linked to this news inactive or not
             // so that if all tenant inactive we can disable the 'see tenant' button on the view
-            // for fix bug OM-724 
+            // for fix bug OM-724
             $_tenants = $news->tenants;
-            
+
             $allTenantInactive = false;
-            
+
             $inactiveTenant = 0;
 
             foreach($_tenants as $key => $value)
@@ -2985,7 +3041,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($inactiveTenant === count($_tenants)) {
                 $allTenantInactive = true;
-            } 
+            }
 
             // cek if any language active
             if (!empty($alternateLanguage) && !empty($news)) {
@@ -3576,16 +3632,6 @@ class MobileCIAPIController extends ControllerAPI
             $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
             $user_detail->save();
 
-             // @author Irianto Pratama <irianto@dominopos.com>
-             // send email if user status pending
-             if ($user->status === 'pending') {
-                 // Send email process to the queue
-                 \Queue::push('Orbit\\Queue\\RegistrationMail', [
-                     'user_id' => $user->user_id,
-                     'merchant_id' => $retailer->merchant_id
-                 ]);
-             }
-
             $cart = Cart::where('status', 'active')->where('customer_id', $user->user_id)->where('retailer_id', $retailer->merchant_id)->first();
             if (is_null($cart)) {
                 $cart = new Cart();
@@ -3840,6 +3886,8 @@ class MobileCIAPIController extends ControllerAPI
                     'role',
                     function ($query) {
                         $query->where('role_name', 'Consumer');
+                        // guest not included here because guest logins should be seeded in initial sync
+                        // and there should be no need to go to cloud for guest login
                     }
                 )->sharedLock()
                 ->first();
@@ -3853,6 +3901,16 @@ class MobileCIAPIController extends ControllerAPI
                 }
 
                 $user = $response->data;
+            }
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            // send email if user status pending
+            if ($user->status === 'pending') {
+                // Send email process to the queue
+                \Queue::push('Orbit\\Queue\\RegistrationMail', [
+                    'user_id' => $user->user_id,
+                    'merchant_id' => $retailer->merchant_id
+                ]);
             }
 
             $acq = \UserAcquisition::where('user_id', $user->user_id)
