@@ -271,6 +271,11 @@ class ActivityAPIController extends ControllerAPI
                       ->orWhere(function($q) {
                             $q->where('activities.activity_name', 'registration_ok')
                               ->where('activities.group', 'cs-portal');
+                      })
+                      ->orWhere(function($q) {
+                            $q->where('activities.activity_name', 'activation_ok')
+                              ->where('activities.activity_name_long', 'Customer Activation')
+                              ->where('activities.group', 'portal');
                       });
                     });
             }

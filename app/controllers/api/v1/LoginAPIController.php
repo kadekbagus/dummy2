@@ -766,7 +766,7 @@ class LoginAPIController extends ControllerAPI
             // Successfull activation
             $activity->setUser($user)
                      ->setActivityName('activation_ok')
-                     ->setActivityNameLong('Account Activation')
+                     ->setActivityNameLong('Customer Activation')
                      ->setModuleName('Application')
                      ->responseOK();
         } catch (ACLForbiddenException $e) {
