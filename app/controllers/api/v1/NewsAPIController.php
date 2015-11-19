@@ -474,7 +474,7 @@ class NewsAPIController extends ControllerAPI
             });
 
             $updatednews->modified_by = $this->api->user->user_id;
-
+            $updatednews->touch();
 
             //  save news default language
             OrbitInput::post('news_name', function($news_name) use ($updatednews_default_language) {
