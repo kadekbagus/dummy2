@@ -237,7 +237,12 @@ class ActivityAPIController extends ControllerAPI
 
             // Filter by merchant ids
             OrbitInput::get('merchant_ids', function($merchantIds) use ($activities) {
-                $activities->whereIn('activities.location_id', $merchantIds);
+                $activities->where(function($q) use ($merchantIds) {
+                    $q->whereIn('activities.location_id', $merchantIds)
+                      ->orWhere(function($q) {
+                            $q->whereNull('activities.location_id');
+                      });
+                    });
             });
 
             // Filter by retailer ids
@@ -266,16 +271,20 @@ class ActivityAPIController extends ControllerAPI
                     $activities->whereIn('activities.group', $groups);
                 });
             } else {
-                $activities->where(function($q) {
+                $activities->where(function($q) use ($tablePrefix) {
                     $q->whereIn('activities.group', ['mobile-ci', 'pos'])
                       ->orWhere(function($q) {
                             $q->where('activities.activity_name', 'registration_ok')
                               ->where('activities.group', 'cs-portal');
                       })
-                      ->orWhere(function($q) {
+                      ->orWhere(function($q) use ($tablePrefix) {
                             $q->where('activities.activity_name', 'activation_ok')
                               ->where('activities.activity_name_long', 'Customer Activation')
-                              ->where('activities.group', 'portal');
+                              ->where('activities.group', 'portal')
+                              ->whereRaw("{$tablePrefix}activities.user_id in (select act.user_id
+                                            from {$tablePrefix}activities as act
+                                            where act.activity_name = 'registration_ok'
+                                                and act.group in ('mobile-ci','cs-portal'))");
                       });
                     });
             }
