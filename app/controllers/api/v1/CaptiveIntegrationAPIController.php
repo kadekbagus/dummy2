@@ -566,6 +566,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                 ->responseOK();
             // copy the user-agent across to help with analysis, but not the IP address (no reason to do that for now)
             $logout_activity->user_agent = $most_recent_login->user_agent;
+            $logout_activity->session_id = $most_recent_login->session_id;
             $logout_activity->save();
             Event::fire('orbit.network.checkout.force_mobileci_checkout', array($this, $logout_activity));
         }
