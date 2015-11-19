@@ -1885,7 +1885,7 @@ class CouponAPIController extends ControllerAPI
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption Successful')
+                    ->setActivityNameLong('Coupon Redemption (Successful)')
                     ->setObject($issuedcoupon)
                     ->setNotes($activityNotes)
                     ->setLocation($mall)
@@ -1911,7 +1911,7 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
                     ->setLocation($mall_id)
@@ -1932,7 +1932,7 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
                     ->setLocation($mall_id)
@@ -1959,7 +1959,7 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
                     ->setLocation($mall_id)
