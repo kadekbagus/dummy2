@@ -284,8 +284,10 @@ return array(
             'language' => 'The Language ID you specified is not found.',
             'merchant_language' => 'The Merchant Language ID you specified is not found.',
             'hour_format'          => 'The :attribute is not a valid date.',
-            'tenant_floor'          => 'Floor is required',
+            'tenant_floor'         => 'Floor is required',
             'tenant_unit'          => 'Unit is required',
+            'membership_status'    => 'The membership status you specified is not found.',
+            'membership_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, membership_name, description, status',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
