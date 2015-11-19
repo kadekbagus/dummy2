@@ -196,21 +196,22 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                                   ->orderBy('created_at', 'desc')
                                   ->first();
 
-            if ($macModel === null) {
-                throw new Exception ("Mac address not found", 1);
-            }
+            if ($macModel !== null) {
+                // find consumer with MAC
 
-            $_customer = User::Consumers()
-                            ->excludeDeleted()
-                            ->where('user_email', $macModel->user_email)
-                            ->first();
+                $_customer = User::Consumers()
+                    ->excludeDeleted()
+                    ->where('user_email', $macModel->user_email)
+                    ->first();
 
-            if (! empty($_customer)) {
-                // user is a consumer user. log out if still logged in.
-                $customer = $_customer;
-                $email = $customer->user_email;
+                if (! empty($_customer)) {
+                    // user is a consumer user. log out if still logged in.
+                    $customer = $_customer;
+                    $email = $customer->user_email;
 
-                $this->logCustomerOutIfStillLoggedIn($_customer);
+                    $this->logCustomerOutIfStillLoggedIn($_customer);
+                }
+
             }
 
             // if User not recognized ($_customer null) log it as 'guest'
@@ -330,21 +331,22 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                                   ->orderBy('created_at', 'desc')
                                   ->first();
 
-            if ($macModel === null) {
-                throw new Exception ("Mac address not found", 1);
+            if ($macModel !== null) {
+                // find customer using this MAC
+
+                $_customer = User::Consumers()
+                    ->excludeDeleted()
+                    ->where('user_email', $macModel->user_email)
+                    ->first();
+
+                if (! empty($_customer)) {
+                    // User is consumer, use found email & user object
+                    $customer = $_customer;
+                    $email = $_customer->user_email;
+                }
+                // else use guest as default user name
             }
 
-            $_customer = User::Consumers()
-                            ->excludeDeleted()
-                            ->where('user_email', $macModel->user_email)
-                            ->first();
-
-            if (! empty($_customer)) {
-                // User is consumer, use found email & user object
-                $customer = $_customer;
-                $email = $_customer->user_email;
-            }
-            // else use guest as default user name
 
             $this->commit();
 
