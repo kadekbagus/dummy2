@@ -206,14 +206,14 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($_customer)) {
-                // User not recognized log it as 'guest'
+                // user is a consumer user. log out if still logged in.
                 $customer = $_customer;
                 $email = $customer->user_email;
 
                 $this->logCustomerOutIfStillLoggedIn($_customer);
             }
 
-            // Successfull
+            // if User not recognized ($_customer null) log it as 'guest'
             $message = sprintf($format, $now, $captiveIP, $email, 'OK');
             $this->response->message = $message;
             $activity->setUser($_customer)
@@ -340,10 +340,11 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($_customer)) {
-                // User not recognized log it as 'guest'
+                // User is consumer, use found email & user object
                 $customer = $_customer;
                 $email = $_customer->user_email;
             }
+            // else use guest as default user name
 
             $this->commit();
 
@@ -563,6 +564,8 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                 ->setActivityNameLong('Sign out')
                 ->setModuleName('Application')
                 ->responseOK();
+            // copy the user-agent across to help with analysis, but not the IP address (no reason to do that for now)
+            $logout_activity->user_agent = $most_recent_login->user_agent;
             $logout_activity->save();
             Event::fire('orbit.network.checkout.force_mobileci_checkout', array($this, $logout_activity));
         }
