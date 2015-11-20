@@ -165,12 +165,8 @@
         }
     }
     $(document).ready(function(){
+        // Hotfix: never display internet popup
         var displayModal = false;
-
-        // Override the content of displayModal
-        if (get('internet_info') == 'yes') {
-            displayModal = true;
-        }
 
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}';
         $('#dLabel').dropdown();

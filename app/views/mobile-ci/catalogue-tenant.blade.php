@@ -272,12 +272,8 @@
         }
     }
     $(document).ready(function(){
+        // Hotfix: never display internet popup
         var displayModal = false;
-
-        // Override the content of displayModal
-        if (get('internet_info') == 'yes') {
-            displayModal = true;
-        }
 
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
