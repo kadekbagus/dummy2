@@ -21,6 +21,9 @@ class postNewLuckyDrawTest extends TestCase
         $this->retailer   = Factory::create('Retailer', ['parent_id' => $this->merchant->merchant_id, 'is_mall' => 'yes']);
 
         Config::set('orbit.shop.id', $this->retailer->merchant_id);
+
+        $_GET = [];
+        $_POST = [];
     }
 
     public function testSaveLuckyDrawAllRequiredFieldFilled()
