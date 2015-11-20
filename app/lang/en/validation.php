@@ -135,6 +135,7 @@ return array(
             'mallgroup_have_mall'    => 'The mall group has one or more mall linked to it, so it cannot be deleted.',
             'tenant_id'              => 'The tenant id has already exists.',
             'tenant_on_inactive_have_linked'    => 'Tenant can not be deactivated, because it has links.',
+            'membership_name'        => 'The membership name has already been used.',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action.',

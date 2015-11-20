@@ -709,7 +709,9 @@ class MembershipAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $mall_id = OrbitInput::get('mall_id');
             $sort_by = OrbitInput::get('sortby');
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
@@ -753,15 +755,22 @@ class MembershipAPIController extends ControllerAPI
             // Builder membership
             $record = Membership::excludeDeleted();
 
-            // Filter membership by Ids
+            // get user mall_ids
+            $listOfMallIds = $user->getUserMallIds($mall_id);
+
+            // filter mall based on user role
+            if (empty($listOfMallIds)) { // invalid mall id
+                $record->whereRaw('0');
+            } elseif ($listOfMallIds[0] === 1) { // if super admin
+                // show all users
+            } else { // valid mall id
+                $record->whereIn('memberships.merchant_id', $listOfMallIds);
+            }
+
+            // Filter membership by ids
             OrbitInput::get('membership_id', function ($arg) use ($record)
             {
                 $record->whereIn('memberships.membership_id', (array)$arg);
-            });
-
-            // Filter membership by merchant Ids
-            OrbitInput::get('mall_id', function ($arg) use ($record) {
-                $record->whereIn('memberships.merchant_id', (array)$arg);
             });
 
             // Filter membership by membership name
