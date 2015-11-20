@@ -993,6 +993,7 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             $employee->status = $updatedUser->status;
+            $employee->touch();
             $employee->save();
 
             OrbitInput::post('birthdate', function($_birthdate) use ($userDetail) {
