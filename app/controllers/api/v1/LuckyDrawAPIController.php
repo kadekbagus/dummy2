@@ -118,7 +118,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'max_number'               => 'required|numeric',
                     'external_lucky_draw_id'   => 'required',
                     'grace_period_date'        => 'date_format:Y-m-d H:i:s',
-                    'status'                   => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_drawn_active:' . $mall_id,
+                    'status'                   => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active:' . $mall_id,
                 )
             );
 
@@ -146,6 +146,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $newluckydraw->grace_period_date = $grace_period_date;
             $newluckydraw->status = $status;
             $newluckydraw->created_by = $this->api->user->user_id;
+            $newluckydraw->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.luckydraw.postnewluckydraw.before.save', array($this, $newluckydraw));
 
