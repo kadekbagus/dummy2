@@ -465,6 +465,7 @@ class EventAPIController extends ControllerAPI
             });
 
             $updatedevent->modified_by = $this->api->user->user_id;
+            $updatedevent->touch();
 
             Event::fire('orbit.event.postupdateevent.before.save', array($this, $updatedevent));
 

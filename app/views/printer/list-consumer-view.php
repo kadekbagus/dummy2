@@ -129,6 +129,7 @@
             <th style="text-align:left;">Issued Coupon</th>
             <th style="text-align:left;">Redeemed Coupon</th>
             <th style="text-align:left;">Status</th>
+            <th style="text-align:left;">Last Update Date & Time</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
@@ -141,6 +142,7 @@
                 <td><?php echo ($row->total_usable_coupon); ?></td>
                 <td><?php echo ($row->total_redeemed_coupon); ?></td>
                 <td><?php echo ($row->status); ?></td>
+                <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>
