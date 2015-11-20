@@ -1778,6 +1778,7 @@ class CouponAPIController extends ControllerAPI
                           ->setActivityType('coupon');
 
         $user = NULL;
+        $mall = NULL;
         $mall_id = NULL;
         $issuedcoupon = NULL;
         try {
@@ -1832,7 +1833,6 @@ class CouponAPIController extends ControllerAPI
                     'merchant_verification_number'  => 'required'
                 )
             );
-
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
 
             // Begin database transaction
@@ -1914,7 +1914,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -1935,7 +1935,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (QueryException $e) {
@@ -1962,7 +1962,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (Exception $e) {
@@ -1982,7 +1982,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Delete Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         }
