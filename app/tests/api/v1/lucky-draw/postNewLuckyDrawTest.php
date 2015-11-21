@@ -134,4 +134,50 @@ class postNewLuckyDrawTest extends TestCase
 
         $this->assertNotSame(0, $response->code);
     }
+
+    public function testSaveLuckyDrawActiveStatusMoreThanOneReturnError()
+    {
+        $luckyDrawOne = Factory::create('LuckyDraw', ['status' => 'active', 'mall_id' => $this->retailer->merchant_id]);
+
+        $nextweek = strtotime('+1 week');
+        $next2week = strtotime('+2 weeks');
+        $dateNextWeek = date('Y-m-d 23:59:59', $nextweek);
+        $dateTwoWeek = date('Y-m-d 23:59:59', $next2week);
+        $faker = Faker::create();
+
+        $data = [
+            'mall_id' => $this->retailer->merchant_id,
+            'lucky_draw_name' => 'XXX',
+            'description' => 'Description 1',
+            'start_date' => date('Y-m-d 00:00:00'),
+            'end_date' => $dateNextWeek,
+            'minimum_amount' => 10000,
+            'grace_period_date' => $dateTwoWeek,
+            'min_number' => 1001,
+            'max_number' => 2000,
+            'status' => 'active',
+            'external_lucky_draw_id' => '0022-2222',
+            'created_by' => $this->apikey->user_id,
+            'modified_by' => $this->apikey->user_id,
+        ];
+
+        // Set the client API Keys
+        $_GET['apikey'] = $this->apikey->api_key;
+        $_GET['apitimestamp'] = time();
+
+        foreach ($data as $field=>$value) {
+            $_POST[$field] = $value;
+        }
+        $url = $this->apiUrl . '?' . http_build_query($_GET);
+
+        $secretKey = $this->apikey->api_secret_key;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = $url;
+        $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = Generator::genSignature($secretKey, 'sha256');
+
+        $json = $this->call('POST', $url)->getContent();
+        $response = json_decode($json);
+
+        $this->assertNotSame(0, $response->code);
+    }
 }
