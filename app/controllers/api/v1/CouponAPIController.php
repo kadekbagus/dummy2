@@ -2096,8 +2096,8 @@ class CouponAPIController extends ControllerAPI
                              // ->where('promotions.status', '!=', 'deleted');
                              ->where('promotions.status', '=', 'active')
                              ->where(function ($q) {
-                                    $q->where('issued.total_issued', '<=', 'promotions.maximum_issued_coupon')
-                                      ->orWhere('promotions.maximum_issued_coupon', '=', 0);
+                                    $q->where(DB::raw('issued.total_issued'), '<=', 'promotions.maximum_issued_coupon')
+                                        ->orWhere('promotions.maximum_issued_coupon', '=', 0);
                              });
 
             if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
