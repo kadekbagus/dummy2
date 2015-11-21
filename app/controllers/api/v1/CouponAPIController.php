@@ -2079,17 +2079,20 @@ class CouponAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
             $coupons = Coupon::join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
-                ->select('merchants.name AS issue_retailer_name', 'promotions.*')
-                ->where('promotions.is_coupon', '=', 'Y')
-                ->where('promotions.promotion_type', 'mall')
-                // ->where('promotions.status', '!=', 'deleted');
-                ->where('promotions.status', '=', 'active');
+                             ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                             ->select('merchants.name AS issue_retailer_name', 'promotions.*', 'timezones.timezone_name')
+                             ->where('promotions.is_coupon', '=', 'Y')
+                             ->where('promotions.promotion_type', 'mall')
+                             // ->where('promotions.status', '!=', 'deleted');
+                             ->where('promotions.status', '=', 'active');
 
-            $mallTime = Carbon::now();
             if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
-                $coupons->whereRaw("? between begin_date and end_date", [$mallTime]);
+                $coupons->where('begin_date', '<=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"))
+                        ->where('end_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
             }
 
             // Filter coupon by Ids

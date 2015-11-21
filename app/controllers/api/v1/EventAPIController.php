@@ -1285,15 +1285,18 @@ class EventAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
             $events = EventModel::join('merchants', 'events.merchant_id', '=', 'merchants.merchant_id')
-                ->select('merchants.name AS retailer_name', 'events.*')
+                ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                ->select('merchants.name AS retailer_name', 'events.*', 'timezones.timezone_name')
                 // ->where('events.status', '!=', 'deleted');
                 ->where('events.status', '=', 'active');
 
-            $mallTime = Carbon::now();
             if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
-                $events->whereRaw("? between begin_date and end_date", [$mallTime]);
+                $events->where('begin_date', '<=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"))
+                       ->where('end_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
             }
 
             // Filter event by Ids
