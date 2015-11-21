@@ -2084,11 +2084,21 @@ class CouponAPIController extends ControllerAPI
             // Builder object
             $coupons = Coupon::join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
                              ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                             ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
+                                               from {$prefix}issued_coupons ic
+                                               where ic.status = 'active' or ic.status = 'redeemed'
+                                               group by promotion_id) issued"),
+                                        // On
+                                        DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
                              ->select('merchants.name AS issue_retailer_name', 'promotions.*', 'timezones.timezone_name')
                              ->where('promotions.is_coupon', '=', 'Y')
                              ->where('promotions.promotion_type', 'mall')
                              // ->where('promotions.status', '!=', 'deleted');
-                             ->where('promotions.status', '=', 'active');
+                             ->where('promotions.status', '=', 'active')
+                             ->where(function ($q) {
+                                    $q->where('issued.total_issued', '<=', 'promotions.maximum_issued_coupon')
+                                      ->orWhere('promotions.maximum_issued_coupon', '=', 0);
+                             });
 
             if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
                 $coupons->where('begin_date', '<=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"))
