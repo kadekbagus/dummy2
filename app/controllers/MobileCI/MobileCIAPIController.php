@@ -3906,7 +3906,7 @@ class MobileCIAPIController extends ControllerAPI
 
             // @author Irianto Pratama <irianto@dominopos.com>
             // send email if user status pending
-            if ($user->status === 'pending') {
+            if ($user->status === 'pending' && ($from === 'cs' || $from === 'mobileci')) {
 
                 $mall_time = Carbon::now($retailer->timezone->timezone_name);
                 $pending_date = $mall_time;
