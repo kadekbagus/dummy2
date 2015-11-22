@@ -44,6 +44,12 @@ return array(
         )
     ),
 
+    // Lucky Draw
+    'lucky_draw' => array(
+        // Maximum LD number per issuance
+        'max_per_issuance' => 1000,
+    ),
+
     // Default Pagination
     'pagination' => array(
         'per_page'      => 25,

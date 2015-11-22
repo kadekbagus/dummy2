@@ -140,20 +140,37 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             $maxRecordReturned = Config::get('orbit.pagination.lucky_draw.max_record', 50);
             $minimumNumber = $luckyDraw->min_number;
 
-            $storedProcArgs = [
-                $number + 1,        // 1, e.g: 1005 - 1001, it should be 5 numbers not 4
-                $issueType,         // 2
-                $luckyNumberDriven, // 3
-                $userId,            // 4
-                $employeeUserId,    // 5
-                $issueDate,         // 6
-                $status,            // 7
-                $maxRecordReturned, // 8
-                $group,             // 9
-                $luckyDrawId,       // 10
-                $minimumNumber      // 11
-            ];
-            $luckyDrawnumbers = DB::select("call issue_lucky_draw_numberv3(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $storedProcArgs);
+            // Number of issuance should not more than one defined in config
+            $maxIssuance = Config::get('orbit.lucky_draw.max_per_issuance', 1000);
+
+            // @todo
+            // If the number more than max issuance, what we gonna do? because there is possibilities of
+            // a customer who got number more than our maximum. Send it to the queue?
+            if ($number > $maxIssuance) {
+                $errorMessage = Lang::get('validation.exceed.lucky_draw.max_issuance', ['max_number' => $maxIssuance]);
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Issue the number
+            $maxReturnedRecord = 50;
+            $luckyDrawnumbers = [];
+            for ($i=$luckyDrawNumberStart; $i<=$luckyDrawNumberEnd; $i++) {
+                $newNumber = new LuckyDrawNumber();
+                $newNumber->lucky_draw_id = $luckyDraw->lucky_draw_id;
+                $newNumber->user_id = $userId;
+                $newNumber->lucky_draw_number_code = $i;
+                $newNumber->issued_date = date('Y-m-d H:i:s');
+                $newNumber->hash = $group;
+                $newNumber->status = 'active';
+                $newNumber->created_by = $this->api->user->user_id;
+                $newNumber->modified_by = $this->api->user->user_id;
+                if (! $newNumber->save()) {
+                    $errorMessage = Lang::get('validation.save_error.lucky_draw.issue_number', ['number' => $i]);
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $luckyDrawnumbers[] = $newNumber;
+            }
 
             // Save each associated receipt and its LD number
             foreach ($savedReceipts as $savedReceipt) {

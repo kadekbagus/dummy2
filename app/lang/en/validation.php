@@ -271,6 +271,16 @@ return array(
                 'diffcount' => 'The number of items on field :field are different.',
             ),
         ),
+        'exceed'    => array(
+            'lucky_draw' => array(
+                'max_issuance' => 'Number of lucky draw generated can not be more than :max_number.'
+            )
+        ),
+        'save_error'    => array(
+            'lucky_draw' => array(
+                'issue_number' => 'There was an error saving lucky draw number :number.'
+            )
+        ),
         'formaterror' => array(
             'product_attr' => array(
                 'attribute' => array(
