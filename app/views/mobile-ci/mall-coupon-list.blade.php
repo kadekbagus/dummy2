@@ -14,12 +14,16 @@
                             @if(!empty($product->promo_image))
                             <a href="{{ asset($product->promo_image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->promo_image) }}"></a>
                             @else
-                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"></a>
                             @endif
                         </div>
                         <div class="col-xs-6">
                             <h4>{{ $product->promotion_name }}</h4>
-                            <p>{{ substr($product->description, 0, 120) }}</p>
+                            @if (strlen($product->description) > 120)
+                            <p>{{{ substr($product->description, 0, 120) }}} [<a href="{{ url('customer/mallcoupon?id='.$product->issued_coupon_id) }}">...</a>] </p>
+                            @else
+                            <p>{{{ $product->description }}}</p>
+                            @endif
                         </div>
                         <div class="col-xs-3" style="margin-top:20px">
                             <div class="circlet btn-blue detail-btn pull-right">

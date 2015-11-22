@@ -47,5 +47,5 @@ if (! defined('ORBIT_APP_RELEASE_DATE')) {
  * Constanct storing the build date, ISO 8601
  */
 if (! defined('ORBIT_APP_BUILD_DATE')) {
-    define('ORBIT_APP_BUILD_DATE', '2015-04-11_12-59-35');
+    define('ORBIT_APP_BUILD_DATE', '');
 }

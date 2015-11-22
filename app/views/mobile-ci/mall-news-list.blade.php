@@ -14,7 +14,7 @@
                             @if(!empty($product->image))
                             <a href="{{ asset($product->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->image) }}"></a>
                             @else
-                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"></a>
                             @endif
                         </div>
                         <div class="col-xs-6">
@@ -138,12 +138,8 @@
         }
     }
     $(document).ready(function(){
+        // Hotfix: never display internet popup
         var displayModal = false;
-
-        // Override the content of displayModal
-        if (get('internet_info') == 'yes') {
-            displayModal = true;
-        }
 
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);

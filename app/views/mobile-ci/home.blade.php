@@ -509,12 +509,8 @@
     }
 
     $(document).ready(function() {
+        // Hotfix: never display internet popup
         var displayModal = false;
-
-        // Override the content of displayModal
-        if (get('internet_info') == 'yes') {
-            displayModal = true;
-        }
 
         @if(! is_null($events))
             if(!$.cookie(cookie_dismiss_name) && displayModal) {
