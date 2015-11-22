@@ -50,7 +50,8 @@ class LuckyDrawNumberNotifier
      * @param array $data [
      *                      lucky_draw_id => NUM,
      *                      retailer_id => NUM,
-     *                      hash => STRING
+     *                      hash => STRING,
+     *                      lucky_draw_id => NUM
      * ]
      * @return void
      * @todo Make this testable
@@ -193,7 +194,7 @@ class LuckyDrawNumberNotifier
             }
 
             // Update the user object based on the return value of external system
-            DB::connection()->getPdo()->beginTransaction();
+            DB::beginTransaction();
 
             // Make sure it popup on user mobile phone
             $_POST['popup'] = 'yes';
@@ -219,7 +220,7 @@ class LuckyDrawNumberNotifier
             // Everything seems fine lets delete the job
             $job->delete();
 
-            DB::connection()->getPdo()->commit();
+            DB::commit();
 
             Log::info($message);
 
@@ -231,18 +232,10 @@ class LuckyDrawNumberNotifier
             $message = sprintf('[Job ID: `%s`] Notify lucky-draw-number User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
-                DB::connection()->getPdo()->rollBack();
-            }
-
             Log::error($message);
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Notify lucky-draw-number User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
-
-            if (DB::connection()->getPdo()->inTransaction()) {
-                DB::connection()->getPdo()->rollBack();
-            }
 
             Log::error($message);
         }
