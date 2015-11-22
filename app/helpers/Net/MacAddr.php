@@ -12,6 +12,14 @@ class MacAddr
     protected $mac = NULL;
 
     /**
+     * Fake mac address, if this was set then method getMacFromIP()
+     * will always return this value.
+     *
+     * @var string
+     */
+    protected $fakeMac = NULL;
+
+    /**
      * Constructor
      *
      * @param string $mac - The mac address
@@ -30,7 +38,21 @@ class MacAddr
      */
     public static function create($mac)
     {
-        return new static();
+        return new static($mac);
+    }
+
+    /**
+     * Set the fake mac address, useful for testing and debugging.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string $mac
+     * @return MacAddr
+     */
+    public function setFakeMac($mac)
+    {
+        $this->fakeMac = $mac;
+
+        return $this;
     }
 
     /**
@@ -43,6 +65,11 @@ class MacAddr
      */
     public function getMacFromIP($ip)
     {
+        if (! empty($this->fakeMac)) {
+            // Return the fake one instead
+            return $this->fakeMac;
+        }
+
         // Ping first to make sure we got arp table list,
         // we don't care about the ping result
         $pingCmdObject = Command::Factory('ping -w 1 -s 32 -c 1 ' . $ip)->run();
@@ -78,12 +105,13 @@ class MacAddr
      */
     public function reformat($separator=':')
     {
-        // Remove the mac separator
-        $newMac = str_replace([':', '-'], '', $this->mac);
+        // Remove non hex chars
+        $nonHexRemoved = preg_replace('/[^[:xdigit:]]/', '', $this->mac);
 
         // Join in again
-        $newMac = str_split($this->mac, 2);
-        $newMac = implode($separator, $newMac);
+        $this->mac = strtolower($nonHexRemoved);
+        $this->mac = str_split($this->mac, 2);
+        $this->mac = implode($separator, $this->mac);
 
         return $this;
     }
@@ -97,5 +125,16 @@ class MacAddr
     public function getMac()
     {
         return $this->mac;
+    }
+
+    /**
+     * Convert the mac to string
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return string
+     */
+    public function __toString()
+    {
+        return (string)$this->mac;
     }
 }

@@ -376,10 +376,17 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Analytics', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Analytics Data', $totalRec, '', '', '', '', '', '', '');
 
+<<<<<<< HEAD
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Promotions', 'Coupons');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
+
+=======
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Events', 'Promotions', 'Coupons');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
                 
+>>>>>>> origin/visionet-1.1
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 

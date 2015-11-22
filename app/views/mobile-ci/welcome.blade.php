@@ -46,7 +46,7 @@
                 <input type="text" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-info btn-block submit-btn">{{ Lang::get('mobileci.signin.login_button') }}</button>
+                <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
             </div>
         </form>
     </div>
@@ -69,7 +69,7 @@
                     <input type="hidden" class="form-control" name="email" id="emailSigned" />
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block submit-btn2">{{ Lang::get('mobileci.signin.start_button') }}</button>
+                    <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
                 </div>
             </form>
         </div>

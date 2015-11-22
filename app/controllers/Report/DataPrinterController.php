@@ -258,7 +258,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
         $default = Config::get('database.default');
         $dbConfig = Config::get('database.connections.' . $default);
 
-        $this->pdo = new PDO("mysql:host=localhost;dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
+        $this->pdo = new PDO("mysql:host={$dbConfig['host']};dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
     }
 
     /**

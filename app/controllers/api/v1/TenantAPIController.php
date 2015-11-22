@@ -207,7 +207,10 @@ class TenantAPIController extends ControllerAPI
      /**
      * POST - Add new tenant
      *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Kadek <kadek@dominopos.com>
      * @author Tian <tian@dominopos.com>
+     * @author Rio Astamal <me@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
@@ -377,6 +380,7 @@ class TenantAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+            Event::fire('orbit.retailer.postnewretailer.after.validation', array($this, $validator));
 
             // validate category_ids
             foreach ($category_ids as $category_id_check) {
@@ -464,6 +468,7 @@ class TenantAPIController extends ControllerAPI
             $newretailer->contact_person_phone2 = $contact_person_phone2;
             $newretailer->contact_person_email = $contact_person_email;
             $newretailer->sector_of_activity = $sector_of_activity;
+            $newretailer->object_type = $object_type;
             $newretailer->parent_id = $parent_id;
             $newretailer->url = $url;
             $newretailer->masterbox_number = $masterbox_number;
@@ -695,6 +700,7 @@ class TenantAPIController extends ControllerAPI
                     'orid'              => $orid,
                     'parent_id'         => $parent_id,
                     'url'               => $url,
+                    'category_ids'      => $category_ids,
                 ),
                 array(
                     'retailer_id'       => 'required|numeric|orbit.empty.tenant',
@@ -704,6 +710,7 @@ class TenantAPIController extends ControllerAPI
                     'orid'              => 'orid_exists_but_me',
                     'parent_id'         => 'numeric|orbit.empty.merchant',
                     'url'               => 'orbit.formaterror.url.web',
+                    'category_ids'      => 'required|array'
                 ),
                 array(
                    'email_exists_but_me' => Lang::get('validation.orbit.exists.email'),
@@ -719,6 +726,9 @@ class TenantAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.tenant.postupdatetenant.after.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             $updatedretailer = App::make('orbit.empty.tenant');
 

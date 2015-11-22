@@ -81,6 +81,7 @@ return array(
         'yes_button'            => 'Yes',
         'do_not_show_label'     => 'Do not show this message again',
         'new_product_price'     => 'New price',
+        'okay'                  => 'OK',
     ),
 
     // page specific lang
@@ -91,6 +92,7 @@ return array(
         'not'               => 'Not',
         'click_here'        => 'click here',
         'email_not_valid'   => 'Email address is not valid',
+        'start_button_mall' => 'Enter Mall',
         'logging_in_button' => 'Logging in. Please wait...',
     ),
 

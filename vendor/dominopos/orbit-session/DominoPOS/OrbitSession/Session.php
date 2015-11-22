@@ -154,7 +154,6 @@ class Session
 
                     // Clear the session value
                     case static::ERR_SESS_EXPIRE:
-                        $this->driver->clear($this->sessionId);
                         throw new Exception($e->getMessage(), $e->getCode());
                         break;
 

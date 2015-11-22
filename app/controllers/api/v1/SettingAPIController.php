@@ -342,6 +342,7 @@ class SettingAPIController extends ControllerAPI
             $backgroundSetting = NULL;
             $masterPasswordSetting = NULL;
             $landingPageSetting = NULL;
+            $startButtonSetting = NULL;
 
             $updatedsetting = Setting::active()
                                      ->where('object_id', $mall->merchant_id)
@@ -359,6 +360,10 @@ class SettingAPIController extends ControllerAPI
 
                 if ($currentSetting->setting_name === 'background_image') {
                     $backgroundSetting = $currentSetting;
+                }
+
+                if ($currentSetting->setting_name === 'start_button_label') {
+                    $startButtonSetting = $currentSetting;
                 }
             }
 
@@ -423,11 +428,26 @@ class SettingAPIController extends ControllerAPI
                 $mall->setRelation('mediaBackground', $response->data);
                 $mall->media_background = $response->data;
             });
+            
+            OrbitInput::post('start_button', function($label) use (&$startButtonSetting, $mall, $user) {
+                // Start button label setting
+                if (is_null($startButtonSetting)) {
+                    $startButtonSetting = new Setting();
+                    $startButtonSetting->setting_name = 'start_button_label';
+                    $startButtonSetting->object_id = $mall->merchant_id;
+                    $startButtonSetting->object_type = 'merchant';
+                }
+
+                $startButtonSetting->setting_value = $label;
+                $startButtonSetting->modified_by = $user->user_id;
+                $startButtonSetting->save();
+            });
 
             $this->response->data = [
                 'landing_page'      => $landingPageSetting,
                 'background'        => $backgroundSetting,
-                'mall'              => $mall
+                'mall'              => $mall,
+                'start_button'      => $startButtonSetting
             ];
 
             // Commit the changes

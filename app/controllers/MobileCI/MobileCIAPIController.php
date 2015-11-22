@@ -50,6 +50,10 @@ use PDO;
 use Response;
 use LuckyDrawAPIController;
 use OrbitShop\API\v1\Helper\Generator;
+use Orbit\Helper\Security\Encrypter;
+use Redirect;
+use Cookie;
+use \Inbox;
 use Event;
 
 class MobileCIAPIController extends ControllerAPI
@@ -122,6 +126,148 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $user->setHidden(array('user_password', 'apikey'));
+
+            // check available auto-issuance coupon
+            $coupons = DB::select(
+                DB::raw(
+                    'SELECT *, p.image AS promo_image,
+                    (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
+                          where ic.promotion_id = p.promotion_id
+                          and ic.status!="deleted") as total_issued_coupon
+                FROM ' . DB::getTablePrefix() . 'promotions p
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
+                WHERE pr.rule_type = "auto_issue_on_signup"
+                    AND p.merchant_id = :merchantid
+                    AND p.is_coupon = "Y" AND p.status = "active"
+                    AND p.begin_date <= "' . $user->created_at . '"
+                    AND p.end_date >= "' . $user->created_at . '"
+                HAVING
+                    (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
+                    OR
+                    (p.maximum_issued_coupon = 0)
+                    '
+                ),
+                array('merchantid' => $retailer->merchant_id)
+            );
+
+            // check available autho-issuance coupon that already obtainde by user
+            $obtained_coupons = DB::select(
+                DB::raw(
+                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
+                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
+                WHERE pr.rule_type = "auto_issue_on_signup"
+                    AND p.merchant_id = :merchantid
+                    AND ic.user_id = :userid
+                    AND p.is_coupon = "Y" AND p.status = "active"
+                    AND p.begin_date <= "' . $user->created_at . '"
+                    AND p.end_date >= "' . $user->created_at . '"
+                    '
+                ),
+                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+            );
+
+            // get obtained auto-issuance coupon ids
+            $obtained_coupon_ids = array();
+            foreach ($obtained_coupons as $obtained_coupon) {
+                $obtained_coupon_ids[] = $obtained_coupon->promotion_id;
+            }
+
+            // filter available auto-issuance coupon id by array above
+            $coupons_to_be_obtained = array_filter(
+                $coupons,
+                function ($v) use ($obtained_coupon_ids) {
+                    $match = TRUE;
+                    foreach ($obtained_coupon_ids as $key => $obtained_coupon) {
+                        if($v->promotion_id === $obtained_coupon) {
+                            $match = $match && FALSE;
+                        }
+                    }
+
+                    if($match) {
+                        return $v;
+                    }
+                }
+            );
+
+            // get available auto-issuance coupon ids
+            $couponIds = array();
+            foreach ($coupons_to_be_obtained as $coupon_to_be_obtained) {
+                $couponIds[] = $coupon_to_be_obtained->promotion_id;
+            }
+
+            // use them to issue
+            if(count($couponIds)) {
+                // Issue coupons
+                $issuedCoupons = [];
+                $numberOfCouponIssued = 0;
+                $applicableCouponNames = [];
+                $issuedCouponNames = [];
+                $prefix = DB::getTablePrefix();
+
+                foreach ($couponIds as $couponId) {
+                    $coupon = Coupon::select('promotions.*',
+                                             DB::raw("(select count(ic.issued_coupon_id) from {$prefix}issued_coupons ic
+                                                      where ic.promotion_id={$prefix}promotions.promotion_id
+                                                      and ic.status!='deleted') as total_issued_coupon"))
+                                    ->active('promotions')
+                                    ->where('promotion_id', $couponId)
+                                    ->first();
+
+                    $issuedCoupon = new IssuedCoupon();
+                    $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user);
+
+                    $obj = new stdClass();
+                    $obj->coupon_number = $tmp->issued_coupon_code;
+                    $obj->coupon_name = $coupon->promotion_name;
+                    $obj->promotion_id = $coupon->promotion_id;
+
+                    $issuedCoupons[] = $obj;
+                    $applicableCouponNames[] = $coupon->promotion_name;
+                    $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
+
+                    $tmp = NULL;
+                    $obj = NULL;
+
+                    $numberOfCouponIssued++;
+                }
+
+                // Insert to alert system
+                $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
+
+                $name = $user->getFullName();
+                $name = trim($name) ? trim($name) : $user->user_email;
+                $subject = Lang::get('mobileci.inbox.coupon.subject');
+
+                $inbox = new Inbox();
+                $inbox->user_id = $user->user_id;
+                $inbox->from_id = 0;
+                $inbox->from_name = 'Orbit';
+                $inbox->subject = $subject;
+                $inbox->content = '';
+                $inbox->inbox_type = 'alert';
+                $inbox->status = 'active';
+                $inbox->is_read = 'N';
+                $inbox->save();
+
+                $retailerId = Config::get('orbit.shop.id');
+                $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+                $data = [
+                    'fullName'          => $name,
+                    'subject'           => 'Coupon',
+                    'inbox'             => $inbox,
+                    'retailerName'      => $retailer->name,
+                    'numberOfCoupon'    => count($issuedCoupons),
+                    'coupons'           => $issuedCouponNames,
+                    'mallName'          => $retailer->name
+                ];
+
+                $template = View::make('mobile-ci.push-notification-coupon', $data);
+
+                $inbox->content = $template;
+                $inbox->save();
+            }
+
             $this->response->data = $user;
 
             $this->commit();
@@ -300,7 +446,17 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.home', array('page_title' => Lang::get('mobileci.page_title.home'), 'user' => $user, 'retailer' => $retailer, 'events' => $events, 'event_families' => $event_families, 'event_family_url_param' => $event_family_url_param, 'widgets' => $widgets, 'widget_flags' => $widget_flags, 'widget_singles' => $widget_singles))->withCookie($event_store);
+            $data = array(
+                'page_title' => Lang::get('mobileci.page_title.home'),
+                'retailer' => $retailer,
+                'events' => $events,
+                'event_families' => $event_families,
+                'event_family_url_param' => $event_family_url_param,
+                'widgets' => $widgets,
+                'widget_flags' => $widget_flags,
+                'active_user' => ($user->status === 'active'),
+            );
+            return View::make('mobile-ci.home', $data)->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
             $activityPage->setUser($user)
@@ -327,7 +483,25 @@ class MobileCIAPIController extends ControllerAPI
     public function getSignInView()
     {
         $bg = null;
+        if (\Input::get('payload')) {
+            // has payload, clear out prev cookies
+            $_COOKIE['orbit_firstname'] = '';
+            $_COOKIE['orbit_email'] = '';
+        }
         $landing_url = URL::route('ci-customer-home');
+        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : '';
+        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : '';
+        $display_name = '';
+
+        if (! empty($cookie_email)) {
+            $display_name = $cookie_email;
+        }
+
+        if (! empty($cookie_fname)) {
+            $display_name = $cookie_fname;
+        }
+        $display_name = OrbitInput::get('fname', $display_name);
+
         try {
             $retailer = $this->getRetailerInfo();
             $mall = Retailer::with('settings')->isMall('yes')->where('merchant_id', $retailer->merchant_id)->first();
@@ -355,27 +529,49 @@ class MobileCIAPIController extends ControllerAPI
                     break;
             }
 
-            $bg = Setting::getFromList($mall->settings, 'background_image');
+            try {
+                $bg = Setting::getFromList($mall->settings, 'background_image');
+            } catch (Exception $e) {
+            }
 
             // Get email from query string
             $loggedUser = $this->getLoggedInUser();
             $user_email = $loggedUser->user_email;
 
-            return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => htmlentities($user_email), 'bg' => $bg, 'landing_url' => $landing_url));
+            // Captive Portal Apple CNA Window
+            // -------------------------------
+            // Payload login is set and the user is logged in, no need to ask user log in again
+            // assuming they was already asked on CNA captive
+            if (isset($_GET['payload_login'])) {
+                $payloadData = $this->proceedPayloadData();
+                Cookie::forever('orbit_email', $payloadData['email'], '/', NULL, FALSE, FALSE);
+                Cookie::forever('orbit_firstname', $payloadData['fname'], '/', NULL, FALSE, FALSE);
+
+                return Redirect::to($landing_url . '?internet_info=yes');
+            }
+
+            $viewData = array(
+                'retailer' => $retailer,
+                'user_email' => htmlentities($user_email),
+                'bg' => $bg,
+                'landing_url' => $landing_url . '?internet_info=yes',
+                'display_name' => $display_name
+            );
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
 
-            $user_email = OrbitInput::get('email', '');
-            if (! empty($user_email)) {
-                \DummyAPIController::create()->getUserSignInNetwork();
-            }
+            $user_email = OrbitInput::get('email', $cookie_email);
 
-            if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'User agent miss match.') {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
-            } else {
-                return View::make('mobile-ci.signin', array('retailer' => $retailer, 'user_email' => $user_email, 'bg' => $bg, 'landing_url' => $landing_url));
-            }
+            $viewData = array(
+                'retailer' => $retailer,
+                'user_email' => htmlentities($user_email),
+                'bg' => $bg,
+                'landing_url' => $landing_url . '?internet_info=yes',
+                'display_name' => $display_name
+            );
         }
+
+        return View::make('mobile-ci.signin', $viewData);
     }
 
     /**
@@ -5993,10 +6189,17 @@ class MobileCIAPIController extends ControllerAPI
             return $e;
         }
 
-        if ($e->getMessage() === 'Session error: user not found.' || $e->getMessage() === 'Invalid session data.' || $e->getMessage() === 'IP address miss match.' || $e->getMessage() === 'Session has ben expires.' || $e->getMessage() === 'User agent miss match.') {
-            return \Redirect::to('/customer');
-        } else {
-            return \Redirect::to('/customer/logout');
+        switch ($e->getCode()) {
+            case Session::ERR_UNKNOWN;
+            case Session::ERR_IP_MISS_MATCH;
+            case Session::ERR_UA_MISS_MATCH;
+            case Session::ERR_SESS_NOT_FOUND;
+            case Session::ERR_SESS_EXPIRE;
+                return \Redirect::to('/customer/logout');
+                break;
+
+            default:
+                return \Redirect::to('/customer');
         }
     }
 
@@ -7625,7 +7828,13 @@ class MobileCIAPIController extends ControllerAPI
 
             $floorList = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id)->groupBy('floor')->orderBy('floor')->lists('floor');
 
-            $products = Retailer::with('mediaLogo', 'categories')->active()->where('is_mall', 'no')->where('parent_id', $retailer->merchant_id);
+            $products = Retailer::with('mediaLogo', 'categories')
+                ->whereHas('categories', function($q) {
+                    $q->where('categories.category_name', '<>', 'Customer Service');
+                })
+                ->active()
+                ->where('is_mall', 'no')
+                ->where('parent_id', $retailer->merchant_id);
 
             // Filter product by name pattern
             OrbitInput::get(
@@ -7844,7 +8053,16 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            return View::make('mobile-ci.catalogue-tenant', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data, 'cartitems' => $cartitems, 'categories' => $categories, 'floorList' => $floorList));
+            $view_data = array(
+                'page_title' => $pagetitle,
+                'retailer' => $retailer,
+                'data' => $data,
+                'cartitems' => $cartitems,
+                'categories' => $categories,
+                'active_user' => ($user->status === 'active'),
+                'floorList' => $floorList
+            );
+            return View::make('mobile-ci.catalogue-tenant', $view_data);
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
@@ -8173,7 +8391,9 @@ class MobileCIAPIController extends ControllerAPI
                     'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id and p.is_coupon = "Y" and p.status = "active" AND ((p.begin_date <= "' . Carbon::now() . '"  and p.end_date >= "' . Carbon::now() . '") or (p.begin_date <= "' . Carbon::now() . '" AND p.is_permanent = "Y"))
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now(). '" AND p.merchant_id = :merchantid AND ic.user_id = :userid AND ic.expired_date >= "' . Carbon::now() . '"'
+                WHERE ic.expired_date >= "' . Carbon::now(). '"
+                    AND p.merchant_id = :merchantid
+                    AND ic.user_id = :userid'
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );
@@ -8199,7 +8419,13 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            $view_data = array(
+                'page_title' => $pagetitle,
+                'retailer' => $retailer,
+                'data' => $data,
+                'active_user' => ($user->status === 'active'),
+            );
+            return View::make('mobile-ci.mall-coupon-list', $view_data);
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
@@ -8252,14 +8478,24 @@ class MobileCIAPIController extends ControllerAPI
                 $q->where('issued_coupons.user_id', $user->user_id);
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now());
                 $q->where('issued_coupons.status', 'active');
-            }))->where('merchant_id', $retailer->merchant_id)->active()->where(function($q){
-                $q->where('begin_date', '<=', Carbon::now());
-                $q->where('end_date', '>=',  Carbon::now());
-                $q->orWhere(function($q2){
-                    $q2->where('begin_date', '<=', Carbon::now());
-                    $q2->where('is_permanent', 'Y');
-                });
-            })->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user) {
+            }))
+            ->where('merchant_id', $retailer->merchant_id)
+            // ->active()
+            // ->where(function($q){
+            //     $q->where(function($q2){
+            //         $q2->where('begin_date', '<=', Carbon::now());
+            //         $q2->where('end_date', '>=',  Carbon::now());
+            //     });
+            //     $q->orWhere(function($q2){
+            //         $q2->where('begin_date', '<=', Carbon::now());
+            //         $q2->whereNull('end_date');
+            //     });
+            //     $q->orWhere(function($q2){
+            //         $q2->whereNull('begin_date');
+            //         $q2->where('end_date', '>=',  Carbon::now());
+            //     });
+            // })
+            ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user) {
                 $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                 $q->where('issued_coupons.user_id', $user->user_id);
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now());
@@ -8267,7 +8503,6 @@ class MobileCIAPIController extends ControllerAPI
             })->first();
 
             $coupon_id = $coupons->promotion_id;
-            $tenants = \CouponRetailer::with('retailer')->where('promotion_id', $coupon_id)->get();
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
@@ -8277,6 +8512,35 @@ class MobileCIAPIController extends ControllerAPI
             if (empty($coupons->image)) {
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
+
+            $tenants = \CouponRetailer::with('retailer', 'retailer.categories')
+                ->wherehas('retailer', function($q){
+                    $q->where('merchants.status', 'active');
+                })
+                ->where('promotion_id', $coupon_id)->get();
+
+            // -- START hack
+            // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
+
+            $cso_exists = FALSE;
+
+            $pure_tenants = array();
+
+            foreach ($tenants as $tenant) {
+                $cso_flag = 0;
+                foreach ($tenant->retailer->categories as $category) {
+                    if ($category->category_name !== 'Customer Service') {
+                        $cso_exists = TRUE;
+                        $cso_flag = 1;
+                    }
+                }
+                if($cso_flag === 1) {
+                    $pure_tenants[] = $tenant;
+                }
+            }
+
+            $tenants = $pure_tenants; // 100% pure tenant ready to be served
+            // -- END of hack
 
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
@@ -8289,7 +8553,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants));
+            return View::make('mobile-ci.mall-coupon', array('page_title' => $coupons->promotion_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons, 'tenants' => $tenants, 'cso_exists' => $cso_exists));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -8389,7 +8653,14 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            $view_data = array(
+                'page_title' => $pagetitle,
+                'retailer' => $retailer,
+                'data' => $data,
+                'user' => $user,
+                'active_user' => ($user->status === 'active'),
+            );
+            return View::make('mobile-ci.mall-promotion-list', $view_data);
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Promotion List');
@@ -8450,7 +8721,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-promotion', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons, 'user' => $user));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Promotion Detail, promotion Id: %s', $product_id);
@@ -8549,7 +8820,15 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-list', array('page_title'=>$pagetitle, 'user' => $user, 'retailer' => $retailer, 'data' => $data));
+            $view_data = array(
+                'page_title'=>$pagetitle,
+                'retailer' => $retailer,
+                'data' => $data,
+                'user' => $user,
+                'active_user' => ($user->status === 'active'),
+            );
+
+            return View::make('mobile-ci.mall-news-list', $view_data);
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'News List');
@@ -8610,7 +8889,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->responseOK()
                 ->save();
 
-            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'user' => $user, 'retailer' => $retailer, 'product' => $coupons));
+            return View::make('mobile-ci.mall-news-detail', array('page_title' => $coupons->news_name, 'retailer' => $retailer, 'product' => $coupons, 'user' => $user));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: News Detail, news Id: %s', $product_id);
@@ -8799,5 +9078,126 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return false;
+    }
+
+    /**
+     * Proceed payload_login data
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return array
+     */
+    protected function proceedPayloadData()
+    {
+        // The sign-in view put the payload from query string to post body on AJAX call
+        if (! isset($_POST['payload_login'])) {
+            return;
+        }
+
+        $payload = $_POST['payload_login'];
+
+        // Decrypt the payload
+        $key = md5('--orbit-mall--');
+        $payload = (new Encrypter($key))->decrypt($payload);
+
+        // The data is in url encoded
+        parse_str($payload, $data);
+
+        // email, fname, lname, gender, mac, ip, login_from
+        $email = isset($data['email']) ? $data['email'] : '';
+        $fname = isset($data['fname']) ? $data['fname'] : '';
+
+        return ['email' => $email, 'fname' => $fname];
+    }
+
+    /**
+     * Method to group the issued coupon number based on the coupon name.
+     *
+     * Array (
+     *    '101' => 'A',
+     *    '102' => 'A',
+     *    '103' => 'B'
+     * )
+     *
+     * Becomes
+     *
+     * Array(
+     *  'A' => [
+     *      '101',
+     *      '102',
+     *  ],
+     *  'B'  => [
+     *     '103'
+     *  ]
+     * )
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param array $source the Array element
+     * @return array
+     */
+    protected function flipArrayElement($source)
+    {
+        $flipped = [];
+
+        $names = array_flip(array_unique(array_values($source)));
+        foreach ($names as $key=>$name) {
+            $names[$key] = [];
+        }
+
+        foreach ($source as $number=>$name) {
+            $flipped[$name][] = $number;
+        }
+
+        return $flipped;
+    }
+
+    /**
+     * Insert issued coupon numbers into inbox table.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param int $userId - The user id
+     * @param array $coupons - Issued Coupons
+     * @param array $couponNames - Issued Coupons with name based
+     * @return void
+     */
+    protected function insertCouponInbox($userId, $coupons, $couponNames)
+    {
+        $user = User::find($userId);
+
+        if (empty($user)) {
+            throw new Exception ('Customer user ID not found.');
+        }
+
+        $name = $user->getFullName();
+        $name = $name ? $name : $user->email;
+        $subject = Lang::get('mobileci.inbox.coupon.subject');
+
+        $inbox = new Inbox();
+        $inbox->user_id = $userId;
+        $inbox->from_id = 0;
+        $inbox->from_name = 'Orbit';
+        $inbox->subject = $subject;
+        $inbox->content = '';
+        $inbox->inbox_type = 'alert';
+        $inbox->status = 'active';
+        $inbox->is_read = 'N';
+        $inbox->save();
+
+        $retailerId = Config::get('orbit.shop.id');
+        $retailer = Retailer::isMall()->where('merchant_id', $retailerId)->first();
+        $data = [
+            'fullName'          => $name,
+            'subject'           => 'Coupon',
+            'inbox'             => $inbox,
+            'retailerName'      => $retailer->name,
+            'numberOfCoupon'    => count($coupons),
+            'coupons'           => $couponNames,
+            'mallName'          => $retailer->name
+        ];
+
+        // $template = View::make('mobile-ci.push-notification-coupon', $data);
+        // $template = $template->render();
+
+        $inbox->content = $template;
+        $inbox->save();
     }
 }

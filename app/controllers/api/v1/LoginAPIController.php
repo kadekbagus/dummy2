@@ -366,6 +366,13 @@ class LoginAPIController extends ControllerAPI
         // Save the activity
         $activity->save();
 
+        // We want the registration activity to have 'from Facebook' or 'from Email'...
+        // Rather than passing the origin here, we save the ID of the registration activity
+        // so the caller can add 'from Facebook' later.
+        if ($activity->response_status == Activity::ACTIVITY_REPONSE_OK) {
+            $this->response->data->setAttribute('registration_activity_id', $activity->activity_id);
+        }
+
         return $this->render($httpCode);
     }
 

@@ -27,6 +27,7 @@ class UserAPIController extends ControllerAPI
      * @param string    `role_id`               (required) - Role ID
      * @param string    `firstname`             (optional) - User first name
      * @param string    `lastname`              (optional) - User last name
+     * @param boolean   `new_consumer_from_captive` (optional) - if 'Y' then role is always consumer, password random
      * @return Illuminate\Support\Facades\Response
      */
     public function postNewUser()
@@ -65,20 +66,33 @@ class UserAPIController extends ControllerAPI
             $password = OrbitInput::post('password');
             $password2 = OrbitInput::post('password_confirmation');
             $user_role_id = OrbitInput::post('role_id');
+            $is_new_consumer_from_captive = OrbitInput::post('new_consumer_from_captive', 'N') === 'Y';
 
-            $validator = Validator::make(
-                array(
-                    'email'     => $email,
-                    'password'  => $password,
-                    'password_confirmation' => $password2,
-                    'role_id' => $user_role_id,
-                ),
-                array(
-                    'email'     => 'required|email|orbit.email.exists',
-                    'password'  => 'required|min:5|confirmed',
-                    'role_id' => 'required|numeric|orbit.empty.role',
-                )
-            );
+            if ($is_new_consumer_from_captive) {
+                $validator = Validator::make(
+                    array(
+                        'email'     => $email,
+                    ),
+                    array(
+                        'email'     => 'required|email|orbit.email.exists',
+                    )
+                );
+            } else {
+                $validator = Validator::make(
+                    array(
+                        'email'     => $email,
+                        'password'  => $password,
+                        'password_confirmation' => $password2,
+                        'role_id' => $user_role_id,
+                    ),
+                    array(
+                        'email'     => 'required|email|orbit.email.exists',
+                        'password'  => 'required|min:5|confirmed',
+                        'role_id' => 'required|numeric|orbit.empty.role',
+                    )
+                );
+            }
+
 
             Event::fire('orbit.user.postnewuser.before.validation', array($this, $validator));
 
@@ -86,6 +100,15 @@ class UserAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // we need this for the registration activity.
+            $captive_location = null;
+            if ($is_new_consumer_from_captive) {
+                $captive_location = Retailer::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
+                if (!isset($captive_location)) {
+                    OrbitShopAPI::throwInvalidArgument('cannot find captive portal location');
+                }
             }
 
             Event::fire('orbit.user.postnewuser.after.validation', array($this, $validator));
@@ -96,9 +119,19 @@ class UserAPIController extends ControllerAPI
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_email = $email;
-            $newuser->user_password = Hash::make($password);
             $newuser->status = 'pending';
-            $newuser->user_role_id = $user_role_id;
+            if ($is_new_consumer_from_captive) {
+                $consumer_role = Role::where('role_name', '=', 'consumer')->first();
+                if ($consumer_role === null) {
+                    OrbitShopAPI::throwInvalidArgument('consumer role not found');  // should never happen?
+                }
+                $newuser->user_role_id = $consumer_role->role_id;
+                $newuser->user_password = Hash::make(mcrypt_create_iv(32));  // just some random password
+            } else {
+                $newuser->user_role_id = $user_role_id;
+                $newuser->user_password = Hash::make($password);
+            }
+
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
             $newuser->modified_by = $this->api->user->user_id;
 
@@ -139,6 +172,19 @@ class UserAPIController extends ControllerAPI
                     ->responseOK();
 
             Event::fire('orbit.user.postnewuser.after.commit', array($this, $newuser));
+
+            if ($is_new_consumer_from_captive) {
+                $registration_activity = Activity::mobileci()
+                    ->setActivityType('registration')
+                    ->setLocation($captive_location)
+                    ->setUser($newuser)
+                    ->setActivityName('registration_ok')
+                    ->setActivityNameLong('Email Sign Up')  // todo make this configurable?
+                    ->setModuleName('Application')
+                    ->responseOK();
+                $registration_activity->save();
+            }
+
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.user.postnewuser.access.forbidden', array($this, $e));
 
@@ -433,6 +479,7 @@ class UserAPIController extends ControllerAPI
      * @param string    `firstname`             (optional) - User first name
      * @param string    `lastname`              (optional) - User last name
      * @param string    `status`                (optional) - Status of the user 'active', 'pending', 'blocked', or 'deleted'
+     * @param boolean   `updated_consumer_from_captive` (optional) - if 'Y' then only updates name, gender, birth date.
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateUser()
@@ -457,8 +504,10 @@ class UserAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.postupdateuser.before.authz', array($this, $user));
 
+            $is_updated_consumer_from_captive = OrbitInput::post('updated_consumer_from_captive', 'N') === 'Y';
+            $captive_from_mall_owner = $is_updated_consumer_from_captive && $user->isRoleName('mall owner');
             $user_id = OrbitInput::post('user_id');
-            if (! ACL::create($user)->isAllowed('update_user')) {
+            if (! (ACL::create($user)->isAllowed('update_user') || $captive_from_mall_owner)) {
                 // No need to check if it is the user itself
                 if ((string)$user->user_id !== (string)$user_id) {
                     Event::fire('orbit.user.postupdateuser.authz.notallowed', array($this, $user));
@@ -511,64 +560,87 @@ class UserAPIController extends ControllerAPI
             $postal_code = OrbitInput::post('postal_code');
             $workphone = OrbitInput::post('work_phone');
 
+            $validate_data = array(
+                'user_id'               => $user_id,
+                'username'              => $username,
+                'email'                 => $email,
+                'role_id'               => $user_role_id,
+                'status'                => $status,
+
+                'firstname'             => $user_firstname,
+                'lastname'              => $user_lastname,
+
+                'birthdate'             => $birthdate,
+                'gender'                => $gender,
+                'address_line1'         => $address1,
+                'city'                  => $city,
+                'province'              => $province,
+                'postal_code'           => $postal_code,
+                'country'               => $country,
+                'phone'                 => $phone1,
+                'phone2'                => $phone2,
+                'relationship_status'   => $relationship_status,
+                'number_of_children'    => $number_of_children,
+                'education_level'       => $education_level,
+                'preferred_language'    => $preferred_lang,
+                'avg_annual_income1'    => $avg_annual_income1,
+                'avg_annual_income2'    => $avg_annual_income2,
+                'avg_monthly_spent1'    => $avg_monthly_spent1,
+                'avg_monthly_spent2'    => $avg_monthly_spent2,
+                'personal_interests'    => $personal_interests,
+            );
+
+            $validate_rules = array(
+                'user_id'               => 'required|numeric',
+                'username'              => 'orbit.exists.username',
+                'email'                 => 'email|email_exists_but_me',
+                'role_id'               => 'numeric|orbit.empty.role',
+                'status'                => 'orbit.empty.user_status',
+
+                'firstname'             => 'required',
+                // 'lastname'              => 'required',
+
+                'birthdate'             => 'date_format:Y-m-d',
+                'gender'                => 'in:m,f',
+                // 'address_line1'         => 'required',
+                // 'city'                  => 'required',
+                // 'province'              => 'required',
+                // 'postal_code'           => 'required',
+                // 'country'               => 'required',
+                // 'phone'                 => 'required',
+                'relationship_status'   => 'in:none,single,in a relationship,engaged,married,divorced,widowed',
+                'number_of_children'    => 'numeric|min:0',
+                'education_level'       => 'in:none,junior high school,high school,diploma,bachelor,master,ph.d,doctor,other',
+                'preferred_language'    => 'in:en,id',
+                'avg_annual_income1'    => 'numeric',
+                'avg_annual_income2'    => 'numeric',
+                'avg_monthly_spent1'    => 'numeric',
+                'avg_monthly_spent2'    => 'numeric',
+                'personal_interests'    => 'array|min:0|orbit.empty.personal_interest',
+            );
+
+            if ($is_updated_consumer_from_captive) {
+                // only use & validate a subset of the fields.
+                // also must ensure nothing is passed except these to prevent people sneaking in updates unvalidated
+                $captive_fields = ['user_id', 'firstname', 'lastname', 'gender', 'birthdate', 'status'];
+                $new_validate_data = [];
+                $new_validate_rules = [];
+                $old_post = $_POST;
+                $old_post['status'] = 'active';
+                $_POST = [];
+                foreach ($captive_fields as $field) {
+                    $new_validate_data[$field] = $validate_data[$field];
+                    $new_validate_rules[$field] = $validate_rules[$field];
+                    $_POST[$field] = $old_post[$field];
+                }
+                $_POST['status'] = 'active';
+                $validate_data = $new_validate_data;
+                $validate_rules = $new_validate_rules;
+            }
+
             $validator = Validator::make(
-                array(
-                    'user_id'               => $user_id,
-                    'username'              => $username,
-                    'email'                 => $email,
-                    'role_id'               => $user_role_id,
-                    'status'                => $status,
-
-                    'firstname'             => $user_firstname,
-                    'lastname'              => $user_lastname,
-
-                    'birthdate'             => $birthdate,
-                    'gender'                => $gender,
-                    'address_line1'         => $address1,
-                    'city'                  => $city,
-                    'province'              => $province,
-                    'postal_code'           => $postal_code,
-                    'country'               => $country,
-                    'phone'                 => $phone1,
-                    'phone2'                => $phone2,
-                    'relationship_status'   => $relationship_status,
-                    'number_of_children'    => $number_of_children,
-                    'education_level'       => $education_level,
-                    'preferred_language'    => $preferred_lang,
-                    'avg_annual_income1'    => $avg_annual_income1,
-                    'avg_annual_income2'    => $avg_annual_income2,
-                    'avg_monthly_spent1'    => $avg_monthly_spent1,
-                    'avg_monthly_spent2'    => $avg_monthly_spent2,
-                    'personal_interests'    => $personal_interests,
-                ),
-                array(
-                    'user_id'               => 'required|numeric',
-                    'username'              => 'orbit.exists.username',
-                    'email'                 => 'email|email_exists_but_me',
-                    'role_id'               => 'numeric|orbit.empty.role',
-                    'status'                => 'orbit.empty.user_status',
-
-                    'firstname'             => 'required',
-                    // 'lastname'              => 'required',
-
-                    'birthdate'             => 'date_format:Y-m-d',
-                    'gender'                => 'in:m,f',
-                    // 'address_line1'         => 'required',
-                    // 'city'                  => 'required',
-                    // 'province'              => 'required',
-                    // 'postal_code'           => 'required',
-                    // 'country'               => 'required',
-                    // 'phone'                 => 'required',
-                    'relationship_status'   => 'in:none,single,in a relationship,engaged,married,divorced,widowed',
-                    'number_of_children'    => 'numeric|min:0',
-                    'education_level'       => 'in:none,junior high school,high school,diploma,bachelor,master,ph.d,doctor,other',
-                    'preferred_language'    => 'in:en,id',
-                    'avg_annual_income1'    => 'numeric',
-                    'avg_annual_income2'    => 'numeric',
-                    'avg_monthly_spent1'    => 'numeric',
-                    'avg_monthly_spent2'    => 'numeric',
-                    'personal_interests'    => 'array|min:0|orbit.empty.personal_interest',
-                ),
+                $validate_data,
+                $validate_rules,
                 array('email_exists_but_me' => Lang::get('validation.orbit.email.exists'))
             );
 
@@ -587,6 +659,16 @@ class UserAPIController extends ControllerAPI
             $updateduser = User::with('userdetail')
                                ->excludeDeleted()
                                ->find($user_id);
+
+            if ($is_updated_consumer_from_captive) {
+                // can only be called for pending consumers, probably inappropriate error message...
+                if ($updateduser->role === null || !$updateduser->isRoleName('consumer')) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.user_status'));
+                }
+                if ($updateduser->status !== 'pending') {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.user_status'));
+                }
+            }
 
             OrbitInput::post('username', function($username) use ($updateduser) {
                 $updateduser->username = $username;
@@ -1612,9 +1694,9 @@ class UserAPIController extends ControllerAPI
             $users->skip($skip);
 
             // Default sort by
-            $sortBy = 'users.created_at';
+            $sortBy = 'users.user_email';
             // Default sort mode
-            $sortMode = 'desc';
+            $sortMode = 'asc';
 
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
@@ -1626,11 +1708,6 @@ class UserAPIController extends ControllerAPI
                     'firstname'               => 'users.user_firstname',
                     'gender'                  => 'user_details.gender',
                     'city'                    => 'user_details.city',
-                    'mobile_phone'            => 'user_details.phone',
-                    'membership_number'       => 'users.membership_number',
-                    'membership_since'        => 'users.membership_since',
-                    'created_at'              => 'users.created_at',
-                    'updated_at'              => 'users.updated_at',
                     'status'                  => 'users.status',
                     'last_visit_shop'         => 'merchants.name',
                     'last_visit_date'         => 'user_details.last_visit_any_shop',
@@ -1646,16 +1723,16 @@ class UserAPIController extends ControllerAPI
             });
 
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
-                if (strtolower($_sortMode) !== 'desc') {
-                    $sortMode = 'asc';
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
                 }
             });
 
             // If sortby not active means we should add active as second argument
             // of sorting
-            // if ($sortBy !== 'users.status') {
-            //     $users->orderBy('users.status', 'asc');
-            // }
+            if ($sortBy !== 'users.status') {
+                $users->orderBy('users.status', 'asc');
+            }
 
             $users->orderBy($sortBy, $sortMode);
 
@@ -1929,39 +2006,17 @@ class UserAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            // set mall id
-            $mallId = Config::get('orbit.shop.id');
-
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
             $lastname = OrbitInput::post('lastname');
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
             $phone = OrbitInput::post('phone');
-
-            $membership_since = OrbitInput::post('joindate');
-            if (trim($membership_since) === '') {
-                $membership_since = OrbitInput::post('membership_since');
-            }
-
+            $joindate = OrbitInput::post('joindate');
             $membershipNumber = OrbitInput::post('membership_number');
-
-            // set status
             $status = OrbitInput::post('status');
-            if (trim($status) === '') {
-                // if membership number is set then status is active, otherwise status is pending
-                if (trim($membershipNumber) === '') {
-                    $status = 'pending';
-                } else {
-                    $status = 'active';
-                }
-            }
-
-            $idcard = OrbitInput::post('idcard');
-            if (trim($idcard) === '') {
-                $idcard = OrbitInput::post('idcard_number');
-            }
-
+            $categoryIds = OrbitInput::post('category_ids');
+            $idcard = OrbitInput::post('idcard_number');
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
             $city = OrbitInput::post('city');
@@ -1976,43 +2031,35 @@ class UserAPIController extends ControllerAPI
             $category_ids = (array) $category_ids;
             $bank_object_ids = OrbitInput::post('bank_object_ids');
             $bank_object_ids = (array) $bank_object_ids;
-            $external_user_id = OrbitInput::post('external_user_id');
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $validator = Validator::make(
                 array(
-                    'external_user_id'      => $external_user_id,
                     'email'                 => $email,
                     'firstname'             => $firstname,
                     'lastname'              => $lastname,
                     'gender'                => $gender,
                     'birthdate'             => $birthdate,
-                    'membership_since'      => $membership_since,
+                    'joindate'              => $joindate,
                     'membership_number'     => $membershipNumber,
                     'status'                => $status,
-                    'category_ids'          => $category_ids,
-                    'bank_object_ids'       => $bank_object_ids,
-                    'idcard'                => $idcard,
+                    'category_ids'          => $categoryIds,
+                    'idcard_number'         => $idcard,
                     'mobile_phone'          => $mobile,
                     'work_phone'            => $workphone,
                     'occupation'            => $occupation,
                     'date_of_work'          => $dateofwork,
                 ),
                 array(
-                    'external_user_id'      => 'required',
                     'email'                 => 'required|email|orbit.email.exists',
                     'firstname'             => 'required',
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d',
-                    'membership_number'     => 'orbit.membership.exists',
-                    'status'                => 'in:active,inactive,pending',
+                    'joindate'              => 'date_format:Y-m-d',
+                    'membership_number'     => 'required|orbit.membership.exists',
+                    'status'                => 'required|in:active,inactive,pending',
                     'category_ids'          => 'array',
-                    'bank_object_ids'       => 'array',
-                    'idcard'                => 'numeric',
+                    'idcard_number'         => 'numeric',
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
@@ -2035,11 +2082,11 @@ class UserAPIController extends ControllerAPI
                         'category_id'   => $category_id_check,
                     ),
                     array(
-                        'category_id'   => 'numeric|orbit.empty.category:' . $mallId,
+                        'category_id'   => 'numeric|orbit.empty.category',
                     )
                 );
 
-                Event::fire('orbit.user.postnewmembership.before.categoryvalidation', array($this, $validator));
+                Event::fire('orbit.user.postnewuser.before.categoryvalidation', array($this, $validator));
 
                 // Run the validation
                 if ($validator->fails()) {
@@ -2047,7 +2094,7 @@ class UserAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                Event::fire('orbit.user.postnewmembership.after.categoryvalidation', array($this, $validator));
+                Event::fire('orbit.user.postnewuser.after.categoryvalidation', array($this, $validator));
             }
 
             // validate bank_object_ids
@@ -2057,11 +2104,11 @@ class UserAPIController extends ControllerAPI
                         'bank_object_id'  => $bank_object_id_check,
                     ),
                     array(
-                        'bank_object_id'  => 'numeric|orbit.empty.bank_object:' . $mallId,
+                        'bank_object_id'  => 'numeric|orbit.empty.bank_object',
                     )
                 );
 
-                Event::fire('orbit.user.postnewmembership.before.bankobjectvalidation', array($this, $validator));
+                Event::fire('orbit.user.postnewuser.before.bankobjectvalidation', array($this, $validator));
 
                 // Run the validation
                 if ($validator->fails()) {
@@ -2069,27 +2116,25 @@ class UserAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                Event::fire('orbit.user.postnewmembership.after.bankobjectvalidation', array($this, $validator));
+                Event::fire('orbit.user.postnewuser.after.bankobjectvalidation', array($this, $validator));
             }
 
             Event::fire('orbit.user.postnewmembership.after.validation', array($this, $validator));
 
-            $roleConsumer = Role::where('role_name', 'consumer')->first();
-            if (empty($roleConsumer)) {
-                OrbitShopAPI::throwInvalidArgument('Could not find role named "Consumer".');
-            }
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $role = Role::where('role_name', 'consumer')->first();
 
             $newuser = new User();
-            $newuser->external_user_id = $external_user_id;
             $newuser->username = $email;
             $newuser->user_email = $email;
             $newuser->status = $status;
             $newuser->user_firstname = $firstname;
             $newuser->user_lastname = $lastname;
-            $newuser->user_role_id = $roleConsumer->role_id;
+            $newuser->user_role_id = $role->role_id;
             $newuser->membership_number = $membershipNumber;
-            $newuser->membership_since = $membership_since . ' 00:00:00';
-
+            $newuser->status = $status;
             $newuser->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.user.postnewmembership.before.save', array($this, $newuser));
@@ -2105,28 +2150,16 @@ class UserAPIController extends ControllerAPI
             $userdetail->province = $province;
             $userdetail->postal_code = $postal_code;
             $userdetail->phone2 = $workphone;
+            $userdetail->merchant_acquired_date = $joindate;
             $userdetail->idcard = $idcard;
             $userdetail->occupation = $occupation;
             $userdetail->date_of_work = $dateofwork;
             $userdetail->address_line1 = $homeAddress;
             $userdetail->address_line2 = $workAddress;
-            $userdetail->merchant_acquired_date = date('Y-m-d H:i:s');
-
-            // get current mall id and its mall group
-            $currentRetailerId = Config::get('orbit.shop.id');
-            $retailer = Retailer::select('parent_id')
-                                ->where('merchant_id', $currentRetailerId)
-                                ->where('object_type', 'retailer')
-                                ->where('is_mall', 'yes')
-                                ->first();
-            $userdetail->merchant_id = $retailer->parent_id;
-            $userdetail->retailer_id = $currentRetailerId;
-
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $newuser->setRelation('userdetail', $userdetail);
             $newuser->userdetail = $userdetail;
-            $newuser->load('userdetail');
 
             $apikey = new Apikey();
             $apikey->api_key = Apikey::genApiKey($newuser);
@@ -2135,8 +2168,8 @@ class UserAPIController extends ControllerAPI
             $apikey->user_id = $newuser->user_id;
             $apikey = $newuser->apikey()->save($apikey);
 
-            //$newuser->setRelation('apikey', $apikey);
-            //$newuser->apikey = $apikey;
+            $newuser->setRelation('apikey', $apikey);
+            $newuser->apikey = $apikey;
             $newuser->setHidden(array('user_password'));
 
             // save categories
@@ -2150,7 +2183,6 @@ class UserAPIController extends ControllerAPI
                 $userCategories[] = $userPersonalInterest;
             }
             $newuser->categories = $userCategories;
-            $newuser->load('categories');
 
             // save bank_object_ids
             $userBanks = array();
@@ -2164,7 +2196,6 @@ class UserAPIController extends ControllerAPI
                 $userBanks[] = $objectRelation;
             }
             $newuser->banks = $userBanks;
-            $newuser->load('banks');
 
             Event::fire('orbit.user.postnewmembership.after.save', array($this, $newuser));
             $this->response->data = $newuser;
@@ -2325,33 +2356,17 @@ class UserAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            // set mall id
-            $mallId = Config::get('orbit.shop.id');
-
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
             $lastname = OrbitInput::post('lastname');
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
             $phone = OrbitInput::post('phone');
-
-            $membership_since = OrbitInput::post('joindate');
-            if (trim($membership_since) === '') {
-                $membership_since = OrbitInput::post('membership_since');
-            }
-
+            $joindate = OrbitInput::post('joindate');
             $membershipNumber = OrbitInput::post('membership_number');
             $status = OrbitInput::post('status');
-            $category_ids = OrbitInput::post('category_ids');
-            $category_ids = (array) $category_ids;
-            $bank_object_ids = OrbitInput::post('bank_object_ids');
-            $bank_object_ids = (array) $bank_object_ids;
-
-            $idcard = OrbitInput::post('idcard');
-            if (trim($idcard) === '') {
-                $idcard = OrbitInput::post('idcard_number');
-            }
-
+            $categoryIds = OrbitInput::post('category_ids');
+            $idcard = OrbitInput::post('idcard_number');
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
             $city = OrbitInput::post('city');
@@ -2362,8 +2377,8 @@ class UserAPIController extends ControllerAPI
             $dateofwork = OrbitInput::post('date_of_work');
             $homeAddress = OrbitInput::post('home_address');
             $workAddress = OrbitInput::post('work_address');
+
             $userId = OrbitInput::post('user_id');
-            $externalUserId = OrbitInput::post('external_user_id');
 
             $validator = Validator::make(
                 array(
@@ -2372,10 +2387,10 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => $lastname,
                     'gender'                => $gender,
                     'birthdate'             => $birthdate,
-                    'membership_since'      => $membership_since,
+                    'joindate'              => $joindate,
                     'membership_number'     => $membershipNumber,
                     'status'                => $status,
-                    'idcard'                => $idcard,
+                    'idcard_number'         => $idcard,
                     'mobile_phone'          => $mobile,
                     'work_phone'            => $workphone,
                     'occupation'            => $occupation,
@@ -2388,10 +2403,11 @@ class UserAPIController extends ControllerAPI
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
-                    'membership_since'      => 'date_format:Y-m-d',
+                    'joindate'              => 'date_format:Y-m-d',
                     'membership_number'     => 'orbit.membership.exists_but_me',
                     'status'                => 'in:active,inactive,pending',
-                    'idcard'                => 'numeric',
+                    'category_ids'          => 'array',
+                    'idcard_number'         => 'numeric',
                     'mobile_phone'          => '',
                     'work_phone'            => '',
                     'occupation'            => '',
@@ -2419,7 +2435,6 @@ class UserAPIController extends ControllerAPI
             $userdetail = $updateduser->userdetail;
 
             OrbitInput::post('email', function($email) use ($updateduser) {
-                $updateduser->username = $email;
                 $updateduser->user_email = $email;
             });
 
@@ -2431,30 +2446,16 @@ class UserAPIController extends ControllerAPI
                 $updateduser->user_lastname = $lastname;
             });
 
-            // User cannot update their own status
-            if ((string)$user->user_id !== (string)$updateduser->user_id) {
-                OrbitInput::post('status', function($status) use ($updateduser) {
-                    $updateduser->status = $status;
-                });
-            }
+            OrbitInput::post('status', function($status) use ($updateduser) {
+                $updateduser->status = $status;
+            });
 
             OrbitInput::post('membership_number', function($number) use ($updateduser) {
-
-                // Check for the previous membership number, if it was empty assuming this is the first time
-                // So activate the user
-                if (empty($updateduser->membership_number) && $updateduser->status === 'pending') {
-                    $updateduser->status = 'active';
-                }
-
                 $updateduser->membership_number = $number;
             });
 
-            OrbitInput::post('membership_since', function($date) use ($updateduser) {
-                $updateduser->membership_since = $date . ' 00:00:00';
-            });
-
-            OrbitInput::post('external_user_id', function($data) use ($updateduser) {
-                $updateduser->external_user_id = $data;
+            OrbitInput::post('joindate', function($date) use ($userdetail) {
+                $userdetail->merchant_acquired_date = $date;
             });
 
             OrbitInput::post('birthdate', function($date) use ($userdetail) {
@@ -2501,10 +2502,6 @@ class UserAPIController extends ControllerAPI
                 $userdetail->idcard = $data;
             });
 
-            OrbitInput::post('idcard_number', function($data) use ($userdetail) {
-                $userdetail->idcard = $data;
-            });
-
             OrbitInput::post('occupation', function($data) use ($userdetail) {
                 $userdetail->occupation = $data;
             });
@@ -2530,7 +2527,7 @@ class UserAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('category_ids', function($category_ids) use ($updateduser, $mallId) {
+            OrbitInput::post('category_ids', function($category_ids) use ($updateduser) {
                 // validate category_ids
                 $category_ids = (array) $category_ids;
                 foreach ($category_ids as $category_id_check) {
@@ -2539,7 +2536,7 @@ class UserAPIController extends ControllerAPI
                             'category_id'   => $category_id_check,
                         ),
                         array(
-                            'category_id'   => 'numeric|orbit.empty.category:' . $mallId,
+                            'category_id'   => 'orbit.empty.category',
                         )
                     );
 
@@ -2556,18 +2553,7 @@ class UserAPIController extends ControllerAPI
                 // sync new set of category ids
                 $pivotData = array_fill(0, count($category_ids), ['object_type' => 'category']);
                 $syncData = array_combine($category_ids, $pivotData);
-
-                $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
-                                                                ->where('object_type', 'category')
-                                                                ->get(array('personal_interest_id'))
-                                                                ->toArray();
-                // detach old relation
-                if (sizeof($deleted_category_ids) > 0) {
-                    $updateduser->categories()->detach($deleted_category_ids);
-                }
-
-                // attach new relation
-                $updateduser->categories()->attach($syncData);
+                $updateduser->categories()->sync($syncData);
 
                 // reload categories relation
                 $updateduser->load('categories');
@@ -2586,7 +2572,7 @@ class UserAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('bank_object_ids', function($bank_object_ids) use ($updateduser, $mallId) {
+            OrbitInput::post('bank_object_ids', function($bank_object_ids) use ($updateduser) {
                 // validate bank_object_ids
                 $bank_object_ids = (array) $bank_object_ids;
                 foreach ($bank_object_ids as $bank_object_id_check) {
@@ -2595,7 +2581,7 @@ class UserAPIController extends ControllerAPI
                             'bank_object_id'  => $bank_object_id_check,
                         ),
                         array(
-                            'bank_object_id'  => 'numeric|orbit.empty.bank_object:' . $mallId,
+                            'bank_object_id'  => 'numeric|orbit.empty.bank_object',
                         )
                     );
 
@@ -2951,21 +2937,7 @@ class UserAPIController extends ControllerAPI
     {
         // Check user email address, it should not exists
         Validator::extend('orbit.email.exists', function ($attribute, $value, $parameters) {
-
-            // get current mall id and its mall group
-            $currentRetailerId = Config::get('orbit.shop.id');
-            $retailer = Retailer::select('parent_id')
-                                ->where('merchant_id', $currentRetailerId)
-                                ->where('object_type', 'retailer')
-                                ->where('is_mall', 'yes')
-                                ->first();
-            $currentMerchantId = $retailer->parent_id;
-
             $user = User::excludeDeleted()
-                        ->Consumers()
-                        ->whereHas('userdetail', function ($q) use ($currentMerchantId) {
-                            $q->where('merchant_id', $currentMerchantId);
-                        })
                         ->where('user_email', $value)
                         ->first();
 
@@ -2980,68 +2952,34 @@ class UserAPIController extends ControllerAPI
 
         // Check user membership, it should not exists
         Validator::extend('orbit.membership.exists', function ($attribute, $value, $parameters) {
-            $check = Config::get('orbit.shop.membership_number_unique_check');
+            $user = User::excludeDeleted()
+                        ->where('membership_number', $value)
+                        ->first();
 
-            // get current mall id and its mall group
-            $currentRetailerId = Config::get('orbit.shop.id');
-            $retailer = Retailer::select('parent_id')
-                                ->where('merchant_id', $currentRetailerId)
-                                ->where('object_type', 'retailer')
-                                ->where('is_mall', 'yes')
-                                ->first();
-            $currentMerchantId = $retailer->parent_id;
-
-            if ($check) {
-                $user = User::excludeDeleted()
-                            ->Consumers()
-                            ->whereHas('userdetail', function ($q) use ($currentMerchantId) {
-                                $q->where('merchant_id', $currentMerchantId);
-                            })
-                            ->where('membership_number', $value)
-                            ->first();
-
-                if (! empty($user)) {
-                    $errorMessage = 'Membership number already exists.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                App::instance('orbit.validation.user', $user);
+            if (! empty($user)) {
+                $errorMessage = 'Membership number already exists.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            App::instance('orbit.validation.user', $user);
 
             return TRUE;
         });
 
         // Check user membership, it should not exists
         Validator::extend('orbit.membership.exists_but_me', function ($attribute, $value, $parameters) {
-            $check = Config::get('orbit.shop.membership_number_unique_check');
+            $userId = OrbitInput::post('user_id');
+            $user = User::excludeDeleted()
+                        ->where('membership_number', $value)
+                        ->where('user_id', '!=', $userId)
+                        ->first();
 
-            // get current mall id and its mall group
-            $currentRetailerId = Config::get('orbit.shop.id');
-            $retailer = Retailer::select('parent_id')
-                                ->where('merchant_id', $currentRetailerId)
-                                ->where('object_type', 'retailer')
-                                ->where('is_mall', 'yes')
-                                ->first();
-            $currentMerchantId = $retailer->parent_id;
-
-            if ($check) {
-                $userId = OrbitInput::post('user_id');
-                $user = User::excludeDeleted()
-                            ->Consumers()
-                            ->whereHas('userdetail', function ($q) use ($currentMerchantId) {
-                                $q->where('merchant_id', $currentMerchantId);
-                            })
-                            ->where('membership_number', $value)
-                            ->where('user_id', '!=', $userId)
-                            ->first();
-
-                if (! empty($user)) {
-                    $errorMessage = 'Membership number already exists.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                App::instance('orbit.validation.user', $user);
+            if (! empty($user)) {
+                $errorMessage = 'Membership number already exists.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            App::instance('orbit.validation.user', $user);
 
             return TRUE;
         });
@@ -3210,12 +3148,9 @@ class UserAPIController extends ControllerAPI
 
         // Check the existance of category id
         Validator::extend('orbit.empty.category', function ($attribute, $value, $parameters) {
-            $mallId = $parameters[0];
-
             $category = Category::excludeDeleted()
-                                ->where('merchant_id', $mallId)
-                                ->where('category_id', $value)
-                                ->first();
+                        ->where('category_id', $value)
+                        ->first();
 
             if (empty($category)) {
                 return FALSE;
@@ -3228,13 +3163,9 @@ class UserAPIController extends ControllerAPI
 
         // Check the existance of bank object id
         Validator::extend('orbit.empty.bank_object', function ($attribute, $value, $parameters) {
-            $mallId = $parameters[0];
-
             $bankObject = Object::excludeDeleted()
-                                ->where('merchant_id', $mallId)
-                                ->where('object_type', 'bank')
-                                ->where('object_id', $value)
-                                ->first();
+                        ->where('object_id', $value)
+                        ->first();
 
             if (empty($bankObject)) {
                 return FALSE;
