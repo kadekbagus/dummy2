@@ -6371,12 +6371,21 @@ class UploadAPIController extends ControllerAPI
                 $user = $this->api->user;
                 Event::fire('orbit.upload.postuploadmembershipimage.before.authz', array($this, $user));
 
+/*
                 if (! ACL::create($user)->isAllowed('update_membership')) {
                     Event::fire('orbit.upload.postuploadmembershipimage.authz.notallowed', array($this, $user));
                     $editMembershipLang = Lang::get('validation.orbit.actionlist.update_membership');
                     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMembershipLang));
                     ACL::throwAccessForbidden($message);
                 }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
                 Event::fire('orbit.upload.postuploadmembershipimage.after.authz', array($this, $user));
             } else {
                 // Comes from event
