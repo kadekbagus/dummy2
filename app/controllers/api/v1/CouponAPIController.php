@@ -2096,7 +2096,7 @@ class CouponAPIController extends ControllerAPI
                              // ->where('promotions.status', '!=', 'deleted');
                              ->where('promotions.status', '=', 'active')
                              ->where(function ($q) {
-                                    $q->where('promotions.maximum_issued_coupon', '>=', DB::raw('issued.total_issued'))
+                                    $q->where('promotions.maximum_issued_coupon', '>', DB::raw('issued.total_issued'))
                                         ->orWhere('promotions.maximum_issued_coupon', '=', 0)
                                         ->orWhereNull(DB::raw('issued.total_issued'));
                              });
