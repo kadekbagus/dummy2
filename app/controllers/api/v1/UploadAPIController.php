@@ -6342,6 +6342,390 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload images for Membership.
+     *
+     * @author Tian <tian@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `membership_id`               (required) - Membership ID
+     * @param file|array `images`                      (required) - Image files
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadMembershipImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadmembershipimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadmembershipimage.after.auth', array($this));
+
+                // Try to check access control list, does this membership allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadmembershipimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_membership')) {
+                    Event::fire('orbit.upload.postuploadmembershipimage.authz.notallowed', array($this, $user));
+                    $editMembershipLang = Lang::get('validation.orbit.actionlist.update_membership');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMembershipLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadmembershipimage.after.authz', array($this, $user));
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for membership upload image
+            $uploadImageConfig = Config::get('orbit.upload.membership.main');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $membership_id = OrbitInput::post('membership_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.three' => Lang::get('validation.max.array', array(
+                    'max' => 3
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'membership_id'     => $membership_id,
+                    $elementName        => $images,
+                ),
+                array(
+                    'membership_id'     => 'required|orbit.empty.membership',
+                    $elementName        => 'required|array|nomore.than.three',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadmembershipimage.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadmembershipimage.after.validation', array($this, $validator));
+
+            // We already had Membership instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $membership = App::make('orbit.empty.membership');
+
+            // Delete old membership image
+            $pastMedia = Media::where('object_id', $membership->membership_id)
+                              ->where('object_name', 'membership')
+                              ->where('media_name_id', 'membership_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($membership)
+            {
+                $membership_id = $membership->membership_id;
+                $slug = Str::slug($membership->membership_name);
+                $file['new']->name = sprintf('%s-%s-%s', $membership_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadmembershipimage.before.save', array($this, $membership, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $membership->membership_id,
+                'name'          => 'membership',
+                'media_name_id' => 'membership_image',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            Event::fire('orbit.upload.postuploadmembershipimage.after.save', array($this, $membership, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.membership.main');
+
+            // Commit the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadmembershipimage.after.commit', array($this, $membership, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadmembershipimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadmembershipimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadmembershipimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadmembershipimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadmembershipimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete images for membership.
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `membership_id`                  (required) - ID of the membership
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteMembershipImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletemembershipimage.before.auth', array($this));
+
+            if (! $this->calledFrom('membership.new, membership.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletemembershipimage.after.auth', array($this));
+
+                // Try to check access control list, does this membership allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletemembershipimage.before.authz', array($this, $user));
+
+/*
+                if (! ACL::create($user)->isAllowed('update_membership')) {
+                    Event::fire('orbit.upload.postdeletemembershipimage.authz.notallowed', array($this, $user));
+                    $editMembershipLang = Lang::get('validation.orbit.actionlist.update_membership');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMembershipLang));
+                    ACL::throwAccessForbidden($message);
+                }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeletemembershipimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $membership_id = OrbitInput::post('membership_id');
+
+            $validator = Validator::make(
+                array(
+                    'membership_id'   => $membership_id,
+                ),
+                array(
+                    'membership_id'   => 'required|orbit.empty.membership',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletemembershipimage.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletemembershipimage.after.validation', array($this, $validator));
+
+            // We already had Membership instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $membership = App::make('orbit.empty.membership');
+
+            // Delete old membership image
+            $pastMedia = Media::where('object_id', $membership->membership_id)
+                              ->where('object_name', 'membership')
+                              ->where('media_name_id', 'membership_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletemembershipimage.before.save', array($this, $membership));
+
+            Event::fire('orbit.upload.postdeletemembershipimage.after.save', array($this, $membership));
+
+            $this->response->data = $membership;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.membership.delete_image');
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletemembershipimage.after.commit', array($this, $membership));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletemembershipimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletemembershipimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletemembershipimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletemembershipimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletemembershipimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -6402,6 +6786,20 @@ class UploadAPIController extends ControllerAPI
                 }
 
                 App::instance('orbit.empty.news', $news);
+
+                return TRUE;
+            });
+
+            Validator::extend('orbit.empty.membership', function ($attribute, $value, $parameters) use ($user) {
+                $membership = Membership::excludeDeleted()
+                                        ->where('membership_id', $value)
+                                        ->first();
+
+                if (empty($membership)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.membership', $membership);
 
                 return TRUE;
             });
