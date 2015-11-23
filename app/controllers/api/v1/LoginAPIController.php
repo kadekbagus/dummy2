@@ -245,7 +245,7 @@ class LoginAPIController extends ControllerAPI
             }
 
             if ($from === 'cs') {
-                $signup_from = 'Sign Up via (Customer Service)';
+                $signup_from = 'Sign Up via Customer Service';
                 $activity = Activity::csportal()
                                     ->setActivityType('registration');
             } else {
