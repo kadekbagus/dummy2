@@ -365,7 +365,7 @@ class ConsumerPrinterController extends DataPrinterController
 
                     $customer_since = $this->printCustomerSince($row, $timezone, 'no');
                     $gender = $this->printGender($row);
-                    $lastUpdateDate = $this->printDateTime($row->updated_at, null, 'no');
+                    $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
 
                     printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customer_since,
