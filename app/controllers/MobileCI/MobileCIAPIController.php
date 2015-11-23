@@ -874,7 +874,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
             $activity->setUser($user)
                 ->setActivityName('view_coupon_list')
-                ->setActivityNameLong('View Coupon List (Pop Up)')
+                ->setActivityNameLong('Coupon Issuance')
                 ->setObject(null)
                 ->setModuleName('Coupon')
                 ->setNotes($activityPageNotes)
@@ -885,7 +885,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
             $activity->setUser($user)
                 ->setActivityName('view_coupon_list')
-                ->setActivityNameLong('View Coupon List Failed (Pop Up')
+                ->setActivityNameLong('Coupon Issuance Failed')
                 ->setObject(null)
                 ->setModuleName('Coupon')
                 ->setNotes($activityPageNotes)
