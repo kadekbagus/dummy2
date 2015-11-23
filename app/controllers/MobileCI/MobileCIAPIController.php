@@ -3879,6 +3879,7 @@ class MobileCIAPIController extends ControllerAPI
             }
             $email = OrbitInput::get('email');
             $from = OrbitInput::get('from');
+
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
@@ -3903,9 +3904,21 @@ class MobileCIAPIController extends ControllerAPI
                 $user = $response->data;
             }
 
+            $payload = OrbitInput::get('payload');
+            if (! empty($payload)) {
+                // Decrypt the payload
+                $key = md5('--orbit-mall--');
+                $payload = (new Encrypter($key))->decrypt($payload);
+
+                // The data is in url encoded
+                parse_str($payload, $data);
+
+                $from = isset($data['login_from']) ? $data['login_from'] : '';
+            }
+
             // @author Irianto Pratama <irianto@dominopos.com>
             // send email if user status pending
-            if ($user->status === 'pending' && ($from === 'cs' || $from === 'mobileci')) {
+            if ($user->status === 'pending' && $from !== 'facebook') {
 
                 $mall_time = Carbon::now($retailer->timezone->timezone_name);
                 $pending_date = $mall_time;
