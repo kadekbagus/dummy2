@@ -563,7 +563,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                 ->setActivityType('logout')
                 ->setUser($customer)
                 ->setActivityName('logout_ok')
-                ->setActivityNameLong('Sign out')
+                ->setActivityNameLong('Sign Out')
                 ->setModuleName('Application')
                 ->responseOK();
             // copy the user-agent across to help with analysis, but not the IP address (no reason to do that for now)

@@ -217,7 +217,7 @@ class DeleteInactiveCISessions extends Command
             ->setActivityType('logout')
             ->setUser(User::find($user_id))
             ->setActivityName('logout_ok')
-            ->setActivityNameLong('Sign out')
+            ->setActivityNameLong('Sign Out')
             ->setModuleName('Application')
             ->setLocation($location)
             ->setSessionId($session_id)
