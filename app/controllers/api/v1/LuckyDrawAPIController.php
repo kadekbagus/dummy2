@@ -14,6 +14,16 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class LuckyDrawAPIController extends ControllerAPI
 {
     /**
+     * Maximum number of the lucky draw
+     */
+    const MAX_NUMBER = 99999999;
+
+    /**
+     * Maximum number of the lucky draw
+     */
+    const MIN_NUMBER = 1;
+
+    /**
      * POST - Create New Lucky Draw
      *
      * List of API Parameters
@@ -109,15 +119,15 @@ class LuckyDrawAPIController extends ControllerAPI
                 ),
                 array(
                     'mall_id'                  => 'required|orbit.empty.mall',
-                    'lucky_draw_name'          => 'required|max:255|orbit.exists.lucky_draw_name',
+                    'lucky_draw_name'          => 'required|max:255|orbit.exists.lucky_draw_name:' . $mall_id,
                     'description'              => 'required',
                     'start_date'               => 'required|date_format:Y-m-d H:i:s',
-                    'end_date'                 => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'                 => 'required|date_format:Y-m-d H:i:s|after:' . $start_date,
                     'minimum_amount'           => 'required|numeric',
-                    'min_number'               => 'required|numeric',
-                    'max_number'               => 'required|numeric',
+                    'min_number'               => 'required|numeric|min:' . static::MIN_NUMBER,
+                    'max_number'               => 'required|numeric|max:' . static::MAX_NUMBER,
                     'external_lucky_draw_id'   => 'required',
-                    'grace_period_date'        => 'date_format:Y-m-d H:i:s',
+                    'grace_period_date'        => 'date_format:Y-m-d H:i:s|after:' . $end_date,
                     'status'                   => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active:' . $mall_id,
                 )
             );
@@ -146,13 +156,11 @@ class LuckyDrawAPIController extends ControllerAPI
             $newluckydraw->grace_period_date = $grace_period_date;
             $newluckydraw->status = $status;
             $newluckydraw->created_by = $this->api->user->user_id;
+            $newluckydraw->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.luckydraw.postnewluckydraw.before.save', array($this, $newluckydraw));
 
             $newluckydraw->save();
-
-            // Generate lucky draw numbers
-            DB::statement(DB::raw('call generate_lucky_draw_number(' . $min_number . ',' . $max_number . ',' . $newluckydraw->lucky_draw_id . ',' . $user->user_id . ');'));
 
             Event::fire('orbit.luckydraw.postnewluckydraw.after.save', array($this, $newluckydraw));
 
@@ -359,7 +367,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'lucky_draw_id'        => 'required|orbit.empty.lucky_draw',
+                    'lucky_draw_id'        => 'required|orbit.empty.lucky_draw:' . $mall_id,
                     'mall_id'              => 'orbit.empty.mall',
                     'lucky_draw_name'      => 'sometimes|required|min:3|max:255|lucky_draw_name_exists_but_me:' . $lucky_draw_id . ',' . $mall_id,
                     'status'               => 'sometimes|required|orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active_but_me:' . $mall_id . ',' . $lucky_draw_id,
@@ -1738,6 +1746,7 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check the existance of lucky_draw id
         Validator::extend('orbit.empty.lucky_draw', function ($attribute, $value, $parameters) {
             $lucky_draw = LuckyDraw::excludeDeleted()
+                                   ->where('mall_id', $parameters[0])
                                    ->where('lucky_draw_id', $value)
                                    ->first();
 
@@ -1753,7 +1762,6 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $mall = Mall::excludeDeleted()
-                            ->isMall()
                             ->where('merchant_id', $value)
                             ->first();
 
@@ -1769,6 +1777,7 @@ class LuckyDrawAPIController extends ControllerAPI
         // Check lucky draw name, it should not exists
         Validator::extend('orbit.exists.lucky_draw_name', function ($attribute, $value, $parameters) {
             $lucky_draw = LuckyDraw::excludeDeleted()
+                                   ->where('mall_id', $parameters[0])
                                    ->where('lucky_draw_name', $value)
                                    ->first();
 

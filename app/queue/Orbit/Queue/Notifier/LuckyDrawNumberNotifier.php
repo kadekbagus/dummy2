@@ -50,7 +50,8 @@ class LuckyDrawNumberNotifier
      * @param array $data [
      *                      lucky_draw_id => NUM,
      *                      retailer_id => NUM,
-     *                      hash => STRING
+     *                      hash => STRING,
+     *                      lucky_draw_id => NUM
      * ]
      * @return void
      * @todo Make this testable
@@ -128,14 +129,15 @@ class LuckyDrawNumberNotifier
 
             // We are only interesting in 200 OK status
             $httpCode = $this->poster->getTransferInfo('http_code');
+
+            // Lets try to decode the body
+            $httpBody = $this->poster->getResponse();
+            Log::info('External HTTP Response: ' . $httpBody);
+
             if ((int)$httpCode !== 200) {
                 $errorMessage = sprintf('Unexpected http response code %s, expected 200.', $httpCode);
                 throw new Exception($errorMessage);
             }
-
-            // Lets try to decode the body
-            $httpBody = $this->poster->getResponse();
-            Log::info('External response: ' . $httpBody);
 
             $response = json_decode($httpBody);
 
@@ -192,7 +194,7 @@ class LuckyDrawNumberNotifier
             }
 
             // Update the user object based on the return value of external system
-            DB::connection()->getPdo()->beginTransaction();
+            DB::beginTransaction();
 
             // Make sure it popup on user mobile phone
             $_POST['popup'] = 'yes';
@@ -218,9 +220,10 @@ class LuckyDrawNumberNotifier
             // Everything seems fine lets delete the job
             $job->delete();
 
-            DB::connection()->getPdo()->commit();
+            DB::commit();
 
             Log::info($message);
+
             return [
                 'status' => 'ok',
                 'message' => $message
@@ -229,27 +232,22 @@ class LuckyDrawNumberNotifier
             $message = sprintf('[Job ID: `%s`] Notify lucky-draw-number User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
-                DB::connection()->getPdo()->rollBack();
-            }
-
-            // Release the job back and give some delay
-            $job->release((int)$notifyData['release_time']);
-
             Log::error($message);
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Notify lucky-draw-number User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
-                DB::connection()->getPdo()->rollBack();
-            }
-
-            // Release the job back and give some delay
-            $job->release((int)$notifyData['release_time']);
-
             Log::error($message);
         }
+
+        // There was an error, delete the receipts so it can be re-entered again
+        LuckyDrawReceipt::excludeDeleted()
+                        ->where('user_id', $user->user_id)
+                        ->where('receipt_group', $hash)
+                        ->delete();
+
+        $job->delete();
+        Log::error(sprintf('LuckyDraw Integration Error PostData: %s', serialize($postData)));
 
         return [
             'status' => 'fail',

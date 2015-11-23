@@ -78,6 +78,7 @@ return array(
     'CreateInboxesTable' => $baseDir . '/app/database/migrations/2015_04_13_151949_create_inboxes_table.php',
     'CreateInitialTables' => $baseDir . '/app/database/migrations/2015_04_10_133107_create_initial_tables.php',
     'CreateOrbitSessionsTable' => $baseDir . '/app/database/migrations/2015_05_05_150244_create_orbit_sessions_table.php',
+    'CreateStoredProcedureIssueLuckyDrawNumberv3' => $baseDir . '/app/database/migrations/2015_10_11_135714_create_stored_procedure_issue_lucky_draw_numberv3.php',
     'CreateTableCategoryMerchant' => $baseDir . '/app/database/migrations/2015_04_11_072738_create_table_category_merchant.php',
     'CreateTableCategoryTranslations' => $baseDir . '/app/database/migrations/2015_08_13_065418_create_table_category_translations.php',
     'CreateTableCouponTranslations' => $baseDir . '/app/database/migrations/2015_09_08_083523_create_table_coupon_translations.php',
