@@ -289,6 +289,7 @@ return array(
             'tenant_unit'          => 'Unit is required',
             'membership_status'    => 'The membership status you specified is not found.',
             'membership_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, membership_name, description, status',
+            'mall_have_membership_card'   => 'Mall membership card not exists.',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

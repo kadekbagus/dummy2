@@ -6,7 +6,7 @@
 /**
  * Create new membership
  */
-Route::post('/api/v1/membership/new', function()
+Route::post('/api/v1/membership-card/new', function()
 {
     return MembershipAPIController::create()->postNewMembership();
 });
@@ -14,7 +14,7 @@ Route::post('/api/v1/membership/new', function()
 /**
  * Delete membership
  */
-Route::post('/api/v1/membership/delete', function()
+Route::post('/api/v1/membership-card/delete', function()
 {
     return MembershipAPIController::create()->postDeleteMembership();
 });
@@ -22,7 +22,7 @@ Route::post('/api/v1/membership/delete', function()
 /**
  * Update membership
  */
-Route::post('/api/v1/membership/update', function()
+Route::post('/api/v1/membership-card/update', function()
 {
     return MembershipAPIController::create()->postUpdateMembership();
 });
@@ -30,7 +30,7 @@ Route::post('/api/v1/membership/update', function()
 /**
  * List/Search membership
  */
-Route::get('/api/v1/membership/{search}', function()
+Route::get('/api/v1/membership-card/{search}', function()
 {
     return MembershipAPIController::create()->getSearchMembership();
 })->where('search', '(list|search)');
@@ -38,7 +38,7 @@ Route::get('/api/v1/membership/{search}', function()
 /**
  * Upload membership image
  */
-Route::post('/api/v1/membership-image/upload', function()
+Route::post('/api/v1/membership-card-image/upload', function()
 {
     return UploadAPIController::create()->postUploadMembershipImage();
 });
@@ -46,7 +46,7 @@ Route::post('/api/v1/membership-image/upload', function()
 /**
  * Delete membership image
  */
-Route::post('/api/v1/membership-image/delete', function()
+Route::post('/api/v1/membership-card-image/delete', function()
 {
     return UploadAPIController::create()->postDeleteMembershipImage();
 });

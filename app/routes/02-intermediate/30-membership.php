@@ -6,30 +6,30 @@
 /**
  * Create new membership
  */
-Route::post('/app/v1/membership/new', 'IntermediateAuthController@Membership_postNewMembership');
+Route::post('/app/v1/membership-card/new', 'IntermediateAuthController@Membership_postNewMembership');
 
 /**
  * Delete membership
  */
-Route::post('/app/v1/membership/delete', 'IntermediateAuthController@Membership_postDeleteMembership');
+Route::post('/app/v1/membership-card/delete', 'IntermediateAuthController@Membership_postDeleteMembership');
 
 /**
  * Update membership
  */
-Route::post('/app/v1/membership/update', 'IntermediateAuthController@Membership_postUpdateMembership');
+Route::post('/app/v1/membership-card/update', 'IntermediateAuthController@Membership_postUpdateMembership');
 
 /**
  * List and/or Search membership
  */
-Route::get('/app/v1/membership/{search}', 'IntermediateAuthController@Membership_getSearchMembership')
+Route::get('/app/v1/membership-card/{search}', 'IntermediateAuthController@Membership_getSearchMembership')
      ->where('search', '(list|search)');
 
 /**
  * Upload membership image
  */
-Route::post('/app/v1/membership-image/upload', 'IntermediateAuthController@Upload_postUploadMembershipImage');
+Route::post('/app/v1/membership-card-image/upload', 'IntermediateAuthController@Upload_postUploadMembershipImage');
 
 /**
  * Delete membership image
  */
-Route::post('/app/v1/membership-image/delete', 'IntermediateAuthController@Upload_postDeleteMembershipImage');
+Route::post('/app/v1/membership-card-image/delete', 'IntermediateAuthController@Upload_postDeleteMembershipImage');
