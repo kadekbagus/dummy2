@@ -140,7 +140,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         $format = "[%s] %s; checkout; Email %s do network checkout; %s";
         $httpCode = 200;
         $message = '';
-        $user = 'guest';
+        $customer = 'guest';
         $email = 'unknown';
 
         try {
@@ -217,7 +217,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             // if User not recognized ($_customer null) log it as 'guest'
             $message = sprintf($format, $now, $captiveIP, $email, 'OK');
             $this->response->message = $message;
-            $activity->setUser($_customer)
+            $activity->setUser($customer)
                      ->setActivityName('network_checkout_ok')
                      ->setActivityNameLong('Network Check Out')
                      ->setModuleName('Network')
