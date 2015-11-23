@@ -14,6 +14,16 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class LuckyDrawAPIController extends ControllerAPI
 {
     /**
+     * Maximum number of the lucky draw
+     */
+    const MAX_NUMBER = 99999999;
+
+    /**
+     * Maximum number of the lucky draw
+     */
+    const MIN_NUMBER = 1;
+
+    /**
      * POST - Create New Lucky Draw
      *
      * List of API Parameters
@@ -112,12 +122,12 @@ class LuckyDrawAPIController extends ControllerAPI
                     'lucky_draw_name'          => 'required|max:255|orbit.exists.lucky_draw_name:' . $mall_id,
                     'description'              => 'required',
                     'start_date'               => 'required|date_format:Y-m-d H:i:s',
-                    'end_date'                 => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'                 => 'required|date_format:Y-m-d H:i:s|after:' . $start_date,
                     'minimum_amount'           => 'required|numeric',
-                    'min_number'               => 'required|numeric',
-                    'max_number'               => 'required|numeric',
+                    'min_number'               => 'required|numeric|min:' . static::MIN_NUMBER,
+                    'max_number'               => 'required|numeric|max:' . static::MAX_NUMBER,
                     'external_lucky_draw_id'   => 'required',
-                    'grace_period_date'        => 'date_format:Y-m-d H:i:s',
+                    'grace_period_date'        => 'date_format:Y-m-d H:i:s|after:' . $end_date,
                     'status'                   => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active:' . $mall_id,
                 )
             );

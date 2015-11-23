@@ -278,7 +278,9 @@ return array(
         ),
         'exceed'    => array(
             'lucky_draw' => array(
-                'max_issuance' => 'Number of lucky draw generated can not be more than :max_number.'
+                'max_issuance'  => 'Number of lucky draw generated can not be more than :max_number.',
+                'max_number'    => 'The maximum number of lucky draw can not be more than :max.',
+                'min_number'    => 'The minimum number of lucky draw can not be less than :min.'
             )
         ),
         'save_error'    => array(
