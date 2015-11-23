@@ -1985,12 +1985,11 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-
             if (! empty($promo_id)) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $tenant->merchant_id . ', promotion ID: '. $promo_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant Promotion Detail')
+                    ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -2002,7 +2001,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from News, tenant ID: ' . $tenant->merchant_id . ', news ID: '. $news_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant News Detail')
+                    ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
