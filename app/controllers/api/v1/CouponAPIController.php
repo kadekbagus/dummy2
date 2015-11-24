@@ -31,7 +31,7 @@ class CouponAPIController extends ControllerAPI
      * @param datetime   `begin_date`                        (optional) - Begin date. Example: 2014-12-30 00:00:00
      * @param datetime   `end_date`                          (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string     `is_permanent`                      (optional) - Is permanent. Valid value: Y, N.
-     * @param string     `is_reedemed_at_cs`                 (optional) - Is permanent. Valid value: Y, N.
+     * @param string     `is_redeemed_at_cs`                 (optional) - Is permanent. Valid value: Y, N.
      * @param file       `image`                             (optional) - Coupon image
      * @param string     `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
      * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
@@ -111,7 +111,7 @@ class CouponAPIController extends ControllerAPI
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
-            $is_reedemed_at_cs = OrbitInput::post('is_reedemed_at_cs');
+            $is_redeemed_at_cs = OrbitInput::post('is_redeemed_at_cs');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
@@ -229,7 +229,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->begin_date = $begin_date;
             $newcoupon->end_date = $end_date;
             $newcoupon->is_permanent = $is_permanent;
-            $newcoupon->is_reedemed_at_cs = $is_reedemed_at_cs;
+            $newcoupon->is_redeemed_at_cs = $is_redeemed_at_cs;
             $newcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
             $newcoupon->maximum_issued_coupon = $maximum_issued_coupon;
             $newcoupon->coupon_validity_in_days = $coupon_validity_in_days;
@@ -475,7 +475,7 @@ class CouponAPIController extends ControllerAPI
      * @param datetime   `begin_date`                        (optional) - Begin date. Example: 2014-12-30 00:00:00
      * @param datetime   `end_date`                          (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string     `is_permanent`                      (optional) - Is permanent. Valid value: Y, N.
-     * @param string     `is_reedemed_at_cs`                 (optional) - Is permanent. Valid value: Y, N.
+     * @param string     `is_redeemed_at_cs`                 (optional) - Is permanent. Valid value: Y, N.
      * @param file       `images`                            (optional) - Coupon image
      * @param integer    `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
      * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
@@ -570,7 +570,7 @@ class CouponAPIController extends ControllerAPI
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
-            $is_reedemed_at_cs = OrbitInput::post('is_reedemed_at_cs');
+            $is_redeemed_at_cs = OrbitInput::post('is_redeemed_at_cs');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
@@ -676,8 +676,8 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_permanent = $is_permanent;
             });
 
-            OrbitInput::post('is_reedemed_at_cs', function($is_reedemed_at_cs) use ($updatedcoupon) {
-                $updatedcoupon->is_reedemed_at_cs = $is_reedemed_at_cs;
+            OrbitInput::post('is_redeemed_at_cs', function($is_redeemed_at_cs) use ($updatedcoupon) {
+                $updatedcoupon->is_redeemed_at_cs = $is_redeemed_at_cs;
             });
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
