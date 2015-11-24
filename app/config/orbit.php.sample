@@ -56,6 +56,9 @@ return array(
     'lucky_draw' => array(
         // Maximum LD number per issuance
         'max_per_issuance' => 1000,
+
+        // batch number to issue lucky draw number on demand.
+        'batch'  => 5
     ),
 
     // Default Pagination
