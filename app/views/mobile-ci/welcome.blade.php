@@ -128,6 +128,7 @@
         // 'Set-X-Orbit-Session: SESSION_ID
         // To do: replace this hardcode session name
         var session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
+        var prefix = '?';
         console.log('Session ID: ' + session_id);
 
         // We will pass this session id to the application inside real browser
@@ -136,6 +137,11 @@
         var create_session_url = '{{ URL::Route("captive-portal") }}';
         console.log('Create session URL: ' + create_session_url);
 
+        // Check for the '?' mark
+        if (create_session_url.indexOf('?') > 0) {
+            // There is already query string
+            prefix = '&';
+        }
         window.location = create_session_url + '?loadsession=' + session_id;
 
         return;
