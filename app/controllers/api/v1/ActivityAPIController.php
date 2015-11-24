@@ -2982,7 +2982,7 @@ class ActivityAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::get('merchant_id');
+            $merchant_id = OrbitInput::get('current_mall');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
