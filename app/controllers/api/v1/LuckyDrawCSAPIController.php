@@ -1040,6 +1040,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
      * POST - Issue Coupon Number (the manual way)
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto Pratama <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1128,6 +1129,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             Event::fire('orbit.issuecoupon.postnewissuecoupon.before.save', array($this, $widget));
 
             // Issue coupons
+            $objectCoupons = [];
             $issuedCoupons = [];
             $numberOfCouponIssued = 0;
             $applicableCouponNames = [];
@@ -1163,6 +1165,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 $obj->coupon_name = $coupon->promotion_name;
                 $obj->promotion_id = $coupon->promotion_id;
 
+                $objectCoupons[] = $coupon;
                 $issuedCoupons[] = $obj;
                 $applicableCouponNames[] = $coupon->promotion_name;
                 $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
@@ -1191,13 +1194,29 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Successfull Creation
             $activity->setUser($customer)
-                    ->setActivityName('issue_coupon_number')
-                    ->setActivityNameLong('Issue Coupon Number')
-                    ->setObject(NULL)
-                    ->setStaff($user)
-                    ->responseOK();
+                     ->setActivityName('issue_coupon_number')
+                     ->setActivityNameLong('Issue Coupon Number')
+                     ->setObject(NULL)
+                     ->setStaff($user)
+                     ->responseOK();
 
             Event::fire('orbit.issuecoupon.postnewissuecoupon.after.commit', array($this, $widget));
+
+            foreach ($objectCoupons as $object) {
+                $activityCouponIssued = Activity::mobileci()
+                                                ->setActivityType('view');
+                $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+                $activityCouponIssued->setUser($customer)
+                                     ->setActivityName('view_coupon_list')
+                                     ->setActivityNameLong('Coupon Issuance')
+                                     ->setObject($object)
+                                     ->setCoupon($object)
+                                     ->setModuleName('Coupon')
+                                     ->setNotes($activityPageNotes)
+                                     ->responseOK()
+                                     ->save();
+            }
+
         } catch (ACLForbiddenException $e) {
             // Rollback the changes
             $this->rollBack();
