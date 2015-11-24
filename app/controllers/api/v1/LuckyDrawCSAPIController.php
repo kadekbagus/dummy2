@@ -545,7 +545,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // set batch, ToDo: move this value to config
+            // set batch
             $batch = Config::get('orbit.lucky_draw.batch');
 
             // determine the starting number
@@ -570,7 +570,6 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     // insert difference as new numbers
                     $batch = ($activeluckydraw->max_number - $activeluckydraw->min_number) - $_generated_to + 1;
                     $_numberOfLuckyDraw = $_free_numbers;
-                    // dd($batch);
                 }
                 for ($i = 0; $i < $batch; $i++) {
                     $lucky_draw_number = new LuckyDrawNumber;
@@ -587,21 +586,13 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 $_generated_to = $_generated_to + $batch;
             }
 
-            // $update_ld = DB::table('lucky_draws')
-            //     ->where('status', 'active')
-            //     ->where('start_date', '<=', Carbon::now())
-            //     ->where('end_date', '>=', Carbon::now())
-            //     ->where('lucky_draw_id', $luckyDrawId)
-            //     ->update(array(
-            //         'free_numbers' => ($_free_numbers),
-            //         'generated_to' => ($_generated_to)
-            //     ));
+            // update free_numbers and generated_to
+            $updated_luckydraw = LuckyDraw::where('lucky_draw_id', $luckyDrawId)->first();
+            $updated_luckydraw->free_numbers = $_free_numbers;
+            $updated_luckydraw->generated_to = $_generated_to;
+            $updated_luckydraw->save();
 
-            $update_ld = LuckyDraw::where('lucky_draw_id', $luckyDrawId)->first();
-            $update_ld->free_numbers = $_free_numbers;
-            $update_ld->generated_to = $_generated_to;
-            $update_ld->save();
-
+            // get the blank lucky draw numbers
             $issued_lucky_draw_numbers = DB::table('lucky_draw_numbers')
                 ->where('lucky_draw_id', $luckyDrawId)
                 ->whereNull('user_id')
@@ -613,7 +604,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // hash for receipt group
             $hash = LuckyDrawReceipt::genReceiptGroup($mallId);
 
-            // assign the user_id
+            // assign the user_id to the blank lucky draw numbers
             $assigned_lucky_draw_number = DB::table('lucky_draw_numbers')
                 ->whereIn('lucky_draw_number_id', $issued_lucky_draw_numbers)
                 ->update(array(
@@ -624,7 +615,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'hash'          => $hash
                 ));
 
-            // update free numbers
+            // update free_numbers
             DB::table('lucky_draws')
                 ->where('status', 'active')
                 ->where('start_date', '<=', Carbon::now())
