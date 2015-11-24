@@ -851,51 +851,6 @@ class MobileCIAPIController extends ControllerAPI
         }
     }
 
-
-    /**
-     * POST - Coupon pop up display activity
-     *
-     * @param integer    `eventdata`        (optional) - The event ID
-     *
-     * @return void
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     */
-    public function postDisplayCouponPopUpActivity()
-    {
-        $activity = Activity::mobileci()
-                            ->setActivityType('view');
-        $user = null;
-
-        try {
-            $user = $this->getLoggedInUser();
-            $retailer = $this->getRetailerInfo();
-
-            $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
-            $activity->setUser($user)
-                ->setActivityName('view_coupon_list')
-                ->setActivityNameLong('Coupon Issuance')
-                ->setObject(null)
-                ->setModuleName('Coupon')
-                ->setNotes($activityPageNotes)
-                ->responseOK()
-                ->save();
-        } catch (Exception $e) {
-            $this->rollback();
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
-            $activity->setUser($user)
-                ->setActivityName('view_coupon_list')
-                ->setActivityNameLong('Coupon Issuance Failed')
-                ->setObject(null)
-                ->setModuleName('Coupon')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
-
-            return $this->redirectIfNotLoggedIn($e);
-        }
-    }
-
     /**
      * POST - Widget click activity
      *
@@ -3719,6 +3674,7 @@ class MobileCIAPIController extends ControllerAPI
             // use them to issue
             if(count($couponIds)) {
                 // Issue coupons
+                $objectCoupons = [];
                 $issuedCoupons = [];
                 $numberOfCouponIssued = 0;
                 $applicableCouponNames = [];
@@ -3742,6 +3698,7 @@ class MobileCIAPIController extends ControllerAPI
                     $obj->coupon_name = $coupon->promotion_name;
                     $obj->promotion_id = $coupon->promotion_id;
 
+                    $objectCoupons[] = $coupon;
                     $issuedCoupons[] = $obj;
                     $applicableCouponNames[] = $coupon->promotion_name;
                     $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
@@ -3772,6 +3729,21 @@ class MobileCIAPIController extends ControllerAPI
                 $inbox->status = 'active';
                 $inbox->is_read = 'N';
                 $inbox->save();
+
+                foreach ($objectCoupons as $object) {
+                    $activity = Activity::mobileci()
+                                        ->setActivityType('view');
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+                    $activity->setUser($user)
+                            ->setActivityName('view_coupon_list')
+                            ->setActivityNameLong('Coupon Issuance')
+                            ->setObject($object)
+                            ->setCoupon($object)
+                            ->setModuleName('Coupon')
+                            ->setNotes($activityPageNotes)
+                            ->responseOK()
+                            ->save();
+                }
 
                 $retailer = Mall::where('merchant_id', $retailerId)->first();
                 $data = [
