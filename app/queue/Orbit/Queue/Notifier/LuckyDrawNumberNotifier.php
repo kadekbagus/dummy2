@@ -10,6 +10,7 @@ use Config;
 use Retailer;
 use LuckyDraw;
 use LuckyDrawReceipt;
+use Mall;
 use CurlWrapper;
 use CurlWrapperCurlException;
 use Exception;
