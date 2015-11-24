@@ -1267,7 +1267,8 @@ class MobileCIAPIController extends ControllerAPI
      */
     protected function addParamsToUrl($landing_url, $internet_info = 'no')
     {
-        return $landing_url . '?from_login=yes&internet_info=' . $internet_info;
+        $req = \Symfony\Component\HttpFoundation\Request::create($landing_url, 'GET', ['from_login' => 'yes', 'internet_info' => $internet_info]);
+        return $req->getUri();
     }
 
     /**

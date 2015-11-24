@@ -3439,14 +3439,6 @@ class UploadAPIController extends ControllerAPI
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
 
-            // Update the `image` field which store the original path of the image
-            // This is temporary since right know the business rules actually
-            // only allows one image per product
-            if (isset($uploaded[0])) {
-                $merchant->logo = $uploaded[0]['path'];
-                $merchant->save();
-            }
-
             Event::fire('orbit.upload.postuploadtenantlogo.after.save', array($this, $merchant, $uploader));
 
             $this->response->data = $mediaList;
