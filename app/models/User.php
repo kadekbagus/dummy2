@@ -192,4 +192,22 @@ class User extends Eloquent implements UserInterface
             }
         }
     }
+
+    /**
+     * Get user membership numbers
+     */
+    public function getMembershipNumbers($membershipCard = null)
+    {
+        $membershipNumbers = MembershipNumber::excludeDeleted('membership_numbers')
+                                             ->active('membership_numbers')
+                                             ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
+                                             ->where('membership_numbers.user_id', $this->user_id);
+
+        if (! empty($membershipCard)) {
+            $membershipNumbers->where('memberships.membership_id', $membershipCard->membership_id);
+        }
+
+        return $membershipNumbers->get();
+    }
+
 }

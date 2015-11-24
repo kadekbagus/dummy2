@@ -2515,7 +2515,7 @@ class UserAPIController extends ControllerAPI
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'join_date'             => 'date_format:Y-m-d',
-                    'membership_number'     => 'membership_number_exists_but_me:' . $mallId . ',' . $userId,
+                    'membership_number'     => 'membership_number_exists_but_me',
                     'status'                => 'in:active,inactive,pending',
                     'idcard'                => '',
                     'mobile_phone'          => '',
@@ -2545,9 +2545,9 @@ class UserAPIController extends ControllerAPI
 
             // if param membership_number is not being sent, then will not enter validation and the class will not exists
             try {
-                $membershipNumber = App::make('membership_number_exists_but_me');
+                $membershipNumbers = App::make('membership_number_exists_but_me');
             } catch (Exception $e) {
-                $membershipNumber = null;
+                $membershipNumbers = null;
             }
 
             OrbitInput::post('email', function($email) use ($updateduser) {
@@ -2637,33 +2637,35 @@ class UserAPIController extends ControllerAPI
             /**
              * create/update membership number
              */
-            if (empty($membershipNumber)) {
+            $membershipCard = App::make('orbit.empty.mall_have_membership_card');
+
+            if ($membershipNumbers->first()) {
+                // update
+                $m = $membershipNumbers->first();
+
+                OrbitInput::post('membership_number', function ($arg) use ($m) {
+                    $m->membership_number = $arg;
+                });
+
+                OrbitInput::post('join_date', function ($arg) use ($m) {
+                    $m->join_date = $arg . ' 00:00:00';
+                });
+
+                $m->modified_by = $user->user_id;
+                $m->save();
+            } else {
                 // create
                 // create if only param membership_number is being sent
                 if (trim($membershipNumberCode) !== '') {
-                    $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-
-                    $membershipNumber = new MembershipNumber();
-                    $membershipNumber->membership_id = $membershipCard->membership_id;
-                    $membershipNumber->user_id = $updateduser->user_id;
-                    $membershipNumber->membership_number = $membershipNumberCode;
-                    $membershipNumber->join_date = $join_date . ' 00:00:00';
-                    $membershipNumber->status = 'active';
-                    $membershipNumber->created_by = $user->user_id;
-                    $membershipNumber->save();
+                    $m = new MembershipNumber();
+                    $m->membership_id = $membershipCard->membership_id;
+                    $m->user_id = $updateduser->user_id;
+                    $m->membership_number = $membershipNumberCode;
+                    $m->join_date = $join_date . ' 00:00:00';
+                    $m->status = 'active';
+                    $m->created_by = $user->user_id;
+                    $m->save();
                 }
-            } else {
-                // update
-                OrbitInput::post('membership_number', function ($arg) use ($membershipNumber) {
-                    $membershipNumber->membership_number = $arg;
-                });
-
-                OrbitInput::post('join_date', function ($arg) use ($membershipNumber) {
-                    $membershipNumber->join_date = $arg . ' 00:00:00';
-                });
-
-                $membershipNumber->modified_by = $user->user_id;
-                $membershipNumber->save();
             }
 
             Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
@@ -2671,7 +2673,8 @@ class UserAPIController extends ControllerAPI
             $updateduser->save();
             $userdetail->save();
 
-            $updateduser->membership_number = $membershipNumber;
+            $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
+            $updateduser->membership_numbers = $membershipNumbers;
 
             // save user categories
             OrbitInput::post('no_category', function($no_category) use ($updateduser) {
@@ -3263,34 +3266,32 @@ class UserAPIController extends ControllerAPI
         Validator::extend('membership_number_exists_but_me', function ($attribute, $value, $parameters) {
             $check = Config::get('orbit.shop.membership_number_unique_check');
 
-            $mallId = $parameters[0];
-            $userId = $parameters[1];
+            $mall = App::make('orbit.empty.mall');
+
+            $user = App::make('orbit.empty.user');
 
             // currently, mall have one membership card
             $membershipCard = App::make('orbit.empty.mall_have_membership_card');
 
             // currently, user have one membership number based on the mall membership card
-            // These codes are here because its need $membershipCard, which $membershipCard need to be validated first in validator
-            $membershipNumber = MembershipNumber::excludeDeleted('membership_numbers')
-                                                ->active('membership_numbers')
-                                                ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
-                                                ->where('memberships.membership_id', $membershipCard->membership_id)
-                                                ->where('membership_numbers.user_id', $userId)
-                                                ->first();
+            $membershipNumbers = $user->getMembershipNumbers($membershipCard);
 
-            App::instance('membership_number_exists_but_me', $membershipNumber);
+            App::instance('membership_number_exists_but_me', $membershipNumbers);
 
             if ($check) {
                 $user = User::excludeDeleted('users')
                             ->Consumers()
                             ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
                             ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
-                            ->where('memberships.merchant_id', $mallId)
-                            ->where('membership_numbers.membership_number', $value)
-                            ->where('membership_numbers.membership_number_id', '!=', $membershipNumber->membership_number_id)
-                            ->first();
+                            ->where('memberships.merchant_id', $mall->merchant_id)
+                            ->where('membership_numbers.membership_number', $value);
 
-                if (! empty($user)) {
+                // if user have membership number then exclude the number
+                if ($membershipNumbers->first()) {
+                    $user->where('membership_numbers.membership_number_id', '!=', $membershipNumbers->first()->membership_number_id);
+                }
+
+                if ($user->first()) {
                     $errorMessage = 'Membership number already exists.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
