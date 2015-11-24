@@ -263,6 +263,7 @@
         // 'Set-X-Orbit-Session: SESSION_ID
         // To do: replace this hardcode session name
         var session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
+        var prefix = '?';
         console.log('Session ID: ' + session_id);
 
         // We will pass this session id to the application inside real browser
@@ -273,7 +274,13 @@
 
         var fname = $('.userName')[0].innerHTML;
         var email = $('#email').val();
-        window.location = create_session_url + '?loadsession=' + session_id + '&fname=' + fname + '&email=' + email;
+
+        // Check for the '?' mark
+        if (create_session_url.indexOf('?') > 0) {
+            // There is already query string
+            prefix = '&';
+        }
+        window.location = create_session_url + prefix + 'loadsession=' + session_id + '&fname=' + fname + '&email=' + email;
 
         return;
     }
