@@ -98,3 +98,11 @@ Route::get('/api/v1/activity/customer-connected-hourly', function()
 {
     return ActivityAPIController::create()->getCustomerConnectedHourly();
 });
+
+/**
+ * Get CRM summary report
+ */
+Route::get('/api/v1/activity/crm-summary-report', function()
+{
+    return ActivityAPIController::create()->getCRMSummaryReport();
+});

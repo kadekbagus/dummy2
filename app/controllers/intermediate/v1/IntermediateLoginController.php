@@ -506,7 +506,7 @@ class IntermediateLoginController extends IntermediateBaseController
             // Successfull logout
             $activity->setUser($user)
                      ->setActivityName('logout_ok')
-                     ->setActivityNameLong('Sign out')
+                     ->setActivityNameLong('Sign Out')
                      ->setModuleName('Application')
                      ->responseOK();
         } catch (Exception $e) {
@@ -521,7 +521,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
             $activity->setUser('guest')
                      ->setActivityName('logout_failed')
-                     ->setActivityNameLong('Sign out Failed')
+                     ->setActivityNameLong('Sign Out Failed')
                      ->setNotes($e->getMessage())
                      ->setModuleName('Application')
                      ->responseFailed();

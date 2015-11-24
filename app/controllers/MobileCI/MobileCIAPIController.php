@@ -851,51 +851,6 @@ class MobileCIAPIController extends ControllerAPI
         }
     }
 
-
-    /**
-     * POST - Coupon pop up display activity
-     *
-     * @param integer    `eventdata`        (optional) - The event ID
-     *
-     * @return void
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     */
-    public function postDisplayCouponPopUpActivity()
-    {
-        $activity = Activity::mobileci()
-                            ->setActivityType('view');
-        $user = null;
-
-        try {
-            $user = $this->getLoggedInUser();
-            $retailer = $this->getRetailerInfo();
-
-            $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
-            $activity->setUser($user)
-                ->setActivityName('view_coupon_list')
-                ->setActivityNameLong('View Coupon List (Pop Up)')
-                ->setObject(null)
-                ->setModuleName('Coupon')
-                ->setNotes($activityPageNotes)
-                ->responseOK()
-                ->save();
-        } catch (Exception $e) {
-            $this->rollback();
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
-            $activity->setUser($user)
-                ->setActivityName('view_coupon_list')
-                ->setActivityNameLong('View Coupon List Failed (Pop Up')
-                ->setObject(null)
-                ->setModuleName('Coupon')
-                ->setNotes($activityPageNotes)
-                ->responseFailed()
-                ->save();
-
-            return $this->redirectIfNotLoggedIn($e);
-        }
-    }
-
     /**
      * POST - Widget click activity
      *
@@ -1312,7 +1267,8 @@ class MobileCIAPIController extends ControllerAPI
      */
     protected function addParamsToUrl($landing_url, $internet_info = 'no')
     {
-        return $landing_url . '?from_login=yes&internet_info=' . $internet_info;
+        $req = \Symfony\Component\HttpFoundation\Request::create($landing_url, 'GET', ['from_login' => 'yes', 'internet_info' => $internet_info]);
+        return $req->getUri();
     }
 
     /**
@@ -1985,12 +1941,11 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-
             if (! empty($promo_id)) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from Promotion, tenant ID: ' . $tenant->merchant_id . ', promotion ID: '. $promo_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant Promotion Detail')
+                    ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -2002,7 +1957,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Tenant Detail Page from News, tenant ID: ' . $tenant->merchant_id . ', news ID: '. $news_id);
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Tenant News Detail')
+                    ->setActivityNameLong('View Tenant Detail')
                     ->setObject($tenant)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -3720,6 +3675,7 @@ class MobileCIAPIController extends ControllerAPI
             // use them to issue
             if(count($couponIds)) {
                 // Issue coupons
+                $objectCoupons = [];
                 $issuedCoupons = [];
                 $numberOfCouponIssued = 0;
                 $applicableCouponNames = [];
@@ -3743,6 +3699,7 @@ class MobileCIAPIController extends ControllerAPI
                     $obj->coupon_name = $coupon->promotion_name;
                     $obj->promotion_id = $coupon->promotion_id;
 
+                    $objectCoupons[] = $coupon;
                     $issuedCoupons[] = $obj;
                     $applicableCouponNames[] = $coupon->promotion_name;
                     $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
@@ -3773,6 +3730,21 @@ class MobileCIAPIController extends ControllerAPI
                 $inbox->status = 'active';
                 $inbox->is_read = 'N';
                 $inbox->save();
+
+                foreach ($objectCoupons as $object) {
+                    $activity = Activity::mobileci()
+                                        ->setActivityType('view');
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+                    $activity->setUser($user)
+                            ->setActivityName('view_coupon_list')
+                            ->setActivityNameLong('Coupon Issuance')
+                            ->setObject($object)
+                            ->setCoupon($object)
+                            ->setModuleName('Coupon')
+                            ->setNotes($activityPageNotes)
+                            ->responseOK()
+                            ->save();
+                }
 
                 $retailer = Mall::where('merchant_id', $retailerId)->first();
                 $data = [
@@ -3880,6 +3852,7 @@ class MobileCIAPIController extends ControllerAPI
             }
             $email = OrbitInput::get('email');
             $from = OrbitInput::get('from');
+
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
@@ -3904,9 +3877,21 @@ class MobileCIAPIController extends ControllerAPI
                 $user = $response->data;
             }
 
+            $payload = OrbitInput::get('payload');
+            if (! empty($payload)) {
+                // Decrypt the payload
+                $key = md5('--orbit-mall--');
+                $payload = (new Encrypter($key))->decrypt($payload);
+
+                // The data is in url encoded
+                parse_str($payload, $data);
+
+                $from = isset($data['login_from']) ? $data['login_from'] : '';
+            }
+
             // @author Irianto Pratama <irianto@dominopos.com>
             // send email if user status pending
-            if ($user->status === 'pending') {
+            if ($user->status === 'pending' && $from !== 'facebook') {
 
                 $mall_time = Carbon::now($retailer->timezone->timezone_name);
                 $pending_date = $mall_time;
