@@ -413,6 +413,11 @@ return array(
             'delete_mallgroup'          => 'delete mall group',
             'view_mallgroup'            => 'view mall group',
         ),
+        'exceed' => array(
+            'lucky_draw' => array(
+                'max_issuance' => 'This lucky draw has reached its maximum number (:max_number).',
+            ),
+        ),
     ),
 
     /*
