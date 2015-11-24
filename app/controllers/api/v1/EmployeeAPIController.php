@@ -392,7 +392,8 @@ class EmployeeAPIController extends ControllerAPI
                     'status'                  => 'in:active,inactive'
                 ),
                 array(
-                    'orbit.empty.employee.role' => $errorMessage['orbit.empty.employee.role'],
+                    'orbit.empty.employee.role'        => $errorMessage['orbit.empty.employee.role'],
+                    'orbit.exist.verification.numbers' => 'Verifications number exist',
                 )
             );
 
@@ -956,8 +957,9 @@ class EmployeeAPIController extends ControllerAPI
                     'status'                  => 'orbit.empty.user_status',
                 ),
                 array(
-                    'orbit.empty.employee.role'         => $errorMessage['orbit.empty.employee.role'],
-                    'orbit.exists.employeeid_but_me'    => $errorMessage['orbit.exists.employeeid_but_me']
+                    'orbit.empty.employee.role'               => $errorMessage['orbit.empty.employee.role'],
+                    'orbit.exists.employeeid_but_me'          => $errorMessage['orbit.exists.employeeid_but_me'],
+                    'orbit.exist.verification.numbers_but_me' => 'Verifications number exist',
                 )
             );
 
@@ -2574,7 +2576,7 @@ class EmployeeAPIController extends ControllerAPI
             $verificationNumber = UserVerificationNumber::
                         where('verification_number', $value)
                         ->where('merchant_id', $merchant_id)
-                        ->whereNotIn('user_id', array($user_id))
+                        ->where('user_id', '!=', $user_id)
                         ->first();
 
             if (!empty($verificationNumber)) {
