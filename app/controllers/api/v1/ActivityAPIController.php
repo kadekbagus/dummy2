@@ -3052,9 +3052,10 @@ class ActivityAPIController extends ControllerAPI
                 ") );
 
             $responses = [];
+            $records = [];
 
             // get column name from config
-            $responses['columns'] = Config::get('orbit.activity_columns');
+            $records['columns'] = Config::get('orbit.activity_columns');
 
             foreach ( $dateRange as $key => $value ) {
 
@@ -3071,7 +3072,7 @@ class ActivityAPIController extends ControllerAPI
             }
 
             // if there is date that have no data, display as empty array
-            if ($days != count($responses)-1) {
+            if ($days != count($responses)) {
                 $dateRange2 = $dateRange;
 
                 foreach ($responses as $a => $b){
@@ -3089,8 +3090,9 @@ class ActivityAPIController extends ControllerAPI
                 }
             }
 
+            $records['records'] = $responses;
 
-            $this->response->data = $responses;
+            $this->response->data = $records;
 
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.dashboard.getcrmsummaryreport.access.forbidden', array($this, $e));
