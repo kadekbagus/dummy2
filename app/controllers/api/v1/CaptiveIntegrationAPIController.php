@@ -140,7 +140,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
         $format = "[%s] %s; checkout; Email %s do network checkout; %s";
         $httpCode = 200;
         $message = '';
-        $user = 'guest';
+        $customer = 'guest';
         $email = 'unknown';
 
         try {
@@ -196,27 +196,28 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                                   ->orderBy('created_at', 'desc')
                                   ->first();
 
-            if ($macModel === null) {
-                throw new Exception ("Mac address not found", 1);
+            if ($macModel !== null) {
+                // find consumer with MAC
+
+                $_customer = User::Consumers()
+                    ->excludeDeleted()
+                    ->where('user_email', $macModel->user_email)
+                    ->first();
+
+                if (! empty($_customer)) {
+                    // user is a consumer user. log out if still logged in.
+                    $customer = $_customer;
+                    $email = $customer->user_email;
+
+                    $this->logCustomerOutIfStillLoggedIn($_customer);
+                }
+
             }
 
-            $_customer = User::Consumers()
-                            ->excludeDeleted()
-                            ->where('user_email', $macModel->user_email)
-                            ->first();
-
-            if (! empty($_customer)) {
-                // User not recognized log it as 'guest'
-                $customer = $_customer;
-                $email = $customer->user_email;
-
-                $this->logCustomerOutIfStillLoggedIn($_customer);
-            }
-
-            // Successfull
+            // if User not recognized ($_customer null) log it as 'guest'
             $message = sprintf($format, $now, $captiveIP, $email, 'OK');
             $this->response->message = $message;
-            $activity->setUser($_customer)
+            $activity->setUser($customer)
                      ->setActivityName('network_checkout_ok')
                      ->setActivityNameLong('Network Check Out')
                      ->setModuleName('Network')
@@ -330,20 +331,22 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                                   ->orderBy('created_at', 'desc')
                                   ->first();
 
-            if ($macModel === null) {
-                throw new Exception ("Mac address not found", 1);
+            if ($macModel !== null) {
+                // find customer using this MAC
+
+                $_customer = User::Consumers()
+                    ->excludeDeleted()
+                    ->where('user_email', $macModel->user_email)
+                    ->first();
+
+                if (! empty($_customer)) {
+                    // User is consumer, use found email & user object
+                    $customer = $_customer;
+                    $email = $_customer->user_email;
+                }
+                // else use guest as default user name
             }
 
-            $_customer = User::Consumers()
-                            ->excludeDeleted()
-                            ->where('user_email', $macModel->user_email)
-                            ->first();
-
-            if (! empty($_customer)) {
-                // User not recognized log it as 'guest'
-                $customer = $_customer;
-                $email = $_customer->user_email;
-            }
 
             $this->commit();
 
@@ -560,9 +563,12 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                 ->setActivityType('logout')
                 ->setUser($customer)
                 ->setActivityName('logout_ok')
-                ->setActivityNameLong('Sign out')
+                ->setActivityNameLong('Sign Out')
                 ->setModuleName('Application')
                 ->responseOK();
+            // copy the user-agent across to help with analysis, but not the IP address (no reason to do that for now)
+            $logout_activity->user_agent = $most_recent_login->user_agent;
+            $logout_activity->session_id = $most_recent_login->session_id;
             $logout_activity->save();
             Event::fire('orbit.network.checkout.force_mobileci_checkout', array($this, $logout_activity));
         }

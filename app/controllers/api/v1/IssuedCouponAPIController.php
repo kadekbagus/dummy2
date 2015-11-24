@@ -828,6 +828,8 @@ class IssuedCouponAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
             $issuedcoupons = IssuedCoupon::join('promotions', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
                 ->join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
@@ -837,7 +839,7 @@ class IssuedCouponAPIController extends ControllerAPI
                 ->where('promotions.status', 'active')
                 // ->where('issued_coupons.status', '!=', 'deleted');
                 ->where('issued_coupons.status', '=', 'active')
-                ->where('issued_coupons.expired_date', '>=', Carbon::now());
+                ->where('issued_coupons.expired_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
 
 
             // Filter coupon by merchant Ids

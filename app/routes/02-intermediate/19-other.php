@@ -32,3 +32,11 @@ Route::get('/app/v1/server-time', [
     'uses'  => 'DummyAPIController@getServerTime'
 ]);
 
+
+/**
+ * Get the session info
+ */
+Route::get('/app/v1/session-info', [
+    'as'    => 'session-info',
+    'uses'  => 'IntermediateLoginController@getSessionLoginInfo'
+]);

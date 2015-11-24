@@ -237,7 +237,12 @@ class ActivityAPIController extends ControllerAPI
 
             // Filter by merchant ids
             OrbitInput::get('merchant_ids', function($merchantIds) use ($activities) {
-                $activities->whereIn('activities.location_id', $merchantIds);
+                $activities->where(function($q) use ($merchantIds) {
+                    $q->whereIn('activities.location_id', $merchantIds)
+                      ->orWhere(function($q) {
+                            $q->whereNull('activities.location_id');
+                      });
+                    });
             });
 
             // Filter by retailer ids
@@ -266,11 +271,20 @@ class ActivityAPIController extends ControllerAPI
                     $activities->whereIn('activities.group', $groups);
                 });
             } else {
-                $activities->where(function($q) {
+                $activities->where(function($q) use ($tablePrefix) {
                     $q->whereIn('activities.group', ['mobile-ci', 'pos'])
                       ->orWhere(function($q) {
                             $q->where('activities.activity_name', 'registration_ok')
                               ->where('activities.group', 'cs-portal');
+                      })
+                      ->orWhere(function($q) use ($tablePrefix) {
+                            $q->where('activities.activity_name', 'activation_ok')
+                              ->where('activities.activity_name_long', 'Customer Activation')
+                              ->where('activities.group', 'portal')
+                              ->whereRaw("{$tablePrefix}activities.user_id in (select act.user_id
+                                            from {$tablePrefix}activities as act
+                                            where act.activity_name = 'registration_ok'
+                                                and act.group in ('mobile-ci','cs-portal'))");
                       });
                     });
             }
@@ -2278,7 +2292,7 @@ class ActivityAPIController extends ControllerAPI
             OrbitInput::get('sign_up_method', function ($sign_up_method) use (&$binds, &$sign_up_method_condition) {
                 if ($sign_up_method === 'facebook') {
                     $sign_up_method_condition = ' and (registration.registration = :sign_up_method) ';
-                    $binds['sign_up_method'] = 'Sign up via mobile (Facebook)';
+                    $binds['sign_up_method'] = 'Sign Up via Mobile (Facebook)';
                 } else if ($sign_up_method === 'email') {
                     $sign_up_method_condition = ' and ((registration.registration = :sign_up_method_1) OR (registration.registration = :sign_up_method_2))';
                     $binds['sign_up_method_1'] = 'Sign Up with email address';

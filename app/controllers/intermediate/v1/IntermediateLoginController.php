@@ -11,6 +11,7 @@ use Net\Security\Firewall;
 use Orbit\Helper\Security\Encrypter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitSession\Session as OrbitSession;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
@@ -127,7 +128,7 @@ class IntermediateLoginController extends IntermediateBaseController
      * @return Response
      */
     public function postLoginMallCustomerService()
-    {   
+    {
         // this additional code is for checking url of cs portal to match the cs user on the correct mall
         // for bug fix OM-685 Takashimaya:Employee Setup(Role:CS) from another mall can login to My CS Portal
 
@@ -150,9 +151,9 @@ class IntermediateLoginController extends IntermediateBaseController
         if (trim($email) === '') {
             $response = new stdclass();
             $response->code = 14;
-            $response->status = 'error'; 
+            $response->status = 'error';
             $response->message = Lang::get('validation.required', array('attribute' => 'email'));
-            $response->data = null; 
+            $response->data = null;
         } else {
             $user = User::excludeDeleted('users')
                       ->leftJoin('employees','employees.user_id', '=', 'users.user_id')
@@ -161,14 +162,14 @@ class IntermediateLoginController extends IntermediateBaseController
                       ->where('employee_retailer.retailer_id', '=', $mallId)
                       ->first();
 
-            if (is_object($user) || $user != null) { 
+            if (is_object($user) || $user != null) {
                 $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
             } else {
                 $response = new stdclass();
                 $response->code = 13;
-                $response->status = 'error'; 
+                $response->status = 'error';
                 $response->message = Lang::get('validation.orbit.access.loginfailed');
-                $response->data = null; 
+                $response->data = null;
             }
 
         }
@@ -505,7 +506,7 @@ class IntermediateLoginController extends IntermediateBaseController
             // Successfull logout
             $activity->setUser($user)
                      ->setActivityName('logout_ok')
-                     ->setActivityNameLong('Sign out')
+                     ->setActivityNameLong('Sign Out')
                      ->setModuleName('Application')
                      ->responseOK();
         } catch (Exception $e) {
@@ -520,7 +521,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
             $activity->setUser('guest')
                      ->setActivityName('logout_failed')
-                     ->setActivityNameLong('Sign out Failed')
+                     ->setActivityNameLong('Sign Out Failed')
                      ->setNotes($e->getMessage())
                      ->setModuleName('Application')
                      ->responseFailed();
@@ -549,6 +550,35 @@ class IntermediateLoginController extends IntermediateBaseController
             } else {
                 $response->data = 'Not in debug mode.';
             }
+        } catch (Exception $e) {
+            $response->code = $e->getCode();
+            $response->status = 'error';
+            $response->message = $e->getMessage();
+        }
+
+        return $this->render($response);
+    }
+
+    /**
+     * Check the session login status.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return Response
+     */
+    public function getSessionLoginInfo()
+    {
+        $response = new ResponseProvider();
+
+        try {
+            $this->session->start(array(), 'no-session-creation');
+
+            $userId = $this->session->read('user_id');
+
+            if ($this->session->read('logged_in') !== true || ! $userId) {
+                throw new Exception('User not logged in', OrbitSession::ERR_UNKNOWN);
+            }
+
+            $response->data = sprintf('User id %s logged in', $userId);
         } catch (Exception $e) {
             $response->code = $e->getCode();
             $response->status = 'error';
@@ -893,7 +923,7 @@ class IntermediateLoginController extends IntermediateBaseController
             if (isset($registration_activity)) {
                 if (isset($from)) {
                     if ($from === 'facebook') {
-                        $registration_activity->activity_name_long = 'Sign up via Facebook';
+                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Facebook)';
                         $registration_activity->save();
 
                         // @author Irianto Pratama <irianto@dominopos.com>

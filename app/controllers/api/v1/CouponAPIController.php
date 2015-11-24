@@ -1778,6 +1778,7 @@ class CouponAPIController extends ControllerAPI
                           ->setActivityType('coupon');
 
         $user = NULL;
+        $mall = NULL;
         $mall_id = NULL;
         $issuedcoupon = NULL;
         try {
@@ -1832,7 +1833,6 @@ class CouponAPIController extends ControllerAPI
                     'merchant_verification_number'  => 'required'
                 )
             );
-
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
 
             // Begin database transaction
@@ -1885,7 +1885,7 @@ class CouponAPIController extends ControllerAPI
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption Successful')
+                    ->setActivityNameLong('Coupon Redemption (Successful)')
                     ->setObject($issuedcoupon)
                     ->setNotes($activityNotes)
                     ->setLocation($mall)
@@ -1911,10 +1911,10 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -1932,10 +1932,10 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (QueryException $e) {
@@ -1959,10 +1959,10 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (Exception $e) {
@@ -1982,7 +1982,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Delete Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         }
@@ -2079,17 +2079,31 @@ class CouponAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
             $coupons = Coupon::join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
-                ->select('merchants.name AS issue_retailer_name', 'promotions.*')
-                ->where('promotions.is_coupon', '=', 'Y')
-                ->where('promotions.promotion_type', 'mall')
-                // ->where('promotions.status', '!=', 'deleted');
-                ->where('promotions.status', '=', 'active');
+                             ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                             ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
+                                               from {$prefix}issued_coupons ic
+                                               where ic.status = 'active' or ic.status = 'redeemed'
+                                               group by promotion_id) issued"),
+                                        // On
+                                        DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
+                             ->select('merchants.name AS issue_retailer_name', 'promotions.*', 'timezones.timezone_name', DB::raw('issued.total_issued'))
+                             ->where('promotions.is_coupon', '=', 'Y')
+                             ->where('promotions.promotion_type', 'mall')
+                             // ->where('promotions.status', '!=', 'deleted');
+                             ->where('promotions.status', '=', 'active')
+                             ->where(function ($q) {
+                                    $q->where('promotions.maximum_issued_coupon', '>', DB::raw('issued.total_issued'))
+                                        ->orWhere('promotions.maximum_issued_coupon', '=', 0)
+                                        ->orWhereNull(DB::raw('issued.total_issued'));
+                             });
 
-            $mallTime = Carbon::now();
             if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
-                $coupons->whereRaw("? between begin_date and end_date", [$mallTime]);
+                $coupons->where('begin_date', '<=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"))
+                        ->where('end_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
             }
 
             // Filter coupon by Ids

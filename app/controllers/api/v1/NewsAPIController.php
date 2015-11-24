@@ -474,7 +474,7 @@ class NewsAPIController extends ControllerAPI
             });
 
             $updatednews->modified_by = $this->api->user->user_id;
-
+            $updatednews->touch();
 
             //  save news default language
             OrbitInput::post('news_name', function($news_name) use ($updatednews_default_language) {
@@ -1274,17 +1274,21 @@ class NewsAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
             $promotions = News::join('merchants', 'news.mall_id', '=', 'merchants.merchant_id')
-                // ->join('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
-                ->select('merchants.name AS retailer_name', 'news.*', 'news.news_name as promotion_name')
-                // ->where('news.object_type', '=', 'promotion')
-                // ->where('news.status', '!=', 'deleted');
-                ->where('news.status', '=', 'active');
+                              ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                              // ->join('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                              ->select('merchants.name AS retailer_name', 'news.*', 'news.news_name as promotion_name', 'timezones.timezone_name')
+                              // ->where('news.object_type', '=', 'promotion')
+                              // ->where('news.status', '!=', 'deleted');
+                              ->where('news.status', '=', 'active');
 
-            $mallTime = Carbon::now();
+
             if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
-                $promotions->whereRaw("? between begin_date and end_date", [$mallTime]);
+                $promotions->where('begin_date', '<=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"))
+                           ->where('end_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
             }
 
             // Filter promotion by Ids

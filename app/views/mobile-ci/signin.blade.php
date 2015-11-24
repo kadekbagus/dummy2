@@ -190,9 +190,6 @@
             <div class="modal-body">
                 <p id="emailModalText">{{ trans('mobileci.signin.must_accept_terms') }}.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{{{  trans('mobileci.signin.accept_modal_button_text') }}}</button>
-            </div>
         </div>
     </div>
 </div>

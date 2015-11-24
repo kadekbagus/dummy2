@@ -12,6 +12,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Helper\Email\MXEmailChecker;
 
 class UserAPIController extends ControllerAPI
 {
@@ -2128,7 +2129,7 @@ class UserAPIController extends ControllerAPI
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
                     'external_user_id'      => 'required',
-                    'email'                 => 'required|email|orbit.email.exists:' . $mallId,
+                    'email'                 => 'required|email|orbit.email.checker.mxrecord|orbit.email.exists:' . $mallId,
                     'firstname'             => 'required',
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
@@ -2508,7 +2509,7 @@ class UserAPIController extends ControllerAPI
                     'current_mall'          => 'required|orbit.empty.mall',
                     'user_id'               => 'required|orbit.empty.user',
                     'membership_card'       => 'orbit.empty.mall_have_membership_card',
-                    'email'                 => 'email|email_exists_but_me',
+                    'email'                 => 'email|email_exists_but_me|orbit.email.checker.mxrecord',
                     'firstname'             => '',
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
@@ -3530,6 +3531,20 @@ class UserAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.mall_have_membership_card', $membershipCard);
+
+            return TRUE;
+        });
+
+        //Check email with mxrecord
+        Validator::extend('orbit.email.checker.mxrecord', function ($attribute, $value, $parameters) {
+            $hosts = MXEmailChecker::create($value)->check()->getMXRecords();
+
+            if (empty($hosts)) {
+                $errorMessage = \Lang::get('validation.email', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.email.checker.mxrecord', $hosts);
 
             return TRUE;
         });
