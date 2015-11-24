@@ -539,9 +539,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_to) {
+            if (($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_numbers) {
                 $this->rollBack();
-                $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $activeluckydraw->generated_to]);
+                $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $activeluckydraw->generated_numbers]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -560,16 +560,15 @@ class LuckyDrawCSAPIController extends ControllerAPI
             }
 
             $_numberOfLuckyDraw = $numberOfLuckyDraw;
-            $_free_numbers = $activeluckydraw->free_numbers;
-            $_generated_to = $activeluckydraw->generated_to;
-            $_generated_numbers = 0;
+            $_free_number_batch = $activeluckydraw->free_number_batch;
+            $_generated_numbers = $activeluckydraw->generated_numbers;
 
             // batch inserting lucky draw numbers
-            while ($_numberOfLuckyDraw > $_free_numbers) {
-                if ($batch >= ($activeluckydraw->max_number - $activeluckydraw->min_number - $_generated_to + 1)) {
+            while ($_numberOfLuckyDraw > $_free_number_batch) {
+                if ($batch >= ($activeluckydraw->max_number - $activeluckydraw->min_number - $_generated_numbers + 1)) {
                     // insert difference as new numbers
-                    $batch = ($activeluckydraw->max_number - $activeluckydraw->min_number) - $_generated_to + 1;
-                    $_numberOfLuckyDraw = $_free_numbers;
+                    $batch = ($activeluckydraw->max_number - $activeluckydraw->min_number) - $_generated_numbers + 1;
+                    $_numberOfLuckyDraw = $_free_number_batch;
                 }
                 for ($i = 0; $i < $batch; $i++) {
                     $lucky_draw_number = new LuckyDrawNumber;
@@ -579,17 +578,16 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     $lucky_draw_number->modified_by = $user->user_id;
                     $lucky_draw_number->save();
                     $starting_number_code++;
-                    $_generated_numbers++;
                 }
 
-                $_free_numbers = $_free_numbers + $batch;
-                $_generated_to = $_generated_to + $batch;
+                $_free_number_batch = $_free_number_batch + $batch;
+                $_generated_numbers = $_generated_numbers + $batch;
             }
 
-            // update free_numbers and generated_to
+            // update free_number_batch and generated_numbers
             $updated_luckydraw = LuckyDraw::where('lucky_draw_id', $luckyDrawId)->first();
-            $updated_luckydraw->free_numbers = $_free_numbers;
-            $updated_luckydraw->generated_to = $_generated_to;
+            $updated_luckydraw->free_number_batch = $_free_number_batch;
+            $updated_luckydraw->generated_numbers = $_generated_numbers;
             $updated_luckydraw->save();
 
             // get the blank lucky draw numbers
@@ -615,13 +613,13 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     'hash'          => $hash
                 ));
 
-            // update free_numbers
+            // update free_number_batch
             DB::table('lucky_draws')
                 ->where('status', 'active')
                 ->where('start_date', '<=', Carbon::now())
                 ->where('end_date', '>=', Carbon::now())
                 ->where('lucky_draw_id', $luckyDrawId)
-                ->update(array('free_numbers' => ($_free_numbers - count($issued_lucky_draw_numbers))));
+                ->update(array('free_number_batch' => ($_free_number_batch - count($issued_lucky_draw_numbers))));
 
             Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this, $luckyDraw, $customer));
 
