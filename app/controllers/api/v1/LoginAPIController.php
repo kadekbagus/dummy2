@@ -245,7 +245,7 @@ class LoginAPIController extends ControllerAPI
             }
 
             if ($from === 'cs') {
-                $signup_from = 'Sign Up via (Customer Service)';
+                $signup_from = 'Sign Up via Customer Service';
                 $activity = Activity::csportal()
                                     ->setActivityType('registration');
             } else {
@@ -724,6 +724,7 @@ class LoginAPIController extends ControllerAPI
                         ->where('user_id', $token->user_id)
                         ->first();
 
+
             if (! is_object($token) || ! is_object($user)) {
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
@@ -756,6 +757,11 @@ class LoginAPIController extends ControllerAPI
                     'user_id' => $user->user_id
                 ]);
             }
+            $userSignUp = Activity::where('activity_name', '=', 'registration_ok')
+                                  ->whereIn('group', ['mobile-ci','cs-portal'])
+                                  ->where('user_id', $user->user_id)
+                                  ->first();
+            $location = Mall::find($userSignUp->location_id);
 
             $this->response->message = Lang::get('statuses.orbit.activate.account');
             $this->response->data = $user;
@@ -768,6 +774,7 @@ class LoginAPIController extends ControllerAPI
                      ->setActivityName('activation_ok')
                      ->setActivityNameLong('Customer Activation')
                      ->setModuleName('Application')
+                     ->setLocation($location)
                      ->responseOK();
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -959,10 +966,20 @@ class LoginAPIController extends ControllerAPI
                 $loginFromSuperadmin = true;
             }
 
+            // Return the current mall object if this login process coming
+            // from mall or cs-portal
+            $from = OrbitInput::get('from_portal', NULL);
+            $mall = NULL;
+
             $user = User::with('role')
                         ->active()
-                        ->where('user_email', $email)
-                        ->first();
+                        ->where('user_email', $email);
+
+            if ($from === 'cs-portal') {
+                $user->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                     ->where('roles.role_name', 'Mall Customer Service');
+            }
+            $user = $user->first();
 
             if (! is_object($user)) {
                 $message = Lang::get('validation.orbit.access.inactiveuser');
@@ -981,11 +998,6 @@ class LoginAPIController extends ControllerAPI
                 ]);
                 ACL::throwAccessForbidden($message);
             }
-
-            // Return the current mall object if this login process coming
-            // from mall or cs-portal
-            $from = OrbitInput::get('from_portal', NULL);
-            $mall = NULL;
 
             if (in_array($from, ['mall', 'cs-portal'])) {
                 if ($from === 'mall') {

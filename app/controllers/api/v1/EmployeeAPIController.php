@@ -2198,7 +2198,7 @@ class EmployeeAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'registered_date'   => 'users.created_at',
                     'create_at'         => 'users.created_at',
-                    'updated_at'        => 'users.updated_at',
+                    'updated_at'        => 'employees.updated_at',
                     'username'          => 'users.username',
                     'login_id'          => 'users.username',
                     'employee_id_char'  => 'employees.employee_id_char',

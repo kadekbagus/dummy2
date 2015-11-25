@@ -135,11 +135,19 @@ class Uploader
             $maxAllowedSize = $this->config->getConfig('file_size');
             if ($file->size > $maxAllowedSize) {
                 $units = static::bytesToUnits($maxAllowedSize);
-                $message = $this->message->getMessage('errors.file_too_big', array(
-                    'index' => ($i + 1),
-                    'size'  => $units['newsize'],
-                    'unit'  => $units['unit']
-                ));
+                if ($i === 0) {
+                    $message = $this->message->getMessage('errors.file_too_big', array(
+                        'index' => '',
+                        'size'  => $units['newsize'],
+                        'unit'  => $units['unit']
+                    ));
+                }else {
+                    $message = $this->message->getMessage('errors.file_too_big', array(
+                        'index' => ($i + 1),
+                        'size'  => $units['newsize'],
+                        'unit'  => $units['unit']
+                    ));
+                }
 
                 throw new Exception($message, static::ERR_SIZE_LIMIT);
             }

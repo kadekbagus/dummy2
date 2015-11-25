@@ -11,6 +11,7 @@
                     <div class="form-group">
                         <label for="keyword">{{ Lang::get('mobileci.modals.search_label') }}</label>
                         <input type="text" class="form-control" name="keyword" id="keyword" placeholder="{{ Lang::get('mobileci.modals.search_placeholder') }}">
+                        {{ \Orbit\UrlGenerator::hiddenSessionIdField() }}
                     </div>
                 </form>
             </div>
