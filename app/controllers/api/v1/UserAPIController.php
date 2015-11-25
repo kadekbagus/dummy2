@@ -1417,7 +1417,7 @@ class UserAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,membership_since,created_at,updated_at,first_visit_date',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,join_date,created_at,updated_at,first_visit_date',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1472,14 +1472,28 @@ class UserAPIController extends ControllerAPI
             // Builder object
             $prefix = DB::getTablePrefix();
             $users = User::Consumers()
-                        ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
-                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                        ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
-                        ->excludeDeleted('users')
-                        ->groupBy('users.user_id');
+                         ->select('users.user_id', 'users.username', 'users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_last_login', 'users.user_ip', 'users.user_role_id', 'users.status', 'users.remember_token', 'users.external_user_id', 'users.modified_by', 'users.created_at', 'users.updated_at')
+                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
+                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
+                         ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
+                         ->excludeDeleted('users')
+                         ->groupBy('users.user_id')
+                         ->with(array('membershipNumbers' => function ($q) use ($listOfMallIds) {
+                            $q->excludeDeleted()
+                              ->whereHas('membership', function ($q2) use ($listOfMallIds) {
+                                $q2->excludeDeleted();
+                                if (empty($listOfMallIds)) { // invalid mall id
+                                    $q2->whereRaw('0');
+                                } elseif ($listOfMallIds[0] === 1) { // if super admin
+                                    // show all users
+                                } else { // valid mall id
+                                    $q2->whereIn('memberships.merchant_id', $listOfMallIds);
+                                }
+                            });
+                         }));
 
             if ($details === 'yes') {
-                $users->select('users.*', DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name','activities.location_id',  DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
+                $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name','activities.location_id',  DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
                                         where cp.user_id={$prefix}users.user_id) as total_usable_coupon,
@@ -1496,10 +1510,15 @@ class UserAPIController extends ControllerAPI
                                         // ON
                                         'tmp_lucky.user_id', '=', 'users.user_id');
             } else {
-                $users->select('users.*', DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"));
+                $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"));
             }
 
-            $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+            $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id')
+                  ->addSelect('membership_numbers.membership_number', 'membership_numbers.join_date')
+                  ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
+                  ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                  ->excludeDeleted('membership_numbers')
+                  ->excludeDeleted('memberships');
 
             $current_mall = OrbitInput::get('current_mall');
 
@@ -1517,7 +1536,8 @@ class UserAPIController extends ControllerAPI
             } elseif ($listOfMallIds[0] === 1) { // if super admin
                 // show all users
             } else { // valid mall id
-                $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds);
+                $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds)
+                      ->whereIn('memberships.merchant_id', $listOfMallIds);
             }
 
             // Filter by retailer (shop) ids
@@ -1594,12 +1614,12 @@ class UserAPIController extends ControllerAPI
 
             // Filter user by membership number
             OrbitInput::get('membership_number', function ($data) use ($users) {
-                $users->whereIn('users.membership_number', $data);
+                $users->whereIn('membership_numbers.membership_number', $data);
             });
 
             // Filter user by membership number
             OrbitInput::get('membership_number_like', function ($arg) use ($users) {
-                $users->where('users.membership_number', 'like', "%$arg%");
+                $users->where('membership_numbers.membership_number', 'like', "%$arg%");
             });
 
             // Filter user by created_at for begin_date
@@ -1647,11 +1667,11 @@ class UserAPIController extends ControllerAPI
             OrbitInput::get('is_member', function ($isMember) use ($users)
             {
                 if ($isMember === 'yes') {
-                    $users->where('users.membership_number', '!=', '');
+                    $users->where('membership_numbers.membership_number', '!=', '');
                 } elseif ($isMember === 'no') {
                     $users->where(function ($q) {
-                        $q->where('users.membership_number', '=', '')
-                          ->orWhereNull('users.membership_number');
+                        $q->where('membership_numbers.membership_number', '=', '')
+                          ->orWhereNull('membership_numbers.membership_number');
                     });
                 }
             });
@@ -1756,8 +1776,8 @@ class UserAPIController extends ControllerAPI
                     'gender'                  => 'user_details.gender',
                     'city'                    => 'user_details.city',
                     'mobile_phone'            => 'user_details.phone',
-                    'membership_number'       => 'users.membership_number',
-                    'membership_since'        => 'users.membership_since',
+                    'membership_number'       => 'membership_numbers.membership_number',
+                    'join_date'               => 'membership_numbers.join_date',
                     'created_at'              => 'users.created_at',
                     'updated_at'              => 'users.updated_at',
                     'status'                  => 'users.status',

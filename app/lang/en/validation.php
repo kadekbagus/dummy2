@@ -172,7 +172,7 @@ return array(
             'merchant_language'    => 'The Merchant_Language ID is not found.',
             'language_default'     => 'The language default you specified is not found.',
             'user_status'          => 'The user status you specified is not found.',
-            'user_sortby'          => 'The sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, membership_since, created_at, updated_at.',
+            'user_sortby'          => 'The sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, join_date, created_at, updated_at, first_visit_date.',
             'merchant_status'      => 'The merchant status you specified is not found.',
             'merchant_sortby'      => 'The sort by argument you specified is not valid, the valid values are: registered_date, merchant_name, merchant_email, merchant_userid, merchant_description, merchantid, merchant_address1, merchant_address2, merchant_address3, merchant_cityid, merchant_city, merchant_countryid, merchant_country, merchant_phone, merchant_fax, merchant_status, merchant_currency, start_date_activity, total_retailer.',
             'retailer_status'      => 'The retailer status you specified is not found.',
