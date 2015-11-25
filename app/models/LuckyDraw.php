@@ -138,4 +138,14 @@ class LuckyDraw extends Eloquent
                               DB::raw("'deleted' and ({$prefix}lucky_draw_numbers.user_id is not null and {$prefix}lucky_draw_numbers.user_id != 0)"));
         });
     }
+
+    /**
+     * Lucky Draw strings can be translated to many languages.
+     */
+    public function translations()
+    {
+        return $this->hasMany('LuckyDrawTranslation', 'lucky_draw_id', 'lucky_draw_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
+    }
 }
