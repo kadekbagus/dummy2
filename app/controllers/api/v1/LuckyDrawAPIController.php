@@ -1045,6 +1045,10 @@ class LuckyDrawAPIController extends ControllerAPI
                         $luckydraws->with('numbers');
                     } elseif ($relation === 'issued_numbers') {
                         $luckydraws->with('issuedNumbers');
+                    } elseif ($relation === 'translations') {
+                        $news->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $news->with('translations.media');
                     }
                 }
             });
