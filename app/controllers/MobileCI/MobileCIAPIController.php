@@ -2512,6 +2512,15 @@ class MobileCIAPIController extends ControllerAPI
             $tenants = $pure_tenants; // 100% pure tenant ready to be served
             // -- END of hack
 
+            // Check coupon have condition cs reedem
+            $cs_reedem = false;
+
+            // Check exist customer verification number per mall
+            $employeeVerificationNumbers = \UserVerificationNumber::where('merchant_id', $retailer->merchant_id)->count();
+            if ($coupons->is_redeemed_at_cs === 'Y' && $employeeVerificationNumbers > 0) {
+                $cs_reedem = true;
+            }
+
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon')
@@ -2530,7 +2539,9 @@ class MobileCIAPIController extends ControllerAPI
                 'coupon' => $coupons,
                 'tenants' => $tenants,
                 'languages' => $languages,
-                'cso_exists' => $cso_exists));
+                'cso_exists' => $cso_exists,
+                'cs_reedem' => $cs_reedem
+                ));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
