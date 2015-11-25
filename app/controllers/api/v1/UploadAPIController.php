@@ -6342,6 +6342,229 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload image for a lucky draw translation (selected language).
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `lucky_draw_id`                (required) - ID of the lucky draw
+     * @param integer    `lucky_draw_translation_id`    (required) - ID of the lucky draw translation
+     * @param integer    `merchant_language_id`         (required) - ID of the merchant language
+     * @param file|array `image_translation`            (required) - Translation images
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadLuckyDrawTranslationImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.auth', array($this));
+
+            if (! $this->calledFrom('luckydraw.translations'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_lucky_draw')) {
+                    Event::fire('orbit.upload.postuploadluckydrawtranslationimage.authz.notallowed', array($this, $user));
+                    $editLuckyDrawLang = Lang::get('validation.orbit.actionlist.update_lucky_draw');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editLuckyDrawLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $lucky_draw_translation_id = OrbitInput::post('lucky_draw_translation_id');
+            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
+            $merchant_language_id = OrbitInput::post('merchant_language_id');
+            $image_translation = OrbitInput::files('image_translation_' . $merchant_language_id);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'lucky_draw_translation_id'  => $lucky_draw_translation_id,
+                    'lucky_draw_id'              => $lucky_draw_id,
+                    'merchant_language_id'       => $merchant_language_id,
+                    'image_translation'          => $image_translation,
+                ),
+                array(
+                    'lucky_draw_translation_id'  => 'required|orbit.empty.lucky_draw_translation',
+                    'lucky_draw_id'              => 'required|orbit.empty.lucky_draw',
+                    'merchant_language_id'       => 'required|orbit.empty.merchant_language',
+                    'image_translation'          => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('luckydraw.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.validation', array($this, $validator));
+
+            // We already had Coupon Translation instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $lucky_draw_translations = App::make('orbit.empty.lucky_draw_translation');
+
+            // Delete old coupon translation image
+            $pastMedia = Media::where('object_id', $lucky_draw_translations->lucky_draw_translation_id)
+                              ->where('object_name', 'lucky_draw_translation')
+                              ->where('media_name_id', 'lucky_draw_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [LUCKY_DRAW_ID]-[LUCKY_DRAW_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($lucky_draw_translations)
+            {
+                $lucky_draw_translation_id = $lucky_draw_translations->lucky_draw_translation_id;
+                $slug = Str::slug($lucky_draw_translations->lucky_draw_name);
+                $file['new']->name = sprintf('%s-%s-%s', $lucky_draw_translation_id, $slug, time());
+            };
+
+            // Load the orbit configuration for event upload
+            $uploadLuckyDrawConfig = Config::get('orbit.upload.lucky_draw.translation');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLuckyDrawConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.save', array($this, $lucky_draw_translations, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($image_translation);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $lucky_draw_translations->lucky_draw_translation_id,
+                'name'          => 'lucky_draw_translation',
+                'media_name_id' => 'lucky_draw_translation_image',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image_translation` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per event
+            if (isset($uploaded[0])) {
+                $lucky_draw_translations->save();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.save', array($this, $lucky_draw_translations, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.lucky_draw_translation.main');
+
+            if (! $this->calledFrom('luckydraw.translations')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.commit', array($this, $lucky_draw_translations, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -6606,6 +6829,20 @@ class UploadAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.coupon_translation', $coupon_translation);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.lucky_draw_translation', function ($attribute, $value, $parameters) {
+            $lucky_draw_translation = LuckyDrawTranslation::excludeDeleted()
+                        ->where('lucky_draw_translation_id', $value)
+                        ->first();
+
+            if (empty($lucky_draw_translation)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.lucky_draw_translation', $lucky_draw_translation);
 
             return TRUE;
         });
