@@ -119,5 +119,40 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
         return $result;
     }
 
+    /**
+     * Called by hiddenSessionIdField below.
+     *
+     * Not called directly as URL::instanceHiddenSessionIdField to prevent crashing if
+     * using standard Laravel UrlGenerator.
+     *
+     * @return string
+     */
+    public function instanceHiddenSessionIdField()
+    {
+        if (!$this->getSessionInUrlEnabled()) {
+            return '';
+        }
+        $id = $this->getSessionIdValue();
+        if ($id === null) {
+            return '';
+        }
+        return \Form::hidden($this->getSessionIdParameterName(), $id);
+    }
+
+    /**
+     * Returns HTML for a hidden field containing session id (for use in GET forms), or empty string.
+     *
+     * Empty string if: URL Generator not configured, session-in-url not configured.
+     *
+     * @return string
+     */
+    public static function hiddenSessionIdField()
+    {
+        $gen = \URL::getFacadeRoot();
+        if (is_callable([$gen, 'instanceHiddenSessionIdField'])) {
+            return $gen->instanceHiddenSessionIdField();
+        }
+        return '';
+    }
 
 }
