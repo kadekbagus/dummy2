@@ -30,7 +30,7 @@ class User extends Eloquent implements UserInterface
         return $this->hasOne('Apikey', 'user_id', 'user_id')->where('apikeys.status','=','active');
     }
 
-    public function membershipNumber()
+    public function membershipNumbers()
     {
         return $this->hasMany('MembershipNumber', 'user_id', 'user_id');
     }
