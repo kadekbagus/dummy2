@@ -724,6 +724,7 @@ class LoginAPIController extends ControllerAPI
                         ->where('user_id', $token->user_id)
                         ->first();
 
+
             if (! is_object($token) || ! is_object($user)) {
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
@@ -756,6 +757,11 @@ class LoginAPIController extends ControllerAPI
                     'user_id' => $user->user_id
                 ]);
             }
+            $userSignUp = Activity::where('activity_name', '=', 'registration_ok')
+                                  ->whereIn('group', ['mobile-ci','cs-portal'])
+                                  ->where('user_id', $user->user_id)
+                                  ->first();
+            $location = Mall::find($userSignUp->location_id);
 
             $this->response->message = Lang::get('statuses.orbit.activate.account');
             $this->response->data = $user;
@@ -768,6 +774,7 @@ class LoginAPIController extends ControllerAPI
                      ->setActivityName('activation_ok')
                      ->setActivityNameLong('Customer Activation')
                      ->setModuleName('Application')
+                     ->setLocation($location)
                      ->responseOK();
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();

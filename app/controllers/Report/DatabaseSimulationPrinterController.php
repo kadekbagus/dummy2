@@ -138,12 +138,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
 
         // Filter by merchant ids
         OrbitInput::get('merchant_ids', function($merchantIds) use ($activities) {
-            $activities->where(function($q) use ($merchantIds) {
-                $q->whereIn('activities.location_id', $merchantIds)
-                  ->orWhere(function($q) {
-                        $q->whereNull('activities.location_id');
-                  });
-                });
+            $activities->whereIn('activities.location_id', $merchantIds);
         });
 
         // Filter by retailer ids
@@ -181,11 +176,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                   ->orWhere(function($q) use ($prefix) {
                         $q->where('activities.activity_name', 'activation_ok')
                           ->where('activities.activity_name_long', 'Customer Activation')
-                          ->where('activities.group', 'portal')
-                          ->whereRaw("{$prefix}activities.user_id in (select act.user_id
-                                        from {$prefix}activities as act
-                                        where act.activity_name = 'registration_ok'
-                                            and act.group in ('mobile-ci','cs-portal'))");
+                          ->where('activities.group', 'portal');
                   });
                 });
         }
