@@ -2982,18 +2982,18 @@ class ActivityAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::get('current_mall');
+            $current_mall = OrbitInput::get('current_mall');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $merchant_id,
+                    'current_mall' => $current_mall,
                     'start_date' => $start_date,
                     'end_date' => $end_date,
                 ),
                 array(
-                    'merchant_id' => 'required',
+                    'current_mall' => 'required',
                     'start_date' => 'required',
                     'end_date' => 'required',
                 )
@@ -3026,13 +3026,15 @@ class ActivityAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // get list of days/date from start date and end date
-            $begin = new DateTime( $start_date );
-            $end = new DateTime( $end_date );
-            $end = $end->modify( '+1 day' );
+            // Check interval
+            $begin = new DateTime($start_date);
+            $endtime = new DateTime($end_date);
+            // Plus one day endtime
+            $end = $endtime->add(new DateInterval('P1D'));
 
-            $interval = new DateInterval('P1D');
-            $_dateRange = new DatePeriod($begin, $interval ,$end);
+            // get periode per 1 day
+            $interval = DateInterval::createFromDateString('1 day');
+            $_dateRange = new DatePeriod($begin, $interval, $end);
 
             $dateRange = [];
 
@@ -3046,7 +3048,7 @@ class ActivityAPIController extends ControllerAPI
 					select date_format(created_at, '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
 					from {$tablePrefix}activities
 					-- filter by date
-					where `group` = 'mobile-ci' and response_status='OK'
+					where `group` = 'mobile-ci' and response_status = 'OK' and location_id = '" . $current_mall . "'
 					and created_at between '" . $start_date . "' and '" . $end_date ."'
 					group by 1, 2;
                 ") );
@@ -3071,23 +3073,20 @@ class ActivityAPIController extends ControllerAPI
                 }
             }
 
-            // if there is date that have no data, display as empty array
-            if ($days != count($responses)) {
-                $dateRange2 = $dateRange;
+            // if there is date that have no data
+            $dateRange2 = $dateRange;
 
-                foreach ($responses as $a => $b){
-
-                    $length = count($dateRange);
-                    for ($i = 0; $i < $length; $i++) {
-                        if ($a===$dateRange[$i]) {
-                            unset($dateRange2[$i]);
-                        }
+            foreach ($responses as $a => $b) {
+                $length = count($dateRange);
+                for ($i = 0; $i < $length; $i++) {
+                    if ($a===$dateRange[$i]) {
+                        unset($dateRange2[$i]);
                     }
                 }
+            }
 
-                foreach ($dateRange2 as $x => $y) {
-                    $responses[$dateRange2[$x]] = array();
-                }
+            foreach ($dateRange2 as $x => $y) {
+                $responses[$dateRange2[$x]] = array();
             }
 
             $records['records'] = $responses;
