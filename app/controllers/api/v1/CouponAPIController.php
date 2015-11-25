@@ -1772,6 +1772,7 @@ class CouponAPIController extends ControllerAPI
      * POST - Redeem Coupon for retailer/tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1859,10 +1860,23 @@ class CouponAPIController extends ControllerAPI
                 ->where('masterbox_number', $verificationNumber)
                 ->first();
 
-            if (! is_object($tenant)) {
+            $csVerificationNumber = UserVerificationNumber::
+                where('merchant_id', $mall_id)
+                ->where('verification_number', $verificationNumber)
+                ->first();
+
+            $redeem_retailer_id = NULL;
+            if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
                 // @Todo replace with language
                 $message = 'Tenant is not found.';
                 ACL::throwAccessForbidden($message);
+            } else {
+                if (is_object($tenant)) {
+                    $redeem_retailer_id = $tenant->merchant_id;
+                }
+                if (is_object($csVerificationNumber)) {
+                    $redeem_retailer_id = $mall_id;
+                }
             }
 
             $mall = App::make('orbit.empty.merchant');
@@ -1872,7 +1886,7 @@ class CouponAPIController extends ControllerAPI
             $coupon = $issuedcoupon->coupon;
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
-            $issuedcoupon->redeem_retailer_id = $tenant->merchant_id;
+            $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
             $issuedcoupon->redeem_verification_code = $verificationNumber;
             $issuedcoupon->status = 'redeemed';
 
@@ -2399,6 +2413,7 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) use ($user) {
             $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
+            $mall_id = OrbitInput::post('current_mall');
 
             $prefix = DB::getTablePrefix();
 
@@ -2423,12 +2438,35 @@ class CouponAPIController extends ControllerAPI
                         ->where('merchants.masterbox_number', $number)
                         ->first();
 
-            if (empty($issuedCoupon)) {
+            // issued coupon with CS verification number
+            $csVerificationNumber = UserVerificationNumber::
+                        where('merchant_id', $mall_id)
+                        ->where('verification_number', $number)
+                        ->first();
+
+            if (! empty($csVerificationNumber)) {
+                $issuedCouponCS = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
+                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                        ->where('issued_coupons.issued_coupon_id', $value)
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                        ->where('merchants.parent_id', $csVerificationNumber->merchant_id)
+                        ->first();
+            }
+
+            if (empty($issuedCoupon) && empty($issuedCouponCS)) {
                 $errorMessage = Lang::get('mobileci.coupon.wrong_verification_number');
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
+            if (! empty($issuedCoupon)) {
+                App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
+            }
+
+            if (! empty($issuedCouponCS)) {
+                App::instance('orbit.empty.issuedcoupon', $issuedCouponCS);
+            }
 
             return TRUE;
         });
