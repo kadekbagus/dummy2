@@ -3026,15 +3026,18 @@ class ActivityAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // Check interval
-            $begin = new DateTime($start_date);
-            $endtime = new DateTime($end_date);
-            // Plus one day endtime
-            $end = $endtime->add(new DateInterval('P1D'));
+            $timezone = $this->getTimezone($current_mall);
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
+            // convert to timezone
+            $begin = new DateTime($start_date, new DateTimeZone('UTC'));
+            $endtime = new DateTime($end_date, new DateTimeZone('UTC'));
+            $begin->setTimezone(new DateTimeZone($timezone));
+            $endtime->setTimezone(new DateTimeZone($timezone));
 
             // get periode per 1 day
             $interval = DateInterval::createFromDateString('1 day');
-            $_dateRange = new DatePeriod($begin, $interval, $end);
+            $_dateRange = new DatePeriod($begin, $interval, $endtime);
 
             $dateRange = [];
 
@@ -3045,7 +3048,7 @@ class ActivityAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $activities = DB::select( DB::raw("
-					select date_format(created_at, '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
+					select date_format(convert_tz(created_at, '+00:00', '" . $timezoneOffset . "'), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
 					from {$tablePrefix}activities
 					-- filter by date
 					where `group` = 'mobile-ci' and response_status = 'OK' and location_id = '" . $current_mall . "'
@@ -3246,6 +3249,22 @@ class ActivityAPIController extends ControllerAPI
 
     public function setReturnQuery($bool) {
         $this->returnQuery = $bool;
+    }
+
+    public function getTimezone($current_mall)
+    {
+        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+            ->where('merchants.merchant_id','=', $current_mall)
+            ->first();
+
+        return $timezone->timezone_name;
+    }
+
+    public function getTimezoneOffset($timezone)
+    {
+        $dt = new DateTime('now', new DateTimeZone($timezone));
+
+        return $dt->format('P');
     }
 
 }
