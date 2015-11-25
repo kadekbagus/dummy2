@@ -31,6 +31,7 @@ class CouponAPIController extends ControllerAPI
      * @param datetime   `begin_date`                        (optional) - Begin date. Example: 2014-12-30 00:00:00
      * @param datetime   `end_date`                          (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string     `is_permanent`                      (optional) - Is permanent. Valid value: Y, N.
+     * @param string     `is_redeemed_at_cs`                 (optional) - Is permanent. Valid value: Y, N.
      * @param file       `image`                             (optional) - Coupon image
      * @param string     `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
      * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
@@ -110,6 +111,7 @@ class CouponAPIController extends ControllerAPI
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
+            $is_redeemed_at_cs = OrbitInput::post('is_redeemed_at_cs');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
@@ -227,6 +229,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->begin_date = $begin_date;
             $newcoupon->end_date = $end_date;
             $newcoupon->is_permanent = $is_permanent;
+            $newcoupon->is_redeemed_at_cs = $is_redeemed_at_cs;
             $newcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
             $newcoupon->maximum_issued_coupon = $maximum_issued_coupon;
             $newcoupon->coupon_validity_in_days = $coupon_validity_in_days;
@@ -472,6 +475,7 @@ class CouponAPIController extends ControllerAPI
      * @param datetime   `begin_date`                        (optional) - Begin date. Example: 2014-12-30 00:00:00
      * @param datetime   `end_date`                          (optional) - End date. Example: 2014-12-31 23:59:59
      * @param string     `is_permanent`                      (optional) - Is permanent. Valid value: Y, N.
+     * @param string     `is_redeemed_at_cs`                 (optional) - Is permanent. Valid value: Y, N.
      * @param file       `images`                            (optional) - Coupon image
      * @param integer    `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
      * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
@@ -566,6 +570,7 @@ class CouponAPIController extends ControllerAPI
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
+            $is_redeemed_at_cs = OrbitInput::post('is_redeemed_at_cs');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
@@ -669,6 +674,10 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('is_permanent', function($is_permanent) use ($updatedcoupon) {
                 $updatedcoupon->is_permanent = $is_permanent;
+            });
+
+            OrbitInput::post('is_redeemed_at_cs', function($is_redeemed_at_cs) use ($updatedcoupon) {
+                $updatedcoupon->is_redeemed_at_cs = $is_redeemed_at_cs;
             });
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
@@ -1763,6 +1772,7 @@ class CouponAPIController extends ControllerAPI
      * POST - Redeem Coupon for retailer/tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1850,10 +1860,23 @@ class CouponAPIController extends ControllerAPI
                 ->where('masterbox_number', $verificationNumber)
                 ->first();
 
-            if (! is_object($tenant)) {
+            $csVerificationNumber = UserVerificationNumber::
+                where('merchant_id', $mall_id)
+                ->where('verification_number', $verificationNumber)
+                ->first();
+
+            $redeem_retailer_id = NULL;
+            if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
                 // @Todo replace with language
                 $message = 'Tenant is not found.';
                 ACL::throwAccessForbidden($message);
+            } else {
+                if (is_object($tenant)) {
+                    $redeem_retailer_id = $tenant->merchant_id;
+                }
+                if (is_object($csVerificationNumber)) {
+                    $redeem_retailer_id = $mall_id;
+                }
             }
 
             $mall = App::make('orbit.empty.merchant');
@@ -1863,7 +1886,7 @@ class CouponAPIController extends ControllerAPI
             $coupon = $issuedcoupon->coupon;
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
-            $issuedcoupon->redeem_retailer_id = $tenant->merchant_id;
+            $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
             $issuedcoupon->redeem_verification_code = $verificationNumber;
             $issuedcoupon->status = 'redeemed';
 
@@ -2391,6 +2414,7 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.empty.issuedcoupon', function ($attribute, $value, $parameters) use ($user) {
             $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
+            $mall_id = OrbitInput::post('current_mall');
 
             $prefix = DB::getTablePrefix();
 
@@ -2415,12 +2439,35 @@ class CouponAPIController extends ControllerAPI
                         ->where('merchants.masterbox_number', $number)
                         ->first();
 
-            if (empty($issuedCoupon)) {
+            // issued coupon with CS verification number
+            $csVerificationNumber = UserVerificationNumber::
+                        where('merchant_id', $mall_id)
+                        ->where('verification_number', $number)
+                        ->first();
+
+            if (! empty($csVerificationNumber)) {
+                $issuedCouponCS = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
+                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                        ->where('issued_coupons.issued_coupon_id', $value)
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                        ->where('merchants.parent_id', $csVerificationNumber->merchant_id)
+                        ->first();
+            }
+
+            if (empty($issuedCoupon) && empty($issuedCouponCS)) {
                 $errorMessage = Lang::get('mobileci.coupon.wrong_verification_number');
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
+            if (! empty($issuedCoupon)) {
+                App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
+            }
+
+            if (! empty($issuedCouponCS)) {
+                App::instance('orbit.empty.issuedcoupon', $issuedCouponCS);
+            }
 
             return TRUE;
         });

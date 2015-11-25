@@ -105,6 +105,11 @@ class User extends Eloquent implements UserInterface
         return $this->hasOne('Employee', 'user_id', 'user_id');
     }
 
+    public function userVerificationNumber()
+    {
+        return $this->hasOne('UserVerificationNumber', 'user_id', 'user_id');
+    }
+
     /**
      * Tells Laravel the name of our password field so Laravel does not uses
      * its default `password` field. Our field name is `user_password`.

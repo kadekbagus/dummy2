@@ -135,8 +135,8 @@ class IntermediateLoginController extends IntermediateBaseController
             $csUrl = trim(OrbitInput::post('url'));
             $email = trim(OrbitInput::post('email'));
 
-            $searchUrl = array("http://cs.", "https://cs.");
-            $replaceUrl = array("dom:", "dom:");
+            $searchUrl = array('http://cs.', 'https://cs.', 'http://cs-', 'https://cs-');
+            $replaceUrl = array('dom:', 'dom:', 'dom:', 'dom:');
             $seetingUrl = str_replace($searchUrl, $replaceUrl, $csUrl);
             $seetingUrl = preg_replace('{/$}', '', $seetingUrl);
 
