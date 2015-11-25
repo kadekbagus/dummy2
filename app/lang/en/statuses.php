@@ -112,6 +112,10 @@ return array(
                 'main'          => 'Lucky Draw image has been successfully uploaded.',
                 'delete_image'  => 'Lucky Draw image has been successfully deleted.'
             ),
+            'lucky_draw_translation' => array(
+                'main'          => 'Lucky Draw Translation image has been successfully uploaded.',
+                'delete_image'  => 'Lucky Draw Translation image has been successfully deleted.'
+            ),
             'news' => array(
                 'main'          => 'News image has been successfully uploaded.',
                 'delete_image'  => 'News image has been successfully deleted.'
