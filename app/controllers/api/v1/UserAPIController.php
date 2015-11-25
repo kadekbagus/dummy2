@@ -2693,6 +2693,13 @@ class UserAPIController extends ControllerAPI
             $updateduser->save();
             $userdetail->save();
 
+            $updateduser->membership_number = $membershipNumberCode;
+            if (empty($join_date)) {
+                $updateduser->join_date = '0000-00-00 00:00:00';
+            } else {
+                $updateduser->join_date = $join_date . ' 00:00:00';
+            }
+
             $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
             $updateduser->membership_numbers = $membershipNumbers;
 
