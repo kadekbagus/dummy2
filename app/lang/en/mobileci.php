@@ -219,7 +219,7 @@ return array(
     'coupon' => array(
         'tenant_based'                     => 'Tenant Based',
         'mall_based'                       => 'Mall Based',
-        'tenant_redeem'                    => 'Where to Reedem',
+        'tenant_redeem'                    => 'Tenant Redeem',
         'coupon_value'                     => 'Coupon Value',
         'use_coupon'                       => 'Use Coupon',
         'enter_tenant_verification_number' => 'Enter Tenant Verification Number',
