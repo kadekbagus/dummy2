@@ -2283,7 +2283,17 @@ class EmployeeAPIController extends ControllerAPI
 
         // Check username, it should not exists
         Validator::extend('orbit.exists.username.mall', function ($attribute, $value, $parameters) {
-            $user = Employee::joinUser()->where('users.username', $value)->first();
+            $user = User::excludeDeleted()
+                        ->where(function ($q) use ($value) {
+                            $q->where('user_email', '=', $value)
+                              ->orWhere('username', '=', $value);
+                          })
+                        ->whereIn('user_role_id', function ($q) {
+                                $q->select('role_id')
+                                  ->from('roles')
+                                  ->whereNotIn('role_name', ['Consumer','Guest']);
+                          })
+                        ->first();
 
             if (! empty($user)) {
                 OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
