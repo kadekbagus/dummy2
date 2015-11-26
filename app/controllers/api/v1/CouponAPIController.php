@@ -1763,6 +1763,7 @@ class CouponAPIController extends ControllerAPI
      * POST - Redeem Coupon for retailer/tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -2090,14 +2091,15 @@ class CouponAPIController extends ControllerAPI
                                                group by promotion_id) issued"),
                                         // On
                                         DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
-                             ->select('merchants.name AS issue_retailer_name', 'promotions.*', 'timezones.timezone_name')
+                             ->select('merchants.name AS issue_retailer_name', 'promotions.*', 'timezones.timezone_name', DB::raw('issued.total_issued'))
                              ->where('promotions.is_coupon', '=', 'Y')
                              ->where('promotions.promotion_type', 'mall')
                              // ->where('promotions.status', '!=', 'deleted');
                              ->where('promotions.status', '=', 'active')
                              ->where(function ($q) {
-                                    $q->where(DB::raw('issued.total_issued'), '<=', 'promotions.maximum_issued_coupon')
-                                        ->orWhere('promotions.maximum_issued_coupon', '=', 0);
+                                    $q->where('promotions.maximum_issued_coupon', '>', DB::raw('issued.total_issued'))
+                                        ->orWhere('promotions.maximum_issued_coupon', '=', 0)
+                                        ->orWhereNull(DB::raw('issued.total_issued'));
                              });
 
             if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {

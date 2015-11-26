@@ -11,6 +11,7 @@
                     <div class="form-group">
                         <label for="keyword">{{ Lang::get('mobileci.modals.search_label') }}</label>
                         <input type="text" class="form-control" name="keyword" id="keyword" placeholder="{{ Lang::get('mobileci.modals.search_placeholder') }}">
+                        {{ \Orbit\UrlGenerator::hiddenSessionIdField() }}
                     </div>
                 </form>
             </div>
@@ -155,6 +156,7 @@
     // pinch zoom using hammerjs
     $(document).on('click', '.zoomer', function(){
         setTimeout(function(){
+            $("body").addClass("modal-open");
             var el = $('.featherlight-content').get(0).getElementsByTagName("img")[0];
             el.addEventListener('touchstart', function (e) {
                 e.preventDefault()
@@ -212,5 +214,9 @@
             });
 
         }, 300);
+    });
+
+    $(document).on('click', '.featherlight-close', function(){
+        $("body").removeClass("modal-open");
     });
 </script>

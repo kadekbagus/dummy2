@@ -68,7 +68,7 @@
                             @endif
                             @foreach($product->mediaLogo as $media)
                             @if($media->media_name_long == 'retailer_logo_orig')
-                            <a href="{{ asset($media->path) }}" data-featherlight="image" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($media->path) }}"></a>
+                            <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($media->path) }}"></a>
                             @endif
                             @endforeach
                         </div>

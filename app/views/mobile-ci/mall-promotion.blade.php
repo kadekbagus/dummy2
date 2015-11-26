@@ -25,11 +25,11 @@
     <div class="col-xs-12 product-img">
         @if(($product->image!='mobile-ci/images/default_product.png'))
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{{ asset($product->image) }}}" data-featherlight="image" class="zoomer"><img alt="" src="{{{ asset('mobile-ci/images/product-zoom.png') }}}" ></a></div>
+            <div class="zoom"><a href="{{{ asset($product->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img alt="" src="{{{ asset('mobile-ci/images/product-zoom.png') }}}" ></a></div>
         </div>
         @endif
         @if(($product->image!='mobile-ci/images/default_product.png'))
-        <a href="{{{ asset($product->image) }}}" data-featherlight="image" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($product->image) }}}" ></a>
+        <a href="{{{ asset($product->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($product->image) }}}" ></a>
         @else
         <img class="img-responsive" alt="" src="{{{ asset($product->image) }}}" >
         @endif
