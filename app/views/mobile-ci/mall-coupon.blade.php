@@ -67,10 +67,6 @@
                     <li>Customer Service</li>
                     @endif
 
-                    @if($cs_reedem)
-                    <li style="margin-bottom : 10px;">CUSTOMER SERVICE COUNTER</li>
-                    @endif
-
                     @foreach($tenants as $tenant)
                         <li>{{ $tenant->tenant->name }}</li>
                     @endforeach
