@@ -704,6 +704,17 @@ class IntermediateLoginController extends IntermediateBaseController
 
                 setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                 setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            } 
+
+            if (Config::get('orbit.shop.guest_mode')) {
+                if ($user->role->role_name === 'Guest') {
+                    $expireTime = time() + 3600 * 24 * 365 * 5;
+                    $guest = User::whereHas('role', function ($q) {
+                        $q->where('role_name', 'Guest');
+                    })->excludeDeleted()->first();
+                    setcookie('orbit_email', $guest->user_email, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('orbit_firstname', 'Orbit Guest', time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                }
             }
 
             // Successfull login
