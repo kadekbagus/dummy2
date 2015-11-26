@@ -1126,10 +1126,11 @@ class LoginAPIController extends ControllerAPI
      * @param string|null $userId the unique ID (if provided) of the user to create - used in box to match data on cloud
      * @param string|null $userDetailId .... of the user detail to create - used in box to match data on cloud
      * @param string|null $apiKeyId .... of the API key to create - used in box to match data on cloud
+     * @param string|null $userStatus the user status on cloud
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $userId = null, $userDetailId = null, $apiKeyId = null)
+    public function createCustomerUser($email, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
     {
         // The retailer (shop) which this registration taken
         $retailerId = $this->getRetailerId();
@@ -1154,7 +1155,7 @@ class LoginAPIController extends ControllerAPI
         }
         $new_user->username = strtolower($email);
         $new_user->user_email = strtolower($email);
-        $new_user->status = 'pending';
+        $new_user->status = isset($userStatus) ? $userStatus : 'pending';
         $new_user->user_role_id = $customerRole->role_id;
         $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
         $new_user->external_user_id = 0;
