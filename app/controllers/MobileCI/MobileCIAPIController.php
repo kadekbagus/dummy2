@@ -3946,6 +3946,7 @@ class MobileCIAPIController extends ControllerAPI
             $this->response->status = 'success';
             $this->response->data = (object)[
                 'user_id' => $user->user_id,
+                'user_status' => $user->status,
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
