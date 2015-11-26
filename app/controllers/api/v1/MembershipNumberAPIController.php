@@ -72,7 +72,7 @@ class MembershipNumberAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:join_date,membership_number,description,status',
+                    'sort_by' => 'in:membership_name,membership_number,join_date,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.membership_sortby'),
