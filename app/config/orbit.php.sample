@@ -36,7 +36,10 @@ return array(
         'poll_interval' => 8,
 
         // config to validate if membership number have to be unique or not
-        'membership_number_unique_check' => false
+        'membership_number_unique_check' => false,
+
+        //guest mode
+        'guest_mode' => false
     ),
 
     // General contact data
