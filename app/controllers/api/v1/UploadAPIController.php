@@ -84,6 +84,7 @@ class UploadAPIController extends ControllerAPI
      * Upload logo for Merchant.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@myorbit.com>
      *
      * List of API Parameters
      * ----------------------
@@ -160,23 +161,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.merchant');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'merchant')
-                              ->where('media_name_id', 'merchant_logo');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($merchant)
@@ -200,6 +184,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'merchant')
+                              ->where('media_name_id', 'merchant_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -471,6 +472,7 @@ class UploadAPIController extends ControllerAPI
      * Upload photo for a product.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -548,23 +550,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $product = App::make('orbit.empty.product');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $product->product_id)
-                              ->where('object_name', 'product')
-                              ->where('media_name_id', 'product_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PRODUCT_ID]-[PRODUCT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($product)
@@ -588,6 +573,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $product->product_id)
+                              ->where('object_name', 'product')
+                              ->where('media_name_id', 'product_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -858,6 +860,7 @@ class UploadAPIController extends ControllerAPI
      * Upload photo for a promotion.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -936,23 +939,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $promotion = App::make('orbit.empty.promotion');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $promotion->promotion_id)
-                              ->where('object_name', 'promotion')
-                              ->where('media_name_id', 'promotion_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PRODUCT_ID]-[PRODUCT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($promotion)
@@ -976,6 +962,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $promotion->promotion_id)
+                              ->where('object_name', 'promotion')
+                              ->where('media_name_id', 'promotion_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -1247,6 +1250,7 @@ class UploadAPIController extends ControllerAPI
      * Upload image for a promotion tranlation (selected language).
      *
      * @author Irianto Pratama <irianto@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1332,23 +1336,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $promotion_translations = App::make('orbit.empty.promotion_translation');
 
-            // Delete old promotion translation image
-            $pastMedia = Media::where('object_id', $promotion_translations->promotion_translation_id)
-                              ->where('object_name', 'promotion_translation')
-                              ->where('media_name_id', 'promotion_translation_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($promotion_translations)
@@ -1372,6 +1359,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
+
+            // Delete old promotion translation image
+            $pastMedia = Media::where('object_id', $promotion_translations->promotion_translation_id)
+                              ->where('object_name', 'promotion_translation')
+                              ->where('media_name_id', 'promotion_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -1469,6 +1473,7 @@ class UploadAPIController extends ControllerAPI
      * Upload profile picure (avatar) for User.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1550,23 +1555,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $user = App::make('orbit.empty.user');
 
-            // Delete old user picture
-            $pastMedia = Media::where('object_id', $user->user_id)
-                              ->where('object_name', 'user')
-                              ->where('media_name_id', 'user_profile_picture');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [USER_ID]-[USER_EMAIL]
             $renameFile = function($uploader, &$file, $dir) use ($user)
@@ -1591,6 +1579,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old user picture
+            $pastMedia = Media::where('object_id', $user->user_id)
+                              ->where('object_name', 'user')
+                              ->where('media_name_id', 'user_profile_picture');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -1865,6 +1870,7 @@ class UploadAPIController extends ControllerAPI
      * Upload photo for a coupon.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1943,23 +1949,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $coupon = App::make('orbit.empty.coupon');
 
-            // Delete old coupon image
-            $pastMedia = Media::where('object_id', $coupon->promotion_id)
-                              ->where('object_name', 'coupon')
-                              ->where('media_name_id', 'coupon_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($coupon)
@@ -1983,6 +1972,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old coupon image
+            $pastMedia = Media::where('object_id', $coupon->promotion_id)
+                              ->where('object_name', 'coupon')
+                              ->where('media_name_id', 'coupon_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -2254,6 +2260,7 @@ class UploadAPIController extends ControllerAPI
      * Upload widget images.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansayh@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -2332,23 +2339,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $widget = App::make('orbit.empty.widget');
 
-            // Delete old user picture
-            $pastMedia = Media::where('object_id', $widget->widget_id)
-                              ->where('object_name', 'widget')
-                              ->where('media_name_id', 'home_widget');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [WIDGET_ID]-[WIDGET_SLOGAN]
             $renameFile = function($uploader, &$file, $dir) use ($widget)
@@ -2374,6 +2364,23 @@ class UploadAPIController extends ControllerAPI
                 $uploaded = $uploader->uploadWidget($images, $widgetOrder);
             } else {
                 $uploaded = $uploader->upload($images);
+            }
+
+            // Delete old user picture
+            $pastMedia = Media::where('object_id', $widget->widget_id)
+                              ->where('object_name', 'widget')
+                              ->where('media_name_id', 'home_widget');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
             }
 
             // Save the files metadata
@@ -2465,6 +2472,7 @@ class UploadAPIController extends ControllerAPI
      * Upload photo for a event.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -2543,23 +2551,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $event = App::make('orbit.empty.event');
 
-            // Delete old event image
-            $pastMedia = Media::where('object_id', $event->event_id)
-                              ->where('object_name', 'event')
-                              ->where('media_name_id', 'event_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($event)
@@ -2583,6 +2574,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old event image
+            $pastMedia = Media::where('object_id', $event->event_id)
+                              ->where('object_name', 'event')
+                              ->where('media_name_id', 'event_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -2950,23 +2958,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $event_translations = App::make('orbit.empty.event_translation');
 
-            // Delete old event translation image
-            $pastMedia = Media::where('object_id', $event_translations->event_translation_id)
-                              ->where('object_name', 'event_translation')
-                              ->where('media_name_id', 'event_translation_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($event_translations)
@@ -2990,6 +2981,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
+
+            // Delete old event translation image
+            $pastMedia = Media::where('object_id', $event_translations->event_translation_id)
+                              ->where('object_name', 'event_translation')
+                              ->where('media_name_id', 'event_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -3087,6 +3095,7 @@ class UploadAPIController extends ControllerAPI
      * Upload image for a coupon translation (selected language).
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -3173,23 +3182,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $coupon_translations = App::make('orbit.empty.coupon_translation');
 
-            // Delete old coupon translation image
-            $pastMedia = Media::where('object_id', $coupon_translations->coupon_translation_id)
-                              ->where('object_name', 'coupon_translation')
-                              ->where('media_name_id', 'coupon_translation_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($coupon_translations)
@@ -3213,6 +3205,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
+
+            // Delete old coupon translation image
+            $pastMedia = Media::where('object_id', $coupon_translations->coupon_translation_id)
+                              ->where('object_name', 'coupon_translation')
+                              ->where('media_name_id', 'coupon_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -3310,6 +3319,7 @@ class UploadAPIController extends ControllerAPI
      * Upload logo for Tenant.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -3392,23 +3402,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.tenant');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_logo');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($merchant)
@@ -3429,6 +3422,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -3692,6 +3702,7 @@ class UploadAPIController extends ControllerAPI
      * Upload images for Tenant.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -3775,6 +3786,27 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.tenant');
 
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($merchant)
+            {
+                $merchant_id = $merchant->merchant_id;
+                $slug = Str::slug($merchant->name);
+                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadtenantimage.before.save', array($this, $merchant, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
                               ->where('object_name', 'retailer')
@@ -3801,27 +3833,6 @@ class UploadAPIController extends ControllerAPI
             if (count($oldMediaFiles) > 0) {
                 $pastMedia->delete();
             }
-
-            // Callback to rename the file, we will format it as follow
-            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
-            $renameFile = function($uploader, &$file, $dir) use ($merchant)
-            {
-                $merchant_id = $merchant->merchant_id;
-                $slug = Str::slug($merchant->name);
-                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
-            };
-
-            $message = new UploaderMessage([]);
-            $config = new UploaderConfig($uploadImageConfig);
-            $config->setConfig('before_saving', $renameFile);
-
-            // Create the uploader object
-            $uploader = new Uploader($config, $message);
-
-            Event::fire('orbit.upload.postuploadtenantimage.before.save', array($this, $merchant, $uploader));
-
-            // Begin uploading the files
-            $uploaded = $uploader->upload($images);
 
             // Save the files metadata
             $object = array(
@@ -4105,6 +4116,7 @@ class UploadAPIController extends ControllerAPI
      * Upload map for Tenant.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -4188,23 +4200,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.tenant');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_map');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($merchant)
@@ -4225,6 +4220,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_map');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -4496,6 +4508,7 @@ class UploadAPIController extends ControllerAPI
      * Upload background mobile page for Mall.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
@@ -4579,23 +4592,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.tenant');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_background');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($merchant)
@@ -4614,8 +4610,25 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadmallbackground.before.save', array($this, $merchant, $uploader));
 
-            // Begin uploading the files
+            // Begin uploading the files, if upload failed
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_background');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -4913,6 +4926,8 @@ class UploadAPIController extends ControllerAPI
 
     /**
      * Upload logo for Mall.
+     *
+     * @author Firmansyah <firmansyah@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
@@ -5318,6 +5333,7 @@ class UploadAPIController extends ControllerAPI
      * Upload images for News.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -5401,23 +5417,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $news = App::make('orbit.empty.news');
 
-            // Delete old news image
-            $pastMedia = Media::where('object_id', $news->news_id)
-                              ->where('object_name', 'news')
-                              ->where('media_name_id', 'news_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($news)
@@ -5438,6 +5437,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old news image
+            $pastMedia = Media::where('object_id', $news->news_id)
+                              ->where('object_name', 'news')
+                              ->where('media_name_id', 'news_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -5803,23 +5819,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $news_translations = App::make('orbit.empty.news_translation');
 
-            // Delete old news translation image
-            $pastMedia = Media::where('object_id', $news_translations->news_translation_id)
-                              ->where('object_name', 'news_translation')
-                              ->where('media_name_id', 'news_translation_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($news_translations)
@@ -5843,6 +5842,24 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
+
+            // Delete old news translation image
+            $pastMedia = Media::where('object_id', $news_translations->news_translation_id)
+                              ->where('object_name', 'news_translation')
+                              ->where('media_name_id', 'news_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
 
             // Save the files metadata
             $object = array(
@@ -5940,6 +5957,7 @@ class UploadAPIController extends ControllerAPI
      * Upload images for Lucky Draw.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -6023,23 +6041,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $luckydraw = App::make('orbit.empty.lucky_draw');
 
-            // Delete old lucky draw image
-            $pastMedia = Media::where('object_id', $luckydraw->lucky_draw_id)
-                              ->where('object_name', 'lucky_draw')
-                              ->where('media_name_id', 'lucky_draw_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($luckydraw)
@@ -6060,6 +6061,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old lucky draw image
+            $pastMedia = Media::where('object_id', $luckydraw->lucky_draw_id)
+                              ->where('object_name', 'lucky_draw')
+                              ->where('media_name_id', 'lucky_draw_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(

@@ -3641,29 +3641,29 @@ class DashboardAPIController extends ControllerAPI
 
             $coupons = DB::table(DB::raw("
                                 (select *
-                                from (select issued_coupon_id,
-                                            issued_date,
-                                            redeemed_date,
-                                            {$prefix}promotions.promotion_name as promotion_name,
-                                            {$prefix}merchants.parent_id as mall_id,
-                                            issued.total_issued as total_issued,
-                                            count(redeem_retailer_id) as total_redeemed
-                                    from {$prefix}issued_coupons
-                                        inner join {$prefix}merchants
-                                            on {$prefix}merchants.merchant_id = {$prefix}issued_coupons.redeem_retailer_id
-                                        inner join {$prefix}promotions
-                                            on {$prefix}promotions.promotion_id = {$prefix}issued_coupons.promotion_id
-                                        left join (select ic.promotion_id,
-                                                        count(ic.promotion_id) as total_issued
-                                                    from {$prefix}issued_coupons ic
-                                                    where ic.status = 'active'
-                                                        or ic.status = 'redeemed'
-                                                    group by ic.promotion_id) issued
-                                            on issued.promotion_id = {$prefix}promotions.promotion_id
-                                    where {$prefix}merchants.parent_id = '{$configMallId}'
-                                    group by {$prefix}promotions.promotion_id
-                                    order by total_redeemed desc
-                                    limit {$take_top}) as issuedredeem) as t
+                                    from (select issued_coupon_id,
+                                                issued_date,
+                                                redeemed_date,
+                                                {$prefix}promotions.promotion_name as promotion_name,
+                                                {$prefix}merchants.parent_id as mall_id,
+                                                issued.total_issued as total_issued,
+                                                count(redeem_retailer_id) as total_redeemed
+                                        from {$prefix}issued_coupons
+                                            inner join {$prefix}merchants
+                                                on {$prefix}merchants.merchant_id = {$prefix}issued_coupons.redeem_retailer_id
+                                            inner join {$prefix}promotions
+                                                on {$prefix}promotions.promotion_id = {$prefix}issued_coupons.promotion_id
+                                            left join (select ic.promotion_id,
+                                                            count(ic.promotion_id) as total_issued
+                                                        from {$prefix}issued_coupons ic
+                                                        where ic.status = 'active'
+                                                            or ic.status = 'redeemed'
+                                                        group by ic.promotion_id) issued
+                                                on issued.promotion_id = {$prefix}promotions.promotion_id
+                                        where {$prefix}merchants.parent_id = '{$configMallId}'
+                                        group by {$prefix}promotions.promotion_id
+                                        order by total_redeemed desc
+                                        limit {$take_top}) as issuedredeem) as t
                             "));
             // Filter by mall id
             OrbitInput::get('merchant_id', function($mallId) use ($coupons) {

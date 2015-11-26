@@ -265,6 +265,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $params = ['status' => $response->status];
         if ($response->status === 'success') {
             $params['user_id'] = $response->data->user_id;
+            $params['user_status'] = $response->data->user_status;
             $params['user_detail_id'] = $response->data->user_detail_id;
             $params['apikey_id'] = $response->data->apikey_id;
             $params['user_email'] = $response->data->user_email;
@@ -299,6 +300,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $apikey_id = OrbitInput::get('apikey_id', '');
         $payload = OrbitInput::get('payload', '');
         $user_acquisition_id = OrbitInput::get('user_acquisition_id', '');
+        $user_status = OrbitInput::get('user_status', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -320,6 +322,7 @@ class IntermediateLoginController extends IntermediateBaseController
         if (!CloudMAC::validateDataFromCloud($mac, $timestamp, [
             'status' => $status,
             'user_email' => $email,
+            'user_status' => $user_status,
             'user_id' => $user_id,
             'user_detail_id' => $user_detail_id,
             'apikey_id' => $apikey_id,
@@ -350,7 +353,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 ->first();
 
             if (!isset($user)) {
-                list($user, $userdetail, $apikey) = $login->createCustomerUser($email, $user_id, $user_detail_id, $apikey_id);
+                list($user, $userdetail, $apikey) = $login->createCustomerUser($email, $user_id, $user_detail_id, $apikey_id, $user_status);
             }
 
             $acq = UserAcquisition::where('user_acquisition_id', $user_acquisition_id)
