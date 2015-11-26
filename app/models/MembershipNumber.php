@@ -39,15 +39,4 @@ class MembershipNumber extends Eloquent
         return $this->belongsTo('User', 'modified_by', 'user_id');
     }
 
-    /**
-     * Membership has many uploaded media.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function media()
-    {
-        return $this->hasMany('Media', 'object_id', 'membership_id')
-                    ->where('object_name', 'membership');
-    }
-
 }
