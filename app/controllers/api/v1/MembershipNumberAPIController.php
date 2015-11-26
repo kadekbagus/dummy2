@@ -153,9 +153,7 @@ class MembershipNumberAPIController extends ControllerAPI
                     if ($relation === 'mall') {
                         $record->with('mall');
                     } elseif ($relation === 'membership') {
-                        $record->with('membership');
-                    } elseif ($relation === 'media') {
-                        $record->with('media');
+                        $record->with('membership.media');
                     }
                 }
             });
@@ -198,9 +196,10 @@ class MembershipNumberAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'join_date'        => 'created_at',
-                    'membership_number' => 'membership_number',
-                    'status'           => 'status'
+                    'join_date'         => 'membership_numbers.join_date',
+                    'membership_name'   => 'membership.membership_name',
+                    'membership_number' => 'membership_numbers.membership_number',
+                    'status'            => 'membership_numbers.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
