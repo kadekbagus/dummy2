@@ -219,7 +219,7 @@ return array(
     'coupon'         => array(
         'tenant_based'                     => 'テナント基づい',
         'mall_based'                       => 'モールベース',
-        'tenant_redeem'                    => 'ja : Where to Reedem',
+        'tenant_redeem'                    => 'テナントの取り戻す',
         'coupon_value'                     => 'クーポンの価値',
         'use_coupon'                       => 'クーポンを使用する',
         'enter_tenant_verification_number' => 'テナント確認番号を入力してください',

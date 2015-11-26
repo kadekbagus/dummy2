@@ -3435,9 +3435,21 @@ class UserAPIController extends ControllerAPI
         // Check user email address, it should not exists
         Validator::extend('email_exists_but_me', function ($attribute, $value, $parameters) {
             $user_id = OrbitInput::post('user_id');
+            $from = OrbitInput::post('from');
+            $role_name = '';
+
+            if ($from === 'cs') {
+                $role_name = 'Consumer';
+            }
+
             $user = User::excludeDeleted()
-                        ->where('user_email', $value)
                         ->where('user_id', '!=', $user_id)
+                        ->where('user_email', '=', $value)
+                        ->where('user_role_id', '=', function($q) use ($role_name) {
+                            $q->select('role_id')
+                                ->from('roles')
+                                ->where('role_name', $role_name);
+                        })
                         ->first();
 
             if (! empty($user)) {

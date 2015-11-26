@@ -12,7 +12,7 @@
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">
                             @if(!empty($coupon->promo_image))
-                            <a href="{{ asset($coupon->promo_image) }}" data-featherlight="image" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($coupon->promo_image) }}"></a>
+                            <a href="{{ asset($coupon->promo_image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($coupon->promo_image) }}"></a>
                             @else
                             <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                             @endif

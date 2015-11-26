@@ -1206,6 +1206,9 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 $activityCouponIssued = Activity::mobileci()
                                                 ->setActivityType('view');
                 $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+
+                $activityCouponIssued->location_id = $mallId;
+
                 $activityCouponIssued->setUser($customer)
                                      ->setActivityName('view_coupon_list')
                                      ->setActivityNameLong('Coupon Issuance')

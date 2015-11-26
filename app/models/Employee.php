@@ -28,11 +28,6 @@ class Employee extends Eloquent
         return $this->hasOne('UserDetail', 'user_id', 'user_id');
     }
 
-    public function userVerificationNumber()
-    {
-        return $this->hasOne('UserVerificationNumber', 'user_id', 'user_id');
-    }
-
     /**
      * Employee could belongs to and has many retailers
      */
