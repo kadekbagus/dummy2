@@ -274,6 +274,11 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons->where('promotions.end_date', '>=', $date);
             });
 
+            // Greater Than Equals
+            OrbitInput::get('cs', function($cs) use ($coupons) {
+                $coupons->where('redeem_retailer_id', '=', $cs);
+            });
+
             // Clone the query builder which still does not include the take,
             $_coupons = clone $coupons;
 
