@@ -2563,12 +2563,8 @@ class UserAPIController extends ControllerAPI
             $updateduser = App::make('orbit.empty.user');
             $userdetail = $updateduser->userdetail;
 
-            // if param membership_number is not being sent, then will not enter validation and the class will not exists
-            try {
-                $membershipNumbers = App::make('membership_number_exists_but_me');
-            } catch (Exception $e) {
-                $membershipNumbers = null;
-            }
+            $membershipCard = App::make('orbit.empty.mall_have_membership_card');
+            $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
 
             OrbitInput::post('email', function($email) use ($updateduser) {
                 $updateduser->username = $email;
@@ -2657,8 +2653,6 @@ class UserAPIController extends ControllerAPI
             /**
              * create/update membership number
              */
-            $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-
             if ($membershipNumbers->first()) {
                 // update
                 $m = $membershipNumbers->first();
@@ -2675,8 +2669,8 @@ class UserAPIController extends ControllerAPI
                 $m->save();
             } else {
                 // create
-                // create if only param membership_number is being sent
-                if (trim($membershipNumberCode) !== '') {
+                // create if only param membership_number or join_date is being sent
+                if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
                     $m = new MembershipNumber();
                     $m->membership_id = $membershipCard->membership_id;
                     $m->user_id = $updateduser->user_id;
@@ -2693,14 +2687,15 @@ class UserAPIController extends ControllerAPI
             $updateduser->save();
             $userdetail->save();
 
-            $updateduser->membership_number = $membershipNumberCode;
-            if (empty($join_date)) {
-                $updateduser->join_date = '0000-00-00 00:00:00';
+            $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
+            if ($membershipNumbers->first()) {
+                $updateduser->membership_number = $membershipNumbers->first()->membership_number;
+                $updateduser->join_date  = $membershipNumbers->first()->join_date;
             } else {
-                $updateduser->join_date = $join_date . ' 00:00:00';
+                $updateduser->membership_number = null;
+                $updateduser->join_date  = '0000-00-00 00:00:00';
             }
 
-            $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
             $updateduser->membership_numbers = $membershipNumbers;
 
             // save user categories
