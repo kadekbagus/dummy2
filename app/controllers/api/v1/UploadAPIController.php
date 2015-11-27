@@ -6410,7 +6410,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $mallId = OrbitInput::post('mall_id');
+            $membership_id = OrbitInput::post('membership_id');
             $images = OrbitInput::files($elementName);
 
             $messages = array(
@@ -6421,12 +6421,12 @@ class UploadAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'mall_id'           => $mallId,
-                    $elementName        => $images,
+                    'membership_id'        => $membership_id,
+                    $elementName           => $images,
                 ),
                 array(
-                    'mall_id'           => 'required|orbit.empty.mall',
-                    $elementName        => 'required|array|nomore.than.three',
+                    'membership_id'        => 'required|orbit.empty.membership',
+                    $elementName           => 'required|array|nomore.than.three',
                 ),
                 $messages
             );
@@ -6445,32 +6445,9 @@ class UploadAPIController extends ControllerAPI
             }
             Event::fire('orbit.upload.postuploadmembershipimage.after.validation', array($this, $validator));
 
-            /*
-             * Get membership card id based on mall id
-             */
-            // get user mall_ids
-            $listOfMallIds = $user->getUserMallIds($mallId);
-            if (empty($listOfMallIds)) { // invalid mall id
-                $errorMessage = 'Invalid mall id.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            $membershipCard = Membership::active()
-                                        ->whereIn('merchant_id', $listOfMallIds)
-                                        ->first();
-
-            // create membership card if not exists
-            if (empty($membershipCard)) {
-                // create
-                $membershipCard = new Membership();
-                $membershipCard->merchant_id = $mallId;
-                $membershipCard->membership_name = 'Standard Card';
-                $membershipCard->status = 'active';
-                $membershipCard->created_by = $user->user_id;
-                $membershipCard->save();
-            }
-
-            $membership = $membershipCard;
+            // We already had Membership instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $membership = App::make('orbit.empty.membership');
 
             // Delete old membership image
             $pastMedia = Media::where('object_id', $membership->membership_id)
