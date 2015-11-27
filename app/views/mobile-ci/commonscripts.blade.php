@@ -112,8 +112,11 @@
               });
             }
         };
-        run();
-        setInterval(run, 5000);
+
+        @if (Config::get('orbit.shop.offline_check.enable'))
+            run();
+            setInterval(run, {{ Config::get('orbit.shop.offline_check.interval', 5000) }} );
+        @endif
 
         $('#barcodeBtn').click(function(){
             $('#get_camera').click();
@@ -152,28 +155,51 @@
             $('#multi-language-popup').modal();
         });
     });
-    
+
     // pinch zoom using hammerjs
     $(document).on('click', '.zoomer', function(){
+        function scaletime (scale, x, y) {
+            var transforms = [];
+            transforms.push('scale('+scale+')');
+            transforms.push('translate('+x+'px,'+y+'px)');
+            $('.featherlight-content img').css("transform", transforms.join(' '));
+        }
+
+        function resetImage() {
+            if($(window).height() < $(window).width()) {
+                $('.featherlight-content img').css({
+                    'height': '100%',
+                    'width': 'auto'
+                });
+            } else {
+                $('.featherlight-content img').css({
+                    'height': 'auto',
+                    'width': '100%' 
+                });
+            }
+        }
+
         setTimeout(function(){
+            resetImage();
+            var currentmodal = $.featherlight.current();
+            
             $("body").addClass("modal-open");
-            var el = $('.featherlight-content').get(0).getElementsByTagName("img")[0];
-            el.addEventListener('touchstart', function (e) {
-                e.preventDefault()
-            });
+            var el = $('.featherlight-content').get(0);
 
             var mc = new Hammer.Manager(el);
             var pinch = new Hammer.Pinch();
             var pan = new Hammer.Pan();
             var tap = new Hammer.Tap();
+            var doubletap = new Hammer.Tap({event: 'doubletap', taps: 2 });
 
             pinch.recognizeWith(pan);
-            mc.add([pinch, pan, tap]);
+            doubletap.recognizeWith(tap);
+            mc.add([pinch, pan, tap, doubletap]);
 
             var initialScale = 1;
             var initialDeltaX = 0;
             var initialDeltaY = 0;
-            
+
             var adjustScale = 1;
             var adjustDeltaX = 0;
             var adjustDeltaY = 0;
@@ -182,7 +208,8 @@
             var currentDeltaX = null;
             var currentDeltaY = null;
 
-            mc.on("pinch pan tap", function(ev) {
+            mc.on("pinch pan tap swipe", function(ev) {
+                ev.preventDefault();
                 var transforms = [];
 
                 // Adjusting the current pinch/pan event properties using the previous ones set when they finished touching
@@ -190,13 +217,17 @@
                 currentDeltaX = adjustDeltaX + (ev.deltaX / currentScale);
                 currentDeltaY = adjustDeltaY + (ev.deltaY / currentScale);
 
-                // Concatenating and applying parameters.
-                transforms.push('scale('+currentScale+')');
-                transforms.push('translate('+currentDeltaX+'px,'+currentDeltaY+'px)');
-                $('.featherlight-content img').css("transform", transforms.join(' '));
+                if(currentScale > initialScale) {
+                    $('.featherlight-content img').css({
+                        'height': '',
+                        'width': '' 
+                    });
+                    scaletime(currentScale, currentDeltaX, currentDeltaY);
+                }
             });
 
             mc.on("panend pinchend", function (ev) {
+                ev.preventDefault();
                 var transforms = [];
                 var afterScale = adjustScale * ev.scale;
                 if(afterScale > initialScale) { // Saving the final transforms for adjustment next time the user interacts.
@@ -207,16 +238,44 @@
                     adjustScale = initialScale;
                     adjustDeltaX = initialDeltaX;
                     adjustDeltaY = initialDeltaY;
-                    transforms.push('scale('+initialScale+')');
-                    transforms.push('translate('+initialDeltaX+'px,'+initialDeltaY+'px)');
-                    $('.featherlight-content img').css("transform", transforms.join(' '));
+                    console.log('x');
+                    resetImage();
+                    scaletime(initialScale, initialDeltaX, initialDeltaY);
                 }
             });
 
-        }, 300);
+            mc.on("tap doubletap", function(ev) {
+                console.log('xx');
+                currentmodal.close();
+            });
+
+            // mc.on("pandown swipedown", function(ev) {
+                
+            //     // if($('.featherlight-content img').)
+            // });
+        }, 0);
     });
 
     $(document).on('click', '.featherlight-close', function(){
         $("body").removeClass("modal-open");
+    });
+
+    $(window).on('resize', function(){
+        //reset the image transform
+        var transforms = [];
+        transforms.push('scale(1)');
+        transforms.push('translate(0px,0px)');
+        $('.featherlight-content img').css("transform", transforms.join(' '));
+        if($(window).height() < $(window).width()) {
+            $('.featherlight-image').css({
+                'height': '100%',
+                'width': 'auto'
+            });
+        } else {
+            $('.featherlight-image').css({
+                'height': 'auto',
+                'width': '100%' 
+            });
+        }
     });
 </script>

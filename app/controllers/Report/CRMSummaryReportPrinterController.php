@@ -43,14 +43,17 @@ class CRMSummaryReportPrinterController extends DataPrinterController
             $dateRange[] = $date->format("Y-m-d");
         }
 
-        $activities = DB::select(DB::raw("
+        $activities = DB::select( DB::raw("
 					select date_format(convert_tz(created_at, '+00:00', '" . $timezoneOffset . "'), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
 					from {$tablePrefix}activities
 					-- filter by date
-					where `group` = 'mobile-ci' or (`group` = 'portal' and activity_type in ('activation')) and response_status = 'OK' and location_id = '" . $current_mall . "'
-					and created_at between '" . $start_date . "' and '" . $end_date . "'
+					where `group` = 'mobile-ci'
+					    or (`group` = 'portal' and activity_type in ('activation'))
+					    or (`group` = 'cs-portal' and activity_type in ('registration'))
+					    and response_status = 'OK' and location_id = '" . $current_mall . "'
+					    and created_at between '" . $start_date . "' and '" . $end_date . "'
 					group by 1, 2;
-                "));
+                ") );
 
         $responses = [];
 
@@ -85,7 +88,6 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         }
 
         $activity_columns  = Config::get('orbit.activity_columns');
-
         $columns = [];
 
         $i = 0;
@@ -116,6 +118,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
             $i++;
         }
 
+        ksort($data);
+
         // special for export csv
         $data2 = $data;
         foreach ($data as $x => $y) {
@@ -130,7 +134,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'CRM Summary List', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'CRM Summary', '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
@@ -211,4 +215,6 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         }
         return false;
     }
+
+
 }
