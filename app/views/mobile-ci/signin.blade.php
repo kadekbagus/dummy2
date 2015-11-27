@@ -24,9 +24,19 @@
   @endif
 @endif
 </style>
+<script type="text/javascript">
+
+</script>
 @stop
 
 @section('content')
+@if (Config::get('orbit.shop.guest_mode') && empty($user_email))
+    <div class="loaders" style="z-index:99999;width:100%;height:100%;position:absolute;left:0;top:0;background:#fff">
+        <div style="width:48px;height:48px;position:absolute;left:50%;top:50%;margin-left:-24px;margin-top:-24px;color:#aeaeae;font-size:48px">
+            <i class="fa fa-circle-o-notch fa-spin"></i>
+        </div>
+    </div>
+@endif
 <div class="row" id="signIn">
     <div class="col-xs-12">
         <header>
@@ -100,9 +110,11 @@
             </form>
         </div>
     </div>
+    @if (! Config::get('orbit.shop.guest_mode'))
     <div class="col-xs-12 text-center vertically-spaced orbit-auto-login">
         <a id="notMe">{{ Lang::get('mobileci.signin.not') }} <span class="signedUser">{{{ $user_email or '' }}}</span><span class="userName">{{{ $display_name or '' }}}</span>, {{ Lang::get('mobileci.signin.click_here') }}.</a>
     </div>
+    @endif
 </div>
 @stop
 
@@ -329,7 +341,20 @@
                 if (get('from_captive') == 'yes') {
                     afterLogin(xhr);
                 } else {
-                    window.location.replace('{{ $landing_url }}');
+                    // @Todo: Replace the hardcoded name
+                    session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
+                    var landing_url = '{{ $landing_url }}';
+
+                    if (session_id) {
+                        if (landing_url.indexOf('orbit_session=') < 0) {
+                            // orbit_session= is not exists, append manually
+                            landing_url += '&orbit_session=' + session_id;
+                        } else {
+                            landing_url = landing_url.replace(/orbit_session=(.*)$/, 'orbit_session=' + session_id);
+                        }
+                    }
+
+                    window.location.replace(landing_url);
                 }
             }
         }).fail(function(data) {
@@ -339,6 +364,14 @@
             $('#errorModal').modal();
         });
     }
+
+    @if (Config::get('orbit.shop.guest_mode'))
+    var user_em = '{{ strtolower($user_email) }}';
+    if (user_em == '') {
+        term_accepted = true;
+        callLoginAPI();
+    }
+    @endif
 
     $(document).ready(function() {
       var em;
