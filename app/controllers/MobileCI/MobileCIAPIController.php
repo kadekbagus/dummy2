@@ -86,6 +86,18 @@ class MobileCIAPIController extends ControllerAPI
             $email = trim(OrbitInput::post('email'));
             $payload = OrbitInput::post('payload');
 
+            if (Config::get('orbit.shop.guest_mode')) {
+                $guest = User::whereHas('role', function ($q) {
+                    $q->where('role_name', 'Guest');
+                })->excludeDeleted()->first();
+
+                if(! is_object($guest)) {
+                    throw new Exception('Guest user not configured properly.');
+                }
+
+                $email = $guest->user_email;
+            }
+
             if (trim($email) === '') {
                 $errorMessage = \Lang::get('validation.required', array('attribute' => 'email'));
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -542,10 +554,6 @@ class MobileCIAPIController extends ControllerAPI
             } catch (Exception $e) {
             }
 
-            // Get email from query string
-            $loggedUser = $this->getLoggedInUser();
-            $user_email = $loggedUser->user_email;
-
             // Captive Portal Apple CNA Window
             // -------------------------------
             // Payload login is set and the user is logged in, no need to ask user log in again
@@ -557,6 +565,10 @@ class MobileCIAPIController extends ControllerAPI
 
                 return Redirect::to($this->addParamsToUrl($landing_url, $internet_info));
             }
+
+            // Get email from query string
+            $loggedUser = $this->getLoggedInUser();
+            $user_email = $loggedUser->user_email;
 
             $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,

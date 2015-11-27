@@ -36,7 +36,10 @@ return array(
         'poll_interval' => 8,
 
         // config to validate if membership number have to be unique or not
-        'membership_number_unique_check' => false
+        'membership_number_unique_check' => false,
+
+        //guest mode
+        'guest_mode' => false
     ),
 
     // General contact data
@@ -2303,7 +2306,7 @@ return array(
         'Event Click'                   => 'Event Click',
         'View Coupon List'              => 'View Coupon List',
         'View Coupon Detail'            => 'View Coupon Detail',
-        'Coupon Redemption Successful'  => 'Redeem Coupon OK',
+        'Coupon Redemption Successful'  => 'Coupon Redemption (Successful)',
         'Coupon Issuance'               => 'Coupon Issuance',
         'View Events Tenant List'       => 'View Events Tenant List',
         'View News List'                => 'View News List',
