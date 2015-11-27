@@ -3119,7 +3119,7 @@ class UserAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
-                    'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
+                    'email'                 => 'required|email|orbit.email.checker.mxrecord|orbit.email.exists:' . $retailer_id,
                     'from'                  => 'in:cs',
                 )
             );
