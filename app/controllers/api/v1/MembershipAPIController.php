@@ -809,6 +809,8 @@ class MembershipAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'mall') {
                         $record->with('mall');
+                    } elseif ($relation === 'media') {
+                        $record->with('media');
                     }
                 }
             });
