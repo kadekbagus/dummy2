@@ -136,7 +136,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
             $activities->where('activities.module_name', 'like', "%{$name}%");
         });
 
-        // Filter by merchant ids (mall)
+        // Filter by merchant ids
         OrbitInput::get('merchant_ids', function($merchantIds) use ($activities) {
             $activities->whereIn('activities.location_id', $merchantIds);
         });
@@ -167,11 +167,16 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 $activities->whereIn('activities.group', $groups);
             });
         } else {
-            $activities->where(function($q) {
+            $activities->where(function($q) use ($prefix) {
                 $q->whereIn('activities.group', ['mobile-ci', 'pos'])
                   ->orWhere(function($q) {
                         $q->where('activities.activity_name', 'registration_ok')
                           ->where('activities.group', 'cs-portal');
+                  })
+                  ->orWhere(function($q) use ($prefix) {
+                        $q->where('activities.activity_name', 'activation_ok')
+                          ->where('activities.activity_name_long', 'Customer Activation')
+                          ->where('activities.group', 'portal');
                   });
                 });
         }

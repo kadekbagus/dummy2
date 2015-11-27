@@ -1763,6 +1763,7 @@ class CouponAPIController extends ControllerAPI
      * POST - Redeem Coupon for retailer/tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
