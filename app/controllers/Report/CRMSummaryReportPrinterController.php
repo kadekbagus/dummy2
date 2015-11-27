@@ -4,6 +4,7 @@ use Config;
 use DB;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
+use OrbitShop\API\v1\OrbitShopAPI;
 use Mall;
 use DateTime;
 use DateTimeZone;
@@ -24,6 +25,17 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         $current_mall = OrbitInput::get('current_mall');
         $start_date = OrbitInput::get('start_date');
         $end_date = OrbitInput::get('end_date');
+
+        // check if the days is more than 7 or not
+        $_startDate = strtotime($start_date);
+        $_endDate = strtotime($end_date);
+        $dateDiff = $_startDate - $_endDate;
+        $days = abs(floor($dateDiff/(60*60*24)));
+
+        if ( $days > 7 ) {
+            $errorMessage = 'Date cannot be more than 7 days';
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
 
         $timezone = $this->getTimezone($current_mall);
         $timezoneOffset = $this->getTimezoneOffset($timezone);
@@ -54,6 +66,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 					    and created_at between ? and ?
 					group by 1, 2;
                 ", array($timezoneOffset, $current_mall, $start_date, $end_date));
+
 
         $responses = [];
 
@@ -111,14 +124,15 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
             foreach ($columns as $keyA => $valueA) {
                 $index = $this->in_array_r($value, 'name', $valueA['value']);
-                //$data[$i][$valueA['order']] = $index ? $value[$index]['count'] : 0;
-                $data[$key][$valueA['label']] = $index ? $value[$index]['count'] : 0;
+                $data[$i][$valueA['order']] = $index > -1 ? $value[$index]['count'] : 0;
             }
 
             $i++;
         }
 
-        ksort($data);
+        usort($dates, function($a, $b) {
+            return strtotime($a['label']) - strtotime($b['label']);
+        });
 
         // special for export csv
         $data2 = $data;
@@ -138,26 +152,29 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-                    'Date', 'Email Sign Up', 'Facebook Sign Up', 'Sign In', 'Sign Up via CS', 'Customer Activation',
-                    'Network Check In', 'Network Check Out', 'Sign Out', 'View (Home Page)','Event View (Pop Up)',
-                    'Event Click','View Coupon List','View Coupon Detail','Coupon Redemption Successful',
-                    'Coupon Issuance','View Events Tenant List','View News List','View News Detail','View News Tenant List',
-                    'View Promotion List','View Promotion Detail','View Promotion Tenant List','View Tenant Detail',
-                    'Widget Click Tenant','Widget Click News','Widget Click Promotion','Widget Click Coupon'
-                    );
+                printf("Date,");
+                foreach ($columns as $x => $y) {
+                    if ($x > 0) {
+                        printf(",");
+                    }
+                    printf("\"%s\"", $y['label']);
+                    if (count($columns) - 1 === $x) {
+                        printf("\n");
+                    }
+                }
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
-                foreach ($data2 as $x => $y) {
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                        $this->printDateTime($data2[$x]['date'], 'd/m/Y'), $data2[$x]['Email Sign Up'], $data2[$x]['Facebook Sign Up'],
-                        $data2[$x]['Sign In'], $data2[$x]['Sign Up via CS'], $data2[$x]['Customer Activation'], $data2[$x]['Network Check In'],
-                        $data2[$x]['Network Check Out'], $data2[$x]['Sign Out'], $data2[$x]['View (Home Page)'], $data2[$x]['Event View (Pop Up)'],
-                        $data2[$x]['Event Click'], $data2[$x]['View Coupon List'], $data2[$x]['View Coupon Detail'], $data2[$x]['Coupon Redemption Successful'],
-                        $data2[$x]['Coupon Issuance'], $data2[$x]['View Events Tenant List'], $data2[$x]['View News List'], $data2[$x]['View News Detail'],
-                        $data2[$x]['View News Tenant List'], $data2[$x]['View Promotion List'], $data2[$x]['View Promotion Detail'], $data2[$x]['View Promotion Tenant List'],
-                        $data2[$x]['View Tenant Detail'], $data2[$x]['Widget Click Tenant'], $data2[$x]['Widget Click News'], $data2[$x]['Widget Click Promotion'], $data2[$x]['Widget Click Coupon']
-                    );
+                foreach ($dates as $x => $y) {
+                        printf("%s,", $this->printDateTime($y['label'], 'd/m/Y'));
+                        foreach ($columns as $i => $j) {
+                            if ($i > 0) {
+                                printf(",");
+                            }
+                            printf("%s", $data[$y['order']][$j['order']]);
+                            if (count($columns) - 1 === $i ) {
+                                printf("\n");
+                            }
+                        }
                 }
 
                 break;

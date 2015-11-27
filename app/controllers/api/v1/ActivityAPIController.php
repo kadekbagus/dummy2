@@ -3086,8 +3086,6 @@ class ActivityAPIController extends ControllerAPI
                 $responses[$dateRange2[$x]] = array();
             }
 
-            ksort($responses);
-
             $records['records'] = $responses;
 
             $this->response->data = $records;
