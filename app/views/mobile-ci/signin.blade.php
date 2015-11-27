@@ -346,7 +346,7 @@
                     var landing_url = '{{ $landing_url }}';
 
                     if (session_id) {
-                        if (landing_url.indexOf('orbit_session=') > 0) {
+                        if (landing_url.indexOf('orbit_session=') < 0) {
                             // orbit_session= is not exists, append manually
                             landing_url += '&orbit_session=' + session_id;
                         } else {
