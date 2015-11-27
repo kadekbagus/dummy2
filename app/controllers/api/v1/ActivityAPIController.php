@@ -2292,7 +2292,7 @@ class ActivityAPIController extends ControllerAPI
             OrbitInput::get('sign_up_method', function ($sign_up_method) use (&$binds, &$sign_up_method_condition) {
                 if ($sign_up_method === 'facebook') {
                     $sign_up_method_condition = ' and (registration.registration = :sign_up_method) ';
-                    $binds['sign_up_method'] = 'Sign up via mobile (Facebook)';
+                    $binds['sign_up_method'] = 'Sign Up via Mobile (Facebook)';
                 } else if ($sign_up_method === 'email') {
                     $sign_up_method_condition = ' and ((registration.registration = :sign_up_method_1) OR (registration.registration = :sign_up_method_2))';
                     $binds['sign_up_method_1'] = 'Sign Up with email address';
@@ -2941,6 +2941,203 @@ class ActivityAPIController extends ControllerAPI
     }
 
 
+    /**
+     * GET - CRM summary report
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`   (required) - mall id
+     * @param date    `start_date`    (required) - start date
+     * @param date    `end_date`      (required) - end date
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCRMSummaryReport()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.auth', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ),
+                array(
+                    'current_mall' => 'required',
+                    'start_date' => 'required',
+                    'end_date' => 'required',
+                )
+            );
+
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ( $validator->fails() ) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.validation', array($this, $validator));
+
+            // start date cannot be bigger than end date
+            if ( $start_date > $end_date ) {
+                $errorMessage = 'Start date should be smaller than end date';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // check if the days is more than 7 or not
+            $_startDate = strtotime($start_date);
+            $_endDate = strtotime($end_date);
+            $dateDiff = $_startDate - $_endDate;
+            $days = abs(floor($dateDiff/(60*60*24)));
+
+            if ( $days > 7 ) {
+                $errorMessage = 'Date cannot be more than 7 days';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Check interval
+            $begin = new DateTime($start_date);
+            $endtime = new DateTime($end_date);
+            // Plus one day endtime
+            $end = $endtime->add(new DateInterval('P1D'));
+
+            // get periode per 1 day
+            $interval = DateInterval::createFromDateString('1 day');
+            $_dateRange = new DatePeriod($begin, $interval, $end);
+
+            $dateRange = [];
+
+            foreach ( $_dateRange as $date ) {
+                $dateRange[] = $date->format("Y-m-d");
+            }
+
+            $tablePrefix = DB::getTablePrefix();
+
+            $activities = DB::select( DB::raw("
+					select date_format(created_at, '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
+					from {$tablePrefix}activities
+					-- filter by date
+					where `group` = 'mobile-ci' and response_status = 'OK' and location_id = '" . $current_mall . "'
+					and created_at between '" . $start_date . "' and '" . $end_date ."'
+					group by 1, 2;
+                ") );
+
+            $responses = [];
+            $records = [];
+
+            // get column name from config
+            $records['columns'] = Config::get('orbit.activity_columns');
+
+            foreach ( $dateRange as $key => $value ) {
+
+                foreach ( $activities as $x => $y ) {
+                    if ( $y->activity_date === $value ) {
+
+                        $date = [];
+                        $date['name'] = $y->activity_name_long;
+                        $date['count'] = $y->count;
+
+                        $responses[$value][] = $date;
+                    }
+                }
+            }
+
+            // if there is date that have no data
+            $dateRange2 = $dateRange;
+
+            foreach ($responses as $a => $b) {
+                $length = count($dateRange);
+                for ($i = 0; $i < $length; $i++) {
+                    if ($a===$dateRange[$i]) {
+                        unset($dateRange2[$i]);
+                    }
+                }
+            }
+
+            foreach ($dateRange2 as $x => $y) {
+                $responses[$dateRange2[$x]] = array();
+            }
+
+            $records['records'] = $responses;
+
+            $this->response->data = $records;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getcrmsummaryreport.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getcrmsummaryreport.before.render', array($this, &$output));
+
+        return $output;
+    }
 
     protected function registerCustomValidation()
     {
