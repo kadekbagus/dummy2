@@ -101,29 +101,29 @@ class DashboardAPIController extends ControllerAPI
             $activities = DB::table('activities')
                 ->join('merchants', "activities.object_id", '=', "merchants.merchant_id")
                 ->select(
-                    DB::raw("{$tablePrefix}activities.object_id as tenant_id"),
-                    DB::raw("COUNT({$tablePrefix}activities.activity_id) as score"),
-                    DB::raw("{$tablePrefix}merchants.name as tenant_name"),
+                    DB::raw("{$tablePrefix}activities.object_id AS tenant_id"),
+                    DB::raw("COUNT({$tablePrefix}activities.activity_id) AS score"),
+                    DB::raw("{$tablePrefix}merchants.name AS tenant_name"),
                     DB::raw("
-                                count({$tablePrefix}activities.activity_id) / (
-                                        SELECT count({$tablePrefix}activities.activity_id) FROM {$tablePrefix}activities
-                                    where 1=1
-                                    and activity_name = 'view_retailer'
-                                    and activity_type = 'view'
-                                    and object_name = 'Tenant'
-                                    and `group` = 'mobile-ci'
-                                    and role = 'Consumer'
-                                    and location_id = '" . $merchant_id . "'
-                                    and DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
-                                    and DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
-                                )*100 as percentage
+                                COUNT({$tablePrefix}activities.activity_id) / (
+                                        SELECT COUNT({$tablePrefix}activities.activity_id) FROM {$tablePrefix}activities
+                                    WHERE 1=1
+                                    AND activity_name = 'view_retailer'
+                                    AND activity_type = 'view'
+                                    AND object_name = 'Tenant'
+                                    AND `group` = 'mobile-ci'
+                                    AND (role = 'Consumer' OR role = 'Guest')
+                                    AND location_id = '" . $merchant_id . "'
+                                    AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
+                                    AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
+                                )*100 AS percentage
                         ")
                 )
                 ->where("activities.activity_name", '=', 'view_retailer')
                 ->where("activities.activity_type", '=', 'view')
                 ->where("activities.object_name", '=', 'Tenant')
                 ->where("activities.group", '=', 'mobile-ci')
-                ->where("activities.role", '=', 'Consumer')
+                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                 ->where("activities.location_id", '=', $merchant_id)
                 ->where("activities.created_at", '>=', $start_date)
                 ->where("activities.created_at", '<=', $end_date)
@@ -289,7 +289,7 @@ class DashboardAPIController extends ControllerAPI
                                 where ac.module_name = 'News'
                                 and ac.activity_name = 'view_news'
                                 and ac.activity_type = 'view'
-                                and ac.role = 'Consumer'
+                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
                                 and ac.group = 'mobile-ci'
                                 and ac.location_id = '{$merchant_id}'
                                 and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
@@ -305,7 +305,6 @@ class DashboardAPIController extends ControllerAPI
                             $join->where('activities.activity_name', '=', 'view_news');
                             $join->where('activities.module_name', '=', 'News');
                             $join->where('activities.activity_type', '=', 'view');
-                            $join->where('activities.role', '=', 'Consumer');
                             $join->where('activities.group', '=', 'mobile-ci');
                             $join->where('activities.location_id', '=', $merchant_id);
                             $join->where("activities.created_at", '>=', $start_date);
@@ -330,7 +329,7 @@ class DashboardAPIController extends ControllerAPI
                                 where ac.module_name = 'Event'
                                 and ac.activity_name = 'event_view'
                                 and ac.activity_type = 'view'
-                                and ac.role = 'Consumer'
+                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
                                 and ac.group = 'mobile-ci'
                                 and ac.location_id = '{$merchant_id}'
                                 and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
@@ -345,7 +344,6 @@ class DashboardAPIController extends ControllerAPI
                             $join->where('activities.activity_name', '=', 'event_view');
                             $join->where('activities.module_name', '=', 'Event');
                             $join->where('activities.activity_type', '=', 'view');
-                            $join->where('activities.role', '=', 'Consumer');
                             $join->where('activities.group', '=', 'mobile-ci');
                             $join->where('activities.location_id', '=', $merchant_id);
                             $join->where("activities.created_at", '>=', $start_date);
@@ -370,7 +368,7 @@ class DashboardAPIController extends ControllerAPI
                                 where ac.module_name = 'Promotion'
                                 and ac.activity_name = 'view_promotion'
                                 and ac.activity_type = 'view'
-                                and ac.role = 'Consumer'
+                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
                                 and ac.group = 'mobile-ci'
                                 and ac.location_id = '{$merchant_id}'
                                 and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
@@ -386,7 +384,6 @@ class DashboardAPIController extends ControllerAPI
                             $join->where('activities.activity_name', '=', 'view_promotion');
                             $join->where('activities.module_name', '=', 'Promotion');
                             $join->where('activities.activity_type', '=', 'view');
-                            $join->where('activities.role', '=', 'Consumer');
                             $join->where('activities.group', '=', 'mobile-ci');
                             $join->where('activities.location_id', '=', $merchant_id);
                             $join->where("activities.created_at", '>=', $start_date);
@@ -526,21 +523,21 @@ class DashboardAPIController extends ControllerAPI
                             ->where('activities.activity_name', '=', 'view_news')
                             ->where('activities.module_name', '=', 'News')
                             ->where('activities.activity_type', '=', 'view')
-                            ->where('activities.role', '=', 'Consumer')
+                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
             $events = Activity::select(DB::raw("count(distinct activity_id) as total"))
                             ->where('activities.activity_name', '=', 'event_view')
                             ->where('activities.module_name', '=', 'Event')
                             ->where('activities.activity_type', '=', 'view')
-                            ->where('activities.role', '=', 'Consumer')
+                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
             $promotions = Activity::select(DB::raw("count(distinct activity_id) as total"))
                             ->where('activities.activity_name', '=', 'view_promotion')
                             ->where('activities.module_name', '=', 'Promotion')
                             ->where('activities.activity_type', '=', 'view')
-                            ->where('activities.role', '=', 'Consumer')
+                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
             // for now lucky draws is not count
@@ -767,7 +764,7 @@ class DashboardAPIController extends ControllerAPI
                                 ->where('activities.activity_name', '=', 'view_news')
                                 ->where('activities.module_name', '=', 'News')
                                 ->where('activities.activity_type', '=', 'view')
-                                ->where('activities.role', '=', 'Consumer')
+                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                                 ->where('activities.group', '=', 'mobile-ci')
                                 ->where('activities.location_id', '=', $merchant_id)
                                 ->where('activities.object_id', '=', $object_id)
@@ -796,7 +793,7 @@ class DashboardAPIController extends ControllerAPI
                                 ->where('activities.activity_name', '=', 'event_view')
                                 ->where('activities.module_name', '=', 'Event')
                                 ->where('activities.activity_type', '=', 'view')
-                                ->where('activities.role', '=', 'Consumer')
+                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                                 ->where('activities.group', '=', 'mobile-ci')
                                 ->where('activities.location_id', '=', $merchant_id)
                                 ->where('activities.object_id', '=', $object_id)
@@ -825,7 +822,7 @@ class DashboardAPIController extends ControllerAPI
                                 ->where('activities.activity_name', '=', 'view_promotion')
                                 ->where('activities.module_name', '=', 'Promotion')
                                 ->where('activities.activity_type', '=', 'view')
-                                ->where('activities.role', '=', 'Consumer')
+                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                                 ->where('activities.group', '=', 'mobile-ci')
                                 ->where('activities.location_id', '=', $merchant_id)
                                 ->where('activities.object_id', '=', $object_id)
@@ -3644,29 +3641,29 @@ class DashboardAPIController extends ControllerAPI
 
             $coupons = DB::table(DB::raw("
                                 (select *
-                                from (select issued_coupon_id,
-                                            issued_date,
-                                            redeemed_date,
-                                            {$prefix}promotions.promotion_name as promotion_name,
-                                            {$prefix}merchants.parent_id as mall_id,
-                                            issued.total_issued as total_issued,
-                                            count(redeem_retailer_id) as total_redeemed
-                                    from {$prefix}issued_coupons
-                                        inner join {$prefix}merchants
-                                            on {$prefix}merchants.merchant_id = {$prefix}issued_coupons.redeem_retailer_id
-                                        inner join {$prefix}promotions
-                                            on {$prefix}promotions.promotion_id = {$prefix}issued_coupons.promotion_id
-                                        left join (select ic.promotion_id,
-                                                        count(ic.promotion_id) as total_issued
-                                                    from {$prefix}issued_coupons ic
-                                                    where ic.status = 'active'
-                                                        or ic.status = 'redeemed'
-                                                    group by ic.promotion_id) issued
-                                            on issued.promotion_id = {$prefix}promotions.promotion_id
-                                    where {$prefix}merchants.parent_id = '{$configMallId}'
-                                    group by {$prefix}promotions.promotion_id
-                                    order by total_redeemed desc
-                                    limit {$take_top}) as issuedredeem) as t
+                                    from (select issued_coupon_id,
+                                                issued_date,
+                                                redeemed_date,
+                                                {$prefix}promotions.promotion_name as promotion_name,
+                                                {$prefix}merchants.parent_id as mall_id,
+                                                issued.total_issued as total_issued,
+                                                count(redeem_retailer_id) as total_redeemed
+                                        from {$prefix}issued_coupons
+                                            inner join {$prefix}merchants
+                                                on {$prefix}merchants.merchant_id = {$prefix}issued_coupons.redeem_retailer_id
+                                            inner join {$prefix}promotions
+                                                on {$prefix}promotions.promotion_id = {$prefix}issued_coupons.promotion_id
+                                            left join (select ic.promotion_id,
+                                                            count(ic.promotion_id) as total_issued
+                                                        from {$prefix}issued_coupons ic
+                                                        where ic.status = 'active'
+                                                            or ic.status = 'redeemed'
+                                                        group by ic.promotion_id) issued
+                                                on issued.promotion_id = {$prefix}promotions.promotion_id
+                                        where {$prefix}merchants.parent_id = '{$configMallId}'
+                                        group by {$prefix}promotions.promotion_id
+                                        order by total_redeemed desc
+                                        limit {$take_top}) as issuedredeem) as t
                             "));
             // Filter by mall id
             OrbitInput::get('merchant_id', function($mallId) use ($coupons) {

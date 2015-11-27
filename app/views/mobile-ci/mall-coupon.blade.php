@@ -59,12 +59,14 @@
                     <p>{{{ Lang::get('mobileci.coupon.mall_based') }}}</p>
                 @endif
             </div>
+
             <div class="col-xs-12">
                 <h4>{{{ Lang::get('mobileci.coupon.tenant_redeem') }}}</h4>
                 <ul class="tenant-list">
                     @if($cso_exists)
                     <li>Customer Service</li>
                     @endif
+
                     @foreach($tenants as $tenant)
                         <li>{{ $tenant->tenant->name }}</li>
                     @endforeach
@@ -154,13 +156,6 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{{ Lang::get('mobileci.coupon.ok') }}}</button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -180,13 +175,6 @@
                         <div class="form-data">
                             <input id="issuecouponno" type="text" class="form-control text-center" style="font-size:20px;" value="" disabled>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <button type="button" id="denyCoupon" class="btn btn-info btn-block" data-dismiss="modal" disabled>{{{ Lang::get('mobileci.coupon.ok') }}}</button>
                     </div>
                 </div>
             </div>
@@ -250,12 +238,12 @@
                                     clearInterval(wait);
                                 }
                                 $('#denyCoupon').prop("disabled", false);
-                                $('#denyCoupon').html("Ok");
+                                $('#denyCoupon').html("OK");
                                 y--;
                             }, 1000);
                         });
                         $('#successCouponModal').on('hide.bs.modal', function($event){
-                            window.location.replace('mallcoupons');
+                            window.location.replace({{ json_encode(url('customer/mallcoupons')) }});
                         });
                     }else{
                         $('#wrongCouponModal').modal();

@@ -266,11 +266,16 @@ class ActivityAPIController extends ControllerAPI
                     $activities->whereIn('activities.group', $groups);
                 });
             } else {
-                $activities->where(function($q) {
+                $activities->where(function($q) use ($tablePrefix) {
                     $q->whereIn('activities.group', ['mobile-ci', 'pos'])
                       ->orWhere(function($q) {
                             $q->where('activities.activity_name', 'registration_ok')
                               ->where('activities.group', 'cs-portal');
+                      })
+                      ->orWhere(function($q) use ($tablePrefix) {
+                            $q->where('activities.activity_name', 'activation_ok')
+                              ->where('activities.activity_name_long', 'Customer Activation')
+                              ->where('activities.group', 'portal');
                       });
                     });
             }
@@ -1501,7 +1506,12 @@ class ActivityAPIController extends ControllerAPI
                 ->leftJoin('user_details', 'activities.user_id', '=', 'user_details.user_id')
                 ->select(
                     DB::raw(
-                        $this_year . ' - EXTRACT(YEAR FROM birthdate)
+                        $this_year . '
+                     -
+                    CASE
+                      WHEN EXTRACT(YEAR FROM birthdate) = 00000 THEN NULL
+                      ELSE EXTRACT(YEAR FROM birthdate)
+                    END
                      -
                     CASE
                       WHEN EXTRACT(MONTH FROM birthdate) > ' . $this_month . ' THEN 1
@@ -1511,9 +1521,15 @@ class ActivityAPIController extends ControllerAPI
                     DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'activities.user_id) as count')
                 )
                 ->where('activities.module_name', '=', 'Application')
-                ->where('activities.group', '=', 'mobile-ci')
-                ->where('activities.activity_type', '=', 'login')
-                ->where('activities.activity_name', '=', 'login_ok')
+                ->where(function($q) {
+                    $q->where('activities.group', 'mobile-ci')
+                      ->where('activities.activity_type', '=', 'login')
+                      ->where('activities.activity_name', '=', 'login_ok')
+                      ->orWhere(function($q) {
+                            $q->where('activities.activity_name', 'registration_ok')
+                              ->where('activities.group', 'cs-portal');
+                      });
+                })
                 ->where('activities.created_at', '>=', $start_date)
                 ->where('activities.created_at', '<=', $end_date)
                 ->groupBy(DB::raw('1'))
@@ -2267,7 +2283,7 @@ class ActivityAPIController extends ControllerAPI
             OrbitInput::get('sign_up_method', function ($sign_up_method) use (&$binds, &$sign_up_method_condition) {
                 if ($sign_up_method === 'facebook') {
                     $sign_up_method_condition = ' and (registration.registration = :sign_up_method) ';
-                    $binds['sign_up_method'] = 'Sign up via mobile (Facebook)';
+                    $binds['sign_up_method'] = 'Sign Up via Mobile (Facebook)';
                 } else if ($sign_up_method === 'email') {
                     $sign_up_method_condition = ' and ((registration.registration = :sign_up_method_1) OR (registration.registration = :sign_up_method_2))';
                     $binds['sign_up_method_1'] = 'Sign Up with email address';
@@ -2617,17 +2633,17 @@ class ActivityAPIController extends ControllerAPI
 
             $activities = DB::select( DB::raw("
                     SELECT DATE(created_at) as date, ROUND(avg(TIMESTAMPDIFF(MINUTE, mindate, maxdate))) as total_minutes FROM (
-                          SELECT
-                          activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
-                          MIN(created_at) mindate, MAX(created_at) maxdate
-                          FROM {$tablePrefix}activities WHERE 1=1
-                          AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                          AND location_id = '" . $current_mall . "'
-                          AND role = 'Consumer'
-                          AND session_id IS NOT NULL
-                          AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
-                          AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
-                          GROUP BY session_id
+                        SELECT
+                            activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
+                            MIN(created_at) mindate, MAX(created_at) maxdate
+                        FROM {$tablePrefix}activities WHERE 1=1
+                            AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
+                            AND location_id = '" . $current_mall . "'
+                            AND (role = 'Consumer' OR role = 'Guest')
+                            AND session_id IS NOT NULL
+                            AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
+                            AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
+                        GROUP BY session_id
                     ) as A
                     group by date
                     order by created_at asc
@@ -2827,34 +2843,33 @@ class ActivityAPIController extends ControllerAPI
                             AND created_at BETWEEN '" . $start_date . "' AND '" . $end_date . "'
                             AND location_id = '" . $current_mall . "'
                             AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                            AND role = 'Consumer'
+                            AND (role = 'Consumer' OR role = 'Guest')
                             AND session_id IS NOT NULL
                         GROUP BY session_id
                     )  as A
                 ") );
 
-            // Get different times
-            $datetime1 = new DateTime($start_date);
-            $datetime2 = new DateTime($end_date);
-
-            $interval = $datetime1->diff($datetime2);
-            $totalRangeDays = $interval->format('%a') + 1;
-
             // Re-Format for response result
             $dataArray = array();
+            $score = 0;
             for ($i=0; $i <= 23 ; $i++) {
                 $starttime = $i;
                 $endtime = $i + 1;
-                if ( $starttime < 10 ) {
+                if ($starttime < 10) {
                     $starttime = '0'.$i;
                 }
-                if ( $endtime < 10) {
+                if ($endtime < 10) {
                     $endtime = '0'.$endtime;
+                }
+
+                // handling null score
+                if ($activities[0]->$i !== null) {
+                    $score = $activities[0]->$i;
                 }
 
                 $dataArray[$i]['start_time'] = $starttime.':00';
                 $dataArray[$i]['end_time'] = $endtime.':00';
-                $dataArray[$i]['score'] = round($activities[0]->$i / $totalRangeDays, 2);
+                $dataArray[$i]['score'] = $score;
             }
 
             $this->response->data = [
@@ -2917,6 +2932,211 @@ class ActivityAPIController extends ControllerAPI
     }
 
 
+    /**
+     * GET - CRM summary report
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`   (required) - mall id
+     * @param date    `start_date`    (required) - start date
+     * @param date    `end_date`      (required) - end date
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCRMSummaryReport()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.auth', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ),
+                array(
+                    'current_mall' => 'required',
+                    'start_date' => 'required',
+                    'end_date' => 'required',
+                )
+            );
+
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ( $validator->fails() ) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.validation', array($this, $validator));
+
+            // start date cannot be bigger than end date
+            if ( $start_date > $end_date ) {
+                $errorMessage = 'Start date should be smaller than end date';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // check if the days is more than 7 or not
+            $_startDate = strtotime($start_date);
+            $_endDate = strtotime($end_date);
+            $dateDiff = $_startDate - $_endDate;
+            $days = abs(floor($dateDiff/(60*60*24)));
+
+            if ( $days > 7 ) {
+                $errorMessage = 'Date cannot be more than 7 days';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $timezone = $this->getTimezone($current_mall);
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
+            // convert to timezone
+            $begin = new DateTime($start_date, new DateTimeZone('UTC'));
+            $endtime = new DateTime($end_date, new DateTimeZone('UTC'));
+            $begin->setTimezone(new DateTimeZone($timezone));
+            $endtime->setTimezone(new DateTimeZone($timezone));
+
+            // get periode per 1 day
+            $interval = DateInterval::createFromDateString('1 day');
+            $_dateRange = new DatePeriod($begin, $interval, $endtime);
+
+            $dateRange = [];
+
+            foreach ( $_dateRange as $date ) {
+                $dateRange[] = $date->format("Y-m-d");
+            }
+
+            $tablePrefix = DB::getTablePrefix();
+
+            $activities = DB::select( DB::raw("
+					select date_format(convert_tz(created_at, '+00:00', '" . $timezoneOffset . "'), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
+					from {$tablePrefix}activities
+					-- filter by date
+					where `group` = 'mobile-ci'
+					    or (`group` = 'portal' and activity_type in ('activation'))
+					    or (`group` = 'cs-portal' and activity_type in ('registration'))
+					    and response_status = 'OK' and location_id = '" . $current_mall . "'
+					    and created_at between '" . $start_date . "' and '" . $end_date . "'
+					group by 1, 2;
+                ") );
+
+            $responses = [];
+            $records = [];
+
+            // get column name from config
+            $records['columns'] = Config::get('orbit.activity_columns');
+
+            foreach ( $dateRange as $key => $value ) {
+
+                foreach ( $activities as $x => $y ) {
+                    if ( $y->activity_date === $value ) {
+
+                        $date = [];
+                        $date['name'] = $y->activity_name_long;
+                        $date['count'] = $y->count;
+
+                        $responses[$value][] = $date;
+                    }
+                }
+            }
+
+            // if there is date that have no data
+            $dateRange2 = $dateRange;
+
+            foreach ($responses as $a => $b) {
+                $length = count($dateRange);
+                for ($i = 0; $i < $length; $i++) {
+                    if ($a === $dateRange[$i]) {
+                        unset($dateRange2[$i]);
+                    }
+                }
+            }
+
+            foreach ($dateRange2 as $x => $y) {
+                $responses[$dateRange2[$x]] = array();
+            }
+
+            ksort($responses);
+
+            $records['records'] = $responses;
+
+            $this->response->data = $records;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getcrmsummaryreport.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getcrmsummaryreport.before.render', array($this, &$output));
+
+        return $output;
+    }
 
     protected function registerCustomValidation()
     {
@@ -3025,6 +3245,22 @@ class ActivityAPIController extends ControllerAPI
 
     public function setReturnQuery($bool) {
         $this->returnQuery = $bool;
+    }
+
+    public function getTimezone($current_mall)
+    {
+        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+            ->where('merchants.merchant_id','=', $current_mall)
+            ->first();
+
+        return $timezone->timezone_name;
+    }
+
+    public function getTimezoneOffset($timezone)
+    {
+        $dt = new DateTime('now', new DateTimeZone($timezone));
+
+        return $dt->format('P');
     }
 
 }

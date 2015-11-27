@@ -18,3 +18,4 @@ Route::get('/app/v1/activity/captive-report', 'IntermediateAuthController@Activi
 Route::get('/app/v1/activity/connected-now-statistics', 'IntermediateAuthController@Activity_getConnectedNowStatistics');
 Route::get('/app/v1/activity/customer-average-connected-time', 'IntermediateAuthController@Activity_getCustomerAverageConnectedTime');
 Route::get('/app/v1/activity/customer-connected-hourly', 'IntermediateAuthController@Activity_getCustomerConnectedHourly');
+Route::get('/app/v1/activity/crm-summary-report', 'IntermediateAuthController@Activity_getCRMSummaryReport');

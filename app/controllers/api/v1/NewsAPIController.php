@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class NewsAPIController extends ControllerAPI
 {
@@ -473,7 +474,7 @@ class NewsAPIController extends ControllerAPI
             });
 
             $updatednews->modified_by = $this->api->user->user_id;
-
+            $updatednews->touch();
 
             //  save news default language
             OrbitInput::post('news_name', function($news_name) use ($updatednews_default_language) {
@@ -931,7 +932,7 @@ class NewsAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,news_name,object_type,description,begin_date,end_date,status',
+                    'sort_by' => 'in:registered_date,news_name,object_type,description,begin_date,end_date,updated_at,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.news_sortby'),
@@ -1108,6 +1109,7 @@ class NewsAPIController extends ControllerAPI
                     'description'       => 'news.description',
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
+                    'updated_at'        => 'news.updated_at',
                     'status'            => 'news.status'
                 );
 
@@ -1250,7 +1252,7 @@ class NewsAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,updated_at,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.promotion_by_retailer_sortby'),
@@ -1272,13 +1274,22 @@ class NewsAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
             $promotions = News::join('merchants', 'news.mall_id', '=', 'merchants.merchant_id')
-                // ->join('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
-                ->select('merchants.name AS retailer_name', 'news.*', 'news.news_name as promotion_name')
-                // ->where('news.object_type', '=', 'promotion')
-                // ->where('news.status', '!=', 'deleted');
-                ->where('news.status', '=', 'active');
+                              ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                              // ->join('news_merchant', 'news.news_id', '=', 'news_merchant.news_id')
+                              ->select('merchants.name AS retailer_name', 'news.*', 'news.news_name as promotion_name', 'timezones.timezone_name')
+                              // ->where('news.object_type', '=', 'promotion')
+                              // ->where('news.status', '!=', 'deleted');
+                              ->where('news.status', '=', 'active');
+
+
+            if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
+                $promotions->where('begin_date', '<=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"))
+                           ->where('end_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
+            }
 
             // Filter promotion by Ids
             OrbitInput::get('news_id', function($promotionIds) use ($promotions)
@@ -1416,6 +1427,7 @@ class NewsAPIController extends ControllerAPI
                     'description'       => 'news.description',
                     'begin_date'        => 'news.begin_date',
                     'end_date'          => 'news.end_date',
+                    'updated_at'        => 'news.updated_at',
                     'status'            => 'news.status'
                 );
 

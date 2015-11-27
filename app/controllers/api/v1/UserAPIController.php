@@ -12,6 +12,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Helper\Email\MXEmailChecker;
 
 class UserAPIController extends ControllerAPI
 {
@@ -1103,7 +1104,7 @@ class UserAPIController extends ControllerAPI
                     'with'      => OrbitInput::get('with')
                 ),
                 array(
-                    'sort_by'   => 'in:username,email,firstname,lastname,registered_date',
+                    'sort_by'   => 'in:username,email,firstname,lastname,registered_date,updated_at',
                     'with'      => 'array|min:0'
                 ),
                 array(
@@ -1258,6 +1259,7 @@ class UserAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'   => 'users.created_at',
+                    'updated_at'        => 'users.updated_at',
                     'username'          => 'users.username',
                     'email'             => 'users.user_email',
                     'lastname'          => 'users.user_lastname',
@@ -1500,7 +1502,7 @@ class UserAPIController extends ControllerAPI
             $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
 
             $current_mall = OrbitInput::get('current_mall');
-            
+
             $users->leftJoin('activities', function($join) use($current_mall) {
                             $join->on('activities.user_id', '=', 'users.user_id')
                                  ->where('activities.activity_name', '=', 'login_ok')
@@ -2132,7 +2134,7 @@ class UserAPIController extends ControllerAPI
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
                     'external_user_id'      => 'required',
-                    'email'                 => 'required|email|orbit.email.exists:' . $mallId,
+                    'email'                 => 'required|email|orbit.email.checker.mxrecord|orbit.email.exists:' . $mallId,
                     'firstname'             => 'required',
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
@@ -2514,7 +2516,7 @@ class UserAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
-                    'email'                 => 'email|email_exists_but_me',
+                    'email'                 => 'email|email_exists_but_me|orbit.email.checker.mxrecord',
                     'firstname'             => '',
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
@@ -2643,6 +2645,11 @@ class UserAPIController extends ControllerAPI
             OrbitInput::post('date_of_work', function($data) use ($userdetail) {
                 $userdetail->date_of_work = $data;
             });
+
+            // Save updated by
+            $updateduser->modified_by = $this->api->user->user_id;
+            $userdetail->modified_by = $this->api->user->user_id;
+
 
             Event::fire('orbit.user.postupdatemembership.before.save', array($this, $updateduser));
 
@@ -3112,7 +3119,7 @@ class UserAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
-                    'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
+                    'email'                 => 'required|email|orbit.email.checker.mxrecord|orbit.email.exists:' . $retailer_id,
                     'from'                  => 'in:cs',
                 )
             );
@@ -3380,9 +3387,21 @@ class UserAPIController extends ControllerAPI
         // Check user email address, it should not exists
         Validator::extend('email_exists_but_me', function ($attribute, $value, $parameters) {
             $user_id = OrbitInput::post('user_id');
+            $from = OrbitInput::post('from');
+            $role_name = '';
+
+            if ($from === 'cs') {
+                $role_name = 'Consumer';
+            }
+
             $user = User::excludeDeleted()
-                        ->where('user_email', $value)
                         ->where('user_id', '!=', $user_id)
+                        ->where('user_email', '=', $value)
+                        ->where('user_role_id', '=', function($q) use ($role_name) {
+                            $q->select('role_id')
+                                ->from('roles')
+                                ->where('role_name', $role_name);
+                        })
                         ->first();
 
             if (! empty($user)) {
@@ -3481,6 +3500,20 @@ class UserAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+
+        //Check email with mxrecord
+        Validator::extend('orbit.email.checker.mxrecord', function ($attribute, $value, $parameters) {
+            $hosts = MXEmailChecker::create($value)->check()->getMXRecords();
+
+            if (empty($hosts)) {
+                $errorMessage = \Lang::get('validation.email', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            App::instance('orbit.email.checker.mxrecord', $hosts);
 
             return TRUE;
         });

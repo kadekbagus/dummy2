@@ -85,12 +85,10 @@ class ConsumerPrinterController extends DataPrinterController
                         DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                         DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                     inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
-                                    where cp.status='active' and cp.user_id={$prefix}users.user_id and
-                                    current_date() <= date(cp.expired_date)) as total_usable_coupon,
+                                    where cp.user_id={$prefix}users.user_id) as total_usable_coupon,
                                     (select count(cp2.user_id) from {$prefix}issued_coupons cp2
                                     inner join {$prefix}promotions p on cp2.promotion_id = p.promotion_id {$filterMallIds}
                                     where cp2.status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
-
                     ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                     ->leftJoin(
                                     // Table
@@ -112,7 +110,7 @@ class ConsumerPrinterController extends DataPrinterController
         $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
 
         $current_mall = OrbitInput::get('current_mall');
-        
+
         $users->leftJoin('activities', function($join) use($current_mall) {
                         $join->on('activities.user_id', '=', 'users.user_id')
                              ->where('activities.activity_name', '=', 'login_ok')
@@ -357,28 +355,21 @@ class ConsumerPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customer', $totalRec, '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customers', $totalRec, '', '', '', '','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Issued Coupon', 'Redeemed Coupon', 'Status');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Issued Coupon', 'Redeemed Coupon', 'Status', 'Last Update Date & Time');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $customer_since = $this->printCustomerSince($row, $timezone, 'no');
                     $gender = $this->printGender($row);
-                    $address = $this->printAddress($row);
-                    $birthdate = $this->printBirthDate($row);
-                    $last_visit_date = $this->printLastVisitDate($row);
-                    $preferred_language = $this->printLanguage($row);
-                    $occupation = $this->printOccupation($row);
-                    $sector_of_activity = $this->printSectorOfActivity($row);
-                    $avg_annual_income = $this->printAverageAnnualIncome($row);
-                    $avg_monthly_spent = $this->printAverageShopping($row);
+                    $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
 
-                    printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\"\n",
+                    printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customer_since,
-                        $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status));
+                        $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status), $lastUpdateDate);
                 }
                 break;
 
@@ -852,4 +843,37 @@ class ConsumerPrinterController extends DataPrinterController
         return utf8_encode($input);
     }
 
+    /**
+     * Print date and time friendly name.
+     *
+     * @param string $datetime
+     * @param string $format
+     * @return string
+     */
+    public function printDateTime($datetime, $timezone, $format='d M Y')
+    {
+        if (empty($datetime) || $datetime === '0000-00-00 00:00:00') {
+            return '';
+        } else {
+
+            // change to correct timezone
+            if (!empty($timezone) || $timezone != null) {
+                $date = Carbon::createFromFormat('Y-m-d H:i:s', $datetime, 'UTC');
+                $date->setTimezone($timezone);
+                $datetime = $date;
+            } else {
+                $datetime = $datetime;
+            }
+        }
+
+        // format the datetime if needed
+        if ($format == 'no') {
+            $result = $datetime;
+        } else {
+            $time = strtotime($datetime);
+            $result = date($format, $time);
+        }
+
+        return $result;
+    }
 }

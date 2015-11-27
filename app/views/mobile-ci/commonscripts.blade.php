@@ -11,6 +11,7 @@
                     <div class="form-group">
                         <label for="keyword">{{ Lang::get('mobileci.modals.search_label') }}</label>
                         <input type="text" class="form-control" name="keyword" id="keyword" placeholder="{{ Lang::get('mobileci.modals.search_placeholder') }}">
+                        {{ \Orbit\UrlGenerator::hiddenSessionIdField() }}
                     </div>
                 </form>
             </div>
@@ -111,8 +112,11 @@
               });
             }
         };
-        run();
-        setInterval(run, 5000);
+
+        @if (Config::get('orbit.shop.offline_check.enable'))
+            run();
+            setInterval(run, {{ Config::get('orbit.shop.offline_check.interval', 5000) }} );
+        @endif
 
         $('#barcodeBtn').click(function(){
             $('#get_camera').click();
@@ -151,7 +155,7 @@
             $('#multi-language-popup').modal();
         });
     });
-    
+
     // pinch zoom using hammerjs
     $(document).on('click', '.zoomer', function(){
         function scaletime (scale, x, y) {
@@ -195,7 +199,7 @@
             var initialScale = 1;
             var initialDeltaX = 0;
             var initialDeltaY = 0;
-            
+
             var adjustScale = 1;
             var adjustDeltaX = 0;
             var adjustDeltaY = 0;

@@ -211,7 +211,7 @@ class LoginAPIController extends ControllerAPI
             $from = OrbitInput::post('from');
             $mall_id = $this->getRetailerId();
 
-            $signup_from = 'Sign up via mobile (email address)';
+            $signup_from = 'Sign Up via Mobile (Email Address)';
 
             $validator = Validator::make(
                 array(
@@ -219,7 +219,7 @@ class LoginAPIController extends ControllerAPI
                     'mall_id'   => $mall_id,
                 ),
                 array(
-                    'email'     => 'required|email|orbit.email.exists',
+                    'email'     => 'required|email|orbit.emailrole.exists',
                     'mall_id'   => 'orbit.empty.mall',
                 )
             );
@@ -245,7 +245,7 @@ class LoginAPIController extends ControllerAPI
             }
 
             if ($from === 'cs') {
-                $signup_from = 'Sign up via customer service';
+                $signup_from = 'Sign Up via Customer Service';
                 $activity = Activity::csportal()
                                     ->setActivityType('registration');
             } else {
@@ -724,6 +724,7 @@ class LoginAPIController extends ControllerAPI
                         ->where('user_id', $token->user_id)
                         ->first();
 
+
             if (! is_object($token) || ! is_object($user)) {
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
@@ -756,6 +757,11 @@ class LoginAPIController extends ControllerAPI
                     'user_id' => $user->user_id
                 ]);
             }
+            $userSignUp = Activity::where('activity_name', '=', 'registration_ok')
+                                  ->whereIn('group', ['mobile-ci','cs-portal'])
+                                  ->where('user_id', $user->user_id)
+                                  ->first();
+            $location = Mall::find($userSignUp->location_id);
 
             $this->response->message = Lang::get('statuses.orbit.activate.account');
             $this->response->data = $user;
@@ -766,8 +772,9 @@ class LoginAPIController extends ControllerAPI
             // Successfull activation
             $activity->setUser($user)
                      ->setActivityName('activation_ok')
-                     ->setActivityNameLong('Account Activation')
+                     ->setActivityNameLong('Customer Activation')
                      ->setModuleName('Application')
+                     ->setLocation($location)
                      ->responseOK();
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -830,6 +837,23 @@ class LoginAPIController extends ControllerAPI
         Validator::extend('orbit.email.exists', function ($attribute, $value, $parameters) {
             $user = User::excludeDeleted()
                         ->where('user_email', $value)
+                        ->first();
+
+            if (! empty($user)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.user', $user);
+
+            return TRUE;
+        });
+
+        // Check user email address, it should not exists
+        Validator::extend('orbit.emailrole.exists', function ($attribute, $value, $parameters) {
+            $user = User::excludeDeleted()
+                        ->join('roles', 'roles.role_id', '=', 'users.user_role_id')
+                        ->where('users.user_email', $value)
+                        ->where('roles.role_name', 'Consumer')
                         ->first();
 
             if (! empty($user)) {
@@ -942,10 +966,20 @@ class LoginAPIController extends ControllerAPI
                 $loginFromSuperadmin = true;
             }
 
+            // Return the current mall object if this login process coming
+            // from mall or cs-portal
+            $from = OrbitInput::get('from_portal', NULL);
+            $mall = NULL;
+
             $user = User::with('role')
                         ->active()
-                        ->where('user_email', $email)
-                        ->first();
+                        ->where('user_email', $email);
+
+            if ($from === 'cs-portal') {
+                $user->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                     ->where('roles.role_name', 'Mall Customer Service');
+            }
+            $user = $user->first();
 
             if (! is_object($user)) {
                 $message = Lang::get('validation.orbit.access.inactiveuser');
@@ -964,11 +998,6 @@ class LoginAPIController extends ControllerAPI
                 ]);
                 ACL::throwAccessForbidden($message);
             }
-
-            // Return the current mall object if this login process coming
-            // from mall or cs-portal
-            $from = OrbitInput::get('from_portal', NULL);
-            $mall = NULL;
 
             if (in_array($from, ['mall', 'cs-portal'])) {
                 if ($from === 'mall') {
@@ -1097,10 +1126,11 @@ class LoginAPIController extends ControllerAPI
      * @param string|null $userId the unique ID (if provided) of the user to create - used in box to match data on cloud
      * @param string|null $userDetailId .... of the user detail to create - used in box to match data on cloud
      * @param string|null $apiKeyId .... of the API key to create - used in box to match data on cloud
+     * @param string|null $userStatus the user status on cloud
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $userId = null, $userDetailId = null, $apiKeyId = null)
+    public function createCustomerUser($email, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
     {
         // The retailer (shop) which this registration taken
         $retailerId = $this->getRetailerId();
@@ -1125,7 +1155,7 @@ class LoginAPIController extends ControllerAPI
         }
         $new_user->username = strtolower($email);
         $new_user->user_email = strtolower($email);
-        $new_user->status = 'pending';
+        $new_user->status = isset($userStatus) ? $userStatus : 'pending';
         $new_user->user_role_id = $customerRole->role_id;
         $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
         $new_user->external_user_id = 0;

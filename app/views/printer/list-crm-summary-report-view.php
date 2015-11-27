@@ -52,6 +52,10 @@
             padding-bottom: 2px;
             border-bottom: 1px solid #ccc;
         }
+
+        /*th, td {*/
+            /*display: inline-block;*/
+        /*}*/
     </style>
     <style type="text/css" media="print">
         #payment-date, #printernote { display:none; }
@@ -105,46 +109,62 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Customer List</h2>
+    <h2 style="margin-bottom:0.5em;">CRM Summary</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
-        <tr>
-            <td>Total Customers</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
-        </tr>
+<!--        <tr>-->
+<!--            <td>Total Customers</td>-->
+<!--            <td>:</td>-->
+<!--            <td><strong>--><?php ////echo number_format($totalRec, 0, '.', '.'); ?><!--</strong></td>-->
+<!--        </tr>-->
     </table>
 
     <table style="width:100%">
         <thead>
-            <th style="text-align:left;">Email </th>
-            <th style="text-align:left;">Name</th>
-            <th style="text-align:left;">Gender</th>
-            <th style="text-align:left;">Mobile Phone</th>
-            <th style="text-align:left;">First Visit Date & Time</th>
-            <th style="text-align:left;">Issued Coupon</th>
-            <th style="text-align:left;">Redeemed Coupon</th>
-            <th style="text-align:left;">Status</th>
-            <th style="text-align:left;">Last Update Date & Time</th>
+        <th style="text-align:left;">Date </th>
+        <th style="text-align:left;">Email Sign Up</th>
+        <th style="text-align:left;">Facebook Sign Up</th>
+        <th style="text-align:left;">Sign In</th>
+        <th style="text-align:left;">Sign Up via CS</th>
+        <th style="text-align:left;">Customer Activation</th>
+        <th style="text-align:left;">Network Check In</th>
+        <th style="text-align:left;">Network Check Out</th>
+        <th style="text-align:left;">Sign Out</th>
+        <th style="text-align:left;">View (Home Page)</th>
+        <th style="text-align:left;">Event View (Pop Up)</th>
+        <th style="text-align:left;">Event Click</th>
+        <th style="text-align:left;">View Coupon List</th>
+        <th style="text-align:left;">View Coupon Detail</th>
+        <th style="text-align:left;">Coupon Redemption Successful</th>
+        <th style="text-align:left;">Coupon Issuance</th>
+        <th style="text-align:left;">View Events Tenant List</th>
+        <th style="text-align:left;">View News List</th>
+        <th style="text-align:left;">View News Detail</th>
+        <th style="text-align:left;">View News Tenant List</th>
+        <th style="text-align:left;">View Promotion List</th>
+        <th style="text-align:left;">View Promotion Detail</th>
+        <th style="text-align:left;">View Promotion Tenant List</th>
+        <th style="text-align:left;">View Tenant Detail</th>
+        <th style="text-align:left;">Widget Click Tenant</th>
+        <th style="text-align:left;">Widget Click News</th>
+        <th style="text-align:left;">Widget Click Promotion</th>
+        <th style="text-align:left;">Widget Click Coupon</th>
         </thead>
         <tbody>
-        <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
-            <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                <td><?php echo ($row->user_email); ?></td>
-                <td><?php echo $me->printUtf8($row->user_firstname) . ' ' . $me->printUtf8($row->user_lastname); ?></td>
-                <td><?php echo $me->printGender($row); ?></td>
-                <td><?php echo $me->printUtf8($row->phone); ?></td>
-                <td><?php echo $me->printCustomerSince($row, $timezone); ?></td>
-                <td><?php echo ($row->total_usable_coupon); ?></td>
-                <td><?php echo ($row->total_redeemed_coupon); ?></td>
-                <td><?php echo ($row->status); ?></td>
-                <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
+
+        <?php foreach ($data as $x => $y) { ?>
+            <tr class=" ">
+                <td width='4%'><?php echo $me->printDateTime($x, 'd/m/Y'); ?></td>
+                <?php foreach($data[$x] as $i => $j) { ?>
+                    <td><?php echo $j; ?></td>
+
+                <?php } ?>
             </tr>
-        <?php endwhile; ?>
+        <?php } ?>
         </tbody>
     </table>
 </div>

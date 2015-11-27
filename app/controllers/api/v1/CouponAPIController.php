@@ -1305,7 +1305,7 @@ class CouponAPIController extends ControllerAPI
                     'current_mall' => $currentmall
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value,coupon_status',
+                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value,updated_at,coupon_status',
                     'current_mall' => 'orbit.empty.merchant'
                 ),
                 array(
@@ -1664,6 +1664,7 @@ class CouponAPIController extends ControllerAPI
                     'description'              => 'promotions.description',
                     'begin_date'               => 'promotions.begin_date',
                     'end_date'                 => 'promotions.end_date',
+                    'updated_at'               => 'promotions.updated_at',
                     'is_permanent'             => 'promotions.is_permanent',
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
@@ -1689,6 +1690,11 @@ class CouponAPIController extends ControllerAPI
             });
 
             $coupons->orderBy($sortBy, $sortMode);
+
+            // also to sort coupon name
+            if ($sortBy !== 'promotion_name') {
+                $coupons->orderBy('promotion_name', 'asc');
+            }
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
@@ -1757,6 +1763,7 @@ class CouponAPIController extends ControllerAPI
      * POST - Redeem Coupon for retailer/tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1772,6 +1779,7 @@ class CouponAPIController extends ControllerAPI
                           ->setActivityType('coupon');
 
         $user = NULL;
+        $mall = NULL;
         $mall_id = NULL;
         $issuedcoupon = NULL;
         try {
@@ -1826,7 +1834,6 @@ class CouponAPIController extends ControllerAPI
                     'merchant_verification_number'  => 'required'
                 )
             );
-
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
 
             // Begin database transaction
@@ -1879,7 +1886,7 @@ class CouponAPIController extends ControllerAPI
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption Successful')
+                    ->setActivityNameLong('Coupon Redemption (Successful)')
                     ->setObject($issuedcoupon)
                     ->setNotes($activityNotes)
                     ->setLocation($mall)
@@ -1905,10 +1912,10 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -1926,10 +1933,10 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (QueryException $e) {
@@ -1953,10 +1960,10 @@ class CouponAPIController extends ControllerAPI
             // Deletion failed Activity log
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Redeem Coupon Failed')
+                    ->setActivityNameLong('Coupon Redemption (Failed)')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         } catch (Exception $e) {
@@ -1976,7 +1983,7 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Delete Coupon Failed')
                     ->setObject($issuedcoupon)
                     ->setNotes($e->getMessage())
-                    ->setLocation($mall_id)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->responseFailed();
         }
@@ -2051,7 +2058,7 @@ class CouponAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:issue_retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:issue_retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,updated_at,is_permanent,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.coupon_by_issue_retailer_sortby'),
@@ -2073,13 +2080,32 @@ class CouponAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
             $coupons = Coupon::join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
-                ->select('merchants.name AS issue_retailer_name', 'promotions.*')
-                ->where('promotions.is_coupon', '=', 'Y')
-                ->where('promotions.promotion_type', 'mall')
-                // ->where('promotions.status', '!=', 'deleted');
-                ->where('promotions.status', '=', 'active');
+                             ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                             ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
+                                               from {$prefix}issued_coupons ic
+                                               where ic.status = 'active' or ic.status = 'redeemed'
+                                               group by promotion_id) issued"),
+                                        // On
+                                        DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
+                             ->select('merchants.name AS issue_retailer_name', 'promotions.*', 'timezones.timezone_name', DB::raw('issued.total_issued'))
+                             ->where('promotions.is_coupon', '=', 'Y')
+                             ->where('promotions.promotion_type', 'mall')
+                             // ->where('promotions.status', '!=', 'deleted');
+                             ->where('promotions.status', '=', 'active')
+                             ->where(function ($q) {
+                                    $q->where('promotions.maximum_issued_coupon', '>', DB::raw('issued.total_issued'))
+                                        ->orWhere('promotions.maximum_issued_coupon', '=', 0)
+                                        ->orWhereNull(DB::raw('issued.total_issued'));
+                             });
+
+            if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
+                $coupons->where('begin_date', '<=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"))
+                        ->where('end_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
+            }
 
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($coupons)
@@ -2228,6 +2254,7 @@ class CouponAPIController extends ControllerAPI
                     'description'            => 'promotions.description',
                     'begin_date'             => 'promotions.begin_date',
                     'end_date'               => 'promotions.end_date',
+                    'updated_at'             => 'promotions.updated_at',
                     'is_permanent'           => 'promotions.is_permanent',
                     'status'                 => 'promotions.status'
                 );

@@ -83,12 +83,12 @@
     <h2 style="margin-bottom:0.5em;">Redeemed Coupon Report for <?php echo ($couponName); ?></h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
-            <td style="width:150px"></td>
+            <td style="width:200px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Redeemed Coupon</td>
+            <td>Total Redeemed Coupons</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -111,7 +111,7 @@
                 <td><?php printf('%s / %s', '1', $row->total_issued); ?></td>
                 <td><?php echo htmlentities($row->issued_coupon_code); ?></td>
                 <td><?php echo htmlentities($row->user_email); ?></td>
-                <td><?php echo $me->printDateTime($row->redeemed_date, 'd M Y H:i'); ?></td>
+                <td><?php echo $me->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'd M Y H:i'); ?></td>
                 <td><?php echo htmlentities($row->redeem_verification_code); ?></td>
             </tr>
         <?php endwhile; ?>

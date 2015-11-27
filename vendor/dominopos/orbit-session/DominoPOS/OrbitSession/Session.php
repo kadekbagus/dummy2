@@ -365,6 +365,9 @@ class Session
 
             if ($makeItExpire) {
                 $expire = time() - 3600;
+                unset($_COOKIE[$cookieConfig['name']]);
+            } else {
+                $_COOKIE[$cookieConfig['name']] = $sessionId;
             }
 
             setcookie(
@@ -376,6 +379,17 @@ class Session
                 $cookieConfig['secure'],
                 $cookieConfig['httponly']
             );
+
+        }
+
+        if (array_key_exists('query_string', $availabilities)
+            && $availabilities['query_string'] === TRUE) {
+            $queryStringName = $this->config->getConfig('session_origin.query_string.name');
+            if ($makeItExpire) {
+                unset($_GET[$queryStringName]);
+            } else {
+                $_GET[$queryStringName] = $sessionId;
+            }
         }
     }
 }

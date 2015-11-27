@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class EventAPIController extends ControllerAPI
 {
@@ -464,6 +465,7 @@ class EventAPIController extends ControllerAPI
             });
 
             $updatedevent->modified_by = $this->api->user->user_id;
+            $updatedevent->touch();
 
             Event::fire('orbit.event.postupdateevent.before.save', array($this, $updatedevent));
 
@@ -932,7 +934,7 @@ class EventAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,event_name,event_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:registered_date,event_name,event_type,description,begin_date,end_date,updated_at,is_permanent,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.event_sortby'),
@@ -1110,6 +1112,7 @@ class EventAPIController extends ControllerAPI
                     'description'       => 'events.description',
                     'begin_date'        => 'events.begin_date',
                     'end_date'          => 'events.end_date',
+                    'updated_at'        => 'events.updated_at',
                     'is_permanent'      => 'events.is_permanent',
                     'status'            => 'events.status'
                 );
@@ -1260,7 +1263,7 @@ class EventAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:retailer_name,registered_date,event_name,event_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:retailer_name,registered_date,event_name,event_type,description,begin_date,end_date,updated_at,is_permanent,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.event_by_retailer_sortby'),
@@ -1282,11 +1285,19 @@ class EventAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
             $events = EventModel::join('merchants', 'events.merchant_id', '=', 'merchants.merchant_id')
-                ->select('merchants.name AS retailer_name', 'events.*')
+                ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                ->select('merchants.name AS retailer_name', 'events.*', 'timezones.timezone_name')
                 // ->where('events.status', '!=', 'deleted');
                 ->where('events.status', '=', 'active');
+
+            if (empty(OrbitInput::get('begin_date')) && empty(OrbitInput::get('end_date'))) {
+                $events->where('begin_date', '<=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"))
+                       ->where('end_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
+            }
 
             // Filter event by Ids
             OrbitInput::get('event_id', function($eventIds) use ($events)
@@ -1464,6 +1475,7 @@ class EventAPIController extends ControllerAPI
                     'description'       => 'events.description',
                     'begin_date'        => 'events.begin_date',
                     'end_date'          => 'events.end_date',
+                    'updated_at'        => 'events.updated_at',
                     'is_permanent'      => 'events.is_permanent',
                     'status'            => 'events.status'
                 );

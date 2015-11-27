@@ -11,6 +11,7 @@ use Activity;
 use CouponReportAPIController;
 use Response;
 use Mall;
+use Carbon\Carbon as Carbon;
 
 class CouponReportPrinterController extends DataPrinterController
 {
@@ -83,7 +84,7 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report for ' . $couponName, '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupon', $totalCoupons, '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupons', $totalCoupons, '', '', '', '','','','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Tenant(s)', 'Redeemed/Issued', 'Coupon Code', 'Customer', 'Redeemed Date & Time', 'Tenant Verification Number');
@@ -97,7 +98,7 @@ class CouponReportPrinterController extends DataPrinterController
                             '1 / ' . $row->total_issued,
                             $row->issued_coupon_code,
                             $row->user_email,
-                            $this->printDateTime($row->redeemed_date, 'd M Y H:i'),
+                            $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'no'),
                             $row->redeem_verification_code
                     );
                     $count++;
@@ -157,7 +158,7 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report for ' . $tenantName, '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupon', $totalCoupons, '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupons', $totalCoupons, '', '', '', '','','','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Redeemed/Issued', 'Customer', 'Coupon Code', 'Redeemed Date & Time', 'Tenant Verification Number');
@@ -171,7 +172,7 @@ class CouponReportPrinterController extends DataPrinterController
                             '1 / ' . $row->total_issued,
                             $row->user_email,
                             $row->issued_coupon_code,
-                            $this->printDateTime($row->redeemed_date, 'd M Y H:i'),
+                            $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'no'),
                             $row->redeem_verification_code
                     );
                     $count++;
@@ -231,7 +232,7 @@ class CouponReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Issued Coupon Report', '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Coupon', $totalCoupons, '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Issued Coupons', $totalCoupons, '', '', '', '','','','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Name', 'Coupon Dates', 'Auto-Issuance Status', 'Coupon Code', 'Customer', 'Issued Date & Time', 'Issued/Maximum', 'Status');
@@ -239,8 +240,8 @@ class CouponReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    $beginDate = $this->printDateTime($row->begin_date);
-                    $endDate = $this->printDateTime($row->end_date);
+                    $beginDate = $this->printDateTime($row->begin_date, $timezoneCurrentMall);
+                    $endDate = $this->printDateTime($row->end_date, $timezoneCurrentMall);
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\"\n",
                             $count,
                             $row->promotion_name,
@@ -248,7 +249,7 @@ class CouponReportPrinterController extends DataPrinterController
                             $this->printYesNoFormatter($row->is_auto_issue_on_signup),
                             $row->issued_coupon_code,
                             $row->user_email,
-                            $this->printDateTime($row->issued_date, 'd M Y H:i'),
+                            $this->printDateTime($row->issued_date, $timezoneCurrentMall, 'no'),
                             '1 / ' . $this->printUnlimitedFormatter($row->maximum_issued_coupon),
                             $row->status
                     );
@@ -271,14 +272,29 @@ class CouponReportPrinterController extends DataPrinterController
      * @param string $format
      * @return string
      */
-    public function printDateTime($datetime, $format='d M Y')
+    public function printDateTime($datetime, $timezone, $format='d M Y')
     {
         if (empty($datetime) || $datetime === '0000-00-00 00:00:00') {
-            return 'none';
+            return '';
+        } else {
+
+            // change to correct timezone
+            if (!empty($timezone) || $timezone != null) {
+                $date = Carbon::createFromFormat('Y-m-d H:i:s', $datetime, 'UTC');
+                $date->setTimezone($timezone);
+                $datetime = $date;
+            } else {
+                $datetime = $datetime;
+            }
         }
 
-        $time = strtotime($datetime);
-        $result = date($format, $time);
+        // format the datetime if needed
+        if ($format == 'no') {
+            $result = $datetime;
+        } else {
+            $time = strtotime($datetime);
+            $result = date($format, $time);
+        }
 
         return $result;
     }
