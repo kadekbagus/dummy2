@@ -3042,8 +3042,11 @@ class ActivityAPIController extends ControllerAPI
 					select date_format(convert_tz(created_at, '+00:00', '" . $timezoneOffset . "'), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
 					from {$tablePrefix}activities
 					-- filter by date
-					where `group` = 'mobile-ci' or (`group` = 'portal' and activity_type in ('activation')) and response_status = 'OK' and location_id = '" . $current_mall . "'
-					and created_at between '" . $start_date . "' and '" . $end_date ."'
+					where `group` = 'mobile-ci'
+					    or (`group` = 'portal' and activity_type in ('activation'))
+					    or (`group` = 'cs-portal' and activity_type in ('registration'))
+					    and response_status = 'OK' and location_id = '" . $current_mall . "'
+					    and created_at between '" . $start_date . "' and '" . $end_date . "'
 					group by 1, 2;
                 ") );
 
@@ -3073,7 +3076,7 @@ class ActivityAPIController extends ControllerAPI
             foreach ($responses as $a => $b) {
                 $length = count($dateRange);
                 for ($i = 0; $i < $length; $i++) {
-                    if ($a===$dateRange[$i]) {
+                    if ($a === $dateRange[$i]) {
                         unset($dateRange2[$i]);
                     }
                 }
@@ -3082,6 +3085,8 @@ class ActivityAPIController extends ControllerAPI
             foreach ($dateRange2 as $x => $y) {
                 $responses[$dateRange2[$x]] = array();
             }
+
+            ksort($responses);
 
             $records['records'] = $responses;
 
