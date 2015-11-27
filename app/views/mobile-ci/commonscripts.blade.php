@@ -112,8 +112,11 @@
               });
             }
         };
-        run();
-        setInterval(run, 5000);
+
+        @if (Config::get('orbit.shop.offline_check.enable', TRUE))
+            run();
+            setInterval(run, Config::get('orbit.shop.offline_check.interval', 5000);
+        @endif
 
         $('#barcodeBtn').click(function(){
             $('#get_camera').click();
@@ -152,7 +155,7 @@
             $('#multi-language-popup').modal();
         });
     });
-    
+
     // pinch zoom using hammerjs
     $(document).on('click', '.zoomer', function(){
         setTimeout(function(){
@@ -173,7 +176,7 @@
             var initialScale = 1;
             var initialDeltaX = 0;
             var initialDeltaY = 0;
-            
+
             var adjustScale = 1;
             var adjustDeltaX = 0;
             var adjustDeltaY = 0;
