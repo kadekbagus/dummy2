@@ -238,21 +238,17 @@
                     adjustScale = initialScale;
                     adjustDeltaX = initialDeltaX;
                     adjustDeltaY = initialDeltaY;
-                    console.log('x');
                     resetImage();
                     scaletime(initialScale, initialDeltaX, initialDeltaY);
                 }
             });
 
             mc.on("tap doubletap", function(ev) {
-                console.log('xx');
                 currentmodal.close();
+                $("body").removeClass("modal-open");
             });
 
-            // mc.on("pandown swipedown", function(ev) {
-                
-            //     // if($('.featherlight-content img').)
-            // });
+
         }, 0);
     });
 
