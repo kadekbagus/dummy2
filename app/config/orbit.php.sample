@@ -43,7 +43,7 @@ return array(
 
         // Internet offline check
         'offline_check' => [
-            'enable'    => FALSE,
+            'enable'    => TRUE,
 
             // enable must be true
             // in milliseconds

@@ -115,7 +115,7 @@
 
         @if (Config::get('orbit.shop.offline_check.enable', TRUE))
             run();
-            setInterval(run, Config::get('orbit.shop.offline_check.interval', 5000);
+            setInterval(run, {{ Config::get('orbit.shop.offline_check.interval' }});
         @endif
 
         $('#barcodeBtn').click(function(){
