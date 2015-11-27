@@ -1,11 +1,8 @@
 <?php namespace Report;
 
-use Report\DataPrinterController;
 use Config;
 use DB;
-use PDO;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Text as OrbitText;
 use Mall;
 use DateTime;
@@ -50,7 +47,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 					select date_format(convert_tz(created_at, '+00:00', '" . $timezoneOffset . "'), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
 					from {$tablePrefix}activities
 					-- filter by date
-					where `group` = 'mobile-ci' and response_status = 'OK' and location_id = '" . $current_mall . "'
+					where `group` = 'mobile-ci' or (`group` = 'portal' and activity_type in ('activation')) and response_status = 'OK' and location_id = '" . $current_mall . "'
 					and created_at between '" . $start_date . "' and '" . $end_date . "'
 					group by 1, 2;
                 "));
