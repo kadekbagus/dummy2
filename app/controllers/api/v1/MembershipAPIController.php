@@ -273,6 +273,36 @@ class MembershipAPIController extends ControllerAPI
             $mall_id = OrbitInput::post('mall_id');
             $status = OrbitInput::post('status');
 
+            // auto create membership card
+            if (trim($membership_id) === '') {
+                /*
+                 * Get membership card id based on mall id
+                 */
+                // get user mall_ids
+                $listOfMallIds = $user->getUserMallIds($mall_id);
+                if (empty($listOfMallIds)) { // invalid mall id
+                    $errorMessage = 'Invalid mall id.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $membershipCard = Membership::active()
+                                            ->whereIn('merchant_id', $listOfMallIds)
+                                            ->first();
+
+                // create membership card if not exists
+                if (empty($membershipCard)) {
+                    // create
+                    $membershipCard = new Membership();
+                    $membershipCard->merchant_id = $listOfMallIds[0];
+                    $membershipCard->membership_name = 'Standard Card';
+                    $membershipCard->status = 'active';
+                    $membershipCard->created_by = $user->user_id;
+                    $membershipCard->save();
+                }
+
+                $membership_id = $membershipCard->membership_id;
+            }
+
             $data = array(
                 'membership_id'       => $membership_id,
                 'mall_id'             => $mall_id,
@@ -310,8 +340,8 @@ class MembershipAPIController extends ControllerAPI
             Event::fire('orbit.membership.postupdatemembership.after.validation', array($this, $validator));
 
             $update = Membership::excludeDeleted()
-                                           ->where('membership_id', $membership_id)
-                                           ->first();
+                                ->where('membership_id', $membership_id)
+                                ->first();
 
             // save Membership
             OrbitInput::post('mall_id', function ($arg) use ($update) {
