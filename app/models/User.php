@@ -182,14 +182,29 @@ class User extends Eloquent implements UserInterface
 
             return $malls->lists('merchant_id');
         } elseif ($this->isMallOwner()) {
-            $mall = Mall::excludeDeleted()->where('user_id', '=', $this->user_id)->first();
+            $mall = Mall::excludeDeleted()
+                        ->where('user_id', '=', $this->user_id);
+
+            if (! empty($mallIds)) {
+                $mall->whereIn('merchant_id', (array)$mallIds);
+            }
+
+            $mall = $mall->first();
+
             if (empty($mall)) {
                 return [];
             } else {
                 return [$mall->merchant_id];
             }
         } elseif ($this->isMallAdmin() || $this->isMallCS()) {
-            $mall = $this->employee->retailers->first();
+            $mall = $this->employee->retailers();
+
+            if (! empty($mallIds)) {
+                $mall->whereIn('retailer_id', (array)$mallIds);
+            }
+
+            $mall = $mall->first();
+
             if (empty($mall)) {
                 return [];
             } else {
