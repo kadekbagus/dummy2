@@ -39,7 +39,16 @@ return array(
         'membership_number_unique_check' => false,
 
         //guest mode
-        'guest_mode' => false
+        'guest_mode' => false,
+
+        // Internet offline check
+        'offline_check' => [
+            'enable'    => FALSE,
+
+            // enable must be true
+            // in milliseconds
+            'interval'  => 5000
+        ]
     ),
 
     // General contact data
