@@ -156,13 +156,6 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{{ Lang::get('mobileci.coupon.ok') }}}</button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -182,13 +175,6 @@
                         <div class="form-data">
                             <input id="issuecouponno" type="text" class="form-control text-center" style="font-size:20px;" value="" disabled>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <button type="button" id="denyCoupon" class="btn btn-info btn-block" data-dismiss="modal" disabled>{{{ Lang::get('mobileci.coupon.ok') }}}</button>
                     </div>
                 </div>
             </div>
