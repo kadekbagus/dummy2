@@ -341,7 +341,20 @@
                 if (get('from_captive') == 'yes') {
                     afterLogin(xhr);
                 } else {
-                    window.location.replace('{{ $landing_url }}');
+                    // @Todo: Replace the hardcoded name
+                    session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
+                    var landing_url = '{{ $landing_url }}';
+
+                    if (session_id) {
+                        if (landing_url.indexOf('orbit_session=') < 0) {
+                            // orbit_session= is not exists, append manually
+                            landing_url += '&orbit_session=' + session_id;
+                        } else {
+                            landing_url = landing_url.replace(/orbit_session=(.*)$/, 'orbit_session=' + session_id);
+                        }
+                    }
+
+                    window.location.replace(landing_url);
                 }
             }
         }).fail(function(data) {
