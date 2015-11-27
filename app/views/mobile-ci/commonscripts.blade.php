@@ -113,9 +113,9 @@
             }
         };
 
-        @if (Config::get('orbit.shop.offline_check.enable', TRUE))
+        @if (Config::get('orbit.shop.offline_check.enable'))
             run();
-            setInterval(run, {{ Config::get('orbit.shop.offline_check.interval') }} );
+            setInterval(run, {{ Config::get('orbit.shop.offline_check.interval', 5000) }} );
         @endif
 
         $('#barcodeBtn').click(function(){
