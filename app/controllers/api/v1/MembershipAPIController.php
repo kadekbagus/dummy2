@@ -224,6 +224,7 @@ class MembershipAPIController extends ControllerAPI
      * @param string     `membership_name`           (optional) - Membership name
      * @param string     `description`               (optional) - Description
      * @param string     `status`                    (optional) - Status. Valid value: active, inactive, deleted
+     * @param string     `enable_membership_card`    (optional) - Enable membership card. Valid value: true, false
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -272,19 +273,20 @@ class MembershipAPIController extends ControllerAPI
             $membership_id = OrbitInput::post('membership_id');
             $mall_id = OrbitInput::post('mall_id');
             $status = OrbitInput::post('status');
+            $enable_membership_card = OrbitInput::post('enable_membership_card');
+
+            // get user mall_ids
+            $listOfMallIds = $user->getUserMallIds($mall_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             // auto create membership card
             if (trim($membership_id) === '') {
                 /*
                  * Get membership card id based on mall id
                  */
-                // get user mall_ids
-                $listOfMallIds = $user->getUserMallIds($mall_id);
-                if (empty($listOfMallIds)) { // invalid mall id
-                    $errorMessage = 'Invalid mall id.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
                 $membershipCard = Membership::active()
                                             ->whereIn('merchant_id', $listOfMallIds)
                                             ->first();
@@ -314,6 +316,11 @@ class MembershipAPIController extends ControllerAPI
                 $data['membership_name'] = $membership_name;
             });
 
+            // Validate enable_membership_card only if exists in POST
+            OrbitInput::post('enable_membership_card', function($arg) use (&$data) {
+                $data['enable_membership_card'] = $arg;
+            });
+
             $validator = Validator::make(
                 $data,
                 array(
@@ -321,6 +328,7 @@ class MembershipAPIController extends ControllerAPI
                     'mall_id'          => 'orbit.empty.mall',
                     'membership_name'  => 'sometimes|required|membership_name_exists_but_me:' . $membership_id,
                     'status'           => 'orbit.empty.membership_status',
+                    'enable_membership_card' => 'sometimes|required|orbit.empty.enable_membership_card',
                 ),
                 array(
                    'membership_name_exists_but_me' => Lang::get('validation.orbit.exists.membership_name'),
@@ -362,11 +370,46 @@ class MembershipAPIController extends ControllerAPI
 
             $update->modified_by = $user->user_id;
 
+            // create/update enable_membership_card on table settings
+            $settingName = 'enable_membership_card';
+
+            $setting = Setting::active()
+                              ->where('object_type', 'merchant')
+                              ->whereIn('object_id', $listOfMallIds)
+                              ->where('setting_name', $settingName)
+                              ->first();
+
+            if (empty($setting)) {
+                // create
+                $setting = new Setting();
+                $setting->setting_name = $settingName;
+                // if enable_membership_card is not being sent, set false as default value
+                if (trim($enable_membership_card) === '') {
+                    $setting->setting_value = 'false';
+                } else {
+                    $setting->setting_value = $enable_membership_card;
+                }
+                $setting->object_type = 'merchant';
+                $setting->object_id = $listOfMallIds[0];
+                $setting->status = 'active';
+                $setting->modified_by = $user->user_id;
+                $setting->save();
+            } else {
+                // update
+                OrbitInput::post('enable_membership_card', function ($arg) use ($setting, $user) {
+                    $setting->setting_value = $arg;
+                    $setting->modified_by = $user->user_id;
+                    $setting->save();
+                });
+            }
+
             Event::fire('orbit.membership.postupdatemembership.before.save', array($this, $update));
 
             $update->save();
 
             Event::fire('orbit.membership.postupdatemembership.after.save', array($this, $update));
+
+            $update->enable_membership_card = $setting->setting_value;
             $this->response->data = $update;
 
             // Commit the changes
@@ -904,6 +947,22 @@ class MembershipAPIController extends ControllerAPI
             $listOfMembership = $record->get();
 
             $data = new stdclass();
+
+            // set enable_membership_card value from table settings
+            $settingName = 'enable_membership_card';
+
+            $setting = Setting::active()
+                              ->where('object_type', 'merchant')
+                              ->whereIn('object_id', $listOfMallIds)
+                              ->where('setting_name', $settingName)
+                              ->first();
+
+            if (empty($setting)) {
+                $data->enable_membership_card = 'false';
+            } else {
+                $data->enable_membership_card = $setting->setting_value;
+            }
+
             $data->total_records = $totalMembership;
             $data->returned_records = count($listOfMembership);
             $data->records = $listOfMembership;
@@ -1058,6 +1117,17 @@ class MembershipAPIController extends ControllerAPI
             }
 
             return TRUE;
+        });
+
+        // Check the existence of the enable_membership_card
+        Validator::extend('orbit.empty.enable_membership_card', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('true', 'false');
+            foreach ($statuses as $status) {
+                if($value === $status) $valid = $valid || TRUE;
+            }
+
+            return $valid;
         });
 
     }

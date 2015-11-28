@@ -290,6 +290,7 @@ return array(
             'membership_status'    => 'The membership status you specified is not found.',
             'membership_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, membership_name, description, status',
             'mall_have_membership_card'   => 'Mall membership card not exists.',
+            'enable_membership_card' => 'The enable membership card argument you specified is not valid, the valid values are: true, false',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
