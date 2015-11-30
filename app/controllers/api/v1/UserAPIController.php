@@ -2559,7 +2559,7 @@ class UserAPIController extends ControllerAPI
                     ->where('token_name', 'user_setup_password')
                     ->first();
 
-                if(!empty($checkToken)){
+                if ($checkToken !== null) {
                     $checkToken->email = $email;
                     $checkToken->save();
                 }
