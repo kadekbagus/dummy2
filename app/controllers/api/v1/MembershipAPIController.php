@@ -410,6 +410,11 @@ class MembershipAPIController extends ControllerAPI
                     $response = UploadAPIController::create('raw')
                                                    ->setCalledFrom('membership.update')
                                                    ->postDeleteMembershipImage();
+
+                    if ($response->code !== 0)
+                    {
+                        throw new \Exception($response->message, $response->code);
+                    }
                 }
             });
 
