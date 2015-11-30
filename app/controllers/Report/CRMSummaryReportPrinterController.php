@@ -36,6 +36,10 @@ class CRMSummaryReportPrinterController extends DataPrinterController
             $flag_7days = true;
         }
 
+        if ( $start_date > $end_date ) {
+            $flag_7days = true;
+        }
+
         $timezone = $this->getTimezone($current_mall);
         $timezoneOffset = $this->getTimezoneOffset($timezone);
 

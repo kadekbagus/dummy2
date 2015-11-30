@@ -3002,7 +3002,7 @@ class ActivityAPIController extends ControllerAPI
 
             // start date cannot be bigger than end date
             if ( $start_date > $end_date ) {
-                $errorMessage = 'Start date should be smaller than end date';
+                $errorMessage = 'Start date cannot be greater than end date';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
