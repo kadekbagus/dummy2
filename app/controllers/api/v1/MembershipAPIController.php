@@ -403,6 +403,16 @@ class MembershipAPIController extends ControllerAPI
                 });
             }
 
+            // delete membership card image if images=""
+            OrbitInput::post('images', function ($arg) use ($update) {
+                if (trim($arg) === '') {
+                    $_POST['membership_id'] = $update->membership_id;
+                    $response = UploadAPIController::create('raw')
+                                                   ->setCalledFrom('membership.update')
+                                                   ->postDeleteMembershipImage();
+                }
+            });
+
             Event::fire('orbit.membership.postupdatemembership.before.save', array($this, $update));
 
             $update->save();
