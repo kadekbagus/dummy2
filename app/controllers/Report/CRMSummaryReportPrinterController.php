@@ -4,7 +4,6 @@ use Config;
 use DB;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
-use OrbitShop\API\v1\OrbitShopAPI;
 use Mall;
 use DateTime;
 use DateTimeZone;
@@ -21,6 +20,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
 
         $mode = OrbitInput::get('export', 'print');
         $user = $this->loggedUser;
+        $flag_7days = false;
 
         $current_mall = OrbitInput::get('current_mall');
         $start_date = OrbitInput::get('start_date');
@@ -30,11 +30,14 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         $_startDate = strtotime($start_date);
         $_endDate = strtotime($end_date);
         $dateDiff = $_startDate - $_endDate;
-        $days = abs(floor($dateDiff/(60*60*24)));
+        $days = abs(floor($dateDiff / (60 * 60 * 24)));
 
-        if ( $days > 7 ) {
-            $errorMessage = 'Date cannot be more than 7 days';
-            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        if ($days > 7) {
+            $flag_7days = true;
+        }
+
+        if ( $start_date > $end_date ) {
+            $flag_7days = true;
         }
 
         $timezone = $this->getTimezone($current_mall);
@@ -50,57 +53,61 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         $_dateRange = new DatePeriod($begin, $interval, $endtime);
 
         $dateRange = [];
+        $responses = [];
 
-        foreach ( $_dateRange as $date ) {
+        foreach ($_dateRange as $date) {
             $dateRange[] = $date->format("Y-m-d");
         }
 
-        $activities = DB::select("
-					select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
-					from {$tablePrefix}activities
-					-- filter by date
-					where (`group` = 'mobile-ci'
-					    or (`group` = 'portal' and activity_type in ('activation'))
-					    or (`group` = 'cs-portal' and activity_type in ('registration')))
-					    and response_status = 'OK' and location_id = ?
-					    and created_at between ? and ?
-					group by 1, 2;
-                ", array($timezoneOffset, $current_mall, $start_date, $end_date));
+
+        if (!$flag_7days) {
+
+            $activities = DB::select("
+                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
+                from {$tablePrefix}activities
+                -- filter by date
+                where (`group` = 'mobile-ci'
+                    or (`group` = 'portal' and activity_type in ('activation'))
+                    or (`group` = 'cs-portal' and activity_type in ('registration')))
+                    and response_status = 'OK' and location_id = ?
+                    and created_at between ? and ?
+                group by 1, 2;
+            ", array($timezoneOffset, $current_mall, $start_date, $end_date));
 
 
-        $responses = [];
+            foreach ($dateRange as $key => $value) {
 
-        foreach ( $dateRange as $key => $value ) {
+                foreach ($activities as $x => $y) {
+                    if ($y->activity_date === $value) {
 
-            foreach ( $activities as $x => $y ) {
-                if ( $y->activity_date === $value ) {
+                        $date = [];
+                        $date['name'] = $y->activity_name_long;
+                        $date['count'] = $y->count;
 
-                    $date = [];
-                    $date['name'] = $y->activity_name_long;
-                    $date['count'] = $y->count;
-
-                    $responses[$value][] = $date;
+                        $responses[$value][] = $date;
+                    }
                 }
             }
-        }
 
-        // if there is date that have no data
-        $dateRange2 = $dateRange;
+            // if there is date that have no data
+            $dateRange2 = $dateRange;
 
-        foreach ($responses as $a => $b) {
-            $length = count($dateRange);
-            for ($i = 0; $i < $length; $i++) {
-                if ($a===$dateRange[$i]) {
-                    unset($dateRange2[$i]);
+            foreach ($responses as $a => $b) {
+                $length = count($dateRange);
+                for ($i = 0; $i < $length; $i++) {
+                    if ($a === $dateRange[$i]) {
+                        unset($dateRange2[$i]);
+                    }
                 }
             }
+
+            foreach ($dateRange2 as $x => $y) {
+                $responses[$dateRange2[$x]] = array();
+            }
+
         }
 
-        foreach ($dateRange2 as $x => $y) {
-            $responses[$dateRange2[$x]] = array();
-        }
-
-        $activity_columns  = Config::get('orbit.activity_columns');
+        $activity_columns = Config::get('orbit.activity_columns');
         $columns = [];
 
         $i = 0;
@@ -113,31 +120,29 @@ class CRMSummaryReportPrinterController extends DataPrinterController
             $i++;
         }
 
-        $dates = [];
-        $data = [];
-        $i = 0;
-        foreach ($responses as $key => $value) {
-            $dateTemp = [];
-            $dateTemp['order'] = $i;
-            $dateTemp['label'] = $key;
-            array_push($dates, $dateTemp);
+        if (!$flag_7days) {
 
-            foreach ($columns as $keyA => $valueA) {
-                $index = $this->in_array_r($value, 'name', $valueA['value']);
-                $data[$i][$valueA['order']] = $index > -1 ? $value[$index]['count'] : 0;
+            $dates = [];
+            $data = [];
+            $i = 0;
+            foreach ($responses as $key => $value) {
+                $dateTemp = [];
+                $dateTemp['order'] = $i;
+                $dateTemp['label'] = $key;
+                array_push($dates, $dateTemp);
+
+                foreach ($columns as $keyA => $valueA) {
+                    $index = $this->in_array_r($value, 'name', $valueA['value']);
+                    $data[$i][$valueA['order']] = $index > -1 ? $value[$index]['count'] : 0;
+                }
+
+                $i++;
             }
 
-            $i++;
-        }
+            usort($dates, function ($a, $b) {
+                return strtotime($a['label']) - strtotime($b['label']);
+            });
 
-        usort($dates, function($a, $b) {
-            return strtotime($a['label']) - strtotime($b['label']);
-        });
-
-        // special for export csv
-        $data2 = $data;
-        foreach ($data as $x => $y) {
-            $data2[$x]['date'] = $x;
         }
 
         $pageTitle = 'CRM Summary Report';
@@ -164,7 +169,8 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 }
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
-                foreach ($dates as $x => $y) {
+                if (!$flag_7days) {
+                    foreach ($dates as $x => $y) {
                         printf("%s,", $this->printDateTime($y['label'], 'd/m/Y'));
                         foreach ($columns as $i => $j) {
                             if ($i > 0) {
@@ -175,6 +181,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                                 printf("\n");
                             }
                         }
+                    }
                 }
 
                 break;
@@ -223,7 +230,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
     }
 
 
-    function in_array_r($products, $field, $value)
+    public function in_array_r($products, $field, $value)
     {
         foreach($products as $key => $product)
         {
@@ -233,5 +240,9 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         return false;
     }
 
+    public function printFormatNumber($number)
+    {
+        return number_format($number, 0,'.','.');
+    }
 
 }
