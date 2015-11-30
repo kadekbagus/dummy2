@@ -2544,6 +2544,27 @@ class UserAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            // Update email in tokens table when change email before user setup a password
+            // Check setup password user or no
+            $userPass = User::excludeDeleted()
+                ->where('user_id', $userId)
+                ->where('user_password', '')
+                ->count('user_id');
+
+            if ($userPass > 0) {
+                // update email in token
+                $checkToken = Token::excludeDeleted()
+                    ->where('user_id', $userId)
+                    ->where('token_name', 'user_setup_password')
+                    ->first();
+
+                if ($checkToken !== null) {
+                    $checkToken->email = $email;
+                    $checkToken->save();
+                }
+            }
+
             Event::fire('orbit.user.postupdatemembership.after.validation', array($this, $validator));
 
             $role = Role::where('role_name', 'consumer')->first();

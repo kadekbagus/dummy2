@@ -38,12 +38,12 @@
         </header>
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
-                <span class="greetings">{{{ trans('mobile-ci.connect.header') }}} <img src="{{ asset('mobile-ci/images/default-logo.png') }}" style="width:60px"></span>
+                <span class="greetings">{{{ trans('mobileci.connect.header') }}} <img src="{{ asset('mobile-ci/images/default-logo.png') }}" style="width:60px"></span>
             </div>
         </div>
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
-                <strong>{{{ trans('mobile-ci.connect.message') }}}</strong>
+                <strong>{{{ trans('mobileci.connect.message') }}}</strong>
             </div>
         </div>
     </div>

@@ -2330,6 +2330,7 @@ return array(
         'View Promotion List'           => 'View Promotion List',
         'View Promotion Detail'         => 'View Promotion Detail',
         'View Promotion Tenant List'    => 'View Promotion Tenant List',
+        'View Tenant List'              => 'View Tenant List',
         'View Tenant Detail'            => 'View Tenant Detail',
         'Widget Click Tenant'           => 'Widget Click Tenant',
         'Widget Click News'             => 'Widget Click News',

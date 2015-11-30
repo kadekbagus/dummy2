@@ -415,9 +415,9 @@ return array(
 
     'homescreen' => array(
         'title'     => 'Did you know?',
-        'message'   => 'You can add this web app to your home screen: tap setting and then',
-        'message_firefox'   => 'You can add this web app to your home screen: tap setting > Page and then',
-        'add_to'    => '<strong>Add to Home Screen</strong>',
+        'message'   => 'You can add this web app to your home screen by tapping on browser settings > ',
+        'add_to'    => '<strong>Add to Home screen</strong>',
+        'message_after' => '',
         'check'     => 'Do not show this message again',
     ),
 
