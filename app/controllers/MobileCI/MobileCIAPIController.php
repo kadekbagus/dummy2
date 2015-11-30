@@ -3859,9 +3859,10 @@ class MobileCIAPIController extends ControllerAPI
      *
      * Returns: { user_id: ..., user_email: ..., user_detail_id: ..., apikey_id: ... }
      *
+     * @param bool $forceReload force reload of box user, userdetail data.
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    public function getCloudLogin()
+    public function getCloudLogin($forceReload = true)
     {
         $this->beginTransaction();
         try {
@@ -3948,7 +3949,7 @@ class MobileCIAPIController extends ControllerAPI
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
                 $acq->save();
-                $acq->forceBoxReloadUserData();
+                $acq->forceBoxReloadUserData($forceReload);
                 // cannot use $user as $user has extra properties added and would fail
                 // if we saved it.
                 $dup_user = User::find($user->user_id);
