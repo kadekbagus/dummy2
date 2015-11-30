@@ -109,62 +109,33 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">CRM Summary List</h2>
+    <h2 style="margin-bottom:0.5em;">CRM Summary</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
-<!--        <tr>-->
-<!--            <td>Total Customers</td>-->
-<!--            <td>:</td>-->
-<!--            <td><strong>--><?php ////echo number_format($totalRec, 0, '.', '.'); ?><!--</strong></td>-->
-<!--        </tr>-->
     </table>
 
     <table style="width:100%">
         <thead>
         <th style="text-align:left;">Date </th>
-        <th style="text-align:left;">Email Sign Up</th>
-        <th style="text-align:left;">Facebook Sign Up</th>
-        <th style="text-align:left;">Sign In</th>
-        <th style="text-align:left;">Sign Up via CS</th>
-        <th style="text-align:left;">Customer Activation</th>
-        <th style="text-align:left;">Network Check In</th>
-        <th style="text-align:left;">Network Check Out</th>
-        <th style="text-align:left;">Sign Out</th>
-        <th style="text-align:left;">View (Home Page)</th>
-        <th style="text-align:left;">Event View (Pop Up)</th>
-        <th style="text-align:left;">Event Click</th>
-        <th style="text-align:left;">View Coupon List</th>
-        <th style="text-align:left;">View Coupon Detail</th>
-        <th style="text-align:left;">Coupon Redemption Successful</th>
-        <th style="text-align:left;">Coupon Issuance</th>
-        <th style="text-align:left;">View Events Tenant List</th>
-        <th style="text-align:left;">View News List</th>
-        <th style="text-align:left;">View News Detail</th>
-        <th style="text-align:left;">View News Tenant List</th>
-        <th style="text-align:left;">View Promotion List</th>
-        <th style="text-align:left;">View Promotion Detail</th>
-        <th style="text-align:left;">View Promotion Tenant List</th>
-        <th style="text-align:left;">View Tenant Detail</th>
-        <th style="text-align:left;">Widget Click Tenant</th>
-        <th style="text-align:left;">Widget Click News</th>
-        <th style="text-align:left;">Widget Click Promotion</th>
-        <th style="text-align:left;">Widget Click Coupon</th>
+        <?php foreach($columns as $i => $j) { ?>
+        <th style="text-align: left;"><?php echo $j['label'] ?></th>
+        <?php } ?>
         </thead>
         <tbody>
 
-        <?php foreach ($data as $x => $y) { ?>
+        <?php if(!$flag_7days) { foreach ($dates as $x => $y) { ?>
             <tr class=" ">
-                <td width='4%'><?php echo $me->printDateTime($x, 'd/m/Y'); ?></td>
-                <?php foreach($data[$x] as $i => $j) { ?>
-                    <td><?php echo $j; ?></td>
+                <td width='4%'><?php echo $me->printDateTime($y['label'], 'd/m/Y'); ?></td>
+                <?php foreach($columns as $i => $j) { ?>
+                    <td><?php echo $me->printFormatNumber($data[$y['order']][$j['order']]); ?></td>
 
                 <?php } ?>
             </tr>
-        <?php } ?>
+        <?php }} ?>
         </tbody>
     </table>
 </div>
