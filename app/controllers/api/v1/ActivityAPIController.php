@@ -3038,17 +3038,17 @@ class ActivityAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            $activities = DB::select( DB::raw("
-					select date_format(convert_tz(created_at, '+00:00', '" . $timezoneOffset . "'), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
+            $activities = DB::select("
+					select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
 					from {$tablePrefix}activities
 					-- filter by date
-					where `group` = 'mobile-ci'
+					where (`group` = 'mobile-ci'
 					    or (`group` = 'portal' and activity_type in ('activation'))
-					    or (`group` = 'cs-portal' and activity_type in ('registration'))
-					    and response_status = 'OK' and location_id = '" . $current_mall . "'
-					    and created_at between '" . $start_date . "' and '" . $end_date . "'
+					    or (`group` = 'cs-portal' and activity_type in ('registration')))
+					    and response_status = 'OK' and location_id = ?
+					    and created_at between ? and ?
 					group by 1, 2;
-                ") );
+                ", array($timezoneOffset, $current_mall, $start_date, $end_date));
 
             $responses = [];
             $records = [];
@@ -3085,8 +3085,6 @@ class ActivityAPIController extends ControllerAPI
             foreach ($dateRange2 as $x => $y) {
                 $responses[$dateRange2[$x]] = array();
             }
-
-            ksort($responses);
 
             $records['records'] = $responses;
 
