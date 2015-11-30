@@ -9,7 +9,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitUploader\UploaderConfig;
 use DominoPOS\OrbitUploader\UploaderMessage;
@@ -24,6 +24,46 @@ class UploadAPIController extends ControllerAPI
      * @var string
      */
     protected $calledFrom = 'default';
+
+    /**
+     * param: type: string
+     */
+    public function getMaximumFileSize()
+    {
+        $httpCode = 200;
+        try {
+            $type = OrbitInput::get('type', null);
+            if ($type === null) {
+                OrbitShopAPI::throwInvalidArgument('Type required');
+            }
+            $type = (string)$type;
+            if (!preg_match('/^[a-z.]+$/', $type)) {
+                OrbitShopAPI::throwInvalidArgument('Type must be alphabetic separated by dots');
+            }
+            $config = Config::get('orbit.upload.' . $type, null);
+            if (!is_array($config)) {
+                OrbitShopAPI::throwInvalidArgument('Type unknown');
+            }
+
+            if (!isset($config['file_size'])) {
+                OrbitShopAPI::throwInvalidArgument('Type does not set file size');
+            }
+
+            $this->response->data = ['bytes' => $config['file_size']];
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+        }
+        return $this->render($httpCode);
+    }
 
     /**
      * Generic method for saving the uploaded metadata to the Media table on
