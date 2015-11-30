@@ -220,10 +220,6 @@
                 currentDeltaY = adjustDeltaY + (ev.deltaY / currentScale);
 
                 if(currentScale > initialScale) {
-                    $('.featherlight-content img').css({
-                        'height': '',
-                        'width': '' 
-                    });
                     scaletime(currentScale, currentDeltaX, currentDeltaY);
                 }
             });
