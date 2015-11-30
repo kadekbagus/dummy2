@@ -12,6 +12,7 @@ use Orbit\Helper\Security\Encrypter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitSession\Session as OrbitSession;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
@@ -237,7 +238,7 @@ class IntermediateLoginController extends IntermediateBaseController
      * Returns: redirect to callback with
      *   GET[status=, message=(if error), user_id=(if success), user_email=(if success)]
      *
-     * @return RedirectResponse
+     * @return Symfony\Component\HttpFoundation\Response
      */
     public function getCloudLogin()
     {
@@ -246,6 +247,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $retailer_id = OrbitInput::get('retailer_id', '');
         $payload = OrbitInput::get('payload', '');
         $from = OrbitInput::get('from', '');
+        $full_data = OrbitInput::get('full_data', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -256,11 +258,16 @@ class IntermediateLoginController extends IntermediateBaseController
             'callback_url' => $callback_url,
             'payload' => $payload,
             'from' => $from,
+            'full_data' => $full_data,
         ])) {
             return $this->displayValidationError();
         }
 
-        $response = MobileCIAPIController::create('raw')->getCloudLogin();
+        $full_data = ($full_data === 'yes');
+
+        /** @var MobileCIAPIController $controllerAPI */
+        $controllerAPI = MobileCIAPIController::create('raw');
+        $response = $controllerAPI->getCloudLogin(!$full_data);
 
         $params = ['status' => $response->status];
         if ($response->status === 'success') {
@@ -274,11 +281,29 @@ class IntermediateLoginController extends IntermediateBaseController
         } else {
             $params['message'] = $response->message;
         }
-        $params = CloudMAC::wrapDataFromCloud($params);
-
-        // we use this to assemble a normalized URL.
-        $req = \Symfony\Component\HttpFoundation\Request::create($callback_url, 'GET', $params);
-        return Redirect::away($req->getUri(), 302, $this->getCORSHeaders());
+        if ($full_data) {
+            $response = new stdclass();
+            $response->code = 0;
+            $response->status = $params['status'];
+            $response->message = '';
+            if ($params['status'] === 'success') {
+                // technically this will also serialize any *loaded* relation, but we are
+                // loading the entity from the ID without loading any relations.
+                $params['user'] = \User::find($params['user_id'])->toJson();
+                $params['user_detail'] = \UserDetail::find($params['user_detail_id'])->toJson();
+                // api key does not need syncing as it is one way only (cloud -> box) plus it contains
+                // secret data so...
+                // user personal interest is always reloaded as it should not conflict (???)
+            }
+            $params = CloudMAC::wrapDataFromCloud($params);
+            $response->data = $params;
+            return $this->render($params);
+        } else {
+            // we use this to assemble a normalized URL.
+            $params = CloudMAC::wrapDataFromCloud($params);
+            $req = \Symfony\Component\HttpFoundation\Request::create($callback_url, 'GET', $params);
+            return Redirect::away($req->getUri(), 302, $this->getCORSHeaders());
+        }
     }
 
     /**

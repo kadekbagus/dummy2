@@ -3841,6 +3841,7 @@ class MobileCIAPIController extends ControllerAPI
             'callback_url' => URL::route('customer-login-callback'),
             'payload' => $payload,
             'from' => $from,
+            'full_data' => 'no',
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
