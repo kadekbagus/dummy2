@@ -3063,7 +3063,7 @@ class ActivityAPIController extends ControllerAPI
 
                         $date = [];
                         $date['name'] = $y->activity_name_long;
-                        $date['count'] = $y->count;
+                        $date['count'] = number_format($y->count, 0,'.','.');
 
                         $responses[$value][] = $date;
                     }
