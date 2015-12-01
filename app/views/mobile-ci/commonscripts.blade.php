@@ -36,7 +36,7 @@
                     <h2>
                         <span>
                             <strong>
-                                {{ (strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
+                                {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
                             </strong>
                             <span class='spacery'></span>
                             <br>
@@ -162,10 +162,12 @@
             var transforms = [];
             transforms.push('scale('+scale+')');
             transforms.push('translate('+x+'px,'+y+'px)');
-            $('.featherlight-content img').css("transform", transforms.join(' '));
+            $('.featherlight-content img').css('transform', transforms.join(' '));
         }
 
         function resetImage() {
+            $('.featherlight-content').css('width', '100%');
+            $('.featherlight-content img').css('margin', '0 auto');
             if($(window).height() < $(window).width()) {
                 $('.featherlight-content img').css({
                     'height': '100%',
@@ -218,10 +220,6 @@
                 currentDeltaY = adjustDeltaY + (ev.deltaY / currentScale);
 
                 if(currentScale > initialScale) {
-                    $('.featherlight-content img').css({
-                        'height': '',
-                        'width': '' 
-                    });
                     scaletime(currentScale, currentDeltaX, currentDeltaY);
                 }
             });
@@ -249,7 +247,7 @@
             });
 
 
-        }, 0);
+        }, 50);
     });
 
     $(document).on('click', '.featherlight-close', function(){
@@ -262,6 +260,8 @@
         transforms.push('scale(1)');
         transforms.push('translate(0px,0px)');
         $('.featherlight-content img').css("transform", transforms.join(' '));
+        $('.featherlight-content').css('width', '100%');
+        $('.featherlight-content img').css('margin', '0 auto');
         if($(window).height() < $(window).width()) {
             $('.featherlight-image').css({
                 'height': '100%',

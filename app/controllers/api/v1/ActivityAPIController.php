@@ -3002,7 +3002,7 @@ class ActivityAPIController extends ControllerAPI
 
             // start date cannot be bigger than end date
             if ( $start_date > $end_date ) {
-                $errorMessage = 'Start date should be smaller than end date';
+                $errorMessage = 'Start date cannot be greater than end date';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -3063,7 +3063,7 @@ class ActivityAPIController extends ControllerAPI
 
                         $date = [];
                         $date['name'] = $y->activity_name_long;
-                        $date['count'] = $y->count;
+                        $date['count'] = number_format($y->count, 0,'.','.');
 
                         $responses[$value][] = $date;
                     }
@@ -3085,6 +3085,8 @@ class ActivityAPIController extends ControllerAPI
             foreach ($dateRange2 as $x => $y) {
                 $responses[$dateRange2[$x]] = array();
             }
+
+            ksort($responses);
 
             $records['records'] = $responses;
 

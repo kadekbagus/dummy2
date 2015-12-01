@@ -127,15 +127,15 @@
         </thead>
         <tbody>
 
-        <?php foreach ($dates as $x => $y) { ?>
+        <?php if(!$flag_7days) { foreach ($dates as $x => $y) { ?>
             <tr class=" ">
                 <td width='4%'><?php echo $me->printDateTime($y['label'], 'd/m/Y'); ?></td>
                 <?php foreach($columns as $i => $j) { ?>
-                    <td><?php echo $data[$y['order']][$j['order']]; ?></td>
+                    <td><?php echo $me->printFormatNumber($data[$y['order']][$j['order']]); ?></td>
 
                 <?php } ?>
             </tr>
-        <?php } ?>
+        <?php }} ?>
         </tbody>
     </table>
 </div>
