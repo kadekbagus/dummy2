@@ -157,16 +157,16 @@
 
 <!-- Privacy Policy -->
 <div class="modal fade" id="privacyModal" tabindex="-1" role="dialog" aria-labelledby="privacyModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
+    <div class="modal-dialog orbit-modal" style="height: 80%;">
+        <div class="modal-content" style="height: 100%;">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span><span class="sr-only">{{{ $closeModalText or 'OK' }}}</span>
                 </button>
                 <h4 class="modal-title" id="myModalLabel">Privacy Policy</h4>
             </div>
-            <div class="modal-body">
-                <iframe src="{{{ Config::get('orbit.contact_information.privacy_policy_url') }}}" style="zoom:0.60" frameborder="0" height="55%" width="99.6%"></iframe>
+            <div class="modal-body" style="height: 100%;">
+                <iframe src="{{{ Config::get('orbit.contact_information.privacy_policy_url') }}}" frameborder="0" height="90%" width="99.6%"></iframe>
             </div>
         </div>
     </div>
@@ -174,16 +174,16 @@
 
 <!-- Term and Condition -->
 <div class="modal fade" id="tosModal" tabindex="-1" role="dialog" aria-labelledby="tosModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
+    <div class="modal-dialog orbit-modal" style="height: 80%;">
+        <div class="modal-content" style="height: 100%;">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span><span class="sr-only">{{{ $closeModalText or 'OK' }}}</span>
                 </button>
                 <h4 class="modal-title" id="myModalLabel">Terms and Conditions</h4>
             </div>
-            <div class="modal-body">
-                <iframe src="{{{ Config::get('orbit.contact_information.terms_of_service_url') }}}" style="zoom:0.60" frameborder="0" height="55%" width="99.6%"></iframe>
+            <div class="modal-body" style="height: 100%;">
+                <iframe src="{{{ Config::get('orbit.contact_information.terms_of_service_url') }}}" frameborder="0" height="90%" width="99.6%"></iframe>
             </div>
         </div>
     </div>
