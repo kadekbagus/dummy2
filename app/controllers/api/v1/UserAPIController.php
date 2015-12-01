@@ -2548,8 +2548,8 @@ class UserAPIController extends ControllerAPI
             // Update email in tokens table when change email before user setup a password
             // Check setup password user or no
             $userPass = User::excludeDeleted()
-                ->where('user_id', $userId)
-                ->where('user_password', '')
+                ->where('user_id', '=', $userId)
+                ->where('user_password', '=', '')
                 ->count('user_id');
 
             if ($userPass > 0) {
