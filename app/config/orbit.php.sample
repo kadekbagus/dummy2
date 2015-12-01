@@ -4,6 +4,13 @@
  */
 return array(
 
+    'assets' => array(
+        // Asset root (without trailing slash)
+        // leave undefined to work from app root
+        // 'root' => 'http://assets.myorbit.com'
+    ),
+
+
     // Languages that supported by orbit app
     'languages' => array('en', 'zh', 'ja'),
 

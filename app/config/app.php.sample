@@ -123,6 +123,7 @@ return array(
 		'Illuminate\Workbench\WorkbenchServiceProvider',
 		'Fideloper\Proxy\ProxyServiceProvider',
         'Laraeval\Laraeval\LaraevalServiceProvider',
+		'Orbit\RoutingServiceProvider',
 	),
 
 	/*
