@@ -166,7 +166,9 @@
                 <h4 class="modal-title" id="myModalLabel">Privacy Policy</h4>
             </div>
             <div class="modal-body" style="height: 100%;">
-                <iframe src="{{{ Config::get('orbit.contact_information.privacy_policy_url') }}}" frameborder="0" height="90%" width="99.6%"></iframe>
+                <div style="width: 100%; height: 100%; overflow: auto;">
+                    <iframe src="{{{ Config::get('orbit.contact_information.privacy_policy_url') }}}" height="90%" frameborder="0" width="99.6%"></iframe>
+                </div>
             </div>
         </div>
     </div>
@@ -183,7 +185,9 @@
                 <h4 class="modal-title" id="myModalLabel">Terms and Conditions</h4>
             </div>
             <div class="modal-body" style="height: 100%;">
-                <iframe src="{{{ Config::get('orbit.contact_information.terms_of_service_url') }}}" frameborder="0" height="90%" width="99.6%"></iframe>
+                <div style="width: 100%; height: 100%; overflow: auto;">
+                    <iframe src="{{{ Config::get('orbit.contact_information.terms_of_service_url') }}}" height="90%" frameborder="0" width="99.6%"></iframe>
+                </div>
             </div>
         </div>
     </div>
