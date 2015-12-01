@@ -86,6 +86,18 @@ class MobileCIAPIController extends ControllerAPI
             $email = trim(OrbitInput::post('email'));
             $payload = OrbitInput::post('payload');
 
+            if (Config::get('orbit.shop.guest_mode')) {
+                $guest = User::whereHas('role', function ($q) {
+                    $q->where('role_name', 'Guest');
+                })->excludeDeleted()->first();
+
+                if(! is_object($guest)) {
+                    throw new Exception('Guest user not configured properly.');
+                }
+
+                $email = $guest->user_email;
+            }
+
             if (trim($email) === '') {
                 $errorMessage = \Lang::get('validation.required', array('attribute' => 'email'));
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -542,10 +554,6 @@ class MobileCIAPIController extends ControllerAPI
             } catch (Exception $e) {
             }
 
-            // Get email from query string
-            $loggedUser = $this->getLoggedInUser();
-            $user_email = $loggedUser->user_email;
-
             // Captive Portal Apple CNA Window
             // -------------------------------
             // Payload login is set and the user is logged in, no need to ask user log in again
@@ -557,6 +565,10 @@ class MobileCIAPIController extends ControllerAPI
 
                 return Redirect::to($this->addParamsToUrl($landing_url, $internet_info));
             }
+
+            // Get email from query string
+            $loggedUser = $this->getLoggedInUser();
+            $user_email = $loggedUser->user_email;
 
             $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,
@@ -2239,7 +2251,8 @@ class MobileCIAPIController extends ControllerAPI
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                 WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
                     AND p.merchant_id = :merchantid
-                    AND ic.user_id = :userid'
+                    AND ic.user_id = :userid
+                    ORDER BY ic.issued_date DESC'
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );
@@ -3924,6 +3937,7 @@ class MobileCIAPIController extends ControllerAPI
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
                 $acq->save();
+                $acq->forceBoxReloadUserData();
                 // cannot use $user as $user has extra properties added and would fail
                 // if we saved it.
                 $dup_user = User::find($user->user_id);
@@ -3935,6 +3949,7 @@ class MobileCIAPIController extends ControllerAPI
             $this->response->status = 'success';
             $this->response->data = (object)[
                 'user_id' => $user->user_id,
+                'user_status' => $user->status,
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
