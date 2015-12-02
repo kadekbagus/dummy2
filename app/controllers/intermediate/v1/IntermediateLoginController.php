@@ -704,6 +704,17 @@ class IntermediateLoginController extends IntermediateBaseController
 
                 setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                 setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            } 
+
+            if (Config::get('orbit.shop.guest_mode')) {
+                if ($user->role->role_name === 'Guest') {
+                    $expireTime = time() + 3600 * 24 * 365 * 5;
+                    $guest = User::whereHas('role', function ($q) {
+                        $q->where('role_name', 'Guest');
+                    })->excludeDeleted()->first();
+                    setcookie('orbit_email', $guest->user_email, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('orbit_firstname', 'Orbit Guest', time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                }
             }
 
             // Successfull login
@@ -883,6 +894,36 @@ class IntermediateLoginController extends IntermediateBaseController
             Log::info('[PAYLOAD] Mac saved -- ' . serialize($macModel));
         }
 
+        // this is passed up from LoginAPIController::postRegisterUserInShop, to MobileCIAPIController::postLoginInShop
+        // to here, so if this login automatically registered the user, we can update this based on where
+        // the registration is coming from.
+        if (isset($registration_activity_id) && isset($customer)) {
+            $registration_activity = Activity::where('activity_id', '=', $registration_activity_id)
+                ->where('activity_name', '=', 'registration_ok')
+                ->where('user_id', '=', $customer->user_id)
+                ->first();
+            if (isset($registration_activity)) {
+                if (isset($from)) {
+                    if ($from === 'facebook') {
+                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Facebook)';
+                        $registration_activity->save();
+
+                        // @author Irianto Pratama <irianto@dominopos.com>
+                        // send email if user status active
+                        if ($customer->status === 'active') {
+                            // Send email process to the queue
+                            \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                                'user_id' => $customer->user_id
+                            ]);
+                        }
+                    } else if ($from === 'form') {
+                        $registration_activity->activity_name_long = 'Sign Up with email address';
+                        $registration_activity->save();
+                    }
+                }
+            }
+        }
+
         // Try to update the activity
         if ($captive === 'yes') {
             switch ($from) {
@@ -912,36 +953,6 @@ class IntermediateLoginController extends IntermediateBaseController
             }
             if (isset($activity)) {
                 $activity->setActivityNameLong($activityNameLong);
-            }
-        }
-
-        // this is passed up from LoginAPIController::postRegisterUserInShop, to MobileCIAPIController::postLoginInShop
-        // to here, so if this login automatically registered the user, we can update this based on where
-        // the registration is coming from.
-        if (isset($registration_activity_id) && isset($customer)) {
-            $registration_activity = Activity::where('activity_id', '=', $registration_activity_id)
-                ->where('activity_name', '=', 'registration_ok')
-                ->where('user_id', '=', $customer->user_id)
-                ->first();
-            if (isset($registration_activity)) {
-                if (isset($from)) {
-                    if ($from === 'facebook') {
-                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Facebook)';
-                        $registration_activity->save();
-
-                        // @author Irianto Pratama <irianto@dominopos.com>
-                        // send email if user status active
-                        if ($customer->status === 'active') {
-                            // Send email process to the queue
-                            \Queue::push('Orbit\\Queue\\NewPasswordMail', [
-                                'user_id' => $customer->user_id
-                            ]);
-                        }
-                    } else if ($from === 'form') {
-                        $registration_activity->activity_name_long = 'Sign Up with email address';
-                        $registration_activity->save();
-                    }
-                }
             }
         }
     }

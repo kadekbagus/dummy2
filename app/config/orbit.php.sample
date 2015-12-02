@@ -4,6 +4,12 @@
  */
 return array(
 
+    'assets' => array(
+        // Asset root (without trailing slash)
+        // leave undefined to work from app root
+        // 'root' => 'http://assets.myorbit.com'
+    ),
+
     // Languages that supported by orbit app
     'languages' => array('en', 'zh', 'ja'),
 
@@ -36,7 +42,19 @@ return array(
         'poll_interval' => 8,
 
         // config to validate if membership number have to be unique or not
-        'membership_number_unique_check' => false
+        'membership_number_unique_check' => false,
+
+        //guest mode
+        'guest_mode' => false,
+
+        // Internet offline check
+        'offline_check' => [
+            'enable'    => TRUE,
+
+            // enable must be true
+            // in milliseconds
+            'interval'  => 5000
+        ]
     ),
 
     // General contact data
@@ -2303,7 +2321,7 @@ return array(
         'Event Click'                   => 'Event Click',
         'View Coupon List'              => 'View Coupon List',
         'View Coupon Detail'            => 'View Coupon Detail',
-        'Coupon Redemption Successful'  => 'Redeem Coupon OK',
+        'Coupon Redemption Successful'  => 'Coupon Redemption (Successful)',
         'Coupon Issuance'               => 'Coupon Issuance',
         'View Events Tenant List'       => 'View Events Tenant List',
         'View News List'                => 'View News List',
@@ -2312,6 +2330,7 @@ return array(
         'View Promotion List'           => 'View Promotion List',
         'View Promotion Detail'         => 'View Promotion Detail',
         'View Promotion Tenant List'    => 'View Promotion Tenant List',
+        'View Tenant List'              => 'View Tenant List',
         'View Tenant Detail'            => 'View Tenant Detail',
         'Widget Click Tenant'           => 'Widget Click Tenant',
         'Widget Click News'             => 'Widget Click News',

@@ -26,7 +26,7 @@
             @if(is_null($page_title))
             {{ 'ORBIT' }}
             @else
-                @if(strlen($page_title) >= 30)
+                @if(mb_strlen($page_title) >= 30)
                 {{ substr($page_title, 0, 30) . '...' }}
                 @else
                 {{ $page_title }}

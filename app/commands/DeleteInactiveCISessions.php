@@ -1,11 +1,27 @@
 <?php
-/**
- * Deletes inactive mobile-ci sessions and inserts logout activity for the corresponding users.
- */
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
+/**
+ * Deletes inactive mobile-ci sessions and inserts logout activity for the corresponding users.
+ *
+ * Possible upstart start script (/etc/init/orbit-ci-session-delete-inactive.conf) BEGIN
+ *
+ * chdir /var/www/production/orbit-mall-api/
+ * exec /var/www/production/orbit-mall-api/artisan ci-session:delete-inactive --inactive-for=300 --interval=15 --batch-size=10 --application-id=1
+ *
+ * start on (filesystem and runlevel [2345])
+ * stop on runlevel [016]
+ *
+ * respawn
+ * respawn limit 10 30
+ *
+ * setuid git
+ * setgid git
+ *
+ * Possible upstart start script END
+ */
 class DeleteInactiveCISessions extends Command
 {
 

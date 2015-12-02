@@ -374,7 +374,6 @@ class EmployeeAPIController extends ControllerAPI
                     'password_confirmation'   => $password2,
                     'employee_role'           => $employeeRole,
                     'retailer_ids'            => $retailerIds,
-                    'cs_verification_numbers' => $csVerificationNumbers,
                     'status'                  => $empStatus
                 ),
                 array(

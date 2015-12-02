@@ -415,9 +415,9 @@ return array(
 
     'homescreen' => array(
         'title'     => '你知道吗？',
-        'message'   => '您可以添加这个Web应用程序到您的主屏幕：点击设置，然后',
-        'message_firefox'   => '您可以添加这个Web应用程序到您的主屏幕：点击设置 > 页面， 然后',
-        'add_to'    => '<strong>添加到主屏幕</strong>',
+        'message'   => '你可以添加你的主屏幕的这个 web 应用程序通过敲击的 浏览器设置 > ',
+        'add_to'    => '<strong>将添加到主屏幕</strong>',
+        'message_after' => '',
         'check'     => '不要再显示此消息',
     ),
 

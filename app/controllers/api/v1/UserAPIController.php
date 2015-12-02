@@ -2464,7 +2464,6 @@ class UserAPIController extends ControllerAPI
             $lastname = OrbitInput::post('lastname');
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
-            $phone = OrbitInput::post('phone');
 
             $membership_since = OrbitInput::post('joindate');
             if (trim($membership_since) === '') {
@@ -2485,10 +2484,10 @@ class UserAPIController extends ControllerAPI
 
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
+            $workphone = OrbitInput::post('work_phone');
             $city = OrbitInput::post('city');
             $province = OrbitInput::post('province');
             $postal_code = OrbitInput::post('postal_code');
-            $workphone = OrbitInput::post('work_phone');
             $occupation = OrbitInput::post('occupation');
             $dateofwork = OrbitInput::post('date_of_work');
             $homeAddress = OrbitInput::post('home_address');
@@ -2544,6 +2543,27 @@ class UserAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            // Update email in tokens table when change email before user setup a password
+            // Check setup password user or no
+            $userPass = User::excludeDeleted()
+                ->where('user_id', '=', $userId)
+                ->where('user_password', '=', '')
+                ->count('user_id');
+
+            if ($userPass > 0) {
+                // update email in token
+                $checkToken = Token::excludeDeleted()
+                    ->where('user_id', $userId)
+                    ->where('token_name', 'user_setup_password')
+                    ->first();
+
+                if ($checkToken !== null) {
+                    $checkToken->email = $email;
+                    $checkToken->save();
+                }
+            }
+
             Event::fire('orbit.user.postupdatemembership.after.validation', array($this, $validator));
 
             $role = Role::where('role_name', 'consumer')->first();
@@ -2598,11 +2618,15 @@ class UserAPIController extends ControllerAPI
                 $userdetail->gender = $gender;
             });
 
-            OrbitInput::post('mobile_phone', function($phone) use ($userdetail) {
-                $userdetail->phone = $phone;
+            OrbitInput::post('mobile_phone', function($phone1) use ($userdetail) {
+                $userdetail->phone = $phone1;
             });
 
-            OrbitInput::post('mobile_phone2', function($phone3) use ($userdetail) {
+            OrbitInput::post('mobile_phone2', function($phone2) use ($userdetail) {
+                $userdetail->phone2 = $phone2;
+            });
+
+            OrbitInput::post('work_phone', function($phone3) use ($userdetail) {
                 $userdetail->phone3 = $phone3;
             });
 
@@ -2616,10 +2640,6 @@ class UserAPIController extends ControllerAPI
 
             OrbitInput::post('postal_code', function($postal) use ($userdetail) {
                 $userdetail->postal_code = $postal;
-            });
-
-            OrbitInput::post('work_phone', function($phone) use ($userdetail) {
-                $userdetail->phone2 = $phone;
             });
 
             OrbitInput::post('home_address', function($data) use ($userdetail) {
@@ -3119,7 +3139,7 @@ class UserAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
-                    'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
+                    'email'                 => 'required|email|orbit.email.checker.mxrecord|orbit.email.exists:' . $retailer_id,
                     'from'                  => 'in:cs',
                 )
             );
