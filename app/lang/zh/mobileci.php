@@ -219,7 +219,7 @@ return array(
     'coupon' => array(
         'tenant_based'                     => '基于租户',
         'mall_based'                       => '基于商城',
-        'tenant_redeem'                    => '店铺挽回',
+         'tenant_redeem'                   => 'zh : Where to Reedem',
         'coupon_value'                     => '优惠券余额',
         'use_coupon'                       => '使优惠券',
         'enter_tenant_verification_number' => '请收入店铺验证码',
