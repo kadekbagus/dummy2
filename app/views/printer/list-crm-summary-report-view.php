@@ -120,10 +120,11 @@
 
     <table style="width:100%">
         <thead>
+        <?php if(!$flag_noconfig) {?>
         <th style="text-align:left;">Date </th>
-        <?php foreach($columns as $i => $j) { ?>
+        <?php  foreach($columns as $i => $j) { ?>
         <th style="text-align: left;"><?php echo $j['label'] ?></th>
-        <?php } ?>
+        <?php } } ?>
         </thead>
         <tbody>
 
@@ -135,7 +136,7 @@
 
                 <?php } ?>
             </tr>
-        <?php }} ?>
+        <?php } } ?>
         </tbody>
     </table>
 </div>
