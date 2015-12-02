@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class IssuedCouponAPIController extends ControllerAPI
 {
@@ -76,15 +77,18 @@ class IssuedCouponAPIController extends ControllerAPI
                     'issuer_retailer_id'   => $issuer_retailer_id,
                 ),
                 array(
-                    'promotion_id'         => 'required|numeric|orbit.empty.coupon',
+                    'promotion_id'         => 'required|orbit.empty.coupon',
                     'issued_coupon_code'   => 'required|orbit.exists.issued_coupon_code',
-                    'user_id'              => 'required|numeric|orbit.empty.user',
+                    'user_id'              => 'required|orbit.empty.user',
                     'status'               => 'required|orbit.empty.issued_coupon_status',
-                    'issuer_retailer_id'   => 'numeric|orbit.empty.retailer',
+                    'issuer_retailer_id'   => 'orbit.empty.retailer',
                 )
             );
 
             Event::fire('orbit.issuedcoupon.postnewissuedcoupon.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -93,9 +97,6 @@ class IssuedCouponAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.issuedcoupon.postnewissuedcoupon.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // save IssuedCoupon.
             $newissuedcoupon = new IssuedCoupon();
@@ -234,10 +235,10 @@ class IssuedCouponAPIController extends ControllerAPI
                     'status'               => $status,
                 ),
                 array(
-                    'issued_coupon_id'     => 'required|numeric|orbit.empty.issued_coupon',
-                    'promotion_id'         => 'numeric|orbit.empty.coupon',
+                    'issued_coupon_id'     => 'required|orbit.empty.issued_coupon',
+                    'promotion_id'         => 'orbit.empty.coupon',
                     'issued_coupon_code'   => 'issued_coupon_code_exists_but_me',
-                    'user_id'              => 'numeric|orbit.empty.user',
+                    'user_id'              => 'orbit.empty.user',
                     'status'               => 'orbit.empty.issued_coupon_status',
                 ),
                 array(
@@ -247,15 +248,15 @@ class IssuedCouponAPIController extends ControllerAPI
 
             Event::fire('orbit.issuedcoupon.postupdateissuedcoupon.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.issuedcoupon.postupdateissuedcoupon.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedissuedcoupon = IssuedCoupon::with('coupon', 'user', 'issuerretailer')->excludeDeleted()->where('issued_coupon_id', $issued_coupon_id)->first();
 
@@ -406,11 +407,14 @@ class IssuedCouponAPIController extends ControllerAPI
                     'issued_coupon_id' => $issued_coupon_id,
                 ),
                 array(
-                    'issued_coupon_id' => 'required|numeric|orbit.empty.issued_coupon',
+                    'issued_coupon_id' => 'required|orbit.empty.issued_coupon',
                 )
             );
 
             Event::fire('orbit.issuedcoupon.postdeleteissuedcoupon.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -418,9 +422,6 @@ class IssuedCouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.issuedcoupon.postdeleteissuedcoupon.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deleteissuedcoupon = IssuedCoupon::excludeDeleted()->where('issued_coupon_id', $issued_coupon_id)->first();
             $deleteissuedcoupon->status = 'deleted';
@@ -827,13 +828,24 @@ class IssuedCouponAPIController extends ControllerAPI
                 $maxRecord = 20;
             }
 
+            $prefix = DB::getTablePrefix();
+            $nowUTC = Carbon::now();
             // Builder object
-            $issuedcoupons = DB::table('issued_coupons')
-                ->join('promotions', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                ->join('promotion_retailer_redeem', 'promotions.promotion_id', '=', 'promotion_retailer_redeem.promotion_id')
-                ->join('merchants', 'promotion_retailer_redeem.retailer_id', '=', 'merchants.merchant_id')
-                ->select('promotion_retailer_redeem.retailer_id', 'merchants.name AS redeem_retailer_name', 'promotions.*', 'issued_coupons.*')
-                ->where('issued_coupons.status', '!=', 'deleted');
+            $issuedcoupons = IssuedCoupon::join('promotions', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->join('merchants', 'promotions.merchant_id', '=', 'merchants.merchant_id')
+                ->join('timezones', 'merchants.timezone_id', '=', 'timezones.timezone_id')
+                ->select('merchants.name AS redeem_retailer_name', 'promotions.*', 'issued_coupons.*', 'timezones.timezone_name')
+                ->where('promotions.promotion_type', 'mall')
+                ->where('promotions.status', 'active')
+                // ->where('issued_coupons.status', '!=', 'deleted');
+                ->where('issued_coupons.status', '=', 'active')
+                ->where('issued_coupons.expired_date', '>=', DB::raw("CONVERT_TZ('{$nowUTC}','UTC',{$prefix}timezones.timezone_name)"));
+
+
+            // Filter coupon by merchant Ids
+            OrbitInput::get('merchant_id', function ($merchantIds) use ($issuedcoupons) {
+                $issuedcoupons->whereIn('promotions.merchant_id', $merchantIds);
+            });
 
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($issuedcoupons)
@@ -878,6 +890,18 @@ class IssuedCouponAPIController extends ControllerAPI
             // Filter coupon by redeem retailer Ids
             OrbitInput::get('redeem_retailer_id', function ($redeemRetailerIds) use ($issuedcoupons) {
                 $issuedcoupons->whereIn('promotion_retailer_redeem.retailer_id', $redeemRetailerIds);
+            });
+
+            OrbitInput::get('with', function ($with) use ($issuedcoupons) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'translations') {
+                        $issuedcoupons->with('coupon.translations');
+                    } elseif ($relation === 'translations.media') {
+                        $issuedcoupons->with('coupon.translations.media');
+                    }
+                }
             });
 
             // Clone the query builder which still does not include the take,
@@ -1097,7 +1121,7 @@ class IssuedCouponAPIController extends ControllerAPI
 
         // Check the existance of issuer retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()->allowedForUser($this->api->user)
+            $retailer = Mall::excludeDeleted()->allowedForUser($this->api->user)
                         ->where('merchant_id', $value)
                         ->first();
 

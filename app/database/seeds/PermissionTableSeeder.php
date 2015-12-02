@@ -64,6 +64,21 @@ class PermissionTableSeeder extends Seeder
                 'order' => ++$permSourceNumber,
                 'perm'  => ['create', 'view', 'update', 'delete']
             ],
+            'MallGroup'  => [
+                'name'  => 'mall_group',
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
+            'Mall'  => [
+                'name'  => 'mall',
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
+            'Tenant'  => [
+                'name'  => 'tenant',
+                'order' => ++$permSourceNumber,
+                'perm'  => ['create', 'view', 'update', 'delete']
+            ],
             'Product'  => [
                 'name'  => 'product',
                 'order' => ++$permSourceNumber,
@@ -159,11 +174,9 @@ class PermissionTableSeeder extends Seeder
         $permissions = [];
 
         // Build the array of permission to be inserted on permissions table
-        $primaryKey = 1;
         foreach ($permissionsSource as $permLabel=>$perm) {
             foreach ($perm['perm'] as $action) {
                 $permissions[] = [
-                        'permission_id'             => $primaryKey++,
                         'permission_name'           => sprintf('%s_%s', $action, $perm['name']),
                         'permission_label'          => $permLabel,
                         'permission_group'          => $perm['name'],

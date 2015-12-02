@@ -16,36 +16,45 @@ Route::post('/api/v1/logout', function()
     return DummyAPIController::create()->unsupported();
 });
 
-Route::group(['before' => 'orbit-settings'], function() {
-    Route::post('/api/v1/login/admin', function()
-    {
-        return LoginAPIController::create()->postLoginAdmin();
-    });
 
-    Route::post('/api/v1/logout/admin', function()
-    {
-        return LoginAPIController::create()->postLogout();
-    });
+Route::post('/api/v1/login/admin', function()
+{
+    return LoginAPIController::create()->postLoginAdmin();
+});
 
-    Route::post('/api/v1/login/mall', function()
-    {
-        return LoginAPIController::create()->postLoginMall();
-    });
+Route::post('/api/v1/logout/admin', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
 
-    Route::post('/api/v1/logout/mall', function()
-    {
-        return LoginAPIController::create()->postLogout();
-    });
+Route::post('/api/v1/login/mall', function()
+{
+    return LoginAPIController::create()->postLoginMall();
+});
 
-    Route::post('/api/v1/login/mallcs', function()
-    {
-        return LoginAPIController::create()->postLoginMallCustomerService();
-    });
+Route::post('/api/v1/logout/mall', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
 
-    Route::post('/api/v1/logout/mallcs', function()
-    {
-        return LoginAPIController::create()->postLogout();
-    });
+Route::post('/api/v1/login/mallcs', function()
+{
+    return LoginAPIController::create()->postLoginMallCustomerService();
+});
+
+Route::post('/api/v1/logout/mallcs', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
+
+Route::post('/api/v1/login/customer', function()
+{
+    return LoginAPIController::create()->postLoginCustomer();
+});
+
+Route::post('/api/v1/logout/customer', function()
+{
+    return LoginAPIController::create()->postLogout();
 });
 
 /**
@@ -57,11 +66,19 @@ Route::post('/api/v1/user/register/mobile', function()
 });
 
 /**
- * URL to check the token
+ * URL to setup new password
  */
-Route::get('/api/v1/user/token/check', function()
+Route::post('/api/v1/user/setup-new-password', function()
 {
-    return LoginAPIController::create()->getRegisterTokenCheck();
+    return LoginAPIController::create()->postSetupPasswordByToken();
+});
+
+/**
+ * URL to update service agreement
+ */
+Route::get('/api/v1/service-agreement/update', function()
+{
+    return LoginAPIController::create()->postUpdateServiceAgreement();
 });
 
 /**
@@ -70,4 +87,12 @@ Route::get('/api/v1/user/token/check', function()
 Route::get('/api/v1/token/list', function()
 {
     return TokenAPIController::create()->getSearchToken();
+});
+
+/**
+ * Token List
+ */
+Route::post('/api/v1/activate-account', function()
+{
+    return LoginAPIController::create()->postActivateAccount();
 });

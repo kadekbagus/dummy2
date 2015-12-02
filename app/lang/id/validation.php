@@ -118,6 +118,8 @@ return array(
             ),
             'employeeid'            => 'Employee ID tidak tersedia.',
             'widget_type'           => 'Terdapat widget lain yang memiliki tipe yang sama.',
+            'mall_have_tenant'      => 'Mall mempunyai satu atau lebih tenant terhubung, sehingga tidak bisa dihapus.',
+            'mallgroup_have_mall'   => 'Mall Group mempunyai satu atau lebih mall terhubung, sehingga tidak bisa dihapus.',
         ),
         'access' => array(
             'forbidden'              => 'Anda tidak memiliki akses untuk :action.',
@@ -144,6 +146,8 @@ return array(
             'coupon'               => 'Coupon ID tidak ditemukan.',
             'issued_coupon'        => 'Issued Coupon ID tidak ditemukan.',
             'event'                => 'Event ID tidak ditemukan.',
+            'event_translations'   => 'The Event Translation ID tidak ditemukan.',
+            'merchant_language'    => 'The Merchant_Language ID tidak ditemukan.',
             'user_status'          => 'User status tidak ditemukan.',
             'user_sortby'          => 'Argument \'sort by\' Anda tidak valid, nilai yang valid adalah: username, email, firstname, lastname, and registered_date.',
             'merchant_status'      => 'Merchant status tidak ditemukan.',
@@ -227,6 +231,8 @@ return array(
                     'sortby'       => 'Argument \'sort by\' Anda tidak valid, nilai yang valid adalah: name, last_transaction.',
                 ),
             ),
+            'language' => 'Language ID tidak ditemukan',
+            'merchant_language' => 'Merchant Language ID tidak ditemukan',
         ),
         'queryerror' => 'Error pada database query, nyalakan mode debug untuk melihat seluruh query.',
         'jsonerror'  => array(
@@ -264,6 +270,10 @@ return array(
                     'max_length' => 'Panjang karakter untuk Merchant ticket footer adalah 40 karakter untuk setiap barisnya.'
                 ),
             ),
+            'translation' => array(
+                'key' => 'Terdapat key yang invalid untuk terjemahan.',
+                'value' => 'Terdapat value yang invalid untuk terjemahan.',
+            )
         ),
         'actionlist' => array(
             'change_password'           => 'update password',

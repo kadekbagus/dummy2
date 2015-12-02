@@ -45,7 +45,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
         }
 
         if (Config::get('app.debug') === FALSE) {
-            return View::make('errors/500', $data);
+            return View::make('errors/500', $this->viewData);
         }
 
         return print_r($tenants, TRUE);
@@ -180,30 +180,30 @@ class DataPrinterController extends IntermediateAuthBrowserController
 
                 // CSV Header
                 // ----------
-                printf("%s,%s,%s,%s,%s,%s\n\n", '', '', strtoupper($currentRetailer->name), 'ISSUED LUCKY DRAW NUMBER REPORT', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n\n", '', '', strtoupper($luckyDraw->lucky_draw_name), 'ISSUED LUCKY DRAW NUMBERS REPORT', '', '');
 
                 // Lucky Draw Name
-                printf("%s,%s,%s,%s,%s,%s\n", '', 'Lucky Draw', $luckyDraw->lucky_draw_name, '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Lucky Draw Name', $luckyDraw->lucky_draw_name, '', '', '');
 
                 // Period
                 $period = sprintf('%s - %s', $formatDate($luckyDraw->start_date), $formatDate($luckyDraw->end_date));
                 printf("%s,%s,%s,%s,%s,%s\n", '', 'Period', $period, '', '', '');
 
                 // Total Number
-                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Number', $totalLuckyDrawNumber, '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Numbers', $totalLuckyDrawNumber, '', '', '');
 
                 // Total Issued Number
-                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Issued Number', $totalIssuedLuckyDrawNumber, '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n", '', 'Total Issued Numbers', $totalIssuedLuckyDrawNumber, '', '', '');
 
                 // Total Number Left
                 $totalNumberLeft = $totalLuckyDrawNumber - $totalIssuedLuckyDrawNumber;
-                printf("%s,%s,%s,%s,%s,%s\n\n", '', 'Total Number Left', $totalNumberLeft, '', '', '');
+                printf("%s,%s,%s,%s,%s,%s\n\n", '', 'Total Unissued Numbers', $totalNumberLeft, '', '', '');
 
                 // CSV Format
                 // #, LUCKY DRAW NUMBER, ISSUED DATE, FULL NAME, EMAIL, MEMBERSHIP
                 printf("NO,LUCKY DRAW NUMBER,ISSUED DATE,FULL NAME,EMAIL,MEMBERSHIP\n");
                 while ($row = $result->fetch(PDO::FETCH_OBJ)) {
-                    printf("%s,%s,%s,%s,%s,%s\n",
+                    printf("%s,%s,%s,%s,%s,\"=\"\"%s\"\"\"\n",
                             ++$rowCounter,
                             $row->lucky_draw_number_code,
                             $formatDate($row->issued_date, 'csv'),
@@ -240,8 +240,8 @@ class DataPrinterController extends IntermediateAuthBrowserController
      */
     public function getCurrentRetailer()
     {
-        $current = Config::get('orbit.shop.id');
-        $retailer = Retailer::find($current);
+        $current = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
+        $retailer = Mall::find($current);
 
         return $retailer;
     }
@@ -258,7 +258,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
         $default = Config::get('database.default');
         $dbConfig = Config::get('database.connections.' . $default);
 
-        $this->pdo = new PDO("mysql:host=localhost;dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
+        $this->pdo = new PDO("mysql:host={$dbConfig['host']};dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
     }
 
     /**

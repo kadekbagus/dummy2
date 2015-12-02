@@ -27,14 +27,20 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'mall_group'  => [
                     'create'    => 'yes',
                     'view'      => 'yes',
                     'update'    => 'yes',
                     'delete'    => 'no'
                 ],
                 // 4
-                'retailer'  => [
+                'mall'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                 'tenant'  => [
                     'create'    => 'yes',
                     'view'      => 'yes',
                     'update'    => 'yes',
@@ -169,14 +175,14 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'mall_group'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'no',
                     'delete'    => 'no'
                 ],
                 // 4
-                'retailer'  => [
+                'mall'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'no',
@@ -311,14 +317,14 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'mall_group'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'yes',
                     'delete'    => 'no'
                 ],
                 // 4
-                'retailer'  => [
+                'mall'  => [
                     'create'    => 'yes',
                     'view'      => 'yes',
                     'update'    => 'yes',
@@ -453,14 +459,14 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'retailer'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'no',
                     'delete'    => 'no'
                 ],
                 // 4
-                'retailer'  => [
+                'merchant'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'yes',
@@ -595,13 +601,35 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'mall_group'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'no',
                     'delete'    => 'no'
                 ],
                 // 4
+                'mall'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 3
+                'tenant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'merchant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+
+                // 3
                 'retailer'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
@@ -737,13 +765,32 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'mall_group'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'no',
                     'delete'    => 'no'
                 ],
                 // 4
+                'mall'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                'tenant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'merchant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
                 'retailer'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
@@ -879,6 +926,21 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
+                'mall_group'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'mall'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+
+                // 3
                 'merchant'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
@@ -887,6 +949,14 @@ class PermissionRoleTableSeeder extends Seeder
                 ],
                 // 4
                 'retailer'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+
+                // 3
+                'tenant'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'no',
@@ -1021,13 +1091,32 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'mall_group'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'no',
                     'delete'    => 'no'
                 ],
                 // 4
+                'mall'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                'tenant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'merchant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
                 'retailer'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
@@ -1163,18 +1252,39 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'mall_group'  => [
                     'create'    => 'yes',
                     'view'      => 'yes',
                     'update'    => 'yes',
                     'delete'    => 'no'
                 ],
                 // 4
-                'retailer'  => [
+                'mall'  => [
                     'create'    => 'yes',
                     'view'      => 'yes',
                     'update'    => 'yes',
                     'delete'    => 'yes'
+                ],
+                // 3
+                'tenant'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'merchant'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'yes'
+                ],
+                // 3
+                'retailer'  => [
+                    'create'    => 'yes',
+                    'view'      => 'yes',
+                    'update'    => 'yes',
+                    'delete'    => 'no'
                 ],
                 // 5
                 'product'  => [
@@ -1305,13 +1415,34 @@ class PermissionRoleTableSeeder extends Seeder
                     'delete'    => 'no'
                 ],
                 // 3
-                'merchant'  => [
+                'mall_group'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
                     'update'    => 'no',
                     'delete'    => 'no'
                 ],
                 // 4
+                'mall'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 3
+                'tenant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 4
+                'merchant'  => [
+                    'create'    => 'no',
+                    'view'      => 'yes',
+                    'update'    => 'no',
+                    'delete'    => 'no'
+                ],
+                // 3
                 'retailer'  => [
                     'create'    => 'no',
                     'view'      => 'yes',
@@ -1434,20 +1565,18 @@ class PermissionRoleTableSeeder extends Seeder
 
         $permissionRoles = [];
 
-        $roleId = 2;
-        foreach ($permissionRoleSource as $roleName=>$permissions) {
-            $permissionId = 1;
-            foreach ($permissions as $resource=>$resources) {
-                foreach ($resources as $action=>$yesNo) {
+        foreach ($permissionRoleSource as $roleName=>$resourcePermissions) {
+            $roleId = $this->getIdOfRoleNamed($roleName);
+            foreach ($resourcePermissions as $resource=>$permissions) {
+                foreach ($permissions as $action=>$allowed) {
                     $actionName = sprintf('%s_%s', $action, $resource);
                     $permissionRoles[$roleName . '.' . $actionName] = [
                         'role_id'       => $roleId,
-                        'permission_id' => $permissionId++,
-                        'allowed'       => $yesNo
+                        'permission_id' => $this->getIdOfPermissionNamed("{$action}_{$resource}"),
+                        'allowed'       => $allowed
                     ];
                 }
             }
-            $roleId++;
         }
 
         $this->command->info('Seeding permission_role table...');
@@ -1462,5 +1591,15 @@ class PermissionRoleTableSeeder extends Seeder
             $this->command->info(sprintf('    Create record for %s.', $rolePerm));
         }
         $this->command->info('permission_role table seeded.');
+    }
+
+    private function getIdOfRoleNamed($roleName)
+    {
+        return Role::where('role_name', '=', $roleName)->firstOrFail()->role_id;
+    }
+
+    private function getIdOfPermissionNamed($permissionName)
+    {
+        return Permission::where('permission_name', '=', $permissionName)->firstOrFail()->permission_id;
     }
 }

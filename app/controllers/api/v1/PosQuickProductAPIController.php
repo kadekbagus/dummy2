@@ -62,7 +62,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('current_mall');;
             $order = OrbitInput::post('product_order');
 
             $retailerId = OrbitInput::post('retailer_id');
@@ -79,14 +79,17 @@ class PosQuickProductAPIController extends ControllerAPI
                     'product_order'     => $order,
                 ),
                 array(
-                    'product_id'        => 'required|numeric|orbit.empty.product',
-                    'merchant_id'       => 'required|numeric|orbit.empty.merchant',
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
+                    'product_id'        => 'required|orbit.empty.product',
+                    'merchant_id'       => 'required|orbit.empty.merchant',
+                    'retailer_id'       => 'required|orbit.empty.retailer',
                     'product_order'     => 'required|numeric|min:0'
                 )
             );
 
             Event::fire('orbit.product.postnewposquickproduct.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -94,9 +97,6 @@ class PosQuickProductAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postnewposquickproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $posQuickProduct = PosQuickProduct::excludeDeleted()
                                               ->where('product_id', $productId)
@@ -269,7 +269,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('current_mall');;
             $order = OrbitInput::post('product_order');
 
             $retailerId = OrbitInput::post('retailer_id');
@@ -286,14 +286,17 @@ class PosQuickProductAPIController extends ControllerAPI
                     'product_order'     => $order,
                 ),
                 array(
-                    'product_id'        => 'required|numeric|orbit.empty.product',
-                    'merchant_id'       => 'required|numeric|orbit.empty.merchant',
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
+                    'product_id'        => 'required|orbit.empty.product',
+                    'merchant_id'       => 'required|orbit.empty.merchant',
+                    'retailer_id'       => 'required|orbit.empty.retailer',
                     'product_order'     => 'required|numeric|min:0'
                 )
             );
 
             Event::fire('orbit.product.postupdateposquickproduct.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -301,9 +304,6 @@ class PosQuickProductAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postupdateposquickproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $posQuickProduct = PosQuickProduct::excludeDeleted()
                                               ->where('product_id', $productId)
@@ -479,7 +479,7 @@ class PosQuickProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $productId = OrbitInput::post('product_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('current_mall');;
 
             $retailerId = OrbitInput::post('retailer_id');
             // @TODO should not be here for next version.
@@ -494,13 +494,16 @@ class PosQuickProductAPIController extends ControllerAPI
                     'retailer_id'       => $retailerId,
                 ),
                 array(
-                    'product_id'        => 'required|numeric|orbit.empty.product',
-                    'merchant_id'       => 'required|numeric|orbit.empty.merchant',
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
+                    'product_id'        => 'required|orbit.empty.product',
+                    'merchant_id'       => 'required|orbit.empty.merchant',
+                    'retailer_id'       => 'required|orbit.empty.retailer',
                 )
             );
 
             Event::fire('orbit.product.postdeleteposquickproduct.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -508,9 +511,6 @@ class PosQuickProductAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postdeleteposquickproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $posQuickProduct = PosQuickProduct::excludeDeleted()
                                               ->where('product_id', $productId)
@@ -903,8 +903,7 @@ class PosQuickProductAPIController extends ControllerAPI
     {
         $user = $this->api->user;
         Validator::extend('orbit.empty.merchant', function ($attribute, $merchantId, $parameters) use ($user) {
-            $merchant = Merchant::allowedForUser($user)
-                                ->excludeDeleted()
+            $merchant = Merchant::excludeDeleted()
                                 ->where('merchant_id', $merchantId)
                                 ->first();
 
@@ -935,7 +934,7 @@ class PosQuickProductAPIController extends ControllerAPI
 
         // Check the existance of retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()
+            $retailer = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 

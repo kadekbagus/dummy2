@@ -11,12 +11,82 @@
                     <div class="form-group">
                         <label for="keyword">{{ Lang::get('mobileci.modals.search_label') }}</label>
                         <input type="text" class="form-control" name="keyword" id="keyword" placeholder="{{ Lang::get('mobileci.modals.search_placeholder') }}">
+                        {{ \Orbit\UrlGenerator::hiddenSessionIdField() }}
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-info" id="searchProductBtn">{{ Lang::get('mobileci.modals.search_button') }}</button>
             </div>
+        </div>
+    </div>
+</div>
+@if(Config::get('orbit.shop.membership'))
+<div class="modal fade bs-example-modal-sm" id="membership-card-popup" tabindex="-1" role="dialog" aria-labelledby="membership-card" aria-hidden="true">
+    <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
+                <h4 class="modal-title">{{ Lang::get('mobileci.modals.membership_title') }}</h4>
+            </div>
+            <div class="modal-body">
+                @if (! empty($user->membership_number))
+                <div class="member-card">
+                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
+                    <h2>
+                        <span>
+                            <strong>
+                                {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
+                            </strong>
+                            <span class='spacery'></span>
+                            <br>
+                            <span class='spacery'></span>
+                            <strong>
+                                {{ $user->membership_number }}
+                            </strong>
+                        </span>
+                    </h2>
+                </div>
+                @else
+                <div class="no-member-card text-center">
+                    <h3><strong><i>{{ Lang::get('mobileci.modals.membership_notfound') }}</i></strong></h3>
+                    <h4><strong>{{ Lang::get('mobileci.modals.membership_want_member') }}</strong></h4>
+                    <p>{{ Lang::get('mobileci.modals.membership_great_deal') }}</p>
+                    <p><i>{{ Lang::get('mobileci.modals.membership_contact_our') }}</i></p>
+                    <br>
+                    <p><small>Lippo Mall Management</small></p>
+                </div>
+                @endif
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+<!-- Language Modal -->
+<div class="modal fade bs-example-modal-sm" id="multi-language-popup" tabindex="-1" role="dialog" aria-labelledby="multi-language" aria-hidden="true">
+    <div class="modal-dialog modal-sm orbit-modal" style="width:320px; margin: 30px auto;">
+        <div class="modal-content">
+            <div class="modal-header orbit-modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
+                <h4 class="modal-title">{{ Lang::get('mobileci.modals.language_title') }}</h4>
+            </div>
+            <form method="POST" name="selecLang" action="{{ url('/customer/setlanguage') }}">
+                <div class="modal-body">
+                    <select class="form-control" name="lang" id="selected-lang">
+                        @if (isset($languages))
+                                @foreach ($languages as $lang)
+                                    <option value="{{{ $lang->language->name }}}" @if (isset($_COOKIE['orbit_preferred_language'])) @if ($lang->language->name === $_COOKIE['orbit_preferred_language']) selected @endif @else @if($lang->language->name === $default_lang) selected @endif @endif>{{{ $lang->language->name_long }}} @if($lang->language->name === $default_lang) (Default) @endif</option>
+                                @endforeach
+                        @endif
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info" value="{{ Lang::get('mobileci.modals.ok') }}">{{ Lang::get('mobileci.modals.ok') }}</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -42,8 +112,11 @@
               });
             }
         };
-        run();
-        setInterval(run, 5000);
+
+        @if (Config::get('orbit.shop.offline_check.enable'))
+            run();
+            setInterval(run, {{ Config::get('orbit.shop.offline_check.interval', 5000) }} );
+        @endif
 
         $('#barcodeBtn').click(function(){
             $('#get_camera').click();
@@ -64,11 +137,141 @@
         $('#backBtn').click(function(){
             window.history.back()
         });
+        $('.backBtn404').click(function(){
+            window.history.back()
+        });
         $('#search-tool-btn').click(function(){
             $('#search-tool').toggle();
         });
         if($('#cart-number').attr('data-cart-number') == '0'){
             $('.cart-qty').css('display', 'none');
+        }
+        @if(Config::get('orbit.shop.membership'))
+        $('#membership-card').click(function(){
+            $('#membership-card-popup').modal();
+        });
+        @endif
+        $('#multi-language').click(function(){
+            $('#multi-language-popup').modal();
+        });
+    });
+
+    // pinch zoom using hammerjs
+    $(document).on('click', '.zoomer', function(){
+        function scaletime (scale, x, y) {
+            var transforms = [];
+            transforms.push('scale('+scale+')');
+            transforms.push('translate('+x+'px,'+y+'px)');
+            $('.featherlight-content img').css('transform', transforms.join(' '));
+        }
+
+        function resetImage() {
+            $('.featherlight-content').css('width', '100%');
+            $('.featherlight-content img').css('margin', '0 auto');
+            if($(window).height() < $(window).width()) {
+                $('.featherlight-content img').css({
+                    'height': '100%',
+                    'width': 'auto'
+                });
+            } else {
+                $('.featherlight-content img').css({
+                    'height': 'auto',
+                    'width': '100%' 
+                });
+            }
+        }
+
+        setTimeout(function(){
+            resetImage();
+            var currentmodal = $.featherlight.current();
+            
+            $("body").addClass("modal-open");
+            var el = $('.featherlight-content').get(0);
+
+            var mc = new Hammer.Manager(el);
+            var pinch = new Hammer.Pinch();
+            var pan = new Hammer.Pan();
+            var tap = new Hammer.Tap();
+            var doubletap = new Hammer.Tap({event: 'doubletap', taps: 2 });
+
+            pinch.recognizeWith(pan);
+            doubletap.recognizeWith(tap);
+            mc.add([pinch, pan, tap, doubletap]);
+
+            var initialScale = 1;
+            var initialDeltaX = 0;
+            var initialDeltaY = 0;
+
+            var adjustScale = 1;
+            var adjustDeltaX = 0;
+            var adjustDeltaY = 0;
+
+            var currentScale = null;
+            var currentDeltaX = null;
+            var currentDeltaY = null;
+
+            mc.on("pinch pan tap swipe", function(ev) {
+                ev.preventDefault();
+                var transforms = [];
+
+                // Adjusting the current pinch/pan event properties using the previous ones set when they finished touching
+                currentScale = adjustScale * ev.scale;
+                currentDeltaX = adjustDeltaX + (ev.deltaX / currentScale);
+                currentDeltaY = adjustDeltaY + (ev.deltaY / currentScale);
+
+                if(currentScale > initialScale) {
+                    scaletime(currentScale, currentDeltaX, currentDeltaY);
+                }
+            });
+
+            mc.on("panend pinchend", function (ev) {
+                ev.preventDefault();
+                var transforms = [];
+                var afterScale = adjustScale * ev.scale;
+                if(afterScale > initialScale) { // Saving the final transforms for adjustment next time the user interacts.
+                    adjustScale = currentScale;
+                    adjustDeltaX = currentDeltaX;
+                    adjustDeltaY = currentDeltaY;
+                } else { // reset image to initial state if zoomed out smaller than initial scale
+                    adjustScale = initialScale;
+                    adjustDeltaX = initialDeltaX;
+                    adjustDeltaY = initialDeltaY;
+                    resetImage();
+                    scaletime(initialScale, initialDeltaX, initialDeltaY);
+                }
+            });
+
+            mc.on("tap doubletap", function(ev) {
+                currentmodal.close();
+                $("body").removeClass("modal-open");
+            });
+
+
+        }, 50);
+    });
+
+    $(document).on('click', '.featherlight-close', function(){
+        $("body").removeClass("modal-open");
+    });
+
+    $(window).on('resize', function(){
+        //reset the image transform
+        var transforms = [];
+        transforms.push('scale(1)');
+        transforms.push('translate(0px,0px)');
+        $('.featherlight-content img').css("transform", transforms.join(' '));
+        $('.featherlight-content').css('width', '100%');
+        $('.featherlight-content img').css('margin', '0 auto');
+        if($(window).height() < $(window).width()) {
+            $('.featherlight-image').css({
+                'height': '100%',
+                'width': 'auto'
+            });
+        } else {
+            $('.featherlight-image').css({
+                'height': 'auto',
+                'width': '100%' 
+            });
         }
     });
 </script>

@@ -12,16 +12,23 @@ Route::post('/app/v1/logout', 'IntermediateLoginController@Dummy_unsupported');
 Route::get('/app/v1/logout', 'IntermediateLoginController@Dummy_unsupported');
 Route::get('/app/v1/session', 'IntermediateLoginController@getSession');
 
+Route::post('/app/v1/login/admin', 'IntermediateLoginController@postLoginAdmin');
+Route::post('/app/v1/logout/admin', 'IntermediateLoginController@getLogout');
+
+Route::post('/app/v1/login/mall', 'IntermediateLoginController@postLoginMall');
+Route::post('/app/v1/logout/mall', 'IntermediateLoginController@getLogout');
+
+Route::post('/app/v1/login/mallcs', 'IntermediateLoginController@postLoginMallCustomerService');
+Route::post('/app/v1/logout/mallcs', 'IntermediateLoginController@getLogout');
+
+Route::post('/app/v1/login/customer', 'IntermediateLoginController@postLoginCustomer');
+Route::post('/app/v1/logout/customer', 'IntermediateLoginController@getLogout');
+
 Route::group(['before' => 'orbit-settings'], function() {
-    Route::post('/app/v1/login/admin', 'IntermediateLoginController@postLoginAdmin');
-    Route::post('/app/v1/logout/admin', 'IntermediateLoginController@getLogout');
-
-    Route::post('/app/v1/login/mall', 'IntermediateLoginController@postLoginMall');
-    Route::post('/app/v1/logout/mall', 'IntermediateLoginController@getLogout');
-
-    Route::post('/app/v1/login/mallcs', 'IntermediateLoginController@postLoginMallCustomerService');
-    Route::post('/app/v1/logout/mallcs', 'IntermediateLoginController@getLogout');
+    Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
 });
+
+Route::get('/app/v1/customer/cloud-login', 'IntermediateLoginController@getCloudLogin');
 
 /**
  * Customer registration
@@ -29,16 +36,21 @@ Route::group(['before' => 'orbit-settings'], function() {
 Route::post('/app/v1/user/register/mobile', 'IntermediateLoginController@Login_postRegisterUserInShop');
 
 /**
- * Check the token
+ * Setup new password by token
  */
-Route::post('/app/v1/user/token/check', 'IntermediateLoginController@postRegisterTokenCheck');
-
-/**
- * Alias for check token
- */
-Route::post('/app/v1/user/activate', 'IntermediateLoginController@postRegisterTokenCheck');
+Route::post('/app/v1/user/setup-new-password', 'IntermediateLoginController@Login_postSetupPasswordByToken');
 
 /**
  * Token List
  */
 Route::get('/app/v1/token/list', 'IntermediateLoginController@getTokenList');
+
+/**
+ * Active Account
+ */
+Route::post('/app/v1/activate-account', 'IntermediateLoginController@Login_postActivateAccount');
+
+/**
+ * Update Service Agreement
+ */
+Route::post('/app/v1/service-agreement/update', 'IntermediateLoginController@Login_postUpdateServiceAgreement');

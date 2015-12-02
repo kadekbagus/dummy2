@@ -8,7 +8,7 @@
     <div class="row padded text-center">
         <div class="col-xs-12">
             <h4>{{ Lang::get('mobileci.404.not_found') }}</h4>
-            <a class="btn btn-info" href="{{ url('/customer/home') }}">{{ Lang::get('mobileci.promotion_detail.back_label') }}</a>
+            <button class="btn btn-info backBtn404">{{ Lang::get('mobileci.promotion_detail.back_label') }}</button>
         </div>
     </div>
 @stop

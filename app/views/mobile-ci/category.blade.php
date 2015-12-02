@@ -75,9 +75,9 @@
                                 @endif
                             </div>
                             <div class="zoom-wrapper">
-                                <div class="zoom"><a href="{{ asset($product->image) }}" data-featherlight="image"><img src="{{ asset('mobile-ci/images/product-zoom.png') }}"></a></div>
+                                <div class="zoom"><a href="{{ asset($product->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset('mobile-ci/images/product-zoom.png') }}"></a></div>
                             </div>
-                            <a href="{{ asset($product->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($product->image) }}"></a>
+                            <a href="{{ asset($product->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{ asset($product->image) }}"></a>
                         </div>
                         <div class="col-xs-6 catalogue-detail bg-catalogue col-xs-height">
                             <div class="row">

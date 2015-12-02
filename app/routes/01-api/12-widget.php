@@ -34,3 +34,11 @@ Route::get('/api/v1/widget/list', function()
 {
     return WidgetAPIController::create()->getSearchWidget();
 });
+
+/**
+ * Delete Widget Image
+ */
+Route::post('/api/v1/widget/deleteimage', function()
+{
+    return WidgetAPIController::create()->postDeleteWidgetImage();
+});

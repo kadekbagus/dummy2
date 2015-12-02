@@ -10,9 +10,13 @@ Thumbs.db
 # Config
 app/config/app.php
 app/config/database.php
+app/config/testing/app.php
+app/config/testing/orbit.php
 app/config/testing/database.php
+app/config/testing/mail.php
 app/config/orbit.php
 app/config/mail.php
+app/config/orbit-notifier.php
 public/mobile-ci/scripts/config.js
 public/templatepos/js/config.js
 
@@ -38,3 +42,6 @@ app/storage/orbit-session/**
 
 # Orbit Compiled Routes
 app/routes/orbit-compiled-routes.php
+
+# Trusted proxies config
+app/config/packages/fideloper/proxy/config.php

@@ -23,6 +23,9 @@ return array(
             'issued_coupon'  => 'Issued Coupon telah berhasil dihapus.',
             'event'          => 'Event telah berhasil dihapus.',
             'lucky_draw'     => 'Lucky Draw telah berhasil dihapus.',
+            'mall'           => 'Mall telah berhasil dihapus.',
+            'mallgroup'      => 'Mall group telah berhasil dihapus.',
+            'tenant'         => 'Tenant telah berhasil dihapus.',
         ),
         'updated'   => array(
             'user'           => 'User telah berhasil diupdate.',
@@ -49,6 +52,9 @@ return array(
             'role'          => 'Tidak ada role yang sesuai kriteria.',
             'token'         => 'Tidak ada token yang sesuai kriteria.',
             'lucky_draw'    => 'Tidak ada lucky draw yang sesuai kriteria.',
+            'mall'          => 'Tidak ada mall yang sesuai kriteria.',
+            'mallgroup'     => 'Tidak ada mall group yang sesuai kriteria.',
+            'tenant'        => 'Tidak ada tenant yang sesuai kriteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(

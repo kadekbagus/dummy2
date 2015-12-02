@@ -39,6 +39,7 @@ class PromotionAPIController extends ControllerAPI
      * @param integer    `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
      * @param decimal    `discount_value`        (optional) - Discount value
      * @param array      `retailer_ids`          (optional) - Retailer IDs
+     * @param integer    `id_language_default`      (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -55,25 +56,34 @@ class PromotionAPIController extends ControllerAPI
             Event::fire('orbit.promotion.postnewpromotion.before.auth', array($this));
 
             $this->checkAuth();
-            
+
             Event::fire('orbit.promotion.postnewpromotion.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.promotion.postnewpromotion.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('create_promotion')) {
                 Event::fire('orbit.promotion.postnewpromotion.authz.notallowed', array($this, $user));
                 $createPromotionLang = Lang::get('validation.orbit.actionlist.new_promotion');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createPromotionLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.promotion.postnewpromotion.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
@@ -93,6 +103,7 @@ class PromotionAPIController extends ControllerAPI
             $discount_value = OrbitInput::post('discount_value');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $validator = Validator::make(
                 array(
@@ -107,9 +118,10 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => $discount_object_id3,
                     'discount_object_id4'  => $discount_object_id4,
                     'discount_object_id5'  => $discount_object_id5,
+                    'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'merchant_id'          => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'          => 'required|orbit.empty.merchant',
                     'promotion_name'       => 'required|max:100|orbit.exists.promotion_name',
                     'promotion_type'       => 'required|orbit.empty.promotion_type',
                     'status'               => 'required|orbit.empty.promotion_status',
@@ -120,10 +132,14 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => 'orbit.empty.discount_object_id3',
                     'discount_object_id4'  => 'orbit.empty.discount_object_id4',
                     'discount_object_id5'  => 'orbit.empty.discount_object_id5',
+                    'id_language_default'   => 'required|numeric',
                 )
             );
 
             Event::fire('orbit.promotion.postnewpromotion.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -138,7 +154,7 @@ class PromotionAPIController extends ControllerAPI
 
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
+                        'retailer_id'   => 'orbit.empty.tenant',
                     )
                 );
 
@@ -154,9 +170,6 @@ class PromotionAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.promotion.postnewpromotion.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // save Promotion.
             $newpromotion = new Promotion();
@@ -232,6 +245,21 @@ class PromotionAPIController extends ControllerAPI
             $newpromotion->retailers = $promotionretailers;
 
             Event::fire('orbit.promotion.postnewpromotion.after.save', array($this, $newpromotion));
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'promotion_name' => $newpromotion->promotion_name,
+                    'description' => $newpromotion->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($newpromotion, json_encode($default_translation), 'create');
+
+            // Save Promotion Translation
+            OrbitInput::post('translations', function($translation_json_string) use ($newpromotion) {
+                $this->validateAndSaveTranslations($newpromotion, $translation_json_string, 'create');
+            });
+
             $this->response->data = $newpromotion;
 
             // Commit the changes
@@ -360,6 +388,7 @@ class PromotionAPIController extends ControllerAPI
      * @param decimal    `discount_value`        (optional) - Discount value
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
+     * @param integer    `id_language_default`   (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -385,18 +414,27 @@ class PromotionAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.promotion.postupdatepromotion.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('update_promotion')) {
+/*            if (! ACL::create($user)->isAllowed('update_promotion')) {
                 Event::fire('orbit.promotion.postupdatepromotion.authz.notallowed', array($this, $user));
                 $updatePromotionLang = Lang::get('validation.orbit.actionlist.update_promotion');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updatePromotionLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.promotion.postupdatepromotion.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
             $promotion_id = OrbitInput::post('promotion_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('current_mall');
             $promotion_type = OrbitInput::post('promotion_type');
             $status = OrbitInput::post('status');
             $rule_type = OrbitInput::post('rule_type');
@@ -406,6 +444,7 @@ class PromotionAPIController extends ControllerAPI
             $discount_object_id3 = OrbitInput::post('discount_object_id3');
             $discount_object_id4 = OrbitInput::post('discount_object_id4');
             $discount_object_id5 = OrbitInput::post('discount_object_id5');
+            $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
                 'promotion_id'         => $promotion_id,
@@ -419,6 +458,7 @@ class PromotionAPIController extends ControllerAPI
                 'discount_object_id3'  => $discount_object_id3,
                 'discount_object_id4'  => $discount_object_id4,
                 'discount_object_id5'  => $discount_object_id5,
+                'id_language_default' => $id_language_default,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -429,8 +469,8 @@ class PromotionAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'promotion_id'         => 'required|numeric|orbit.empty.promotion',
-                    'merchant_id'          => 'numeric|orbit.empty.merchant',
+                    'promotion_id'         => 'required|orbit.empty.promotion',
+                    'merchant_id'          => 'orbit.empty.merchant',
                     'promotion_name'       => 'sometimes|required|min:5|max:100|promotion_name_exists_but_me',
                     'promotion_type'       => 'orbit.empty.promotion_type',
                     'status'               => 'orbit.empty.promotion_status',
@@ -441,6 +481,7 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id3'  => 'orbit.empty.discount_object_id3',
                     'discount_object_id4'  => 'orbit.empty.discount_object_id4',
                     'discount_object_id5'  => 'orbit.empty.discount_object_id5',
+                    'id_language_default' => 'required|numeric',
                 ),
                 array(
                    'promotion_name_exists_but_me' => Lang::get('validation.orbit.exists.promotion_name'),
@@ -449,15 +490,15 @@ class PromotionAPIController extends ControllerAPI
 
             Event::fire('orbit.promotion.postupdatepromotion.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.promotion.postupdatepromotion.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedpromotion = Promotion::with('promotionrule', 'retailers')->excludeDeleted()->allowedForUser($user)->where('promotion_id', $promotion_id)->first();
 
@@ -586,7 +627,7 @@ class PromotionAPIController extends ControllerAPI
                             'retailer_id'   => $retailer_id_check,
                         ),
                         array(
-                            'retailer_id'   => 'orbit.empty.retailer',
+                            'retailer_id'   => 'orbit.empty.tenant',
                         )
                     );
 
@@ -606,10 +647,24 @@ class PromotionAPIController extends ControllerAPI
                 // reload retailers relation
                 $updatedpromotion->load('retailers');
             });
-            
+
 
             Event::fire('orbit.promotion.postupdatepromotion.after.save', array($this, $updatedpromotion));
             $this->response->data = $updatedpromotion;
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            $default_translation = [
+                $id_language_default => [
+                    'promotion_name' => $updatedpromotion->promotion_name,
+                    'description' => $updatedpromotion->description
+                ]
+            ];
+            $this->validateAndSaveTranslations($updatedpromotion, json_encode($default_translation), 'update');
+
+            // save PromotionTranslation
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedpromotion) {
+                $this->validateAndSaveTranslations($updatedpromotion, $translation_json_string, 'update');
+            });
 
             // Commit the changes
             $this->commit();
@@ -746,13 +801,22 @@ class PromotionAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.promotion.postdeletepromotion.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('delete_promotion')) {
                 Event::fire('orbit.promotion.postdeletepromotion.authz.notallowed', array($this, $user));
                 $deletePromotionLang = Lang::get('validation.orbit.actionlist.delete_promotion');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deletePromotionLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.promotion.postdeletepromotion.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -764,11 +828,14 @@ class PromotionAPIController extends ControllerAPI
                     'promotion_id' => $promotion_id,
                 ),
                 array(
-                    'promotion_id' => 'required|numeric|orbit.empty.promotion',
+                    'promotion_id' => 'required|orbit.empty.promotion',
                 )
             );
 
             Event::fire('orbit.promotion.postdeletepromotion.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -776,9 +843,6 @@ class PromotionAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.promotion.postdeletepromotion.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deletepromotion = Promotion::excludeDeleted()->allowedForUser($user)->where('promotion_id', $promotion_id)->first();
             $deletepromotion->status = 'deleted';
@@ -790,6 +854,11 @@ class PromotionAPIController extends ControllerAPI
             $deletepromotionretailers = PromotionRetailer::where('promotion_id', $deletepromotion->promotion_id)->get();
             foreach ($deletepromotionretailers as $deletepromotionretailer) {
                 $deletepromotionretailer->delete();
+            }
+
+            foreach ($deletepromotion->translations as $translation) {
+                $translation->modified_by = $this->api->user->user_id;
+                $translation->delete();
             }
 
             $deletepromotion->save();
@@ -969,7 +1038,7 @@ class PromotionAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status,rule_type,display_discount_value',
+                    'sort_by' => 'in:registered_date,promotion_name,promotion_type,description,begin_date,end_date,updated_at,is_permanent,status,rule_type,display_discount_value',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.promotion_sortby'),
@@ -1156,6 +1225,8 @@ class PromotionAPIController extends ControllerAPI
                         $promotions->with('promotionrule.discountproduct');
                     } elseif ($relation === 'family') {
                         $promotions->with('promotionrule.discountcategory1', 'promotionrule.discountcategory2', 'promotionrule.discountcategory3', 'promotionrule.discountcategory4', 'promotionrule.discountcategory5');
+                    } elseif ($relation === 'translations') {
+                        $promotions->with('translations');
                     }
                 }
             });
@@ -1206,6 +1277,7 @@ class PromotionAPIController extends ControllerAPI
                     'description'              => 'promotions.description',
                     'begin_date'               => 'promotions.begin_date',
                     'end_date'                 => 'promotions.end_date',
+                    'updated_at'               => 'promotions.updated_at',
                     'is_permanent'             => 'promotions.is_permanent',
                     'status'                   => 'promotions.status',
                     'rule_type'                => 'rule_type',
@@ -1353,7 +1425,7 @@ class PromotionAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,is_permanent,status',
+                    'sort_by' => 'in:retailer_name,registered_date,promotion_name,promotion_type,description,begin_date,end_date,updated_at,is_permanent,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.promotion_by_retailer_sortby'),
@@ -1512,6 +1584,7 @@ class PromotionAPIController extends ControllerAPI
                     'description'       => 'promotions.description',
                     'begin_date'        => 'promotions.begin_date',
                     'end_date'          => 'promotions.end_date',
+                    'updated_at'        => 'promotions.updated_at',
                     'is_permanent'      => 'promotions.is_permanent',
                     'status'            => 'promotions.status'
                 );
@@ -1624,8 +1697,11 @@ class PromotionAPIController extends ControllerAPI
 
         // Check promotion name, it should not exists
         Validator::extend('orbit.exists.promotion_name', function ($attribute, $value, $parameters) {
+            $merchant_id = OrbitInput::post('current_mall');
+
             $promotionName = Promotion::excludeDeleted()
                         ->where('promotion_name', $value)
+                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($promotionName)) {
@@ -1640,9 +1716,12 @@ class PromotionAPIController extends ControllerAPI
         // Check promotion name, it should not exists (for update)
         Validator::extend('promotion_name_exists_but_me', function ($attribute, $value, $parameters) {
             $promotion_id = trim(OrbitInput::post('promotion_id'));
+            $merchant_id = OrbitInput::post('current_mall');
+
             $promotion = Promotion::excludeDeleted()
                         ->where('promotion_name', $value)
                         ->where('promotion_id', '!=', $promotion_id)
+                        ->where('merchant_id', $merchant_id)
                         ->first();
 
             if (! empty($promotion)) {
@@ -1780,20 +1859,132 @@ class PromotionAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // Check the existance of retailer id
-        Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
-            $retailer = Retailer::excludeDeleted()->allowedForUser($this->api->user)
+        // Check the existance of tenant id
+        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
+            $tenant = Tenant::excludeDeleted()->allowedForUser($this->api->user)
                         ->where('merchant_id', $value)
                         ->first();
 
-            if (empty($retailer)) {
+            if (empty($tenant)) {
                 return FALSE;
             }
 
-            App::instance('orbit.empty.retailer', $retailer);
+            App::instance('orbit.empty.tenant', $tenant);
 
             return TRUE;
         });
 
     }
+
+    /**
+     * @param Promotion $promotion
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslations($promotion, $translations_json_string, $scenario = 'create')
+    {
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where PromotionTranslation object is object with keys:
+         *   promotion_name, description
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['promotion_name', 'description'];
+        $user = $this->api->user;
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+        foreach ($data as $merchant_language_id => $translations) {
+            $language = MerchantLanguage::excludeDeleted()
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            }
+            $existing_translation = PromotionTranslation::excludeDeleted()
+                ->where('promotion_id', '=', $promotion->promotion_id)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $merchant_language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+                $new_translation = new PromotionTranslation();
+                $new_translation->promotion_id = $promotion->promotion_id;
+                $new_translation->merchant_language_id = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $new_translation->{$field} = $value;
+                }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
+                $new_translation->save();
+
+                // Fire an promotion which listen on orbit.promotion.after.translation.save
+                // @param ControllerAPI $this
+                // @param PromotionTranslation $new_transalation
+                Event::fire('orbit.promotion.after.translation.save', array($this, $new_translation));
+
+                $promotion->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
+            }
+            elseif ($op === 'update') {
+                /** @var PromotionTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->status = $promotion->status;
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->save();
+
+                // Fire an promotion which listen on orbit.promotion.after.translation.save
+                // @param ControllerAPI $this
+                // @param PromotionTranslation $existing_transalation
+                Event::fire('orbit.promotion.after.translation.save', array($this, $existing_translation));
+
+                $promotion->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
+
+            }
+            elseif ($op === 'delete') {
+                /** @var PromotionTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->delete();
+            }
+        }
+    }
+
 }

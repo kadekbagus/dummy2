@@ -38,8 +38,9 @@ class InboxAPIController extends ControllerAPI
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
+            $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
 
-            $alerts = Inbox::latestOne($user->user_id)
+            $alerts = Inbox::latestOne($user->user_id, $mall_id)
                             ->where('inbox_type', 'alert')
                             ->take(1);
 
@@ -148,11 +149,14 @@ class InboxAPIController extends ControllerAPI
                     'inbox_id'             => $alertId,
                 ),
                 array(
-                    'inbox_id'             => 'required|numeric|orbit.empty.alert',
+                    'inbox_id'             => 'required|orbit.empty.alert',
                 )
             );
 
             Event::fire('orbit.inbox.postreadalert.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -160,9 +164,6 @@ class InboxAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.inbox.postreadalert.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $inbox = App::make('orbit.empty.alert');
             $inbox->is_read = 'Y';

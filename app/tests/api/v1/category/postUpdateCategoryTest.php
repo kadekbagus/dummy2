@@ -38,6 +38,8 @@ class postUpdateCategoryTest extends TestCase
         $_POST['category_level'] = '1';
         $_POST['status']         = 'active';
 
+        $_POST['id_language_default'] = 1;
+
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
         $secretKey = $authData->api_secret_key;
@@ -71,6 +73,8 @@ class postUpdateCategoryTest extends TestCase
         $_POST['category_level'] = '1';
         $_POST['status']         = 'active';
 
+        $_POST['id_language_default'] = 1;
+
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
         $secretKey = $this->authData->api_secret_key;
@@ -95,7 +99,7 @@ class postUpdateCategoryTest extends TestCase
 
     public function testOK_update_owned_category()
     {
-        $role = Factory::create('role_admin');
+        $role = Factory::create('Role', ['role_name' => 'mall owner']);
         $permission = Factory::create('Permission', ['permission_name' => 'update_category']);
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $authData = Factory::create('Apikey', ['user_id' => $user->user_id]);
@@ -111,6 +115,8 @@ class postUpdateCategoryTest extends TestCase
         $_POST['category_name']  = 'Unique Submitted';
         $_POST['category_level'] = '1';
         $_POST['status']         = 'active';
+
+        $_POST['id_language_default'] = 1;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 
@@ -136,7 +142,7 @@ class postUpdateCategoryTest extends TestCase
 
     public function testOK_update_same_merchant_owner()
     {
-        $role = Factory::create('role_admin');
+        $role = Factory::create('Role', ['role_name' => 'mall owner']);
         $permission = Factory::create('Permission', ['permission_name' => 'update_category']);
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $authData = Factory::create('Apikey', ['user_id' => $user->user_id]);
@@ -152,6 +158,8 @@ class postUpdateCategoryTest extends TestCase
         $_POST['category_name']  = 'Unique Submitted';
         $_POST['category_level'] = '1';
         $_POST['status']         = 'active';
+
+        $_POST['id_language_default'] = 1;
 
         $url = $this->baseUrl . '?' . http_build_query($_GET);
 

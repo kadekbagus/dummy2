@@ -10,11 +10,11 @@ Route::group(['before' => 'orbit-settings'], function()
      */
     Route::post('/api/v1/cs/lucky-draw-number/issue', function()
     {
-        return LuckyDrawCSAPIController::create()->postIssueLuckyDrawNumber();
+        return LuckyDrawCSAPIController::create()->postIssueLuckyDrawNumberExternal();
     });
 
     /**
      * Intermediate.
      */
-    Route::post('/app/v1/cs/lucky-draw-number/issue', 'IntermediateAuthController@LuckyDrawCS_postIssueLuckyDrawNumber');
+    Route::post('/app/v1/cs/lucky-draw-number/issue', 'IntermediateAuthController@LuckyDrawCS_postIssueLuckyDrawNumberExternal');
 });

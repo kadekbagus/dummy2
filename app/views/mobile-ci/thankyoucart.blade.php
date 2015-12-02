@@ -30,7 +30,7 @@
             <h3 class="text-black">{{ Lang::get('mobileci.thank_you.thank_you_for_shopping') }}</h3>
         </div>
         <div class="col-xs-12 text-center merchant-logo">
-            <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" style="margin:0 auto;"/>
+            <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" style="margin:0 auto;"/>
         </div>
         <div class="col-xs-12 text-center vertically-spaced">
             <a href="{{ url('/customer/logout') }}" class="btn btn-info">{{ Lang::get('mobileci.thank_you.shop_again_button') }}</a>
@@ -63,7 +63,7 @@
 @section('ext_script_bot')
 <script type="text/javascript">
 $(document).ready(function(){
-  
+
 });
 </script>
 @stop

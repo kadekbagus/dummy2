@@ -10,7 +10,7 @@
       <div class="mobile-ci home-widget widget-container">
         <div class="single-widget-container">
           <header class="widget-title">
-            <span>CATALOGUE</span>
+            <span>{{ Lang::get('mobileci.page_title.catalogue') }}</span>
           </header>
           <section class="widget-single">
             <div class="top-container">
@@ -36,7 +36,7 @@
         </div>
         <div class="single-widget-container">
           <header class="widget-title">
-            <span>CATALOGUE</span>
+            <span>{{ Lang::get('mobileci.page_title.catalogue') }}</span>
           </header>
           <section class="widget-single">
             <div class="top-container">

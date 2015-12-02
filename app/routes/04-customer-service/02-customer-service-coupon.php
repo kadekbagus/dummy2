@@ -3,18 +3,15 @@
  * Routes file Customer Service lucky draw related activity.
  */
 
-Route::group(['before' => 'orbit-settings'], function()
+/**
+ * Issue lucky draw to customer
+ */
+Route::post('/api/v1/cs/coupon/issue', function()
 {
-    /**
-     * Issue lucky draw to customer
-     */
-    Route::post('/api/v1/cs/coupon/issue', function()
-    {
-        return LuckyDrawCSAPIController::create()->postIssueCouponManual();
-    });
-
-    /**
-     * Intermediate.
-     */
-    Route::post('/app/v1/cs/coupon/issue', 'IntermediateAuthController@LuckyDrawCS_postIssueCouponManual');
+    return LuckyDrawCSAPIController::create()->postIssueCouponManual();
 });
+
+/**
+ * Intermediate.
+ */
+Route::post('/app/v1/cs/coupon/issue', 'IntermediateAuthController@LuckyDrawCS_postIssueCouponManual');

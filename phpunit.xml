@@ -12,36 +12,20 @@
          syntaxCheck="false"
 >
     <testsuites>
-        <testsuite name="Model Test Suite">
+        <testsuite name="Models">
             <directory>./app/tests/models/</directory>
         </testsuite>
 
-        <testsuite name="Base APIv1 Test Suite">
-            <directory>./app/tests/api/v1/base/</directory>
-        </testsuite>
-
-        <testsuite name="User APIv1 Test Suite">
-            <directory>./app/tests/api/v1/user/</directory>
-        </testsuite>
-
-        <testsuite name="Merchant APIv1 Test Suite">
-            <directory>./app/tests/api/v1/merchant/</directory>
-        </testsuite>
-
-        <testsuite name="Retailer APIv1 Test Suite">
-            <directory>./app/tests/api/v1/retailer/</directory>
-        </testsuite>
-
-        <testsuite name="Orbit ACL Test Suite">
+        <testsuite name="Orbit ACL">
             <directory>./app/tests/acl</directory>
         </testsuite>
 
-        <testsuite name="Orbit Uploader Test Suite">
+        <testsuite name="Orbit Uploader">
             <directory>./app/tests/uploader</directory>
         </testsuite>
 
-        <testsuite name="Application Test Suite">
-            <directory>./app/tests/</directory>
+        <testsuite name="Orbit API UUID Smoke Test">
+            <directory>./app/tests/uuid</directory>
         </testsuite>
 
     </testsuites>

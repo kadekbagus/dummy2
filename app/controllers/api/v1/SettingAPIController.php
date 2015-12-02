@@ -81,15 +81,15 @@ class SettingAPIController extends ControllerAPI
 
             Event::fire('orbit.setting.postupdatesetting.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.setting.postupdatesetting.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedsetting = Setting::excludeDeleted()->where('setting_name', $setting_name)->first();
 
@@ -256,6 +256,8 @@ class SettingAPIController extends ControllerAPI
      * @param string        `password`              (optional) - Master password for deletion
      * @param string        `password_confirmation` (optional) - Master password confirmation
      *
+     * @param integer       `id_language_default`   (optional) - ID language default
+     *
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateMallSetting()
@@ -304,22 +306,36 @@ class SettingAPIController extends ControllerAPI
             $landingPage = OrbitInput::post('landing_page');
             $password = OrbitInput::post('password');
             $password2 = OrbitInput::post('password_confirmation');
+            $id_language_default = OrbitInput::post('id_language_default');
+
+            // Catch the supported language for mall
+            $supportedMallLanguageIds = OrbitInput::post('mall_supported_language_ids');
+            $supportedMallLanguageIds_copy = OrbitInput::post('mall_supported_language_ids');
+
+            $mall_id = OrbitInput::post('current_mall');
 
             $validator = Validator::make(
                 array(
-                    'language'                  => $language,
-                    'landing_page'              => $landingPage,
-                    'password'                  => $password,
-                    'password_confirmation'     => $password2,
+                    'current_mall'          => $mall_id,
+                    'language'              => $language,
+                    'landing_page'          => $landingPage,
+                    'password'              => $password,
+                    'password_confirmation' => $password2,
+                    'id_language_default'   => $id_language_default,
                 ),
                 array(
-                    'language'          => 'required|in:en,id',
-                    'landing_page'      => 'required|in:widget,news,promotion,tenant',
-                    'password'          => 'min:5|confirmed',
+                    'current_mall'        => 'required|orbit.empty.mall',
+                    'language'            => 'required',
+                    'landing_page'        => 'required|in:widget,news,promotion,tenant',
+                    'password'            => 'min:5|confirmed',
+                    'id_language_default' => 'required|orbit.empty.language_default',
                 )
             );
 
             Event::fire('orbit.setting.postupdatesetting.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -328,20 +344,22 @@ class SettingAPIController extends ControllerAPI
             }
             Event::fire('orbit.setting.postupdatesetting.after.validation', array($this, $validator));
 
-            // Begin database transaction
-            $this->beginTransaction();
+            // disabled - the current mall id now using current_mall param
+            // $setting = Setting::active()->where('setting_name', 'current_retailer')->first();
+            // if (empty($setting)) {
+            //     $errorMessage = 'Could not find current active mall from setting.';
+            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // }
 
-            $setting = Setting::active()->where('setting_name', 'current_retailer')->first();
-            if (empty($setting)) {
-                $errorMessage = 'Could not find current active mall from setting.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            $mall = Retailer::find($setting->setting_value);
+            $mall = Mall::excludeDeleted()
+                ->where('merchant_id', $mall_id)
+                ->firstOrFail();
 
             $backgroundSetting = NULL;
             $masterPasswordSetting = NULL;
             $landingPageSetting = NULL;
+            $startButtonSetting = NULL;
+            $dataMerchantLanguage = NULL;
 
             $updatedsetting = Setting::active()
                                      ->where('object_id', $mall->merchant_id)
@@ -359,6 +377,10 @@ class SettingAPIController extends ControllerAPI
 
                 if ($currentSetting->setting_name === 'background_image') {
                     $backgroundSetting = $currentSetting;
+                }
+
+                if ($currentSetting->setting_name === 'start_button_label') {
+                    $startButtonSetting = $currentSetting;
                 }
             }
 
@@ -424,10 +446,120 @@ class SettingAPIController extends ControllerAPI
                 $mall->media_background = $response->data;
             });
 
+            OrbitInput::post('start_button', function($label) use (&$startButtonSetting, $mall, $user) {
+                // Start button label setting
+                if (is_null($startButtonSetting)) {
+                    $startButtonSetting = new Setting();
+                    $startButtonSetting->setting_name = 'start_button_label';
+                    $startButtonSetting->object_id = $mall->merchant_id;
+                    $startButtonSetting->object_type = 'merchant';
+                }
+
+                $startButtonSetting->setting_value = $label;
+                $startButtonSetting->modified_by = $user->user_id;
+                $startButtonSetting->save();
+            });
+
+            // Save the default language setting for start button
+            $default_translation = [
+                $id_language_default => [
+                    'setting_value' => $startButtonSetting->setting_value,
+                ]
+            ];
+            $this->validateAndSaveTranslations($startButtonSetting, json_encode($default_translation), 'create');
+
+            OrbitInput::post('translations', function($translation_json_string) use ($startButtonSetting) {
+                $this->validateAndSaveTranslations($startButtonSetting, $translation_json_string, 'create');
+            });
+
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $mall->merchant_id,
+                    'language_id'   => $supportedMallLanguageIds,
+                ),
+                array(
+                    'merchant_id'   => 'required|orbit.empty.merchant',
+                    'language_id'   => 'required',
+                )
+            );
+
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            foreach ($supportedMallLanguageIds as $language_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'language_id'   => $language_id_check,
+                    ),
+                    array(
+                        'language_id'   => 'required|orbit.empty.language',
+                    )
+                );
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+            Event::fire('orbit.news.postlanguage.before.validation', array($this, $validator));
+
+            // Check old merchant language
+            $oldMallLanguage = MerchantLanguage::where('merchant_id','=', $mall->merchant_id)->get();
+
+            // Compare  old and new data of merchant language
+            foreach ($oldMallLanguage as $key => $valDeleted) {
+                if (!in_array($valDeleted->language_id, $supportedMallLanguageIds, TRUE)) {
+                    // inactive merchant language
+                    $merchantLanguage = MerchantLanguage::find($valDeleted->merchant_language_id);
+                    $merchantLanguage->status = 'deleted';
+                    // $merchantLanguage->status = 'inactive';
+                    $merchantLanguage->save();
+                } else {
+                    $keyArray = array_search($valDeleted->language_id, $supportedMallLanguageIds);
+                    // this data array will be inserted
+                    unset($supportedMallLanguageIds[$keyArray]);
+                }
+            }
+
+            // Re-activate merchant lamguage
+            $oldMallLanguageInactive = MerchantLanguage::where('merchant_id','=', $mall->merchant_id)->where('status','=', 'deleted')->get();
+            foreach ($oldMallLanguageInactive as $key => $valInactive) {
+                if (in_array($valInactive->language_id, $supportedMallLanguageIds_copy, TRUE)) {
+                    // active merchant language
+                    $merchantLanguage = MerchantLanguage::find($valInactive->merchant_language_id);
+                    $merchantLanguage->status = 'active';
+                    $merchantLanguage->save();
+                }
+            }
+
+            // Insert new merchant language
+            if (count($supportedMallLanguageIds) > 0) {
+                foreach ($supportedMallLanguageIds as $key => $value) {
+                    $merchantLanguage = new MerchantLanguage();
+                    $merchantLanguage->merchant_id = $mall->merchant_id;
+                    $merchantLanguage->language_id = $value;
+                    $merchantLanguage->language_id = $value;
+                    $merchantLanguage->save();
+                }
+            }
+
+            // Return new merchant language data
+            $dataMerchantLanguage = MerchantLanguage::with('language')
+                                    ->excludeDeleted()
+                                    ->where('merchant_id','=', $mall->merchant_id)
+                                    ->where('status','=', 'active')->get();
+
             $this->response->data = [
                 'landing_page'      => $landingPageSetting,
                 'background'        => $backgroundSetting,
-                'mall'              => $mall
+                'mall'              => $mall,
+                'start_button'      => $startButtonSetting,
+                'merchant_language' => $dataMerchantLanguage
             ];
 
             // Commit the changes
@@ -661,6 +793,11 @@ class SettingAPIController extends ControllerAPI
                 $settings->whereIn('settings.status', $status);
             });
 
+            // Filter setting by current_mall
+            OrbitInput::get('current_mall', function ($current_mall) use ($settings) {
+                $settings->where('settings.object_id', $current_mall);
+            });
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_settings = clone $settings;
@@ -778,8 +915,299 @@ class SettingAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * GET - Agreement Setting
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getAgreement()
+    {
+        try {
+            $httpCode = 200;
+
+            $this->registerCustomValidation();
+
+            // set mall id
+            $mallId = OrbitInput::get('current_mall');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $mallId
+                ),
+                array(
+                    'current_mall' => 'required|orbit.empty.mall'
+                )
+            );
+
+            Event::fire('orbit.setting.getagreement.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Builder object
+            $settings = Setting::excludeDeleted()
+                               ->where('object_type', 'merchant')
+                               ->where('object_id', $mallId)
+                               ->where('setting_name', 'agreement')
+                               ->where('status', 'active')
+                               ->first();
+
+            if (empty($settings)) {
+                $agreement = 'no';
+            } else {
+                $agreement = $settings->setting_value;
+            }
+
+            $this->response->data = $agreement;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.setting.getagreement.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.setting.getagreement.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.setting.getagreement.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.setting.getagreement.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.setting.getagreement.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+    /**
+     * POST - Create/update Agreement setting
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdateAgreement()
+    {
+        $activity = Activity::portal()
+                           ->setActivityType('update');
+
+        $user = NULL;
+        $updatedsetting = NULL;
+        try {
+            $httpCode=200;
+
+            $this->registerCustomValidation();
+
+            // set mall id
+            $mallId = OrbitInput::post('current_mall');;
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $mallId
+                ),
+                array(
+                    'current_mall' => 'required|orbit.empty.mall'
+                )
+            );
+
+            Event::fire('orbit.setting.getagreement.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $setting_name = 'agreement';
+            $setting_value = 'yes';
+            $object_type = 'merchant';
+            $status = 'active';
+
+            $updatedsetting = Setting::excludeDeleted()
+                                     ->where('object_type', $object_type)
+                                     ->where('object_id', $mallId)
+                                     ->where('setting_name', $setting_name)
+                                     ->where('status', $status)
+                                     ->first();
+
+            if (empty($updatedsetting)) {
+                // do insert
+                $updatedsetting = new Setting();
+                $updatedsetting->setting_name = $setting_name;
+                $updatedsetting->setting_value = $setting_value;
+                $updatedsetting->object_id = $mallId;
+                $updatedsetting->object_type = $object_type;
+                $updatedsetting->status = $status;
+
+                Event::fire('orbit.setting.postupdateagreement.before.save', array($this, $updatedsetting));
+
+                $updatedsetting->save();
+
+                Event::fire('orbit.setting.postupdateagreement.after.save', array($this, $updatedsetting));
+
+            } else {
+                // do update
+                $updatedsetting->setting_value = $setting_value;
+
+                Event::fire('orbit.setting.postupdateagreement.before.save', array($this, $updatedsetting));
+
+                $updatedsetting->save();
+
+                Event::fire('orbit.setting.postupdateagreement.after.save', array($this, $updatedsetting));
+            }
+
+            $this->response->data = $setting_value;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Update
+            $activityNotes = sprintf('Setting updated: %s', $updatedsetting->setting_name);
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting OK')
+                    ->setObject($updatedsetting)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.setting.postupdateagreement.after.commit', array($this, $updatedsetting));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.setting.postupdateagreement.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.setting.postupdateagreement.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.setting.postupdateagreement.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.setting.postupdateagreement.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_setting')
+                    ->setActivityNameLong('Update Setting Failed')
+                    ->setObject($updatedsetting)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save activity
+        $activity->save();
+
+        return $this->render($httpCode);
+
+    }
+
     protected function registerCustomValidation()
     {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $news = MerchantLanguage::excludeDeleted()
+                        ->where('merchant_language_id', $value)
+                        ->first();
+
+            if (empty($news)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.language_default', $news);
+
+            return TRUE;
+        });
+
         // Check the existence of the setting status
         Validator::extend('orbit.empty.setting_status', function ($attribute, $value, $parameters) {
             $valid = false;
@@ -794,8 +1222,7 @@ class SettingAPIController extends ControllerAPI
         // @Todo: Refactor by adding allowedForUser for mall
         $user = $this->api->user;
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) use ($user) {
-            $merchant = Retailer::excludeDeleted()
-                        ->isMall('yes')
+            $merchant = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
@@ -807,5 +1234,138 @@ class SettingAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+
+        // $user = $this->api->user;
+        Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) use ($user) {
+            $merchant = Mall::excludeDeleted()
+                /* ->allowedForUser($user) */
+                ->where('merchant_id', $value)
+                /* ->where('is_mall', 'yes') */
+                ->first();
+
+            if (empty($merchant)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.merchant', $merchant);
+
+            return true;
+        });
+
+
+        Validator::extend('orbit.empty.language', function ($attribute, $value, $parameters) {
+            $language = Language::where('language_id', $value)->where('status', '=', 'active')->first();
+            if (empty($language)) {
+                return false;
+            }
+            App::instance('orbit.empty.language', $language);
+            return true;
+        });
+
     }
+
+
+    /**
+     * @param SettingModel $event
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslations($event, $translations_json_string, $scenario = 'create')
+    {
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where SettingTranslation object is object with keys:
+         *   setting_value
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['setting_value'];
+        $user = $this->api->user;
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+        foreach ($data as $merchant_language_id => $translations) {
+            $language = MerchantLanguage::excludeDeleted()
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            };
+            $existing_translation = SettingTranslation::excludeDeleted()
+                ->where('setting_id', '=', $event->setting_id)
+                ->where('merchant_language_id', '=', $merchant_language_id)
+                ->first();
+
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $merchant_language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+                $new_translation = new SettingTranslation();
+                $new_translation->setting_id = $event->setting_id;
+                $new_translation->merchant_language_id = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $new_translation->{$field} = $value;
+                }
+                $new_translation->created_by = $this->api->user->user_id;
+                $new_translation->modified_by = $this->api->user->user_id;
+                $new_translation->save();
+
+                $event->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
+            }
+            elseif ($op === 'update') {
+
+                /** @var SettingTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->save();
+
+                $event->setRelation('translation_'. $existing_translation->merchant_language_id, $existing_translation);
+            }
+            elseif ($op === 'delete') {
+                /** @var SettingTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->modified_by = $this->api->user->user_id;
+                $existing_translation->delete();
+            }
+        }
+    }
+
 }

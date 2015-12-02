@@ -23,39 +23,40 @@
             </div>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" />
                 </div>
             </div>
         </header>
         <form name="loginForm" id="loginForm">
             <input type="hidden" name="token" id="token" value="{{ Input::get('token') }}">
             <div class="form-group">
-                <input type="password" class="form-control" name="password" id="password" placeholder="Password Baru" pattern=".{5,}" required title="Harap isi password (5-20 karakter)"/>
+                <input type="password" class="form-control" name="password" id="password" placeholder="{{ Lang::get('mobileci.activation.new_password') }}" pattern=".{5,}" required title="Harap isi password (5-20 karakter)"/>
             </div>
             <div class="form-group">
-                <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="Konfirmasi Password" required title="Harap isi password (5-20 karakter)"/>
+                <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" placeholder="{{ Lang::get('mobileci.activation.confirm_password') }}" required title="{{ Lang::get('mobileci.activation.fill_password') }}"/>
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-success btn-block">Aktifkan</button>
+                <button type="submit" class="btn btn-success btn-block">{{ Lang::get('mobileci.activation.activate') }}</button>
             </div>
         </form>
     </div>
 </div>
 @stop
+
 @section('modals')
 <!-- Modal -->
 <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog orbit-modal">
         <div class="modal-content">
             <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="myModalLabel">Error</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.activation.close') }}</span></button>
+                <h4 class="modal-title" id="myModalLabel">{{ Lang::get('mobileci.activation.error') }}</h4>
             </div>
             <div class="modal-body">
                 <p id="errorModalText"></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.activation.close') }}</button>
             </div>
         </div>
     </div>

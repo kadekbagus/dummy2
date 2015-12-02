@@ -19,7 +19,7 @@ class Object extends Eloquent
 
     public function mall()
     {
-        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall();
+        return $this->belongsTo('Mall', 'merchant_id', 'merchant_id');
     }
 
     public function users()

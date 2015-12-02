@@ -20,6 +20,7 @@ html{
       }
     }
     .widget-single {
+      background-color: #fff;
       border: 1px solid @theme-main-gray;
       border-top: none;
       .top-container, .bottom-container {
@@ -96,7 +97,7 @@ html{
 }
 
 .rslides_nav:active {
-  
+
 }
 
 .rslides_nav.next {
@@ -128,4 +129,44 @@ html{
   -o-transform: translate(-50%, -50%);
   -ms-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
+}
+
+.member-card{
+  position: relative;
+  width:100%;
+
+  h2{
+    position:absolute;
+    bottom:14px;
+    left:4%;
+    width:100%;
+    font-size:14px;
+
+    span{
+      color: #000;
+      letter-spacing: -1px;
+      padding: 10px;
+    }
+  }
+  .spacery{
+    padding:0 5px;
+  }
+}
+
+.no-member-card{
+  h3{
+    color:@theme-main-complimentary;
+  }
+}
+
+i.disableds{
+  color:#aeaeae;
+}
+
+.circlet i.disableds{
+  color:#aeaeae;
+}
+
+.mobile-ci.ci-header.header-container .buttons-list>li a.disableds {
+  color:#aeaeae;
 }

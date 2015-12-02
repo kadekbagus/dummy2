@@ -13,6 +13,9 @@ use Illuminate\Database\QueryException;
 
 class LoginAPIController extends ControllerAPI
 {
+    /** @var string|null the retailer ID (may be force set in cloud to match ID of requesting box) */
+    private $retailerId = null;
+
     /**
      * POST - Login user
      *
@@ -157,6 +160,20 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Login Mall Consumer
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginCustomer()
+    {
+        return $this->postLoginRole(['Consumer']);
+    }
+
+    /**
      * POST - Logout user
      *
      * @author Tian <tian@dominopos.com>
@@ -183,23 +200,32 @@ class LoginAPIController extends ControllerAPI
      */
     public function postRegisterUserInShop()
     {
-        $activity = Activity::mobileci()
-                            ->setActivityType('registration');
         try {
             $httpCode = 200;
 
             $this->registerCustomValidation();
 
+            $activity = null;
+
             $email = OrbitInput::post('email');
+            $from = OrbitInput::post('from');
+            $mall_id = $this->getRetailerId();
+
+            $signup_from = 'Sign Up via Mobile (Email Address)';
 
             $validator = Validator::make(
                 array(
                     'email'     => $email,
+                    'mall_id'   => $mall_id,
                 ),
                 array(
-                    'email'     => 'required|email|orbit.email.exists',
+                    'email'     => 'required|email|orbit.emailrole.exists',
+                    'mall_id'   => 'orbit.empty.mall',
                 )
             );
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -207,95 +233,9 @@ class LoginAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // Begin database transaction
-            $this->beginTransaction();
+            $mall = Mall::where('merchant_id', $mall_id)->first();
 
-            $customerRole = Role::where('role_name', 'Consumer')->first();
-            if (empty($customerRole)) {
-                $errorMessage = Lang::get('validation.orbit.empty.consumer_role');
-                throw new Exception($errorMessage);
-            }
-
-            // The retailer (shop) which this registration taken
-            $retailerId = Config::get('orbit.shop.id');
-            $retailer = Retailer::excludeDeleted()
-                                ->where('merchant_id', $retailerId)
-                                ->first();
-            if (empty($retailer)) {
-                $errorMessage = Lang::get('validation.orbit.empty.retailer');
-                throw new Exception($errorMessage);
-            }
-
-            $newuser = new User();
-            $newuser->username = strtolower($email);
-            $newuser->user_email = strtolower($email);
-            $newuser->status = 'pending';
-            $newuser->user_role_id = $customerRole->role_id;
-            $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
-
-            $newuser->save();
-
-            $userdetail = new UserDetail();
-
-            // Fill the information about retailer (shop)
-            $userdetail->merchant_id = $retailer->parent_id;
-            $userdetail->merchant_acquired_date = date('Y-m-d H:i:s');
-            $userdetail->retailer_id = $retailer->merchant_id;
-
-            // Save the user details
-            $userdetail = $newuser->userdetail()->save($userdetail);
-
-            // Generate API key for this user
-            $apikey = $newuser->createApiKey();
-
-            $newuser->setRelation('userDetail', $userdetail);
-            $newuser->user_detail = $userdetail;
-
-            $newuser->setRelation('apikey', $apikey);
-            $newuser->apikey = $apikey;
-
-            // Token expiration, fallback to 30 days
-            $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
-
-            // Token Settings
-            $token = new Token();
-            $token->token_name = 'user_registration_mobile';
-            $token->token_value = $token->generateToken($email);
-            $token->status = 'active';
-            $token->email = $email;
-            $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
-            $token->ip_address = $_SERVER['REMOTE_ADDR'];
-            $token->user_id = $newuser->user_id;
-            $token->save();
-
-            // URL Activation link
-            $baseUrl = Config::get('orbit.registration.mobile.activation_base_url');
-            $tokenUrl = sprintf($baseUrl, $token->token_value);
-            $contactInfo = Config::get('orbit.contact_information.customer_service');
-
-            $data = array(
-                'token'             => $token->token_value,
-                'email'             => $email,
-                'token_url'         => $tokenUrl,
-                'shop_name'         => $retailer->name,
-                'cs_phone'          => $contactInfo['phone'],
-                'cs_email'          => $contactInfo['email'],
-                'cs_office_hour'    => $contactInfo['office_hour']
-            );
-            $mailviews = array(
-                'html' => 'emails.registration.activation-html',
-                'text' => 'emails.registration.activation-text'
-            );
-            Mail::send($mailviews, $data, function($message)
-            {
-                $emailconf = Config::get('orbit.registration.mobile.sender');
-                $from = $emailconf['email'];
-                $name = $emailconf['name'];
-
-                $email = OrbitInput::post('email');
-                $message->from($from, $name)->subject('You are almost in Orbit!');
-                $message->to($email);
-            });
+            list($newuser, $userdetail, $apikey) = $this->createCustomerUser($email);
 
             $this->response->data = $newuser;
 
@@ -304,11 +244,21 @@ class LoginAPIController extends ControllerAPI
                 $this->commit();
             }
 
+            if ($from === 'cs') {
+                $signup_from = 'Sign Up via Customer Service';
+                $activity = Activity::csportal()
+                                    ->setActivityType('registration');
+            } else {
+                $activity = Activity::mobileci()
+                    ->setActivityType('registration');
+            }
+
             // Successfull registration
             $activity->setUser($newuser)
                      ->setActivityName('registration_ok')
-                     ->setActivityNameLong('Sign Up')
+                     ->setActivityNameLong($signup_from)
                      ->setModuleName('Application')
+                     ->setLocation($mall)
                      ->responseOK();
 
         } catch (ACLForbiddenException $e) {
@@ -389,14 +339,23 @@ class LoginAPIController extends ControllerAPI
         // Save the activity
         $activity->save();
 
+        // We want the registration activity to have 'from Facebook' or 'from Email'...
+        // Rather than passing the origin here, we save the ID of the registration activity
+        // so the caller can add 'from Facebook' later.
+        if ($activity->response_status == Activity::ACTIVITY_REPONSE_OK) {
+            $this->response->data->setAttribute('registration_activity_id', $activity->activity_id);
+            IntermediateLoginController::proceedPayload(null, $activity->activity_id);
+        }
+
         return $this->render($httpCode);
     }
 
     /**
-     * GET - Register Token Check
+     * POST - Setup Password By Token
      *
      * @author Kadek <kadek@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto Pratama <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -405,7 +364,7 @@ class LoginAPIController extends ControllerAPI
      * @param string    `password_confirmation`     (required) - Confirmation
      * @return Illuminate\Support\Facades\Response
      */
-    public function postRegisterTokenCheck()
+    public function postSetupPasswordByToken()
     {
         $activity = Activity::portal()
                             ->setActivityType('activation');
@@ -428,6 +387,9 @@ class LoginAPIController extends ControllerAPI
                 )
             );
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -444,9 +406,6 @@ class LoginAPIController extends ControllerAPI
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
             }
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // update the token status so it cannot be use again
             $token->status = 'deleted';
@@ -548,12 +507,353 @@ class LoginAPIController extends ControllerAPI
         return $this->render();
     }
 
+    /**
+     * Post - Update Service Agreement
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `token`          (required) - Token to be check
+     * @param string    `first_name`     (required) - value of first name
+     * @param string    `last_name`      (required) - value of last name
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUpdateServiceAgreement()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('activation');
+        try {
+            $this->registerCustomValidation();
+
+            $tokenValue = trim(OrbitInput::post('token'));
+            $first_name = OrbitInput::post('first_name');
+            $last_name = OrbitInput::post('last_name');
+
+            $validator = Validator::make(
+                array(
+                    'token_value'   => $tokenValue,
+                    'first_name'    => $first_name,
+                    'last_name'     => $last_name
+                ),
+                array(
+                    'token_value'   => 'required|orbit.empty.token',
+                    'first_name'    => 'required|min:1',
+                    'last_name'     => 'required|min:1',
+                )
+            );
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $token = App::make('orbit.empty.token');
+            $user  = User::excludeDeleted()
+                        ->where('user_id', $token->user_id)
+                        ->first();
+            $mall = Mall::excludeDeleted()->where('user_id', $token->user_id)->first();
+
+            if (! is_object($token) || ! is_object($user) || ! is_object($mall)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            // update the token status so it cannot be use again
+            $token->status = 'deleted';
+            $token->save();
+
+            // Update settings service agreement
+            $setting_items = array('agreement_accepted'=>'true',
+                             'agreement_acceptor_first_name'=>$first_name,
+                             'agreement_acceptor_last_name'=>$last_name
+                            );
+
+            foreach ($setting_items as $setting_name => $setting_value) {
+                $settings = Setting::excludeDeleted()
+                                   ->where('object_id',$mall->merchant_id)
+                                   ->where('object_type','merchant')
+                                   ->where('setting_name', $setting_name)
+                                   ->first();
+
+                if (empty($settings)) {
+                    // do insert
+                    $settings = new Setting();
+                    $settings->setting_name = $setting_name;
+                    $settings->setting_value = $setting_value;
+                    $settings->object_id = $mall->merchant_id;
+                    $settings->object_type = 'merchant';
+                    $settings->status = 'active';
+                    $settings->modified_by = $user->user_id;
+
+                    $settings->save();
+                } else {
+                    $settings->setting_value = $setting_value;
+
+                    $settings->save();
+                }
+            }
+            $mall->load('settings');
+
+            $this->response->message = Lang::get('statuses.orbit.updated.serviceagreement');
+            $this->response->data = $mall;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull activation
+            $activity->setUser($user)
+                     ->setActivityName('service_agreement')
+                     ->setActivityNameLong('Update Service Agreement Successfull')
+                     ->setModuleName('Application')
+                     ->responseOK();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('mall')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement Failed')
+                     ->setModuleName('Application')
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('mall')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('mall')
+                     ->setActivityName('service_agreement_failed')
+                     ->setActivityNameLong('Update Service Agreement Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render();
+    }
+
+    /**
+     * POST - Activate Account
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `first_name`     (required) - first name
+     * @param string    `last_name`      (required) - last name
+     * @param string    `birthdate`      (required) - date of birth date
+     * @param string    `gender`         (required) - gender 'm','f','unknown'
+     * @param string    `token`          (required) - Token to be check
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postActivateAccount()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('activation');
+        try {
+            $this->registerCustomValidation();
+
+            $first_name = OrbitInput::post('first_name');
+            $last_name = OrbitInput::post('last_name');
+            $birthdate = OrbitInput::post('birthdate');
+            $gender = OrbitInput::post('gender');
+            $token = trim(OrbitInput::post('token'));
+
+            $validator = Validator::make(
+                array(
+                    'first_name'     => $first_name,
+                    'last_name'      => $last_name,
+                    'birthdate'      => $birthdate,
+                    'gender'         => $gender,
+                    'token'          => $token,
+                ),
+                array(
+                    'first_name'     => 'required|min:1',
+                    'last_name'      => 'required|min:1',
+                    'birthdate'      => 'required|date_format:Y-m-d H:i:s',
+                    'gender'         => 'required|in:m,f',
+                    'token'          => 'required|orbit.empty.token',
+                )
+            );
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $token = App::make('orbit.empty.token');
+            $user = User::excludeDeleted()
+                        ->where('user_id', $token->user_id)
+                        ->first();
+
+
+            if (! is_object($token) || ! is_object($user)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            // update the token status so it cannot be use again
+            $token->status = 'deleted';
+            $token->save();
+
+            // Update user first, last name and status
+            $user->user_firstname = $first_name;
+            $user->user_lastname = $last_name;
+            $user->status = 'active';
+            $user->save();
+
+            // Update user detail birthdate and gender
+            $user_detail = UserDetail::where('user_id', $user->user_id)
+                                     ->first();
+            $user_detail->birthdate = $birthdate;
+            $user_detail->gender = $gender;
+
+            // Save the user details
+            $user_detail->save();
+
+            // @author Irianto Pratama <irianto@dominopos.com>
+            // send email if user status active
+            if ($user->status === 'active') {
+                // Send email process to the queue
+                \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                    'user_id' => $user->user_id
+                ]);
+            }
+            $userSignUp = Activity::where('activity_name', '=', 'registration_ok')
+                                  ->whereIn('group', ['mobile-ci','cs-portal'])
+                                  ->where('user_id', $user->user_id)
+                                  ->first();
+            $location = Mall::find($userSignUp->location_id);
+
+            $this->response->message = Lang::get('statuses.orbit.activate.account');
+            $this->response->data = $user;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull activation
+            $activity->setUser($user)
+                     ->setActivityName('activation_ok')
+                     ->setActivityNameLong('Customer Activation')
+                     ->setModuleName('Application')
+                     ->setLocation($location)
+                     ->responseOK();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Activation
+            $activity->setUser('guest')
+                     ->setActivityName('activation_failed')
+                     ->setActivityNameLong('Account Activation Failed')
+                     ->setModuleName('Application')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render();
+    }
+
     protected function registerCustomValidation()
     {
         // Check user email address, it should not exists
         Validator::extend('orbit.email.exists', function ($attribute, $value, $parameters) {
             $user = User::excludeDeleted()
                         ->where('user_email', $value)
+                        ->first();
+
+            if (! empty($user)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.user', $user);
+
+            return TRUE;
+        });
+
+        // Check user email address, it should not exists
+        Validator::extend('orbit.emailrole.exists', function ($attribute, $value, $parameters) {
+            $user = User::excludeDeleted()
+                        ->join('roles', 'roles.role_id', '=', 'users.user_role_id')
+                        ->where('users.user_email', $value)
+                        ->where('roles.role_name', 'Consumer')
                         ->first();
 
             if (! empty($user)) {
@@ -574,6 +874,20 @@ class LoginAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.token', $token);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
 
             return TRUE;
         });
@@ -602,17 +916,77 @@ class LoginAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // check for superadmin login as user
+            $loginFromSuperadmin = false;
+            // superadmin@domain logs in as user@domain using an email of this format:
+            // superadmin@domain-----user--AT--domain
+            $emailDelimiter = '-----';
+            $emailAtReplacement = '--AT--';
+            if (strpos($email, $emailDelimiter) !== FALSE) {
+                $parts = explode($emailDelimiter, $email);
+                if (count($parts) !== 2) {
+                    // something odd?
+                    $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $adminEmail = $parts[0];
+                $loginAsEmail = $parts[1];
+                if (strpos($loginAsEmail, $emailAtReplacement) === FALSE) {
+                    // no --AT-- in second part
+                    $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // check for super admin user first
+                $superAdminUser = User::with('role')
+                    ->active()
+                    ->where('user_email', $adminEmail)
+                    ->first();
+
+                if (! is_object($superAdminUser)) {
+                    $message = Lang::get('validation.orbit.access.inactiveuser');
+                    ACL::throwAccessForbidden($message);
+                }
+
+                if (! Hash::check($password, $superAdminUser->user_password)) {
+                    $message = Lang::get('validation.orbit.access.loginfailed');
+                    ACL::throwAccessForbidden($message);
+                }
+
+                $roleIds = Role::roleIdsByName(['Super Admin']);
+                if (! in_array($superAdminUser->user_role_id, $roleIds)) {
+                    $message = Lang::get('validation.orbit.access.forbidden', [
+                        'action' => 'Login (Role Denied) ' . implode(', ', $roleIds) . ' ' . $superAdminUser->user_role_id
+                    ]);
+                    ACL::throwAccessForbidden($message);
+                }
+
+                // then if the superadmin checks pass, use the user email specified
+                $email = str_replace($emailAtReplacement, '@', $loginAsEmail);
+                $loginFromSuperadmin = true;
+            }
+
+            // Return the current mall object if this login process coming
+            // from mall or cs-portal
+            $from = OrbitInput::get('from_portal', NULL);
+            $mall = NULL;
+
             $user = User::with('role')
                         ->active()
-                        ->where('user_email', $email)
-                        ->first();
+                        ->where('user_email', $email);
+
+            if ($from === 'cs-portal') {
+                $user->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                     ->where('roles.role_name', 'Mall Customer Service');
+            }
+            $user = $user->first();
 
             if (! is_object($user)) {
-                $message = Lang::get('validation.orbit.access.loginfailed');
+                $message = Lang::get('validation.orbit.access.inactiveuser');
                 ACL::throwAccessForbidden($message);
             }
 
-            if (! Hash::check($password, $user->user_password)) {
+            if (! $loginFromSuperadmin && ! Hash::check($password, $user->user_password)) {
                 $message = Lang::get('validation.orbit.access.loginfailed');
                 ACL::throwAccessForbidden($message);
             }
@@ -625,14 +999,16 @@ class LoginAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            // Return the current mall object if this login process coming
-            // from mall or cs-portal
-            $from = OrbitInput::get('from_portal', NULL);
-            $mall = NULL;
-
             if (in_array($from, ['mall', 'cs-portal'])) {
-                $mallId = Config::get('orbit.shop.id');
-                $mall = Retailer::excludeDeleted()->find($mallId);
+                if ($from === 'mall') {
+                    if (strtolower($user->role->role_name) === 'mall admin') {
+                        $mall = $user->employee->retailers[0]->load('timezone');
+                    } else {
+                        $mall = Mall::with('timezone')->excludeDeleted()->where('user_id', $user->user_id)->first();
+                    }
+                } elseif ($from === 'cs-portal') {
+                    $mall = $user->employee->retailers[0]->load('timezone');
+                }
             }
             $user->mall = $mall;
 
@@ -643,6 +1019,38 @@ class LoginAPIController extends ControllerAPI
                      ->responseOK();
 
             $this->response->data = $user;
+
+            if (!empty($mall) && $from === 'mall') {
+                // @author Irianto Pratama <irianto@dominopos.com>
+                $agreement_accepted = $mall->settings()
+                                           ->where('setting_name', 'agreement_accepted')
+                                           ->where('setting_value', 'true')
+                                           ->where('object_id', $mall->merchant_id)
+                                           ->where('object_type', 'merchant')
+                                           ->first();
+
+                if (empty($agreement_accepted) || $agreement_accepted->setting_value !== 'true') {
+
+                    // Token expiration, fallback to 30 days
+                    $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
+
+                    // Token Settings
+                    $token = new Token();
+                    $token->token_name = 'service_agreement';
+                    $token->token_value = $token->generateToken($user->user_email);
+                    $token->status = 'active';
+                    $token->email = $user->user_email;
+                    $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
+                    $token->ip_address = $user->user_ip;
+                    $token->user_id = $user->user_id;
+                    $token->save();
+
+                    $this->response->code = 302;
+                    $this->response->status = 'redirect';
+                    $this->response->message = Lang::get('validation.orbit.access.agreement');
+                    $this->response->data = sprintf(Config::get('orbit.agreement.url'), $token->token_value);
+                }
+            }
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -682,5 +1090,100 @@ class LoginAPIController extends ControllerAPI
         $activity->setModuleName('Application')->save();
 
         return $this->render();
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getRetailerId()
+    {
+        if (isset($this->retailerId)) {
+            return $this->retailerId;
+        }
+        return Config::get('orbit.shop.id');
+    }
+
+    /**
+     * @param $id
+     * @return self
+     */
+    public function setRetailerId($id)
+    {
+        $this->retailerId = $id;
+        return $this;
+    }
+
+    /**
+     * Creates a customer user and the associated user detail and API key objects.
+     *
+     * NOT transactional, wrap in transaction yourself.
+     *
+     * May throw exception if cannot find retailer or cannot find consumer role.
+     *
+     * Uses retailer set using setRetailerId() or the one in config.
+     *
+     * @param string $email the user's email
+     * @param string|null $userId the unique ID (if provided) of the user to create - used in box to match data on cloud
+     * @param string|null $userDetailId .... of the user detail to create - used in box to match data on cloud
+     * @param string|null $apiKeyId .... of the API key to create - used in box to match data on cloud
+     * @param string|null $userStatus the user status on cloud
+     * @return array [User, UserDetail, ApiKey]
+     * @throws Exception
+     */
+    public function createCustomerUser($email, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null)
+    {
+        // The retailer (shop) which this registration taken
+        $retailerId = $this->getRetailerId();
+        $retailer = Mall::excludeDeleted()
+            ->where('merchant_id', $retailerId)
+            ->first();
+
+        if (empty($retailer)) {
+            $errorMessage = Lang::get('validation.orbit.empty.retailer');
+            throw new Exception($errorMessage);
+        }
+
+        $customerRole = Role::where('role_name', 'Consumer')->first();
+        if (empty($customerRole)) {
+            $errorMessage = Lang::get('validation.orbit.empty.consumer_role');
+            throw new Exception($errorMessage);
+        }
+
+        $new_user = new User();
+        if (isset($userId)) {
+            $new_user->user_id = $userId;
+        }
+        $new_user->username = strtolower($email);
+        $new_user->user_email = strtolower($email);
+        $new_user->status = isset($userStatus) ? $userStatus : 'pending';
+        $new_user->user_role_id = $customerRole->role_id;
+        $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
+        $new_user->external_user_id = 0;
+
+        $new_user->save();
+
+        $user_detail = new UserDetail();
+
+        if (isset($userDetailId)) {
+            $user_detail->user_detail_id = $userDetailId;
+        }
+        // Fill the information about retailer (shop)
+        $user_detail->merchant_id = $retailer->parent_id;
+        $user_detail->merchant_acquired_date = date('Y-m-d H:i:s');
+        $user_detail->retailer_id = $retailer->merchant_id;
+
+        // Save the user details
+        $user_detail = $new_user->userdetail()->save($user_detail);
+
+        // Generate API key for this user (with given ID if specified)
+        $apikey = $new_user->createApiKey($apiKeyId);
+
+        $new_user->setRelation('userDetail', $user_detail);
+        $new_user->user_detail = $user_detail;
+
+        $new_user->setRelation('apikey', $apikey);
+        $new_user->apikey = $apikey;
+        
+        return [$new_user, $user_detail, $apikey];
     }
 }

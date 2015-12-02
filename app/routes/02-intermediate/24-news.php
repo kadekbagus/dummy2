@@ -11,7 +11,7 @@ Route::post('/app/v1/news/new', 'IntermediateAuthController@News_postNewNews');
 /**
  * Delete news
  */
-Route::post('/app/v1/news/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@News_postDeleteNews']);
+Route::post('/app/v1/news/delete', 'IntermediateAuthController@News_postDeleteNews');
 
 /**
  * Update news
@@ -33,3 +33,8 @@ Route::post('/app/v1/news-image/upload', 'IntermediateAuthController@Upload_post
  * Delete news image
  */
 Route::post('/app/v1/news-image/delete', 'IntermediateAuthController@Upload_postDeleteNewsImage');
+
+/**
+ * List and/or Search promotion by retailer
+ */
+Route::get('/app/v1/newspromotion/by-retailer/search', 'IntermediateAuthController@News_getSearchNewsPromotionByRetailer');

@@ -71,6 +71,16 @@ class Promotion extends Eloquent
     }
 
     /**
+     * Promotion strings can be translated to many languages.
+     */
+    public function translations()
+    {        
+        return $this->hasMany('PromotionTranslation', 'promotion_id', 'promotion_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
+    }
+
+    /**
      * Add Filter promotions based on user who request it.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $builder

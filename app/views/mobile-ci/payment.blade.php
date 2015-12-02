@@ -72,7 +72,7 @@
     </div>
     <div class="row">
         <div class="col-xs-12 text-center merchant-logo">
-            <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" style="margin: 0 auto;" />
+            <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" style="margin: 0 auto;" />
         </div>
     </div>
 </div>

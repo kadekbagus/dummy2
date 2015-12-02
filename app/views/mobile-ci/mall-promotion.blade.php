@@ -23,35 +23,43 @@
 <!-- product -->
 <div class="row product">
     <div class="col-xs-12 product-img">
+        @if(($product->image!='mobile-ci/images/default_product.png'))
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{ asset($product->image) }}" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
+            <div class="zoom"><a href="{{{ asset($product->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img alt="" src="{{{ asset('mobile-ci/images/product-zoom.png') }}}" ></a></div>
         </div>
-        <a href="{{ asset($product->image) }}" data-featherlight="image"><img class="img-responsive" alt="" src="{{ asset($product->image) }}" ></a>
+        @endif
+        @if(($product->image!='mobile-ci/images/default_product.png'))
+        <a href="{{{ asset($product->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($product->image) }}}" ></a>
+        @else
+        <img class="img-responsive" alt="" src="{{{ asset($product->image) }}}" >
+        @endif
     </div>
     <div class="col-xs-12 main-theme product-detail">
         <div class="row">
             <div class="col-xs-12">
-                <h3>{{ $product->promotion_name }}</h3>
+                <h3>{{{ $product->promotion_name }}}</h3>
             </div>
             <div class="col-xs-12">
-                <p>{{ $product->description }}</p>
+                <p>{{{ $product->description }}}</p>
             </div>
             <div class="col-xs-12">
-                <h4>Validity</h4>
-                <p>{{ date('d M Y', strtotime($product->begin_date)) }} - {{ date('d M Y', strtotime($product->end_date)) }}</p>
+                <h4>{{{ Lang::get('mobileci.promotion.validity') }}}</h4>
+                <p>{{{ date('d M Y', strtotime($product->begin_date)) }}} - {{{ date('d M Y', strtotime($product->end_date)) }}}</p>
             </div>
         </div>
     </div>
     <div class="col-xs-12 main-theme-mall product-detail where">
         <div class="row">
-            @if(count($product->tenants) > 1 )
-            <div class="col-xs-12 text-center">
-                <a href="{{ url('customer/tenants?promotion_id='.$product->news_id) }}" class="btn btn-info btn-block">See Tenants</a>
-            </div>
-            @elseif(count($product->tenants) == 1 )
-            <div class="col-xs-12 text-center">
-                <a href="{{ url('customer/tenant?id='.$product->tenants[0]->merchant_id.'&pid='.$product->news_id) }}" class="btn btn-info btn-block">See Tenant</a>
-            </div>
+            @if(!$all_tenant_inactive)
+                @if(count($product->tenants) > 1 )
+                <div class="col-xs-12 text-center">
+                    <a href="{{{ url('customer/tenants?promotion_id='.$product->news_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+                </div>
+                @elseif(count($product->tenants) == 1 )
+                <div class="col-xs-12 text-center">
+                    <a href="{{{ url('customer/tenant?id='.$product->tenants[0]->merchant_id.'&pid='.$product->news_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
+                </div>
+                @endif
             @endif
         </div>
     </div>

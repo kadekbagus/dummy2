@@ -82,6 +82,8 @@ class Session
         $queryStringName = $this->config->getConfig('session_origin.query_string.name');
         $cookieName = $this->config->getConfig('session_origin.cookie.name');
 
+        $applicationId = $this->config->getConfig('application_id');
+
         if (array_key_exists('header', $availabilities)
             && $availabilities['header'] === TRUE
             && isset($_SERVER[$headerName])) {
@@ -114,7 +116,7 @@ class Session
                 throw new Exception ('No session found.', static::ERR_SESS_NOT_FOUND);
             }
 
-            $sessionData = new SessionData($data);
+            $sessionData = new SessionData($data, $applicationId);
             $sessionData->createdAt = $now;
             $this->driver->start($sessionData);
 
@@ -154,7 +156,6 @@ class Session
 
                     // Clear the session value
                     case static::ERR_SESS_EXPIRE:
-                        $this->driver->clear($this->sessionId);
                         throw new Exception($e->getMessage(), $e->getCode());
                         break;
 
@@ -364,6 +365,9 @@ class Session
 
             if ($makeItExpire) {
                 $expire = time() - 3600;
+                unset($_COOKIE[$cookieConfig['name']]);
+            } else {
+                $_COOKIE[$cookieConfig['name']] = $sessionId;
             }
 
             setcookie(
@@ -375,6 +379,17 @@ class Session
                 $cookieConfig['secure'],
                 $cookieConfig['httponly']
             );
+
+        }
+
+        if (array_key_exists('query_string', $availabilities)
+            && $availabilities['query_string'] === TRUE) {
+            $queryStringName = $this->config->getConfig('session_origin.query_string.name');
+            if ($makeItExpire) {
+                unset($_GET[$queryStringName]);
+            } else {
+                $_GET[$queryStringName] = $sessionId;
+            }
         }
     }
 }

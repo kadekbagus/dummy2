@@ -14,15 +14,21 @@
         "laravel/framework": "4.2.9",
         "zendframework/zend-permissions-acl": "2.3",
         "laraeval/laraeval": "dev-master",
-        "barryvdh/laravel-debugbar": "1.7.7"
+        "barryvdh/laravel-debugbar": "1.7.7",
+        "pda/pheanstalk": "~2.1.1",
+        "svyatov/curlwrapper": "~1.3",
+        "fideloper/proxy": "2.1.1"
     },
     "autoload": {
                 "psr-0": {
+                    "Facebook": "vendor/facebook/src",
                     "DominoPOS\\OrbitAPI\\": "vendor/dominopos/orbit-api/",
                     "OrbitShop\\API\\": "vendor/dominopos/orbit-shop-api/",
                     "DominoPOS\\OrbitACL\\": "vendor/dominopos/orbit-acl/",
                     "DominoPOS\\OrbitUploader\\": "vendor/dominopos/orbit-uploader/",
-                    "DominoPOS\\OrbitSession\\": "vendor/dominopos/orbit-session/"
+                    "DominoPOS\\OrbitSession\\": "vendor/dominopos/orbit-session/",
+                    "Orbit\\Database\\": "vendor/dominopos/orbit-database/",
+                    "Orbit\\Queue\\": "app/queue/"
                 },
         "classmap": [
             "app/commands",

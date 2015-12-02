@@ -43,6 +43,11 @@ class Retailer extends Eloquent
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
 
+    public function timezone()
+    {
+        return $this->belongsTo('Timezone', 'timezone_id', 'timezone_id');
+    }
+
     public function merchant()
     {
         return $this->belongsTo('Merchant', 'parent_id', 'merchant_id');
@@ -51,6 +56,12 @@ class Retailer extends Eloquent
     public function parent()
     {
         return $this->merchant();
+    }
+
+    public function merchant_as_parent()
+    {
+        return $this->merchant()
+                    ->select('merchant_id', 'name');
     }
 
     /**
@@ -102,6 +113,25 @@ class Retailer extends Eloquent
     public function categories()
     {
         return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
+    }
+
+    /**
+     * Retailer has many languages for translations.
+     */
+    public function languages()
+    {
+        return $this->hasMany('MerchantLanguage', 'merchant_id', 'merchant_id')->excludeDeleted();
+    }
+
+    /**
+     * Retailer strings can be translated to many languages. (table shared with Merchant).
+     */
+    public function translations()
+    {
+        return $this->hasMany('MerchantTranslation', 'merchant_id', 'merchant_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
+
     }
 
     /**

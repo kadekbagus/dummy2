@@ -7,7 +7,7 @@
 /**
  * List/Search Consumer
  */
-Route::get('/api/v1/consumer/search', function()
+Route::get('/api/v1/{consumer}/{search}', function()
 {
     return UserAPIController::create()->getConsumerListing();
-});
+})->where(['consumer' => '(consumer|membership)', 'search' => '(search|list)']);

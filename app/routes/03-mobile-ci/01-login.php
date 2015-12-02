@@ -5,11 +5,27 @@ Route::group(
     function () {
 
         Route::get(
-            '/customer',
+            '/customer', ['as' => 'mobile-ci.signin',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getSignInView();
-            }
+            }]
+        );
+
+        Route::post(
+            '/customer/social-login', ['as' => 'mobile-ci.social_login',
+                function () {
+                    return MobileCI\MobileCIAPIController::create()->postSocialLoginView();
+                },
+            ]
+        );
+
+        Route::get(
+            '/customer/social-login-callback', ['as' => 'mobile-ci.social_login_callback',
+                function () {
+                    return MobileCI\MobileCIAPIController::create()->getSocialLoginCallbackView();
+                },
+            ]
         );
 
         Route::get(
@@ -146,8 +162,6 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->getActivationView();
             }
         );
-
-        Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
 
         Route::get('/customer/logout', 'IntermediateLoginController@getLogoutMobileCI');
 
@@ -306,6 +320,17 @@ Route::group(
             })
         );
 
+        // track coupon popup display activity
+        Route::post(
+            '/app/v1/customer/displaycouponpopupactivity',
+            array(
+            'as' => 'display-coupon-popup-activity',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->postDisplayCouponPopUpActivity();
+            })
+        );
+
         // track widget click activity
         Route::post(
             '/app/v1/customer/widgetclickactivity',
@@ -445,7 +470,6 @@ Route::group(
         Route::get(
             '/customer/mallnewsdetail',
             function () {
-
                 return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
             }
         );
@@ -456,5 +480,18 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->getMallLuckyDrawDownloadList();
             }]
         );
+
+        // set language from pop up selected language to cookies
+        Route::post(
+            '/customer/setlanguage',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->postLanguagebySelected();
+            }
+        );
+
+        Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
+        Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
 );
+
+
