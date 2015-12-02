@@ -2481,7 +2481,6 @@ class UserAPIController extends ControllerAPI
             $lastname = OrbitInput::post('lastname');
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
-            $phone = OrbitInput::post('phone');
             $join_date = OrbitInput::post('join_date');
             $membershipNumberCode = OrbitInput::post('membership_number');
             $status = OrbitInput::post('status');
@@ -2497,10 +2496,10 @@ class UserAPIController extends ControllerAPI
 
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
+            $workphone = OrbitInput::post('work_phone');
             $city = OrbitInput::post('city');
             $province = OrbitInput::post('province');
             $postal_code = OrbitInput::post('postal_code');
-            $workphone = OrbitInput::post('work_phone');
             $occupation = OrbitInput::post('occupation');
             $dateofwork = OrbitInput::post('date_of_work');
             $homeAddress = OrbitInput::post('home_address');
@@ -2562,8 +2561,8 @@ class UserAPIController extends ControllerAPI
             // Update email in tokens table when change email before user setup a password
             // Check setup password user or no
             $userPass = User::excludeDeleted()
-                ->where('user_id', $userId)
-                ->where('user_password', '')
+                ->where('user_id', '=', $userId)
+                ->where('user_password', '=', '')
                 ->count('user_id');
 
             if ($userPass > 0) {
@@ -2621,11 +2620,15 @@ class UserAPIController extends ControllerAPI
                 $userdetail->gender = $gender;
             });
 
-            OrbitInput::post('mobile_phone', function($phone) use ($userdetail) {
-                $userdetail->phone = $phone;
+            OrbitInput::post('mobile_phone', function($phone1) use ($userdetail) {
+                $userdetail->phone = $phone1;
             });
 
-            OrbitInput::post('mobile_phone2', function($phone3) use ($userdetail) {
+            OrbitInput::post('mobile_phone2', function($phone2) use ($userdetail) {
+                $userdetail->phone2 = $phone2;
+            });
+
+            OrbitInput::post('work_phone', function($phone3) use ($userdetail) {
                 $userdetail->phone3 = $phone3;
             });
 
@@ -2639,10 +2642,6 @@ class UserAPIController extends ControllerAPI
 
             OrbitInput::post('postal_code', function($postal) use ($userdetail) {
                 $userdetail->postal_code = $postal;
-            });
-
-            OrbitInput::post('work_phone', function($phone) use ($userdetail) {
-                $userdetail->phone2 = $phone;
             });
 
             OrbitInput::post('home_address', function($data) use ($userdetail) {
