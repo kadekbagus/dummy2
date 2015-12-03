@@ -4655,7 +4655,7 @@ class UploadAPIController extends ControllerAPI
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
+                              ->where('object_name', 'mall')
                               ->where('media_name_id', 'retailer_background');
 
             // Delete each files
@@ -4673,7 +4673,7 @@ class UploadAPIController extends ControllerAPI
             // Save the files metadata
             $object = array(
                 'id'            => $merchant->merchant_id,
-                'name'          => 'retailer',
+                'name'          => 'mall',
                 'media_name_id' => 'retailer_background',
                 'modified_by'   => $user->user_id
             );
