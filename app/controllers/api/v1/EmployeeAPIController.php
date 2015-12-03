@@ -920,6 +920,7 @@ class EmployeeAPIController extends ControllerAPI
             $retailerIds = OrbitInput::post('retailer_ids', []);
             $status = OrbitInput::post('status');
             $myRetailerIds = OrbitInput::post('current_mall');
+            $csVerificationNumbers = OrbitInput::post('cs_verification_numbers');
 
             $errorMessage = [
                 'orbit.empty.employee.role'         => Lang::get('validation.orbit.empty.employee.role', array(
