@@ -4655,7 +4655,7 @@ class UploadAPIController extends ControllerAPI
 
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
+                              ->where('object_name', 'mall')
                               ->where('media_name_id', 'retailer_background');
 
             // Delete each files
@@ -4673,29 +4673,11 @@ class UploadAPIController extends ControllerAPI
             // Save the files metadata
             $object = array(
                 'id'            => $merchant->merchant_id,
-                'name'          => 'retailer',
+                'name'          => 'mall',
                 'media_name_id' => 'retailer_background',
                 'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
-
-            $updatedsetting = Setting::active()
-                     ->where('object_id', $merchant->merchant_id)
-                     ->where('object_type', 'merchant')
-                     ->where('setting_name', 'background_image')
-                     ->first();
-
-            if(is_object($updatedsetting)) {
-                $updatedsetting->setting_value = $uploaded[0]['path'];
-                $updatedsetting->save();
-            } else {
-                $updatedsetting = new Setting;
-                $updatedsetting->object_type = 'merchant';
-                $updatedsetting->object_id = $merchant->merchant_id;
-                $updatedsetting->setting_name = 'background_image';
-                $updatedsetting->setting_value = $uploaded[0]['path'];
-                $updatedsetting->save();
-            }
 
             Event::fire('orbit.upload.postuploadmallbackground.after.save', array($this, $merchant, $uploader));
 
