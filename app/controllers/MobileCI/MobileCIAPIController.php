@@ -65,6 +65,7 @@ use \Inbox;
 use \News;
 use \Object;
 use \App;
+use \Media;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -550,7 +551,11 @@ class MobileCIAPIController extends ControllerAPI
             $landing_url = $this->getLandingUrl($mall);
 
             try {
-                $bg = Setting::getFromList($mall->settings, 'background_image');
+                $bg = Media::where('object_id', $retailer->merchant_id)
+                    ->where('media_name_id', 'retailer_background')
+                    ->where('media_name_long', 'retailer_background_orig')
+                    ->where('object_name', 'mall')
+                    ->first();
             } catch (Exception $e) {
             }
 
