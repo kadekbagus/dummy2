@@ -30,6 +30,16 @@ class User extends Eloquent implements UserInterface
         return $this->hasOne('Apikey', 'user_id', 'user_id')->where('apikeys.status','=','active');
     }
 
+    public function membershipNumbers()
+    {
+        return $this->hasMany('MembershipNumber', 'user_id', 'user_id');
+    }
+
+    public function acquirers()
+    {
+        return $this->hasMany('UserAcquisition', 'user_id', 'user_id');
+    }
+
     public function modifier()
     {
         return $this->belongsTo('User', 'modified_by', 'user_id');
@@ -98,6 +108,11 @@ class User extends Eloquent implements UserInterface
     public function employee()
     {
         return $this->hasOne('Employee', 'user_id', 'user_id');
+    }
+
+    public function userVerificationNumber()
+    {
+        return $this->hasOne('UserVerificationNumber', 'user_id', 'user_id');
     }
 
     /**
@@ -172,19 +187,62 @@ class User extends Eloquent implements UserInterface
 
             return $malls->lists('merchant_id');
         } elseif ($this->isMallOwner()) {
-            $mall = Mall::excludeDeleted()->where('user_id', '=', $this->user_id)->first();
+            $mall = Mall::excludeDeleted()
+                        ->where('user_id', '=', $this->user_id);
+
+            if (! empty($mallIds)) {
+                $mall->whereIn('merchant_id', (array)$mallIds);
+            }
+
+            $mall = $mall->first();
+
             if (empty($mall)) {
                 return [];
             } else {
                 return [$mall->merchant_id];
             }
         } elseif ($this->isMallAdmin() || $this->isMallCS()) {
-            $mall = $this->employee->retailers->first();
+            $mall = $this->employee->retailers();
+
+            if (! empty($mallIds)) {
+                $mall->whereIn('retailer_id', (array)$mallIds);
+            }
+
+            $mall = $mall->first();
+
             if (empty($mall)) {
                 return [];
             } else {
                 return [$mall->merchant_id];
             }
+        } elseif ($this->isConsumer()) {
+            $malls = Mall::excludeDeleted()
+                         ->join('user_acquisitions', 'user_acquisitions.acquirer_id', '=', 'merchants.merchant_id')
+                         ->where('user_acquisitions.user_id', '=', $this->user_id);
+
+            if (! empty($mallIds)) {
+                $malls->whereIn('user_acquisitions.acquirer_id', (array)$mallIds);
+            }
+
+            return $malls->lists('merchant_id');
         }
     }
+
+    /**
+     * Get user membership numbers
+     */
+    public function getMembershipNumbers($membershipCard = null)
+    {
+        $membershipNumbers = MembershipNumber::excludeDeleted('membership_numbers')
+                                             ->active('membership_numbers')
+                                             ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
+                                             ->where('membership_numbers.user_id', $this->user_id);
+
+        if (! empty($membershipCard)) {
+            $membershipNumbers->where('memberships.membership_id', $membershipCard->membership_id);
+        }
+
+        return $membershipNumbers->get();
+    }
+
 }

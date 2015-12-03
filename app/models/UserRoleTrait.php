@@ -308,6 +308,18 @@ trait UserRoleTrait
     }
 
     /**
+     * Consumer check.
+     *
+     * @return boolean
+     */
+    public function isConsumer()
+    {
+        $role = 'consumer';
+
+        return strtolower($this->role->role_name) === $role;
+    }
+
+    /**
      * Super admin check.
      *
      * @Todo: Prevent query.

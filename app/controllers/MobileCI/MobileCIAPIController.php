@@ -2481,6 +2481,15 @@ class MobileCIAPIController extends ControllerAPI
             $tenants = $pure_tenants; // 100% pure tenant ready to be served
             // -- END of hack
 
+            // Check coupon have condition cs reedem
+            $cs_reedem = false;
+
+            // Check exist customer verification number per mall
+            $employeeVerificationNumbers = \UserVerificationNumber::where('merchant_id', $retailer->merchant_id)->count();
+            if ($coupons->is_redeemed_at_cs === 'Y' && $employeeVerificationNumbers > 0) {
+                $cs_reedem = true;
+            }
+
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon')
@@ -2499,7 +2508,9 @@ class MobileCIAPIController extends ControllerAPI
                 'coupon' => $coupons,
                 'tenants' => $tenants,
                 'languages' => $languages,
-                'cso_exists' => $cso_exists));
+                'cso_exists' => $cso_exists,
+                'cs_reedem' => $cs_reedem
+                ));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -3830,6 +3841,7 @@ class MobileCIAPIController extends ControllerAPI
             'callback_url' => URL::route('customer-login-callback'),
             'payload' => $payload,
             'from' => $from,
+            'full_data' => 'no',
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
@@ -3848,9 +3860,10 @@ class MobileCIAPIController extends ControllerAPI
      *
      * Returns: { user_id: ..., user_email: ..., user_detail_id: ..., apikey_id: ... }
      *
+     * @param bool $forceReload force reload of box user, userdetail data.
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    public function getCloudLogin()
+    public function getCloudLogin($forceReload = true)
     {
         $this->beginTransaction();
         try {
@@ -3937,7 +3950,7 @@ class MobileCIAPIController extends ControllerAPI
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
                 $acq->save();
-                $acq->forceBoxReloadUserData();
+                $acq->forceBoxReloadUserData($forceReload);
                 // cannot use $user as $user has extra properties added and would fail
                 // if we saved it.
                 $dup_user = User::find($user->user_id);

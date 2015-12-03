@@ -3660,7 +3660,7 @@ class DashboardAPIController extends ControllerAPI
                                                             or ic.status = 'redeemed'
                                                         group by ic.promotion_id) issued
                                                 on issued.promotion_id = {$prefix}promotions.promotion_id
-                                        where {$prefix}merchants.parent_id = '{$configMallId}'
+                                        where ({$prefix}merchants.parent_id = '{$configMallId}' OR {$prefix}merchants.merchant_id = '{$configMallId}')
                                         group by {$prefix}promotions.promotion_id
                                         order by total_redeemed desc
                                         limit {$take_top}) as issuedredeem) as t
