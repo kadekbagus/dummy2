@@ -15,9 +15,9 @@
   display: none;
 }
 @if(!empty($bg))
-  @if(!empty($bg[0]))
+  @if(!empty($bg->path))
   body.bg{
-    background: url('{{ asset($bg[0]) }}');
+    background: url('{{ asset($bg->path) }}');
     background-size: cover;
     background-repeat: no-repeat;
   }
