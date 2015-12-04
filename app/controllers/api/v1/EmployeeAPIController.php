@@ -1943,6 +1943,7 @@ class EmployeeAPIController extends ControllerAPI
      * @param string    `firstname_like`        (optional)
      * @param string    `lastname_like`         (optional)
      * @param array     `employee_id_char_like` (optional)
+     * @param array     `cs_coupon_redeem_mall` (optional) - cs was have verification number for coupon redeem
      * @param integer   `take`                  (optional) - limit
      * @param integer   `skip`                  (optional) - limit offset
      * @param array     `with`                  (optional) -
@@ -2081,6 +2082,13 @@ class EmployeeAPIController extends ControllerAPI
                 $listOfMerchantIds = (array)$merchantIds;
                 $users->whereHas('retailers', function ($q) use($merchantIds) {
                     $q->whereIn('employee_retailer.retailer_id', $merchantIds);
+                });
+            });
+
+            OrbitInput::get('cs_coupon_redeem_mall', function ($merchantIds) use ($listOfMerchantIds, $joined, $users) {
+                $listOfMerchantIds = (array)$merchantIds;
+                $users->whereHas('userVerificationNumber', function ($q) use($merchantIds) {
+                    $q->whereIn('user_verification_numbers.merchant_id', $merchantIds);
                 });
             });
 
