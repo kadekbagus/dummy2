@@ -15,18 +15,28 @@
   display: none;
 }
 @if(!empty($bg))
-  @if(!empty($bg[0]))
+  @if(!empty($bg->path))
   body.bg{
-    background: url('{{ asset($bg[0]) }}');
+    background: url('{{ asset($bg->path) }}');
     background-size: cover;
     background-repeat: no-repeat;
   }
   @endif
 @endif
 </style>
+<script type="text/javascript">
+
+</script>
 @stop
 
 @section('content')
+@if (Config::get('orbit.shop.guest_mode') && empty($user_email))
+    <div class="loaders" style="z-index:99999;width:100%;height:100%;position:absolute;left:0;top:0;background:#fff">
+        <div style="width:48px;height:48px;position:absolute;left:50%;top:50%;margin-left:-24px;margin-top:-24px;color:#aeaeae;font-size:48px">
+            <i class="fa fa-circle-o-notch fa-spin"></i>
+        </div>
+    </div>
+@endif
 <div class="row" id="signIn">
     <div class="col-xs-12">
         <header>
@@ -100,9 +110,11 @@
             </form>
         </div>
     </div>
+    @if (! Config::get('orbit.shop.guest_mode'))
     <div class="col-xs-12 text-center vertically-spaced orbit-auto-login">
         <a id="notMe">{{ Lang::get('mobileci.signin.not') }} <span class="signedUser">{{{ $user_email or '' }}}</span><span class="userName">{{{ $display_name or '' }}}</span>, {{ Lang::get('mobileci.signin.click_here') }}.</a>
     </div>
+    @endif
 </div>
 @stop
 
@@ -145,16 +157,18 @@
 
 <!-- Privacy Policy -->
 <div class="modal fade" id="privacyModal" tabindex="-1" role="dialog" aria-labelledby="privacyModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
+    <div class="modal-dialog orbit-modal" style="height: 80%;">
+        <div class="modal-content" style="height: 100%;">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span><span class="sr-only">{{{ $closeModalText or 'OK' }}}</span>
                 </button>
                 <h4 class="modal-title" id="myModalLabel">Privacy Policy</h4>
             </div>
-            <div class="modal-body">
-                <iframe src="{{{ Config::get('orbit.contact_information.privacy_policy_url') }}}" style="zoom:0.60" frameborder="0" height="55%" width="99.6%"></iframe>
+            <div class="modal-body" style="height: 100%;">
+                <div style="width: 100%; height: 100%; overflow: auto;">
+                    <iframe src="{{{ Config::get('orbit.contact_information.privacy_policy_url') }}}" height="90%" frameborder="0" width="99.6%"></iframe>
+                </div>
             </div>
         </div>
     </div>
@@ -162,16 +176,18 @@
 
 <!-- Term and Condition -->
 <div class="modal fade" id="tosModal" tabindex="-1" role="dialog" aria-labelledby="tosModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
+    <div class="modal-dialog orbit-modal" style="height: 80%;">
+        <div class="modal-content" style="height: 100%;">
             <div class="modal-header orbit-modal-header">
                 <button type="button" class="close" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span><span class="sr-only">{{{ $closeModalText or 'OK' }}}</span>
                 </button>
                 <h4 class="modal-title" id="myModalLabel">Terms and Conditions</h4>
             </div>
-            <div class="modal-body">
-                <iframe src="{{{ Config::get('orbit.contact_information.terms_of_service_url') }}}" style="zoom:0.60" frameborder="0" height="55%" width="99.6%"></iframe>
+            <div class="modal-body" style="height: 100%;">
+                <div style="width: 100%; height: 100%; overflow: auto;">
+                    <iframe src="{{{ Config::get('orbit.contact_information.terms_of_service_url') }}}" height="90%" frameborder="0" width="99.6%"></iframe>
+                </div>
             </div>
         </div>
     </div>
@@ -329,7 +345,20 @@
                 if (get('from_captive') == 'yes') {
                     afterLogin(xhr);
                 } else {
-                    window.location.replace('{{ $landing_url }}');
+                    // @Todo: Replace the hardcoded name
+                    session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
+                    var landing_url = '{{ $landing_url }}';
+
+                    if (session_id) {
+                        if (landing_url.indexOf('orbit_session=') < 0) {
+                            // orbit_session= is not exists, append manually
+                            landing_url += '&orbit_session=' + session_id;
+                        } else {
+                            landing_url = landing_url.replace(/orbit_session=(.*)$/, 'orbit_session=' + session_id);
+                        }
+                    }
+
+                    window.location.replace(landing_url);
                 }
             }
         }).fail(function(data) {
@@ -339,6 +368,14 @@
             $('#errorModal').modal();
         });
     }
+
+    @if (Config::get('orbit.shop.guest_mode'))
+    var user_em = '{{ strtolower($user_email) }}';
+    if (user_em == '') {
+        term_accepted = true;
+        callLoginAPI();
+    }
+    @endif
 
     $(document).ready(function() {
       var em;

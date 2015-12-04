@@ -1417,7 +1417,7 @@ class UserAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,membership_since,created_at,updated_at,first_visit_date',
+                    'sort_by' => 'in:status,total_lucky_draw_number,total_usable_coupon,total_redeemed_coupon,username,email,firstname,lastname,registered_date,gender,city,last_visit_shop,last_visit_date,last_spent_amount,mobile_phone,membership_number,join_date,created_at,updated_at,first_visit_date',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.user_sortby'),
@@ -1472,14 +1472,28 @@ class UserAPIController extends ControllerAPI
             // Builder object
             $prefix = DB::getTablePrefix();
             $users = User::Consumers()
-                        ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
-                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                        ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
-                        ->excludeDeleted('users')
-                        ->groupBy('users.user_id');
+                         ->select('users.user_id', 'users.username', 'users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_last_login', 'users.user_ip', 'users.user_role_id', 'users.status', 'users.remember_token', 'users.external_user_id', 'users.modified_by', 'users.created_at', 'users.updated_at')
+                         ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
+                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
+                         ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
+                         ->excludeDeleted('users')
+                         ->groupBy('users.user_id')
+                         ->with(array('membershipNumbers' => function ($q) use ($listOfMallIds) {
+                            $q->excludeDeleted()
+                              ->whereHas('membership', function ($q2) use ($listOfMallIds) {
+                                $q2->excludeDeleted();
+                                if (empty($listOfMallIds)) { // invalid mall id
+                                    $q2->whereRaw('0');
+                                } elseif ($listOfMallIds[0] === 1) { // if super admin
+                                    // show all users
+                                } else { // valid mall id
+                                    $q2->whereIn('memberships.merchant_id', $listOfMallIds);
+                                }
+                            });
+                         }));
 
             if ($details === 'yes') {
-                $users->select('users.*', DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name','activities.location_id',  DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
+                $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name','activities.location_id',  DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
                                         where cp.user_id={$prefix}users.user_id) as total_usable_coupon,
@@ -1496,10 +1510,15 @@ class UserAPIController extends ControllerAPI
                                         // ON
                                         'tmp_lucky.user_id', '=', 'users.user_id');
             } else {
-                $users->select('users.*', DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"));
+                $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"));
             }
 
-            $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id');
+            $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id')
+                  ->addSelect('membership_numbers.membership_number', 'membership_numbers.join_date')
+                  ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
+                  ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                  ->excludeDeleted('membership_numbers')
+                  ->excludeDeleted('memberships');
 
             $current_mall = OrbitInput::get('current_mall');
 
@@ -1517,7 +1536,8 @@ class UserAPIController extends ControllerAPI
             } elseif ($listOfMallIds[0] === 1) { // if super admin
                 // show all users
             } else { // valid mall id
-                $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds);
+                $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds)
+                      ->whereIn('memberships.merchant_id', $listOfMallIds);
             }
 
             // Filter by retailer (shop) ids
@@ -1594,12 +1614,12 @@ class UserAPIController extends ControllerAPI
 
             // Filter user by membership number
             OrbitInput::get('membership_number', function ($data) use ($users) {
-                $users->whereIn('users.membership_number', $data);
+                $users->whereIn('membership_numbers.membership_number', $data);
             });
 
             // Filter user by membership number
             OrbitInput::get('membership_number_like', function ($arg) use ($users) {
-                $users->where('users.membership_number', 'like', "%$arg%");
+                $users->where('membership_numbers.membership_number', 'like', "%$arg%");
             });
 
             // Filter user by created_at for begin_date
@@ -1647,11 +1667,11 @@ class UserAPIController extends ControllerAPI
             OrbitInput::get('is_member', function ($isMember) use ($users)
             {
                 if ($isMember === 'yes') {
-                    $users->where('users.membership_number', '!=', '');
+                    $users->where('membership_numbers.membership_number', '!=', '');
                 } elseif ($isMember === 'no') {
                     $users->where(function ($q) {
-                        $q->where('users.membership_number', '=', '')
-                          ->orWhereNull('users.membership_number');
+                        $q->where('membership_numbers.membership_number', '=', '')
+                          ->orWhereNull('membership_numbers.membership_number');
                     });
                 }
             });
@@ -1756,8 +1776,8 @@ class UserAPIController extends ControllerAPI
                     'gender'                  => 'user_details.gender',
                     'city'                    => 'user_details.city',
                     'mobile_phone'            => 'user_details.phone',
-                    'membership_number'       => 'users.membership_number',
-                    'membership_since'        => 'users.membership_since',
+                    'membership_number'       => 'membership_numbers.membership_number',
+                    'join_date'               => 'membership_numbers.join_date',
                     'created_at'              => 'users.created_at',
                     'updated_at'              => 'users.updated_at',
                     'status'                  => 'users.status',
@@ -2061,6 +2081,16 @@ class UserAPIController extends ControllerAPI
 
             // set mall id
             $mallId = OrbitInput::post('current_mall');
+            if (trim($mallId) === '') {
+                $mallId = OrbitInput::post('mall_id');
+            }
+
+            // get user mall_ids
+            $listOfMallIds = $user->getUserMallIds($mallId);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
@@ -2070,18 +2100,7 @@ class UserAPIController extends ControllerAPI
             $phone = OrbitInput::post('phone');
             $join_date = OrbitInput::post('join_date');
             $membershipNumberCode = OrbitInput::post('membership_number');
-
-            // set status
             $status = OrbitInput::post('status');
-            if (trim($status) === '') {
-                // if membership number is set then status is active, otherwise status is pending
-                if (trim($membershipNumberCode) === '') {
-                    $status = 'pending';
-                } else {
-                    $status = 'active';
-                }
-            }
-
             $idcard = OrbitInput::post('idcard');
             if (trim($idcard) === '') {
                 $idcard = OrbitInput::post('idcard_number');
@@ -2109,6 +2128,7 @@ class UserAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'current_mall'          => $mallId,
+                    'membership_card'       => $mallId,
                     'external_user_id'      => $external_user_id,
                     'email'                 => $email,
                     'firstname'             => $firstname,
@@ -2128,15 +2148,16 @@ class UserAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
+                    'membership_card'       => 'orbit.empty.mall_have_membership_card',
                     'external_user_id'      => 'required',
-                    'email'                 => 'required|email|orbit.email.checker.mxrecord|orbit.email.exists:' . $mallId,
+                    'email'                 => 'required|email|orbit.email.checker.mxrecord|orbit.exists.email',
                     'firstname'             => 'required',
                     'lastname'              => '',
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'join_date'             => 'date_format:Y-m-d',
-                    'membership_number'     => 'orbit.membership.exists:' . $mallId,
-                    'status'                => 'in:active,inactive,pending',
+                    'membership_number'     => 'orbit.exists.membership_number',
+                    'status'                => 'required|in:active,inactive,pending',
                     'category_ids'          => 'array',
                     'bank_object_ids'       => 'array',
                     'idcard'                => 'numeric',
@@ -2214,14 +2235,26 @@ class UserAPIController extends ControllerAPI
             $newuser->user_firstname = $firstname;
             $newuser->user_lastname = $lastname;
             $newuser->user_role_id = $roleConsumer->role_id;
-            $newuser->membership_number = $membershipNumberCode;
-            $newuser->join_date = $join_date . ' 00:00:00';
-
             $newuser->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.user.postnewmembership.before.save', array($this, $newuser));
 
             $newuser->save();
+
+            // create membership number
+            // create if only param membership_number or join_date is being sent
+            if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
+                $m = new MembershipNumber();
+                $membershipCard = App::make('orbit.empty.mall_have_membership_card');
+                $m->membership_id = $membershipCard->membership_id;
+                $m->user_id = $newuser->user_id;
+                $m->membership_number = $membershipNumberCode;
+                $m->join_date = $join_date . ' 00:00:00';
+                $m->status = 'active';
+                $m->created_by = $user->user_id;
+                $m->save();
+            }
+            $newuser->load('membershipNumbers');
 
             $userdetail = new UserDetail();
             $userdetail->gender = $gender;
@@ -2239,15 +2272,6 @@ class UserAPIController extends ControllerAPI
             $userdetail->address_line2 = $workAddress;
             $userdetail->merchant_acquired_date = date('Y-m-d H:i:s');
 
-            // get current mall id and its mall group
-            $currentRetailerId = $mallId;
-            $mall = Mall::select('parent_id')
-                                ->where('merchant_id', $currentRetailerId)
-                                ->first();
-
-            $userdetail->merchant_id = $mall->parent_id;
-            $userdetail->retailer_id = $currentRetailerId;
-
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $newuser->setRelation('userdetail', $userdetail);
@@ -2261,8 +2285,6 @@ class UserAPIController extends ControllerAPI
             $apikey->user_id = $newuser->user_id;
             $apikey = $newuser->apikey()->save($apikey);
 
-            //$newuser->setRelation('apikey', $apikey);
-            //$newuser->apikey = $apikey;
             $newuser->setHidden(array('user_password'));
 
             // save categories
@@ -2307,7 +2329,7 @@ class UserAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.user.postnewmembership.after.commit', array($this, $newuser, $mallId));
+            //Event::fire('orbit.user.postnewmembership.after.commit', array($this, $newuser, $mallId));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.user.postnewmembership.access.forbidden', array($this, $e));
 
@@ -2459,7 +2481,6 @@ class UserAPIController extends ControllerAPI
             $lastname = OrbitInput::post('lastname');
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
-            $phone = OrbitInput::post('phone');
             $join_date = OrbitInput::post('join_date');
             $membershipNumberCode = OrbitInput::post('membership_number');
             $status = OrbitInput::post('status');
@@ -2475,10 +2496,10 @@ class UserAPIController extends ControllerAPI
 
             $mobile = OrbitInput::post('mobile_phone');
             $mobile2 = OrbitInput::post('mobile_phone2');
+            $workphone = OrbitInput::post('work_phone');
             $city = OrbitInput::post('city');
             $province = OrbitInput::post('province');
             $postal_code = OrbitInput::post('postal_code');
-            $workphone = OrbitInput::post('work_phone');
             $occupation = OrbitInput::post('occupation');
             $dateofwork = OrbitInput::post('date_of_work');
             $homeAddress = OrbitInput::post('home_address');
@@ -2536,6 +2557,27 @@ class UserAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            // Update email in tokens table when change email before user setup a password
+            // Check setup password user or no
+            $userPass = User::excludeDeleted()
+                ->where('user_id', '=', $userId)
+                ->where('user_password', '=', '')
+                ->count('user_id');
+
+            if ($userPass > 0) {
+                // update email in token
+                $checkToken = Token::excludeDeleted()
+                    ->where('user_id', $userId)
+                    ->where('token_name', 'user_setup_password')
+                    ->first();
+
+                if ($checkToken !== null) {
+                    $checkToken->email = $email;
+                    $checkToken->save();
+                }
+            }
+
             Event::fire('orbit.user.postupdatemembership.after.validation', array($this, $validator));
 
             $role = Role::where('role_name', 'consumer')->first();
@@ -2543,12 +2585,8 @@ class UserAPIController extends ControllerAPI
             $updateduser = App::make('orbit.empty.user');
             $userdetail = $updateduser->userdetail;
 
-            // if param membership_number is not being sent, then will not enter validation and the class will not exists
-            try {
-                $membershipNumbers = App::make('membership_number_exists_but_me');
-            } catch (Exception $e) {
-                $membershipNumbers = null;
-            }
+            $membershipCard = App::make('orbit.empty.mall_have_membership_card');
+            $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
 
             OrbitInput::post('email', function($email) use ($updateduser) {
                 $updateduser->username = $email;
@@ -2582,11 +2620,15 @@ class UserAPIController extends ControllerAPI
                 $userdetail->gender = $gender;
             });
 
-            OrbitInput::post('mobile_phone', function($phone) use ($userdetail) {
-                $userdetail->phone = $phone;
+            OrbitInput::post('mobile_phone', function($phone1) use ($userdetail) {
+                $userdetail->phone = $phone1;
             });
 
-            OrbitInput::post('mobile_phone2', function($phone3) use ($userdetail) {
+            OrbitInput::post('mobile_phone2', function($phone2) use ($userdetail) {
+                $userdetail->phone2 = $phone2;
+            });
+
+            OrbitInput::post('work_phone', function($phone3) use ($userdetail) {
                 $userdetail->phone3 = $phone3;
             });
 
@@ -2600,10 +2642,6 @@ class UserAPIController extends ControllerAPI
 
             OrbitInput::post('postal_code', function($postal) use ($userdetail) {
                 $userdetail->postal_code = $postal;
-            });
-
-            OrbitInput::post('work_phone', function($phone) use ($userdetail) {
-                $userdetail->phone2 = $phone;
             });
 
             OrbitInput::post('home_address', function($data) use ($userdetail) {
@@ -2637,8 +2675,6 @@ class UserAPIController extends ControllerAPI
             /**
              * create/update membership number
              */
-            $membershipCard = App::make('orbit.empty.mall_have_membership_card');
-
             if ($membershipNumbers->first()) {
                 // update
                 $m = $membershipNumbers->first();
@@ -2655,8 +2691,8 @@ class UserAPIController extends ControllerAPI
                 $m->save();
             } else {
                 // create
-                // create if only param membership_number is being sent
-                if (trim($membershipNumberCode) !== '') {
+                // create if only param membership_number or join_date is being sent
+                if ((trim($membershipNumberCode) !== '') || (trim($join_date) !== '')) {
                     $m = new MembershipNumber();
                     $m->membership_id = $membershipCard->membership_id;
                     $m->user_id = $updateduser->user_id;
@@ -2674,6 +2710,14 @@ class UserAPIController extends ControllerAPI
             $userdetail->save();
 
             $membershipNumbers = $updateduser->getMembershipNumbers($membershipCard);
+            if ($membershipNumbers->first()) {
+                $updateduser->membership_number = $membershipNumbers->first()->membership_number;
+                $updateduser->join_date  = $membershipNumbers->first()->join_date;
+            } else {
+                $updateduser->membership_number = null;
+                $updateduser->join_date  = '0000-00-00 00:00:00';
+            }
+
             $updateduser->membership_numbers = $membershipNumbers;
 
             // save user categories
@@ -3139,7 +3183,7 @@ class UserAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'          => 'required|orbit.empty.mall',
-                    'email'                 => 'required|email|orbit.email.exists:' . $retailer_id,
+                    'email'                 => 'required|email|orbit.email.checker.mxrecord|orbit.email.exists:' . $retailer_id,
                     'from'                  => 'in:cs',
                 )
             );
@@ -3156,6 +3200,7 @@ class UserAPIController extends ControllerAPI
                 'callback_url' => URL::route('customer-login-callback-show-id'),
                 'payload' => '',
                 'from' => $from,
+                'full_data' => 'yes',
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
@@ -3231,6 +3276,22 @@ class UserAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Check user email address, it should not exists
+        Validator::extend('orbit.exists.email', function ($attribute, $value, $parameters) {
+            $user = User::excludeDeleted()
+                        ->Consumers()
+                        ->where('user_email', $value)
+                        ->first();
+
+            if (! empty($user)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.user', $user);
+
+            return TRUE;
+        });
+
         // Check user membership, it should not exists
         Validator::extend('orbit.membership.exists', function ($attribute, $value, $parameters) {
             $check = Config::get('orbit.shop.membership_number_unique_check');
@@ -3263,6 +3324,32 @@ class UserAPIController extends ControllerAPI
         });
 
         // Check membership number should be unique in one mall, but not unique in different malls
+        Validator::extend('orbit.exists.membership_number', function ($attribute, $value, $parameters) {
+            $check = Config::get('orbit.shop.membership_number_unique_check');
+
+            $mall = App::make('orbit.empty.mall');
+
+            if ($check) {
+                $user = User::excludeDeleted('users')
+                            ->Consumers()
+                            ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
+                            ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
+                            ->where('memberships.status', '!=', 'deleted')
+                            ->where('memberships.merchant_id', $mall->merchant_id)
+                            ->where('membership_numbers.status', '!=', 'deleted')
+                            ->where('membership_numbers.membership_number', $value);
+
+                if ($user->first()) {
+                    $errorMessage = 'Membership number already exists.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+            }
+
+            return TRUE;
+        });
+
+        // Check membership number should be unique in one mall, but not unique in different malls
         Validator::extend('membership_number_exists_but_me', function ($attribute, $value, $parameters) {
             $check = Config::get('orbit.shop.membership_number_unique_check');
 
@@ -3283,7 +3370,9 @@ class UserAPIController extends ControllerAPI
                             ->Consumers()
                             ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
                             ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
+                            ->where('memberships.status', '!=', 'deleted')
                             ->where('memberships.merchant_id', $mall->merchant_id)
+                            ->where('membership_numbers.status', '!=', 'deleted')
                             ->where('membership_numbers.membership_number', $value);
 
                 // if user have membership number then exclude the number
@@ -3413,9 +3502,21 @@ class UserAPIController extends ControllerAPI
         // Check user email address, it should not exists
         Validator::extend('email_exists_but_me', function ($attribute, $value, $parameters) {
             $user_id = OrbitInput::post('user_id');
+            $from = OrbitInput::post('from');
+            $role_name = '';
+
+            if ($from === 'cs') {
+                $role_name = 'Consumer';
+            }
+
             $user = User::excludeDeleted()
-                        ->where('user_email', $value)
                         ->where('user_id', '!=', $user_id)
+                        ->where('user_email', '=', $value)
+                        ->where('user_role_id', '=', function($q) use ($role_name) {
+                            $q->select('role_id')
+                                ->from('roles')
+                                ->where('role_name', $role_name);
+                        })
                         ->first();
 
             if (! empty($user)) {

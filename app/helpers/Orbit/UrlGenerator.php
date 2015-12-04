@@ -119,5 +119,64 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
         return $result;
     }
 
+    /**
+     * Called by hiddenSessionIdField below.
+     *
+     * Not called directly as URL::instanceHiddenSessionIdField to prevent crashing if
+     * using standard Laravel UrlGenerator.
+     *
+     * @return string
+     */
+    public function instanceHiddenSessionIdField()
+    {
+        if (!$this->getSessionInUrlEnabled()) {
+            return '';
+        }
+        $id = $this->getSessionIdValue();
+        if ($id === null) {
+            return '';
+        }
+        return \Form::hidden($this->getSessionIdParameterName(), $id);
+    }
+
+    /**
+     * Returns HTML for a hidden field containing session id (for use in GET forms), or empty string.
+     *
+     * Empty string if: URL Generator not configured, session-in-url not configured.
+     *
+     * @return string
+     */
+    public static function hiddenSessionIdField()
+    {
+        $gen = \URL::getFacadeRoot();
+        if (is_callable([$gen, 'instanceHiddenSessionIdField'])) {
+            return $gen->instanceHiddenSessionIdField();
+        }
+        return '';
+    }
+
+    /**
+     * Determine asset URL based on "orbit.assets.root" config, or defers to parent if not set.
+     *
+     * @param string $path path
+     * @param bool|null $secure secure or not (or use existing protocol)
+     * @return string
+     */
+    public function asset($path, $secure = null)
+    {
+        if ($this->isValidUrl($path)) return $path;
+
+        $assetRoot = Config::get('orbit.assets.root', false);
+        if (!$assetRoot) {
+            // not defined, use parent
+            return parent::asset($path, $secure);
+        }
+
+        $scheme = $this->getScheme($secure);
+        $start = starts_with($assetRoot, 'http://') ? 'http://' : 'https://';
+        $root = preg_replace('~'.$start.'~', $scheme, $assetRoot, 1);
+
+        return $this->removeIndex($root).'/'.trim($path, '/');
+    }
 
 }

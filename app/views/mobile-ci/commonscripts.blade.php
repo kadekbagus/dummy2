@@ -11,6 +11,7 @@
                     <div class="form-group">
                         <label for="keyword">{{ Lang::get('mobileci.modals.search_label') }}</label>
                         <input type="text" class="form-control" name="keyword" id="keyword" placeholder="{{ Lang::get('mobileci.modals.search_placeholder') }}">
+                        {{ \Orbit\UrlGenerator::hiddenSessionIdField() }}
                     </div>
                 </form>
             </div>
@@ -35,7 +36,7 @@
                     <h2>
                         <span>
                             <strong>
-                                {{ (strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
+                                {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
                             </strong>
                             <span class='spacery'></span>
                             <br>
@@ -91,6 +92,7 @@
 </div>
 
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
+{{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
         var run = function () {
@@ -111,8 +113,11 @@
               });
             }
         };
-        run();
-        setInterval(run, 5000);
+
+        @if (Config::get('orbit.shop.offline_check.enable'))
+            run();
+            setInterval(run, {{ Config::get('orbit.shop.offline_check.interval', 5000) }} );
+        @endif
 
         $('#barcodeBtn').click(function(){
             $('#get_camera').click();
@@ -150,67 +155,98 @@
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();
         });
-    });
 
-    // pinch zoom using hammerjs
-    $(document).on('click', '.zoomer', function(){
-        setTimeout(function(){
-            var el = $('.featherlight-content').get(0).getElementsByTagName("img")[0];
-            el.addEventListener('touchstart', function (e) {
-                e.preventDefault()
+        function resetImage() {
+            $('.featherlight-image').css('margin', '0 auto');
+            $('.featherlight-content').css('width', '100%');    
+            $('.featherlight-image').css({
+                'height': 'auto',
+                'width': '100%' 
             });
+            // this cause problems when zoomed
+            // if($(window).height() < $(window).width()) {
+            //     $('.featherlight-image').css({
+            //         'height': '100%',
+            //         'width': 'auto'
+            //     });
+            // } else {
+            //     $('.featherlight-image').css({
+            //         'height': 'auto',
+            //         'width': '100%' 
+            //     });
+            // }
+        }
 
-            var mc = new Hammer.Manager(el);
-            var pinch = new Hammer.Pinch();
-            var pan = new Hammer.Pan();
-            var tap = new Hammer.Tap();
+        function parseMatrix (_str) {
+            return _str.replace(/^matrix(3d)?\((.*)\)$/,'$2').split(/, /);
+        }
 
-            pinch.recognizeWith(pan);
-            mc.add([pinch, pan, tap]);
+        function getScaleDegrees (obj) {
+            var matrix = this.parseMatrix(this.getMatrix(obj)),
+                scale = 1;
 
-            var initialScale = 1;
-            var initialDeltaX = 0;
-            var initialDeltaY = 0;
+            if(matrix[0] !== 'none') {
+                var a = matrix[0],
+                    b = matrix[1],
+                    d = 10;
+                scale = Math.round( Math.sqrt( a*a + b*b ) * d ) / d;
+            }
 
-            var adjustScale = 1;
-            var adjustDeltaX = 0;
-            var adjustDeltaY = 0;
+            return scale;
+        }
+        var zoomer, fl;
+        $(document).on('click', '.zoomer', function(){
+            zoomer = $(this);
+            setTimeout(function(){
+                resetImage();
+                fl = $.featherlight.current();
+                $("body").addClass("modal-open");
+                $(".featherlight-image").panzoom({
+                    minScale: 1,
+                    maxScale: 5,
+                    $zoomRange: $("input[type='range']"),
+                    contain: 'invert',
+                    onStart: function() {
+                        $('.featherlight-image').css('margin', '0 auto');
+                        $('.featherlight-content').css('width', '100%');
+                    },
+                    onChange: function(){
+                        var matrix = parseMatrix($(this).panzoom('getTransform'));
+                        var currentScale = matrix[3];
+                        if (currentScale <= 1) {
+                            resetImage();
+                        }
+                        $('.featherlight-image').css('margin', '0 auto');
+                        $('.featherlight-content').css('width', '100%');
+                    }
+                });
+                $(".featherlight-image").on('panzoomend', function(e, panzoom, matrix, changed) {
+                    if(! changed) {
+                        fl.close();
+                        $("body").removeClass("modal-open");
+                    }
+                });
+            }, 50);
+        });
 
-            var currentScale = null;
-            var currentDeltaX = null;
-            var currentDeltaY = null;
+        $(window).on('resize', function() {
+            var transforms = [];
+            transforms.push('scale(1)');
+            transforms.push('translate(0px,0px)');
+            $('.featherlight-image').css("transform", transforms.join(' '));
+            $(".featherlight-image").panzoom('resetDimensions');
+            zoomer.featherlight();
+            resetImage();
+        });
 
-            mc.on("pinch pan tap", function(ev) {
-                var transforms = [];
+        $(document).on('click', '.featherlight-close', function(){
+            $("body").removeClass("modal-open");
+        });
 
-                // Adjusting the current pinch/pan event properties using the previous ones set when they finished touching
-                currentScale = adjustScale * ev.scale;
-                currentDeltaX = adjustDeltaX + (ev.deltaX / currentScale);
-                currentDeltaY = adjustDeltaY + (ev.deltaY / currentScale);
+        $(document).on('click', '.featherlight-content, .featherlight-image', function(){
+            fl.close();
+            $("body").removeClass("modal-open");
+        });
 
-                // Concatenating and applying parameters.
-                transforms.push('scale('+currentScale+')');
-                transforms.push('translate('+currentDeltaX+'px,'+currentDeltaY+'px)');
-                $('.featherlight-content img').css("transform", transforms.join(' '));
-            });
-
-            mc.on("panend pinchend", function (ev) {
-                var transforms = [];
-                var afterScale = adjustScale * ev.scale;
-                if(afterScale > initialScale) { // Saving the final transforms for adjustment next time the user interacts.
-                    adjustScale = currentScale;
-                    adjustDeltaX = currentDeltaX;
-                    adjustDeltaY = currentDeltaY;
-                } else { // reset image to initial state if zoomed out smaller than initial scale
-                    adjustScale = initialScale;
-                    adjustDeltaX = initialDeltaX;
-                    adjustDeltaY = initialDeltaY;
-                    transforms.push('scale('+initialScale+')');
-                    transforms.push('translate('+initialDeltaX+'px,'+initialDeltaY+'px)');
-                    $('.featherlight-content img').css("transform", transforms.join(' '));
-                }
-            });
-
-        }, 300);
     });
 </script>
