@@ -219,7 +219,7 @@ return array(
     'coupon'         => array(
         'tenant_based'                     => 'テナント基づい',
         'mall_based'                       => 'モールベース',
-         'tenant_redeem'                   => 'ja : Where to Reedem',
+        'tenant_redeem'                    => '交換する場所',
         'coupon_value'                     => 'クーポンの価値',
         'use_coupon'                       => 'クーポンを使用する',
         'enter_tenant_verification_number' => 'テナント確認番号を入力してください',
@@ -232,7 +232,7 @@ return array(
         'please_communicate'               => '以下の数をテナント従業員に 伝えてください.',
         'congratulations_you_get'          => 'おめでとう、あなたが得る',
         'here_is_your_coupon'              => 'クーポン。こちらはあなたのクーポンです',
-        'here_are_your_coupons'              => 'クーポン。こちらはあなたのクーポンです',
+        'here_are_your_coupons'            => 'クーポン。こちらはあなたのクーポンです',
         'happy_shopping'                   => 'どうぞ買い物してください!',
         'close'                            => '閉じる',
         'my_coupon'                        => '私のクーポン',
