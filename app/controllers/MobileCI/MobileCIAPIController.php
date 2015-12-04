@@ -1216,7 +1216,7 @@ class MobileCIAPIController extends ControllerAPI
             throw new Exception('Invalid session data.');
         }
 
-        $user = User::with('userDetail', 'membershipNumbers')->where('user_id', $userId)->first();
+        $user = User::with('userDetail', 'membershipNumbers.membership.media')->where('user_id', $userId)->first();
 
         if (! $user) {
             throw new Exception('Session error: user not found.');
@@ -2958,7 +2958,8 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
-                'user_email' => $user->user_email
+                'user_email' => $user->user_email,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-news-list', $view_data);
 
