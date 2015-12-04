@@ -29,7 +29,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.membership_title') }}</h4>
             </div>
-            <div class="modal-body">
+            <div class="modal-body"><?php print_r($user); ?>
                 @if (! empty($user->membership_number))
                 <div class="member-card">
                     <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
@@ -158,10 +158,10 @@
 
         function resetImage() {
             $('.featherlight-image').css('margin', '0 auto');
-            $('.featherlight-content').css('width', '100%');    
+            $('.featherlight-content').css('width', '100%');
             $('.featherlight-image').css({
                 'height': 'auto',
-                'width': '100%' 
+                'width': '100%'
             });
             // this cause problems when zoomed
             // if($(window).height() < $(window).width()) {
@@ -172,7 +172,7 @@
             // } else {
             //     $('.featherlight-image').css({
             //         'height': 'auto',
-            //         'width': '100%' 
+            //         'width': '100%'
             //     });
             // }
         }

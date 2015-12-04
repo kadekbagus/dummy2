@@ -453,7 +453,8 @@ class MobileCIAPIController extends ControllerAPI
                 'widget_singles' => $widget_singles,
                 'languages' => $languages,
                 'active_user' => ($user->status === 'active'),
-                'user_email' => $user->user_email
+                'user_email' => $user->user_email,
+                'user' => $user
             );
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
         } catch (Exception $e) {
