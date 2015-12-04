@@ -2383,6 +2383,10 @@ return array(
     'Symfony\\Component\\Translation\\Writer\\TranslationWriter' => $vendorDir . '/symfony/translation/Symfony/Component/Translation/Writer/TranslationWriter.php',
     'System_SSH_Agent' => $vendorDir . '/phpseclib/phpseclib/phpseclib/System/SSH/Agent.php',
     'System_SSH_Agent_Identity' => $vendorDir . '/phpseclib/phpseclib/phpseclib/System/SSH/Agent.php',
+<<<<<<< HEAD
+=======
+    'TableUserVerificationNumbers' => $baseDir . '/app/database/migrations/2015_11_23_041259_table_user_verification_numbers.php',
+>>>>>>> origin/development
     'TakashimayaBankSeeder' => $baseDir . '/app/database/seeds/TakashimayaBankSeeder.php',
     'TakashimayaCategorySeeder' => $baseDir . '/app/database/seeds/TakashimayaCategorySeeder.php',
     'TakashimayaDatabaseSeeder' => $baseDir . '/app/database/seeds/TakashimayaDatabaseSeeder.php',

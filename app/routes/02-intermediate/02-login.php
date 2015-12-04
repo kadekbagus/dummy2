@@ -30,6 +30,8 @@ Route::group(['before' => 'orbit-settings'], function() {
 
 Route::get('/app/v1/customer/cloud-login', 'IntermediateLoginController@getCloudLogin');
 
+Route::post('/app/v1/customer/accept-cloud-data', 'IntermediateLoginController@postAcceptCloudLoginFullData');
+
 /**
  * Customer registration
  */

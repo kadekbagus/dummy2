@@ -219,7 +219,7 @@ return array(
     'coupon'         => array(
         'tenant_based'                     => 'テナント基づい',
         'mall_based'                       => 'モールベース',
-        'tenant_redeem'                    => 'テナントの取り戻す',
+         'tenant_redeem'                   => 'ja : Where to Reedem',
         'coupon_value'                     => 'クーポンの価値',
         'use_coupon'                       => 'クーポンを使用する',
         'enter_tenant_verification_number' => 'テナント確認番号を入力してください',
@@ -415,9 +415,9 @@ return array(
 
     'homescreen' => array(
         'title'     => '知ってますか？',
-        'message'   => 'あなたはあなたのホーム画面にこのウェブアプリを追加することができます, タップ 設定をし',
-        'message_firefox'   => 'あなたはあなたのホーム画面にこのウェブアプリを追加することができます, タップ 設定をし > ページ その後,',
-        'add_to'    => '<strong>ホーム画面に追加</strong>',
+        'message'   => 'ブラウザーの設定をクリックし、',
+        'add_to'    => '<strong>「ホーム画面に追加」</strong>',
+        'message_after' => 'をタップして、ホーム画面にこの web アプリを追加できます',
         'check'     => '今後このメッセージを表示しません',
     ),
 

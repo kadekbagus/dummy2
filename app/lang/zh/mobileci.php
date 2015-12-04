@@ -219,7 +219,7 @@ return array(
     'coupon' => array(
         'tenant_based'                     => '基于租户',
         'mall_based'                       => '基于商城',
-        'tenant_redeem'                    => '店铺挽回',
+         'tenant_redeem'                   => 'zh : Where to Reedem',
         'coupon_value'                     => '优惠券余额',
         'use_coupon'                       => '使优惠券',
         'enter_tenant_verification_number' => '请收入店铺验证码',
@@ -415,9 +415,9 @@ return array(
 
     'homescreen' => array(
         'title'     => '你知道吗？',
-        'message'   => '您可以添加这个Web应用程序到您的主屏幕：点击设置，然后',
-        'message_firefox'   => '您可以添加这个Web应用程序到您的主屏幕：点击设置 > 页面， 然后',
-        'add_to'    => '<strong>添加到主屏幕</strong>',
+        'message'   => '你可以添加你的主屏幕的这个 web 应用程序通过敲击的 浏览器设置 > ',
+        'add_to'    => '<strong>将添加到主屏幕</strong>',
+        'message_after' => '',
         'check'     => '不要再显示此消息',
     ),
 

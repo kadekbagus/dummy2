@@ -27,11 +27,11 @@
     <div class="col-xs-12 product-img">
         @if(($coupon->image!='mobile-ci/images/default_product.png'))
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{{ asset($coupon->image) }}}" data-featherlight="image" class="zoomer"><img alt="" src="{{{ asset('mobile-ci/images/product-zoom.png') }}}" ></a></div>
+            <div class="zoom"><a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img alt="" src="{{{ asset('mobile-ci/images/product-zoom.png') }}}" ></a></div>
         </div>
         @endif
         @if(($coupon->image!='mobile-ci/images/default_product.png'))
-        <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
+        <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
         @else
         <img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" >
         @endif
@@ -59,12 +59,18 @@
                     <p>{{{ Lang::get('mobileci.coupon.mall_based') }}}</p>
                 @endif
             </div>
+
             <div class="col-xs-12">
                 <h4>{{{ Lang::get('mobileci.coupon.tenant_redeem') }}}</h4>
                 <ul class="tenant-list">
                     @if($cso_exists)
                     <li>Customer Service</li>
                     @endif
+
+                    @if($cs_reedem)
+                    <li style="margin-bottom : 10px;">CUSTOMER SERVICE COUNTER</li>
+                    @endif
+
                     @foreach($tenants as $tenant)
                         <li>{{ $tenant->tenant->name }}</li>
                     @endforeach
@@ -154,13 +160,6 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{{ Lang::get('mobileci.coupon.ok') }}}</button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -180,13 +179,6 @@
                         <div class="form-data">
                             <input id="issuecouponno" type="text" class="form-control text-center" style="font-size:20px;" value="" disabled>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <button type="button" id="denyCoupon" class="btn btn-info btn-block" data-dismiss="modal" disabled>{{{ Lang::get('mobileci.coupon.ok') }}}</button>
                     </div>
                 </div>
             </div>

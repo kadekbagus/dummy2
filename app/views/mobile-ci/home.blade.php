@@ -516,13 +516,6 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -617,7 +610,7 @@
                         backdrop: true,
                         backdropContainer: 'body',
                         title: '{{ Lang::get('mobileci.homescreen.title') }}',
-                        content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                        content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }} {{ Lang::get('mobileci.homescreen.message_after') }}',
                         arrowClass: 'top-right'
                     };
                 } else if(navigator.getBrowser[0] === 'Safari') { // ios safari
@@ -637,7 +630,7 @@
                                 backdrop: true,
                                 backdropContainer: 'body',
                                 title: '{{ Lang::get('mobileci.homescreen.title') }}',
-                                content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                                content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }} {{ Lang::get('mobileci.homescreen.message_after') }}',
                                 arrowClass: 'top-right'
                             };
                         } else if(window.orientation == 0 || window.orientation == 180) { // detect safari in portrait
@@ -655,7 +648,7 @@
                                 backdrop: true,
                                 backdropContainer: 'body',
                                 title: '{{ Lang::get('mobileci.homescreen.title') }}',
-                                content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                                content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }} {{ Lang::get('mobileci.homescreen.message_after') }}',
                                 arrowClass: 'bottom'
                             };
                         }
@@ -675,7 +668,7 @@
                         backdrop: true,
                         backdropContainer: 'body',
                         title: '{{ Lang::get('mobileci.homescreen.title') }}',
-                        content: '{{ Lang::get('mobileci.homescreen.message_firefox') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                        content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }} {{ Lang::get('mobileci.homescreen.message_after') }}',
                         arrowClass: 'top-right'
                     };
                 } else if(navigator.getBrowser[0] === 'Opera' || navigator.getBrowser[0] === 'O') { // android opera
@@ -693,7 +686,7 @@
                         backdrop: true,
                         backdropContainer: 'body',
                         title: '{{ Lang::get('mobileci.homescreen.title') }}',
-                        content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }}',
+                        content: '{{ Lang::get('mobileci.homescreen.message') }} {{ Lang::get('mobileci.homescreen.add_to') }} {{ Lang::get('mobileci.homescreen.message_after') }}',
                         arrowClass: 'top-right'
                     };
                 }

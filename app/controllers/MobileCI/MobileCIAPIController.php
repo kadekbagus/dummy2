@@ -65,6 +65,7 @@ use \Inbox;
 use \News;
 use \Object;
 use \App;
+use \Media;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -85,6 +86,18 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $email = trim(OrbitInput::post('email'));
             $payload = OrbitInput::post('payload');
+
+            if (Config::get('orbit.shop.guest_mode')) {
+                $guest = User::whereHas('role', function ($q) {
+                    $q->where('role_name', 'Guest');
+                })->excludeDeleted()->first();
+
+                if(! is_object($guest)) {
+                    throw new Exception('Guest user not configured properly.');
+                }
+
+                $email = $guest->user_email;
+            }
 
             if (trim($email) === '') {
                 $errorMessage = \Lang::get('validation.required', array('attribute' => 'email'));
@@ -538,13 +551,13 @@ class MobileCIAPIController extends ControllerAPI
             $landing_url = $this->getLandingUrl($mall);
 
             try {
-                $bg = Setting::getFromList($mall->settings, 'background_image');
+                $bg = Media::where('object_id', $retailer->merchant_id)
+                    ->where('media_name_id', 'retailer_background')
+                    ->where('media_name_long', 'retailer_background_orig')
+                    ->where('object_name', 'mall')
+                    ->first();
             } catch (Exception $e) {
             }
-
-            // Get email from query string
-            $loggedUser = $this->getLoggedInUser();
-            $user_email = $loggedUser->user_email;
 
             // Captive Portal Apple CNA Window
             // -------------------------------
@@ -557,6 +570,10 @@ class MobileCIAPIController extends ControllerAPI
 
                 return Redirect::to($this->addParamsToUrl($landing_url, $internet_info));
             }
+
+            // Get email from query string
+            $loggedUser = $this->getLoggedInUser();
+            $user_email = $loggedUser->user_email;
 
             $viewData = array_merge($viewData, array(
                 'retailer' => $retailer,
@@ -844,51 +861,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->setModuleName('Event')
                 ->setEvent($event)
                 ->setNotes($e->getMessage())
-                ->responseFailed()
-                ->save();
-
-            return $this->redirectIfNotLoggedIn($e);
-        }
-    }
-
-
-    /**
-     * POST - Coupon pop up display activity
-     *
-     * @param integer    `eventdata`        (optional) - The event ID
-     *
-     * @return void
-     *
-     * @author Firmansyah <firmansyah@dominopos.com>
-     */
-    public function postDisplayCouponPopUpActivity()
-    {
-        $activity = Activity::mobileci()
-                            ->setActivityType('view');
-        $user = null;
-
-        try {
-            $user = $this->getLoggedInUser();
-            $retailer = $this->getRetailerInfo();
-
-            $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
-            $activity->setUser($user)
-                ->setActivityName('view_coupon_list')
-                ->setActivityNameLong('View Coupon List (Pop Up)')
-                ->setObject(null)
-                ->setModuleName('Coupon')
-                ->setNotes($activityPageNotes)
-                ->responseOK()
-                ->save();
-        } catch (Exception $e) {
-            $this->rollback();
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'Coupon List');
-            $activity->setUser($user)
-                ->setActivityName('view_coupon_list')
-                ->setActivityNameLong('View Coupon List Failed (Pop Up')
-                ->setObject(null)
-                ->setModuleName('Coupon')
-                ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
 
@@ -1312,7 +1284,8 @@ class MobileCIAPIController extends ControllerAPI
      */
     protected function addParamsToUrl($landing_url, $internet_info = 'no')
     {
-        return $landing_url . '?from_login=yes&internet_info=' . $internet_info;
+        $req = \Symfony\Component\HttpFoundation\Request::create($landing_url, 'GET', ['from_login' => 'yes', 'internet_info' => $internet_info]);
+        return $req->getUri();
     }
 
     /**
@@ -2283,7 +2256,8 @@ class MobileCIAPIController extends ControllerAPI
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                 WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
                     AND p.merchant_id = :merchantid
-                    AND ic.user_id = :userid'
+                    AND ic.user_id = :userid
+                    ORDER BY ic.issued_date DESC'
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
             );
@@ -2512,6 +2486,15 @@ class MobileCIAPIController extends ControllerAPI
             $tenants = $pure_tenants; // 100% pure tenant ready to be served
             // -- END of hack
 
+            // Check coupon have condition cs reedem
+            $cs_reedem = false;
+
+            // Check exist customer verification number per mall
+            $employeeVerificationNumbers = \UserVerificationNumber::where('merchant_id', $retailer->merchant_id)->count();
+            if ($coupons->is_redeemed_at_cs === 'Y' && $employeeVerificationNumbers > 0) {
+                $cs_reedem = true;
+            }
+
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
             $activityPage->setUser($user)
                 ->setActivityName('view_coupon')
@@ -2530,7 +2513,9 @@ class MobileCIAPIController extends ControllerAPI
                 'coupon' => $coupons,
                 'tenants' => $tenants,
                 'languages' => $languages,
-                'cso_exists' => $cso_exists));
+                'cso_exists' => $cso_exists,
+                'cs_reedem' => $cs_reedem
+                ));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
@@ -3719,6 +3704,7 @@ class MobileCIAPIController extends ControllerAPI
             // use them to issue
             if(count($couponIds)) {
                 // Issue coupons
+                $objectCoupons = [];
                 $issuedCoupons = [];
                 $numberOfCouponIssued = 0;
                 $applicableCouponNames = [];
@@ -3742,6 +3728,7 @@ class MobileCIAPIController extends ControllerAPI
                     $obj->coupon_name = $coupon->promotion_name;
                     $obj->promotion_id = $coupon->promotion_id;
 
+                    $objectCoupons[] = $coupon;
                     $issuedCoupons[] = $obj;
                     $applicableCouponNames[] = $coupon->promotion_name;
                     $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
@@ -3772,6 +3759,21 @@ class MobileCIAPIController extends ControllerAPI
                 $inbox->status = 'active';
                 $inbox->is_read = 'N';
                 $inbox->save();
+
+                foreach ($objectCoupons as $object) {
+                    $activity = Activity::mobileci()
+                                        ->setActivityType('view');
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
+                    $activity->setUser($user)
+                            ->setActivityName('view_coupon_list')
+                            ->setActivityNameLong('Coupon Issuance')
+                            ->setObject($object)
+                            ->setCoupon($object)
+                            ->setModuleName('Coupon')
+                            ->setNotes($activityPageNotes)
+                            ->responseOK()
+                            ->save();
+                }
 
                 $retailer = Mall::where('merchant_id', $retailerId)->first();
                 $data = [
@@ -3844,6 +3846,7 @@ class MobileCIAPIController extends ControllerAPI
             'callback_url' => URL::route('customer-login-callback'),
             'payload' => $payload,
             'from' => $from,
+            'full_data' => 'no',
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
@@ -3862,9 +3865,10 @@ class MobileCIAPIController extends ControllerAPI
      *
      * Returns: { user_id: ..., user_email: ..., user_detail_id: ..., apikey_id: ... }
      *
+     * @param bool $forceReload force reload of box user, userdetail data.
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    public function getCloudLogin()
+    public function getCloudLogin($forceReload = true)
     {
         $this->beginTransaction();
         try {
@@ -3879,6 +3883,7 @@ class MobileCIAPIController extends ControllerAPI
             }
             $email = OrbitInput::get('email');
             $from = OrbitInput::get('from');
+
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
@@ -3903,9 +3908,21 @@ class MobileCIAPIController extends ControllerAPI
                 $user = $response->data;
             }
 
+            $payload = OrbitInput::get('payload');
+            if (! empty($payload)) {
+                // Decrypt the payload
+                $key = md5('--orbit-mall--');
+                $payload = (new Encrypter($key))->decrypt($payload);
+
+                // The data is in url encoded
+                parse_str($payload, $data);
+
+                $from = isset($data['login_from']) ? $data['login_from'] : '';
+            }
+
             // @author Irianto Pratama <irianto@dominopos.com>
             // send email if user status pending
-            if ($user->status === 'pending') {
+            if ($user->status === 'pending' && $from !== 'facebook') {
 
                 $mall_time = Carbon::now($retailer->timezone->timezone_name);
                 $pending_date = $mall_time;
@@ -3938,6 +3955,7 @@ class MobileCIAPIController extends ControllerAPI
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
                 $acq->save();
+                $acq->forceBoxReloadUserData($forceReload);
                 // cannot use $user as $user has extra properties added and would fail
                 // if we saved it.
                 $dup_user = User::find($user->user_id);
@@ -3949,6 +3967,7 @@ class MobileCIAPIController extends ControllerAPI
             $this->response->status = 'success';
             $this->response->data = (object)[
                 'user_id' => $user->user_id,
+                'user_status' => $user->status,
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
