@@ -2985,8 +2985,8 @@ class ActivityAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required',
-                    'start_date' => 'required',
-                    'end_date' => 'required',
+                    'start_date' => 'required | date_format:Y-m-d H:i:s',
+                    'end_date' => 'required | date_format:Y-m-d H:i:s',
                 )
             );
 
