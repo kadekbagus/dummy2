@@ -29,7 +29,7 @@
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.membership_title') }}</h4>
             </div>
-            <div class="modal-body"><?php print_r($user); ?>
+            <div class="modal-body">
                 @if (! empty($user->membership_number))
                 <div class="member-card">
                     <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
