@@ -1216,10 +1216,14 @@ class MobileCIAPIController extends ControllerAPI
             throw new Exception('Invalid session data.');
         }
 
-        $user = User::with('userDetail')->find($userId);
+        $user = User::with('userDetail', 'membershipNumbers')->where('user_id', $userId)->first();
 
         if (! $user) {
             throw new Exception('Session error: user not found.');
+        } else {
+            if (count($user->membership_numbers)) {
+                $user->membership_number = $user->membership_numbers[0]->membership_number;
+            }
         }
 
         return $user;
