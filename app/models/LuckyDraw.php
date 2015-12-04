@@ -148,4 +148,12 @@ class LuckyDraw extends Eloquent
             $has->where('merchant_languages.status', 'active');
         });
     }
+
+    /**
+     * Lucky Draw strings can be translated to many languages.
+     */
+    public function announcements()
+    {
+        return $this->hasMany('LuckyDrawAnnouncement', 'lucky_draw_id', 'lucky_draw_id');
+    }
 }
