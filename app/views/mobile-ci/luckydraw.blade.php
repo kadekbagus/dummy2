@@ -49,7 +49,7 @@
 @endif
 <div class="row text-center lucky-number-wrapper">
     <div class="col-xs-12">
-        <img src="{{ asset($retailer->bigLogo) }}" clas="img-responsive">
+        <img src="{{ asset($retailer->bigLogo) }}" class="img-responsive">
     </div>
     @if(!empty($luckydraw))
     <div class="row">
