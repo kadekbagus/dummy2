@@ -274,6 +274,7 @@ return array(
             'hour_format'          => ':attribute 是不是有效日期',
             'tenant_floor'          => 'Floor is required',
             'tenant_unit'          => 'Unit is required',
+            'lucky_draw_announcement' => 'The lucky draw announcement you specified is not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

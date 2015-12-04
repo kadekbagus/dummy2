@@ -286,6 +286,7 @@ return array(
             'hour_format'          => 'The :attribute is not a valid date.',
             'tenant_floor'          => 'Floor is required',
             'tenant_unit'          => 'Unit is required',
+            'lucky_draw_announcement' => 'The lucky draw announcement you specified is not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
