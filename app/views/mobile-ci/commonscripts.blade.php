@@ -158,10 +158,10 @@
 
         function resetImage() {
             $('.featherlight-image').css('margin', '0 auto');
-            $('.featherlight-content').css('width', '100%');    
+            $('.featherlight-content').css('width', '100%');
             $('.featherlight-image').css({
                 'height': 'auto',
-                'width': '100%' 
+                'width': '100%'
             });
             // this cause problems when zoomed
             // if($(window).height() < $(window).width()) {
@@ -172,7 +172,7 @@
             // } else {
             //     $('.featherlight-image').css({
             //         'height': 'auto',
-            //         'width': '100%' 
+            //         'width': '100%'
             //     });
             // }
         }
