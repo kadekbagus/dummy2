@@ -390,6 +390,9 @@ return array(
             'delete_lucky_draw'         => '删除抽奖',
             'view_lucky_draw'           => '查看抽奖'
         ),
+        'max' => array(
+            'total_issued_coupons' => 'zh:Number can not be less than current total issued coupons',
+        ),
     ),
 
     /*

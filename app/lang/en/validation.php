@@ -424,6 +424,9 @@ return array(
                 'max_issuance' => 'This lucky draw has reached its maximum number (:max_number).',
             ),
         ),
+        'max' => array(
+            'total_issued_coupons' => 'Number can not be less than current total issued coupons',
+        ),
     ),
 
     /*

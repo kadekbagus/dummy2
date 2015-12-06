@@ -580,16 +580,17 @@ class CouponAPIController extends ControllerAPI
             $id_language_default = OrbitInput::post('id_language_default');
 
             $data = array(
-                'promotion_id'            => $promotion_id,
-                'current_mall'            => $merchant_id,
-                'promotion_type'          => $promotion_type,
-                'status'                  => $status,
-                'begin_date'              => $begin_date,
-                'end_date'                => $end_date,
-                'coupon_validity_in_date' => $coupon_validity_in_date,
-                'rule_value'              => $rule_value,
-                'discount_value'          => $discount_value,
-                'id_language_default'     => $id_language_default,
+                'promotion_id'              => $promotion_id,
+                'current_mall'              => $merchant_id,
+                'promotion_type'            => $promotion_type,
+                'status'                    => $status,
+                'begin_date'                => $begin_date,
+                'end_date'                  => $end_date,
+                'coupon_validity_in_date'   => $coupon_validity_in_date,
+                'rule_value'                => $rule_value,
+                'discount_value'            => $discount_value,
+                'id_language_default'       => $id_language_default,
+                'maximum_issued_coupon'     => $maximum_issued_coupon,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -600,17 +601,18 @@ class CouponAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'promotion_id'            => 'required|orbit.empty.coupon',
-                    'current_mall'            => 'orbit.empty.merchant',
-                    'promotion_name'          => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
-                    'promotion_type'          => 'orbit.empty.coupon_type',
-                    'status'                  => 'orbit.empty.coupon_status',
-                    'begin_date'              => 'date_format:Y-m-d H:i:s',
-                    'end_date'                => 'date_format:Y-m-d H:i:s',
-                    'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
-                    'rule_value'              => 'numeric|min:0',
-                    'discount_value'          => 'numeric|min:0',
-                    'id_language_default'     => 'required|orbit.empty.language_default',
+                    'promotion_id'              => 'required|orbit.empty.coupon',
+                    'current_mall'              => 'orbit.empty.merchant',
+                    'promotion_name'            => 'sometimes|required|min:5|max:255|coupon_name_exists_but_me',
+                    'promotion_type'            => 'orbit.empty.coupon_type',
+                    'status'                    => 'orbit.empty.coupon_status',
+                    'begin_date'                => 'date_format:Y-m-d H:i:s',
+                    'end_date'                  => 'date_format:Y-m-d H:i:s',
+                    'coupon_validity_in_date'   => 'date_format:Y-m-d H:i:s',
+                    'rule_value'                => 'numeric|min:0',
+                    'discount_value'            => 'numeric|min:0',
+                    'id_language_default'       => 'required|orbit.empty.language_default',
+                    'maximum_issued_coupon'     => 'orbit.max.total_issued_coupons:' . $promotion_id,
                 ),
                 array(
                     'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
@@ -2357,6 +2359,22 @@ class CouponAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check maximal of total issued coupons
+        Validator::extend('orbit.max.total_issued_coupons', function ($attribute, $value, $parameters) {
+            $promotion_id = $parameters[0];
+
+            $total_issued_coupons = IssuedCoupon::where('promotion_id', '=', $promotion_id)
+                                                ->count();
+
+            if ($value < $total_issued_coupons) {
+                return FALSE;
+            }
+
+            App::instance('orbit.max.total_issued_coupons', $total_issued_coupons);
+
+            return TRUE;
+        });
+
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $news = MerchantLanguage::excludeDeleted()

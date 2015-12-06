@@ -390,6 +390,9 @@ return array(
             'delete_lucky_draw'         => '抽選を削除',
             'view_lucky_draw'           => '抽選を表示'
         ),
+        'max' => array(
+            'total_issued_coupons' => 'ja:Number can not be less than current total issued coupons',
+        ),
     ),
 
     /*
