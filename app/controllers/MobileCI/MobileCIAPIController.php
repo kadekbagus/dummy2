@@ -453,7 +453,8 @@ class MobileCIAPIController extends ControllerAPI
                 'widget_singles' => $widget_singles,
                 'languages' => $languages,
                 'active_user' => ($user->status === 'active'),
-                'user_email' => $user->user_email
+                'user_email' => $user->user_email,
+                'user' => $user
             );
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
         } catch (Exception $e) {
@@ -1215,10 +1216,24 @@ class MobileCIAPIController extends ControllerAPI
             throw new Exception('Invalid session data.');
         }
 
-        $user = User::with('userDetail')->find($userId);
+        $retailer = $this->getRetailerInfo();
+
+        $user = User::with(['userDetail',
+            'membershipNumbers' => function($q) use ($retailer) {
+                $q->select('membership_numbers.*')
+                    ->with('membership.media')
+                    ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                    ->excludeDeleted('membership_numbers')
+                    ->excludeDeleted('memberships')
+                    ->where('memberships.merchant_id', $retailer->merchant_id);
+            }])->where('user_id', $userId)->first();
 
         if (! $user) {
             throw new Exception('Session error: user not found.');
+        } else {
+            if (count($user->membership_numbers)) {
+                $user->membership_number = $user->membership_numbers[0]->membership_number;
+            }
         }
 
         return $user;
@@ -2953,7 +2968,8 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
-                'user_email' => $user->user_email
+                'user_email' => $user->user_email,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-news-list', $view_data);
 
@@ -3847,6 +3863,7 @@ class MobileCIAPIController extends ControllerAPI
             'payload' => $payload,
             'from' => $from,
             'full_data' => 'no',
+            'check_only' => 'no',
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
@@ -3866,9 +3883,10 @@ class MobileCIAPIController extends ControllerAPI
      * Returns: { user_id: ..., user_email: ..., user_detail_id: ..., apikey_id: ... }
      *
      * @param bool $forceReload force reload of box user, userdetail data.
+     * @param bool $forceInsert
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    public function getCloudLogin($forceReload = true)
+    public function getCloudLogin($forceReload = true, $forceInsert = true)
     {
         $this->beginTransaction();
         try {
@@ -3896,6 +3914,17 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 )->sharedLock()
                 ->first();
+
+            if ($user === null && !$forceInsert) {
+                // just say now that it is not found
+                $this->response->code = 0;
+                $this->response->status = 'success';
+                $this->response->data = (object)[
+                    'user_id' => null,
+                ];
+                $this->commit();
+                return $this->render();
+            }
 
             if ($user === null) {
                 $_POST['email'] = $email;

@@ -54,7 +54,9 @@ return array(
             // enable must be true
             // in milliseconds
             'interval'  => 5000
-        ]
+        ],
+
+        'membership' => true
     ),
 
     // General contact data

@@ -1463,10 +1463,13 @@ class UserAPIController extends ControllerAPI
 
             if (empty($listOfMallIds)) { // invalid mall id
                 $filterMallIds = 'and 0';
+                $filterMembershipNumberMallIds = 'and 0';
             } elseif ($listOfMallIds[0] === 1) { // if super admin
                 $filterMallIds = '';
+                $filterMembershipNumberMallIds = '';
             } else { // valid mall id
                 $filterMallIds = ' and p.merchant_id in ("' . join('","', $listOfMallIds) . '") ';
+                $filterMembershipNumberMallIds = ' and m.merchant_id in ("' . join('","', $listOfMallIds) . '") ';
             }
 
             // Builder object
@@ -1514,11 +1517,15 @@ class UserAPIController extends ControllerAPI
             }
 
             $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id')
-                  ->addSelect('membership_numbers.membership_number', 'membership_numbers.join_date')
-                  ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
-                  ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
-                  ->excludeDeleted('membership_numbers')
-                  ->excludeDeleted('memberships');
+                  ->addSelect('tmp_membership_numbers.membership_number', 'tmp_membership_numbers.join_date')
+                  ->leftJoin(
+                    DB::raw("(select mn.user_id, mn.membership_number, mn.join_date from {$prefix}membership_numbers mn
+                        left join {$prefix}memberships m on m.membership_id = mn.membership_id
+                        where mn.status != 'deleted'
+                            and m.status != 'deleted'
+                            {$filterMembershipNumberMallIds}
+                        ) as {$prefix}tmp_membership_numbers"),
+                    'tmp_membership_numbers.user_id', '=', 'users.user_id');
 
             $current_mall = OrbitInput::get('current_mall');
 
@@ -1536,8 +1543,7 @@ class UserAPIController extends ControllerAPI
             } elseif ($listOfMallIds[0] === 1) { // if super admin
                 // show all users
             } else { // valid mall id
-                $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds)
-                      ->whereIn('memberships.merchant_id', $listOfMallIds);
+                $users->whereIn('user_acquisitions.acquirer_id', $listOfMallIds);
             }
 
             // Filter by retailer (shop) ids
@@ -1614,12 +1620,12 @@ class UserAPIController extends ControllerAPI
 
             // Filter user by membership number
             OrbitInput::get('membership_number', function ($data) use ($users) {
-                $users->whereIn('membership_numbers.membership_number', $data);
+                $users->whereIn('tmp_membership_numbers.membership_number', $data);
             });
 
             // Filter user by membership number
             OrbitInput::get('membership_number_like', function ($arg) use ($users) {
-                $users->where('membership_numbers.membership_number', 'like', "%$arg%");
+                $users->where('tmp_membership_numbers.membership_number', 'like', "%$arg%");
             });
 
             // Filter user by created_at for begin_date
@@ -1667,11 +1673,11 @@ class UserAPIController extends ControllerAPI
             OrbitInput::get('is_member', function ($isMember) use ($users)
             {
                 if ($isMember === 'yes') {
-                    $users->where('membership_numbers.membership_number', '!=', '');
+                    $users->where('tmp_membership_numbers.membership_number', '!=', '');
                 } elseif ($isMember === 'no') {
                     $users->where(function ($q) {
-                        $q->where('membership_numbers.membership_number', '=', '')
-                          ->orWhereNull('membership_numbers.membership_number');
+                        $q->where('tmp_membership_numbers.membership_number', '=', '')
+                          ->orWhereNull('tmp_membership_numbers.membership_number');
                     });
                 }
             });
@@ -1776,8 +1782,8 @@ class UserAPIController extends ControllerAPI
                     'gender'                  => 'user_details.gender',
                     'city'                    => 'user_details.city',
                     'mobile_phone'            => 'user_details.phone',
-                    'membership_number'       => 'membership_numbers.membership_number',
-                    'join_date'               => 'membership_numbers.join_date',
+                    'membership_number'       => 'tmp_membership_numbers.membership_number',
+                    'join_date'               => 'tmp_membership_numbers.join_date',
                     'created_at'              => 'users.created_at',
                     'updated_at'              => 'users.updated_at',
                     'status'                  => 'users.status',
@@ -3172,6 +3178,7 @@ class UserAPIController extends ControllerAPI
             $email = OrbitInput::get('email');
             $retailer_id = OrbitInput::get('current_mall');
             $from = OrbitInput::get('from');
+            $check_only = OrbitInput::get('check_only', 'no') === 'yes';
 
             $this->registerCustomValidation();
 
@@ -3201,6 +3208,7 @@ class UserAPIController extends ControllerAPI
                 'payload' => '',
                 'from' => $from,
                 'full_data' => 'yes',
+                'check_only' => $check_only ? 'yes' : 'no',
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);

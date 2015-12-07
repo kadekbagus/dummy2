@@ -6,6 +6,7 @@ composer.phar
 Thumbs.db
 /.idea
 *.iml
+.project
 
 # Config
 app/config/app.php

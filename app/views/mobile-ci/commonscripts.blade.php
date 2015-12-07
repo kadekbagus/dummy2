@@ -30,32 +30,38 @@
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.membership_title') }}</h4>
             </div>
             <div class="modal-body">
-                @if (! empty($user->membership_number))
-                <div class="member-card">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
-                    <h2>
-                        <span>
-                            <strong>
-                                {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
-                            </strong>
-                            <span class='spacery'></span>
-                            <br>
-                            <span class='spacery'></span>
-                            <strong>
-                                {{ $user->membership_number }}
-                            </strong>
-                        </span>
-                    </h2>
-                </div>
-                @else
-                <div class="no-member-card text-center">
-                    <h3><strong><i>{{ Lang::get('mobileci.modals.membership_notfound') }}</i></strong></h3>
-                    <h4><strong>{{ Lang::get('mobileci.modals.membership_want_member') }}</strong></h4>
-                    <p>{{ Lang::get('mobileci.modals.membership_great_deal') }}</p>
-                    <p><i>{{ Lang::get('mobileci.modals.membership_contact_our') }}</i></p>
-                    <br>
-                    <p><small>Lippo Mall Management</small></p>
-                </div>
+                @if (! empty($user))
+                    @if (! empty($user->membership_numbers->first()))
+                    <div class="member-card">
+                        @if (empty($user->membership_numbers[0]->membership->media->first()))
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
+                        @else
+                        <img class="img-responsive" src="{{ asset($user->membership_numbers[0]->membership->media[0]->path) }}">
+                        @endif
+                        <h2>
+                            <span>
+                                <strong>
+                                    {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
+                                </strong>
+                                <span class='spacery'></span>
+                                <br>
+                                <span class='spacery'></span>
+                                <strong>
+                                    {{ $user->membership_number }}
+                                </strong>
+                            </span>
+                        </h2>
+                    </div>
+                    @else
+                    <div class="no-member-card text-center">
+                        <h3><strong><i>{{ Lang::get('mobileci.modals.membership_notfound') }}</i></strong></h3>
+                        <h4><strong>{{ Lang::get('mobileci.modals.membership_want_member') }}</strong></h4>
+                        <p>{{ Lang::get('mobileci.modals.membership_great_deal') }}</p>
+                        <p><i>{{ Lang::get('mobileci.modals.membership_contact_our') }}</i></p>
+                        <br>
+                        <p><small>Lippo Mall Management</small></p>
+                    </div>
+                    @endif
                 @endif
             </div>
             <div class="modal-footer">
@@ -158,10 +164,10 @@
 
         function resetImage() {
             $('.featherlight-image').css('margin', '0 auto');
-            $('.featherlight-content').css('width', '100%');    
+            $('.featherlight-content').css('width', '100%');
             $('.featherlight-image').css({
                 'height': 'auto',
-                'width': '100%' 
+                'width': '100%'
             });
             // this cause problems when zoomed
             // if($(window).height() < $(window).width()) {
@@ -172,7 +178,7 @@
             // } else {
             //     $('.featherlight-image').css({
             //         'height': 'auto',
-            //         'width': '100%' 
+            //         'width': '100%'
             //     });
             // }
         }
