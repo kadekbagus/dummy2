@@ -1216,7 +1216,17 @@ class MobileCIAPIController extends ControllerAPI
             throw new Exception('Invalid session data.');
         }
 
-        $user = User::with('userDetail', 'membershipNumbers.membership.media')->where('user_id', $userId)->first();
+        $retailer = $this->getRetailerInfo();
+
+        $user = User::with(['userDetail',
+            'membershipNumbers' => function($q) use ($retailer) {
+                $q->select('membership_numbers.*')
+                    ->with('membership.media')
+                    ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                    ->excludeDeleted('membership_numbers')
+                    ->excludeDeleted('memberships')
+                    ->where('memberships.merchant_id', $retailer->merchant_id);
+            }])->where('user_id', $userId)->first();
 
         if (! $user) {
             throw new Exception('Session error: user not found.');
