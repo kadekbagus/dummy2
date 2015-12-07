@@ -1137,6 +1137,14 @@ class LuckyDrawAPIController extends ControllerAPI
                         $luckydraws->with('translations.media');
                     } elseif ($relation === 'announcements') {
                         $luckydraws->with('announcements');
+                    } elseif ($relation === 'prizes') {
+                        $luckydraws->with('prizes');
+                    } elseif ($relation === 'prizes.winners') {
+                        $luckydraws->with('prizes.winners');
+                    } elseif ($relation === 'prizes.winners.number') {
+                        $luckydraws->with('prizes.winners.number');
+                    } elseif ($relation === 'prizes.winners.number.user') {
+                        $luckydraws->with('prizes.winners.number.user');
                     } elseif ($relation === 'announcements.translations') {
                         $luckydraws->with('announcements.translations');
                     } elseif ($relation === 'announcements.translations.media') {
@@ -2024,8 +2032,96 @@ class LuckyDrawAPIController extends ControllerAPI
                 $this->validateAndSaveAnnouncementTranslations($lucky_draw_announcement, $announcement_translations, 'create');
             });
 
+            $prize_winners_response = null;
+            // associate prize with number
+            OrbitInput::post('prize_winners', function ($prize_winners) use ($lucky_draw_announcement, $lucky_draw_id, &$prize_winners_response) {
+                $prize_winners_response = array();
+                $data = @json_decode($prize_winners);
+
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'prize_winners']));
+                }
+
+                foreach ($data as $prize_winner) {
+                    // check prize existance
+                    $prize = LuckyDrawPrize::excludeDeleted()->where('lucky_draw_prize_id', $prize_winner->lucky_draw_prize_id)->first();
+                    if (! is_object($prize)) {
+                        $errorMessage = 'Lucky draw prize not found.';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    // check winning number qty
+                    if (count($prize_winner->winners) > $prize->winner_number) {
+                        $errorMessage = 'Prize winner numbers exceed the predefined value on lucky draw prize.';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    foreach($prize_winner->winners as $winner) {
+                        // check issued number existance
+                        $lucky_draw_number = LuckyDrawNumber::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_number_code', $winner->lucky_draw_number_code)->first();
+                        if (! is_object($lucky_draw_number)) {
+                            $errorMessage = 'Lucky draw number is not found.';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // if the lucky_draw_winner_id is specified then update the lucky draw winner number
+                        if (isset($winner->lucky_draw_winner_id)) {
+                            // check already existing number for update
+                            $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_id', $winner->lucky_draw_winner_id)->first();
+                            if (! is_object($lucky_draw_number_winner)) {
+                                $errorMessage = 'Lucky draw winner number not found.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+                            $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
+                            $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
+                            $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
+                            $lucky_draw_number_winner->save();
+                        } else {
+                            // if these two conditional maybe included in lucky draw campaign setup then it should be changed from config to LuckyDraw
+                            // conditional check for someone has already won another prize
+                            if (! Config::get('orbit.lucky_draw.winner.more_than_one_all_prize_enabled', FALSE)) {
+                                $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()
+                                    ->where('lucky_draw_id', $lucky_draw_id)
+                                    ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                    ->first();
+                                if (is_object($lucky_draw_number_winner)) {
+                                    $errorMessage = $winner->lucky_draw_number_code . ' has already won another prize.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+                            }
+
+                            // conditional check for someone has already won the same prize
+                            if (! Config::get('orbit.lucky_draw.winner.more_than_one_single_prize_enabled', FALSE)) {
+                                $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()
+                                    ->where('lucky_draw_id', $lucky_draw_id)
+                                    ->where('lucky_draw_prize_id', $prize->lucky_draw_prize_id)
+                                    ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                    ->first();
+                                if (is_object($lucky_draw_number_winner)) {
+                                    $errorMessage = $winner->lucky_draw_number_code . ' has already won the same prize.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+                            }
+
+                            $lucky_draw_number_winner = new LuckyDrawWinner();
+                            $lucky_draw_number_winner->lucky_draw_id = $lucky_draw_id;
+                            $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
+                            $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
+                            $lucky_draw_number_winner->lucky_draw_prize_id = $prize->lucky_draw_prize_id;
+                            $lucky_draw_number_winner->status = 'active';
+                            $lucky_draw_number_winner->created_by = $this->api->user->user_id;
+                            $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
+                            $lucky_draw_number_winner->save();
+                        }
+                    }
+
+                    $prize_winners_response[] = $prize->load('winners.number.user');
+                }
+            });
+
             $this->response->data = $lucky_draw_announcement;
             $this->response->data->translation_default = $lucky_draw_announcement_translation_default;
+            $this->response->data->prize_winners = $prize_winners_response;
 
             // Commit the changes
             $this->commit();
@@ -2263,10 +2359,100 @@ class LuckyDrawAPIController extends ControllerAPI
             OrbitInput::post('translations', function ($announcement_translations) use ($lucky_draw_announcement) {
                 $this->validateAndSaveAnnouncementTranslations($lucky_draw_announcement, $announcement_translations, 'update');
             });
+            
+            $prize_winners_response = null;
+            // associate prize with number
+            OrbitInput::post('prize_winners', function ($prize_winners) use ($lucky_draw_announcement, $lucky_draw_id, &$prize_winners_response) {
+                $prize_winners_response = array();
+                $data = @json_decode($prize_winners);
+
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'prize_winners']));
+                }
+
+                foreach ($data as $prize_winner) {
+                    // check prize existance
+                    $prize = LuckyDrawPrize::excludeDeleted()->where('lucky_draw_prize_id', $prize_winner->lucky_draw_prize_id)->first();
+                    if (! is_object($prize)) {
+                        $errorMessage = 'Lucky draw prize not found.';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    // check winning number qty
+                    if (count($prize_winner->winners) > $prize->winner_number) {
+                        $errorMessage = 'Prize winner numbers exceed the predefined value on lucky draw prize.';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    // delete existing winning number
+                    // $existing_winning_numbers = LuckyDrawWinner::where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_prize_id', $prize->lucky_draw_prize_id)->get();
+                    // $existing_winning_numbers->delete(TRUE);
+
+                    foreach($prize_winner->winners as $winner) {
+                        // check issued number existance
+                        $lucky_draw_number = LuckyDrawNumber::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_number_code', $winner->lucky_draw_number_code)->first();
+                        if (! is_object($lucky_draw_number)) {
+                            $errorMessage = 'Lucky draw number (' . $winner->lucky_draw_number_code . ') is not found.';
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // if the lucky_draw_winner_id is specified then update the lucky draw winner number
+                        if (isset($winner->lucky_draw_winner_id)) {
+                            // check already existing number for update
+                            $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_id', $winner->lucky_draw_winner_id)->first();
+                            if (! is_object($lucky_draw_number_winner)) {
+                                $errorMessage = 'Lucky draw winner number not found.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+                            $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
+                            $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
+                            $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
+                            $lucky_draw_number_winner->save();
+                        } else {
+                            // if these two conditional maybe included in lucky draw campaign setup then it should be changed from config to LuckyDraw
+                            // conditional check for someone has already won another prize
+                            if (! Config::get('orbit.lucky_draw.winner.more_than_one_all_prize_enabled', FALSE)) {
+                                $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()
+                                    ->where('lucky_draw_id', $lucky_draw_id)
+                                    ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                    ->first();
+                                if (is_object($lucky_draw_number_winner)) {
+                                    $errorMessage = $winner->lucky_draw_number_code . ' has already won another prize.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+                            }
+
+                            // conditional check for someone has already won the same prize
+                            if (! Config::get('orbit.lucky_draw.winner.more_than_one_single_prize_enabled', FALSE)) {
+                                $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()
+                                    ->where('lucky_draw_id', $lucky_draw_id)
+                                    ->where('lucky_draw_prize_id', $prize->lucky_draw_prize_id)
+                                    ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                    ->first();
+                                if (is_object($lucky_draw_number_winner)) {
+                                    $errorMessage = $winner->lucky_draw_number_code . ' has already won the same prize.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+                            }
+
+                            $lucky_draw_number_winner = new LuckyDrawWinner();
+                            $lucky_draw_number_winner->lucky_draw_id = $lucky_draw_id;
+                            $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
+                            $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
+                            $lucky_draw_number_winner->lucky_draw_prize_id = $prize->lucky_draw_prize_id;
+                            $lucky_draw_number_winner->status = 'active';
+                            $lucky_draw_number_winner->created_by = $this->api->user->user_id;
+                            $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
+                            $lucky_draw_number_winner->save();
+                        }
+                    }
+
+                    $prize_winners_response[] = $prize->load('winners.number.user');
+                }
+            });
 
             $this->response->data = $lucky_draw_announcement;
             $this->response->data->translation_default = $lucky_draw_announcement_translation_default;
-
+            $this->response->data->prize_winners = $prize_winners_response;
             // Commit the changes
             $this->commit();
 
@@ -2349,7 +2535,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getLine()];
 
             // Rollback the changes
             $this->rollBack();
@@ -2942,8 +3128,10 @@ class LuckyDrawAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'winners') {
                         $luckydrawprizes->with('winners');
-                    } elseif ($relation === 'winners.numbers') {
-                        $luckydrawprizes->with('winners.numbers');
+                    } elseif ($relation === 'winners.number') {
+                        $luckydrawprizes->with('winners.number');
+                    } elseif ($relation === 'winners.number.user') {
+                        $luckydrawprizes->with('winners.number.user');
                     } elseif ($relation === 'luckydraw') {
                         $luckydrawprizes->with('LuckyDraw');
                     }
@@ -3121,6 +3309,21 @@ class LuckyDrawAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.lucky_draw_announcement', $lucky_draw_announcement);
+
+            return TRUE;
+        });
+
+        // Check the existance of lucky_draw_prize id
+        Validator::extend('orbit.empty.lucky_draw_prize', function ($attribute, $value, $parameters) {
+            $lucky_draw_prize = LuckyDrawPrize::excludeDeleted()
+                                   ->where('lucky_draw_prize_id', $value)
+                                   ->first();
+
+            if (empty($lucky_draw_prize)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.lucky_draw_prize', $lucky_draw_prize);
 
             return TRUE;
         });
