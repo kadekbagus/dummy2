@@ -76,7 +76,16 @@ return array(
         'max_per_issuance' => 1000,
 
         // batch number to issue lucky draw number on demand.
-        'batch'  => 5
+        'batch'  => 5,
+
+        // lucky draw winning number config
+        'winner' => array(
+            // if TRUE then winner can have another prize on the same campaign
+            'more_than_one_all_prize_enabled' => TRUE,
+
+            // if TRUE then winner can have another same prize on the same campaign
+            'more_than_one_single_prize_enabled' => TRUE,
+        ),
     ),
 
     // Default Pagination
