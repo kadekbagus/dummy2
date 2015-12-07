@@ -30,9 +30,13 @@
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.membership_title') }}</h4>
             </div>
             <div class="modal-body">
-                @if (! empty($user->membership_number))
+                @if (! empty($user->membership_numbers->first()))
                 <div class="member-card">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
+                    @if (empty($user->membership_numbers[0]->membership->media->first()))
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
+                    @else
+                        <img class="img-responsive" src="{{ asset($user->membership_numbers[0]->membership->media[0]->path) }}">
+                    @endif
                     <h2>
                         <span>
                             <strong>
