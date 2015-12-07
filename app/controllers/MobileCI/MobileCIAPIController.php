@@ -3863,6 +3863,7 @@ class MobileCIAPIController extends ControllerAPI
             'payload' => $payload,
             'from' => $from,
             'full_data' => 'no',
+            'check_only' => 'no',
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
