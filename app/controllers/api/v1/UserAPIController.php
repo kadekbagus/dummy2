@@ -3178,6 +3178,7 @@ class UserAPIController extends ControllerAPI
             $email = OrbitInput::get('email');
             $retailer_id = OrbitInput::get('current_mall');
             $from = OrbitInput::get('from');
+            $check_only = OrbitInput::get('check_only', 'no') === 'yes';
 
             $this->registerCustomValidation();
 
@@ -3207,6 +3208,7 @@ class UserAPIController extends ControllerAPI
                 'payload' => '',
                 'from' => $from,
                 'full_data' => 'yes',
+                'check_only' => $check_only ? 'yes' : 'no',
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);

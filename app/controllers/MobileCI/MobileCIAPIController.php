@@ -3872,9 +3872,10 @@ class MobileCIAPIController extends ControllerAPI
      * Returns: { user_id: ..., user_email: ..., user_detail_id: ..., apikey_id: ... }
      *
      * @param bool $forceReload force reload of box user, userdetail data.
+     * @param bool $forceInsert
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    public function getCloudLogin($forceReload = true)
+    public function getCloudLogin($forceReload = true, $forceInsert = true)
     {
         $this->beginTransaction();
         try {
@@ -3902,6 +3903,17 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 )->sharedLock()
                 ->first();
+
+            if ($user === null && !$forceInsert) {
+                // just say now that it is not found
+                $this->response->code = 0;
+                $this->response->status = 'success';
+                $this->response->data = (object)[
+                    'user_id' => null,
+                ];
+                $this->commit();
+                return $this->render();
+            }
 
             if ($user === null) {
                 $_POST['email'] = $email;
