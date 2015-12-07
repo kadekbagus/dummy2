@@ -3637,6 +3637,7 @@ class DashboardAPIController extends ControllerAPI
 
             if (empty($take_top)) {
                 $take_top = 0;
+
             }
 
             $coupons = DB::table(DB::raw("
@@ -3665,10 +3666,6 @@ class DashboardAPIController extends ControllerAPI
                                         order by total_redeemed desc
                                         limit {$take_top}) as issuedredeem) as t
                             "));
-            // Filter by mall id
-            OrbitInput::get('merchant_id', function($mallId) use ($coupons) {
-                $coupons->where('mall_id', $mallId);
-            });
 
             // Filter by Promotion Name
             OrbitInput::get('promotion_name_like', function($name) use ($coupons) {
