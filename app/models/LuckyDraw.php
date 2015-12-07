@@ -156,4 +156,12 @@ class LuckyDraw extends Eloquent
     {
         return $this->hasMany('LuckyDrawAnnouncement', 'lucky_draw_id', 'lucky_draw_id');
     }
+
+    /**
+     * Lucky Draw strings can be translated to many languages.
+     */
+    public function prizes()
+    {
+        return $this->hasMany('LuckyDrawPrize', 'lucky_draw_id', 'lucky_draw_id');
+    }
 }
