@@ -2496,7 +2496,7 @@ class MobileCIAPIController extends ControllerAPI
 
             // Check exist customer verification number per mall
             $employeeVerificationNumbers = \UserVerificationNumber::where('merchant_id', $retailer->merchant_id)->count();
-            if ($coupons->is_redeemed_at_cs === 'Y' && $employeeVerificationNumbers > 0) {
+            if ($employeeVerificationNumbers > 0) {
                 $cs_reedem = true;
             }
 

@@ -1033,6 +1033,10 @@ class EmployeeAPIController extends ControllerAPI
                     // if any record, will be deleted
                     if (!empty($userVerificationNumber)) {
                         $userVerificationNumber->delete();
+
+                        //Delete link to CS
+                        $promotionEmployee = PromotionEmployee::find($userId);
+                        $promotionEmployee->delete();
                     }
                 } else {
                     // Updated data verification number
