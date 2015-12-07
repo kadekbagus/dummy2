@@ -1231,8 +1231,9 @@ class MobileCIAPIController extends ControllerAPI
         if (! $user) {
             throw new Exception('Session error: user not found.');
         } else {
-            if (count($user->membership_numbers)) {
-                $user->membership_number = $user->membership_numbers[0]->membership_number;
+            $_user = clone($user);
+            if (count($_user->membership_numbers)) {
+               $user->membership_number = $_user->membership_numbers[0]->membership_number;
             }
         }
 
