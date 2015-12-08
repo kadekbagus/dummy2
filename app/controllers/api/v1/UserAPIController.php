@@ -3535,13 +3535,17 @@ class UserAPIController extends ControllerAPI
 
             $user = User::excludeDeleted()
                         ->where('user_id', '!=', $user_id)
-                        ->where('user_email', '=', $value)
-                        ->where('user_role_id', '=', function($q) use ($role_name) {
-                            $q->select('role_id')
-                                ->from('roles')
-                                ->where('role_name', $role_name);
-                        })
-                        ->first();
+                        ->where('user_email', '=', $value);
+
+            if ($role_name !== '') {
+                $user = $user->where('user_role_id', '=', function($q) use ($role_name) {
+                    $q->select('role_id')
+                        ->from('roles')
+                        ->where('role_name', $role_name);
+                });
+            }
+
+            $user = $user->first();
 
             if (! empty($user)) {
                 return FALSE;
