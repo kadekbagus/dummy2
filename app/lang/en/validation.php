@@ -153,6 +153,7 @@ return array(
             'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
+            'status_link_to'       => 'The Link To must be Y or N.',
             'role'                 => 'The Role ID you specified is not found.',
             'consumer_role'        => 'The Consumer role does not exist.',
             'token'                => 'The Token you specified is not found.',

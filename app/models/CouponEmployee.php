@@ -1,11 +1,11 @@
 <?php
 
-class PromotionEmployee extends Eloquent
+class CouponEmployee extends Eloquent
 {
     /**
-     * PromotionEmployee Model
+     * CouponEmployee Model
      *
-     * @author Tian <firmansyah@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
 
     protected $primaryKey = 'promotion_employee_id';

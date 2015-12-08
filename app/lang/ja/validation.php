@@ -150,6 +150,7 @@ return array(
             'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
+            'status_link_to'       => 'The Link To must be Y or N.',
             'role'                 => 'Role ID あなたが見つかりません指定され.',
             'consumer_role'        => 'Consumer role does not exist.',
             'token'                => 'Token あなたが見つかりません指定され.',
