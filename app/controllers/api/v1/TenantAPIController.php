@@ -421,7 +421,7 @@ class TenantAPIController extends ControllerAPI
                 ),
                 array(
                     //ACL::throwAccessForbidden($message);
-                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.',
+                    'orbit_unique_verification_number' => 'The verification number already used by other.',
                     'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
                )
@@ -786,7 +786,7 @@ class TenantAPIController extends ControllerAPI
                     'orbit.exists.tenant_on_inactive_have_linked' => Lang::get('validation.orbit.exists.tenant_on_inactive_have_linked'),
                     'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
-                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
+                    'orbit_unique_verification_number' => 'The verification number already used by other.'
                 //ACL::throwAccessForbidden($message);
                )
             );
