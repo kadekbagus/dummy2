@@ -31,12 +31,12 @@
             </div>
             <div class="modal-body">
                 @if (! empty($user))
-                    @if (! empty($user->membership_numbers->first()))
+                    @if (! empty($user->membershipNumbers->first()))
                     <div class="member-card">
-                        @if (empty($user->membership_numbers[0]->membership->media->first()))
+                        @if (empty($user->membershipNumbers[0]->membership->media->first()))
                         <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
                         @else
-                        <img class="img-responsive" src="{{ asset($user->membership_numbers[0]->membership->media[0]->path) }}">
+                        <img class="img-responsive" src="{{ asset($user->membershipNumbers[0]->membership->media[0]->path) }}">
                         @endif
                         <h2>
                             <span>

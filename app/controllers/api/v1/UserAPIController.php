@@ -1819,6 +1819,22 @@ class UserAPIController extends ControllerAPI
             $listOfUsers = $users->get();
 
             $data = new stdclass();
+
+            // set enable_membership_card value from table settings
+            $settingName = 'enable_membership_card';
+
+            $setting = Setting::active()
+                              ->where('object_type', 'merchant')
+                              ->whereIn('object_id', $listOfMallIds)
+                              ->where('setting_name', $settingName)
+                              ->first();
+
+            if (empty($setting)) {
+                $data->enable_membership_card = 'false';
+            } else {
+                $data->enable_membership_card = $setting->setting_value;
+            }
+
             $data->total_records = $totalUsers;
             $data->returned_records = count($listOfUsers);
             $data->records = $listOfUsers;
