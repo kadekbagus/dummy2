@@ -2345,7 +2345,7 @@ class EmployeeAPIController extends ControllerAPI
                         ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
@@ -2362,7 +2362,7 @@ class EmployeeAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
