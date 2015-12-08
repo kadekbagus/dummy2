@@ -398,30 +398,30 @@ class TenantAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'name'                 => $name,
-                    'external_object_id'   => $external_object_id,
-                    'status'               => $status,
-                    'parent_id'            => $parent_id,
-                    /* 'country'              => $country, */
-                    'url'                  => $url,
+                    'name'                => $name,
+                    'external_object_id'  => $external_object_id,
+                    'status'              => $status,
+                    'parent_id'           => $parent_id,
+                    /* 'country'          => $country, */
+                    'url'                 => $url,
                     'id_language_default' => $id_language_default,
-                    'masterbox_number'  => $masterbox_number,
-                    'box_url'              => $box_url
+                    'masterbox_number'    => $masterbox_number,
+                    'box_url'             => $box_url
                 ),
                 array(
-                    'name'                 => 'required',
-                    'box_url'              => 'orbit.formaterror.url.web',
-                    'external_object_id'   => 'required',
-                    'status'               => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $parent_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
-                    'parent_id'            => 'required|orbit.empty.mall',
-                    /* 'country'              => 'numeric', */
-                    'url'                  => 'orbit.formaterror.url.web',
+                    'name'                => 'required',
+                    'box_url'             => 'orbit.formaterror.url.web',
+                    'external_object_id'  => 'required',
+                    'status'              => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $parent_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
+                    'parent_id'           => 'required|orbit.empty.mall',
+                    /* 'country'          => 'numeric', */
+                    'url'                 => 'orbit.formaterror.url.web',
                     'id_language_default' => 'required|orbit.empty.language_default',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . $parent_id . ',' . '',
+                    'masterbox_number'    => 'orbit_unique_verification_number:' . $parent_id . ',' . '',
                 ),
                 array(
                     //ACL::throwAccessForbidden($message);
-                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.',
+                    'orbit_unique_verification_number' => 'The verification number already used by other.',
                     'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
                )
@@ -786,7 +786,7 @@ class TenantAPIController extends ControllerAPI
                     'orbit.exists.tenant_on_inactive_have_linked' => Lang::get('validation.orbit.exists.tenant_on_inactive_have_linked'),
                     'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
-                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
+                    'orbit_unique_verification_number' => 'The verification number already used by other.'
                 //ACL::throwAccessForbidden($message);
                )
             );
@@ -2134,14 +2134,21 @@ class TenantAPIController extends ControllerAPI
             // Current Mall
             $parent_id = $parameters[0];
             $tenant_id = $parameters[1];
-            // Check the tenants which has verification number posted
-            $tenant = Tenant::excludeDeleted()
-                      ->where('object_type', 'tenant')
-                      ->where('masterbox_number', $value)
-                      ->where('parent_id', $parent_id)
-                      ->first();
 
-            if (! empty($tenant) && $tenant->merchant_id !== $tenant_id) {
+            // Check the tenants which has verification number posted
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $parent_id)
+                    ->first();
+
+            // Check verification number tenant with cs verification number
+            $csVerificationNumber = UserVerificationNumber::
+                    where('verification_number', $value)
+                    ->where('merchant_id', $parent_id)
+                    ->first();
+
+            if ( (! empty($tenantVerificationNumber) && $tenantVerificationNumber->merchant_id !== $tenant_id) || ! empty($csVerificationNumber)) {
                 return FALSE;
             }
 

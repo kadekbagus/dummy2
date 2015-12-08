@@ -2575,16 +2575,23 @@ class EmployeeAPIController extends ControllerAPI
         Validator::extend('orbit.exist.verification.numbers', function ($attribute, $value, $parameters) {
             $merchant_id = $parameters[0];
 
-            $verificationNumber = UserVerificationNumber::
+            $csVerificationNumber = UserVerificationNumber::
                         where('verification_number', $value)
                         ->where('merchant_id', $merchant_id)
                         ->first();
 
-            if (!empty($verificationNumber)) {
+            // Check the tenants which has verification number posted
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $merchant_id)
+                    ->first();
+
+            if (! empty($verificationNumber) || ! empty($tenantVerificationNumber)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exist.verification.numbers', $verificationNumber);
+            App::instance('orbit.exist.verification.numbers', $csVerificationNumber);
 
             return TRUE;
         });
@@ -2594,17 +2601,24 @@ class EmployeeAPIController extends ControllerAPI
             $merchant_id = $parameters[0];
             $user_id = $parameters[1];
 
-            $verificationNumber = UserVerificationNumber::
+            $csVerificationNumber = UserVerificationNumber::
                         where('verification_number', $value)
                         ->where('merchant_id', $merchant_id)
                         ->where('user_id', '!=', $user_id)
                         ->first();
 
-            if (!empty($verificationNumber)) {
+            // Check the tenants which has verification number posted
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $merchant_id)
+                    ->first();
+
+            if (! empty($csVerificationNumber) || ! empty($tenantVerificationNumber)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exist.verification.numbers', $verificationNumber);
+            App::instance('orbit.exist.verification.numbers', $csVerificationNumber);
 
             return TRUE;
         });
