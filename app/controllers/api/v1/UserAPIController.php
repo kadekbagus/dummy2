@@ -3539,10 +3539,10 @@ class UserAPIController extends ControllerAPI
 
             if ($role_name !== '') {
                 $user = $user->where('user_role_id', '=', function($q) use ($role_name) {
-                    $q->select('role_id')
-                        ->from('roles')
-                        ->where('role_name', $role_name);
-                });
+                            $q->select('role_id')
+                                ->from('roles')
+                                ->where('role_name', $role_name);
+                        });
             }
 
             $user = $user->first();

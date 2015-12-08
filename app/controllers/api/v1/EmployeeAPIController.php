@@ -374,7 +374,8 @@ class EmployeeAPIController extends ControllerAPI
                     'password_confirmation'   => $password2,
                     'employee_role'           => $employeeRole,
                     'retailer_ids'            => $retailerIds,
-                    'status'                  => $empStatus
+                    'status'                  => $empStatus,
+                    'cs_verification_numbers' => $csVerificationNumbers
                 ),
                 array(
                     'current_mall'            => 'required|orbit.empty.mall',
@@ -391,7 +392,7 @@ class EmployeeAPIController extends ControllerAPI
                 ),
                 array(
                     'orbit.empty.employee.role'        => $errorMessage['orbit.empty.employee.role'],
-                    'orbit.exist.verification.numbers' => 'Verifications number exist',
+                    'orbit.exist.verification.numbers' => 'The verification number already used by other.',
                 )
             );
 
@@ -958,7 +959,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'orbit.empty.employee.role'               => $errorMessage['orbit.empty.employee.role'],
                     'orbit.exists.employeeid_but_me'          => $errorMessage['orbit.exists.employeeid_but_me'],
-                    'orbit.exist.verification.numbers_but_me' => 'Verifications number exist',
+                    'orbit.exist.verification.numbers_but_me' => 'The verification number already used by other.',
                 )
             );
 
