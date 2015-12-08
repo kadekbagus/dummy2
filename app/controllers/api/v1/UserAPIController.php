@@ -3353,7 +3353,7 @@ class UserAPIController extends ControllerAPI
 
             $mall = App::make('orbit.empty.mall');
 
-            if ($check) {
+            if (! $check) {
                 $user = User::excludeDeleted('users')
                             ->Consumers()
                             ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
@@ -3389,7 +3389,7 @@ class UserAPIController extends ControllerAPI
 
             App::instance('membership_number_exists_but_me', $membershipNumbers);
 
-            if ($check) {
+            if (! $check) {
                 $user = User::excludeDeleted('users')
                             ->Consumers()
                             ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
