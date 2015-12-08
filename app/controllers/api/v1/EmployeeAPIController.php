@@ -393,6 +393,7 @@ class EmployeeAPIController extends ControllerAPI
                 array(
                     'orbit.empty.employee.role'        => $errorMessage['orbit.empty.employee.role'],
                     'orbit.exist.verification.numbers' => 'The verification number already used by other.',
+                    'alpha_num' => 'The verification number must letter and number.',
                 )
             );
 
@@ -960,6 +961,7 @@ class EmployeeAPIController extends ControllerAPI
                     'orbit.empty.employee.role'               => $errorMessage['orbit.empty.employee.role'],
                     'orbit.exists.employeeid_but_me'          => $errorMessage['orbit.exists.employeeid_but_me'],
                     'orbit.exist.verification.numbers_but_me' => 'The verification number already used by other.',
+                    'alpha_num' => 'The verification number must letter and number.',
                 )
             );
 
