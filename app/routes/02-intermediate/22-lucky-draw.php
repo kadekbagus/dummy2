@@ -71,3 +71,8 @@ Route::post('/app/v1/lucky-draw-prize/update', 'IntermediateAuthController@Lucky
  */
 Route::get('/app/v1/lucky-draw-prize/{search}', 'IntermediateAuthController@LuckyDraw_getSearchLuckyDrawPrize')
      ->where('search', '(list|search)');
+
+/**
+ * Bulk Update lucky draw prize
+ */
+Route::post('/app/v1/lucky-draw-prize/bulk-update', 'IntermediateAuthController@LuckyDraw_postNewAndUpdateLuckyDrawPrize');

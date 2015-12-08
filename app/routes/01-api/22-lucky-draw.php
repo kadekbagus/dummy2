@@ -106,3 +106,11 @@ Route::get('/api/v1/lucky-draw-prize/{search}', function()
 {
     return LuckyDrawAPIController::create()->getSearchLuckyDrawPrize();
 })->where('search', '(list|search)');
+
+/**
+ * Bulk Update lucky draw prize
+ */
+Route::post('/api/v1/lucky-draw-prize/bulk-update', function()
+{
+    return LuckyDrawAPIController::create()->postNewAndUpdateLuckyDrawPrize();
+});
