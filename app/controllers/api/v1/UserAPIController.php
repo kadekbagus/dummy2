@@ -3364,7 +3364,7 @@ class UserAPIController extends ControllerAPI
                             ->where('membership_numbers.membership_number', $value);
 
                 if ($user->first()) {
-                    $errorMessage = 'Membership number already exists.';
+                    $errorMessage = 'Membership number has already been exists.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -3405,7 +3405,7 @@ class UserAPIController extends ControllerAPI
                 }
 
                 if ($user->first()) {
-                    $errorMessage = 'Membership number already exists.';
+                    $errorMessage = 'Membership number has already been exists.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
