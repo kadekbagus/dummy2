@@ -2777,13 +2777,10 @@ class LuckyDrawAPIController extends ControllerAPI
                     'mall_id'                  => 'required|orbit.empty.mall',
                     'lucky_draw_prize_id'      => 'required|orbit.empty.lucky_draw_prize',
                     'lucky_draw_id'            => 'required|orbit.empty.lucky_draw',
-                    'prize_name'               => 'required|max:255|lucky_draw_prize_name_exists_but_me:' . $lucky_draw_prize_id . ',' . $lucky_draw_id,
+                    'prize_name'               => 'required|max:255',
                     'winner_number'            => 'required|numeric',
                     'order'                    => 'numeric',
                     'status'                   => 'required|orbit.empty.lucky_draw_status',
-                ),
-                array(
-                    'lucky_draw_prize_name_exists_but_me' => 'Prize name already exist for this lucky draw campaign.',
                 )
             );
 
@@ -3319,11 +3316,9 @@ class LuckyDrawAPIController extends ControllerAPI
                     $validator = Validator::make(
                         array(
                             'lucky_draw_prize_id'       => $prize->lucky_draw_prize_id,
-                            'prize_name'               => $prize->prize_name,
                         ),
                         array(
                             'lucky_draw_prize_id'       => 'required|orbit.empty.lucky_draw_prize',
-                            'prize_name'               => 'required|max:255|lucky_draw_prize_name_exists_but_me:' . $prize->lucky_draw_prize_id . ',' . $lucky_draw_id,
                         )
                     );
 
@@ -3338,15 +3333,21 @@ class LuckyDrawAPIController extends ControllerAPI
                     Event::fire('orbit.luckydraw.postnewluckydrawprize.individual.lucky_draw_prize_id.after.validation', array($this, $validator));
 
                     $lucky_draw_prize = LuckyDrawPrize::excludeDeleted()->where('lucky_draw_prize_id', $prize->lucky_draw_prize_id)->first();
-                    $lucky_draw_prize->prize_name = $prize->prize_name;
-                    $lucky_draw_prize->winner_number = $prize->winner_number;
-                    $lucky_draw_prize->lucky_draw_id = $lucky_draw_id;
-                    $lucky_draw_prize->order = $prize->order;
-                    $lucky_draw_prize->status = $prize->status;
-                    $lucky_draw_prize->modified_by = $this->api->user->user_id;
-                    $lucky_draw_prize->save();
-                } else {
 
+                    // delete the prize
+                    if (isset($prize->delete)) {
+                        $lucky_draw_prize->delete(TRUE);
+                    } else { // update the prize
+                        $lucky_draw_prize->prize_name = $prize->prize_name;
+                        $lucky_draw_prize->winner_number = $prize->winner_number;
+                        $lucky_draw_prize->lucky_draw_id = $lucky_draw_id;
+                        $lucky_draw_prize->order = $prize->order;
+                        $lucky_draw_prize->status = $prize->status;
+                        $lucky_draw_prize->modified_by = $this->api->user->user_id;
+                        $lucky_draw_prize->save();
+                        $lucky_draw_prizes[] = $lucky_draw_prize;
+                    }
+                } else { //create the prize
                     $lucky_draw_prize = new LuckyDrawPrize();
                     $lucky_draw_prize->prize_name = $prize->prize_name;
                     $lucky_draw_prize->winner_number = $prize->winner_number;
@@ -3356,8 +3357,8 @@ class LuckyDrawAPIController extends ControllerAPI
                     $lucky_draw_prize->created_by = $this->api->user->user_id;
                     $lucky_draw_prize->modified_by = $this->api->user->user_id;
                     $lucky_draw_prize->save();
+                    $lucky_draw_prizes[] = $lucky_draw_prize;
                 }
-                $lucky_draw_prizes[] = $lucky_draw_prize;
             }
 
             Event::fire('orbit.postnewupdateluckydrawprize.after.save', array($this, $lucky_draw_prize));
