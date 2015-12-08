@@ -737,11 +737,11 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('is_all_retailer', function($is_all_retailer) use ($updatedcoupon) {
                 $updatedcoupon->is_all_retailer = $is_all_retailer;
-                // if ($is_all_retailer == 'Y') {
-                //     $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
-                //     $updatedcoupon->tenants()->detach($deleted_retailer_ids);
-                //     $updatedcoupon->load('tenants');
-                // }
+                if ($is_all_retailer == 'Y') {
+                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $updatedcoupon->tenants()->detach($deleted_retailer_ids);
+                    $updatedcoupon->load('tenants');
+                }
             });
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
@@ -1453,8 +1453,7 @@ class CouponAPIController extends ControllerAPI
                         WHEN 'cart_discount_by_percentage' THEN discount_value * 100
                         WHEN 'product_discount_by_percentage' THEN discount_value * 100
                         ELSE discount_value
-                    END AS 'display_discount_value',
-                    {$table_prefix}merchants.name as retailer_name
+                    END AS 'display_discount_value'
                     "),
                     DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
                     DB::raw("CASE WHEN {$table_prefix}promotions.end_date IS NOT NULL THEN
@@ -1470,8 +1469,6 @@ class CouponAPIController extends ControllerAPI
                     END as 'coupon_status'")
                 )
                 ->joinPromotionRules()
-                ->joinPromotionRetailer()
-                ->joinMerchant()
                 ->groupBy('promotions.promotion_id');
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
@@ -1952,6 +1949,7 @@ class CouponAPIController extends ControllerAPI
                 ->first();
 
             $redeem_retailer_id = NULL;
+            $redeem_user_id = NULL;
             if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
                 // @Todo replace with language
                 $message = 'Tenant is not found.';
@@ -1961,7 +1959,7 @@ class CouponAPIController extends ControllerAPI
                     $redeem_retailer_id = $tenant->merchant_id;
                 }
                 if (is_object($csVerificationNumber)) {
-                    $redeem_retailer_id = $mall_id;
+                    $redeem_user_id = $csVerificationNumber->user_id;
                 }
             }
 
@@ -1973,6 +1971,7 @@ class CouponAPIController extends ControllerAPI
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
             $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
+            $issuedcoupon->redeem_user_id = $redeem_user_id;
             $issuedcoupon->redeem_verification_code = $verificationNumber;
             $issuedcoupon->status = 'redeemed';
 

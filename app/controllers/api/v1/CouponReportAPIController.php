@@ -66,6 +66,7 @@ class CouponReportAPIController extends ControllerAPI
      * ----------------------
      * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status.
      * @param string   `sortmode`              (optional) - ASC or DESC
+     * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant only
      * @param integer  `take`                  (optional) - Limit
      * @param integer  `skip`                  (optional) - Limit offset
      *
@@ -111,6 +112,8 @@ class CouponReportAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby');
 
             $configMallId = OrbitInput::get('current_mall');
+
+            $redeemedBy = OrbitInput::get('redeemed_by');
 
             $this->registerCustomValidation();
 
@@ -159,39 +162,73 @@ class CouponReportAPIController extends ControllerAPI
             // Builder object
             $now = date('Y-m-d H:i:s');
             $prefix = DB::getTablePrefix();
-            $coupons = Coupon::select('promotions.promotion_id', 'promotions.merchant_id as mall_id', 'promotions.is_coupon', 'promotions.promotion_name',
-                                      'promotions.begin_date', 'promotions.end_date', 'merchants.name as retailer_name',
-                                      DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
-                                      DB::raw("issued.*"),
-                                      DB::raw("redeemed.*"),
-                                      DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
-                                                    CASE WHEN
-                                                        DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
-                                                    WHEN
-                                                        {$prefix}promotions.end_date < '{$now}' THEN 'expired'
+            $coupons = null;
+            if ($redeemedBy === 'tenant') {
+                $coupons = Coupon::select('promotions.promotion_id', 'promotions.merchant_id as mall_id', 'promotions.is_coupon', 'promotions.promotion_name',
+                                          'promotions.begin_date', 'promotions.end_date', 'merchants.name as retailer_name',
+                                          DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
+                                          DB::raw("issued.*"),
+                                          DB::raw("redeemed.*"),
+                                          DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
+                                                        CASE WHEN
+                                                            DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
+                                                        WHEN
+                                                            {$prefix}promotions.end_date < '{$now}' THEN 'expired'
+                                                        ELSE
+                                                            {$prefix}promotions.status
+                                                        END
                                                     ELSE
                                                         {$prefix}promotions.status
-                                                    END
-                                                ELSE
-                                                    {$prefix}promotions.status
-                                                END as 'coupon_status'"), 'promotions.status')
-                            ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
-                                              from {$prefix}issued_coupons ic
-                                              where ic.status = 'active' or ic.status = 'redeemed'
-                                              group by promotion_id) issued"),
-                            // On
-                            DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
+                                                    END as 'coupon_status'"), 'promotions.status')
+                                ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                                ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
+                                                  from {$prefix}issued_coupons ic
+                                                  where ic.status = 'active' or ic.status = 'redeemed'
+                                                  group by promotion_id) issued"),
+                                // On
+                                DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
 
-                            ->join(DB::raw("(select promotion_id, redeem_retailer_id, count(promotion_id) as total_redeemed
-                                                from {$prefix}issued_coupons ic
-                                                where ic.status = 'redeemed'
-                                                group by promotion_id, redeem_retailer_id) redeemed"),
-                            // On
-                            DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
+                                ->join(DB::raw("(select promotion_id, redeem_retailer_id, count(promotion_id) as total_redeemed
+                                                    from {$prefix}issued_coupons ic
+                                                    where ic.status = 'redeemed'
+                                                    group by promotion_id, redeem_retailer_id) redeemed"),
+                                // On
+                                DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
+                                ->join('merchants', 'merchants.merchant_id', '=', DB::raw('redeemed.redeem_retailer_id'));
+            } elseif ($redeemedBy === 'cs') {
+                $coupons = Coupon::select('promotions.promotion_id', 'promotions.merchant_id as mall_id', 'promotions.is_coupon', 'promotions.promotion_name',
+                                          'promotions.begin_date', 'promotions.end_date',
+                                          DB::raw('CONCAT(user_firstname, " ", user_lastname) AS retailer_name'),
+                                          DB::raw("CASE {$prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
+                                          DB::raw("issued.*"),
+                                          DB::raw("redeemed.*"),
+                                          DB::raw("CASE WHEN {$prefix}promotions.end_date IS NOT NULL THEN
+                                                        CASE WHEN
+                                                            DATE_FORMAT({$prefix}promotions.end_date, '%Y-%m-%d %H:%i:%s') = '0000-00-00 00:00:00' THEN {$prefix}promotions.status
+                                                        WHEN
+                                                            {$prefix}promotions.end_date < '{$now}' THEN 'expired'
+                                                        ELSE
+                                                            {$prefix}promotions.status
+                                                        END
+                                                    ELSE
+                                                        {$prefix}promotions.status
+                                                    END as 'coupon_status'"), 'promotions.status')
+                                ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                                ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
+                                                  from {$prefix}issued_coupons ic
+                                                  where ic.status = 'active' or ic.status = 'redeemed'
+                                                  group by promotion_id) issued"),
+                                // On
+                                DB::raw('issued.promotion_id'), '=', 'promotions.promotion_id')
 
-                            ->join('merchants', 'merchants.merchant_id', '=', DB::raw('redeemed.redeem_retailer_id'));
-
+                                ->join(DB::raw("(select promotion_id, redeem_user_id, count(promotion_id) as total_redeemed
+                                                    from {$prefix}issued_coupons ic
+                                                    where ic.status = 'redeemed'
+                                                    group by promotion_id, redeem_user_id) redeemed"),
+                                // On
+                                DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
+                                ->join('users', 'users.user_id', '=', DB::raw('redeemed.redeem_user_id'));
+            }
 
             // Filter by mall id
             OrbitInput::get('mall_id', function($mallId) use ($coupons, $configMallId) {
@@ -852,6 +889,7 @@ class CouponReportAPIController extends ControllerAPI
      * @author Rio Astamal <me@rioastamal.net>
      * @author Tian <tian@dominopos.com>
      * @author Irianto Pratama <irianto@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
