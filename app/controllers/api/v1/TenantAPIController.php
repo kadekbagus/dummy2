@@ -417,7 +417,7 @@ class TenantAPIController extends ControllerAPI
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
                     'id_language_default' => 'required|orbit.empty.language_default',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . $parent_id . ',' . '',
+                    'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $parent_id . ',' . '',
                 ),
                 array(
                     //ACL::throwAccessForbidden($message);
@@ -778,7 +778,7 @@ class TenantAPIController extends ControllerAPI
                     'status'            => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
+                    'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
                     'category_ids'      => 'array'
                 ),
                 array(
