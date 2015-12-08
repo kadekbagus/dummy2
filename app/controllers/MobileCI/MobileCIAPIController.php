@@ -1231,8 +1231,9 @@ class MobileCIAPIController extends ControllerAPI
         if (! $user) {
             throw new Exception('Session error: user not found.');
         } else {
-            if (count($user->membership_numbers)) {
-                $user->membership_number = $user->membership_numbers[0]->membership_number;
+            $_user = clone($user);
+            if (count($_user->membershipNumbers)) {
+               $user->membership_number = $_user->membershipNumbers[0]->membership_number;
             }
         }
 
@@ -3863,6 +3864,7 @@ class MobileCIAPIController extends ControllerAPI
             'payload' => $payload,
             'from' => $from,
             'full_data' => 'no',
+            'check_only' => 'no',
         ];
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);

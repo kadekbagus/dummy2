@@ -320,6 +320,12 @@ class IntermediateLoginController extends IntermediateBaseController
             }
             $params = CloudMAC::wrapDataFromCloud($params);
             $response->data = $params;
+            if ($check_only) {
+                if ($params['user_id'] != '') {
+                    // this is so that the frontend can display this (translated) error message
+                    $response->message = Lang::get('validation.orbit.email.exists');
+                }
+            }
             return $this->render($response);
         } else {
             // we use this to assemble a normalized URL.
