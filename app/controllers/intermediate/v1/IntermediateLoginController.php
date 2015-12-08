@@ -248,6 +248,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $payload = OrbitInput::get('payload', '');
         $from = OrbitInput::get('from', '');
         $full_data = OrbitInput::get('full_data', '');
+        $check_only = OrbitInput::get('check_only', '');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -259,25 +260,37 @@ class IntermediateLoginController extends IntermediateBaseController
             'payload' => $payload,
             'from' => $from,
             'full_data' => $full_data,
+            'check_only' => $check_only,
         ])) {
             return $this->displayValidationError();
         }
 
         $full_data = ($full_data === 'yes');
+        $check_only = ($check_only === 'yes');
 
         /** @var MobileCIAPIController $controllerAPI */
         $controllerAPI = MobileCIAPIController::create('raw');
-        $response = $controllerAPI->getCloudLogin(!$full_data);
+        $response = $controllerAPI->getCloudLogin(!$full_data, !$check_only);
 
         $params = ['status' => $response->status];
         if ($response->status === 'success') {
-            $params['user_id'] = $response->data->user_id;
-            $params['user_status'] = $response->data->user_status;
-            $params['user_detail_id'] = $response->data->user_detail_id;
-            $params['apikey_id'] = $response->data->apikey_id;
-            $params['user_email'] = $response->data->user_email;
-            $params['payload'] = $payload;
-            $params['user_acquisition_id'] = $response->data->user_acquisition_id;
+            if (isset($response->data->user_id)) {
+                $params['user_id'] = $response->data->user_id;
+                $params['user_status'] = $response->data->user_status;
+                $params['user_detail_id'] = $response->data->user_detail_id;
+                $params['apikey_id'] = $response->data->apikey_id;
+                $params['user_email'] = $response->data->user_email;
+                $params['payload'] = $payload;
+                $params['user_acquisition_id'] = $response->data->user_acquisition_id;
+            } else {
+                $params['user_id'] = '';
+                $params['user_status'] = '';
+                $params['user_detail_id'] = '';
+                $params['apikey_id'] = '';
+                $params['user_email'] = '';
+                $params['payload'] = '';
+                $params['user_acquisition_id'] = '';
+            }
         } else {
             $params['message'] = $response->message;
         }
@@ -287,17 +300,33 @@ class IntermediateLoginController extends IntermediateBaseController
             $response->status = $params['status'];
             $response->message = '';
             if ($params['status'] === 'success') {
-                // technically this will also serialize any *loaded* relation, but we are
-                // loading the entity from the ID without loading any relations.
-                $params['user'] = \User::find($params['user_id'])->toJson();
-                $params['user_detail'] = \UserDetail::find($params['user_detail_id'])->toJson();
-                // api key does not need syncing as it is one way only (cloud -> box) plus it contains
-                // secret data so...
-                // user personal interest is always reloaded as it should not conflict (???)
+                $params['user'] = '';
+                $params['user_detail'] = '';
+                if ($params['user_id'] !== '') {
+                    // technically this will also serialize any *loaded* relation, but we are
+                    // loading the entity from the ID without loading any relations.
+                    $u = \User::find($params['user_id']);
+                    if (isset($u)) {
+                        $params['user'] = $u->toJson();
+                    }
+                    $ud = \UserDetail::find($params['user_detail_id']);
+                    if (isset($ud)) {
+                        $params['user_detail'] = $ud->toJson();
+                    }
+                    // api key does not need syncing as it is one way only (cloud -> box) plus it contains
+                    // secret data so...
+                    // user personal interest is always reloaded as it should not conflict (???)
+                }
             }
             $params = CloudMAC::wrapDataFromCloud($params);
             $response->data = $params;
-            return $this->render($params);
+            if ($check_only) {
+                if ($params['user_id'] != '') {
+                    // this is so that the frontend can display this (translated) error message
+                    $response->message = Lang::get('validation.orbit.email.exists');
+                }
+            }
+            return $this->render($response);
         } else {
             // we use this to assemble a normalized URL.
             $params = CloudMAC::wrapDataFromCloud($params);

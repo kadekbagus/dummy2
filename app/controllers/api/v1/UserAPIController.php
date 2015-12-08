@@ -1819,6 +1819,22 @@ class UserAPIController extends ControllerAPI
             $listOfUsers = $users->get();
 
             $data = new stdclass();
+
+            // set enable_membership_card value from table settings
+            $settingName = 'enable_membership_card';
+
+            $setting = Setting::active()
+                              ->where('object_type', 'merchant')
+                              ->whereIn('object_id', $listOfMallIds)
+                              ->where('setting_name', $settingName)
+                              ->first();
+
+            if (empty($setting)) {
+                $data->enable_membership_card = 'false';
+            } else {
+                $data->enable_membership_card = $setting->setting_value;
+            }
+
             $data->total_records = $totalUsers;
             $data->returned_records = count($listOfUsers);
             $data->records = $listOfUsers;
@@ -3178,6 +3194,7 @@ class UserAPIController extends ControllerAPI
             $email = OrbitInput::get('email');
             $retailer_id = OrbitInput::get('current_mall');
             $from = OrbitInput::get('from');
+            $check_only = OrbitInput::get('check_only', 'no') === 'yes';
 
             $this->registerCustomValidation();
 
@@ -3207,6 +3224,7 @@ class UserAPIController extends ControllerAPI
                 'payload' => '',
                 'from' => $from,
                 'full_data' => 'yes',
+                'check_only' => $check_only ? 'yes' : 'no',
             ];
             $values = CloudMAC::wrapDataFromBox($values);
             $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
@@ -3517,13 +3535,17 @@ class UserAPIController extends ControllerAPI
 
             $user = User::excludeDeleted()
                         ->where('user_id', '!=', $user_id)
-                        ->where('user_email', '=', $value)
-                        ->where('user_role_id', '=', function($q) use ($role_name) {
-                            $q->select('role_id')
-                                ->from('roles')
-                                ->where('role_name', $role_name);
-                        })
-                        ->first();
+                        ->where('user_email', '=', $value);
+
+            if ($role_name !== '') {
+                $user = $user->where('user_role_id', '=', function($q) use ($role_name) {
+                    $q->select('role_id')
+                        ->from('roles')
+                        ->where('role_name', $role_name);
+                });
+            }
+
+            $user = $user->first();
 
             if (! empty($user)) {
                 return FALSE;
