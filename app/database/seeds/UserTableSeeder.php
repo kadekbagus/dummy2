@@ -10,13 +10,12 @@ class UserTableSeeder extends Seeder
     {
         // Super Admin account
         // -------------------
-        // Password file is stored on ./super-admin-password.config
-        $passwordFile = __DIR__ . DIRECTORY_SEPARATOR . 'super-admin-password.config';
-        if (! file_exists($passwordFile)) {
-            throw new Exception ("File ${passwordFile} not found.");
+        // Password taken from environment variables
+        if (! isset($_SERVER['ORBIT_SUPER_ADMIN_PASSWORD'])) {
+            throw new Exception('Missing ORBIT_SUPER_ADMIN_PASSWORD environment variable.');
         }
 
-        $password = trim(file_get_contents($passwordFile));
+        $password = $_SERVER['ORBIT_SUPER_ADMIN_PASSWORD'];
         $superAdminData = [
             'user_id'           => 1,
             'username'          => 'orbitadmin',

@@ -70,3 +70,42 @@ Event::listen('orbit.luckydraw.postupdateluckydraw.after.save', function($contro
     }
 
 });
+
+/**
+ * Listen on:    `orbit.luckydraw.after.translation.save`
+ * Purpose:      Handle file upload on lucky draw with language translation
+ *
+ * @author Ahmad Anshori <ahmad@dominopos.com>
+ *
+ * @param LuckyDrawAPIController $controller
+ * @param LuckyDrawTranslations $lucky_draw_translations
+ */
+Event::listen('orbit.luckydraw.after.translation.save', function($controller, $lucky_draw_translations)
+{
+    $image_id = $lucky_draw_translations->merchant_language_id;
+
+    $files = OrbitInput::files('image_translation_' . $image_id);
+    if (! $files) {
+        return;
+    }
+
+    $_POST['lucky_draw_translation_id'] = $lucky_draw_translations->lucky_draw_translation_id;
+    $_POST['lucky_draw_id'] = $lucky_draw_translations->lucky_draw_id;
+    $_POST['merchant_language_id'] = $lucky_draw_translations->merchant_language_id;
+    $response = UploadAPIController::create('raw')
+                                   ->setCalledFrom('luckydraw.translations')
+                                   ->postUploadLuckyDrawTranslationImage();
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+
+    unset($_POST['lucky_draw_translation_id']);
+    unset($_POST['lucky_draw_id']);
+    unset($_POST['merchant_language_id']);
+
+    $lucky_draw_translations->setRelation('media', $response->data);
+    $lucky_draw_translations->media = $response->data;
+    $lucky_draw_translations->image_translation = $response->data[0]->path;
+});

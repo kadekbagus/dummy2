@@ -48,7 +48,8 @@ class LuckyDrawNumber extends Eloquent
      * @author Rio Astamal <me@rioastamal.net>
      * @param  \Illuminate\Database\Eloquent\Builder  $builder
      */
-    public function scopeJoinReceipts($query) {
+    public function scopeJoinReceipts($query)
+    {
         $query->join('lucky_draw_number_receipt',
                      'lucky_draw_number_receipt.lucky_draw_number_id', '=',
                      'lucky_draw_numbers.lucky_draw_number_id')
@@ -66,11 +67,31 @@ class LuckyDrawNumber extends Eloquent
      * @author Rio Astamal <me@rioastamal.net>
      * @param  \Illuminate\Database\Eloquent\Builder  $builder
      */
-    public function scopeJoinLuckyDraw($query) {
+    public function scopeJoinLuckyDraw($query)
+    {
         $query->join('lucky_draws',
                      'lucky_draws.lucky_draw_id', '=',
                      'lucky_draw_numbers.lucky_draw_id');
 
         return $query;
+    }
+
+    /**
+     * Get last issued number
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param \Illuminate\Database\Eloquent\Builder  $builder
+     * @param LuckyDraw The lucky draw object
+     * @return NULL|int
+     */
+    public static function getLastIssuedNumber($query, $ld)
+    {
+        $last = DB::table('lucky_draw_number')
+                    ->where('status', '!=', 'deleted')
+                    ->where('lucky_draw_id', $ld->lucky_draw_id)
+                    ->lockForUpdate()
+                    ->max('lucky_draw_number_code');
+
+        return $last;
     }
 }
