@@ -3980,7 +3980,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('acquirer_id', $retailer->merchant_id)
                 ->lockForUpdate()->first();
 
-            if ($acq === null) {
+            if ($acq === null && $forceInsert) {
                 $acq = new \UserAcquisition();
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
@@ -4001,7 +4001,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
-                'user_acquisition_id' => $acq->user_acquisition_id,
+                'user_acquisition_id' => isset($acq) ? $acq->user_acquisition_id : '',
             ];
             $this->commit();
         } catch (ACLForbiddenException $e) {
