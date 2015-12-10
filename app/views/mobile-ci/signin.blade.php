@@ -325,7 +325,8 @@
             url:apiPath+'customer/login',
             data:{
                 email: $('#email').val().trim(),
-                payload: "{{{ Input::get('payload', '') }}}"
+                payload: "{{{ Input::get('payload', '') }}}",
+                mac_address: {{ json_encode(Input::get('mac_address', '')) }}
             }
         }).done(function(data, status, xhr) {
             orbit_login_processing = false;
