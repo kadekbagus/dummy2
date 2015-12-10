@@ -226,7 +226,7 @@ return array(
         'ask_our_tenant_employee'          => '我々のテナント従業員に尋ねてくださいまたはモールの顧客サービス',
         'validate'                         => '有効にする',
         'wrong_verification_number'        => '間違った確認番号',
-        'please_check_tenant'              => 'テナントの従業員又はモールのカスタマーサービスを確認してください。',
+        'please_check_tenant'              => 'テナントの従業員又はモールのカスタマーサービスを確認してください',
         'ok'                               => 'はい',
         'successful'                       => '成功した',
         'please_communicate'               => '以下の数をテナント従業員に 伝えてくださいまたはモールの顧客サービス',
