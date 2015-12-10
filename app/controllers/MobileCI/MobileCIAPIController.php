@@ -636,7 +636,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = ['email'];
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook']);
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'mac_address' => \Input::post('mac_address', '')]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
         $rerequest = '&auth_type=rerequest';
@@ -705,7 +705,7 @@ class MobileCIAPIController extends ControllerAPI
             'lname' => $lastName,
             'gender' => $gender,
             'login_from'  => 'facebook',
-            'mac' => '',
+            'mac' => \Input::get('mac_address', ''),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'is_captive' => 'yes',
             'recognized' => $recognized
@@ -2361,6 +2361,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-coupon-list', $view_data);
 
@@ -2697,7 +2698,8 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
-                'user_email' => $user->user_email
+                'user_email' => $user->user_email,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-promotion-list', $view_data);
 
