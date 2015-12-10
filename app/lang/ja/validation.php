@@ -274,6 +274,7 @@ return array(
             'hour_format'          => ':attribute 有効な日付ではありません.',
             'tenant_floor'          => 'Floor is required',
             'tenant_unit'          => 'Unit is required',
+            'lucky_draw_announcement' => 'The lucky draw announcement you specified is not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
@@ -388,6 +389,9 @@ return array(
             'update_lucky_draw'         => '抽選を更新',
             'delete_lucky_draw'         => '抽選を削除',
             'view_lucky_draw'           => '抽選を表示'
+        ),
+        'max' => array(
+            'total_issued_coupons' => 'ja:Number can not be less than current total issued coupons',
         ),
     ),
 
