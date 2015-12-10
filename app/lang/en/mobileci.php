@@ -226,7 +226,7 @@ return array(
         'ask_our_tenant_employee'          => '(Ask our tenant employee or mall customer service)',
         'validate'                         => 'Enter',
         'wrong_verification_number'        => 'Wrong Verification Number',
-        'please_check_tenant'              => 'Please check the tenant employee or mall customer service',
+        'please_check_tenant'              => 'Please check with the tenant employee or mall customer service',
         'ok'                               => 'OK',
         'successful'                       => 'Successful',
         'please_communicate'               => 'Please communicate the following number to tenant employee or mall customer service',
