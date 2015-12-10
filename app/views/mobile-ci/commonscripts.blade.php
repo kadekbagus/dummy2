@@ -65,7 +65,6 @@
                 @endif
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-info" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button>
             </div>
         </div>
     </div>
