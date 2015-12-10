@@ -34,9 +34,9 @@
                     @if (! empty($user->membershipNumbers->first()) && ($user->membershipNumbers[0]->status === 'active'))
                     <div class="member-card">
                         @if (empty($user->membershipNumbers[0]->membership->media->first()))
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/membership_card_default.png') }}">
+                        <img class="img-responsive membership-card" src="{{ asset('mobile-ci/images/membership_card_default.png') }}">
                         @else
-                        <img class="img-responsive" src="{{ asset($user->membershipNumbers[0]->membership->media[0]->path) }}">
+                        <img class="img-responsive membership-card" src="{{ asset($user->membershipNumbers[0]->membership->media[0]->path) }}">
                         @endif
                         <h2>
                             <span>
