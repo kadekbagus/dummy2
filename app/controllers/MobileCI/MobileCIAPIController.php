@@ -3,6 +3,7 @@
 /**
  * An API controller for managing Mobile CI.
  */
+use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
@@ -119,10 +120,16 @@ class MobileCIAPIController extends ControllerAPI
                 if ($acq === null) {
                     $user = null;
                 }
-
             }
-            if (! is_object($user)) {
-                return $this->redirectToCloud($email, $retailer, $payload);
+
+            // if not from cloud callback we redirect to cloud if pending so cloud
+            // can resend activation email.
+            // if from cloud callback we do not redirect to cloud again
+            // cloud callback sends apikey_id (and other ids) in GET
+            $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
+
+            if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
+                return $this->redirectToCloud($email, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
                 return $this->loginStage2($user, $retailer);
             }
@@ -559,6 +566,7 @@ class MobileCIAPIController extends ControllerAPI
                 'display_name' => $display_name,
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
+                'mac' => $mac,
             ));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
@@ -573,6 +581,7 @@ class MobileCIAPIController extends ControllerAPI
                 'display_name' => $display_name,
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
+                'mac' => $mac,
             ));
         }
 
@@ -3535,6 +3544,22 @@ class MobileCIAPIController extends ControllerAPI
                 throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
             }
 
+            // if a valid MAC specified, associate the MAC with the given email if not associated yet
+            $mac = OrbitInput::get('mac_address', '');
+            if ($mac !== '') {
+                $addr_object = new MacAddr($mac);
+                if ($addr_object->isValid()) {
+                    $addr_entity = \MacAddress::excludeDeleted()->where('user_email', '=', $user->user_email)->where('mac_address', '=', $mac)->first();
+                    if ($addr_entity === null) {
+                        $addr_entity = new \MacAddress();
+                        $addr_entity->user_email = $user->user_email;
+                        $addr_entity->mac_address = $mac;
+                        $addr_entity->status = 'active';
+                        $addr_entity->save();
+                    }
+                }
+            }
+
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
             $user_detail->last_visit_shop_id = $retailer->merchant_id;
             $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
@@ -3749,15 +3774,20 @@ class MobileCIAPIController extends ControllerAPI
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer, $payload = '') {
+    private function redirectToCloud($email, $retailer, $payload = '', $from = '', $mac_address = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
         $url = Config::get('orbit.registration.mobile.cloud_login_url');
+
+        $callback_url = URL::route('customer-login-callback');
+        $callback_req = \Symfony\Component\HttpFoundation\Request::create(
+            $callback_url, 'GET', ['mac_address' => $mac_address]);
+
         $values = [
             'email' => $email,
             'retailer_id' => $retailer->merchant_id,
-            'callback_url' => URL::route('customer-login-callback'),
+            'callback_url' => $callback_req->getUri(),
             'payload' => $payload,
         ];
         $values = CloudMAC::wrapDataFromBox($values);
