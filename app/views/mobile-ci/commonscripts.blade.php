@@ -31,7 +31,7 @@
             </div>
             <div class="modal-body">
                 @if (! empty($user))
-                    @if (! empty($user->membershipNumbers->first()))
+                    @if (! empty($user->membershipNumbers->first()) && ($user->membershipNumbers[0]->status === 'active'))
                     <div class="member-card">
                         @if (empty($user->membershipNumbers[0]->membership->media->first()))
                         <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
