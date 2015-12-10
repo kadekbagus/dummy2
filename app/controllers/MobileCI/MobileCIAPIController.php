@@ -2361,6 +2361,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-coupon-list', $view_data);
 
@@ -2697,7 +2698,8 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
-                'user_email' => $user->user_email
+                'user_email' => $user->user_email,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-promotion-list', $view_data);
 
