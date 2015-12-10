@@ -59,6 +59,7 @@
             <form class="row" name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                 <div class="form-group">
                     <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}" />
+                    <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}" />
                     <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}" value="{{{ $orbitToFacebookOriginValue }}}" />
                 </div>
                 <div class="form-group">
