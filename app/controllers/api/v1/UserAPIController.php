@@ -2722,6 +2722,12 @@ class UserAPIController extends ControllerAPI
                     $m->join_date = $arg . ' 00:00:00';
                 });
 
+                if ((empty($membershipNumberCode)) && (empty($join_date))) {
+                    $m->status = 'inactive';
+                } else {
+                    $m->status = 'active';
+                }
+
                 $m->modified_by = $user->user_id;
                 $m->save();
             } else {
