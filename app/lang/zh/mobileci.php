@@ -217,6 +217,8 @@ return array(
     ),
 
     'coupon' => array(
+        'all_tenants'                      => 'zh : ALL TENANTS',
+        'all_cs'                           => 'zh : CUSTOMER SERVICE COUNTER',
         'tenant_based'                     => '基于租户',
         'mall_based'                       => '基于商城',
          'tenant_redeem'                   => '在哪里兑换',

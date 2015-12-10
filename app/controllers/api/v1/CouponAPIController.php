@@ -2507,6 +2507,7 @@ class CouponAPIController extends ControllerAPI
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
                         ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                        ->with('coupon')
                         ->first();
 
             if (empty($issuedCoupon)) {
@@ -2514,46 +2515,51 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // issued coupon with verification number check
-            $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
-                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                        ->where('issued_coupons.issued_coupon_id', $value)
-                        ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
-                        ->where('merchants.masterbox_number', $number)
-                        ->first();
-
-            // issued coupon with CS verification number
-            $csVerificationNumber = UserVerificationNumber::
-                        where('merchant_id', $mall_id)
-                        ->where('verification_number', $number)
-                        ->first();
-
-            if (! empty($csVerificationNumber)) {
-                $issuedCouponCS = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
-                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                        ->where('issued_coupons.issued_coupon_id', $value)
-                        ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
-                        ->where('merchants.parent_id', $csVerificationNumber->merchant_id)
-                        ->first();
+            //Checking verification number in cs and tenant verification number
+            //Checking in cs verification number first
+            if ($issuedCoupon->coupon->is_all_retailer === 'Y') {
+                $checkIssuedCoupon = Tenant::where('parent_id','=', $mall_id)
+                            ->where('status', 'active')
+                            ->where('masterbox_number', $number)
+                            ->first();
+            } elseif ($issuedCoupon->coupon->is_all_retailer === 'N') {
+                $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                            ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
+                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->where('issued_coupons.issued_coupon_id', $value)
+                            ->where('issued_coupons.user_id', $user->user_id)
+                            ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                            ->where('merchants.masterbox_number', $number)
+                            ->first();
             }
 
-            if (empty($issuedCoupon) && empty($issuedCouponCS)) {
-                if (empty($issuedCoupon)) {
-                    $errorMessage = Lang::get('mobileci.coupon.wrong_verification_number');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // Continue checking to tenant verification number
+            if (empty($checkIssuedCoupon)) {
+                // Checking tenant verification number
+                if ($issuedCoupon->coupon->is_all_employee === 'Y') {
+                    $checkIssuedCoupon = UserVerificationNumber::
+                                where('merchant_id', $mall_id)
+                                ->where('verification_number', $number)
+                                ->first();
+                } elseif ($issuedCoupon->coupon->is_all_employee === 'N') {
+                    $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                                ->join('promotion_employee', 'promotion_employee.promotion_id', '=', 'issued_coupons.promotion_id')
+                                ->join('user_verification_numbers', 'user_verification_numbers.user_id', '=', 'promotion_employee.user_id')
+                                ->where('issued_coupons.issued_coupon_id', $value)
+                                ->where('issued_coupons.user_id', $user->user_id)
+                                ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
+                                ->where('user_verification_numbers.verification_number', $number)
+                                ->first();
                 }
             }
 
-            if (! empty($issuedCoupon)) {
-                App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
+            if (! isset($checkIssuedCoupon) || empty($checkIssuedCoupon)) {
+                $errorMessage = Lang::get('mobileci.coupon.wrong_verification_number');
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (! empty($issuedCouponCS)) {
-                App::instance('orbit.empty.issuedcoupon', $issuedCouponCS);
+            if (! empty($checkIssuedCoupon)) {
+                App::instance('orbit.empty.issuedcoupon', $issuedCoupon);
             }
 
             return TRUE;

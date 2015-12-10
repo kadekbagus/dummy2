@@ -217,6 +217,8 @@ return array(
     ),
 
     'coupon' => array(
+        'all_tenants'                      => 'ALL TENANTS',
+        'all_cs'                           => 'CUSTOMER SERVICE COUNTER',
         'tenant_based'                     => 'Tenant Based',
         'mall_based'                       => 'Mall Based',
         'tenant_redeem'                    => 'Where to Reedem',

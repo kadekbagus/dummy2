@@ -217,6 +217,8 @@ return array(
     ),
 
     'coupon'         => array(
+        'all_tenants'                      => 'ja : ALL TENANTS',
+        'all_cs'                           => 'ja : CUSTOMER SERVICE COUNTER',
         'tenant_based'                     => 'テナント基づい',
         'mall_based'                       => 'モールベース',
         'tenant_redeem'                    => '交換する場所',
