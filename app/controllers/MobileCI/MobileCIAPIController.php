@@ -486,14 +486,22 @@ class MobileCIAPIController extends ControllerAPI
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
 
-        if (\Input::get('payload')) {
+        if (\Input::get('payload', false) !== false) {
             // has payload, clear out prev cookies
             $_COOKIE['orbit_firstname'] = '';
             $_COOKIE['orbit_email'] = '';
         }
+
+        $mac = \Input::get('mac_address', '');
+        /** @var \MacAddress $mac_model */
+        $mac_model = null;
+        if ($mac !== '') {
+            $mac_model = \MacAddress::excludeDeleted()->with('user')->where('mac_address', $mac)->orderBy('mac_addresses.created_at', 'desc')->first();
+        }
+
         $landing_url = URL::route('ci-customer-home');
-        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : '';
-        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : '';
+        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : (isset($mac_model) ? $mac_model->user->user_firstname : '');
+        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (isset($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
         $display_name = '';
 
