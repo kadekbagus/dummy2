@@ -2706,6 +2706,8 @@ class UserAPIController extends ControllerAPI
             // Save updated by
             $updateduser->modified_by = $this->api->user->user_id;
             $userdetail->modified_by = $this->api->user->user_id;
+            $updateduser->touch();
+
 
             /**
              * create/update membership number
