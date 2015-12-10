@@ -71,9 +71,16 @@
                     <li style="margin-bottom : 10px;">CUSTOMER SERVICE COUNTER</li>
                     @endif
 
-                    @foreach($tenants as $tenant)
-                        <li>{{ $tenant->tenant->name }}</li>
-                    @endforeach
+                    @if ($link_to_all_tenant === TRUE)
+                        @foreach($tenants as $tenant)
+                            <li>{{ $tenant->name }}</li>
+                        @endforeach
+                    @else
+                        @foreach($tenants as $tenant)
+                            <li>{{ $tenant->tenant->name }}</li>
+                        @endforeach
+                    @endif
+
                     @if(count($tenants) <=0)
                         <li> - </li>
                     @endif

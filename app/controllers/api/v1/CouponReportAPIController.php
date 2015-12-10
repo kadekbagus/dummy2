@@ -191,6 +191,7 @@ class CouponReportAPIController extends ControllerAPI
                                 ->join(DB::raw("(select promotion_id, redeem_retailer_id, count(promotion_id) as total_redeemed
                                                     from {$prefix}issued_coupons ic
                                                     where ic.status = 'redeemed'
+                                                    and ic.redeem_retailer_id != 'NULL'
                                                     group by promotion_id, redeem_retailer_id) redeemed"),
                                 // On
                                 DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
@@ -224,6 +225,7 @@ class CouponReportAPIController extends ControllerAPI
                                 ->join(DB::raw("(select promotion_id, redeem_user_id, count(promotion_id) as total_redeemed
                                                     from {$prefix}issued_coupons ic
                                                     where ic.status = 'redeemed'
+                                                    and ic.redeem_user_id != 'NULL'
                                                     group by promotion_id, redeem_user_id) redeemed"),
                                 // On
                                 DB::raw('redeemed.promotion_id'), '=', 'promotions.promotion_id')
@@ -260,6 +262,13 @@ class CouponReportAPIController extends ControllerAPI
             // Filter by Retailer name
             OrbitInput::get('retailer_name_like', function($name) use ($coupons) {
                 $coupons->where('merchants.name', 'like', "%$name%");
+            });
+
+            // Filter by Customer Service name (first + last name)
+            OrbitInput::get('cs_name_like', function($name) use ($coupons) {
+                // user_firstname, " ", user_lastname
+                $coupons->where(DB::raw('CONCAT(COALESCE(user_firstname, ""), " ", COALESCE(user_lastname, ""))'), 'like', "%$name%");
+                // $coupons->where('merchants.retailer_name', 'like', "%$name%");
             });
 
             // Filter by auto issue on sign up
