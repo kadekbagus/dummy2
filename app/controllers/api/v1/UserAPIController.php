@@ -2722,6 +2722,12 @@ class UserAPIController extends ControllerAPI
                     $m->join_date = $arg . ' 00:00:00';
                 });
 
+                if ((empty($membershipNumberCode)) && (empty($join_date))) {
+                    $m->status = 'inactive';
+                } else {
+                    $m->status = 'active';
+                }
+
                 $m->modified_by = $user->user_id;
                 $m->save();
             } else {
@@ -3366,7 +3372,7 @@ class UserAPIController extends ControllerAPI
 
             $mall = App::make('orbit.empty.mall');
 
-            if ($check) {
+            if (! $check) {
                 $user = User::excludeDeleted('users')
                             ->Consumers()
                             ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
@@ -3377,7 +3383,7 @@ class UserAPIController extends ControllerAPI
                             ->where('membership_numbers.membership_number', $value);
 
                 if ($user->first()) {
-                    $errorMessage = 'Membership number already exists.';
+                    $errorMessage = 'Membership number has already been exists.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -3402,7 +3408,7 @@ class UserAPIController extends ControllerAPI
 
             App::instance('membership_number_exists_but_me', $membershipNumbers);
 
-            if ($check) {
+            if (! $check) {
                 $user = User::excludeDeleted('users')
                             ->Consumers()
                             ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
@@ -3418,7 +3424,7 @@ class UserAPIController extends ControllerAPI
                 }
 
                 if ($user->first()) {
-                    $errorMessage = 'Membership number already exists.';
+                    $errorMessage = 'Membership number has already been exists.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -3552,10 +3558,10 @@ class UserAPIController extends ControllerAPI
 
             if ($role_name !== '') {
                 $user = $user->where('user_role_id', '=', function($q) use ($role_name) {
-                    $q->select('role_id')
-                        ->from('roles')
-                        ->where('role_name', $role_name);
-                });
+                            $q->select('role_id')
+                                ->from('roles')
+                                ->where('role_name', $role_name);
+                        });
             }
 
             $user = $user->first();

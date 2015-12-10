@@ -374,7 +374,8 @@ class EmployeeAPIController extends ControllerAPI
                     'password_confirmation'   => $password2,
                     'employee_role'           => $employeeRole,
                     'retailer_ids'            => $retailerIds,
-                    'status'                  => $empStatus
+                    'status'                  => $empStatus,
+                    'cs_verification_numbers' => $csVerificationNumbers
                 ),
                 array(
                     'current_mall'            => 'required|orbit.empty.mall',
@@ -383,15 +384,16 @@ class EmployeeAPIController extends ControllerAPI
                     'date_of_birth'           => 'date_format:Y-m-d',
                     'employee_id_char'        => 'orbit.exists.employeeid:' . $myRetailerIds,
                     'username'                => 'required|orbit.exists.username.mall',
-                    'password'                => 'required|min:5|confirmed',
+                    'password'                => 'required|min:6|confirmed',
                     'employee_role'           => 'required|orbit.empty.employee.role',
                     'retailer_ids'            => 'array|min:1|orbit.empty.retailer',
-                    'cs_verification_numbers' => 'orbit.exist.verification.numbers:' . $myRetailerIds ,
+                    'cs_verification_numbers' => 'alpha_num|orbit.exist.verification.numbers:' . $myRetailerIds ,
                     'status'                  => 'in:active,inactive'
                 ),
                 array(
                     'orbit.empty.employee.role'        => $errorMessage['orbit.empty.employee.role'],
-                    'orbit.exist.verification.numbers' => 'Verifications number exist',
+                    'orbit.exist.verification.numbers' => 'The verification number already used by other.',
+                    'alpha_num' => 'The verification number must letter and number.',
                 )
             );
 
@@ -952,13 +954,14 @@ class EmployeeAPIController extends ControllerAPI
                     'username'                => 'orbit.exists.username.mall_but_me',
                     'employee_id_char'        => 'orbit.exists.employeeid_but_me:' . $myRetailerIds . ',' . $userId,
                     'retailer_ids'            => 'array|min:1|orbit.empty.retailer',
-                    'cs_verification_numbers' => 'orbit.exist.verification.numbers_but_me:' . $myRetailerIds . ',' . $userId,
+                    'cs_verification_numbers' => 'alpha_num|orbit.exist.verification.numbers_but_me:' . $myRetailerIds . ',' . $userId,
                     'status'                  => 'orbit.empty.user_status',
                 ),
                 array(
                     'orbit.empty.employee.role'               => $errorMessage['orbit.empty.employee.role'],
                     'orbit.exists.employeeid_but_me'          => $errorMessage['orbit.exists.employeeid_but_me'],
-                    'orbit.exist.verification.numbers_but_me' => 'Verifications number exist',
+                    'orbit.exist.verification.numbers_but_me' => 'The verification number already used by other.',
+                    'alpha_num' => 'The verification number must letter and number.',
                 )
             );
 
@@ -2342,7 +2345,7 @@ class EmployeeAPIController extends ControllerAPI
                         ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
@@ -2359,7 +2362,7 @@ class EmployeeAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);

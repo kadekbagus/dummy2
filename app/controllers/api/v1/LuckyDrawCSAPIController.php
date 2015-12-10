@@ -1141,12 +1141,11 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                          DB::raw("(select count(ic.issued_coupon_id) from {$prefix}issued_coupons ic
                                                   where ic.promotion_id={$prefix}promotions.promotion_id
                                                   and ic.status!='deleted') as total_issued_coupon"))
-                                ->active('promotions')
                                 ->where('end_date', '>=', DB::raw('now()'))
                                 ->where('promotion_id', $couponId)->first();
 
-                if (empty($coupon)) {
-                    $errorMessage = sprintf('Coupon ID %s is not found.', $couponId);
+                if ($coupon->status !== 'active') {
+                    $errorMessage = sprintf('Coupon %s is not found.', $coupon->promotion_name);
                     OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
                 }
 
