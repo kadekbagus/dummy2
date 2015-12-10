@@ -111,7 +111,6 @@ class CouponAPIController extends ControllerAPI
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
-            $is_redeemed_at_cs = OrbitInput::post('is_redeemed_at_cs');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
@@ -229,7 +228,6 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->begin_date = $begin_date;
             $newcoupon->end_date = $end_date;
             $newcoupon->is_permanent = $is_permanent;
-            $newcoupon->is_redeemed_at_cs = $is_redeemed_at_cs;
             $newcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
             $newcoupon->maximum_issued_coupon = $maximum_issued_coupon;
             $newcoupon->coupon_validity_in_days = $coupon_validity_in_days;

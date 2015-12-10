@@ -417,13 +417,14 @@ class TenantAPIController extends ControllerAPI
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
                     'id_language_default' => 'required|orbit.empty.language_default',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . $parent_id . ',' . '',
+                    'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $parent_id . ',' . '',
                 ),
                 array(
                     //ACL::throwAccessForbidden($message);
-                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.',
+                    'orbit_unique_verification_number' => 'The verification number already used by other.',
                     'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
+                    'alpha_num' => 'The verification number must letter and number.',
                )
             );
 
@@ -778,7 +779,7 @@ class TenantAPIController extends ControllerAPI
                     'status'            => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
-                    'masterbox_number'  => 'orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
+                    'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
                     'category_ids'      => 'array'
                 ),
                 array(
@@ -786,7 +787,8 @@ class TenantAPIController extends ControllerAPI
                     'orbit.exists.tenant_on_inactive_have_linked' => Lang::get('validation.orbit.exists.tenant_on_inactive_have_linked'),
                     'orbit.empty.tenant_floor' => Lang::get('validation.orbit.empty.tenant_floor'),
                     'orbit.empty.tenant_unit' => Lang::get('validation.orbit.empty.tenant_unit'),
-                    'orbit_unique_verification_number' => 'The verification number already used by other tenant.'
+                    'orbit_unique_verification_number' => 'The verification number already used by other.',
+                    'alpha_num' => 'The verification number must letter and number.',
                 //ACL::throwAccessForbidden($message);
                )
             );
