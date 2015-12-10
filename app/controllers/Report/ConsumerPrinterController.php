@@ -78,18 +78,19 @@ class ConsumerPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $gender = $this->printGender($row);
-                    $customer_since = $this->printDateTime($row->first_visit_date, $timezone, 'no');
+                    $customerSince = $this->printDateTime($row->first_visit_date, $timezone, 'no');
                     $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
+                    $membershipJoinDate = $this->printDateTime($row->join_date, $timezone, 'no');
 
                     if ($flagMembershipEnable) {
                         printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),
-                            $gender, $row->phone, $customer_since, $row->join_date, $row->membership_number,
+                            $gender, $row->phone, $customerSince, $membershipJoinDate, $row->membership_number,
                             $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status), $lastUpdateDate);
                     }
                     else {
                         printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customer_since,
+                            '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customerSince,
                             $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status), $lastUpdateDate);
                     }
 

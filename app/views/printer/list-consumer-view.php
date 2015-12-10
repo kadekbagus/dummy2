@@ -144,7 +144,7 @@
                 <td><?php echo $me->printUtf8($row->phone); ?></td>
                 <td><?php echo $me->printDateTime($row->first_visit_date, $timezone, 'd F Y  H:i:s'); ?></td>
                 <?php if($flagMembershipEnable) { ?>
-                    <td><?php echo $me->printDateTime($row->join_date, $timezone, 'd F Y  H:i:s'); ?></td>
+                    <td><?php echo $me->printDateTime($row->join_date, $timezone, 'd F Y'); ?></td>
                     <td><?php echo ($row->membership_number); ?></td>
                 <?php } ?>
                 <td><?php echo ($row->total_usable_coupon); ?></td>
