@@ -202,7 +202,7 @@ class MembershipNumberAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'join_date'         => 'membership_numbers.join_date',
-                    'membership_name'   => 'membership.membership_name',
+                    'membership_name'   => 'membership_name',
                     'membership_number' => 'membership_numbers.membership_number',
                     'status'            => 'membership_numbers.status'
                 );
