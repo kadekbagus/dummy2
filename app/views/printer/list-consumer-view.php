@@ -124,16 +124,16 @@
         <thead>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Email </th>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Name</th>
-            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Gender</th>
-            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Mobile Phone</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Gender</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Mobile Phone</th>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">First Visit Date & Time</th>
             <?php if($flagMembershipEnable) { ?>
                 <th style="text-align:left; width:10%">Membership Join Date</th>
                 <th style="text-align:left; width:10%">Membership Number</th>
             <?php } ?>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Issued Coupon</th>
-            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Redeemed Coupon</th>
-            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Status</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Redeemed Coupon</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Status</th>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Last Update Date & Time</th>
         </thead>
         <tbody>
