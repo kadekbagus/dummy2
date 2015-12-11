@@ -70,7 +70,7 @@ return array(
         'delete_coupon_title'   => '删除优惠券',
         'close_cart_title'      => '关闭车',
         'reset_cart_title'      => '复位车',
-        'membership_title'      => '会员信息',
+        'membership_title'      => '会员',
         'language_title'        => '选语言',
         'activate_account'      => 'アカウントを有効に',
 
