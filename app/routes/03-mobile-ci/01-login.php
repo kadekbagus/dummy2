@@ -420,12 +420,26 @@ Route::group(
                     }]
                 );
 
+                Route::get(
+                    '/customer/luckydraws', ['as' => 'ci-luckydraw-list',
+                    function () {
+                        return MobileCI\MobileCIAPIController::create()->getLuckyDrawListView();
+                    }]
+                );
+
                 Route::post(
                     '/app/v1/customer/luckydrawnumberpopup',
                     function () {
 
                         return MobileCI\MobileCIAPIController::create()->postLuckyNumberPopup();
                     }
+                );
+
+                Route::get(
+                    '/customer/luckydraw-announcement', ['as' => 'ci-luckydraw-announcement',
+                    function () {
+                        return MobileCI\MobileCIAPIController::create()->getLuckyDrawAnnouncementView();
+                    }]
                 );
             }
         );

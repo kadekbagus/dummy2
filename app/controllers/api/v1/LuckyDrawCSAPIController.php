@@ -702,9 +702,10 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->commit();
 
             // Successfull Creation
-            $activity->setUser($user)
+            $activity->setUser($customer)
+                    ->setStaff($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw')
+                    ->setActivityNameLong('Lucky Draw Number Issuance')
                     ->setObject($luckyDraw)
                     ->responseOK();
 
@@ -1246,7 +1247,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                 ->where('promotion_id', $couponId)->first();
 
                 if ($coupon->status !== 'active') {
-                    $errorMessage = sprintf('Coupon %s is not found.', $coupon->promotion_name);
+                    $errorMessage = sprintf('%s is not found.', $coupon->promotion_name);
                     OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
                 }
 

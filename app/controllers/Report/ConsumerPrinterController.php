@@ -34,7 +34,7 @@ class ConsumerPrinterController extends DataPrinterController
             $flagMembershipEnable = true;
         }
 
-        // Instantiate the UserAPIController to get the query builder of Coupons
+        // Instantiate the UserAPIController to get the query builder of Users
         $response = UserAPIController::create('raw')
             ->setReturnBuilder(true)
             ->setDetail(true)
@@ -80,16 +80,16 @@ class ConsumerPrinterController extends DataPrinterController
                     $gender = $this->printGender($row);
                     $customerSince = $this->printDateTime($row->first_visit_date, $timezone, 'no');
                     $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
-                    $membershipJoinDate = $this->printDateTime($row->join_date, $timezone, 'no');
+                    $membershipJoinDate = $this->printDateTime($row->join_date, $timezone, 'Y-m-d');
 
                     if ($flagMembershipEnable) {
-                        printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),
                             $gender, $row->phone, $customerSince, $membershipJoinDate, $row->membership_number,
                             $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status), $lastUpdateDate);
                     }
                     else {
-                        printf("\"%s\",\"%s\",\"%s\", %s,\"%s\", %s,\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customerSince,
                             $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->status), $lastUpdateDate);
                     }
