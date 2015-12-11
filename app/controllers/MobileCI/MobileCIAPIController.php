@@ -2328,7 +2328,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Lucky Draw Detail')
-                ->setObject($luckydraw)
+                ->setObject($luckydraw, TRUE)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()
@@ -2456,7 +2456,7 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if (! empty($alternateLanguage) && ! empty($luckydraw->announcements)) {
+            if (! empty($alternateLanguage) && isset($luckydraw->announcements[0])) {
                 $luckyDrawAnnouncementTranslation = \LuckyDrawAnnouncementTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('lucky_draw_announcement_id', $luckydraw->announcements[0]->lucky_draw_announcement_id)
@@ -2511,7 +2511,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw_announcement')
                 ->setActivityNameLong('View Winning Numbers & Prizes')
-                ->setObject($luckydraw)
+                ->setObject($luckydraw, TRUE)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()

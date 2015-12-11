@@ -372,12 +372,15 @@ return array(
         'no_lucky_draw_number_1'    => '让您的抽奖号码吧！',
         'no_lucky_draw_number_2'    => '请就如何参与客户服务',
         'see_prizes'                => '见奖品',
+        'see_prizes_and_winner'     => '见奖品和获奖者',
         'prizes'                    => '奖品',
         'winners_and_prizes'        => '获奖者及奖品',
         'default_announcement_winner_title' => '恭喜所有获奖者钟爱',
         'information'               => '信息',
         'winning_numbers'           => '中奖号码',
-        'prizes_and_winners'        => '奖品和获奖者'
+        'prizes_and_winners'        => '奖品和获奖者',
+        'lucky_draw_prizes'         => '幸运抽奖',
+        'no_prize'                  => '该奖项即将到来'
     ),
 
     'tour' => array(

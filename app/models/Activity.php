@@ -299,12 +299,51 @@ class Activity extends Eloquent
      * @param Object $object
      * @return Activity
      */
-    public function setObject($object)
+    public function setObject($object, $setDisplayName = FALSE)
     {
         if (is_object($object)) {
             $primaryKey = $object->getKeyName();
             $this->object_id = $object->$primaryKey;
             $this->object_name = get_class($object);
+
+            if ($setDisplayName) {
+                switch (get_class($object)) {
+                    case 'News':
+                        $this->object_display_name = $object->news_name;
+                        break;
+
+                    case 'Promotion':
+                        $this->object_display_name = $object->promotion_name;
+                        break;
+
+                    case 'Merchant':
+                        $this->object_display_name = $object->name;
+                        break;
+                    
+                    case 'LuckyDraw':
+                        $this->object_display_name = $object->lucky_draw_name;
+                        break;
+
+                    case 'EventModel':
+                        $this->object_display_name = $object->event_name;
+                        break;
+
+                    case 'Event':
+                        $this->object_display_name = $object->event_name;
+                        break;
+
+                    case 'Object':
+                        $this->object_display_name = $object->object_name;
+                        break;
+
+                    case 'User':
+                        $this->object_display_name = $object->getFullName();
+                        break;
+
+                    default:
+                        break;
+                }
+            }
 
             $this->metadata_object = $object->toJSON();
         }
