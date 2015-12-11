@@ -372,12 +372,15 @@ return array(
         'no_lucky_draw_number_1'    => 'Get your lucky draw numbers now!',
         'no_lucky_draw_number_2'    => 'Check with customer service on how to participate',
         'see_prizes'                => 'See Prizes',
+        'see_prizes_and_winner'     => 'See Prizes &amp; Winners',
         'prizes'                    => 'Prizes',
         'winners_and_prizes'        => 'Winners &amp; Prizes',
         'default_announcement_winner_title' => 'Congratulations to all beloved winners',
         'information'               => 'Information',
         'winning_numbers'           => 'Winning Numbers',
-        'prizes_and_winners'        => 'Prizes &amp; Winners'
+        'prizes_and_winners'        => 'Prizes &amp; Winners',
+        'lucky_draw_prizes'         => 'Lucky Draw Prizes',
+        'no_prize'                  => 'The prize is coming soon'
     ),
 
     'tour' => array(
