@@ -1247,7 +1247,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                 ->where('promotion_id', $couponId)->first();
 
                 if ($coupon->status !== 'active') {
-                    $errorMessage = sprintf('Coupon %s is not found.', $coupon->promotion_name);
+                    $errorMessage = sprintf('%s is not found.', $coupon->promotion_name);
                     OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
                 }
 
