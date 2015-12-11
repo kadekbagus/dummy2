@@ -2327,7 +2327,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Page');
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
-                ->setActivityNameLong('View Lucky Draw')
+                ->setActivityNameLong('View Lucky Draw Detail')
                 ->setObject($luckydraw)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
@@ -2357,7 +2357,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
-                ->setActivityNameLong('View Lucky Draw')
+                ->setActivityNameLong('View Lucky Draw Detail')
                 ->setObject(null)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
@@ -2402,7 +2402,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('mall_id', $retailer->merchant_id)
                 ->where('lucky_draw_id', $lucky_draw_id)
                 ->first();
-// dd($luckydraw);
+
             $languages = $this->getListLanguages($retailer);
 
             if (empty($luckydraw)) {
@@ -2507,7 +2507,7 @@ class MobileCIAPIController extends ControllerAPI
                 $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.winners_and_prizes');
             }
 
-            $activityProductNotes = sprintf('Page viewed: Lucky Draw Announcement Page');
+            $activityProductNotes = sprintf('Page viewed: Lucky Draw Winning Numbers & Prizes');
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw_announcement')
                 ->setActivityNameLong('View Winning Numbers & Prizes')
@@ -2526,10 +2526,10 @@ class MobileCIAPIController extends ControllerAPI
                                 'ongoing'       => $ongoing
             ]);
         } catch (Exception $e) {
-            $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
+            $activityProductNotes = sprintf('Failed to view: Lucky Draw Winning Numbers & Prizes');
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
-                ->setActivityNameLong('View Lucky Draw')
+                ->setActivityNameLong('View Winning Numbers & Prizes')
                 ->setObject(null)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
