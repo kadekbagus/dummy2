@@ -34,6 +34,7 @@ return array(
         'news'               => '信息',
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
+        'lucky_draws'        => '抽奖',
     ),
 
     'widgets' => array(
@@ -69,7 +70,7 @@ return array(
         'delete_coupon_title'   => '删除优惠券',
         'close_cart_title'      => '关闭车',
         'reset_cart_title'      => '复位车',
-        'membership_title'      => '会员信息',
+        'membership_title'      => '会员',
         'language_title'        => '选语言',
         'activate_account'      => 'アカウントを有効に',
 
@@ -366,6 +367,19 @@ return array(
         'lucky_draw_total_info_5'   => '抽奖号码。它通过高排序，以最低的数字。',
         'lucky_draw_total_info_6'   => '您下载马上自动开始，如不下载，请点击下面按键。',
         'download_image'            => '下载图片',
+        'description'               => '描述',
+        'period'                    => '期',
+        'draw_date'                 => '抽奖日期',
+        'my_lucky_draw_number'      => '我的幸运抽奖号码',
+        'no_lucky_draw_number_1'    => '让您的抽奖号码吧！',
+        'no_lucky_draw_number_2'    => '请就如何参与客户服务',
+        'see_prizes'                => '见奖品',
+        'prizes'                    => '奖品',
+        'winners_and_prizes'        => '获奖者及奖品',
+        'default_announcement_winner_title' => '恭喜所有获奖者钟爱',
+        'information'               => '信息',
+        'winning_numbers'           => '中奖号码',
+        'prizes_and_winners'        => '奖品和获奖者'
     ),
 
     'tour' => array(

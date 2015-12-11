@@ -17,6 +17,14 @@ use Orbit\Helper\Email\MXEmailChecker;
 class UserAPIController extends ControllerAPI
 {
     /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+    protected $detailYes = FALSE;
+
+    /**
      * POST - Create new user
      *
      * @author <Ahmad Anshori> <ahmad@dominopos.com>
@@ -1475,7 +1483,7 @@ class UserAPIController extends ControllerAPI
             // Builder object
             $prefix = DB::getTablePrefix();
             $users = User::Consumers()
-                         ->select('users.user_id', 'users.username', 'users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_last_login', 'users.user_ip', 'users.user_role_id', 'users.status', 'users.remember_token', 'users.external_user_id', 'users.modified_by', 'users.created_at', 'users.updated_at')
+                         ->select('users.user_id', 'users.username', 'users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_last_login', 'users.user_ip', 'users.user_role_id', 'users.status', 'users.remember_token', 'users.external_user_id', 'users.modified_by', 'users.created_at', 'users.updated_at', 'user_details.gender', 'user_details.phone')
                          ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                          ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
                          ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
@@ -1495,7 +1503,7 @@ class UserAPIController extends ControllerAPI
                             });
                          }));
 
-            if ($details === 'yes') {
+            if ($details === 'yes' || $this->detailYes === true) {
                 $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name','activities.location_id',  DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
@@ -1742,29 +1750,32 @@ class UserAPIController extends ControllerAPI
             // skip, and order by
             $_users = clone $users;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            // if not printing / exporting data then do pagination.
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $users->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $users->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function ($_skip) use (&$skip, $users) {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function ($_skip) use (&$skip, $users) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $users->skip($skip);
+                    $skip = $_skip;
+                });
+                $users->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'users.created_at';
@@ -1814,6 +1825,11 @@ class UserAPIController extends ControllerAPI
             // }
 
             $users->orderBy($sortBy, $sortMode);
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $users, 'count' => RecordCounter::create($_users)->count()];
+            }
 
             $totalUsers = RecordCounter::create($_users)->count();
             $listOfUsers = $users->get();
@@ -2693,6 +2709,8 @@ class UserAPIController extends ControllerAPI
             // Save updated by
             $updateduser->modified_by = $this->api->user->user_id;
             $userdetail->modified_by = $this->api->user->user_id;
+            $updateduser->touch();
+
 
             /**
              * create/update membership number
@@ -2708,6 +2726,12 @@ class UserAPIController extends ControllerAPI
                 OrbitInput::post('join_date', function ($arg) use ($m) {
                     $m->join_date = $arg . ' 00:00:00';
                 });
+
+                if ((empty($membershipNumberCode)) && (empty($join_date))) {
+                    $m->status = 'inactive';
+                } else {
+                    $m->status = 'active';
+                }
 
                 $m->modified_by = $user->user_id;
                 $m->save();
@@ -3353,7 +3377,7 @@ class UserAPIController extends ControllerAPI
 
             $mall = App::make('orbit.empty.mall');
 
-            if ($check) {
+            if (! $check) {
                 $user = User::excludeDeleted('users')
                             ->Consumers()
                             ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
@@ -3364,7 +3388,7 @@ class UserAPIController extends ControllerAPI
                             ->where('membership_numbers.membership_number', $value);
 
                 if ($user->first()) {
-                    $errorMessage = 'Membership number already exists.';
+                    $errorMessage = 'Membership number has already been exists.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -3389,7 +3413,7 @@ class UserAPIController extends ControllerAPI
 
             App::instance('membership_number_exists_but_me', $membershipNumbers);
 
-            if ($check) {
+            if (! $check) {
                 $user = User::excludeDeleted('users')
                             ->Consumers()
                             ->join('membership_numbers', 'membership_numbers.user_id', '=', 'users.user_id')
@@ -3405,7 +3429,7 @@ class UserAPIController extends ControllerAPI
                 }
 
                 if ($user->first()) {
-                    $errorMessage = 'Membership number already exists.';
+                    $errorMessage = 'Membership number has already been exists.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -3539,10 +3563,10 @@ class UserAPIController extends ControllerAPI
 
             if ($role_name !== '') {
                 $user = $user->where('user_role_id', '=', function($q) use ($role_name) {
-                    $q->select('role_id')
-                        ->from('roles')
-                        ->where('role_name', $role_name);
-                });
+                            $q->select('role_id')
+                                ->from('roles')
+                                ->where('role_name', $role_name);
+                        });
             }
 
             $user = $user->first();
@@ -3680,4 +3704,17 @@ class UserAPIController extends ControllerAPI
         });
     }
 
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
+    }
+
+    public function setDetail($bool)
+    {
+        $this->detailYes = $bool;
+
+        return $this;
+    }
 }

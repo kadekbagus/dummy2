@@ -203,7 +203,7 @@
                     <div class="callbacks_container">
                         <ul class="rslides" @if($widget_singles->luckydraw->animation == 'horizontal') id="slider2" @endif>
                             <li>
-                                <a data-widget="{{ $widget_singles->luckydraw->widget_id }}" class="widget-link" href="{{ url('customer/luckydraw') }}">
+                                <a data-widget="{{ $widget_singles->luckydraw->widget_id }}" class="widget-link" href="{{ url('customer/luckydraws') }}">
                                     @if(!empty($widget_singles->luckydraw->media()->where('media_name_long', 'home_widget_resized_default')->first()))
                                     <img class="img-responsive text-center vcenter" src="{{ asset($widget_singles->luckydraw->media()->where('media_name_long', 'home_widget_resized_default')->first()->path) }}" />
                                     @else
@@ -228,7 +228,7 @@
                         <ul class="rslides">
                             <li>
                                 @if(! empty($widget_flags->enable_lucky_draw) && $widget_flags->enable_lucky_draw->setting_value == 'true')
-                                <a class="widget-link" data-widget="" href="{{ url('customer/luckydraw') }}">
+                                <a class="widget-link" data-widget="" href="{{ url('customer/luckydraws') }}">
                                 @else
                                 <a class="widget-link" data-widget="" id="emptyLuck">
                                 @endif

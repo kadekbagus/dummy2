@@ -56,6 +56,7 @@
             <form class="row" name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                 <div class="form-group">
                     <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}" />
+                    <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}" />
                     <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}" value="{{{ $orbitToFacebookOriginValue }}}" />
                 </div>
                 <div class="form-group">
@@ -325,7 +326,8 @@
             url:apiPath+'customer/login',
             data:{
                 email: $('#email').val().trim(),
-                payload: "{{{ Input::get('payload', '') }}}"
+                payload: "{{{ Input::get('payload', '') }}}",
+                mac_address: {{ json_encode(Input::get('mac_address', '')) }}
             }
         }).done(function(data, status, xhr) {
             orbit_login_processing = false;

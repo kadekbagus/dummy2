@@ -3,6 +3,7 @@
 /**
  * An API controller for managing Mobile CI.
  */
+use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
@@ -147,7 +148,7 @@ class MobileCIAPIController extends ControllerAPI
             $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
 
             if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
-                return $this->redirectToCloud($email, $retailer, $payload);
+                return $this->redirectToCloud($email, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
                 return $this->loginStage2($user, $retailer);
             }
@@ -456,6 +457,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'user' => $user
             );
+
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
@@ -486,14 +488,22 @@ class MobileCIAPIController extends ControllerAPI
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
 
-        if (\Input::get('payload')) {
+        if (\Input::get('payload', false) !== false) {
             // has payload, clear out prev cookies
             $_COOKIE['orbit_firstname'] = '';
             $_COOKIE['orbit_email'] = '';
         }
+
+        $mac = \Input::get('mac_address', '');
+        /** @var \MacAddress $mac_model */
+        $mac_model = null;
+        if ($mac !== '') {
+            $mac_model = \MacAddress::excludeDeleted()->with('user')->where('mac_address', $mac)->orderBy('mac_addresses.created_at', 'desc')->first();
+        }
+
         $landing_url = URL::route('ci-customer-home');
-        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : '';
-        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : '';
+        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : (isset($mac_model) ? $mac_model->user->user_firstname : '');
+        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (isset($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
         $display_name = '';
 
@@ -584,6 +594,7 @@ class MobileCIAPIController extends ControllerAPI
                 'display_name' => $display_name,
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
+                'mac' => $mac,
             ));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
@@ -598,6 +609,7 @@ class MobileCIAPIController extends ControllerAPI
                 'display_name' => $display_name,
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
+                'mac' => $mac,
             ));
         }
 
@@ -625,7 +637,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = ['email'];
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook']);
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'mac_address' => \Input::get('mac_address', '')]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
         $rerequest = '&auth_type=rerequest';
@@ -694,7 +706,7 @@ class MobileCIAPIController extends ControllerAPI
             'lname' => $lastName,
             'gender' => $gender,
             'login_from'  => 'facebook',
-            'mac' => '',
+            'mac' => \Input::get('mac_address', ''),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'is_captive' => 'yes',
             'recognized' => $recognized
@@ -747,6 +759,13 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
             $retailer = Mall::with('parent')->where('merchant_id', $retailer_id)->first();
+            $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$retailer_id)->first();
+
+            if (! empty($membership_card)){
+                $retailer->enable_membership=$membership_card->setting_value;
+            } else {
+                $retailer->enable_membership='false';
+            }
 
             return $retailer;
         } catch (ACLForbiddenException $e) {
@@ -2044,6 +2063,130 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * GET - Lucky draw list page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getLuckyDrawListView()
+    {
+        $user = null;
+        $activityPage = Activity::mobileci()
+            ->setActivityType('view');
+        try {
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            
+            $languages = $this->getListLanguages($retailer);
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $luckydraws = LuckyDraw::with('translations')
+                ->excludeDeleted()
+                ->where('mall_id', $retailer->merchant_id)
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime])
+                ->orderBy('status', 'asc')
+                ->orderBy('lucky_draw_id', 'desc')
+                ->get();
+
+            if (!empty($alternateLanguage) && !empty($luckydraws)) {
+                foreach ($luckydraws as $key => $val) {
+
+                    $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('lucky_draw_id', $val->lucky_draw_id)->first();
+
+                    if (!empty($luckyDrawTranslation)) {
+                        foreach (['lucky_draw_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($luckyDrawTranslation->{$field}) && $luckyDrawTranslation->{$field} !== '') {
+                                $val->{$field} = $luckyDrawTranslation->{$field};
+                            }
+                        }
+
+                        $media = $luckyDrawTranslation->find($luckyDrawTranslation->lucky_draw_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $val->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('lucky_draw_id', $val->lucky_draw_id)->first();
+
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
+                                    ->media_orig()
+                                    ->first();
+
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $val->image = $mediaDefaultLanguage->path;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($luckydraws->isEmpty()) {
+                $data = new stdclass();
+                $data->status = 0;
+            } else {
+                $data = new stdclass();
+                $data->status = 1;
+                $data->total_records = sizeof($luckydraws);
+                $data->returned_records = sizeof($luckydraws);
+                $data->records = $luckydraws;
+            }
+
+            $languages = $this->getListLanguages($retailer);
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'News List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_lucky_draw_list')
+                ->setActivityNameLong('View Lucky Draw List')
+                ->setObject(null)
+                ->setModuleName('LuckyDraw')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            $view_data = array(
+                'page_title'=> Lang::get('mobileci.page_title.lucky_draws'),
+                'retailer' => $retailer,
+                'data' => $data,
+                'active_user' => ($user->status === 'active'),
+                'languages' => $languages,
+                'user_email' => $user->user_email,
+                'user' => $user
+            );
+
+            return View::make('mobile-ci.luckydraws', $view_data);
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view: Lucky Draw List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_lucky_draw_list')
+                ->setActivityNameLong('View Lucky Draw List')
+                ->setObject(null)
+                ->setModuleName('Lucky Draw')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
      * GET - Lucky draw page
      *
      * @param integer    `id`        (required) - The product ID
@@ -2063,14 +2206,35 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
 
             $retailer = $this->getRetailerInfo();
-            $luckydraw = LuckyDraw::active()->where('mall_id', $retailer->merchant_id)->first();
+
+            $lucky_draw_id = OrbitInput::get('id');
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $luckydraw = LuckyDraw::with('translations', 'prizes')->excludeDeleted()->where('mall_id', $retailer->merchant_id)->where('lucky_draw_id', $lucky_draw_id)->first();
 
             $languages = $this->getListLanguages($retailer);
 
             if (empty($luckydraw)) {
-                return View::make('mobile-ci.luckydraw', [
-                                'page_title'    => 'LUCKY DRAW',
+                // return View::make('mobile-ci.luckydraw', [
+                //                 'page_title'    => 'LUCKY DRAW',
+                //                 'user'          => $user,
+                //                 'retailer'      => $retailer,
+                //                 'luckydraw'     => null,
+                //                 'numbers'       => [],
+                //                 'total_number'  => null,
+                //                 'prev_url'      => null,
+                //                 'next_url'      => null,
+                //                 'total_pages'   => null,
+                //                 'current_page'  => null,
+                //                 'per_page'      => null,
+                //                 'servertime'    => null,
+                // ]);
+
+                return View::make('mobile-ci.404', [
+                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
                                 'user'          => $user,
+                                'languages'     => $languages,
                                 'retailer'      => $retailer,
                                 'luckydraw'     => null,
                                 'numbers'       => [],
@@ -2082,6 +2246,47 @@ class MobileCIAPIController extends ControllerAPI
                                 'per_page'      => null,
                                 'servertime'    => null,
                 ]);
+            }
+
+            if (!empty($alternateLanguage) && !empty($luckydraw)) {
+                $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+
+                if (!empty($luckyDrawTranslation)) {
+                    foreach (['lucky_draw_name', 'description'] as $field) {
+                        //if field translation empty or null, value of field back to english (default)
+                        if (isset($luckyDrawTranslation->{$field}) && $luckyDrawTranslation->{$field} !== '') {
+                            $luckydraw->{$field} = $luckyDrawTranslation->{$field};
+                        }
+                    }
+
+                    $media = $luckyDrawTranslation->find($luckyDrawTranslation->lucky_draw_translation_id)
+                        ->media_orig()
+                        ->first();
+
+                    if (isset($media->path)) {
+                        $luckydraw->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        $defaultLanguage = $this->getDefaultLanguage($retailer);
+                        if ($defaultLanguage !== NULL) {
+                            $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $luckydraw->image = $mediaDefaultLanguage->path;
+                            }
+                        }
+                    }
+                }
             }
 
             // Pass information to the API
@@ -2130,7 +2335,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Page');
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
-                ->setActivityNameLong('View Lucky Draw')
+                ->setActivityNameLong('View Lucky Draw Detail')
                 ->setObject($luckydraw)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
@@ -2142,7 +2347,7 @@ class MobileCIAPIController extends ControllerAPI
             $servertime = Carbon::now($retailer->timezone->timezone_name);
 
             return View::make('mobile-ci.luckydraw', [
-                                'page_title'    => 'LUCKY DRAW',
+                                'page_title'    => $luckydraw->lucky_draw_name,
                                 'user'          => $user,
                                 'retailer'      => $retailer,
                                 'luckydraw'     => $luckydraw,
@@ -2160,7 +2365,179 @@ class MobileCIAPIController extends ControllerAPI
             $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
             $activityProduct->setUser($user)
                 ->setActivityName('view_lucky_draw')
-                ->setActivityNameLong('View Lucky Draw')
+                ->setActivityNameLong('View Lucky Draw Detail')
+                ->setObject(null)
+                ->setModuleName('Lucky Draw')
+                ->setNotes($activityProductNotes)
+                ->responseOK()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Lucky draw announcement page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getLuckyDrawAnnouncementView()
+    {
+        $user = null;
+        $product_id = 0;
+        $activityProduct = Activity::mobileci()
+                                   ->setActivityType('view');
+
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+
+            $lucky_draw_id = OrbitInput::get('id');
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $luckydraw = LuckyDraw::with(array('translations', 'prizes' => function ($q) {
+                    $q->with('winners.number.user')->orderBy('lucky_draw_prizes.order', 'asc');
+                }, 'announcements'))
+                ->excludeDeleted()
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime])
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('lucky_draw_id', $lucky_draw_id)
+                ->first();
+
+            $languages = $this->getListLanguages($retailer);
+
+            if (empty($luckydraw)) {
+                return View::make('mobile-ci.404', [
+                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                                'user'          => $user,
+                                'languages'     => $languages,
+                                'retailer'      => $retailer,
+                                'luckydraw'     => null
+                ]);
+            }
+
+            if (!empty($alternateLanguage) && !empty($luckydraw)) {
+                $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+
+                if (!empty($luckyDrawTranslation)) {
+                    foreach (['lucky_draw_name', 'description'] as $field) {
+                        //if field translation empty or null, value of field back to english (default)
+                        if (isset($luckyDrawTranslation->{$field}) && $luckyDrawTranslation->{$field} !== '') {
+                            $luckydraw->{$field} = $luckyDrawTranslation->{$field};
+                        }
+                    }
+
+                    $media = $luckyDrawTranslation->find($luckyDrawTranslation->lucky_draw_translation_id)
+                        ->media_orig()
+                        ->first();
+
+                    if (isset($media->path)) {
+                        $luckydraw->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        $defaultLanguage = $this->getDefaultLanguage($retailer);
+                        if ($defaultLanguage !== NULL) {
+                            $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $luckydraw->image = $mediaDefaultLanguage->path;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (! empty($alternateLanguage) && ! empty($luckydraw->announcements)) {
+                $luckyDrawAnnouncementTranslation = \LuckyDrawAnnouncementTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('lucky_draw_announcement_id', $luckydraw->announcements[0]->lucky_draw_announcement_id)
+                    ->first();
+
+                if (!empty($luckyDrawAnnouncementTranslation)) {
+                    foreach (['title', 'description'] as $field) {
+                        //if field translation empty or null, value of field back to english (default)
+                        if (isset($luckyDrawAnnouncementTranslation->{$field}) && $luckyDrawAnnouncementTranslation->{$field} !== '') {
+                            $luckydraw->announcements[0]->{$field} = $luckyDrawAnnouncementTranslation->{$field};
+                        }
+                    }
+
+                    $media = $luckyDrawAnnouncementTranslation->find($luckyDrawAnnouncementTranslation->lucky_draw_announcement_translation_id)
+                        ->media_orig()
+                        ->first();
+
+                    if (isset($media->path)) {
+                        $luckydraw->announcements[0]->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        $defaultLanguage = $this->getDefaultLanguage($retailer);
+                        if ($defaultLanguage !== NULL) {
+                            $contentDefaultLanguage = \LuckyDrawAnnouncementTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('lucky_draw_announcement_id', $luckydraw->announcements[0]->lucky_draw_announcement_id)
+                                ->first();
+
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_announcement_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $luckydraw->announcements[0]->image = $mediaDefaultLanguage->path;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($mallTime > $luckydraw->start_date && $mallTime < $luckydraw->draw_date) {
+                $ongoing = TRUE;
+                $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.prizes');
+            } elseif ($mallTime >= $luckydraw->draw_date && $mallTime < $luckydraw->grace_period_date) {
+                $ongoing = FALSE;
+                $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.winners_and_prizes');
+            }
+
+            $activityProductNotes = sprintf('Page viewed: Lucky Draw Winning Numbers & Prizes');
+            $activityProduct->setUser($user)
+                ->setActivityName('view_lucky_draw_announcement')
+                ->setActivityNameLong('View Winning Numbers & Prizes')
+                ->setObject($luckydraw)
+                ->setModuleName('Lucky Draw')
+                ->setNotes($activityProductNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.luckydraw-announcement', [
+                                'page_title'    => $pagetitle,
+                                'user'          => $user,
+                                'retailer'      => $retailer,
+                                'luckydraw'     => $luckydraw,
+                                'languages'     => $languages,
+                                'ongoing'       => $ongoing
+            ]);
+        } catch (Exception $e) {
+            $activityProductNotes = sprintf('Failed to view: Lucky Draw Winning Numbers & Prizes');
+            $activityProduct->setUser($user)
+                ->setActivityName('view_lucky_draw')
+                ->setActivityNameLong('View Winning Numbers & Prizes')
                 ->setObject(null)
                 ->setModuleName('Lucky Draw')
                 ->setNotes($activityProductNotes)
@@ -2350,6 +2727,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-coupon-list', $view_data);
 
@@ -2698,7 +3076,8 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
-                'user_email' => $user->user_email
+                'user_email' => $user->user_email,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-promotion-list', $view_data);
 
@@ -3196,11 +3575,12 @@ class MobileCIAPIController extends ControllerAPI
 
         $pdo = new PDO("mysql:host=localhost;dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
         $query = $pdo->query("SELECT * FROM {$prefix}lucky_draws
-                              where lucky_draw_id=$luckyDrawId and status='active' LIMIT 1");
+                              where lucky_draw_id='{$luckyDrawId}' and status='active' LIMIT 1");
+
         $luckyDraw = $query->fetch(PDO::FETCH_ASSOC);
 
         $countQuery = $pdo->query("SELECT count(*) as total FROM {$prefix}lucky_draw_numbers
-                                  where user_id=$userId");
+                                  where user_id='{$userId}'");
         $numberOfLuckyDraw = $countQuery->fetch(PDO::FETCH_ASSOC);
         $numberOfLuckyDraw = (int)$numberOfLuckyDraw['total'];
 
@@ -3441,9 +3821,12 @@ class MobileCIAPIController extends ControllerAPI
     */
     protected function getListLanguages($mall)
     {
-        $languages = MerchantLanguage::with('language')->excludeDeleted()
-                                    ->where('merchant_id', $mall->merchant_id)
-                                    ->get();
+        $languages = MerchantLanguage::with('language')
+                                     ->where('merchant_languages.status', '!=', 'deleted')
+                                     ->where('merchant_id', $mall->merchant_id)
+                                     ->join('languages', 'languages.language_id', '=','merchant_languages.language_id')
+                                     ->orderBy('languages.name_long', 'ASC')
+                                     ->get();
 
         return $languages;
     }
@@ -3639,6 +4022,22 @@ class MobileCIAPIController extends ControllerAPI
             $lowerCasedStatus = strtolower($user->status);
             if (in_array($lowerCasedStatus, $notAllowedStatus)) {
                 throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
+            }
+
+            // if a valid MAC specified, associate the MAC with the given email if not associated yet
+            $mac = OrbitInput::get('mac_address', '');
+            if ($mac !== '') {
+                $addr_object = new MacAddr($mac);
+                if ($addr_object->isValid()) {
+                    $addr_entity = \MacAddress::excludeDeleted()->where('user_email', '=', $user->user_email)->where('mac_address', '=', $mac)->first();
+                    if ($addr_entity === null) {
+                        $addr_entity = new \MacAddress();
+                        $addr_entity->user_email = $user->user_email;
+                        $addr_entity->mac_address = $mac;
+                        $addr_entity->status = 'active';
+                        $addr_entity->save();
+                    }
+                }
             }
 
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
@@ -3864,15 +4263,20 @@ class MobileCIAPIController extends ControllerAPI
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer, $payload = '', $from = '') {
+    private function redirectToCloud($email, $retailer, $payload = '', $from = '', $mac_address = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
         $url = Config::get('orbit.registration.mobile.cloud_login_url');
+
+        $callback_url = URL::route('customer-login-callback');
+        $callback_req = \Symfony\Component\HttpFoundation\Request::create(
+            $callback_url, 'GET', ['mac_address' => $mac_address]);
+
         $values = [
             'email' => $email,
             'retailer_id' => $retailer->merchant_id,
-            'callback_url' => URL::route('customer-login-callback'),
+            'callback_url' => $callback_req->getUri(),
             'payload' => $payload,
             'from' => $from,
             'full_data' => 'no',
@@ -3992,7 +4396,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('acquirer_id', $retailer->merchant_id)
                 ->lockForUpdate()->first();
 
-            if ($acq === null) {
+            if ($acq === null && $forceInsert) {
                 $acq = new \UserAcquisition();
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
@@ -4013,7 +4417,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
-                'user_acquisition_id' => $acq->user_acquisition_id,
+                'user_acquisition_id' => isset($acq) ? $acq->user_acquisition_id : '',
             ];
             $this->commit();
         } catch (ACLForbiddenException $e) {

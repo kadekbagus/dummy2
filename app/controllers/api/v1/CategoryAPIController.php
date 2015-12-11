@@ -91,7 +91,7 @@ class CategoryAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall'           => 'required|orbit.empty.merchant',
-                    'category_name'         => 'required|orbit.exists.category_name:'.$merchant_id,
+                    'category_name'         => 'required|orbit.exists.category_name:' . $merchant_id,
                     'category_level'        => 'numeric',
                     'status'                => 'required|orbit.empty.category_status',
                     'id_language_default'   => 'required|orbit.empty.language_default',

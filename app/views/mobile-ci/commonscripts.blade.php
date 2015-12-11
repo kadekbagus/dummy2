@@ -31,12 +31,12 @@
             </div>
             <div class="modal-body">
                 @if (! empty($user))
-                    @if (! empty($user->membershipNumbers->first()))
+                    @if (! empty($user->membershipNumbers->first()) && ($user->membershipNumbers[0]->status === 'active'))
                     <div class="member-card">
                         @if (empty($user->membershipNumbers[0]->membership->media->first()))
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
+                        <img class="img-responsive membership-card" src="{{ asset('mobile-ci/images/membership_card_default.png') }}">
                         @else
-                        <img class="img-responsive" src="{{ asset($user->membershipNumbers[0]->membership->media[0]->path) }}">
+                        <img class="img-responsive membership-card" src="{{ asset($user->membershipNumbers[0]->membership->media[0]->path) }}">
                         @endif
                         <h2>
                             <span>
@@ -65,7 +65,6 @@
                 @endif
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-info" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button>
             </div>
         </div>
     </div>
@@ -155,8 +154,10 @@
         }
         @if(Config::get('orbit.shop.membership'))
         $('#membership-card').click(function(){
+            $('.dropdown-menu').css('display','none');
             $('#membership-card-popup').modal();
         });
+        $('#dropdown-disable').click(function(){ event.stopPropagation(); });
         @endif
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();

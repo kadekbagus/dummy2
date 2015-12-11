@@ -612,6 +612,7 @@ class CouponAPIController extends ControllerAPI
             $discount_object_id3 = OrbitInput::post('discount_object_id3');
             $discount_object_id4 = OrbitInput::post('discount_object_id4');
             $discount_object_id5 = OrbitInput::post('discount_object_id5');
+
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
@@ -638,6 +639,7 @@ class CouponAPIController extends ControllerAPI
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
+                'maximum_issued_coupon'     => $maximum_issued_coupon,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -661,6 +663,7 @@ class CouponAPIController extends ControllerAPI
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
+                    'maximum_issued_coupon'     => 'orbit.max.total_issued_coupons:' . $promotion_id,
                 ),
                 array(
                     'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
@@ -922,6 +925,16 @@ class CouponAPIController extends ControllerAPI
             $couponrule->save();
             $updatedcoupon->setRelation('couponRule', $couponrule);
             $updatedcoupon->coupon_rule = $couponrule;
+
+
+            // save CouponRetailer
+            OrbitInput::post('no_retailer', function($no_retailer) use ($updatedcoupon) {
+                if ($no_retailer == 'Y') {
+                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $updatedcoupon->tenants()->detach($deleted_retailer_ids);
+                    $updatedcoupon->load('tenants');
+                }
+            });
 
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatedcoupon) {
                 // validate retailer_ids
@@ -1453,7 +1466,8 @@ class CouponAPIController extends ControllerAPI
                         WHEN 'cart_discount_by_percentage' THEN discount_value * 100
                         WHEN 'product_discount_by_percentage' THEN discount_value * 100
                         ELSE discount_value
-                    END AS 'display_discount_value'
+                    END AS 'display_discount_value',
+                    {$table_prefix}merchants.name as retailer_name
                     "),
                     DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
                     DB::raw("CASE WHEN {$table_prefix}promotions.end_date IS NOT NULL THEN
@@ -1469,6 +1483,8 @@ class CouponAPIController extends ControllerAPI
                     END as 'coupon_status'")
                 )
                 ->joinPromotionRules()
+                ->joinPromotionRetailer()
+                ->joinMerchant()
                 ->groupBy('promotions.promotion_id');
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
