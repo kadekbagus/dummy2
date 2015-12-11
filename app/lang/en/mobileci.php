@@ -70,7 +70,7 @@ return array(
         'delete_coupon_title'    => 'Delete Coupon',
         'close_cart_title'       => 'Close Cart',
         'reset_cart_title'       => 'Reset Cart',
-        'membership_title'       => 'Membership Information',
+        'membership_title'       => 'Membership',
         'language_title'         => 'Select Language',
         'activate_account'       => 'Activate Account',
 
