@@ -58,6 +58,7 @@ return array(
             'lucky_draw'    => 'There is no lucky draw that matched your search criteria.',
             'lucky_draw_number_receipt' => 'There is no lucky draw number receipt that matched your search criteria.',
             'lucky_draw_number' => 'There is no lucky draw number that matched your search criteria.',
+            'lucky_draw_prize' => 'There is no lucky draw prize that matched your search criteria.',
             'news'          => 'There is no news that matched your search criteria.',
             'object'        => 'There is no object that matched your search criteria.',
             'activity'      => 'There is no activity that matched your search criteria.',

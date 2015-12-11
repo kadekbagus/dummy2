@@ -6583,7 +6583,7 @@ class UploadAPIController extends ControllerAPI
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getLine()];
+            $this->response->data = null;
 
             if (! $this->calledFrom('coupon.translations')) {
                 // Rollback the changes
@@ -6800,7 +6800,7 @@ class UploadAPIController extends ControllerAPI
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getLine(), $e->getFile()];
+            $this->response->data = null;
 
             // Rollback the changes
             if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
@@ -6863,7 +6863,7 @@ class UploadAPIController extends ControllerAPI
             $lucky_draw_announcement_translation_id = OrbitInput::post('lucky_draw_announcement_translation_id');
             $lucky_draw_announcement_id = OrbitInput::post('lucky_draw_announcement_id');
             $merchant_language_id = OrbitInput::post('merchant_language_id');
-            $image_translation = OrbitInput::files('image_announcement_translation_' . $merchant_language_id);
+            $image_translation = OrbitInput::files('image_translation_' . $merchant_language_id);
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
                     'max' => 1

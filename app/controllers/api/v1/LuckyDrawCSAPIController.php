@@ -702,9 +702,10 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->commit();
 
             // Successfull Creation
-            $activity->setUser($user)
+            $activity->setUser($customer)
+                    ->setStaff($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw')
+                    ->setActivityNameLong('Lucky Draw Number Issuance')
                     ->setObject($luckyDraw)
                     ->responseOK();
 
