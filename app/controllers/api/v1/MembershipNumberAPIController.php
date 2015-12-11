@@ -125,6 +125,16 @@ class MembershipNumberAPIController extends ControllerAPI
                 $record->whereIn('memberships.merchant_id', $listOfMallIds);
             }
 
+            // Filter by user_ids
+            if ($user->isConsumer()) {
+                $record->where('membership_numbers.user_id', $user->user_id);
+            } else {
+                OrbitInput::get('user_id', function ($arg) use ($record)
+                {
+                    $record->whereIn('membership_numbers.user_id', (array)$arg);
+                });
+            }
+
             // Filter membership by ids
             OrbitInput::get('membership_id', function ($arg) use ($record)
             {
