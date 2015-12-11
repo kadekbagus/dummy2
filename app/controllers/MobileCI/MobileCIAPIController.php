@@ -457,6 +457,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'user' => $user
             );
+
             return View::make('mobile-ci.home', $data)->withCookie($event_store);
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view Page: %s', 'Home');
@@ -758,6 +759,13 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
             $retailer = Mall::with('parent')->where('merchant_id', $retailer_id)->first();
+            $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$retailer_id)->first();
+
+            if (! empty($membership_card)){
+                $retailer->enable_membership=$membership_card->setting_value;
+            } else {
+                $retailer->enable_membership='false';
+            }
 
             return $retailer;
         } catch (ACLForbiddenException $e) {
