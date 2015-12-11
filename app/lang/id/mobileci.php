@@ -67,7 +67,7 @@ return array(
         'delete_coupon_title'   => 'Hapus Kupon',
         'close_cart_title'      => 'Tutup Keranjang',
         'reset_cart_title'      => 'Hapus Keranjang',
-        'membership_title'      => 'Informasi Membership',
+        'membership_title'      => 'Membership',
         'language_title'        => 'Pilih Bahasa',
 
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',

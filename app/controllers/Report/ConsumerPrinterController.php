@@ -34,7 +34,7 @@ class ConsumerPrinterController extends DataPrinterController
             $flagMembershipEnable = true;
         }
 
-        // Instantiate the UserAPIController to get the query builder of Coupons
+        // Instantiate the UserAPIController to get the query builder of Users
         $response = UserAPIController::create('raw')
             ->setReturnBuilder(true)
             ->setDetail(true)
