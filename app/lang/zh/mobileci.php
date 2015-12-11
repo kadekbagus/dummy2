@@ -34,6 +34,7 @@ return array(
         'news'               => '信息',
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
+        'lucky_draws'        => '抽奖',
     ),
 
     'widgets' => array(

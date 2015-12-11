@@ -148,4 +148,20 @@ class LuckyDraw extends Eloquent
             $has->where('merchant_languages.status', 'active');
         });
     }
+
+    /**
+     * Lucky Draw announcements
+     */
+    public function announcements()
+    {
+        return $this->hasMany('LuckyDrawAnnouncement', 'lucky_draw_id', 'lucky_draw_id');
+    }
+
+    /**
+     * Lucky Draw prizes
+     */
+    public function prizes()
+    {
+        return $this->hasMany('LuckyDrawPrize', 'lucky_draw_id', 'lucky_draw_id');
+    }
 }

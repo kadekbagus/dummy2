@@ -34,6 +34,7 @@ return array(
         'news'              => 'NEWS',
         'membership'        => 'MEMBERSHIP',
         'orbit_tour'        => 'ORBIT TOUR',
+        'lucky_draws'       => 'LUCKY DRAWS',
     ),
 
     'widgets' => array(
@@ -342,7 +343,7 @@ return array(
 
         'no_ongoing_lucky_draws'    => 'There is no ongoing lucky draws at the moment.',
         'winner_number_will_appear' => 'The Winner Number will appear here while you are in the Mall.',
-        'winning_number'            => 'Winning Number',
+        'winning_number'            => 'See Winners &amp; Prizes',
         'lucky_draw_got_info_1'     => 'You got no Lucky Draw Number yet.',
         'lucky_draw_got_info_2'     => 'Here are your lucky draw numbers, you have ',
         'lucky_draw_got_info_3'     => 'lucky draw number. We wish you luck!.',
@@ -364,6 +365,19 @@ return array(
         'lucky_draw_total_info_5'   => 'lucky draw number. It sorted by highest to lowest number.',
         'lucky_draw_total_info_6'   => 'Your download should be started automatically. If it doesnt try to click button below.',
         'download_image'            => 'Download Image',
+        'description'               => 'Description',
+        'period'                    => 'Period',
+        'draw_date'                 => 'Draw Date',
+        'my_lucky_draw_number'      => 'My Lucky Draw Number(s)',
+        'no_lucky_draw_number_1'    => 'Get your lucky draw numbers now!',
+        'no_lucky_draw_number_2'    => 'Check with customer service on how to participate',
+        'see_prizes'                => 'See Prizes',
+        'prizes'                    => 'Prizes',
+        'winners_and_prizes'        => 'Winners &amp; Prizes',
+        'default_announcement_winner_title' => 'Congratulations to all beloved winners',
+        'information'               => 'Information',
+        'winning_numbers'           => 'Winning Numbers',
+        'prizes_and_winners'        => 'Prizes &amp; Winners'
     ),
 
     'tour' => array(
