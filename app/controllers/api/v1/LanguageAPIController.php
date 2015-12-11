@@ -29,7 +29,9 @@ class LanguageAPIController extends ControllerAPI
             $status = Input::get('status');
 
             if($status != ""){
-                $all_languages = Language::where('status', '=', $status)->get();
+                $all_languages = Language::where('status', '=', $status)
+                                         ->orderBy('name_long', 'ASC')
+                                         ->get();
             } else{
                 $all_languages = Language::all();
             }
@@ -105,9 +107,15 @@ class LanguageAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
 
             }
-            $merchant_languages = MerchantLanguage::excludeDeleted()->where('merchant_id', '=',
-                $merchant_id)->with('language')->get();
+            $merchant_languages = MerchantLanguage::with('language')
+                                                  ->where('merchant_languages.status', '!=', 'deleted')
+                                                  ->where('merchant_id', '=', $merchant_id)
+                                                  ->join('languages', 'languages.language_id', '=','merchant_languages.language_id')
+                                                  ->orderBy('languages.name_long', 'ASC')
+                                                  ->get();
+
             $count = count($merchant_languages);
+
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = $count;
