@@ -3440,9 +3440,12 @@ class MobileCIAPIController extends ControllerAPI
     */
     protected function getListLanguages($mall)
     {
-        $languages = MerchantLanguage::with('language')->excludeDeleted()
-                                    ->where('merchant_id', $mall->merchant_id)
-                                    ->get();
+        $languages = MerchantLanguage::with('language')
+                                     ->where('merchant_languages.status', '!=', 'deleted')
+                                     ->where('merchant_id', $mall->merchant_id)
+                                     ->join('languages', 'languages.language_id', '=','merchant_languages.language_id')
+                                     ->orderBy('languages.name_long', 'ASC')
+                                     ->get();
 
         return $languages;
     }
