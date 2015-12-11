@@ -1319,7 +1319,7 @@ class LuckyDrawAPIController extends ControllerAPI
             // Builder object
             $luckydraws = LuckyDrawNumber::select('lucky_draw_numbers.*')
                                          ->active('lucky_draw_numbers')
-                                         ->joinReceipts()
+                                         // ->joinReceipts()
                                          ->joinLuckyDraw();
 
             if ($groupByReceipt === 'yes') {

@@ -34,6 +34,7 @@ return array(
         'news'               => 'ニュース',
         'membership'         => '会員',
         'orbit_tour'         => 'ORBIT ツアー',
+        'lucky_draws'        => '幸運な抽選',
     ),
 
     'widgets' => array(

@@ -150,7 +150,7 @@ class LuckyDraw extends Eloquent
     }
 
     /**
-     * Lucky Draw strings can be translated to many languages.
+     * Lucky Draw announcements
      */
     public function announcements()
     {
@@ -158,7 +158,7 @@ class LuckyDraw extends Eloquent
     }
 
     /**
-     * Lucky Draw strings can be translated to many languages.
+     * Lucky Draw prizes
      */
     public function prizes()
     {
