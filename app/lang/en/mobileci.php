@@ -338,7 +338,7 @@ return array(
         'lucky_draw_info_3'         => 'The first number that you can ',
         'lucky_draw_info_4'         => 'Total Currently you have ',
         'lucky_draw_info_5'         => 'lucky numbers draw, you can see your entire page numbers',
-        'lucky_draw'                => 'Lucky Draw.',
+        'lucky_draw'                => 'Lucky Draw',
         'close'                     => 'Close.',
 
         'no_ongoing_lucky_draws'    => 'There is no ongoing lucky draws at the moment.',
@@ -380,7 +380,7 @@ return array(
         'winning_numbers'           => 'Winning Numbers',
         'prizes_and_winners'        => 'Prizes &amp; Winners',
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
-        'no_prize'                  => 'The prize is coming soon'
+        'no_prize'                  => 'The prize is coming soon',
     ),
 
     'tour' => array(

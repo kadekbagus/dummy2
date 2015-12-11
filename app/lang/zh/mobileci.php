@@ -70,7 +70,7 @@ return array(
         'delete_coupon_title'   => '删除优惠券',
         'close_cart_title'      => '关闭车',
         'reset_cart_title'      => '复位车',
-        'membership_title'      => '会员',
+        'membership_title'      => '会员信息',
         'language_title'        => '选语言',
         'activate_account'      => 'アカウントを有効に',
 
@@ -380,7 +380,7 @@ return array(
         'winning_numbers'           => '中奖号码',
         'prizes_and_winners'        => '奖品和获奖者',
         'lucky_draw_prizes'         => '幸运抽奖',
-        'no_prize'                  => '该奖项即将到来'
+        'no_prize'                  => '该奖项即将到来',
     ),
 
     'tour' => array(

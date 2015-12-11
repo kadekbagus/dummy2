@@ -3510,7 +3510,18 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
-            $luckyDraw = LuckyDraw::active()->first();
+            $lucky_draw_id = OrbitInput::get('id');
+            $languages = $this->getListLanguages($retailer);
+            $luckyDraw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
+
+            if (! is_object($luckyDraw)) {
+                return View::make('mobile-ci.404', [
+                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                                'user'          => $user,
+                                'languages'     => $languages,
+                                'retailer'      => $retailer
+                ]);
+            }
 
             $mode = OrbitInput::get('mode', 'view');
 
@@ -3528,8 +3539,6 @@ class MobileCIAPIController extends ControllerAPI
                     $totalPerImage = 160;
                     $totalImage = ceil($totalLuckyDrawNumber / $totalPerImage);
 
-                    $languages = $this->getListLanguages($retailer);
-
                     return View::make('mobile-ci.lucky-draw-number-download', [
                                      'page_title'   => 'Download Lucky Draw Number',
                                      'luckydraw'    => $luckyDraw,
@@ -3539,6 +3548,7 @@ class MobileCIAPIController extends ControllerAPI
                                      'total_image'  => $totalImage,
                                      'number_per_image'  => $totalPerImage,
                                      'languages' => $languages,
+                                     'lucky_draw_id' => $lucky_draw_id,
                     ]);
             }
         } catch (Exception $e) {
@@ -3568,7 +3578,7 @@ class MobileCIAPIController extends ControllerAPI
         $luckyDraw = $query->fetch(PDO::FETCH_ASSOC);
 
         $countQuery = $pdo->query("SELECT count(*) as total FROM {$prefix}lucky_draw_numbers
-                                  where user_id='{$userId}'");
+                                  where user_id='{$userId}' and lucky_draw_id='{$luckyDrawId}'");
         $numberOfLuckyDraw = $countQuery->fetch(PDO::FETCH_ASSOC);
         $numberOfLuckyDraw = (int)$numberOfLuckyDraw['total'];
 
@@ -3601,25 +3611,26 @@ class MobileCIAPIController extends ControllerAPI
 
         $periodHumanStart = date('d/m/Y H:i', strtotime($luckyDraw['start_date']));
         $periodHumanEnd = date('d/m/Y H:i', strtotime($luckyDraw['end_date']));
-        $header = sprintf('%-12s: %s - %s', 'Periode', $periodHumanStart, $periodHumanEnd);
+        $header = sprintf('%-12s: %s - %s', 'Period', $periodHumanStart, $periodHumanEnd);
 
         $ypos += $heighPerLine;
         imagestring($im, $fontSize, $xpos, $ypos, $header, $black);
 
-        $totalSentences = 'Total nomor lucky draw yang anda peroleh per tanggal';
+        $totalSentences = 'Total of lucky draw number(s) you earn per date';
         $ypos += $heighPerLine * 2;
         imagestring($im, $fontSize, $xpos, $ypos, $totalSentences, $black);
 
         $today = date('d/m/Y H:i');
-        $totalSentences = sprintf('%s adalah sebanyak %s nomor.', $today, $numberOfLuckyDraw);
+        $totalSentences = sprintf('%s %s %s.', $today, 'is',$numberOfLuckyDraw);
         $ypos += $heighPerLine;
         imagestring($im, $fontSize, $xpos, $ypos, $totalSentences, $black);
 
         $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
         $uresult = $pdo->query("SELECT * FROM {$prefix}lucky_draw_numbers
-                                where user_id=$userId order by issued_date desc,
+                                where user_id='{$userId}' and lucky_draw_id='{$luckyDrawId}' order by issued_date desc,
                                 lucky_draw_number_code desc
                                 limit $start, $take");
+
         if ($uresult) {
             $i = 0;
             $ypos += $heighPerLine * 2;
@@ -3637,12 +3648,12 @@ class MobileCIAPIController extends ControllerAPI
                 $xpos += 80 + $yplus;
             }
 
-            $goodLuckString = 'Semoga Anda Beruntung!';;
+            $goodLuckString = 'Good luck!';
             $xpos = 14;
             $ypos += $heighPerLine * 2;
             imagestring($im, $fontSize, $xpos, $ypos, $goodLuckString, $black);
 
-            $pageInfoString = sprintf('Gambar %s dari %s', $currentPage, $totalPages, $take);
+            $pageInfoString = sprintf('%s %s %s', $currentPage, 'of', $totalPages);
             $ypos += $heighPerLine;
             $xpos = $imageWidth - 150;
             imagestring($im, 5, $xpos, $ypos, $pageInfoString, $black);

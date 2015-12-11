@@ -156,7 +156,7 @@
 <div class="row">
     <div class="row text-center save-btn">
         <div class="col-xs-12">
-            <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
+            <a href="{{ url('/customer/luckydrawnumber/download?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
         </div>
     </div>
 </div>

@@ -70,7 +70,7 @@ return array(
         'delete_coupon_title'   => 'クーポンを削除',
         'close_cart_title'      => '閉じるカート',
         'reset_cart_title'      => 'リセットカート',
-        'membership_title'      => '会員',
+        'membership_title'      => '会員情報',
         'language_title'        => '言語を選ぶ',
         'activate_account'      => '激活账户',
 
@@ -101,7 +101,7 @@ return array(
         'okay'                  => 'オーケー',
 
         'membership_notfound'    => '会員が見つかりません',
-        'membership_want_member' => '会員になりたいですか?',
+        'membership_want_member' => '会員になりたいですか',
         'membership_great_deal'  => '我々からスペシャル大きな取引を得ます',
         'membership_contact_our' => 'あなたの会員番号を得るために、我々のカスタマーサービスに連絡してください',
 
@@ -380,7 +380,7 @@ return array(
         'winning_numbers'           => '当選番号',
         'prizes_and_winners'        => '賞と受賞者',
         'lucky_draw_prizes'         => '幸運な抽選賞',
-        'no_prize'                  => '賞金はすぐに来ています'
+        'no_prize'                  => '賞金はすぐに来ています',
     ),
 
     'tour' => array(
