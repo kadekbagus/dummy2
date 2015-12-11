@@ -54,7 +54,7 @@ class MembershipNumberAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service', 'consumer'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -75,7 +75,7 @@ class MembershipNumberAPIController extends ControllerAPI
                     'sort_by' => 'in:membership_name,membership_number,join_date,status',
                 ),
                 array(
-                    'in' => Lang::get('validation.orbit.empty.membership_sortby'),
+                    'in' => Lang::get('validation.orbit.empty.membership_number_sortby'),
                 )
             );
 
@@ -89,7 +89,7 @@ class MembershipNumberAPIController extends ControllerAPI
             Event::fire('orbit.membershipnumber.getsearchmembershipnumber.after.validation', array($this, $validator));
 
             // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.membershipnumber.max_record');
+            $maxRecord = (int) Config::get('orbit.pagination.membership_number.max_record');
             if ($maxRecord <= 0) {
                 // Fallback
                 $maxRecord = (int) Config::get('orbit.pagination.max_record');
@@ -98,7 +98,7 @@ class MembershipNumberAPIController extends ControllerAPI
                 }
             }
             // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.membershipnumber.per_page');
+            $perPage = (int) Config::get('orbit.pagination.membership_number.per_page');
             if ($perPage <= 0) {
                 // Fallback
                 $perPage = (int) Config::get('orbit.pagination.per_page');
@@ -108,7 +108,10 @@ class MembershipNumberAPIController extends ControllerAPI
             }
 
             // Builder membership
-            $record = MembershipNumber::excludeDeleted();
+            $record = MembershipNumber::select('membership_numbers.*', 'memberships.merchant_id', 'memberships.membership_name')
+                                      ->excludeDeleted('membership_numbers')
+                                      ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                                      ->excludeDeleted('memberships');
 
             // get user mall_ids
             $listOfMallIds = $user->getUserMallIds($mall_id);
@@ -119,30 +122,30 @@ class MembershipNumberAPIController extends ControllerAPI
             } elseif ($listOfMallIds[0] === 1) { // if super admin
                 // show all users
             } else { // valid mall id
-                $record->whereIn('merchant_id', $listOfMallIds);
+                $record->whereIn('memberships.merchant_id', $listOfMallIds);
             }
 
             // Filter membership by ids
             OrbitInput::get('membership_id', function ($arg) use ($record)
             {
-                $record->whereIn('membership_id', (array)$arg);
+                $record->whereIn('membership_numbers.membership_id', (array)$arg);
             });
 
             // Filter membership by membership name
             OrbitInput::get('membership_number', function ($arg) use ($record)
             {
-                $record->whereIn('membership_number', (array)$arg);
+                $record->whereIn('membership_numbers.membership_number', (array)$arg);
             });
 
             // Filter membership by matching membership name pattern
             OrbitInput::get('membership_number_like', function ($arg) use ($record)
             {
-                $record->where('membership_number', 'like', "%$arg%");
+                $record->where('membership_numbers.membership_number', 'like', "%$arg%");
             });
 
             // Filter membership by status
             OrbitInput::get('status', function ($arg) use ($record) {
-                $record->whereIn('status', (array)$arg);
+                $record->whereIn('membership_numbers.status', (array)$arg);
             });
 
             // Add new relation based on request
@@ -151,9 +154,11 @@ class MembershipNumberAPIController extends ControllerAPI
 
                 foreach ($with as $relation) {
                     if ($relation === 'mall') {
-                        $record->with('mall');
+                        $record->with('membership.mall');
                     } elseif ($relation === 'membership') {
                         $record->with('membership.media');
+                    } elseif ($relation === 'user') {
+                        $record->with('user');
                     }
                 }
             });
@@ -197,7 +202,7 @@ class MembershipNumberAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'join_date'         => 'membership_numbers.join_date',
-                    'membership_name'   => 'membership.membership_name',
+                    'membership_name'   => 'membership_name',
                     'membership_number' => 'membership_numbers.membership_number',
                     'status'            => 'membership_numbers.status'
                 );

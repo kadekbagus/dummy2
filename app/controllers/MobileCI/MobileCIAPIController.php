@@ -3,6 +3,7 @@
 /**
  * An API controller for managing Mobile CI.
  */
+use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
@@ -147,7 +148,7 @@ class MobileCIAPIController extends ControllerAPI
             $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
 
             if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
-                return $this->redirectToCloud($email, $retailer, $payload);
+                return $this->redirectToCloud($email, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
                 return $this->loginStage2($user, $retailer);
             }
@@ -486,14 +487,22 @@ class MobileCIAPIController extends ControllerAPI
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
 
-        if (\Input::get('payload')) {
+        if (\Input::get('payload', false) !== false) {
             // has payload, clear out prev cookies
             $_COOKIE['orbit_firstname'] = '';
             $_COOKIE['orbit_email'] = '';
         }
+
+        $mac = \Input::get('mac_address', '');
+        /** @var \MacAddress $mac_model */
+        $mac_model = null;
+        if ($mac !== '') {
+            $mac_model = \MacAddress::excludeDeleted()->with('user')->where('mac_address', $mac)->orderBy('mac_addresses.created_at', 'desc')->first();
+        }
+
         $landing_url = URL::route('ci-customer-home');
-        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : '';
-        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : '';
+        $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : (isset($mac_model) ? $mac_model->user->user_firstname : '');
+        $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (isset($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
         $display_name = '';
 
@@ -584,6 +593,7 @@ class MobileCIAPIController extends ControllerAPI
                 'display_name' => $display_name,
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
+                'mac' => $mac,
             ));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
@@ -598,6 +608,7 @@ class MobileCIAPIController extends ControllerAPI
                 'display_name' => $display_name,
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
+                'mac' => $mac,
             ));
         }
 
@@ -625,7 +636,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = ['email'];
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook']);
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'mac_address' => \Input::get('mac_address', '')]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
         $rerequest = '&auth_type=rerequest';
@@ -694,7 +705,7 @@ class MobileCIAPIController extends ControllerAPI
             'lname' => $lastName,
             'gender' => $gender,
             'login_from'  => 'facebook',
-            'mac' => '',
+            'mac' => \Input::get('mac_address', ''),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'is_captive' => 'yes',
             'recognized' => $recognized
@@ -2708,6 +2719,7 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-coupon-list', $view_data);
 
@@ -3044,7 +3056,8 @@ class MobileCIAPIController extends ControllerAPI
                 'data' => $data,
                 'active_user' => ($user->status === 'active'),
                 'languages' => $languages,
-                'user_email' => $user->user_email
+                'user_email' => $user->user_email,
+                'user' => $user
             );
             return View::make('mobile-ci.mall-promotion-list', $view_data);
 
@@ -3988,6 +4001,22 @@ class MobileCIAPIController extends ControllerAPI
                 throw new Exception('You are not allowed to login. Please check with Customer Service.', 13);
             }
 
+            // if a valid MAC specified, associate the MAC with the given email if not associated yet
+            $mac = OrbitInput::get('mac_address', '');
+            if ($mac !== '') {
+                $addr_object = new MacAddr($mac);
+                if ($addr_object->isValid()) {
+                    $addr_entity = \MacAddress::excludeDeleted()->where('user_email', '=', $user->user_email)->where('mac_address', '=', $mac)->first();
+                    if ($addr_entity === null) {
+                        $addr_entity = new \MacAddress();
+                        $addr_entity->user_email = $user->user_email;
+                        $addr_entity->mac_address = $mac;
+                        $addr_entity->status = 'active';
+                        $addr_entity->save();
+                    }
+                }
+            }
+
             $user_detail = UserDetail::where('user_id', $user->user_id)->first();
             $user_detail->last_visit_shop_id = $retailer->merchant_id;
             $user_detail->last_visit_any_shop = Carbon::now($retailer->timezone->timezone_name);
@@ -4211,15 +4240,20 @@ class MobileCIAPIController extends ControllerAPI
      * @param Mall $retailer
      * @return \OrbitShop\API\v1\ResponseProvider|string
      */
-    private function redirectToCloud($email, $retailer, $payload = '', $from = '') {
+    private function redirectToCloud($email, $retailer, $payload = '', $from = '', $mac_address = '') {
         $this->response->code = 302; // must not be 0
         $this->response->status = 'success';
         $this->response->message = 'Redirecting to cloud'; // stored in activity by IntermediateLoginController
         $url = Config::get('orbit.registration.mobile.cloud_login_url');
+
+        $callback_url = URL::route('customer-login-callback');
+        $callback_req = \Symfony\Component\HttpFoundation\Request::create(
+            $callback_url, 'GET', ['mac_address' => $mac_address]);
+
         $values = [
             'email' => $email,
             'retailer_id' => $retailer->merchant_id,
-            'callback_url' => URL::route('customer-login-callback'),
+            'callback_url' => $callback_req->getUri(),
             'payload' => $payload,
             'from' => $from,
             'full_data' => 'no',
@@ -4339,7 +4373,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('acquirer_id', $retailer->merchant_id)
                 ->lockForUpdate()->first();
 
-            if ($acq === null) {
+            if ($acq === null && $forceInsert) {
                 $acq = new \UserAcquisition();
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
@@ -4360,7 +4394,7 @@ class MobileCIAPIController extends ControllerAPI
                 'user_email' => $user->user_email,
                 'apikey_id' => $user->apikey->apikey_id,
                 'user_detail_id' => $user->userdetail->user_detail_id,
-                'user_acquisition_id' => $acq->user_acquisition_id,
+                'user_acquisition_id' => isset($acq) ? $acq->user_acquisition_id : '',
             ];
             $this->commit();
         } catch (ACLForbiddenException $e) {

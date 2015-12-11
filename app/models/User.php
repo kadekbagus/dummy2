@@ -233,8 +233,8 @@ class User extends Eloquent implements UserInterface
      */
     public function getMembershipNumbers($membershipCard = null)
     {
-        $membershipNumbers = MembershipNumber::excludeDeleted('membership_numbers')
-                                             ->active('membership_numbers')
+        $membershipNumbers = MembershipNumber::select('membership_numbers.*', 'memberships.merchant_id', 'memberships.membership_name')
+                                             ->excludeDeleted('membership_numbers')
                                              ->join('memberships', 'membership_numbers.membership_id', '=', 'memberships.membership_id')
                                              ->where('membership_numbers.user_id', $this->user_id);
 

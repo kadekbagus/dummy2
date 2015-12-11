@@ -4836,7 +4836,7 @@ class UploadAPIController extends ControllerAPI
 
             // Delete old merchant image
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
+                              ->where('object_name', 'mall')
                               ->where('media_name_id', 'retailer_background');
 
             // Delete each files
