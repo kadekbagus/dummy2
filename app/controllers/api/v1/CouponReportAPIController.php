@@ -1052,7 +1052,8 @@ class CouponReportAPIController extends ControllerAPI
                                                              ->on(DB::raw('redeemed.user_id'), '=', 'issued_coupons.user_id');
                                                     })
                                 ->where('issued_coupons.status', 'redeemed')
-                                ->whereNotNull('issued_coupons.redeem_user_id');
+                                ->whereNotNull('issued_coupons.redeem_user_id')
+                                ->groupBy('issued_coupons.issued_coupon_id');
             }
 
             if ($user->isSuperAdmin()) {
