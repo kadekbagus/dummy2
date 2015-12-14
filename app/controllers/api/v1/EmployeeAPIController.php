@@ -2589,7 +2589,7 @@ class EmployeeAPIController extends ControllerAPI
                     ->where('parent_id', $merchant_id)
                     ->first();
 
-            if (! empty($verificationNumber) || ! empty($tenantVerificationNumber)) {
+            if (! empty($csVerificationNumber) || ! empty($tenantVerificationNumber)) {
                 return FALSE;
             }
 
