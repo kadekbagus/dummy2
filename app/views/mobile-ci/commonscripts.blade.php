@@ -59,7 +59,6 @@
                         <p>{{ Lang::get('mobileci.modals.membership_great_deal') }}</p>
                         <p><i>{{ Lang::get('mobileci.modals.membership_contact_our') }}</i></p>
                         <br>
-                        <p><small>Lippo Mall Management</small></p>
                     </div>
                     @endif
                 @endif
@@ -154,7 +153,6 @@
         }
         @if(Config::get('orbit.shop.membership'))
         $('#membership-card').click(function(){
-            $('.dropdown-menu').css('display','none');
             $('#membership-card-popup').modal();
         });
         $('#dropdown-disable').click(function(){ event.stopPropagation(); });

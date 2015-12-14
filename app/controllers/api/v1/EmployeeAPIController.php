@@ -949,7 +949,7 @@ class EmployeeAPIController extends ControllerAPI
                     'current_mall'            => 'required|orbit.empty.mall',
                     'user_id'                 => 'required|orbit.empty.user',
                     'date_of_birth'           => 'date_format:Y-m-d',
-                    'password'                => 'min:5|confirmed',
+                    'password'                => 'min:6|confirmed',
                     'employee_role'           => 'orbit.empty.employee.role',
                     'username'                => 'orbit.exists.username.mall_but_me',
                     'employee_id_char'        => 'orbit.exists.employeeid_but_me:' . $myRetailerIds . ',' . $userId,
