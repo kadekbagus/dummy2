@@ -111,7 +111,12 @@ class MembershipNumberAPIController extends ControllerAPI
             $record = MembershipNumber::select('membership_numbers.*', 'memberships.merchant_id', 'memberships.membership_name')
                                       ->excludeDeleted('membership_numbers')
                                       ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
-                                      ->excludeDeleted('memberships');
+                                      ->excludeDeleted('memberships')
+                                      ->join('settings','memberships.merchant_id', '=', 'settings.object_id')
+                                      ->where('settings.setting_name', '=', 'enable_membership_card')
+                                      ->where('settings.object_type', '=', 'merchant')
+                                      ->where('settings.setting_value', '=', 'true')
+                                      ->excludeDeleted('settings');
 
             // get user mall_ids
             $listOfMallIds = $user->getUserMallIds($mall_id);
