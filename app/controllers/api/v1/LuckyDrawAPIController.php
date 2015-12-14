@@ -895,7 +895,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id',
+                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.lucky_draw_sortby'),
@@ -935,9 +935,10 @@ class LuckyDrawAPIController extends ControllerAPI
 
             if ($details_view === 'yes') {
                 $prefix = DB::getTablePrefix();
-                $luckydraws->select('lucky_draws.*',
+                $luckydraws->select('lucky_draws.*', 'merchants.name',
                                     DB::raw("count({$prefix}lucky_draw_numbers.lucky_draw_number_id) as total_issued_lucky_draw_number"))
                                     ->joinLuckyDrawNumbers()
+                                    ->joinMerchant()
                                     ->groupBy('lucky_draws.lucky_draw_id');
             }
 
@@ -1127,8 +1128,10 @@ class LuckyDrawAPIController extends ControllerAPI
                     'description'              => 'lucky_draws.description',
                     'start_date'               => 'lucky_draws.start_date',
                     'end_date'                 => 'lucky_draws.end_date',
+                    'draw_date'                => 'lucky_draws.draw_date',
                     'status'                   => 'lucky_draws.status',
                     'external_lucky_draw_id'   => 'lucky_draws.external_lucky_draw_id',
+                    'mall_name'                => 'merchants.name',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
