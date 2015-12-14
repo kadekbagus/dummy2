@@ -101,7 +101,7 @@ return array(
         'okay'                  => 'オーケー',
 
         'membership_notfound'    => '会員が見つかりません',
-        'membership_want_member' => '会員になりたいですか',
+        'membership_want_member' => '会員になりたいですか?',
         'membership_great_deal'  => '我々からスペシャル大きな取引を得ます',
         'membership_contact_our' => 'あなたの会員番号を得るために、我々のカスタマーサービスに連絡してください',
 

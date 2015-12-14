@@ -2194,7 +2194,7 @@ class UserAPIController extends ControllerAPI
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'join_date'             => 'date_format:Y-m-d',
-                    'membership_number'     => 'orbit.exists.membership_number',
+                    'membership_number'     => 'alpha_num|orbit.exists.membership_number',
                     'status'                => 'required|in:active,inactive,pending',
                     'category_ids'          => 'array',
                     'bank_object_ids'       => 'array',
@@ -2203,6 +2203,9 @@ class UserAPIController extends ControllerAPI
                     'work_phone'            => '',
                     'occupation'            => '',
                     'date_of_work'          => 'date_format:Y-m-d'
+                ),
+                array(
+                    'alpha_num' => 'The membership number must letter and number.',
                 )
             );
 
@@ -2574,7 +2577,7 @@ class UserAPIController extends ControllerAPI
                     'gender'                => 'in:m,f',
                     'birthdate'             => 'date_format:Y-m-d',
                     'join_date'             => 'date_format:Y-m-d',
-                    'membership_number'     => 'membership_number_exists_but_me',
+                    'membership_number'     => 'alpha_num|membership_number_exists_but_me',
                     'status'                => 'in:active,inactive,pending',
                     'idcard'                => '',
                     'mobile_phone'          => '',
@@ -2582,7 +2585,10 @@ class UserAPIController extends ControllerAPI
                     'occupation'            => '',
                     'date_of_work'          => 'date_format:Y-m-d',
                 ),
-                array('email_exists_but_me' => Lang::get('validation.orbit.email.exists'))
+                array(
+                    'email_exists_but_me' => Lang::get('validation.orbit.email.exists'),
+                    'alpha_num' => 'The membership number must letter and number.',
+                )
             );
 
             Event::fire('orbit.user.postupdatemembership.before.validation', array($this, $validator));
