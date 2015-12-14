@@ -2455,6 +2455,23 @@ class CouponAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check maximal of total issued coupons
+        Validator::extend('orbit.max.total_issued_coupons', function ($attribute, $value, $parameters) {
+            $promotion_id = $parameters[0];
+
+            $total_issued_coupons = IssuedCoupon::where('promotion_id', '=', $promotion_id)
+                                                ->count();
+
+            if ($value < $total_issued_coupons) {
+                return FALSE;
+            }
+
+            App::instance('orbit.max.total_issued_coupons', $total_issued_coupons);
+
+            return TRUE;
+        });
+
+
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $news = MerchantLanguage::excludeDeleted()
