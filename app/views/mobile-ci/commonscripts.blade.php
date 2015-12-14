@@ -154,7 +154,6 @@
         }
         @if(Config::get('orbit.shop.membership'))
         $('#membership-card').click(function(){
-            $('.dropdown-menu').css('display','none');
             $('#membership-card-popup').modal();
         });
         $('#dropdown-disable').click(function(){ event.stopPropagation(); });
