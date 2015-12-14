@@ -19,7 +19,7 @@ class LuckyDraw extends Eloquent
 
     public function mall()
     {
-        return $this->belongsTo('Retailer', 'mall_id', 'merchant_id')->isMall();
+        return $this->belongsTo('Mall', 'mall_id', 'merchant_id');
     }
 
     public function creator()
@@ -136,6 +136,22 @@ class LuckyDraw extends Eloquent
                     $join->on('lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id');
                     $join->on('lucky_draw_numbers.status', '!=',
                               DB::raw("'deleted' and ({$prefix}lucky_draw_numbers.user_id is not null and {$prefix}lucky_draw_numbers.user_id != 0)"));
+        });
+    }
+
+    /**
+     * Join with mall.
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public function scopeJoinMerchant($query)
+    {
+        return $query->join('merchants', function($join) {
+                    $prefix = DB::getTablePrefix();
+                    $join->on('merchants.merchant_id', '=', 'lucky_draws.mall_id');
+                    $join->on('merchants.status', '!=',
+                              DB::raw("'deleted'"));
         });
     }
 
