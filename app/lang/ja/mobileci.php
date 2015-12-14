@@ -70,7 +70,7 @@ return array(
         'delete_coupon_title'   => 'クーポンを削除',
         'close_cart_title'      => '閉じるカート',
         'reset_cart_title'      => 'リセットカート',
-        'membership_title'      => '会員情報',
+        'membership_title'      => '会員',
         'language_title'        => '言語を選ぶ',
         'activate_account'      => '激活账户',
 
