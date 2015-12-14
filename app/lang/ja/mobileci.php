@@ -70,7 +70,7 @@ return array(
         'delete_coupon_title'   => 'クーポンを削除',
         'close_cart_title'      => '閉じるカート',
         'reset_cart_title'      => 'リセットカート',
-        'membership_title'      => '会員情報',
+        'membership_title'      => '会員',
         'language_title'        => '言語を選ぶ',
         'activate_account'      => '激活账户',
 
@@ -103,7 +103,7 @@ return array(
         'membership_notfound'    => '会員が見つかりません',
         'membership_want_member' => '会員になりたいですか?',
         'membership_great_deal'  => '我々からスペシャル大きな取引を得ます',
-        'membership_contact_our' => 'あなたの会員番号を得るために、我々のカスタマーサービスに連絡してください',
+        'membership_contact_our' => 'あなたの会員を得るために、我々のカスタマーサービスに連絡してください',
 
         'enjoy_free'             => '無料で楽しみます',
         'unlimited'              => '無制限の',
@@ -218,9 +218,11 @@ return array(
     ),
 
     'coupon'         => array(
+        'all_tenants'                      => 'ja : ALL TENANTS',
+        'all_cs'                           => 'ja : CUSTOMER SERVICE COUNTER',
         'tenant_based'                     => 'テナント基づい',
         'mall_based'                       => 'モールベース',
-         'tenant_redeem'                   => 'ja : Where to Reedem',
+        'tenant_redeem'                    => '交換する場所',
         'coupon_value'                     => 'クーポンの価値',
         'use_coupon'                       => 'クーポンを使用する',
         'enter_tenant_verification_number' => 'テナント確認番号を入力してください',
@@ -233,7 +235,7 @@ return array(
         'please_communicate'               => '以下の数をテナント従業員に 伝えてください.',
         'congratulations_you_get'          => 'おめでとう、あなたが得る',
         'here_is_your_coupon'              => 'クーポン。こちらはあなたのクーポンです',
-        'here_are_your_coupons'              => 'クーポン。こちらはあなたのクーポンです',
+        'here_are_your_coupons'            => 'クーポン。こちらはあなたのクーポンです',
         'happy_shopping'                   => 'どうぞ買い物してください!',
         'close'                            => '閉じる',
         'my_coupon'                        => '私のクーポン',

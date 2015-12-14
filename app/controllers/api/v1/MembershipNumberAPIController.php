@@ -72,7 +72,7 @@ class MembershipNumberAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:membership_name,membership_number,join_date,status',
+                    'sort_by' => 'in:membership_name,membership_number,join_date,status,merchant_name',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.membership_number_sortby'),
@@ -108,11 +108,12 @@ class MembershipNumberAPIController extends ControllerAPI
             }
 
             // Builder membership
-            $record = MembershipNumber::select('membership_numbers.*', 'memberships.merchant_id', 'memberships.membership_name')
+            $record = MembershipNumber::select('membership_numbers.*', 'memberships.merchant_id', 'merchants.name AS merchant_name', 'memberships.membership_name')
                                       ->excludeDeleted('membership_numbers')
                                       ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                                      ->join('merchants', 'merchants.merchant_id', '=', 'memberships.merchant_id')
                                       ->excludeDeleted('memberships')
-                                      ->join('settings','memberships.merchant_id', '=', 'settings.object_id')
+									  ->join('settings','memberships.merchant_id', '=', 'settings.object_id')
                                       ->where('settings.setting_name', '=', 'enable_membership_card')
                                       ->where('settings.object_type', '=', 'merchant')
                                       ->where('settings.setting_value', '=', 'true')
@@ -219,7 +220,8 @@ class MembershipNumberAPIController extends ControllerAPI
                     'join_date'         => 'membership_numbers.join_date',
                     'membership_name'   => 'membership_name',
                     'membership_number' => 'membership_numbers.membership_number',
-                    'status'            => 'membership_numbers.status'
+                    'status'            => 'membership_numbers.status',
+                    'merchant_name'     => 'merchant_name'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
