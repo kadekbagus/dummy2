@@ -39,7 +39,7 @@
                         <img class="img-responsive membership-card" src="{{ asset($user->membershipNumbers[0]->membership->media[0]->path) }}">
                         @endif
                         <h2>
-                            <span>
+                            <span class="membership-number">
                                 <strong>
                                     {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
                                 </strong>
