@@ -103,7 +103,7 @@ return array(
         'membership_notfound'    => '会员不存在',
         'membership_want_member' => '想要成为会员?',
         'membership_great_deal'  => '取特殊伟大交易',
-        'membership_contact_our' => '请联系客户服务取您的会员号码',
+        'membership_contact_our' => '请联系客户服务取您的会员',
 
         'enjoy_free'             => '享受免费的',
         'unlimited'              => '无限',
