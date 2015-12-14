@@ -101,9 +101,9 @@ return array(
         'okay'                   => 'OK',
 
         'membership_notfound'    => 'Membership Not Found',
-        'membership_want_member' => 'Want to be a member?',
+        'membership_want_member' => 'Want To Become A Member?',
         'membership_great_deal'  => 'To get special great deals from us',
-        'membership_contact_our' => 'Please, contact our customer service to get your membership number',
+        'membership_contact_our' => 'Please, contact our customer service to get your membership',
 
         'enjoy_free'             => 'ENJOY FREE',
         'unlimited'              => 'UNLIMITED',
@@ -340,7 +340,7 @@ return array(
         'lucky_draw_info_3'         => 'The first number that you can ',
         'lucky_draw_info_4'         => 'Total Currently you have ',
         'lucky_draw_info_5'         => 'lucky numbers draw, you can see your entire page numbers',
-        'lucky_draw'                => 'Lucky Draw.',
+        'lucky_draw'                => 'Lucky Draw',
         'close'                     => 'Close.',
 
         'no_ongoing_lucky_draws'    => 'There is no ongoing lucky draws at the moment.',
@@ -374,12 +374,15 @@ return array(
         'no_lucky_draw_number_1'    => 'Get your lucky draw numbers now!',
         'no_lucky_draw_number_2'    => 'Check with customer service on how to participate',
         'see_prizes'                => 'See Prizes',
+        'see_prizes_and_winner'     => 'See Prizes &amp; Winners',
         'prizes'                    => 'Prizes',
         'winners_and_prizes'        => 'Winners &amp; Prizes',
         'default_announcement_winner_title' => 'Congratulations to all beloved winners',
         'information'               => 'Information',
         'winning_numbers'           => 'Winning Numbers',
-        'prizes_and_winners'        => 'Prizes &amp; Winners'
+        'prizes_and_winners'        => 'Prizes &amp; Winners',
+        'lucky_draw_prizes'         => 'Lucky Draw Prizes',
+        'no_prize'                  => 'The prize is coming soon',
     ),
 
     'tour' => array(

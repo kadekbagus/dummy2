@@ -41,7 +41,7 @@
         @if(! empty($luckydraw->prizes))
         <div class="row text-center vertically-spaced">
             <div class="col-xs-12">
-                <a href="{{ url('/customer/luckydraw-announcement?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.winning_number') }}</a>
+                <a href="{{ url('/customer/luckydraw-announcement?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</a>
             </div>
         </div>
         @endif
@@ -64,7 +64,7 @@
 </div>
 <div class="row text-center lucky-number-wrapper">
     @if(!empty($luckydraw))
-    <div class="row">
+    <div class="row vertically-spaced">
         <h4>{{ Lang::get('mobileci.lucky_draw.my_lucky_draw_number') }}</h4>
     </div>
 
@@ -83,12 +83,12 @@
         </div>
     </div>
 
-    <div class="row">
+   <!--  <div class="row">
         <p>&nbsp;</p>
-    </div>
+    </div> -->
 
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-xs-12 lucky-number-row">
             @if ($total_pages > 1)
             <div class="col-xs-6 col-sm-6 col-lg-6">
                 <div class="row">
@@ -113,15 +113,15 @@
             @endif
 
             @foreach($numbers as $i=>$number)
-            <div class="col-xs-6 col-sm-6 col-lg-6">
+            <div class="col-xs-6 col-sm-6 col-lg-6 lucky-number-col">
                 <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
             </div>
             @endforeach
 
             @if ($total_number % 2 !== 0)
-            <div class="col-xs-12 col-sm-6 col-lg-6">
+            <!-- <div class="col-xs-12 col-sm-6 col-lg-6">
                 <div class="lucky-number-container" data-number=""></div>
-            </div>
+            </div> -->
             @endif
 
             @if ($total_pages > 1)
@@ -156,7 +156,7 @@
 <div class="row">
     <div class="row text-center save-btn">
         <div class="col-xs-12">
-            <a href="{{ URL::route('ci-luckydrawnumber-download') }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
+            <a href="{{ url('/customer/luckydrawnumber/download?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
         </div>
     </div>
 </div>
