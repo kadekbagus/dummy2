@@ -1984,7 +1984,7 @@ class CouponAPIController extends ControllerAPI
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
             $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
-            $issuedcoupon->redeem_user_id = $redeem_user_id;
+            $issuedcoupon->user_id = $redeem_user_id;
             $issuedcoupon->redeem_verification_code = $verificationNumber;
             $issuedcoupon->status = 'redeemed';
 
