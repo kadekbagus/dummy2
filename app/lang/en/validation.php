@@ -289,7 +289,7 @@ return array(
             'tenant_unit'          => 'Unit is required',
             'membership_status'    => 'The membership status you specified is not found.',
             'membership_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, membership_name, description, status',
-            'membership_number_sortby'    => 'The sort by argument you specified is not valid, the valid values are: membership_name, membership_number, join_date, status',
+            'membership_number_sortby'    => 'The sort by argument you specified is not valid, the valid values are: membership_name, membership_number, join_date, status, merchant_name',
             'mall_have_membership_card'   => 'Mall membership card not exists.',
             'enable_membership_card' => 'The enable membership card argument you specified is not valid, the valid values are: true, false',
             'lucky_draw_announcement' => 'The lucky draw announcement you specified is not found',
