@@ -219,9 +219,9 @@
             })
 
             $('#clock').countdown({
-                start:new Date('{{$servertime}}'),
+                start:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{$servertime}}')),
                 @if(!empty($luckydraw))
-                until:new Date('{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}'),
+                until:$.countdown.UTCDate({{ \Carbon\Carbon::now($retailer->timezone->timezone_name)->offsetHours }}, new Date('{{ date('Y/m/d H:i:s', strtotime($luckydraw->end_date)) }}')),
                 layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">{dn}</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">{hn}</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">{mn}</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">{sn}</span><span class="countdown-period">{sl}</span></span></span>'
                 @else
                 layout: '<span class="countdown-row countdown-show4"><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{dl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{hl}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{ml}</span></span><span class="countdown-section"><span class="countdown-amount">0</span><span class="countdown-period">{sl}</span></span></span>'
