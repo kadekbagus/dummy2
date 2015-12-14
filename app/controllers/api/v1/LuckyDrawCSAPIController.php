@@ -546,7 +546,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             }
 
             // set batch
-            $batch = Config::get('orbit.lucky_draw.batch');
+            $batch = Config::get('orbit.lucky_draw.batch', 5);
 
             // determine the starting number
             $starting_number_code = DB::table('lucky_draw_numbers')
@@ -570,6 +570,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     $batch = ($activeluckydraw->max_number - $activeluckydraw->min_number) - $_generated_numbers + 1;
                     $_numberOfLuckyDraw = $_free_number_batch;
                 }
+
                 for ($i = 0; $i < $batch; $i++) {
                     $lucky_draw_number = new LuckyDrawNumber;
                     $lucky_draw_number->lucky_draw_id = $luckyDrawId;
@@ -691,12 +692,22 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                         ->where('user_id', $customer->user_id)
                                         ->count();
 
+            $issued_lucky_draw_numbers_obj = DB::table('lucky_draw_numbers')
+                    ->where('lucky_draw_id', $luckyDrawId)
+                    ->where('user_id', $customer->user_id)
+                    ->orderBy('lucky_draw_number_code', 'desc')
+                    ->limit($numberOfLuckyDraw)
+                    ->get();
+
             $data = new stdclass();
-            $data->total_records = $receiptsCount;
-            $data->returned_records = $receipts->count();
-            $data->records = $receipts;
+            $data->total_records = count($issued_lucky_draw_numbers);
+            $data->returned_records = count($issued_lucky_draw_numbers);
+            $data->records = $issued_lucky_draw_numbers_obj;
 
             $this->response->data = $data;
+
+            // Insert to alert system
+            $this->insertLuckyDrawNumberInbox($userId, $data, $mallId);
 
             // Commit the changes
             $this->commit();

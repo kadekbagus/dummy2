@@ -1132,6 +1132,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'status'                   => 'lucky_draws.status',
                     'external_lucky_draw_id'   => 'lucky_draws.external_lucky_draw_id',
                     'mall_name'                => 'merchants.name',
+                    'total_issued_lucky_draw_number' => 'total_issued_lucky_draw_number'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
