@@ -1466,8 +1466,7 @@ class CouponAPIController extends ControllerAPI
                         WHEN 'cart_discount_by_percentage' THEN discount_value * 100
                         WHEN 'product_discount_by_percentage' THEN discount_value * 100
                         ELSE discount_value
-                    END AS 'display_discount_value',
-                    {$table_prefix}merchants.name as retailer_name
+                    END AS 'display_discount_value'
                     "),
                     DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
                     DB::raw("CASE WHEN {$table_prefix}promotions.end_date IS NOT NULL THEN
@@ -1483,8 +1482,6 @@ class CouponAPIController extends ControllerAPI
                     END as 'coupon_status'")
                 )
                 ->joinPromotionRules()
-                ->joinPromotionRetailer()
-                ->joinMerchant()
                 ->groupBy('promotions.promotion_id');
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
