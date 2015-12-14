@@ -68,12 +68,17 @@
                     @endif
 
                     @if($cs_reedem)
-                    <li style="margin-bottom : 10px;">CUSTOMER SERVICE COUNTER</li>
+                        <li style="margin-bottom : 10px;">{{{ Lang::get('mobileci.coupon.all_cs') }}}</li>
                     @endif
 
-                    @foreach($tenants as $tenant)
-                        <li>{{ $tenant->tenant->name }}</li>
-                    @endforeach
+                    @if ($link_to_all_tenant === TRUE)
+                        {{{ Lang::get('mobileci.coupon.all_tenants') }}}
+                    @else
+                        @foreach($tenants as $tenant)
+                            <li>{{ $tenant->tenant->name }}</li>
+                        @endforeach
+                    @endif
+
                     @if(count($tenants) <=0)
                         <li> - </li>
                     @endif

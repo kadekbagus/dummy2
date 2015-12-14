@@ -133,6 +133,7 @@ return array(
             'view_role'              => 'Anda tidak memiliki akses untuk melihat role',
         ),
         'empty' => array(
+            'status_link_to'       => 'The Link To must be Y or N.',
             'role'                 => 'Role ID tidak ditemukan.',
             'consumer_role'        => 'Consumer role tidak ditemukan.',
             'token'                => 'Token tidak ditemukan.',

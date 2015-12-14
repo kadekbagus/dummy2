@@ -374,8 +374,8 @@ class EmployeeAPIController extends ControllerAPI
                     'password_confirmation'   => $password2,
                     'employee_role'           => $employeeRole,
                     'retailer_ids'            => $retailerIds,
-                    'status'                  => $empStatus,
-                    'cs_verification_numbers' => $csVerificationNumbers
+                    'cs_verification_numbers' => $csVerificationNumbers,
+                    'status'                  => $empStatus
                 ),
                 array(
                     'current_mall'            => 'required|orbit.empty.mall',
@@ -1036,6 +1036,10 @@ class EmployeeAPIController extends ControllerAPI
                     // if any record, will be deleted
                     if (!empty($userVerificationNumber)) {
                         $userVerificationNumber->delete();
+
+                        //Delete link to CS
+                        $promotionEmployee = PromotionEmployee::find($userId);
+                        $promotionEmployee->delete();
                     }
                 } else {
                     // Updated data verification number
@@ -1946,6 +1950,7 @@ class EmployeeAPIController extends ControllerAPI
      * @param string    `firstname_like`        (optional)
      * @param string    `lastname_like`         (optional)
      * @param array     `employee_id_char_like` (optional)
+     * @param array     `cs_coupon_redeem_mall` (optional) - cs was have verification number for coupon redeem
      * @param integer   `take`                  (optional) - limit
      * @param integer   `skip`                  (optional) - limit offset
      * @param array     `with`                  (optional) -
@@ -2084,6 +2089,13 @@ class EmployeeAPIController extends ControllerAPI
                 $listOfMerchantIds = (array)$merchantIds;
                 $users->whereHas('retailers', function ($q) use($merchantIds) {
                     $q->whereIn('employee_retailer.retailer_id', $merchantIds);
+                });
+            });
+
+            OrbitInput::get('cs_coupon_redeem_mall', function ($merchantIds) use ($listOfMerchantIds, $joined, $users) {
+                $listOfMerchantIds = (array)$merchantIds;
+                $users->whereHas('userVerificationNumber', function ($q) use($merchantIds) {
+                    $q->whereIn('user_verification_numbers.merchant_id', $merchantIds);
                 });
             });
 
@@ -2565,16 +2577,23 @@ class EmployeeAPIController extends ControllerAPI
         Validator::extend('orbit.exist.verification.numbers', function ($attribute, $value, $parameters) {
             $merchant_id = $parameters[0];
 
-            $verificationNumber = UserVerificationNumber::
+            $csVerificationNumber = UserVerificationNumber::
                         where('verification_number', $value)
                         ->where('merchant_id', $merchant_id)
                         ->first();
 
-            if (!empty($verificationNumber)) {
+            // Check the tenants which has verification number posted
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $merchant_id)
+                    ->first();
+
+            if (! empty($verificationNumber) || ! empty($tenantVerificationNumber)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exist.verification.numbers', $verificationNumber);
+            App::instance('orbit.exist.verification.numbers', $csVerificationNumber);
 
             return TRUE;
         });
@@ -2584,17 +2603,24 @@ class EmployeeAPIController extends ControllerAPI
             $merchant_id = $parameters[0];
             $user_id = $parameters[1];
 
-            $verificationNumber = UserVerificationNumber::
+            $csVerificationNumber = UserVerificationNumber::
                         where('verification_number', $value)
                         ->where('merchant_id', $merchant_id)
                         ->where('user_id', '!=', $user_id)
                         ->first();
 
-            if (!empty($verificationNumber)) {
+            // Check the tenants which has verification number posted
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $merchant_id)
+                    ->first();
+
+            if (! empty($csVerificationNumber) || ! empty($tenantVerificationNumber)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exist.verification.numbers', $verificationNumber);
+            App::instance('orbit.exist.verification.numbers', $csVerificationNumber);
 
             return TRUE;
         });

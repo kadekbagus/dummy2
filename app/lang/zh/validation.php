@@ -150,6 +150,7 @@ return array(
             'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
+            'status_link_to'       => 'The Link To must be Y or N.',
             'role'                 => ' Role ID 您指定未找到.',
             'consumer_role'        => ' Consumer role 不存在',
             'token'                => ' Token 您指定未找到.',

@@ -70,7 +70,7 @@ return array(
         'delete_coupon_title'   => '删除优惠券',
         'close_cart_title'      => '关闭车',
         'reset_cart_title'      => '复位车',
-        'membership_title'      => '会员信息',
+        'membership_title'      => '会员',
         'language_title'        => '选语言',
         'activate_account'      => 'アカウントを有効に',
 
@@ -103,7 +103,7 @@ return array(
         'membership_notfound'    => '会员不存在',
         'membership_want_member' => '想要成为会员?',
         'membership_great_deal'  => '取特殊伟大交易',
-        'membership_contact_our' => '请联系客户服务取您的会员号码',
+        'membership_contact_our' => '请联系客户服务取您的会员',
 
         'enjoy_free'             => '享受免费的',
         'unlimited'              => '无限',
@@ -218,9 +218,11 @@ return array(
     ),
 
     'coupon' => array(
+        'all_tenants'                      => 'zh : ALL TENANTS',
+        'all_cs'                           => 'zh : CUSTOMER SERVICE COUNTER',
         'tenant_based'                     => '基于租户',
         'mall_based'                       => '基于商城',
-         'tenant_redeem'                   => 'zh : Where to Reedem',
+         'tenant_redeem'                   => '在哪里兑换',
         'coupon_value'                     => '优惠券余额',
         'use_coupon'                       => '使优惠券',
         'enter_tenant_verification_number' => '请收入店铺验证码',

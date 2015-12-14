@@ -398,15 +398,15 @@ class TenantAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'name'                 => $name,
-                    'external_object_id'   => $external_object_id,
-                    'status'               => $status,
-                    'parent_id'            => $parent_id,
-                    /* 'country'              => $country, */
-                    'url'                  => $url,
+                    'name'                => $name,
+                    'external_object_id'  => $external_object_id,
+                    'status'              => $status,
+                    'parent_id'           => $parent_id,
+                    /* 'country'          => $country, */
+                    'url'                 => $url,
                     'id_language_default' => $id_language_default,
-                    'masterbox_number'  => $masterbox_number,
-                    'box_url'              => $box_url
+                    'masterbox_number'    => $masterbox_number,
+                    'box_url'             => $box_url
                 ),
                 array(
                     'name'                 => 'required',
@@ -2137,13 +2137,19 @@ class TenantAPIController extends ControllerAPI
             $parent_id = $parameters[0];
             $tenant_id = $parameters[1];
             // Check the tenants which has verification number posted
-            $tenant = Tenant::excludeDeleted()
-                      ->where('object_type', 'tenant')
-                      ->where('masterbox_number', $value)
-                      ->where('parent_id', $parent_id)
-                      ->first();
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $parent_id)
+                    ->first();
 
-            if (! empty($tenant) && $tenant->merchant_id !== $tenant_id) {
+            // Check verification number tenant with cs verification number
+            $csVerificationNumber = UserVerificationNumber::
+                    where('verification_number', $value)
+                    ->where('merchant_id', $parent_id)
+                    ->first();
+
+            if ( (! empty($tenantVerificationNumber) && $tenantVerificationNumber->merchant_id !== $tenant_id) || ! empty($csVerificationNumber)) {
                 return FALSE;
             }
 

@@ -103,7 +103,7 @@ return array(
         'membership_notfound'    => 'Membership Not Found',
         'membership_want_member' => 'Want To Become A Member?',
         'membership_great_deal'  => 'To get special great deals from us',
-        'membership_contact_our' => 'Please, contact our customer service to get your membership',
+        'membership_contact_our' => 'Please contact our customer service to get your membership',
 
         'enjoy_free'             => 'ENJOY FREE',
         'unlimited'              => 'UNLIMITED',
@@ -218,6 +218,8 @@ return array(
     ),
 
     'coupon' => array(
+        'all_tenants'                      => 'ALL TENANTS',
+        'all_cs'                           => 'CUSTOMER SERVICE COUNTER',
         'tenant_based'                     => 'Tenant Based',
         'mall_based'                       => 'Mall Based',
         'tenant_redeem'                    => 'Where to Reedem',
