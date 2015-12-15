@@ -96,12 +96,12 @@
     <table style="width:100%">
         <thead>
             <th style="text-align:left;">No</th>
-            <th style="text-align:left;">Tenant(s)</th>
+            <th style="text-align:left;"><?php  echo ($redeemed_by === 'tenant') ? 'Tenant(s)' : 'Customer Service(s)'; ?></th>
             <th style="text-align:left;">Redeemed/Issued</th>
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Customer</th>
             <th style="text-align:left;">Redeemed Date & Time</th>
-            <th style="text-align:left;">Tenant Verification Number</th>
+            <th style="text-align:left;">Verification Number</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
