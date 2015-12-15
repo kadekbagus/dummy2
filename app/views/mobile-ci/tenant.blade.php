@@ -16,7 +16,7 @@
     <div class="col-xs-12 product-img">
         @if(count($tenant->mediaLogoOrig) > 0)
         <div class="zoom-wrapper">
-            <div class="zoom"><a href="#" data-featherlight="image"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
+            <div class="zoom"><a href="#" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img alt="" src="{{ asset('mobile-ci/images/product-zoom.png') }}" ></a></div>
         </div>
         @endif
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
@@ -29,12 +29,12 @@
             @foreach($tenant->mediaLogoOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
                 <span class="gallery-helper"></span>
-                <a href="{{ asset($media->path) }}" data-featherlight="image"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
+                <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
             </li>
             @endforeach
             @foreach($tenant->mediaImageOrig as $media)
             <li data-thumb="{{ asset($media->path) }}">
-                <a href="{{ asset($media->path) }}" data-featherlight="image"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
+                <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" src="{{ asset($media->path) }}" /></a>
             </li>
             @endforeach
         </ul>
@@ -54,13 +54,16 @@
     <div class="col-xs-12 main-theme-mall product-detail where">
         <div class="row">
             <div class="col-xs-12">
-                <h4>{{ Lang::get('mobileci.tenant.where') }}</h4>
             </div>
             <div class="col-xs-12">
-                <p>{{ $tenant->name }} {{ Lang::get('mobileci.tenant.at') }}</p>
-                <p>{{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p>
-                <p>{{ Lang::get('mobileci.tenant.phone') }} : {{{ (($tenant->phone) != '') ? $tenant->phone : '-' }}}</p>
-                <p style="word-wrap: break-word;">{{ Lang::get('mobileci.tenant.website') }} : {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p>
+
+                <br/>
+                <p>{{ $tenant->name }}</p>
+                <ul class="where-list">
+                    <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
+                    <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
+                    <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
+                </ul>
 
                 @if ($box_url)
                 <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
@@ -68,7 +71,7 @@
 
                 @foreach($tenant->mediaMapOrig as $map)
                 <p>
-                    <img class="img-responsive maps" src="{{ asset($map->path) }}">
+                    <a href="{{ asset($map->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive maps" src="{{ asset($map->path) }}"></a>
                 </p>
                 @endforeach
             </div>
@@ -88,7 +91,7 @@
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">
                                     @if(!empty($tenant->newsPromotions->image))
-                                    <a href="{{ asset($tenant->newsPromotions->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($tenant->newsPromotions->image) }}"></a>
+                                    <a href="{{ asset($tenant->newsPromotions->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($tenant->newsPromotions->image) }}"></a>
                                     @else
                                     <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                     @endif
@@ -124,7 +127,7 @@
                             <div class="row catalogue-top">
                                 <div class="col-xs-3 catalogue-img">
                                     @if(!empty($tenant->news->image))
-                                    <a href="{{ asset($tenant->news->image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($tenant->news->image) }}"></a>
+                                    <a href="{{ asset($tenant->news->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($tenant->news->image) }}"></a>
                                     @else
                                     <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                     @endif

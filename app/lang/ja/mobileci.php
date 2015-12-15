@@ -34,6 +34,7 @@ return array(
         'news'               => 'ニュース',
         'membership'         => '会員',
         'orbit_tour'         => 'ORBIT ツアー',
+        'lucky_draws'        => '幸運な抽選',
     ),
 
     'widgets' => array(
@@ -69,7 +70,7 @@ return array(
         'delete_coupon_title'   => 'クーポンを削除',
         'close_cart_title'      => '閉じるカート',
         'reset_cart_title'      => 'リセットカート',
-        'membership_title'      => '会員情報',
+        'membership_title'      => '会員',
         'language_title'        => '言語を選ぶ',
         'activate_account'      => '激活账户',
 
@@ -100,9 +101,9 @@ return array(
         'okay'                  => 'オーケー',
 
         'membership_notfound'    => '会員が見つかりません',
-        'membership_want_member' => '会員になりたいですか',
+        'membership_want_member' => '会員になりたいですか?',
         'membership_great_deal'  => '我々からスペシャル大きな取引を得ます',
-        'membership_contact_our' => 'あなたの会員番号を得るために、我々のカスタマーサービスに連絡してください',
+        'membership_contact_our' => 'あなたの会員を得るために、我々のカスタマーサービスに連絡してください',
 
         'enjoy_free'             => '無料で楽しみます',
         'unlimited'              => '無制限の',
@@ -217,9 +218,11 @@ return array(
     ),
 
     'coupon'         => array(
+        'all_tenants'                      => 'すべてのテナント',
+        'all_cs'                           => 'カスタマーサービスカウンター',
         'tenant_based'                     => 'テナント基づい',
         'mall_based'                       => 'モールベース',
-        'tenant_redeem'                    => 'テナントの取り戻す',
+        'tenant_redeem'                    => '交換する場所',
         'coupon_value'                     => 'クーポンの価値',
         'use_coupon'                       => 'クーポンを使用する',
         'enter_tenant_verification_number' => 'テナント確認番号を入力してください',
@@ -232,7 +235,7 @@ return array(
         'please_communicate'               => '以下の数をテナント従業員に 伝えてください.',
         'congratulations_you_get'          => 'おめでとう、あなたが得る',
         'here_is_your_coupon'              => 'クーポン。こちらはあなたのクーポンです',
-        'here_are_your_coupons'              => 'クーポン。こちらはあなたのクーポンです',
+        'here_are_your_coupons'            => 'クーポン。こちらはあなたのクーポンです',
         'happy_shopping'                   => 'どうぞ買い物してください!',
         'close'                            => '閉じる',
         'my_coupon'                        => '私のクーポン',
@@ -364,6 +367,22 @@ return array(
         'lucky_draw_total_info_5'   => '抽選番号.これは、最小の番号に最高でソート.',
         'lucky_draw_total_info_6'   => 'あなたのダウンロードは、自動的に始まらなければなりません。それがしようとしない場合、以下のボタンをクリックしてみてください',
         'download_image'            => 'ダウンロードイメージ',
+        'description'               => '説明',
+        'period'                    => '期間',
+        'draw_date'                 => '日付を描きます',
+        'my_lucky_draw_number'      => '私のラッキードロー番号',
+        'no_lucky_draw_number_1'    => '今あなたの抽選番号を入手！',
+        'no_lucky_draw_number_2'    => '参加方法の顧客サービスに確認してください',
+        'see_prizes'                => '賞を参照してください。',
+        'see_prizes_and_winner'     => '賞と受賞者を参照してください。',
+        'prizes'                    => '賞',
+        'winners_and_prizes'        => '勝者と賞',
+        'default_announcement_winner_title' => 'すべての最愛の受賞者を祝福',
+        'information'               => '情報',
+        'winning_numbers'           => '当選番号',
+        'prizes_and_winners'        => '賞と受賞者',
+        'lucky_draw_prizes'         => '幸運な抽選賞',
+        'no_prize'                  => '賞金はすぐに来ています',
     ),
 
     'tour' => array(
@@ -415,9 +434,9 @@ return array(
 
     'homescreen' => array(
         'title'     => '知ってますか？',
-        'message'   => 'あなたはあなたのホーム画面にこのウェブアプリを追加することができます, タップ 設定をし',
-        'message_firefox'   => 'あなたはあなたのホーム画面にこのウェブアプリを追加することができます, タップ 設定をし > ページ その後,',
-        'add_to'    => '<strong>ホーム画面に追加</strong>',
+        'message'   => 'ブラウザーの設定をクリックし、',
+        'add_to'    => '<strong>「ホーム画面に追加」</strong>',
+        'message_after' => 'をタップして、ホーム画面にこの web アプリを追加できます',
         'check'     => '今後このメッセージを表示しません',
     ),
 

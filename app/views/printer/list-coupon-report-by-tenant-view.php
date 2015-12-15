@@ -101,7 +101,7 @@
             <th style="text-align:left;">Customer</th>
             <th style="text-align:left;">Coupon Code</th>
             <th style="text-align:left;">Redeemed Date & Time</th>
-            <th style="text-align:left;">Tenant Verification Number</th>
+            <th style="text-align:left;">Verification Number</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>

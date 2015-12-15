@@ -9,7 +9,12 @@
             <li id="orbit-tour-tenant"><a href="{{ url('/customer/tenants') }}"><span class="fa fa-list-ul"></span></a></li>
             <li id="orbit-tour-profile"><a data-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span><i class="glyphicon glyphicon-cog"></i></span></a>
                 <ul class="dropdown-menu" role="menu">
-                    <li class="complimentary-bg"><a class="disableds" id="membership-card"><span><span class="glyphicon glyphicon-credit-card"></span> {{ Lang::get('mobileci.page_title.membership') }}</span></a></li>
+                    @if($retailer->enable_membership === 'true')
+                        <li class="complimentary-bg"><a id="membership-card"><span><span class="glyphicon glyphicon-credit-card"></span> {{ Lang::get('mobileci.page_title.membership') }}</span></a></li>
+                    @else
+                        <li class="complimentary-bg" id="dropdown-disable" style="color:#999999;"><span><span class="glyphicon glyphicon-credit-card"></span> {{ Lang::get('mobileci.page_title.membership') }}</span></li>
+                    @endif
+
                     <li class="complimentary-bg"><a id="multi-language"><span><span class="glyphicon glyphicon-globe"></span> {{ Lang::get('mobileci.page_title.language') }}</span></a></li>
                     <li class="complimentary-bg"><a href="{{ url('/customer/home?show_tour=yes') }}" id="orbit-tour-setting"><span><span class="glyphicon glyphicon-info-sign"></span> {{ Lang::get('mobileci.page_title.orbit_tour') }}</span></a></li>
                     <li class="complimentary-bg"><a href="{{ url('/customer/logout') }}"><span><span class="glyphicon glyphicon-off"></span> {{ Lang::get('mobileci.page_title.logout') }}</span></a></li>
@@ -26,7 +31,7 @@
             @if(is_null($page_title))
             {{ 'ORBIT' }}
             @else
-                @if(strlen($page_title) >= 30)
+                @if(mb_strlen($page_title) >= 30)
                 {{ substr($page_title, 0, 30) . '...' }}
                 @else
                 {{ $page_title }}

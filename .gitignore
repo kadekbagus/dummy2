@@ -6,6 +6,7 @@ composer.phar
 Thumbs.db
 /.idea
 *.iml
+.project
 
 # Config
 app/config/app.php
@@ -45,3 +46,8 @@ app/routes/orbit-compiled-routes.php
 
 # Trusted proxies config
 app/config/packages/fideloper/proxy/config.php
+
+# CI dev css
+public/mobile-ci/stylesheet/orbit.lmp.mardi.css
+public/mobile-ci/stylesheet/orbit.smv.mardi.css
+public/mobile-ci/stylesheet/orbit.tks.mardi.css

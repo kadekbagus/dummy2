@@ -9,7 +9,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitUploader\UploaderConfig;
 use DominoPOS\OrbitUploader\UploaderMessage;
@@ -24,6 +24,46 @@ class UploadAPIController extends ControllerAPI
      * @var string
      */
     protected $calledFrom = 'default';
+
+    /**
+     * param: type: string
+     */
+    public function getMaximumFileSize()
+    {
+        $httpCode = 200;
+        try {
+            $type = OrbitInput::get('type', null);
+            if ($type === null) {
+                OrbitShopAPI::throwInvalidArgument('Type required');
+            }
+            $type = (string)$type;
+            if (!preg_match('/^[a-z.]+$/', $type)) {
+                OrbitShopAPI::throwInvalidArgument('Type must be alphabetic separated by dots');
+            }
+            $config = Config::get('orbit.upload.' . $type, null);
+            if (!is_array($config)) {
+                OrbitShopAPI::throwInvalidArgument('Type unknown');
+            }
+
+            if (!isset($config['file_size'])) {
+                OrbitShopAPI::throwInvalidArgument('Type does not set file size');
+            }
+
+            $this->response->data = ['bytes' => $config['file_size']];
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+        }
+        return $this->render($httpCode);
+    }
 
     /**
      * Generic method for saving the uploaded metadata to the Media table on
@@ -84,6 +124,7 @@ class UploadAPIController extends ControllerAPI
      * Upload logo for Merchant.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@myorbit.com>
      *
      * List of API Parameters
      * ----------------------
@@ -160,23 +201,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.merchant');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'merchant')
-                              ->where('media_name_id', 'merchant_logo');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($merchant)
@@ -200,6 +224,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'merchant')
+                              ->where('media_name_id', 'merchant_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -471,6 +512,7 @@ class UploadAPIController extends ControllerAPI
      * Upload photo for a product.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -548,23 +590,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $product = App::make('orbit.empty.product');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $product->product_id)
-                              ->where('object_name', 'product')
-                              ->where('media_name_id', 'product_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PRODUCT_ID]-[PRODUCT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($product)
@@ -588,6 +613,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $product->product_id)
+                              ->where('object_name', 'product')
+                              ->where('media_name_id', 'product_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -858,6 +900,7 @@ class UploadAPIController extends ControllerAPI
      * Upload photo for a promotion.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -936,23 +979,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $promotion = App::make('orbit.empty.promotion');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $promotion->promotion_id)
-                              ->where('object_name', 'promotion')
-                              ->where('media_name_id', 'promotion_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PRODUCT_ID]-[PRODUCT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($promotion)
@@ -976,6 +1002,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $promotion->promotion_id)
+                              ->where('object_name', 'promotion')
+                              ->where('media_name_id', 'promotion_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -1247,6 +1290,7 @@ class UploadAPIController extends ControllerAPI
      * Upload image for a promotion tranlation (selected language).
      *
      * @author Irianto Pratama <irianto@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1332,23 +1376,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $promotion_translations = App::make('orbit.empty.promotion_translation');
 
-            // Delete old promotion translation image
-            $pastMedia = Media::where('object_id', $promotion_translations->promotion_translation_id)
-                              ->where('object_name', 'promotion_translation')
-                              ->where('media_name_id', 'promotion_translation_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($promotion_translations)
@@ -1372,6 +1399,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
+
+            // Delete old promotion translation image
+            $pastMedia = Media::where('object_id', $promotion_translations->promotion_translation_id)
+                              ->where('object_name', 'promotion_translation')
+                              ->where('media_name_id', 'promotion_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -1469,6 +1513,7 @@ class UploadAPIController extends ControllerAPI
      * Upload profile picure (avatar) for User.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1550,23 +1595,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $user = App::make('orbit.empty.user');
 
-            // Delete old user picture
-            $pastMedia = Media::where('object_id', $user->user_id)
-                              ->where('object_name', 'user')
-                              ->where('media_name_id', 'user_profile_picture');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [USER_ID]-[USER_EMAIL]
             $renameFile = function($uploader, &$file, $dir) use ($user)
@@ -1591,6 +1619,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old user picture
+            $pastMedia = Media::where('object_id', $user->user_id)
+                              ->where('object_name', 'user')
+                              ->where('media_name_id', 'user_profile_picture');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -1865,6 +1910,7 @@ class UploadAPIController extends ControllerAPI
      * Upload photo for a coupon.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1943,23 +1989,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $coupon = App::make('orbit.empty.coupon');
 
-            // Delete old coupon image
-            $pastMedia = Media::where('object_id', $coupon->promotion_id)
-                              ->where('object_name', 'coupon')
-                              ->where('media_name_id', 'coupon_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($coupon)
@@ -1983,6 +2012,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old coupon image
+            $pastMedia = Media::where('object_id', $coupon->promotion_id)
+                              ->where('object_name', 'coupon')
+                              ->where('media_name_id', 'coupon_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -2254,6 +2300,7 @@ class UploadAPIController extends ControllerAPI
      * Upload widget images.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansayh@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -2332,23 +2379,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $widget = App::make('orbit.empty.widget');
 
-            // Delete old user picture
-            $pastMedia = Media::where('object_id', $widget->widget_id)
-                              ->where('object_name', 'widget')
-                              ->where('media_name_id', 'home_widget');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [WIDGET_ID]-[WIDGET_SLOGAN]
             $renameFile = function($uploader, &$file, $dir) use ($widget)
@@ -2374,6 +2404,23 @@ class UploadAPIController extends ControllerAPI
                 $uploaded = $uploader->uploadWidget($images, $widgetOrder);
             } else {
                 $uploaded = $uploader->upload($images);
+            }
+
+            // Delete old user picture
+            $pastMedia = Media::where('object_id', $widget->widget_id)
+                              ->where('object_name', 'widget')
+                              ->where('media_name_id', 'home_widget');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
             }
 
             // Save the files metadata
@@ -2465,6 +2512,7 @@ class UploadAPIController extends ControllerAPI
      * Upload photo for a event.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -2543,23 +2591,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $event = App::make('orbit.empty.event');
 
-            // Delete old event image
-            $pastMedia = Media::where('object_id', $event->event_id)
-                              ->where('object_name', 'event')
-                              ->where('media_name_id', 'event_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($event)
@@ -2583,6 +2614,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old event image
+            $pastMedia = Media::where('object_id', $event->event_id)
+                              ->where('object_name', 'event')
+                              ->where('media_name_id', 'event_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -2950,23 +2998,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $event_translations = App::make('orbit.empty.event_translation');
 
-            // Delete old event translation image
-            $pastMedia = Media::where('object_id', $event_translations->event_translation_id)
-                              ->where('object_name', 'event_translation')
-                              ->where('media_name_id', 'event_translation_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($event_translations)
@@ -2990,6 +3021,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
+
+            // Delete old event translation image
+            $pastMedia = Media::where('object_id', $event_translations->event_translation_id)
+                              ->where('object_name', 'event_translation')
+                              ->where('media_name_id', 'event_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -3087,6 +3135,7 @@ class UploadAPIController extends ControllerAPI
      * Upload image for a coupon translation (selected language).
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -3173,23 +3222,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $coupon_translations = App::make('orbit.empty.coupon_translation');
 
-            // Delete old coupon translation image
-            $pastMedia = Media::where('object_id', $coupon_translations->coupon_translation_id)
-                              ->where('object_name', 'coupon_translation')
-                              ->where('media_name_id', 'coupon_translation_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($coupon_translations)
@@ -3213,6 +3245,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
+
+            // Delete old coupon translation image
+            $pastMedia = Media::where('object_id', $coupon_translations->coupon_translation_id)
+                              ->where('object_name', 'coupon_translation')
+                              ->where('media_name_id', 'coupon_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -3310,6 +3359,7 @@ class UploadAPIController extends ControllerAPI
      * Upload logo for Tenant.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -3392,23 +3442,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.tenant');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_logo');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($merchant)
@@ -3430,6 +3463,23 @@ class UploadAPIController extends ControllerAPI
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
 
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
             // Save the files metadata
             $object = array(
                 'id'            => $merchant->merchant_id,
@@ -3438,14 +3488,6 @@ class UploadAPIController extends ControllerAPI
                 'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
-
-            // Update the `image` field which store the original path of the image
-            // This is temporary since right know the business rules actually
-            // only allows one image per product
-            if (isset($uploaded[0])) {
-                $merchant->logo = $uploaded[0]['path'];
-                $merchant->save();
-            }
 
             Event::fire('orbit.upload.postuploadtenantlogo.after.save', array($this, $merchant, $uploader));
 
@@ -3700,6 +3742,7 @@ class UploadAPIController extends ControllerAPI
      * Upload images for Tenant.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -3783,6 +3826,27 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.tenant');
 
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($merchant)
+            {
+                $merchant_id = $merchant->merchant_id;
+                $slug = Str::slug($merchant->name);
+                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadtenantimage.before.save', array($this, $merchant, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
                               ->where('object_name', 'retailer')
@@ -3809,27 +3873,6 @@ class UploadAPIController extends ControllerAPI
             if (count($oldMediaFiles) > 0) {
                 $pastMedia->delete();
             }
-
-            // Callback to rename the file, we will format it as follow
-            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
-            $renameFile = function($uploader, &$file, $dir) use ($merchant)
-            {
-                $merchant_id = $merchant->merchant_id;
-                $slug = Str::slug($merchant->name);
-                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
-            };
-
-            $message = new UploaderMessage([]);
-            $config = new UploaderConfig($uploadImageConfig);
-            $config->setConfig('before_saving', $renameFile);
-
-            // Create the uploader object
-            $uploader = new Uploader($config, $message);
-
-            Event::fire('orbit.upload.postuploadtenantimage.before.save', array($this, $merchant, $uploader));
-
-            // Begin uploading the files
-            $uploaded = $uploader->upload($images);
 
             // Save the files metadata
             $object = array(
@@ -4113,6 +4156,7 @@ class UploadAPIController extends ControllerAPI
      * Upload map for Tenant.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -4196,23 +4240,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.tenant');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_map');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($merchant)
@@ -4233,6 +4260,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'retailer')
+                              ->where('media_name_id', 'retailer_map');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -4504,6 +4548,7 @@ class UploadAPIController extends ControllerAPI
      * Upload background mobile page for Mall.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
@@ -4587,23 +4632,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $merchant = App::make('orbit.empty.tenant');
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_background');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($merchant)
@@ -4622,35 +4650,34 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadmallbackground.before.save', array($this, $merchant, $uploader));
 
-            // Begin uploading the files
+            // Begin uploading the files, if upload failed
             $uploaded = $uploader->upload($images);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'mall')
+                              ->where('media_name_id', 'retailer_background');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
                 'id'            => $merchant->merchant_id,
-                'name'          => 'retailer',
+                'name'          => 'mall',
                 'media_name_id' => 'retailer_background',
                 'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
-
-            $updatedsetting = Setting::active()
-                     ->where('object_id', $merchant->merchant_id)
-                     ->where('object_type', 'merchant')
-                     ->where('setting_name', 'background_image')
-                     ->first();
-
-            if(is_object($updatedsetting)) {
-                $updatedsetting->setting_value = $uploaded[0]['path'];
-                $updatedsetting->save();
-            } else {
-                $updatedsetting = new Setting;
-                $updatedsetting->object_type = 'merchant';
-                $updatedsetting->object_id = $merchant->merchant_id;
-                $updatedsetting->setting_name = 'background_image';
-                $updatedsetting->setting_value = $uploaded[0]['path'];
-                $updatedsetting->save();
-            }
 
             Event::fire('orbit.upload.postuploadmallbackground.after.save', array($this, $merchant, $uploader));
 
@@ -4809,7 +4836,7 @@ class UploadAPIController extends ControllerAPI
 
             // Delete old merchant image
             $pastMedia = Media::where('object_id', $merchant->merchant_id)
-                              ->where('object_name', 'retailer')
+                              ->where('object_name', 'mall')
                               ->where('media_name_id', 'retailer_background');
 
             // Delete each files
@@ -4921,6 +4948,8 @@ class UploadAPIController extends ControllerAPI
 
     /**
      * Upload logo for Mall.
+     *
+     * @author Firmansyah <firmansyah@rioastamal.net>
      *
      * List of API Parameters
      * ----------------------
@@ -5326,6 +5355,7 @@ class UploadAPIController extends ControllerAPI
      * Upload images for News.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -5409,23 +5439,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $news = App::make('orbit.empty.news');
 
-            // Delete old news image
-            $pastMedia = Media::where('object_id', $news->news_id)
-                              ->where('object_name', 'news')
-                              ->where('media_name_id', 'news_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($news)
@@ -5446,6 +5459,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old news image
+            $pastMedia = Media::where('object_id', $news->news_id)
+                              ->where('object_name', 'news')
+                              ->where('media_name_id', 'news_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -5811,23 +5841,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $news_translations = App::make('orbit.empty.news_translation');
 
-            // Delete old news translation image
-            $pastMedia = Media::where('object_id', $news_translations->news_translation_id)
-                              ->where('object_name', 'news_translation')
-                              ->where('media_name_id', 'news_translation_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($news_translations)
@@ -5851,6 +5864,24 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
+
+            // Delete old news translation image
+            $pastMedia = Media::where('object_id', $news_translations->news_translation_id)
+                              ->where('object_name', 'news_translation')
+                              ->where('media_name_id', 'news_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
 
             // Save the files metadata
             $object = array(
@@ -5948,6 +5979,7 @@ class UploadAPIController extends ControllerAPI
      * Upload images for Lucky Draw.
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -6031,23 +6063,6 @@ class UploadAPIController extends ControllerAPI
             // get it from there no need to re-query the database
             $luckydraw = App::make('orbit.empty.lucky_draw');
 
-            // Delete old lucky draw image
-            $pastMedia = Media::where('object_id', $luckydraw->lucky_draw_id)
-                              ->where('object_name', 'lucky_draw')
-                              ->where('media_name_id', 'lucky_draw_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($luckydraw)
@@ -6068,6 +6083,23 @@ class UploadAPIController extends ControllerAPI
 
             // Begin uploading the files
             $uploaded = $uploader->upload($images);
+
+            // Delete old lucky draw image
+            $pastMedia = Media::where('object_id', $luckydraw->lucky_draw_id)
+                              ->where('object_name', 'lucky_draw')
+                              ->where('media_name_id', 'lucky_draw_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
 
             // Save the files metadata
             $object = array(
@@ -6342,6 +6374,1064 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload image for a lucky draw translation (selected language).
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `lucky_draw_id`                (required) - ID of the lucky draw
+     * @param integer    `lucky_draw_translation_id`    (required) - ID of the lucky draw translation
+     * @param integer    `merchant_language_id`         (required) - ID of the merchant language
+     * @param file|array `image_translation`            (required) - Translation images
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadLuckyDrawTranslationImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.auth', array($this));
+
+            if (! $this->calledFrom('luckydraw.translations'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_lucky_draw')) {
+                    Event::fire('orbit.upload.postuploadluckydrawtranslationimage.authz.notallowed', array($this, $user));
+                    $editLuckyDrawLang = Lang::get('validation.orbit.actionlist.update_lucky_draw');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editLuckyDrawLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $lucky_draw_translation_id = OrbitInput::post('lucky_draw_translation_id');
+            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
+            $merchant_language_id = OrbitInput::post('merchant_language_id');
+            $image_translation = OrbitInput::files('image_translation_' . $merchant_language_id);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'lucky_draw_translation_id'  => $lucky_draw_translation_id,
+                    'lucky_draw_id'              => $lucky_draw_id,
+                    'merchant_language_id'       => $merchant_language_id,
+                    'image_translation'          => $image_translation,
+                ),
+                array(
+                    'lucky_draw_translation_id'  => 'required|orbit.empty.lucky_draw_translation',
+                    'lucky_draw_id'              => 'required|orbit.empty.lucky_draw',
+                    'merchant_language_id'       => 'required|orbit.empty.merchant_language',
+                    'image_translation'          => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('luckydraw.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.validation', array($this, $validator));
+
+            // We already had Coupon Translation instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $lucky_draw_translations = App::make('orbit.empty.lucky_draw_translation');
+
+            // Delete old coupon translation image
+            $pastMedia = Media::where('object_id', $lucky_draw_translations->lucky_draw_translation_id)
+                              ->where('object_name', 'lucky_draw_translation')
+                              ->where('media_name_id', 'lucky_draw_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [LUCKY_DRAW_ID]-[LUCKY_DRAW_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($lucky_draw_translations)
+            {
+                $lucky_draw_translation_id = $lucky_draw_translations->lucky_draw_translation_id;
+                $slug = Str::slug($lucky_draw_translations->lucky_draw_name);
+                $file['new']->name = sprintf('%s-%s-%s', $lucky_draw_translation_id, $slug, time());
+            };
+
+            // Load the orbit configuration for event upload
+            $uploadLuckyDrawConfig = Config::get('orbit.upload.lucky_draw.translation');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLuckyDrawConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.save', array($this, $lucky_draw_translations, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($image_translation);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $lucky_draw_translations->lucky_draw_translation_id,
+                'name'          => 'lucky_draw_translation',
+                'media_name_id' => 'lucky_draw_translation_image',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image_translation` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per event
+            if (isset($uploaded[0])) {
+                $lucky_draw_translations->save();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.save', array($this, $lucky_draw_translations, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.lucky_draw_translation.main');
+
+            if (! $this->calledFrom('luckydraw.translations')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.after.commit', array($this, $lucky_draw_translations, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadluckydrawtranslationimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadluckydrawtranslationimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload images for Lucky Draw Announcement.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `lucky_draw_announcement_id`               (required) - ID of the lucky draw announcement
+     * @param file|array `images`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadLuckyDrawAnnouncementImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('luckydrawannouncement.new, luckydrawannouncement.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadluckydrawannouncementimage.after.auth', array($this));
+
+                // Try to check access control list, does this lucky draw allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadluckydrawannouncementimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_lucky_draw')) {
+                    Event::fire('orbit.upload.postuploadluckydrawannouncementimage.authz.notallowed', array($this, $user));
+                    $editLuckyDrawLang = Lang::get('validation.orbit.actionlist.update_lucky_draw');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editLuckyDrawLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadluckydrawannouncementimage.after.authz', array($this, $user));
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for lucky draw upload image
+            $uploadImageConfig = Config::get('orbit.upload.lucky_draw.main');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $lucky_draw_announcement_id = OrbitInput::post('lucky_draw_announcement_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.three' => Lang::get('validation.max.array', array(
+                    'max' => 3
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'lucky_draw_announcement_id' => $lucky_draw_announcement_id,
+                    $elementName                 => $images,
+                ),
+                array(
+                    'lucky_draw_announcement_id' => 'required|orbit.empty.lucky_draw_announcement',
+                    $elementName                 => 'required|array|nomore.than.three',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('luckydrawannouncement.new, luckydrawannouncement.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.after.validation', array($this, $validator));
+
+            // We already had LuckyDraw instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $luckydrawannouncement = App::make('orbit.empty.lucky_draw_announcement');
+
+            // Delete old lucky draw image
+            $pastMedia = Media::where('object_id', $luckydrawannouncement->lucky_draw_announcement_id)
+                              ->where('object_name', 'lucky_draw_announcement')
+                              ->where('media_name_id', 'lucky_draw_announcement_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($luckydrawannouncement)
+            {
+                $lucky_draw_id = $luckydrawannouncement->lucky_draw_announcement_id;
+                $slug = Str::slug($luckydrawannouncement->title);
+                $file['new']->name = sprintf('%s-%s-%s', $lucky_draw_announcement_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.before.save', array($this, $luckydrawannouncement, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $luckydrawannouncement->lucky_draw_announcement_id,
+                'name'          => 'lucky_draw_announcement',
+                'media_name_id' => 'lucky_draw_announcement_image',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            // if (isset($uploaded[0])) {
+            //     $luckydrawannouncement->save();
+            // }
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.after.save', array($this, $luckydrawannouncement, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.lucky_draw.announcement');
+
+            // Commit the changes
+            if (! $this->calledFrom('luckydrawannouncement.new, luckydrawannouncement.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.after.commit', array($this, $luckydraw, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadluckydrawannouncementimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('luckydraw.new, luckydraw.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadluckydrawannouncementimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload image for a lucky draw translation (selected language).
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `lucky_draw_id`                (required) - ID of the lucky draw
+     * @param integer    `lucky_draw_translation_id`    (required) - ID of the lucky draw translation
+     * @param integer    `merchant_language_id`         (required) - ID of the merchant language
+     * @param file|array `image_translation`            (required) - Translation images
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadLuckyDrawAnnouncementTranslationImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.before.auth', array($this));
+
+            if (! $this->calledFrom('luckydrawannouncement.translations'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_lucky_draw')) {
+                    Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.authz.notallowed', array($this, $user));
+                    $editLuckyDrawLang = Lang::get('validation.orbit.actionlist.update_lucky_draw');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editLuckyDrawLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $lucky_draw_announcement_translation_id = OrbitInput::post('lucky_draw_announcement_translation_id');
+            $lucky_draw_announcement_id = OrbitInput::post('lucky_draw_announcement_id');
+            $merchant_language_id = OrbitInput::post('merchant_language_id');
+            $image_translation = OrbitInput::files('image_translation_' . $merchant_language_id);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'lucky_draw_announcement_translation_id'  => $lucky_draw_announcement_translation_id,
+                    'lucky_draw_announcement_id'              => $lucky_draw_announcement_id,
+                    'merchant_language_id'                    => $merchant_language_id,
+                    'image_translation'                       => $image_translation,
+                ),
+                array(
+                    'lucky_draw_announcement_translation_id'  => 'required|orbit.empty.lucky_draw_announcement_translation',
+                    'lucky_draw_announcement_id'              => 'required|orbit.empty.lucky_draw_announcement',
+                    'merchant_language_id'                    => 'required|orbit.empty.merchant_language',
+                    'image_translation'                       => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.before.validation', array($this, $validator));
+            if (! $this->calledFrom('luckydrawannouncement.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.after.validation', array($this, $validator));
+
+            // We already had Coupon Translation instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $lucky_draw_announcement_translations = App::make('orbit.empty.lucky_draw_announcement_translation');
+
+            // Delete old coupon translation image
+            $pastMedia = Media::where('object_id', $lucky_draw_announcement_translations->lucky_draw_announcement_translation_id)
+                              ->where('object_name', 'lucky_draw_announcement_translation')
+                              ->where('media_name_id', 'lucky_draw_announcement_translation_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [LUCKY_DRAW_ID]-[LUCKY_DRAW_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($lucky_draw_announcement_translations)
+            {
+                $lucky_draw_announcement_translation_id = $lucky_draw_announcement_translations->lucky_draw_announcement_translation_id;
+                $slug = Str::slug($lucky_draw_announcement_translations->title);
+                $file['new']->name = sprintf('%s-%s-%s', $lucky_draw_announcement_translation_id, $slug, time());
+            };
+
+            // Load the orbit configuration for event upload
+            $uploadLuckyDrawConfig = Config::get('orbit.upload.lucky_draw.announcement_translation');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLuckyDrawConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.before.save', array($this, $lucky_draw_announcement_translations, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($image_translation);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $lucky_draw_announcement_translations->lucky_draw_announcement_translation_id,
+                'name'          => 'lucky_draw_announcement_translation',
+                'media_name_id' => 'lucky_draw_announcement_translation_image',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image_translation` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per event
+            if (isset($uploaded[0])) {
+                $lucky_draw_announcement_translations->save();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.after.save', array($this, $lucky_draw_announcement_translations, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.lucky_draw_translation.main');
+
+            if (! $this->calledFrom('luckydrawannouncement.translations')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.after.commit', array($this, $lucky_draw_announcement_translations, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('coupon.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadluckydrawannouncementtranslationimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload images for Membership.
+     *
+     * @author Tian <tian@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `membership_id`               (required) - Membership ID
+     * @param file|array `images`                      (required) - Image files
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadMembershipImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadmembershipimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadmembershipimage.after.auth', array($this));
+
+                // Try to check access control list, does this membership allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadmembershipimage.before.authz', array($this, $user));
+
+/*
+                if (! ACL::create($user)->isAllowed('update_membership')) {
+                    Event::fire('orbit.upload.postuploadmembershipimage.authz.notallowed', array($this, $user));
+                    $editMembershipLang = Lang::get('validation.orbit.actionlist.update_membership');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMembershipLang));
+                    ACL::throwAccessForbidden($message);
+                }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postuploadmembershipimage.after.authz', array($this, $user));
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for membership upload image
+            $uploadImageConfig = Config::get('orbit.upload.membership.main');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $membership_id = OrbitInput::post('membership_id');
+            $images = OrbitInput::files($elementName);
+
+            $messages = array(
+                'nomore.than.three' => Lang::get('validation.max.array', array(
+                    'max' => 3
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'membership_id'        => $membership_id,
+                    $elementName           => $images,
+                ),
+                array(
+                    'membership_id'        => 'required|orbit.empty.membership',
+                    $elementName           => 'required|array|nomore.than.three',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadmembershipimage.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadmembershipimage.after.validation', array($this, $validator));
+
+            // We already had Membership instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $membership = App::make('orbit.empty.membership');
+
+            // Delete old membership image
+            $pastMedia = Media::where('object_id', $membership->membership_id)
+                              ->where('object_name', 'membership')
+                              ->where('media_name_id', 'membership_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($membership)
+            {
+                $membership_id = $membership->membership_id;
+                $slug = Str::slug($membership->membership_name);
+                $file['new']->name = sprintf('%s-%s-%s', $membership_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadmembershipimage.before.save', array($this, $membership, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $membership->membership_id,
+                'name'          => 'membership',
+                'media_name_id' => 'membership_image',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            Event::fire('orbit.upload.postuploadmembershipimage.after.save', array($this, $membership, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.membership.main');
+
+            // Commit the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadmembershipimage.after.commit', array($this, $membership, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadmembershipimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadmembershipimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadmembershipimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadmembershipimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadmembershipimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete images for membership.
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `membership_id`                  (required) - ID of the membership
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteMembershipImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletemembershipimage.before.auth', array($this));
+
+            if (! $this->calledFrom('membership.new, membership.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletemembershipimage.after.auth', array($this));
+
+                // Try to check access control list, does this membership allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletemembershipimage.before.authz', array($this, $user));
+
+/*
+                if (! ACL::create($user)->isAllowed('update_membership')) {
+                    Event::fire('orbit.upload.postdeletemembershipimage.authz.notallowed', array($this, $user));
+                    $editMembershipLang = Lang::get('validation.orbit.actionlist.update_membership');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMembershipLang));
+                    ACL::throwAccessForbidden($message);
+                }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeletemembershipimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $membership_id = OrbitInput::post('membership_id');
+
+            $validator = Validator::make(
+                array(
+                    'membership_id'   => $membership_id,
+                ),
+                array(
+                    'membership_id'   => 'required|orbit.empty.membership',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletemembershipimage.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletemembershipimage.after.validation', array($this, $validator));
+
+            // We already had Membership instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $membership = App::make('orbit.empty.membership');
+
+            // Delete old membership image
+            $pastMedia = Media::where('object_id', $membership->membership_id)
+                              ->where('object_name', 'membership')
+                              ->where('media_name_id', 'membership_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletemembershipimage.before.save', array($this, $membership));
+
+            Event::fire('orbit.upload.postdeletemembershipimage.after.save', array($this, $membership));
+
+            $membership->load('media');
+
+            $this->response->data = $membership;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.membership.delete_image');
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletemembershipimage.after.commit', array($this, $membership));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletemembershipimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletemembershipimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletemembershipimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletemembershipimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('membership.new, membership.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletemembershipimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -6402,6 +7492,21 @@ class UploadAPIController extends ControllerAPI
                 }
 
                 App::instance('orbit.empty.news', $news);
+
+                return TRUE;
+            });
+
+            Validator::extend('orbit.empty.membership', function ($attribute, $value, $parameters) use ($user) {
+                $membership = Membership::excludeDeleted()
+                                        ->with('media')
+                                        ->where('membership_id', $value)
+                                        ->first();
+
+                if (empty($membership)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.membership', $membership);
 
                 return TRUE;
             });
@@ -6606,6 +7711,48 @@ class UploadAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.coupon_translation', $coupon_translation);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.lucky_draw_translation', function ($attribute, $value, $parameters) {
+            $lucky_draw_translation = LuckyDrawTranslation::excludeDeleted()
+                        ->where('lucky_draw_translation_id', $value)
+                        ->first();
+
+            if (empty($lucky_draw_translation)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.lucky_draw_translation', $lucky_draw_translation);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.lucky_draw_announcement', function ($attribute, $value, $parameters) {
+            $luckyDrawAnnouncement = LuckyDrawAnnouncement::excludeDeleted()
+                        ->where('lucky_draw_announcement_id', $value)
+                        ->first();
+
+            if (empty($luckyDrawAnnouncement)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.lucky_draw_announcement', $luckyDrawAnnouncement);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.lucky_draw_announcement_translation', function ($attribute, $value, $parameters) {
+            $lucky_draw_announcement_translation = LuckyDrawAnnouncementTranslation::excludeDeleted()
+                        ->where('lucky_draw_announcement_translation_id', $value)
+                        ->first();
+
+            if (empty($lucky_draw_announcement_translation)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.lucky_draw_announcement_translation', $lucky_draw_announcement_translation);
 
             return TRUE;
         });

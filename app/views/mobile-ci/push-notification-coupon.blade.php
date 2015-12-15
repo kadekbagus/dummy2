@@ -29,13 +29,6 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">|#|close|#|</button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>

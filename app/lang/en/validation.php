@@ -135,6 +135,7 @@ return array(
             'mallgroup_have_mall'    => 'The mall group has one or more mall linked to it, so it cannot be deleted.',
             'tenant_id'              => 'The tenant id has already exists.',
             'tenant_on_inactive_have_linked'    => 'Tenant can not be deactivated, because it has links.',
+            'membership_name'        => 'The membership name has already been used.',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action.',
@@ -152,6 +153,7 @@ return array(
             'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
+            'status_link_to'       => 'The Link To must be Y or N.',
             'role'                 => 'The Role ID you specified is not found.',
             'consumer_role'        => 'The Consumer role does not exist.',
             'token'                => 'The Token you specified is not found.',
@@ -171,7 +173,7 @@ return array(
             'merchant_language'    => 'The Merchant_Language ID is not found.',
             'language_default'     => 'The language default you specified is not found.',
             'user_status'          => 'The user status you specified is not found.',
-            'user_sortby'          => 'The sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, membership_since, created_at, updated_at.',
+            'user_sortby'          => 'The sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, join_date, created_at, updated_at, first_visit_date, membership_since.',
             'merchant_status'      => 'The merchant status you specified is not found.',
             'merchant_sortby'      => 'The sort by argument you specified is not valid, the valid values are: registered_date, merchant_name, merchant_email, merchant_userid, merchant_description, merchantid, merchant_address1, merchant_address2, merchant_address3, merchant_cityid, merchant_city, merchant_countryid, merchant_country, merchant_phone, merchant_fax, merchant_status, merchant_currency, start_date_activity, total_retailer.',
             'retailer_status'      => 'The retailer status you specified is not found.',
@@ -284,8 +286,14 @@ return array(
             'language' => 'The Language ID you specified is not found.',
             'merchant_language' => 'The Merchant Language ID you specified is not found.',
             'hour_format'          => 'The :attribute is not a valid date.',
-            'tenant_floor'          => 'Floor is required',
+            'tenant_floor'         => 'Floor is required',
             'tenant_unit'          => 'Unit is required',
+            'membership_status'    => 'The membership status you specified is not found.',
+            'membership_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, membership_name, description, status',
+            'membership_number_sortby'    => 'The sort by argument you specified is not valid, the valid values are: membership_name, membership_number, join_date, status, merchant_name',
+            'mall_have_membership_card'   => 'Mall membership card not exists.',
+            'enable_membership_card' => 'The enable membership card argument you specified is not valid, the valid values are: true, false',
+            'lucky_draw_announcement' => 'The lucky draw announcement you specified is not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(
@@ -412,6 +420,14 @@ return array(
             'update_mallgroup'          => 'update mall group',
             'delete_mallgroup'          => 'delete mall group',
             'view_mallgroup'            => 'view mall group',
+        ),
+        'exceed' => array(
+            'lucky_draw' => array(
+                'max_issuance' => 'This lucky draw has reached its maximum number (:max_number).',
+            ),
+        ),
+        'max' => array(
+            'total_issued_coupons' => 'Number can not be less than current total issued coupons',
         ),
     ),
 
