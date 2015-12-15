@@ -59,10 +59,10 @@
 
                 <br/>
                 <p>{{ $tenant->name }}</p>
-                <ul style="list-style-type: none;margin:0;padding: 0;">
-                <li><i class="fa fa-map-marker fa-lg" style="margin:0;padding:8px;color:#0aa5d5;"></i>  {{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
-                <li><i class="fa fa-globe fa-lg" style="margin:0;padding:8px;color:#0aa5d5;"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
-                <li><i class="fa fa-phone-square fa-lg" style="margin:0;padding:8px;color:#0aa5d5;"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
+                <ul class="where-list">
+                    <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
+                    <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
+                    <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
                 </ul>
 
                 @if ($box_url)
