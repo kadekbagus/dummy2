@@ -79,7 +79,7 @@
                             <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
                                 <span class="link-spanner"></span>
                                 <h4>{{ mb_strlen($product->name) > 64 ? substr($product->name, 0, 64) . '...' : $product->name }}</h4>
-                                <h3><i class="fa fa-location-arrow"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
+                                <h3><i class="fa fa-map-marker"></i> &nbsp; {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
                                 <h5 class="tenant-category">
                                     <i class="fa fa-tags"></i>
                                     <span>{{ mb_strlen($product->category_string) > 54 ? substr($product->category_string, 0, 54) . '...' : $product->category_string }}</span>
@@ -361,8 +361,6 @@
             var ph = $('.catalogue').height();
             $(this).css('margin-top', ((ph-h)/2) + 'px');
         });
-
-        $('.detail-btn').css('margin-top', (($('.catalogue').height()-$('.detail-btn').height())/2) + 'px');
     }); 
     
     $(window).resize(function(){
