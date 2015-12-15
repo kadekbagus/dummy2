@@ -196,8 +196,6 @@
             var ph = $('.catalogue').height();
             $(this).css('margin-top', ((ph-h)/2) + 'px');
         });
-
-        $('.detail-btn').css('margin-top', (($('.catalogue').height()-$('.detail-btn').height())/2) + 'px');
     }); 
     
     $(window).resize(function(){

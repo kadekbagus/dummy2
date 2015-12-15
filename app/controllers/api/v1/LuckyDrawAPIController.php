@@ -94,6 +94,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $max_number = OrbitInput::post('max_number');
             $external_lucky_draw_id = OrbitInput::post('external_lucky_draw_id');
             $grace_period_date = OrbitInput::post('grace_period_date');
+            $grace_period_in_days = OrbitInput::post('grace_period_in_days');
             $id_language_default = OrbitInput::post('id_language_default');
 
             // set default value for status
@@ -118,6 +119,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'max_number'               => $max_number,
                     'external_lucky_draw_id'   => $external_lucky_draw_id,
                     'grace_period_date'        => $grace_period_date,
+                    'grace_period_in_days'     => $grace_period_in_days,
                     'status'                   => $status,
                     'id_language_default'      => $id_language_default,
                 ),
@@ -133,6 +135,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'max_number'               => 'required|numeric|max:' . static::MAX_NUMBER,
                     'external_lucky_draw_id'   => 'required',
                     'grace_period_date'        => 'date_format:Y-m-d H:i:s|after:' . $end_date,
+                    'grace_period_in_days'     => 'numeric',
                     'status'                   => 'orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active:' . $mall_id,
                     'id_language_default'      => 'required|orbit.empty.language_default',
                 )
@@ -161,6 +164,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $newluckydraw->max_number = $max_number;
             $newluckydraw->external_lucky_draw_id = $external_lucky_draw_id;
             $newluckydraw->grace_period_date = $grace_period_date;
+            $newluckydraw->grace_period_in_days = $grace_period_in_days;
             $newluckydraw->status = $status;
             $newluckydraw->created_by = $this->api->user->user_id;
             $newluckydraw->modified_by = $this->api->user->user_id;
