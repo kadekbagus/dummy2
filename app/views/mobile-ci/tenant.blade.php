@@ -59,7 +59,7 @@
             <div class="col-xs-12">
                 <p>{{ $tenant->name }} {{ Lang::get('mobileci.tenant.at') }}</p>
                 <p>{{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p>
-                <p>{{ Lang::get('mobileci.tenant.phone') }} : {{{ (($tenant->phone) != '') ? $tenant->phone : '-' }}}</p>
+                <p>{{ Lang::get('mobileci.tenant.phone') }} : @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</p>
                 <p style="word-wrap: break-word;">{{ Lang::get('mobileci.tenant.website') }} : {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p>
 
                 @if ($box_url)
