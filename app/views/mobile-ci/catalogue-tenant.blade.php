@@ -62,20 +62,17 @@
             @foreach($data->records as $product)
                 <div class="main-theme-mall catalogue" id="product-{{$product->product_id}}">
                     <div class="row catalogue-top">
-                        <div class="col-xs-6 catalogue-img">
+                        <div class="col-xs-3 catalogue-img">
                             @if(!count($product->mediaLogo) > 0)
-                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <img class="img-responsive side-margin-center" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                             @endif
                             @foreach($product->mediaLogo as $media)
                             @if($media->media_name_long == 'retailer_logo_orig')
-                            <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($media->path) }}"></a>
+                            <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive side-margin-center" alt="" src="{{ asset($media->path) }}"></a>
                             @endif
                             @endforeach
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-xs-9">
+                        <div class="col-xs-6">
                             <h4>{{ $product->name }} {{ Lang::get('mobileci.tenant.at') }}</h4>
                             <h3>{{ $retailer->name }}{{{ !empty($product->floor) ? ' - ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
                             <h5 class="tenant-category">
@@ -84,7 +81,7 @@
                             @endforeach
                             </h5>
                         </div>
-                        <div class="col-xs-3">
+                        <div class="col-xs-3" style="margin-top:20px">
                             <div class="circlet btn-blue detail-btn pull-right">
                                 <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
                             </div>

@@ -75,7 +75,7 @@
                         {{{ Lang::get('mobileci.coupon.all_tenants') }}}
                     @else
                         @foreach($tenants as $tenant)
-                            <li>{{ $tenant->tenant->name }}</li>
+                            <li>{{{ $tenant->tenant->name }}}</li>
                         @endforeach
                     @endif
 
@@ -98,6 +98,11 @@
         @endif
         <div class="row">
             @if(count($tenants) <=0)
+                @if($cs_reedem)
+                    <div class="col-xs-12 text-center">
+                        <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.modals.coupon_use') }}}</button>
+                    </div>
+                    @endif
             @else
             <div class="col-xs-12 text-center">
                 <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.modals.coupon_use') }}}</button>
