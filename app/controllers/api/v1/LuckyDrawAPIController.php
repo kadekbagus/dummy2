@@ -127,7 +127,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'description'              => 'required',
                     'start_date'               => 'required|date_format:Y-m-d H:i:s',
                     'end_date'                 => 'required|date_format:Y-m-d H:i:s|after:' . $start_date,
-                    'draw_date'                => 'required|date_format:Y-m-d H:i:s|after:' . $start_date,
+                    'draw_date'                => 'required|date_format:Y-m-d H:i:s|after:' . $end_date,
                     'minimum_amount'           => 'required|numeric',
                     'min_number'               => 'required|numeric|min:' . static::MIN_NUMBER,
                     'max_number'               => 'required|numeric|max:' . static::MAX_NUMBER,
@@ -400,14 +400,15 @@ class LuckyDrawAPIController extends ControllerAPI
                     'status'               => 'sometimes|required|orbit.empty.lucky_draw_status|orbit.exists.lucky_draw_active_but_me:' . $mall_id . ',' . $lucky_draw_id,
                     'start_date'           => 'date_format:Y-m-d H:i:s',
                     'end_date'             => 'date_format:Y-m-d H:i:s|end_date_greater_than_start_date_and_current_date:'.$start_date.','.$now,
-                    'draw_date'            => 'date_format:Y-m-d H:i:s|end_date_greater_than_start_date_and_current_date:'.$start_date.','.$now,
+                    'draw_date'            => 'date_format:Y-m-d H:i:s|draw_date_greater_than_end_date_and_current_date:'.$end_date.','.$now,
                     'grace_period_date'    => 'date_format:Y-m-d H:i:s',
                     'id_language_default'  => 'required|orbit.empty.language_default',
                 ),
                 array(
                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
                    'orbit.exists.lucky_draw_active_but_me' => Lang::get('validation.orbit.exists.lucky_draw_active'),
-                   'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.'
+                   'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.',
+                   'draw_date_greater_than_end_date_and_current_date' => 'The draw datetime should be greater than the end datetime or current datetime.'
                 )
             );
 
@@ -1132,6 +1133,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'status'                   => 'lucky_draws.status',
                     'external_lucky_draw_id'   => 'lucky_draws.external_lucky_draw_id',
                     'mall_name'                => 'merchants.name',
+                    'total_issued_lucky_draw_number' => 'total_issued_lucky_draw_number'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -3630,6 +3632,19 @@ class LuckyDrawAPIController extends ControllerAPI
             $current_date = strtotime($parameters[1]);
 
             if (($end_date > $start_date) && ($end_date > $current_date)) {
+                return TRUE;
+            }
+
+            return FALSE;
+        });
+
+        // Check draw date should be greater than end date and current date
+        Validator::extend('draw_date_greater_than_end_date_and_current_date', function ($attribute, $value, $parameters) {
+            $end_date = strtotime($parameters[0]);
+            $draw_date = strtotime($value);
+            $current_date = strtotime($parameters[1]);
+
+            if (($draw_date > $end_date) && ($draw_date > $current_date)) {
                 return TRUE;
             }
 
