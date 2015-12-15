@@ -107,17 +107,19 @@ class MembershipNumberAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
             // Builder membership
-            $record = MembershipNumber::select('membership_numbers.*', 'memberships.merchant_id', 'merchants.name AS merchant_name', 'memberships.membership_name')
+            $record = MembershipNumber::select('membership_numbers.membership_number_id', 'membership_numbers.membership_id', 'membership_numbers.user_id', 'membership_numbers.membership_number', 'membership_numbers.expired_date', 'membership_numbers.join_date', 'membership_numbers.issuer_merchant_id', 'memberships.merchant_id', 'merchants.name AS merchant_name', 'memberships.membership_name', DB::raw("CASE WHEN {$prefix}settings.setting_value = 'true' THEN 'active' ELSE 'inactive' END AS status"))
                                       ->excludeDeleted('membership_numbers')
                                       ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
                                       ->join('merchants', 'merchants.merchant_id', '=', 'memberships.merchant_id')
                                       ->excludeDeleted('memberships')
-									  ->join('settings','memberships.merchant_id', '=', 'settings.object_id')
-                                      ->where('settings.setting_name', '=', 'enable_membership_card')
-                                      ->where('settings.object_type', '=', 'merchant')
-                                      ->where('settings.setting_value', '=', 'true')
-                                      ->excludeDeleted('settings');
+									  ->leftJoin('settings', function($q) {
+                                              $q->on('memberships.merchant_id', '=', 'settings.object_id')
+                                                ->where('settings.setting_name', '=', 'enable_membership_card')
+                                                ->where('settings.object_type', '=', 'merchant')
+                                                ;
+                                      });
 
             // get user mall_ids
             $listOfMallIds = $user->getUserMallIds($mall_id);
@@ -160,8 +162,8 @@ class MembershipNumberAPIController extends ControllerAPI
             });
 
             // Filter membership by status
-            OrbitInput::get('status', function ($arg) use ($record) {
-                $record->whereIn('membership_numbers.status', (array)$arg);
+            OrbitInput::get('status', function ($arg) use ($record, $prefix) {
+                $record->whereIn(DB::raw("CASE WHEN {$prefix}settings.setting_value = 'true' THEN 'active' ELSE 'inactive' END"), (array)$arg);
             });
 
             // Add new relation based on request
@@ -220,7 +222,7 @@ class MembershipNumberAPIController extends ControllerAPI
                     'join_date'         => 'membership_numbers.join_date',
                     'membership_name'   => 'membership_name',
                     'membership_number' => 'membership_numbers.membership_number',
-                    'status'            => 'membership_numbers.status',
+                    'status'            => 'membership_status',
                     'merchant_name'     => 'merchant_name'
                 );
 
@@ -247,7 +249,7 @@ class MembershipNumberAPIController extends ControllerAPI
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.membership');
             }
-
+            
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.membershipnumber.getsearchmembershipnumber.access.forbidden', array($this, $e));
