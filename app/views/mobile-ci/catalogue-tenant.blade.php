@@ -63,27 +63,29 @@
                 <div class="main-theme-mall catalogue catalogue-tenant" id="product-{{$product->product_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">
-                            @if(!count($product->mediaLogo) > 0)
-                            <img class="img-responsive side-margin-center" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                            @endif
-                            @foreach($product->mediaLogo as $media)
-                            @if($media->media_name_long == 'retailer_logo_orig')
-                            <a href="{{ asset($media->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive side-margin-center" alt="" src="{{ asset($media->path) }}"></a>
-                            @endif
-                            @endforeach
+                            <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
+                                <span class="link-spanner"></span>
+                                @if(!count($product->mediaLogo) > 0)
+                                <img class="img-responsive side-margin-center" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                @endif
+                                @foreach($product->mediaLogo as $media)
+                                @if($media->media_name_long == 'retailer_logo_orig')
+                                <img class="img-responsive side-margin-center" alt="" src="{{ asset($media->path) }}"/>
+                                @endif
+                                @endforeach
+                            </a>
                         </div>
                         <div class="col-xs-6 catalogue-info">
                             <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
-                            <span class="link-spanner">
-                            <h4>{{ $product->name }}</h4>
-                            <h3><i class="fa fa-location-arrow"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
-                            <h5 class="tenant-category">
-                                <i class="fa fa-tags"></i>
-                                @foreach($product->categories as $cat)
-                                    <span>{{$cat->category_name}}</span>
-                                @endforeach
-                            </h5>
-                            </span>
+                                <span class="link-spanner"></span>
+                                <h4>{{ $product->name }}</h4>
+                                <h3><i class="fa fa-location-arrow"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
+                                <h5 class="tenant-category">
+                                    <i class="fa fa-tags"></i>
+                                    @foreach($product->categories as $cat)
+                                        <span>{{$cat->category_name}}</span>
+                                    @endforeach
+                                </h5>
                             </a>
                         </div>
                         <div class="col-xs-3">
