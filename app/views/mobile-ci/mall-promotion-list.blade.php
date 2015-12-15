@@ -8,24 +8,25 @@
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
             @foreach($data->records as $product)
-                <div class="main-theme-mall catalogue" id="product-{{$product->promotion_id}}">
+                <div class="main-theme-mall catalogue catalogue-other" id="product-{{$product->promotion_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">
-                            @if(!empty($product->image))
-                            <a href="{{ asset($product->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($product->image) }}"></a>
-                            @else
-                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                            @endif
+                            <a href="{{ url('customer/mallpromotion?id='.$product->news_id) }}">
+                                <span class="link-spanner"></span>
+                                @if(!empty($product->image))
+                                <img class="img-responsive" alt="" src="{{ asset($product->image) }}">
+                                @else
+                                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                @endif
+                            </a>
                         </div>
-                        <div class="col-xs-6">
-                            <h4>{{ $product->news_name }}</h4>
-                            @if (strlen($product->description) > 120)
-                            <p>{{{ mb_substr($product->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallpromotion?id='.$product->news_id) }}">...</a>] </p>
-                            @else
-                            <p>{{{ $product->description }}}</p>
-                            @endif
+                        <div class="col-xs-6 catalogue-info">
+                            <a href="{{ url('customer/mallpromotion?id='.$product->news_id) }}">
+                                <span class="link-spanner"></span>
+                                <h4>{{ $product->news_name }}</h4>
+                            </a>
                         </div>
-                        <div class="col-xs-3" style="margin-top:20px">
+                        <div class="col-xs-3">
                             <div class="circlet btn-blue detail-btn pull-right">
                                 <a href="{{ url('customer/mallpromotion?id='.$product->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
                             </div>
@@ -262,6 +263,22 @@
             path = updateQueryStringParameter(path, 'fid', $(this).data('floor'));
             console.log(path);
             window.location.replace(path);
+        });
+
+        $('.catalogue-img img').each(function(){
+            var h = $(this).height();
+            var ph = $('.catalogue').height();
+            $(this).css('margin-top', ((ph-h)/2) + 'px');
+        });
+
+        $('.detail-btn').css('margin-top', (($('.catalogue').height()-$('.detail-btn').height())/2) + 'px');
+    }); 
+    
+    $(window).resize(function(){
+        $('.catalogue-img img').each(function(){
+            var h = $(this).height();
+            var ph = $('.catalogue').height();
+            $(this).css('margin-top', ((ph-h)/2) + 'px');
         });
     });
 </script>

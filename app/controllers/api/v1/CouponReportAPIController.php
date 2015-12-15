@@ -904,7 +904,7 @@ class CouponReportAPIController extends ControllerAPI
      * ----------------------
      * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status.
      * @param string   `sortmode`              (optional) - ASC or DESC
-     * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant only
+     * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant
      * @param integer  `take`                  (optional) - Limit
      * @param integer  `skip`                  (optional) - Limit offset
      *
@@ -1021,7 +1021,6 @@ class CouponReportAPIController extends ControllerAPI
                                                         $join->on(DB::raw('redeemed.promotion_id'), '=', 'issued_coupons.promotion_id')
                                                              ->on(DB::raw('redeemed.redeem_retailer_id'), '=', 'issued_coupons.redeem_retailer_id')
                                                              ->on(DB::raw('redeemed.user_id'), '=', 'issued_coupons.user_id');
-
                                                     })
 
                                 ->join('merchants', 'merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id')
@@ -1032,7 +1031,7 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'users.user_email',
                                         DB::raw('cs.user_firstname AS redeem_retailer_name'),
                                         DB::raw("issued.*"),
-                                        DB::raw("redeemed.*"))
+                                        DB::raw("redeemed.user_id"))
                                 ->join('users', 'users.user_id', '=', 'issued_coupons.user_id')
                                 ->join('users as cs', DB::raw('cs.user_id'), '=', 'issued_coupons.redeem_user_id')
                                 ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
@@ -1085,7 +1084,7 @@ class CouponReportAPIController extends ControllerAPI
                 if ($redeemedBy === 'tenant') {
                     $coupons->where('merchants.name', 'like', "%$name%");
                 } elseif ($redeemedBy === 'cs') {
-                    $coupons->where(DB::raw('user_firstname'), 'like', "%$name%");
+                    $coupons->where(DB::raw('cs.user_firstname'), 'like', "%$name%");
                 }
             });
 
@@ -1094,7 +1093,7 @@ class CouponReportAPIController extends ControllerAPI
                 if ($redeemedBy === 'tenant') {
                     $coupons->where('merchants.name', 'like', "%$name%");
                 } elseif ($redeemedBy === 'cs') {
-                    $coupons->where(DB::raw('user_firstname'), 'like', "%$name%");
+                    $coupons->where(DB::raw('cs.user_firstname'), 'like', "%$name%");
                 }
             });
 
@@ -1286,11 +1285,13 @@ class CouponReportAPIController extends ControllerAPI
      * GET - Coupon Report By Tenant
      *
      * @author Tian <tian@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
      * @param string   `sortby`                (optional) - Column order by. Valid value: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status.
      * @param string   `sortmode`              (optional) - ASC or DESC
+     * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant
      * @param integer  `take`                  (optional) - Limit
      * @param integer  `skip`                  (optional) - Limit offset
      *
@@ -1336,6 +1337,8 @@ class CouponReportAPIController extends ControllerAPI
             $sort_by = OrbitInput::get('sortby');
 
             $configMallId = OrbitInput::get('current_mall');
+
+            $redeemedBy = OrbitInput::get('redeemed_by');
 
             $validator = Validator::make(
                 array(
@@ -1383,31 +1386,57 @@ class CouponReportAPIController extends ControllerAPI
             $now = date('Y-m-d H:i:s');
             $prefix = DB::getTablePrefix();
 
-            $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.promotion_name', 'merchants.name AS redeem_retailer_name', 'users.user_email',
-                                  DB::raw("issued.*"),
-                                  DB::raw("redeemed.*"))
-                        ->join('users', 'users.user_id', '=', 'issued_coupons.user_id')
-                        ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id')
-                        ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
-                                          from {$prefix}issued_coupons ic
-                                          where ic.status = 'active' or ic.status = 'redeemed'
-                                          group by promotion_id) issued"),
-                        // On
-                        DB::raw('issued.promotion_id'), '=', 'issued_coupons.promotion_id')
+            if ($redeemedBy === 'tenant') {
+                $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.promotion_name', 'merchants.name AS redeem_retailer_name', 'users.user_email',
+                                      DB::raw("issued.*"),
+                                      DB::raw("redeemed.*"))
+                            ->join('users', 'users.user_id', '=', 'issued_coupons.user_id')
+                            ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                            ->join('merchants', 'merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id')
+                            ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
+                                              from {$prefix}issued_coupons ic
+                                              where ic.status = 'active' or ic.status = 'redeemed'
+                                              group by promotion_id) issued"),
+                            // On
+                            DB::raw('issued.promotion_id'), '=', 'issued_coupons.promotion_id')
 
-                        ->join(DB::raw("(select promotion_id, redeem_retailer_id, user_id, count(promotion_id) as total_redeemed
-                                            from {$prefix}issued_coupons ic
-                                            where ic.status = 'redeemed'
-                                            group by promotion_id, redeem_retailer_id, user_id) redeemed"), function($join) {
+                            ->join(DB::raw("(select promotion_id, redeem_retailer_id, user_id, count(promotion_id) as total_redeemed
+                                                from {$prefix}issued_coupons ic
+                                                where ic.status = 'redeemed'
+                                                group by promotion_id, redeem_retailer_id, user_id) redeemed"), function($join) {
 
-                                                // On
-                                                $join->on(DB::raw('redeemed.promotion_id'), '=', 'issued_coupons.promotion_id')
-                                                     ->on(DB::raw('redeemed.redeem_retailer_id'), '=', 'issued_coupons.redeem_retailer_id')
-                                                     ->on(DB::raw('redeemed.user_id'), '=', 'issued_coupons.user_id');
+                                                    // On
+                                                    $join->on(DB::raw('redeemed.promotion_id'), '=', 'issued_coupons.promotion_id')
+                                                         ->on(DB::raw('redeemed.redeem_retailer_id'), '=', 'issued_coupons.redeem_retailer_id')
+                                                         ->on(DB::raw('redeemed.user_id'), '=', 'issued_coupons.user_id');
+                                                })
+                            ->where('issued_coupons.status', 'redeemed');
+            } elseif ($redeemedBy === 'cs') {
+                $coupons = IssuedCoupon::select('issued_coupons.*', 'promotions.promotion_name', 'users.user_email',
+                                    DB::raw('cs.user_firstname AS redeem_retailer_name'),
+                                    DB::raw("issued.*"),
+                                    DB::raw("redeemed.user_id"))
+                            ->join('users', 'users.user_id', '=', 'issued_coupons.user_id')
+                            ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                            ->join('users as cs', DB::raw('cs.user_id'), '=', 'issued_coupons.redeem_user_id')
+                            ->leftJoin(DB::raw("(select ic.promotion_id, count(ic.promotion_id) as total_issued
+                                              from {$prefix}issued_coupons ic
+                                              where ic.status = 'active' or ic.status = 'redeemed'
+                                              group by promotion_id) issued"),
+                            // On
+                            DB::raw('issued.promotion_id'), '=', 'issued_coupons.promotion_id')
+                            ->join(DB::raw("(select promotion_id, redeem_retailer_id, user_id, count(promotion_id) as total_redeemed
+                                                from {$prefix}issued_coupons ic
+                                                where ic.status = 'redeemed'
+                                                and ic.redeem_user_id IS NOT NULL
+                                                group by promotion_id, redeem_retailer_id, user_id) redeemed"), function($join) {
 
-                                            })
-                        ->where('issued_coupons.status', 'redeemed');
+                                                    // On
+                                                    $join->on(DB::raw('redeemed.promotion_id'), '=', 'issued_coupons.promotion_id')
+                                                         ->on(DB::raw('redeemed.user_id'), '=', 'issued_coupons.user_id');
+                                                })
+                            ->where('issued_coupons.status', 'redeemed');
+            }
 
             if ($user->isSuperAdmin()) {
                 // Filter by mall id
@@ -1437,6 +1466,12 @@ class CouponReportAPIController extends ControllerAPI
             OrbitInput::get('redeem_retailer_id', function($data) use ($coupons) {
                 $data = (array)$data;
                 $coupons->whereIn('issued_coupons.redeem_retailer_id', $data);
+            });
+
+            // Filter by redeem_retailer_id
+            OrbitInput::get('redeem_user_id', function($data) use ($coupons) {
+                $data = (array)$data;
+                $coupons->whereIn('issued_coupons.redeem_user_id', $data);
             });
 
             // Filter by Retailer name
