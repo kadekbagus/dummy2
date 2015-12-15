@@ -407,7 +407,7 @@ class LuckyDrawAPIController extends ControllerAPI
                 array(
                    'lucky_draw_name_exists_but_me' => Lang::get('validation.orbit.exists.lucky_draw_name'),
                    'orbit.exists.lucky_draw_active_but_me' => Lang::get('validation.orbit.exists.lucky_draw_active'),
-                   'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.'
+                   'end_date_greater_than_start_date_and_current_date' => 'The end datetime should be greater than the start datetime or current datetime.',
                    'draw_date_greater_than_end_date_and_current_date' => 'The draw datetime should be greater than the end datetime or current datetime.'
                 )
             );
