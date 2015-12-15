@@ -1032,7 +1032,7 @@ class CouponReportAPIController extends ControllerAPI
                 $coupons = IssuedCoupon::select('issued_coupons.*', 'users.user_email',
                                         DB::raw('cs.user_firstname AS redeem_retailer_name'),
                                         DB::raw("issued.*"),
-                                        DB::raw("redeemed.*"))
+                                        DB::raw("redeemed.user_id"))
                                 ->join('users', 'users.user_id', '=', 'issued_coupons.user_id')
                                 ->join('users as cs', DB::raw('cs.user_id'), '=', 'issued_coupons.redeem_user_id')
                                 ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
