@@ -1729,6 +1729,15 @@ class MobileCIAPIController extends ControllerAPI
                     $phone = explode('|#|', $tenant->phone);
                     $tenant->phone = implode(' ', $phone);
                 }
+                $category_string = '';
+                foreach ($tenant->categories as $i => $category) {
+                    if ($i == (count($tenant->categories) - 1)) {
+                        $category_string .= $category->category_name;
+                    } else {
+                        $category_string .= $category->category_name . ', ';
+                    }
+                }
+                $tenant->category_string = $category_string;
             }
 
             // should not be limited for new products - limit only when searching
