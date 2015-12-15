@@ -2079,7 +2079,7 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
-            
+
             $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
@@ -2898,6 +2898,17 @@ class MobileCIAPIController extends ControllerAPI
             $employeeVerificationNumbers = \UserVerificationNumber::where('merchant_id', $retailer->merchant_id)->count();
             if ($employeeVerificationNumbers > 0 || $coupons->is_all_employee === 'Y') {
                 $cs_reedem = true;
+            }
+
+            // check if coupon linked to mall cs
+            if ($coupons->is_all_employee === 'N') {
+                $couponcs = Coupon::select(DB::raw("count('promotion_employee.promotion_id') as totalcs"))
+                    ->excludeDeleted('promotions')
+                    ->leftJoin('promotion_employee','promotion_employee.promotion_id','=','promotions.promotion_id')
+                    ->where('promotions.promotion_id','=', $coupons->promotion_id)->first();
+                if ($couponcs->totalcs > 0) {
+                    $cs_reedem = true;
+                }
             }
 
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Issued Coupon Id: %s', $issued_coupon_id);
