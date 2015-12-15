@@ -222,7 +222,7 @@ class MembershipNumberAPIController extends ControllerAPI
                     'join_date'         => 'membership_numbers.join_date',
                     'membership_name'   => 'membership_name',
                     'membership_number' => 'membership_numbers.membership_number',
-                    'status'            => 'membership_status',
+                    'status'            => 'status',
                     'merchant_name'     => 'merchant_name'
                 );
 
@@ -249,7 +249,7 @@ class MembershipNumberAPIController extends ControllerAPI
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.membership');
             }
-            
+
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.membershipnumber.getsearchmembershipnumber.access.forbidden', array($this, $e));
