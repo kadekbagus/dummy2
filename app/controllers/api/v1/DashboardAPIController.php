@@ -3685,7 +3685,7 @@ class DashboardAPIController extends ControllerAPI
             });
 
             // Greater Than Equals
-            OrbitInput::get('enda_date', function($date) use ($coupons) {
+            OrbitInput::get('end_date', function($date) use ($coupons) {
                 $coupons->where('redeemed_date', '<=', $date);
             });
             // Clone the query builder which still does not include the take,
