@@ -24,6 +24,11 @@
                             <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
                                 <span class="link-spanner"></span>
                                 <h4>{{ $luckydraw->lucky_draw_name }}</h4>
+                                @if (mb_strlen($luckydraw->description) > 64)
+                                <p>{{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') }}} ... </p>
+                                @else
+                                <p>{{{ $luckydraw->description }}}</p>
+                                @endif
                             </a>
                         </div>
                     </div>
