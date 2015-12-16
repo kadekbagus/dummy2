@@ -24,6 +24,11 @@
                             <a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">
                                 <span class="link-spanner"></span>
                                 <h4>{{ $coupon->promotion_name }}</h4>
+                                @if (mb_strlen($coupon->description) > 64)
+                                <p>{{{ mb_substr($coupon->description, 0, 64, 'UTF-8') }}} ... </p>
+                                @else
+                                <p>{{{ $coupon->description }}}</p>
+                                @endif
                             </a>
                         </div>
                     </div>
