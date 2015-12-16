@@ -54,13 +54,16 @@
     <div class="col-xs-12 main-theme-mall product-detail where">
         <div class="row">
             <div class="col-xs-12">
-                <h4>{{ Lang::get('mobileci.tenant.where') }}</h4>
             </div>
             <div class="col-xs-12">
-                <p>{{ $tenant->name }} {{ Lang::get('mobileci.tenant.at') }}</p>
-                <p>{{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p>
-                <p>{{ Lang::get('mobileci.tenant.phone') }} : @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</p>
-                <p style="word-wrap: break-word;">{{ Lang::get('mobileci.tenant.website') }} : {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p>
+
+                <br/>
+                <p>{{ $tenant->name }}</p>
+                <ul class="where-list">
+                    <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
+                    <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
+                    <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
+                </ul>
 
                 @if ($box_url)
                 <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>

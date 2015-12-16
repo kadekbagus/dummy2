@@ -75,23 +75,16 @@
                                 @endforeach
                             </a>
                         </div>
-                        <div class="col-xs-6 catalogue-info">
+                        <div class="col-xs-9 catalogue-info">
                             <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
                                 <span class="link-spanner"></span>
-                                <h4>{{ $product->name }}</h4>
-                                <h3><i class="fa fa-location-arrow"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
+                                <h4>{{ mb_strlen($product->name) > 64 ? substr($product->name, 0, 64) . '...' : $product->name }}</h4>
+                                <h3><i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
                                 <h5 class="tenant-category">
-                                    <i class="fa fa-tags"></i>
-                                    @foreach($product->categories as $cat)
-                                        <span>{{$cat->category_name}}</span>
-                                    @endforeach
+                                    <i class="fa fa-tags" style="padding-left: 2px;padding-right: 4px;"></i>
+                                    <span>{{ mb_strlen($product->category_string) > 54 ? substr($product->category_string, 0, 54) . '...' : $product->category_string }}</span>
                                 </h5>
                             </a>
-                        </div>
-                        <div class="col-xs-3">
-                            <div class="circlet btn-blue detail-btn pull-right">
-                                <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -368,8 +361,6 @@
             var ph = $('.catalogue').height();
             $(this).css('margin-top', ((ph-h)/2) + 'px');
         });
-
-        $('.detail-btn').css('margin-top', (($('.catalogue').height()-$('.detail-btn').height())/2) + 'px');
     }); 
     
     $(window).resize(function(){

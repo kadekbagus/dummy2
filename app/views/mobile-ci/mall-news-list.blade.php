@@ -20,16 +20,11 @@
                                 @endif
                             </a>
                         </div>
-                        <div class="col-xs-6 catalogue-info">
+                        <div class="col-xs-9 catalogue-info">
                             <a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}">
                                 <span class="link-spanner"></span>
                                 <h4>{{ $news->news_name }}</h4>
                             </a>
-                        </div>
-                        <div class="col-xs-3">
-                            <div class="circlet btn-blue detail-btn pull-right">
-                                <a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -247,8 +242,6 @@
             var ph = $('.catalogue').height();
             $(this).css('margin-top', ((ph-h)/2) + 'px');
         });
-
-        $('.detail-btn').css('margin-top', (($('.catalogue').height()-$('.detail-btn').height())/2) + 'px');
     }); 
     
     $(window).resize(function(){
