@@ -519,9 +519,9 @@ class LuckyDrawNumberAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'lucky_draw_numbers.lucky_draw_number_code';
+            $sortBy = 'lucky_draw_numbers.created_at';
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
@@ -539,14 +539,14 @@ class LuckyDrawNumberAPIController extends ControllerAPI
                 }
             });
 
-            if ($sortBy !== 'lucky_draw_numbers.status') {
-                $luckydraws->orderBy('lucky_draw_numbers.status', 'asc');
+            if ($sortBy !== 'lucky_draw_numbers.created_at') {
+                $luckydraws->orderBy('lucky_draw_numbers.created_at', 'desc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
+                if (strtolower($_sortMode) !== 'desc') {
+                    $sortMode = 'asc';
                 }
             });
 
