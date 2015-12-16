@@ -722,6 +722,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     ->setStaff($user)
                     ->setActivityName('issue_lucky_draw')
                     ->setActivityNameLong('Lucky Draw Number Issuance')
+                    ->setLocation($mall)
                     ->setObject($luckyDraw, TRUE)
                     ->responseOK();
 
