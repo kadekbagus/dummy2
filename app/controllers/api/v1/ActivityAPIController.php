@@ -188,6 +188,7 @@ class ActivityAPIController extends ControllerAPI
                                                     'activities.response_status',
                                                     'activities.created_at',
                                                     'activities.updated_at',
+                                                    'activities.object_display_name',
                                                     DB::Raw("DATE_FORMAT({$tablePrefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"),
                                                     'user_details.gender as gender')
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
@@ -273,8 +274,8 @@ class ActivityAPIController extends ControllerAPI
                               ->where('activities.group', 'cs-portal');
                       })
                       ->orWhere(function($q) use ($tablePrefix) {
-                            $q->where('activities.activity_name', 'activation_ok')
-                              ->where('activities.activity_name_long', 'Customer Activation')
+                            $q->whereIn('activities.activity_name', ['activation_ok','issue_lucky_draw'])
+                              ->whereIn('activities.activity_name_long', ['Customer Activation','Lucky Draw Number Issuance'])
                               ->where('activities.group', 'portal');
                       });
                     });
