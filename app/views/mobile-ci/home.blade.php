@@ -500,25 +500,6 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="userActivationModal" tabindex="-1" role="dialog" aria-labelledby="userActivationModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="userActivationModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.modals.activate_account') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <p style="font-size:15px;">
-                            {{{ sprintf(Lang::get('mobileci.modals.message_user_activation'), $user_email) }}}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="modal fade" id="tour-confirmation" data-keyboard="false" data-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -714,10 +695,6 @@
                 }
             });
 
-            $('#userActivationModal').on('hidden.bs.modal', function () {
-                $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
-            });
-
             @if(! is_null($events))
             $('#promoModal').on('show.bs.modal', function() {
                 $.ajax({
@@ -741,14 +718,6 @@
                 display: true
             },
             @endif
-            {
-                selector: '#userActivationModal',
-                @if ($active_user)
-                    display: false
-                @else
-                    display: onlyEvent === false && !$.cookie(cookie_dismiss_name_2)
-                @endif
-            }
             ];
             var modalIndex;
 
