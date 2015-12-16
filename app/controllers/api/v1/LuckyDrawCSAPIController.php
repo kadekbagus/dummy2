@@ -698,9 +698,13 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                         ->count();
 
             $issued_lucky_draw_numbers_obj = DB::table('lucky_draw_numbers')
-                    ->where('lucky_draw_id', $luckyDrawId)
+                    ->select('lucky_draw_numbers.*', 'lucky_draws.lucky_draw_name')
+                    ->leftJoin('lucky_draws', function($q) {
+                        $q->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_numbers.lucky_draw_id');
+                    })
+                    ->where('lucky_draw_numbers.lucky_draw_id', $luckyDrawId)
                     ->where('user_id', $customer->user_id)
-                    ->orderBy('lucky_draw_number_code', 'desc')
+                    ->orderByRaw('CAST(lucky_draw_number_code as UNSIGNED) DESC')
                     ->limit($numberOfLuckyDraw)
                     ->get();
 
@@ -712,7 +716,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->response->data = $data;
 
             // Insert to alert system
-            $this->insertLuckyDrawNumberInbox($userId, $data, $mallId);
+            $inbox = new Inbox();
+            $inbox->addToInbox($userId, $data, $mallId, 'lucky_draw_issuance', "You've got lucky number(s)");
 
             // Commit the changes
             $this->commit();
