@@ -722,7 +722,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     ->setStaff($user)
                     ->setActivityName('issue_lucky_draw')
                     ->setActivityNameLong('Lucky Draw Number Issuance')
-                    ->setObject($luckyDraw)
+                    ->setObject($luckyDraw, TRUE)
                     ->responseOK();
 
             Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.commit', array($this, $hash, $luckyDraw, $customer, $mallId));
@@ -741,7 +741,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Lucky Draw Number Issuance Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -759,7 +759,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Lucky Draw Number Issuance Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
@@ -783,7 +783,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Lucky Draw Number Issuance Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
