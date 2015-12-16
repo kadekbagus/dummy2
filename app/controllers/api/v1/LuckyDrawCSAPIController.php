@@ -510,6 +510,11 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 }
             }
 
+            if ((int)$totalAmount < $luckyDraw->minimum_amount) {
+                $errorMessage = 'Total amount of spent must be greater than minimum amount.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $numberOfLuckyDraw = floor($totalAmount / $luckyDraw->minimum_amount);
 
             foreach ($receiptDates as $i=>$receiptDate) {
@@ -1429,7 +1434,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $luckyDraw = LuckyDraw::active()->where('lucky_draw_id', $value)->first();
 
             if (empty($luckyDraw)) {
-                $errorMessage = sprintf('Lucky draw ID %s is not found.', $value);
+                $errorMessage = sprintf('Lucky draw ID is not found.', $value);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
@@ -1451,12 +1456,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $user = User::excludeDeleted()->where('user_id', $value)->first();
 
             if (empty($user)) {
-                $errorMessage = sprintf('User ID %s is not found.', $value);
+                $errorMessage = sprintf('User ID is not found.', $value);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
             if (strtolower($user->status) !== 'active') {
-                $errorMessage = sprintf('Status of user %s is not active.', $value);
+                $errorMessage = sprintf('Status of user is not active.', $value);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
