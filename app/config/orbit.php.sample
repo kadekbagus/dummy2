@@ -262,6 +262,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
+
+        // Inbox Notification
+        'inbox' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
     ),
 
     'registration' => array(
