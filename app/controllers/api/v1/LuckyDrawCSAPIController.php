@@ -528,12 +528,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this, $luckyDraw, $customer));
 
-            $mall = Mall::active()->where('merchant_id', $mallId)->first();
+            $mall = Mall::with('timezone')->active()->where('merchant_id', $mallId)->first();
 
             $activeluckydraw = DB::table('lucky_draws')
                 ->where('status', 'active')
-                ->where('start_date', '<=', Carbon::now())
-                ->where('end_date', '>=', Carbon::now())
+                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
                 ->where('lucky_draw_id', $luckyDrawId)
                 ->lockForUpdate()
                 ->first();
@@ -613,7 +613,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 ->whereIn('lucky_draw_number_id', $issued_lucky_draw_numbers)
                 ->update(array(
                     'user_id'       => $userId,
-                    'issued_date'   => Carbon::now(),
+                    'issued_date'   => Carbon::now($mall->timezone->timezone_name),
                     'modified_by'   => $user->user_id,
                     'status'        => 'active',
                     'hash'          => $hash
@@ -622,8 +622,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // update free_number_batch
             DB::table('lucky_draws')
                 ->where('status', 'active')
-                ->where('start_date', '<=', Carbon::now())
-                ->where('end_date', '>=', Carbon::now())
+                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
                 ->where('lucky_draw_id', $luckyDrawId)
                 ->update(array('free_number_batch' => ($_free_number_batch - count($issued_lucky_draw_numbers))));
 
