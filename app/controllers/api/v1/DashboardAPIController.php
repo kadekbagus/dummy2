@@ -540,43 +540,49 @@ class DashboardAPIController extends ControllerAPI
                             ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
-            // for now lucky draws is not count
-            $empty_lucky_draws = new stdclass();
-            $empty_lucky_draws->total = 0;
-            $lucky_draws = $empty_lucky_draws;
+            $luckydraws = Activity::select(DB::raw("count(distinct activity_id) as total"))
+                            ->where('activities.activity_name', '=', 'view_lucky_draw')
+                            ->where('activities.module_name', '=', 'LuckyDraw')
+                            ->where('activities.activity_type', '=', 'view')
+                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
+                            ->where('activities.group', '=', 'mobile-ci');
 
-            OrbitInput::get('merchant_id', function ($merchant_id) use ($news, $promotions, $events) {
+            OrbitInput::get('merchant_id', function ($merchant_id) use ($news, $promotions, $events, $luckydraws) {
                 $news->where('activities.location_id', '=', $merchant_id);
                 $promotions->where('activities.location_id', '=', $merchant_id);
                 $events->where('activities.location_id', '=', $merchant_id);
+                $luckydraws->where('activities.location_id', '=', $merchant_id);
             });
 
-            OrbitInput::get('start_date', function ($beginDate) use ($news, $promotions, $events) {
+            OrbitInput::get('start_date', function ($beginDate) use ($news, $promotions, $events, $luckydraws) {
                 $news->where('activities.created_at', '>=', $beginDate);
                 $promotions->where('activities.created_at', '>=', $beginDate);
                 $events->where('activities.created_at', '>=', $beginDate);
+                $luckydraws->where('activities.created_at', '>=', $beginDate);
             });
 
-            OrbitInput::get('end_date', function ($endDate) use ($news, $promotions, $events) {
+            OrbitInput::get('end_date', function ($endDate) use ($news, $promotions, $events, $luckydraws) {
                 $news->where('activities.created_at', '<=', $endDate);
                 $promotions->where('activities.created_at', '<=', $endDate);
                 $events->where('activities.created_at', '<=', $endDate);
+                $luckydraws->where('activities.created_at', '<=', $endDate);
             });
 
             $news = $news->first();
             $events = $events->first();
             $promotions = $promotions->first();
+            $luckydraws = $luckydraws->first();
 
             $news->label = 'News';
             $events->label = 'Events';
             $promotions->label = 'Promotions';
-            $lucky_draws->label = 'Lucky Draws';
+            $luckydraws->label = 'Lucky Draws';
 
             $data = new stdclass();
             $data->news = $news;
             $data->events = $events;
             $data->promotions = $promotions;
-            $data->lucky_draws = $lucky_draws;
+            $data->lucky_draws = $luckydraws;
 
             $this->response->data = $data;
 
