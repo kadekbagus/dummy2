@@ -134,7 +134,7 @@ class LuckyDraw extends Eloquent
         return $query->leftJoin('lucky_draw_numbers', function($join) {
                     $prefix = DB::getTablePrefix();
                     $join->on('lucky_draw_numbers.lucky_draw_id', '=', 'lucky_draws.lucky_draw_id');
-                    $join->on('lucky_draw_numbers.status', '!=',
+                    $join->where('lucky_draw_numbers.status', '!=',
                               DB::raw("'deleted' and ({$prefix}lucky_draw_numbers.user_id is not null and {$prefix}lucky_draw_numbers.user_id != 0)"));
         });
     }
