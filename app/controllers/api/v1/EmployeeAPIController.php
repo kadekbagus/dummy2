@@ -1038,7 +1038,7 @@ class EmployeeAPIController extends ControllerAPI
                         $userVerificationNumber->delete();
 
                         //Delete link to CS
-                        $promotionEmployee = PromotionEmployee::find($userId);
+                        $promotionEmployee = CouponEmployee::where('user_id', $userId);
                         $promotionEmployee->delete();
                     }
                 } else {
