@@ -2186,7 +2186,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityName('view_lucky_draw_list')
                 ->setActivityNameLong('View Lucky Draw List')
                 ->setObject(null)
-                ->setModuleName('Lucky Draw')
+                ->setModuleName('LuckyDraw')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
@@ -2359,7 +2359,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Lucky Draw Detail')
                 ->setObject($luckydraw, TRUE)
-                ->setModuleName('Lucky Draw')
+                ->setModuleName('LuckyDraw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()
                 ->save();

@@ -511,7 +511,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             }
 
             if ((int)$totalAmount < $luckyDraw->minimum_amount) {
-                $errorMessage = 'Total amount of spent must be greater than minimum amount.';
+                $errorMessage = 'Amount spent cannot be less than minimum spend requirement.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
