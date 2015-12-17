@@ -2305,7 +2305,7 @@ class MobileCIAPIController extends ControllerAPI
             $_GET['lucky_draw_id'] = (array) $luckydraw->lucky_draw_id;
 
             $currentPage = (int)OrbitInput::get('page', 1);
-            $take = 100;
+            $take = 8;
             $start = ($currentPage - 1)  * $take;
 
             $_GET['take'] = (int)OrbitInput::get('take', $take);
@@ -2329,8 +2329,8 @@ class MobileCIAPIController extends ControllerAPI
             $totalPages = ceil($apiResponse->data->total_records / $take);
 
             if ($totalPages > 1) {
-                $prevUrl = URL::route('ci-luckydraw') . '?page=' . ($currentPage - 1);
-                $nextUrl = URL::route('ci-luckydraw') . '?page=' . ($currentPage + 1);
+                // $prevUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage - 1);
+                // $nextUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage + 1);
 
                 if ($currentPage >= $totalPages) {
                     $nextUrl = '#';
@@ -2338,6 +2338,20 @@ class MobileCIAPIController extends ControllerAPI
 
                 if ($currentPage === 1) {
                     $prevUrl = '#';
+                }
+
+                $pageNumber = 4;
+                $paginationPage = array();
+                if ($totalPages > $pageNumber) {
+                    if ($currentPage >= $totalPages - $pageNumber + 1) {
+                        for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
+                            $paginationPage[] = $x;
+                        }
+                    } else { 
+                        for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
+                            $paginationPage[] = $x;
+                        }
+                    }
                 }
             }
 
@@ -2369,6 +2383,7 @@ class MobileCIAPIController extends ControllerAPI
                                 'per_page'      => $take,
                                 'servertime'    => $servertime,
                                 'languages'     => $languages,
+                                'paginationPage'=> $paginationPage
             ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');
