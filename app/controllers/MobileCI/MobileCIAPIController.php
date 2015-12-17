@@ -2327,7 +2327,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $totalPages = ceil($apiResponse->data->total_records / $take);
-
+            $paginationPage = array();
             if ($totalPages > 1) {
                 // $prevUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage - 1);
                 // $nextUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage + 1);
@@ -2341,7 +2341,6 @@ class MobileCIAPIController extends ControllerAPI
                 }
 
                 $pageNumber = 4;
-                $paginationPage = array();
                 if ($totalPages > $pageNumber) {
                     if ($currentPage >= $totalPages - $pageNumber + 1) {
                         for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
