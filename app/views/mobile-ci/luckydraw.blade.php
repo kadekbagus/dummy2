@@ -16,7 +16,7 @@
     <div class="col-xs-12 text-left">
         <h4>{{ Lang::get('mobileci.lucky_draw.description') }}</h4>
         <p>
-            {{ $luckydraw->description }}
+            {{ nl2br($luckydraw->description) }}
         </p>
     </div>
 </div>
@@ -147,31 +147,6 @@
         </div>
     </div>
 </div>
-
-<!-- Modal -->
-@if(!empty($luckydraw))
-<div class="modal fade" id="lddetail" tabindex="-1" role="dialog" aria-labelledby="lddetailLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="lddetailLabel">{{ Lang::get('mobileci.lucky_draw.lucky_draw_info') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <b>{{ $luckydraw->lucky_draw_name }}</b>
-                        <br>
-                        <img src="{{ asset($luckydraw->image) }}" class="img-responsive">
-                        <p>{{ nl2br($luckydraw->description) }}</p>
-                        <p>{{ Lang::get('mobileci.coupon_detail.validity_label') }} : {{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 @stop
 
 @section('ext_script_bot')

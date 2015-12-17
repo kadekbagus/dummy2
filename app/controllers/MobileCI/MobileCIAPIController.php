@@ -2305,7 +2305,7 @@ class MobileCIAPIController extends ControllerAPI
             $_GET['lucky_draw_id'] = (array) $luckydraw->lucky_draw_id;
 
             $currentPage = (int)OrbitInput::get('page', 1);
-            $take = 8;
+            $take = 10;
             $start = ($currentPage - 1)  * $take;
 
             $_GET['take'] = (int)OrbitInput::get('take', $take);
