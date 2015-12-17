@@ -200,16 +200,15 @@ class DataPrinterController extends IntermediateAuthBrowserController
                 printf("%s,%s,%s,%s,%s,%s\n\n", '', 'Total Unissued Numbers', $totalNumberLeft, '', '', '');
 
                 // CSV Format
-                // #, LUCKY DRAW NUMBER, ISSUED DATE, FULL NAME, EMAIL, MEMBERSHIP
-                printf("NO,LUCKY DRAW NUMBER,ISSUED DATE,FULL NAME,EMAIL,MEMBERSHIP\n");
+                // #, LUCKY DRAW NUMBER, ISSUED DATE, FULL NAME, EMAIL
+                printf("NO,LUCKY DRAW NUMBER,ISSUED DATE,FULL NAME,EMAIL\n");
                 while ($row = $result->fetch(PDO::FETCH_OBJ)) {
-                    printf("%s,%s,%s,%s,%s,\"=\"\"%s\"\"\"\n",
+                    printf("%s,%s,%s,%s,%s",
                             ++$rowCounter,
                             $row->lucky_draw_number_code,
                             $formatDate($row->issued_date, 'csv'),
                             $getFullName($row, 'no_email'),
-                            $row->user_email,
-                            $row->membership_number
+                            $row->user_email
                     );
                 }
 
