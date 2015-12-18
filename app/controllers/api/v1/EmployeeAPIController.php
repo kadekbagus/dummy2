@@ -2225,7 +2225,7 @@ class EmployeeAPIController extends ControllerAPI
             // If sortby not active means we should add active as second argument
             // of sorting
 
-            if ($cs_coupon_redeem_mall === '' && $cs_coupon_redeem_mall === null) {
+            if ($cs_coupon_redeem_mall === '' || $cs_coupon_redeem_mall === null) {
                 if ($sortBy !== 'users.status') {
                     $users->orderBy('users.status', 'asc');
                 }
