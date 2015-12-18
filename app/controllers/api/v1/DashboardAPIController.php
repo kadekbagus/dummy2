@@ -395,6 +395,45 @@ class DashboardAPIController extends ControllerAPI
                         $flag_type = true;
                         break;
 
+                // show luckydraws
+                case 'lucky_draws':
+                        $query = LuckyDraw::select(
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
+                                select
+                                    count(ac.activity_id) as total
+                                from
+                                    {$tablePrefix}lucky_draws luck
+                                        inner join
+                                    {$tablePrefix}activities ac ON luck.lucky_draw_id = ac.object_id
+                                where ac.module_name = 'LuckyDraw'
+                                and ac.activity_name = 'view_lucky_draw'
+                                and ac.activity_type = 'view'
+                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
+                                and ac.group = 'mobile-ci'
+                                and ac.location_id = '{$merchant_id}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
+                            ) * 100 as percentage"),
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
+                            "lucky_draws.lucky_draw_name as name",
+                            "lucky_draws.lucky_draw_id as object_id"
+                        )
+                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
+                            $join->on('lucky_draws.lucky_draw_id', '=', 'activities.object_id');
+                            $join->where('activities.activity_name', '=', 'view_lucky_draw');
+                            $join->where('activities.module_name', '=', 'LuckyDraw');
+                            $join->where('activities.activity_type', '=', 'view');
+                            $join->where('activities.group', '=', 'mobile-ci');
+                            $join->where('activities.location_id', '=', $merchant_id);
+                            $join->where("activities.created_at", '>=', $start_date);
+                            $join->where("activities.created_at", '<=', $end_date);
+                        })
+                        ->groupBy('lucky_draws.lucky_draw_id')
+                        ->orderBy('score', 'DESC')
+                        ->take($take);
+                        $flag_type = true;
+                        break;
+
                 // by default do nothing
                 default:
                      $query = null;
