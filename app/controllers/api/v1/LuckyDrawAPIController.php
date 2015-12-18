@@ -955,7 +955,7 @@ class LuckyDrawAPIController extends ControllerAPI
                                 ->where('merchant_id', $value)
                                 ->first();
                     $now = Carbon::now($mall->timezone->timezone_name);
-                    $luckydraws->whereRaw("? between start_date and grace_period_date", [$now])
+                    $luckydraws->whereRaw("? between start_date and grace_period_date", [$now]);
                 }
             });
 
@@ -1513,7 +1513,7 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             $luckydraws->orderBy('lucky_draw_numbers.issued_date', 'desc');
-            
+
             if ($sortBy === 'lucky_draw_numbers.lucky_draw_number_code') {
                 $prefix = DB::getTablePrefix();
                 $luckydraws->orderByRaw("CAST({$prefix}{$sortBy} as UNSIGNED) {$sortMode}");
@@ -2313,7 +2313,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $lucky_draw_announcement_translation_default->modified_by = $this->api->user->user_id;
             $lucky_draw_announcement->modified_by = $this->api->user->user_id;
-            
+
             $lucky_draw_announcement->save();
             Event::fire('orbit.luckydraw.after.announcement.save', array($this, $lucky_draw_announcement));
 
@@ -2323,7 +2323,7 @@ class LuckyDrawAPIController extends ControllerAPI
             OrbitInput::post('translations', function ($announcement_translations) use ($lucky_draw_announcement) {
                 $this->validateAndSaveAnnouncementTranslations($lucky_draw_announcement, $announcement_translations, 'update');
             });
-            
+
             $prize_winners_response = null;
             // associate prize with number
             OrbitInput::post('prize_winners', function ($prize_winners) use ($lucky_draw_announcement, $lucky_draw_id, &$prize_winners_response) {
