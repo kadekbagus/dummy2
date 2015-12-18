@@ -944,6 +944,16 @@ class LuckyDrawAPIController extends ControllerAPI
                                     ->joinLuckyDrawNumbers()
                                     ->joinMerchant()
                                     ->groupBy('lucky_draws.lucky_draw_id');
+
+                // Filter by user_ids
+                if ($user->isConsumer()) {
+                    $luckydraws->where('lucky_draw_numbers.user_id', $user->user_id);
+                } else {
+                    OrbitInput::get('user_id', function ($arg) use ($luckydraws)
+                    {
+                        $luckydraws->whereIn('lucky_draw_numbers.user_id', (array)$arg);
+                    });
+                }
             }
 
             // Filter lucky draw by ids
