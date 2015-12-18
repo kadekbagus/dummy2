@@ -946,6 +946,19 @@ class LuckyDrawAPIController extends ControllerAPI
                                     ->groupBy('lucky_draws.lucky_draw_id');
             }
 
+            OrbitInput::get('filter_cs', function($filter_cs) use ($luckydraws)
+            {
+                // This is for cs
+                if ($filter_cs === 'yes') {
+                    $mall = Mall::with('timezone')
+                                ->excludeDeleted()
+                                ->where('merchant_id', $value)
+                                ->first();
+                    $now = Carbon::now($mall->timezone->timezone_name);
+                    $luckydraws->whereRaw("? between start_date and grace_period_date", [$now])
+                }
+            });
+
             // Filter lucky draw by ids
             OrbitInput::get('lucky_draw_id', function($id) use ($luckydraws)
             {

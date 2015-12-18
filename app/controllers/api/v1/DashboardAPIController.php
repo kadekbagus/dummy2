@@ -884,6 +884,35 @@ class DashboardAPIController extends ControllerAPI
                             ];
                         }
                         break;
+                        
+                // show lucky draws
+                case 'lucky_draws':
+                        foreach ($periods as $period) {
+
+                            $start_date = $period['start_date'];
+                            $end_date = $period['end_date'];
+
+                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
+                                ->where('activities.activity_name', '=', 'view_lucky_draw')
+                                ->where('activities.module_name', '=', 'LuckyDraw')
+                                ->where('activities.activity_type', '=', 'view')
+                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
+                                ->where('activities.group', '=', 'mobile-ci')
+                                ->where('activities.location_id', '=', $merchant_id)
+                                ->where('activities.object_id', '=', $object_id)
+                                ->where("activities.created_at", '>=', $start_date)
+                                ->where("activities.created_at", '<=', $end_date)
+                                ->first();
+
+                            $result = (int)$query->score;
+
+                            $responses[] = [
+                                'start_date' => $start_date,
+                                'end_date' => $end_date,
+                                'score' => $result
+                            ];
+                        }
+                        break;
 
                 // by default do nothing
                 default:

@@ -122,13 +122,12 @@ class DataPrinterController extends IntermediateAuthBrowserController
                                     u.user_email, u.membership_number,
                                     u.user_firstname, u.user_lastname
                                     from {$prefix}lucky_draw_numbers ldn
-                                    left join {$prefix}users u on u.user_id=ldn.user_id
+                                    left join {$prefix}users u on u.user_id='ldn.user_id'
                                     where ldn.lucky_draw_id='$luckyDrawId' and
                                     (ldn.user_id is not null or ldn.user_id != 0)
                                     $whereKeyword
                                     group by ldn.lucky_draw_number_id
-                                    order by ldn.lucky_draw_number_code asc,
-                                    ldn.issued_date desc
+                                    order by ldn.issued_date desc
                                     limit $start, $take");
 
         if (! $result) {
