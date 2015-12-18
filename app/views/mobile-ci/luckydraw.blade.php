@@ -116,17 +116,17 @@
             <div class="col-xs-12 text-center">
                 <div class="col-xs-12">
                     <ul class="ld-pagination">
-                        <li><a href="{{ URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=1' }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-chevron-left"></i></a></li>
+                        <li><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=1' }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-chevron-left"></i></a></li>
                         @if(! in_array(1, $paginationPage))
                         <li class="ld-pagination-ellipsis">...</li>
                         @endif
                         @foreach($paginationPage as $p)
-                        <li @if($current_page == $p) class="ld-pagination-active" @endif><a href="{{ URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . $p }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}">{{ $p }}</a></li>
+                        <li @if($current_page == $p) class="ld-pagination-active" @endif><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=' . $p }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}">{{ $p }}</a></li>
                         @endforeach
                         @if(! in_array($total_pages, $paginationPage))
                         <li class="ld-pagination-ellipsis">...</li>
                         @endif
-                        <li><a href="{{ URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . $total_pages }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-chevron-right"></i></a></li>
+                        <li><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=' . $total_pages }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-chevron-right"></i></a></li>
                     </ul>
                 </div>
             </div>
