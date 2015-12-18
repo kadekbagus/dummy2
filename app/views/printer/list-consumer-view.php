@@ -133,6 +133,7 @@
             <?php } ?>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Issued Coupon</th>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Redeemed Coupon</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Issued Lucky Draw Numbers</th>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Status</th>
             <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Last Update Date & Time</th>
         </thead>
@@ -150,6 +151,7 @@
                 <?php } ?>
                 <td><?php echo ($row->total_usable_coupon); ?></td>
                 <td><?php echo ($row->total_redeemed_coupon); ?></td>
+                <td><?php echo ($row->total_lucky_draw_number); ?></td>
                 <td><?php echo ($row->status); ?></td>
                 <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
             </tr>

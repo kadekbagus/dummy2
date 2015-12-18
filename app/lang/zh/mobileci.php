@@ -34,7 +34,7 @@ return array(
         'news'               => '信息',
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
-        'lucky_draws'        => '抽奖',
+        'lucky_draws'        => '幸运大抽奖',
     ),
 
     'widgets' => array(
@@ -43,7 +43,7 @@ return array(
         'promotion'     => '促销活动',
         'coupon'        => '我的优惠券',
         'tenant'        => '店铺',
-        'lucky_draw'    => '抽奖',
+        'lucky_draw'    => '幸运大抽奖',
         'news'          => '消息',
     ),
 
