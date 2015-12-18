@@ -1504,7 +1504,7 @@ class UserAPIController extends ControllerAPI
                          }));
 
             if ($details === 'yes' || $this->detailYes === true) {
-                $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name','activities.location_id',  DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
+                $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name', 'activities.location_id', DB::raw("CASE WHEN {$prefix}tmp_lucky.total_lucky_draw_number is null THEN '0' ELSE {$prefix}tmp_lucky.total_lucky_draw_number END AS total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
                                         where cp.user_id={$prefix}users.user_id) as total_usable_coupon,
@@ -1513,10 +1513,10 @@ class UserAPIController extends ControllerAPI
                                         where cp2.status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
                                   ->leftJoin(
                                         // Table
-                                        DB::raw("(select ldn.user_id from `{$prefix}lucky_draw_numbers` ldn
+                                        DB::raw("(select ldn.user_id, count(ldn.user_id) AS total_lucky_draw_number from `{$prefix}lucky_draw_numbers` ldn
                                                  join {$prefix}lucky_draws ld on ld.lucky_draw_id=ldn.lucky_draw_id
                                                  where ldn.status='active' and ld.status='active'
-                                                 and (ldn.user_id is not null and ldn.user_id != 0))
+                                                 and (ldn.user_id is not null and ldn.user_id != '0'))
                                                  {$prefix}tmp_lucky"),
                                         // ON
                                         'tmp_lucky.user_id', '=', 'users.user_id');
