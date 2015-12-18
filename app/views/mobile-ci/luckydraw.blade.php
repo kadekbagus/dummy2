@@ -89,16 +89,22 @@
 
     <div class="row">
         <div class="col-xs-12 lucky-number-row">
-            @foreach($numbers as $i=>$number)
-            <div class="col-xs-6 col-sm-6 col-lg-6 lucky-number-col">
-                <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
-            </div>
-            @endforeach
+            @if(count($numbers) == 1)
+                <div class="col-xs-12 lucky-number-col">
+                    <div class="lucky-number-container" data-number="{{$numbers[0]->lucky_draw_number_id}}">{{ $numbers[0]->lucky_draw_number_code }}</div>
+                </div>
+            @else
+                @foreach($numbers as $i=>$number)
+                <div class="col-xs-6 col-sm-6 col-lg-6 lucky-number-col">
+                    <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
+                </div>
+                @endforeach
 
-            @if ($total_number % 2 !== 0)
-            <!-- <div class="col-xs-12 col-sm-6 col-lg-6">
-                <div class="lucky-number-container" data-number=""></div>
-            </div> -->
+                @if ($total_number % 2 !== 0)
+                <!-- <div class="col-xs-12 col-sm-6 col-lg-6">
+                    <div class="lucky-number-container" data-number=""></div>
+                </div> -->
+                @endif
             @endif
         </div>
     </div>
