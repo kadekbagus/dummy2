@@ -46,13 +46,11 @@
         </div>
         @endif
     @else
-        @if(! empty($luckydraw->prizes))
         <div class="row text-center vertically-spaced">
             <div class="col-xs-12">
-                <a href="{{ url('/customer/luckydraw-announcement?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes') }}</a>
+                <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
             </div>
         </div>
-        @endif
     @endif
 @endif
 <div class="row counter">
@@ -122,7 +120,11 @@
             <div class="col-xs-12 text-center">
                 <div class="col-xs-12">
                     <ul class="ld-pagination">
-                        <li><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=1' }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-chevron-left"></i></a></li>
+                        @if($current_page != '1')
+                        <li><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=1' }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-left"></i></a></li>
+                        @else
+                        <li><a class="disabled" style="color:#dedede;"><i class="fa fa-angle-double-left"></i></a></li>
+                        @endif
                         @if(! in_array(1, $paginationPage))
                         <li class="ld-pagination-ellipsis">...</li>
                         @endif
@@ -132,7 +134,11 @@
                         @if(! in_array($total_pages, $paginationPage))
                         <li class="ld-pagination-ellipsis">...</li>
                         @endif
-                        <li><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=' . $total_pages }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-chevron-right"></i></a></li>
+                        @if($current_page != $total_pages)
+                        <li><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=' . $total_pages }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-right"></i></a></li>
+                        @else
+                        <li><a class="disabled" style="color:#dedede;"><i class="fa fa-angle-double-right"></i></a></li>
+                        @endif
                     </ul>
                 </div>
             </div>

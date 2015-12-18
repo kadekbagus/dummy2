@@ -94,16 +94,37 @@
         a{
             display:block;
             color:#000;
+            &:hover{
+                color:#fff;
+            }
         }
     }
     .ld-pagination-active{
-        background:@theme-main;
-        color:#fff;
+        li {
+            a{
+                background:@theme-main;
+                color:#fff;
+            }
+        }
     }
     .ld-pagination-ellipsis{
         &:hover{
             background:#fff;
             color:#000;
         }
+    }
+}
+
+.btn-disabled-ld{
+    color: #aaa;
+    background:#cbcbcb;
+    &:hover{
+        color: #aaa;
+    }
+    &:active{
+        color: #aaa;
+    }
+    &:focus{
+        color: #aaa;
     }
 }
