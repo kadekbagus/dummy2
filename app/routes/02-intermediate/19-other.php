@@ -22,7 +22,7 @@ Route::get('/app/v1/inbox/unread-count', 'IntermediateAuthController@Inbox_getPo
 /**
  * Change the flag of alert to read
  */
-Route::post('/app/v1/alert/read', 'IntermediateAuthController@Inbox_postReadAlert');
+Route::post('/app/v1/inbox/read', 'IntermediateAuthController@Inbox_postReadAlert');
 
 /**
  * Poll new alert
@@ -32,7 +32,7 @@ Route::get('/app/v1/inbox/list', 'IntermediateAuthController@Inbox_getSearchInbo
 /**
  * Change the status of alert to deleted
  */
-Route::post('/app/v1/alert/delete', 'IntermediateAuthController@Inbox_postDeleteAlert');
+Route::post('/app/v1/inbox/delete', 'IntermediateAuthController@Inbox_postDeleteAlert');
 
 /**
  * Get the server time

@@ -47,7 +47,7 @@ Route::group(
 /**
  * Read / flag the alert as read
  */
-Route::post('/api/v1/alert/read', function()
+Route::post('/api/v1/inbox/read', function()
 {
     return InboxAPIController::create()->postReadAlert();
 });
@@ -55,7 +55,7 @@ Route::post('/api/v1/alert/read', function()
 /**
  * Delete the alert
  */
-Route::post('/api/v1/alert/delete', function()
+Route::post('/api/v1/inbox/delete', function()
 {
     return InboxAPIController::create()->postDeleteAlert();
 });
