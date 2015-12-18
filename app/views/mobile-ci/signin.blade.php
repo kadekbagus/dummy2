@@ -53,6 +53,19 @@
         </header>
 
         <div id="social-wrapper">
+            <form class="row" name="googleLoginForm" id="googleLoginForm" action="{{ $googlePlusUrl }}" method="get">
+                <div class="form-group">
+                    <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}" />
+                    <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}" />
+                </div>
+                <div class="form-group">
+                   <button style="background-color:#dd4b39;" type="submit" class="btn btn-info btn-block submit-btn" id="btn-login-form-google"><i class="fa fa-google-plus"></i> {{{ trans('mobileci.signin.login_via_google') }}}</button>
+                </div>
+                <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="no" />
+            </form>
+        </div>
+
+        <div id="social-wrapper">
             <form class="row" name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                 <div class="form-group">
                     <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}" />
@@ -253,6 +266,14 @@
         this.innerHTML = '<i class="fa fa-facebook"></i> ' + {{  json_encode(trans('mobileci.signin.connecting_to_facebook')); }};
     });
 
+    $('#btn-login-form-google').click(function(e) {
+        if (! term_accepted) {
+            e.preventDefault();
+            $('#acceptTnCModal').modal();
+            return false;
+        }
+        this.innerHTML = '<i class="fa fa-google-plus"></i> ' + {{  json_encode(trans('mobileci.signin.connecting_to_google')); }};
+    });
 
     /**
      * Get Query String from the URL
