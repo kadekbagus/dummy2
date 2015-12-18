@@ -2094,11 +2094,10 @@ class MobileCIAPIController extends ControllerAPI
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $luckydraws = LuckyDraw::with('translations')
-                ->excludeDeleted()
+                ->active()
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime])
-                ->orderBy('status', 'asc')
-                ->orderBy('lucky_draw_id', 'desc')
+                ->orderBy('start_date', 'desc')
                 ->get();
 
             if (!empty($alternateLanguage) && !empty($luckydraws)) {
