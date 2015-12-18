@@ -3310,18 +3310,27 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $lucky_draw_prizes = array();
             foreach ($prizes_data as $prize) {
+                $prize_name = (empty($prize->prize_name)) ? NULL : $prize->prize_name;
+                $winner_number = (empty($prize->winner_number)) ? NULL : $prize->winner_number;
+                $order = (empty($prize->order)) ? NULL : $prize->order;
+                $status = (empty($prize->status)) ? NULL : $prize->status;
+
                 $validator = Validator::make(
                     array(
-                        'prize_name'               => $prize->prize_name,
-                        'winner_number'            => $prize->winner_number,
-                        'order'                    => $prize->order,
-                        'status'                   => $prize->status,
+                        'prize_name'               => $prize_name,
+                        'winner_number'            => $winner_number,
+                        'order'                    => $order,
+                        'status'                   => $status,
                     ),
                     array(
                         'prize_name'               => 'required|max:255',
                         'winner_number'            => 'required|numeric',
                         'order'                    => 'numeric',
                         'status'                   => 'required|orbit.empty.lucky_draw_status',
+                    ),
+                    array(
+                        'prize_name.required' => 'Prize name is required',
+                        'winner_number.required' => 'Number of winners is required',
                     )
                 );
 
