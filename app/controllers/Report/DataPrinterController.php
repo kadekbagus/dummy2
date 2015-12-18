@@ -127,8 +127,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
                                     (ldn.user_id is not null or ldn.user_id != 0)
                                     $whereKeyword
                                     group by ldn.lucky_draw_number_id
-                                    order by ldn.lucky_draw_number_code asc,
-                                    ldn.issued_date desc
+                                    order by ldn.issued_date desc
                                     limit $start, $take");
 
         if (! $result) {
