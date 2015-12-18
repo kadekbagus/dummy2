@@ -832,44 +832,22 @@ class IntermediateLoginController extends IntermediateBaseController
      */
     public function checkEmailSignUp()
     {
-        // dd('dawdauwgdawd');
-        // try {
-            // $this->registerCustomValidation();
+        $email = OrbitInput::post('email');
+        $validator = Validator::make(
+            array(
+                'email' => $email,
+            ),
+            array(
+                'email' => 'required',
+            )
+        );
 
-            $email = OrbitInput::post('email');
+        $users = User::select('users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_lastname', 'users.user_id', 'user_details.birthdate', 'user_details.gender', 'users.status')
+                ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
+                ->where('users.user_email', $email)
+                ->get();
 
-            $validator = Validator::make(
-                array(
-                    'email' => $email,
-                ),
-                array(
-                    'email' => '',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
-                )
-            );
-            // // Builder object
-            // $prefix = DB::getTablePrefix();
-            $users = User::select('users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_lastname', 'users.user_id', 'user_details.birthdate', 'user_details.gender', 'users.status')
-                    ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
-                    ->where('users.user_email', $email);
-
-            // dd($users->get());
-
-            // Clone the query builder which still does not include the take,
-            // skip, and order by
-            $_users = clone $users;
-
-            $listOfUsers = $users->get();
-
-            $data = new stdclass();
-
-            $data->returned_records = count($listOfUsers);
-            $data->records = $listOfUsers;
-
-
-            $this->response->data = $data;
+        return $users;
     }
 
     /**
