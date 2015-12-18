@@ -29,7 +29,7 @@ Route::group(
 		/**
 		 * Poll new alert
 		 */
-		Route::post('/api/v1/alert/poll', function()
+		Route::get('/api/v1/inbox/unread-count', function()
 		{
 		    return InboxAPIController::create()->getPollAlert();
 		});
@@ -37,7 +37,7 @@ Route::group(
 		/**
 		 * Search inbox
 		 */
-		Route::get('/api/v1/alert/search', function()
+		Route::get('/api/v1/inbox/list', function()
 		{
 		    return InboxAPIController::create()->getSearchInbox();
 		});

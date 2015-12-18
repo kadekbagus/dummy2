@@ -17,7 +17,7 @@ Route::post('/app/v1/box-control/reboot', 'IntermediateAuthController@Shutdown_p
 /**
  * Poll new alert
  */
-Route::get('/app/v1/alert/poll', 'IntermediateAuthController@Inbox_getPollAlert');
+Route::get('/app/v1/inbox/unread-count', 'IntermediateAuthController@Inbox_getPollAlert');
 
 /**
  * Change the flag of alert to read
@@ -27,7 +27,7 @@ Route::post('/app/v1/alert/read', 'IntermediateAuthController@Inbox_postReadAler
 /**
  * Poll new alert
  */
-Route::get('/app/v1/alert/search', 'IntermediateAuthController@Inbox_getSearchInbox');
+Route::get('/app/v1/inbox/list', 'IntermediateAuthController@Inbox_getSearchInbox');
 
 /**
  * Change the status of alert to deleted

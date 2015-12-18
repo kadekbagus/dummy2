@@ -206,6 +206,10 @@ class InboxAPIController extends ControllerAPI
             $data->returned_records = count($listOfAlerts);
             $data->records = $listOfAlerts;
 
+            if ($listOfAlerts > 9) {
+                $data->records = '9+';
+            }
+
             if ($totalAlerts === 0) {
                 $data->records = null;
                 $this->response->message = 'No new alert';
