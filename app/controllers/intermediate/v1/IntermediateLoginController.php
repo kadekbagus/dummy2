@@ -818,6 +818,38 @@ class IntermediateLoginController extends IntermediateBaseController
         return $this->render(TokenAPIController::create('raw')->getSearchToken());
     }
 
+
+    /**
+     * Mobile-CI Intermediate call by registering client mac address when login
+     * succeed.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string        `email`             (optional)
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function checkEmailSignUp()
+    {
+        $email = OrbitInput::post('email');
+        $validator = Validator::make(
+            array(
+                'email' => $email,
+            ),
+            array(
+                'email' => 'required',
+            )
+        );
+
+        $users = User::select('users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_lastname', 'users.user_id', 'user_details.birthdate', 'user_details.gender', 'users.status')
+                ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
+                ->where('users.user_email', $email)
+                ->get();
+
+        return $users;
+    }
+
     /**
      * Mobile-CI Intermediate call by registering client mac address when login
      * succeed.
@@ -890,7 +922,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
                 setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                 setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-            } 
+            }
 
             if (Config::get('orbit.shop.guest_mode')) {
                 if ($user->role->role_name === 'Guest') {
