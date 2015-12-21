@@ -19,7 +19,7 @@
                                    value="{{{ $orbitToFacebookOriginValue }}}"/>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary icon-button facebook text-center" id="btn-login-form-fb">
+                            <button type="submit" class="btn btn-primary icon-button facebook text-center">
                                     <i class="fa fa-facebook fa-4x"></i>
                             </button>
                         </div>
