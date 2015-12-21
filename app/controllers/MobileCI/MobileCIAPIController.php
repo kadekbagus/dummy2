@@ -3619,6 +3619,7 @@ class MobileCIAPIController extends ControllerAPI
     public function getNotificationDetailView()
     {
         $user = null;
+        $inbox = null;
         $keyword = null;
         $activityPage = Activity::mobileci()
                         ->setActivityType('view');
@@ -3650,15 +3651,48 @@ class MobileCIAPIController extends ControllerAPI
             $inbox->is_read = 'Y';
             $inbox->save();
 
-            $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
-            $activityPage->setUser($user)
-                ->setActivityName('view_notification_list')
-                ->setActivityNameLong('View Notification List')
-                ->setObject(null)
-                ->setModuleName('Inbox')
-                ->setNotes($activityPageNotes)
-                ->responseOK()
-                ->save();
+
+            
+            switch ($inbox->inbox_type) {
+                case 'activation':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Activation Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Activation')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+
+                case 'lucky_draw_issuance':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Lucky Draw Number Issuance')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+
+                case 'coupon_issuance':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Coupon Issuance Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Coupon Issuance')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+                
+                default:
+                    break;
+            }
 
             $view_data = array(
                 'page_title' => $inbox->subject,
@@ -3672,10 +3706,10 @@ class MobileCIAPIController extends ControllerAPI
             return View::make('mobile-ci.mall-notification-detail', $view_data);
 
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view Page: %s', 'Notification List');
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Notification Detail');
             $activityPage->setUser($user)
-                ->setActivityName('view_notification_list')
-                ->setActivityNameLong('View Notification List')
+                ->setActivityName('read_notification')
+                ->setActivityNameLong('Read Notification')
                 ->setObject(null)
                 ->setModuleName('Inbox')
                 ->setNotes($activityPageNotes)
