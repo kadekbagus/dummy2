@@ -76,7 +76,7 @@ class Inbox extends Eloquent
         }
 
         $name = $user->getFullName();
-        $name = $name ? $name : $user->email;
+        $name = $name ? $name : $user->user_email;
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;

@@ -7,7 +7,7 @@
 		@elseif($inbox->inbox_type == 'coupon_issuance')
 		<img src="{{ asset('mobile-ci/images/default_no_coupon.png') }}" class="img-responsive side-margin-center">
 		@elseif($inbox->inbox_type == 'activation')
-		<img src="{{ asset('mobile-ci/images/default_email.png.png') }}" class="img-responsive side-margin-center">
+		<img src="{{ asset('mobile-ci/images/default_email.png') }}" class="img-responsive side-margin-center">
 		@endif
 	</div>	
 </div>
@@ -44,16 +44,19 @@
 		<a href="{{ url('customer/luckydraws') }}" style="color:#000;">
 			<span class="link-spanner" style="height:100%;"></span>
 			<h4>Hello {{$fullName}},</h4>
-	        <p>{{Lang::get('mobileci.coupon.congratulations_you_get')}} {{count($listItem)}} {{Lang::get('mobileci.lucky_draw.no_lucky_draw')}} @if (count($listItem) > 1) {{Lang::get('mobileci.coupon.here_are_your_coupons')}} @else {{Lang::get('mobileci.coupon.here_is_your_coupon')}} @endif:</p>
+	        <p>{{Lang::get('mobileci.coupon.congratulations_you_get')}} {{count($listItem)}} @if (count($listItem) > 1) {{Lang::get('mobileci.coupon.here_are_your_coupons')}} @else {{Lang::get('mobileci.coupon.here_is_your_coupon')}} @endif:</p>
 	        <ol>
 	        @foreach ($listItem as $couponname => $code)
 	            <li>{{$couponname}}</li>
 	        @endforeach
 	        </ol>
-	        <p>{{Lang::get('mobileci.coupon.check_coupon')}}</p>
-	        <p style="margin-top:1em">{{Lang::get('mobileci.lucky_draw.goodluck')}}</br><strong>{{$mallName}}</strong></p>
 	        <p>{{Lang::get('mobileci.coupon.happy_shopping')}}</br></br><strong>{{ $mallName }}</strong></p>
         </a>
+	</div>
+</div>
+<div class="row vertically-spaced">
+	<div class="col-xs-12">
+	<a href="{{ url('customer/mallcoupons') }}" class="btn btn-block btn-info">{{ Lang::get('mobileci.coupon_list.view_coupons_btn') }}</a>
 	</div>
 </div>
 @endif

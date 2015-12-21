@@ -249,6 +249,7 @@ return array(
         'no_coupon'          => 'You do not have any coupons.',
         'product_label'      => 'Product',
         'category_label'     => 'Category',
+        'view_coupons_btn'   => 'View Your Coupon(s)',
     ),
 
     'coupon_detail' => array(
