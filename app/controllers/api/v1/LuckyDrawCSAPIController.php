@@ -1447,7 +1447,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             }
 
             $now = strtotime(Carbon::now($mall->timezone->timezone_name));
-            $luckyDrawDate = strtotime(date('Y-m-d', strtotime($luckyDraw->end_date)));
+            $luckyDrawDate = strtotime($luckyDraw->end_date);
 
             if ($now > $luckyDrawDate) {
                 $errorMessage = sprintf('The lucky draw already expired on %s.', date('d/m/Y', strtotime($luckyDraw->end_date)));
