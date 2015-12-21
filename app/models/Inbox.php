@@ -63,16 +63,12 @@ class Inbox extends Eloquent
      * @param int $retailerId - The retailer
      * @return void
      */
-    public function addToInbox($userId, $response, $retailerId, $type, $subject)
+    public function addToInbox($userId, $response, $retailerId, $type)
     {
         $user = User::find($userId);
 
         if (empty($user)) {
             throw new Exception ('Customer user ID not found.');
-        }
-
-        if (empty($subject)) {
-            $subject = 'Orbit Notification';
         }
 
         if (empty($type)) {
@@ -87,12 +83,10 @@ class Inbox extends Eloquent
         $inbox->merchant_id = $retailerId;
         $inbox->from_id = 0;
         $inbox->from_name = 'Orbit';
-        $inbox->subject = $subject;
         $inbox->content = '';
         $inbox->inbox_type = $type;
         $inbox->status = 'active';
         $inbox->is_read = 'N';
-        $inbox->save();
 
         $retailer = Mall::where('merchant_id', $retailerId)->first();
 
@@ -100,11 +94,17 @@ class Inbox extends Eloquent
 
         $listItem = null;
         switch ($type) {
+            case 'activation':
+                $inbox->subject = "Activation";
+                break;
+
             case 'lucky_draw_issuance':
+                $inbox->subject = "You've got lucky number(s)";
                 $listItem = $response->records;
                 break;
 
             case 'coupon_issuance':
+                $inbox->subject = "You've got coupon(s)";
                 $listItem = $response->coupon_names;
                 break;
             
@@ -112,9 +112,11 @@ class Inbox extends Eloquent
                 break;
         }
 
+        $inbox->save();
+
         $data = [
             'fullName'              => $name,
-            'subject'               => $subject,
+            'subject'               => $inbox->subject,
             'inbox'                 => $inbox,
             'item'                  => $response,
             'listItem'              => $listItem,
