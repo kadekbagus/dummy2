@@ -42,7 +42,7 @@
                     </form>
                 </div>
                 <div class="col-xs-4 text-center">
-                    <button type="button" class="btn btn-info icon-button form text-center" data-toggle="modal" data-target="#formModal"><i class="fa fa-envelope fa-4x"></i></button>
+                    <button type="button" class="btn btn-info icon-button form text-center" data-toggle="modal" data-target="#formModal"><i class="fa fa-envelope fa-3x"></i></button>
                 </div>
             </div>
         </div>
