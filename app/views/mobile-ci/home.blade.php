@@ -602,7 +602,7 @@
             @endif
             {
                 selector: '#userActivationModal',
-                @if ($active_user)
+                @if (true || $active_user)
                     display: false
                 @else
                     display: onlyEvent === false && !$.cookie(cookie_dismiss_name_2)
@@ -896,7 +896,7 @@
             loadTutorial();
         });
 
-        if (displayTutorial || !$.cookie('orbit-tour')) {
+        if (false && (displayTutorial || !$.cookie('orbit-tour'))) {
             loadTutorial();
         } else {
             loadModal();
