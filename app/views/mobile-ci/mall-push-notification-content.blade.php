@@ -7,7 +7,7 @@
 		@elseif($inbox->inbox_type == 'coupon_issuance')
 		<img src="{{ asset('mobile-ci/images/default_no_coupon.png') }}" class="img-responsive side-margin-center">
 		@elseif($inbox->inbox_type == 'activation')
-		<img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive side-margin-center">
+		<img src="{{ asset('mobile-ci/images/default_email.png.png') }}" class="img-responsive side-margin-center">
 		@endif
 	</div>	
 </div>
@@ -15,14 +15,8 @@
 @if($inbox->inbox_type == 'activation')
 <div class="row vertically-spaced">
 	<div class="col-xs-12">
-		<p>
-			An email has been sent to <b>{{ $fullName }}</b>. Please follow the instruction to activate your account.
-		</p>
-		<p>
-			<small>
-				If for some reason you don't see an email from us in a couple of hours, please check your Spam or Junk folder.
-			</small>
-		</p>
+		<p>An email has been sent to <b>{{ $fullName }}</b>. Please follow the instruction to activate your account.</p>
+		<p><small>If for some reason you don't see an email from us in a couple of hours, please check your Spam or Junk folder.</small></p>
 	</div>
 </div>
 @elseif($inbox->inbox_type == 'lucky_draw_issuance')
@@ -51,24 +45,14 @@
 			<span class="link-spanner" style="height:100%;"></span>
 			<h4>Hello {{$fullName}},</h4>
 	        <p>{{Lang::get('mobileci.coupon.congratulations_you_get')}} {{count($listItem)}} {{Lang::get('mobileci.lucky_draw.no_lucky_draw')}} @if (count($listItem) > 1) {{Lang::get('mobileci.coupon.here_are_your_coupons')}} @else {{Lang::get('mobileci.coupon.here_is_your_coupon')}} @endif:</p>
-
 	        <ol>
 	        @foreach ($listItem as $couponname)
 	            <li>{{$couponname}}</li>
 	        @endforeach
 	        </ol>
-
 	        <p>{{Lang::get('mobileci.coupon.check_coupon')}}</p>
-
-	        <p style="margin-top:1em">
-	            {{Lang::get('mobileci.lucky_draw.goodluck')}}</br>
-	            <strong>{{$mallName}}</strong>
-	        </p>
-	        <p>
-                {{Lang::get('mobileci.coupon.happy_shopping')}}
-                </br></br>
-                <strong>{{ $mallName }}</strong>
-            </p>
+	        <p style="margin-top:1em">{{Lang::get('mobileci.lucky_draw.goodluck')}}</br><strong>{{$mallName}}</strong></p>
+	        <p>{{Lang::get('mobileci.coupon.happy_shopping')}}</br></br><strong>{{ $mallName }}</strong></p>
         </a>
 	</div>
 </div>
