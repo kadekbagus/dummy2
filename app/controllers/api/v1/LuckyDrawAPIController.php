@@ -947,7 +947,7 @@ class LuckyDrawAPIController extends ControllerAPI
             if (! empty($mall)) {
                 $mallTime = Carbon::now($mall->timezone->timezone_name);
 
-                $luckydraws->where('start_date', '>=', $mallTime);
+                $luckydraws->where('start_date', '<=', $mallTime);
             }
 
             if ($details_view === 'yes') {
