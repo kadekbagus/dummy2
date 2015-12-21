@@ -3542,6 +3542,141 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * GET - Message list page
+     *
+     * @param integer    `id`        (required) - The inbox ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getNotificationsView()
+    {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $languages = $this->getListLanguages($retailer);
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_notification_list')
+                ->setActivityNameLong('View Notification List')
+                ->setObject(null)
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            $view_data = array(
+                'page_title' => Lang::get('mobileci.page_title.my_messages'),
+                'retailer' => $retailer,
+                'active_user' => ($user->status === 'active'),
+                'languages' => $languages,
+                'user_email' => $user->user_email,
+                'user' => $user
+            );
+            return View::make('mobile-ci.mall-notifications-list', $view_data);
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Notification List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_notification_list')
+                ->setActivityNameLong('View Notification List')
+                ->setObject(null)
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Message detail page
+     *
+     * @param integer    `id`        (required) - The inbox ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getNotificationDetailView()
+    {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $languages = $this->getListLanguages($retailer);
+
+            $inbox = Inbox::excludeDeleted()
+                        ->where('user_id', $user->user_id)
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->first();
+
+            if (! is_object($inbox)) {
+                return View::make('mobile-ci.404', [
+                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                                'user'          => $user,
+                                'languages'     => $languages,
+                                'retailer'      => $retailer
+                ]);
+            }
+            
+            $inbox->is_read = 'Y';
+            $inbox->save();
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_notification_list')
+                ->setActivityNameLong('View Notification List')
+                ->setObject(null)
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            $view_data = array(
+                'page_title' => $inbox->subject,
+                'retailer' => $retailer,
+                'active_user' => ($user->status === 'active'),
+                'languages' => $languages,
+                'user_email' => $user->user_email,
+                'user' => $user,
+                'inbox' => $inbox
+            );
+            return View::make('mobile-ci.mall-notification-detail', $view_data);
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Notification List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_notification_list')
+                ->setActivityNameLong('View Notification List')
+                ->setObject(null)
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
      * Get list of downloadable lucky draw number. There is possibilities that
      * one user have hundred even thousands of luckydraw coupons. So, we could
      * not fit all that number into one image. We need to split it into

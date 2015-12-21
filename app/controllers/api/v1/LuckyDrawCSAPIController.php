@@ -718,7 +718,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Insert to alert system
             $inbox = new Inbox();
-            $inbox->addToInbox($userId, $data, $mallId, 'lucky_draw_issuance', "You've got lucky number(s)");
+            $inbox->addToInbox($userId, $data, $mallId, 'lucky_draw_issuance');
 
             // Commit the changes
             $this->commit();
@@ -1311,7 +1311,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Insert to alert system
             $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
-            $this->insertCouponInbox($userId, $issuedCoupons, $issuedCouponNames, $mallId);
+            $inbox = new Inbox();
+            $inbox->addToInbox($userId, $issuedCouponNames, $mallId, 'coupon_issuance');
 
             // Commit the changes
             $this->commit();
