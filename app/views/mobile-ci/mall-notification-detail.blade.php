@@ -5,13 +5,7 @@
 @stop
 
 @section('content')
-    <div id="notification-detail">
-        <div class="row">
-            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
-            <p>An email has been sent to "lanang@dominopos.com". Please follow the instructions to activate your account</p>
-            <p class="notification-additional-text">if for some reason you don't see an e-mail from us in a couple of hours, please check your Spam or Junk folder</p>
-        </div>
-    </div>
+    {{ $inbox->content }}
 @stop
 
 @section('ext_script_bot')
