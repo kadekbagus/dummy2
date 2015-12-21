@@ -89,6 +89,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                                                     'activities.response_status',
                                                     'activities.created_at',
                                                     'activities.updated_at',
+                                                    'activities.object_display_name',
                                                     DB::Raw("DATE_FORMAT({$prefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"),
                                                     'user_details.gender as gender')
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
@@ -174,8 +175,8 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                           ->where('activities.group', 'cs-portal');
                   })
                   ->orWhere(function($q) use ($prefix) {
-                        $q->where('activities.activity_name', 'activation_ok')
-                          ->where('activities.activity_name_long', 'Customer Activation')
+                        $q->whereIn('activities.activity_name', ['activation_ok','issue_lucky_draw'])
+                          ->whereIn('activities.activity_name_long', ['Customer Activation','Lucky Draw Number Issuance'])
                           ->where('activities.group', 'portal');
                   });
                 });
@@ -405,20 +406,20 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 @header('Content-Type: text/csv');
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Data', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Data', $totalRec, '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Data', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Data', $totalRec, '', '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Events', 'Promotions', 'Coupons');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Events', 'Promotions', 'Coupons', 'Lucky Draws');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $gender = $this->printGender($row);
                     $date = $this->printDateTime($row, $timezone, 'no');
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $date, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->event_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name));
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $date, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->event_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name), $this->printUtf8($row->object_display_name));
                     $count++;
 
                 }

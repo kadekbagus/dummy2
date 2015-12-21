@@ -262,6 +262,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
+
+        // Inbox Notification
+        'inbox' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
     ),
 
     'registration' => array(
@@ -2652,5 +2658,11 @@ return array(
         'Widget Click News'             => 'Widget Click News',
         'Widget Click Promotion'        => 'Widget Click Promotion',
         'Widget Click Coupon'           => 'Widget Click Coupon',
+        'Widget Click Lucky Draw'       => 'Widget Click Lucky Draw',
+        'View Lucky Draw List'          => 'View Lucky Draw List',
+        'View Lucky Draw Detail'        => 'View Lucky Draw Detail',
+        'View Prizes & Winning Numbers' => 'View Winning Numbers & Prizes',
+        'View Lucky Draw Number Issuance' => 'View Lucky Draw Number Issuance',
+        'View Winner Announcement Notification' => 'View Winner Announcement Notification'
     ),
 );

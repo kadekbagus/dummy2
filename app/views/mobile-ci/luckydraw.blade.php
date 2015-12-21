@@ -16,7 +16,7 @@
     <div class="col-xs-12 text-left">
         <h4>{{ Lang::get('mobileci.lucky_draw.description') }}</h4>
         <p>
-            {{ $luckydraw->description }}
+            {{ nl2br($luckydraw->description) }}
         </p>
     </div>
 </div>
@@ -46,13 +46,11 @@
         </div>
         @endif
     @else
-        @if(! empty($luckydraw->prizes))
         <div class="row text-center vertically-spaced">
             <div class="col-xs-12">
-                <a href="{{ url('/customer/luckydraw-announcement?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes') }}</a>
+                <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
             </div>
         </div>
-        @endif
     @endif
 @endif
 <div class="row counter">
@@ -89,79 +87,65 @@
 
     <div class="row">
         <div class="col-xs-12 lucky-number-row">
-            @if ($total_pages > 1)
-            <div class="col-xs-6 col-sm-6 col-lg-6">
-                <div class="row">
-                    <div class="col-xs-10 col-xs-offset-1">
-                        <a href="{{ $prev_url }}#ln-nav" class="btn btn-info btn-block {{ ($prev_url === '#' ? 'disabled' : ''); }}">{{ Lang::get('mobileci.lucky_draw.prev') }}</a>
-                    </div>
+            @if(count($numbers) == 1)
+                <div class="col-xs-12 lucky-number-col">
+                    <div class="lucky-number-container" data-number="{{$numbers[0]->lucky_draw_number_id}}">{{ $numbers[0]->lucky_draw_number_code }}</div>
                 </div>
-            </div>
-            <div class="col-xs-6 col-sm-6 col-lg-6">
-                <div class="row">
-                    <div class="col-xs-10 col-xs-offset-1 col-lg-10 col-lg-offset-1">
-                        <a href="{{ $next_url }}#ln-nav" class="btn btn-info btn-block {{ ($next_url === '#' ? 'disabled' : ''); }}">{{ Lang::get('mobileci.lucky_draw.next') }}</a>
-                    </div>
+            @else
+                @foreach($numbers as $i=>$number)
+                <div class="col-xs-6 col-sm-6 col-lg-6 lucky-number-col">
+                    <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
                 </div>
-            </div>
+                @endforeach
 
-            <div class="row">
-                <div class="col-xs-12 text-center">
-                    <small>{{ Lang::get('mobileci.lucky_draw.page') }} {{ $current_page }} {{ Lang::get('mobileci.lucky_draw.of') }} {{ $total_pages }}.</small>
-                </div>
-            </div>
-            @endif
-
-            @foreach($numbers as $i=>$number)
-            <div class="col-xs-6 col-sm-6 col-lg-6 lucky-number-col">
-                <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
-            </div>
-            @endforeach
-
-            @if ($total_number % 2 !== 0)
-            <!-- <div class="col-xs-12 col-sm-6 col-lg-6">
-                <div class="lucky-number-container" data-number=""></div>
-            </div> -->
-            @endif
-
-            @if ($total_pages > 1)
-            <div class="row ">
-            <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
-                <div class="row">
-                    <div class="col-xs-10 col-xs-offset-1">
-                        <a href="{{ $prev_url }}#ln-nav" class="btn btn-info btn-block {{ ($prev_url === '#' ? 'disabled' : ''); }}">{{ Lang::get('mobileci.lucky_draw.prev') }}</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
-                <div class="row">
-                    <div class="col-xs-10 col-xs-offset-1 col-lg-10 col-lg-offset-1">
-                        <a href="{{ $next_url }}#ln-nav" class="btn btn-info btn-block {{ ($next_url === '#' ? 'disabled' : ''); }}">{{ Lang::get('mobileci.lucky_draw.next') }}</a>
-                    </div>
-                </div>
-            </div>
-            </div>
-            <div class="row">
-                <div class="col-xs-12 text-center">
-                    <small>Page {{ $current_page }} of {{ $total_pages }}.</small>
-                </div>
-            </div>
+                @if ($total_number % 2 !== 0)
+                <!-- <div class="col-xs-12 col-sm-6 col-lg-6">
+                    <div class="lucky-number-container" data-number=""></div>
+                </div> -->
+                @endif
             @endif
         </div>
     </div>
-    @endif
-</div>
-
-@if ($total_number > 0)
-<div class="row">
-    <div class="row text-center save-btn">
-        <div class="col-xs-12">
+    @if ($total_number > 0)
+    <div class="row text-center save-btn vertically-spaced">
+        <div class="col-xs-1"></div>
+        <div class="col-xs-10">
             <a href="{{ url('/customer/luckydrawnumber/download?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
         </div>
+        <div class="col-xs-1"></div>
     </div>
+    @endif
+    @if ($total_pages > 1)
+        <div class="row">
+            <div class="col-xs-12 text-center">
+                <div class="col-xs-12">
+                    <ul class="ld-pagination">
+                        @if($current_page != '1')
+                        <li><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=1' }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-left"></i></a></li>
+                        @else
+                        <li><a class="disabled" style="color:#dedede;"><i class="fa fa-angle-double-left"></i></a></li>
+                        @endif
+                        @if(! in_array(1, $paginationPage))
+                        <li class="ld-pagination-ellipsis">...</li>
+                        @endif
+                        @foreach($paginationPage as $p)
+                        <li @if($current_page == $p) class="ld-pagination-active" @endif><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=' . $p }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}">{{ $p }}</a></li>
+                        @endforeach
+                        @if(! in_array($total_pages, $paginationPage))
+                        <li class="ld-pagination-ellipsis">...</li>
+                        @endif
+                        @if($current_page != $total_pages)
+                        <li><a href="{{ URL::route('ci-luckydraw') . '&id='. $luckydraw->lucky_draw_id . '&page=' . $total_pages }}#ln-nav" class="{{ ($prev_url === '#' ? 'disabled' : ''); }}"><i class="fa fa-angle-double-right"></i></a></li>
+                        @else
+                        <li><a class="disabled" style="color:#dedede;"><i class="fa fa-angle-double-right"></i></a></li>
+                        @endif
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @endif
+    @endif
 </div>
-@endif
-
 @stop
 
 @section('modals')
@@ -175,31 +159,6 @@
         </div>
     </div>
 </div>
-
-<!-- Modal -->
-@if(!empty($luckydraw))
-<div class="modal fade" id="lddetail" tabindex="-1" role="dialog" aria-labelledby="lddetailLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="lddetailLabel">{{ Lang::get('mobileci.lucky_draw.lucky_draw_info') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <b>{{ $luckydraw->lucky_draw_name }}</b>
-                        <br>
-                        <img src="{{ asset($luckydraw->image) }}" class="img-responsive">
-                        <p>{{ nl2br($luckydraw->description) }}</p>
-                        <p>{{ Lang::get('mobileci.coupon_detail.validity_label') }} : {{ date('d M Y H:m', strtotime($luckydraw->end_date)) }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 @stop
 
 @section('ext_script_bot')

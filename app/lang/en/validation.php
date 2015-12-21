@@ -246,7 +246,7 @@ return array(
             'employee_sortby'      => 'The sort by argument you specified is not valid, the valid values are: username, firstname, lastname, registered_date, employee_id_char, position.',
             'posquickproduct'      => 'The pos quick product you specified is not found.',
             'posquickproduct_sortby' => 'The sort by argument you specified is not valid, the valid values are: id, price, name, product_order.',
-            'activity_sortby'      => 'The sort by argument you specified is not valid, valid values are: id, ip_address, created, registered_at, email, full_name, object_name, product_name, coupon_name, promotion_name, news_name, promotion_news_name, event_name, action_name, action_name_long, activity_type, gender, staff_name, module_name, retailer_name.',
+            'activity_sortby'      => 'The sort by argument you specified is not valid, valid values are: id, ip_address, created, registered_at, email, full_name, object_name, product_name, coupon_name, promotion_name, news_name, promotion_news_name, event_name, action_name, action_name_long, activity_type, gender, staff_name, module_name, retailer_name, object_display_name.',
             'transactionhistory'   => array(
                 'merchantlist'     => array(
                     'sortby'       => 'The sort by argument you specified is not valid, the valid values are: name, last_transaction.',
@@ -260,7 +260,7 @@ return array(
             ),
             'lucky_draw'           => 'The lucky draw you specified is not found.',
             'lucky_draw_status'    => 'The lucky draw status you specified is not found.',
-            'lucky_draw_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, lucky_draw_name, description, start_date, end_date, status, external_lucky_draw_id.',
+            'lucky_draw_sortby'    => 'The sort by argument you specified is not valid, the valid values are: registered_date, lucky_draw_name, description, start_date, end_date, status, external_lucky_draw_id, mall_name, minimum_amount, updated_at.',
             'lucky_draw_number_receipt' => 'The lucky draw number receipt you specified is not found.',
             'lucky_draw_number_receipt_status' => 'The lucky draw number receipt status you specified is not found.',
             'lucky_draw_number_receipt_sortby' => 'The sort by argument you specified is not valid, the valid values are: lucky_draw_number, lucky_draw_id, user_id.',
