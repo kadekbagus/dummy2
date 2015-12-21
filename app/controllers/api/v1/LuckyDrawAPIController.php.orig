@@ -482,8 +482,8 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             OrbitInput::post('max_number', function($max_number) use ($updatedluckydraw) {
-                if ((int)$max_number < (int)$updatedluckydraw->max_number) {
-                    $errorMessage = 'You can not decrease the maximum number of lucky draw.';
+                if ((string)$max_number !== (string)$updatedluckydraw->max_number) {
+                    $errorMessage = 'You can not change the maximum number of lucky draw its already generated.';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
                 $updatedluckydraw->max_number = $max_number;
@@ -944,18 +944,24 @@ class LuckyDrawAPIController extends ControllerAPI
                                     ->joinLuckyDrawNumbers()
                                     ->joinMerchant()
                                     ->groupBy('lucky_draws.lucky_draw_id');
-
-                // Filter by user_ids
-                if ($user->isConsumer()) {
-                    $luckydraws->where('lucky_draw_numbers.user_id', $user->user_id);
-                } else {
-                    OrbitInput::get('user_id', function ($arg) use ($luckydraws)
-                    {
-                        $luckydraws->whereIn('lucky_draw_numbers.user_id', (array)$arg);
-                    });
-                }
             }
 
+<<<<<<< HEAD
+=======
+            OrbitInput::get('filter_cs', function($filter_cs) use ($luckydraws)
+            {
+                // This is for cs
+                if ($filter_cs === 'yes') {
+                    $mall = Mall::with('timezone')
+                                ->excludeDeleted()
+                                ->where('merchant_id', $value)
+                                ->first();
+                    $now = Carbon::now($mall->timezone->timezone_name);
+                    $luckydraws->whereRaw("? between start_date and grace_period_date", [$now]);
+                }
+            });
+
+>>>>>>> origin/development
             // Filter lucky draw by ids
             OrbitInput::get('lucky_draw_id', function($id) use ($luckydraws)
             {

@@ -25,6 +25,16 @@ Route::get('/app/v1/alert/poll', 'IntermediateAuthController@Inbox_getPollAlert'
 Route::post('/app/v1/alert/read', 'IntermediateAuthController@Inbox_postReadAlert');
 
 /**
+ * Poll new alert
+ */
+Route::get('/app/v1/alert/search', 'IntermediateAuthController@Inbox_getSearchInbox');
+
+/**
+ * Change the status of alert to deleted
+ */
+Route::post('/app/v1/alert/delete', 'IntermediateAuthController@Inbox_postDeleteAlert');
+
+/**
  * Get the server time
  */
 Route::get('/app/v1/server-time', [

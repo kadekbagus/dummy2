@@ -395,6 +395,45 @@ class DashboardAPIController extends ControllerAPI
                         $flag_type = true;
                         break;
 
+                // show luckydraws
+                case 'lucky_draws':
+                        $query = LuckyDraw::select(
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
+                                select
+                                    count(ac.activity_id) as total
+                                from
+                                    {$tablePrefix}lucky_draws luck
+                                        inner join
+                                    {$tablePrefix}activities ac ON luck.lucky_draw_id = ac.object_id
+                                where ac.module_name = 'LuckyDraw'
+                                and ac.activity_name = 'view_lucky_draw'
+                                and ac.activity_type = 'view'
+                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
+                                and ac.group = 'mobile-ci'
+                                and ac.location_id = '{$merchant_id}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
+                            ) * 100 as percentage"),
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
+                            "lucky_draws.lucky_draw_name as name",
+                            "lucky_draws.lucky_draw_id as object_id"
+                        )
+                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
+                            $join->on('lucky_draws.lucky_draw_id', '=', 'activities.object_id');
+                            $join->where('activities.activity_name', '=', 'view_lucky_draw');
+                            $join->where('activities.module_name', '=', 'LuckyDraw');
+                            $join->where('activities.activity_type', '=', 'view');
+                            $join->where('activities.group', '=', 'mobile-ci');
+                            $join->where('activities.location_id', '=', $merchant_id);
+                            $join->where("activities.created_at", '>=', $start_date);
+                            $join->where("activities.created_at", '<=', $end_date);
+                        })
+                        ->groupBy('lucky_draws.lucky_draw_id')
+                        ->orderBy('score', 'DESC')
+                        ->take($take);
+                        $flag_type = true;
+                        break;
+
                 // by default do nothing
                 default:
                      $query = null;
@@ -540,43 +579,49 @@ class DashboardAPIController extends ControllerAPI
                             ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
-            // for now lucky draws is not count
-            $empty_lucky_draws = new stdclass();
-            $empty_lucky_draws->total = 0;
-            $lucky_draws = $empty_lucky_draws;
+            $luckydraws = Activity::select(DB::raw("count(distinct activity_id) as total"))
+                            ->where('activities.activity_name', '=', 'view_lucky_draw')
+                            ->where('activities.module_name', '=', 'LuckyDraw')
+                            ->where('activities.activity_type', '=', 'view')
+                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
+                            ->where('activities.group', '=', 'mobile-ci');
 
-            OrbitInput::get('merchant_id', function ($merchant_id) use ($news, $promotions, $events) {
+            OrbitInput::get('merchant_id', function ($merchant_id) use ($news, $promotions, $events, $luckydraws) {
                 $news->where('activities.location_id', '=', $merchant_id);
                 $promotions->where('activities.location_id', '=', $merchant_id);
                 $events->where('activities.location_id', '=', $merchant_id);
+                $luckydraws->where('activities.location_id', '=', $merchant_id);
             });
 
-            OrbitInput::get('start_date', function ($beginDate) use ($news, $promotions, $events) {
+            OrbitInput::get('start_date', function ($beginDate) use ($news, $promotions, $events, $luckydraws) {
                 $news->where('activities.created_at', '>=', $beginDate);
                 $promotions->where('activities.created_at', '>=', $beginDate);
                 $events->where('activities.created_at', '>=', $beginDate);
+                $luckydraws->where('activities.created_at', '>=', $beginDate);
             });
 
-            OrbitInput::get('end_date', function ($endDate) use ($news, $promotions, $events) {
+            OrbitInput::get('end_date', function ($endDate) use ($news, $promotions, $events, $luckydraws) {
                 $news->where('activities.created_at', '<=', $endDate);
                 $promotions->where('activities.created_at', '<=', $endDate);
                 $events->where('activities.created_at', '<=', $endDate);
+                $luckydraws->where('activities.created_at', '<=', $endDate);
             });
 
             $news = $news->first();
             $events = $events->first();
             $promotions = $promotions->first();
+            $luckydraws = $luckydraws->first();
 
             $news->label = 'News';
             $events->label = 'Events';
             $promotions->label = 'Promotions';
-            $lucky_draws->label = 'Lucky Draws';
+            $luckydraws->label = 'Lucky Draws';
 
             $data = new stdclass();
             $data->news = $news;
             $data->events = $events;
             $data->promotions = $promotions;
-            $data->lucky_draws = $lucky_draws;
+            $data->lucky_draws = $luckydraws;
 
             $this->response->data = $data;
 
@@ -821,6 +866,35 @@ class DashboardAPIController extends ControllerAPI
                             $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
                                 ->where('activities.activity_name', '=', 'view_promotion')
                                 ->where('activities.module_name', '=', 'Promotion')
+                                ->where('activities.activity_type', '=', 'view')
+                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
+                                ->where('activities.group', '=', 'mobile-ci')
+                                ->where('activities.location_id', '=', $merchant_id)
+                                ->where('activities.object_id', '=', $object_id)
+                                ->where("activities.created_at", '>=', $start_date)
+                                ->where("activities.created_at", '<=', $end_date)
+                                ->first();
+
+                            $result = (int)$query->score;
+
+                            $responses[] = [
+                                'start_date' => $start_date,
+                                'end_date' => $end_date,
+                                'score' => $result
+                            ];
+                        }
+                        break;
+                        
+                // show lucky draws
+                case 'lucky_draws':
+                        foreach ($periods as $period) {
+
+                            $start_date = $period['start_date'];
+                            $end_date = $period['end_date'];
+
+                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
+                                ->where('activities.activity_name', '=', 'view_lucky_draw')
+                                ->where('activities.module_name', '=', 'LuckyDraw')
                                 ->where('activities.activity_type', '=', 'view')
                                 ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                                 ->where('activities.group', '=', 'mobile-ci')
@@ -3681,12 +3755,12 @@ class DashboardAPIController extends ControllerAPI
 
             // Less Than Equals
             OrbitInput::get('start_date', function($date) use ($coupons) {
-                $coupons->where('redeemed_date', '>=', $date);
+                $coupons->orWhere('redeemed_date', '>=', $date);
             });
 
             // Greater Than Equals
-            OrbitInput::get('enda_date', function($date) use ($coupons) {
-                $coupons->where('redeemed_date', '<=', $date);
+            OrbitInput::get('end_date', function($date) use ($coupons) {
+                $coupons->orWhere('redeemed_date', '<=', $date);
             });
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -3695,7 +3769,7 @@ class DashboardAPIController extends ControllerAPI
 
             // Get the take args
             $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+            OrbitInput::get('take_top', function ($_take) use (&$take, $maxRecord) {
                 if ($_take > $maxRecord) {
                     $_take = $maxRecord;
                 }
@@ -3719,10 +3793,10 @@ class DashboardAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotion_name';
+            $sortBy = 'total_issued';
 
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {

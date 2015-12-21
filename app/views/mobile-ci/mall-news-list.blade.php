@@ -24,6 +24,11 @@
                             <a href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}">
                                 <span class="link-spanner"></span>
                                 <h4>{{ $news->news_name }}</h4>
+                                @if (mb_strlen($news->description) > 64)
+                                <p>{{{ mb_substr($news->description, 0, 64, 'UTF-8') }}} ... </p>
+                                @else
+                                <p>{{{ $news->description }}}</p>
+                                @endif
                             </a>
                         </div>
                     </div>

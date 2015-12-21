@@ -2546,7 +2546,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             //Checking verification number in cs and tenant verification number
-            //Checking in cs verification number first
+            //Checking in tenant verification number first
             if ($issuedCoupon->coupon->is_all_retailer === 'Y') {
                 $checkIssuedCoupon = Tenant::where('parent_id','=', $mall_id)
                             ->where('status', 'active')
@@ -2565,10 +2565,12 @@ class CouponAPIController extends ControllerAPI
 
             // Continue checking to tenant verification number
             if (empty($checkIssuedCoupon)) {
-                // Checking tenant verification number
+                // Checking cs verification number
                 if ($issuedCoupon->coupon->is_all_employee === 'Y') {
                     $checkIssuedCoupon = UserVerificationNumber::
-                                where('merchant_id', $mall_id)
+                                join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
+                                ->where('status', 'active')
+                                ->where('merchant_id', $mall_id)
                                 ->where('verification_number', $number)
                                 ->first();
                 } elseif ($issuedCoupon->coupon->is_all_employee === 'N') {

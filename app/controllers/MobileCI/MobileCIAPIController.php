@@ -2094,11 +2094,10 @@ class MobileCIAPIController extends ControllerAPI
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $luckydraws = LuckyDraw::with('translations')
-                ->excludeDeleted()
+                ->active()
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime])
-                ->orderBy('status', 'asc')
-                ->orderBy('lucky_draw_id', 'desc')
+                ->orderBy('start_date', 'desc')
                 ->get();
 
             if (!empty($alternateLanguage) && !empty($luckydraws)) {
@@ -2186,7 +2185,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityName('view_lucky_draw_list')
                 ->setActivityNameLong('View Lucky Draw List')
                 ->setObject(null)
-                ->setModuleName('Lucky Draw')
+                ->setModuleName('LuckyDraw')
                 ->setNotes($activityPageNotes)
                 ->responseOK()
                 ->save();
@@ -2305,7 +2304,7 @@ class MobileCIAPIController extends ControllerAPI
             $_GET['lucky_draw_id'] = (array) $luckydraw->lucky_draw_id;
 
             $currentPage = (int)OrbitInput::get('page', 1);
-            $take = 100;
+            $take = 10;
             $start = ($currentPage - 1)  * $take;
 
             $_GET['take'] = (int)OrbitInput::get('take', $take);
@@ -2327,10 +2326,10 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $totalPages = ceil($apiResponse->data->total_records / $take);
-
+            $paginationPage = array();
             if ($totalPages > 1) {
-                $prevUrl = URL::route('ci-luckydraw') . '?page=' . ($currentPage - 1);
-                $nextUrl = URL::route('ci-luckydraw') . '?page=' . ($currentPage + 1);
+                // $prevUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage - 1);
+                // $nextUrl = URL::route('ci-luckydraw') . '?id='. $luckydraw->lucky_draw_id . '&page=' . ($currentPage + 1);
 
                 if ($currentPage >= $totalPages) {
                     $nextUrl = '#';
@@ -2339,6 +2338,19 @@ class MobileCIAPIController extends ControllerAPI
                 if ($currentPage === 1) {
                     $prevUrl = '#';
                 }
+
+                $pageNumber = 4;
+                if ($totalPages > $pageNumber) {
+                    if ($currentPage >= $totalPages - $pageNumber + 1) {
+                        for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
+                            $paginationPage[] = $x;
+                        }
+                    } else { 
+                        for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
+                            $paginationPage[] = $x;
+                        }
+                    }
+                }
             }
 
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Page');
@@ -2346,7 +2358,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityName('view_lucky_draw')
                 ->setActivityNameLong('View Lucky Draw Detail')
                 ->setObject($luckydraw, TRUE)
-                ->setModuleName('Lucky Draw')
+                ->setModuleName('LuckyDraw')
                 ->setNotes($activityProductNotes)
                 ->responseOK()
                 ->save();
@@ -2369,6 +2381,7 @@ class MobileCIAPIController extends ControllerAPI
                                 'per_page'      => $take,
                                 'servertime'    => $servertime,
                                 'languages'     => $languages,
+                                'paginationPage'=> $paginationPage
             ]);
         } catch (Exception $e) {
             $activityProductNotes = sprintf('Failed to view: Lucky Draw Page');

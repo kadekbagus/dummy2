@@ -1038,7 +1038,7 @@ class EmployeeAPIController extends ControllerAPI
                         $userVerificationNumber->delete();
 
                         //Delete link to CS
-                        $promotionEmployee = PromotionEmployee::find($userId);
+                        $promotionEmployee = CouponEmployee::where('user_id', $userId);
                         $promotionEmployee->delete();
                     }
                 } else {
@@ -1996,6 +1996,9 @@ class EmployeeAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $role_ids = OrbitInput::post('role_ids');
+            $cs_coupon_redeem_mall = OrbitInput::get('cs_coupon_redeem_mall');
+
+
             $listOfRetailerIds = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
 
             $validator = Validator::make(
@@ -2089,13 +2092,6 @@ class EmployeeAPIController extends ControllerAPI
                 $listOfMerchantIds = (array)$merchantIds;
                 $users->whereHas('retailers', function ($q) use($merchantIds) {
                     $q->whereIn('employee_retailer.retailer_id', $merchantIds);
-                });
-            });
-
-            OrbitInput::get('cs_coupon_redeem_mall', function ($merchantIds) use ($listOfMerchantIds, $joined, $users) {
-                $listOfMerchantIds = (array)$merchantIds;
-                $users->whereHas('userVerificationNumber', function ($q) use($merchantIds) {
-                    $q->whereIn('user_verification_numbers.merchant_id', $merchantIds);
                 });
             });
 
@@ -2228,8 +2224,11 @@ class EmployeeAPIController extends ControllerAPI
 
             // If sortby not active means we should add active as second argument
             // of sorting
-            if ($sortBy !== 'users.status') {
-                $users->orderBy('users.status', 'asc');
+
+            if ($cs_coupon_redeem_mall === '' || $cs_coupon_redeem_mall === null) {
+                if ($sortBy !== 'users.status') {
+                    $users->orderBy('users.status', 'asc');
+                }
             }
 
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
