@@ -444,6 +444,8 @@ class InboxAPIController extends ControllerAPI
             $inbox->save();
 
             Event::fire('orbit.inbox.postdeletedalert.after.save', array($this, $inbox));
+            $this->response->code = 0;
+            $this->response->status = 'success';
             $this->response->message = 'Message has been deleted.';
             $this->response->data = NULL;
 
