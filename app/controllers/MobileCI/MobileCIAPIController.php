@@ -3630,9 +3630,12 @@ class MobileCIAPIController extends ControllerAPI
             $retailer = $this->getRetailerInfo();
             $languages = $this->getListLanguages($retailer);
 
+            $inbox_id = OrbitInput::get('id');
+
             $inbox = Inbox::excludeDeleted()
                         ->where('user_id', $user->user_id)
                         ->where('merchant_id', $retailer->merchant_id)
+                        ->where('inbox_id', $inbox_id)
                         ->first();
 
             if (! is_object($inbox)) {
