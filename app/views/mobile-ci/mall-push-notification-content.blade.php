@@ -46,7 +46,7 @@
 			<h4>Hello {{$fullName}},</h4>
 	        <p>{{Lang::get('mobileci.coupon.congratulations_you_get')}} {{count($listItem)}} {{Lang::get('mobileci.lucky_draw.no_lucky_draw')}} @if (count($listItem) > 1) {{Lang::get('mobileci.coupon.here_are_your_coupons')}} @else {{Lang::get('mobileci.coupon.here_is_your_coupon')}} @endif:</p>
 	        <ol>
-	        @foreach ($listItem as $couponname)
+	        @foreach ($listItem as $couponname => $code)
 	            <li>{{$couponname}}</li>
 	        @endforeach
 	        </ol>

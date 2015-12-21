@@ -105,7 +105,7 @@ class Inbox extends Eloquent
 
             case 'coupon_issuance':
                 $inbox->subject = "You've got coupon(s)";
-                $listItem = $response->coupon_names;
+                $listItem = $response;
                 break;
             
             default:
