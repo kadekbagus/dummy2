@@ -1958,6 +1958,8 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postnewluckydrawannouncement.after.validation', array($this, $validator));
 
+            $lucky_draw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
+
             $lucky_draw_announcement = new LuckyDrawAnnouncement();
             $lucky_draw_announcement->title = $title;
             $lucky_draw_announcement->description = $description;
@@ -2084,6 +2086,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->data->translation_default = $lucky_draw_announcement_translation_default;
             $this->response->data->prize_winners = $prize_winners_response;
 
+            $lucky_draw->touch();
             // Commit the changes
             $this->commit();
 
