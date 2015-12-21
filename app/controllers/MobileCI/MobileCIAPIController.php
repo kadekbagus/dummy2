@@ -67,7 +67,7 @@ use \News;
 use \Object;
 use \App;
 use \Media;
-use \OAuth;
+use Artdarek\OAuth\Facade\OAuth;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -488,7 +488,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
-       
+
 
         $googlePlusUrl = URL::route('mobile-ci.social_google_callback');
 
@@ -680,18 +680,18 @@ class MobileCIAPIController extends ControllerAPI
 
         $recognized = \Input::get('recognized', 'none');
         $code = \Input::get('code', NULL);
-        
-        
+
+
         $googleService = OAuth::consumer( 'Google' );
-        
+
         if ( !empty( $code ) ) {
             try {
 
                 Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
                 $token = $googleService->requestAccessToken( $code );
-                
+
                 $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
-                
+
                 $userEmail = isset($user['email']) ? $user['email'] : '';
                 $firstName = isset($user['given_name']) ? $user['given_name'] : '';
                 $lastName = isset($user['family_name']) ? $user['family_name'] : '';
@@ -711,7 +711,7 @@ class MobileCIAPIController extends ControllerAPI
 
                 $orbit_origin = \Input::get('orbit_origin', 'google');
                 $this->prepareSession();
-                
+
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
                 if (empty($userEmail)) {
@@ -790,7 +790,7 @@ class MobileCIAPIController extends ControllerAPI
             'recognized' => $recognized
         ];
 
-        
+
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
@@ -2424,7 +2424,7 @@ class MobileCIAPIController extends ControllerAPI
                         for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
                             $paginationPage[] = $x;
                         }
-                    } else { 
+                    } else {
                         for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
                             $paginationPage[] = $x;
                         }
