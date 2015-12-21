@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class LuckyDrawAPIController extends ControllerAPI
 {
@@ -894,6 +895,8 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $details_view = OrbitInput::get('details');
+            $mallId = OrbitInput::get('mall_id');
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
@@ -934,8 +937,18 @@ class LuckyDrawAPIController extends ControllerAPI
                 }
             }
 
+            $mall = Mall::with('timezone')->excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+
             // Builder object
             $luckydraws = LuckyDraw::excludeDeleted('lucky_draws')->select('lucky_draws.*');
+
+            if (! empty($mall)) {
+                $mallTime = Carbon::now($mall->timezone->timezone_name);
+
+                $luckydraws->where('start_date', '>=', $mallTime);
+            }
 
             if ($details_view === 'yes') {
                 $prefix = DB::getTablePrefix();
