@@ -544,7 +544,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_numbers) {
+            if ((($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_numbers) && ($activeluckydraw->free_number_batch === '0')) {
                 $this->rollBack();
                 $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $activeluckydraw->generated_numbers]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
