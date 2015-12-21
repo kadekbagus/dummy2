@@ -4366,16 +4366,7 @@ class MobileCIAPIController extends ControllerAPI
                 $retailerId = Config::get('orbit.shop.id');
 
                 $inbox = new Inbox();
-                $inbox->user_id = $user->user_id;
-                $inbox->merchant_id = $retailerId;
-                $inbox->from_id = 0;
-                $inbox->from_name = 'Orbit';
-                $inbox->subject = $subject;
-                $inbox->content = '';
-                $inbox->inbox_type = 'alert';
-                $inbox->status = 'active';
-                $inbox->is_read = 'N';
-                $inbox->save();
+                $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailerId, 'coupon_issuance');
 
                 foreach ($objectCoupons as $object) {
                     $activity = Activity::mobileci()
@@ -4391,22 +4382,6 @@ class MobileCIAPIController extends ControllerAPI
                             ->responseOK()
                             ->save();
                 }
-
-                $retailer = Mall::where('merchant_id', $retailerId)->first();
-                $data = [
-                    'fullName'          => $name,
-                    'subject'           => 'Coupon',
-                    'inbox'             => $inbox,
-                    'retailerName'      => $retailer->name,
-                    'numberOfCoupon'    => count($issuedCoupons),
-                    'coupons'           => $issuedCouponNames,
-                    'mallName'          => $retailer->name
-                ];
-
-                $template = View::make('mobile-ci.push-notification-coupon', $data);
-
-                $inbox->content = $template;
-                $inbox->save();
             }
 
             $this->response->data = $user;
