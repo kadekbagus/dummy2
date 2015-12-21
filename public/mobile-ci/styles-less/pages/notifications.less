@@ -1,0 +1,113 @@
+#notification {
+
+    .list-notification {
+        padding: 10px 0;
+        color: black;
+
+        a {
+            display: flex;
+
+            .notification-icon {
+                flex: 1;
+                align-self: center;
+
+                .unread {
+                    .circle {
+                        color: @theme-main-complimentary;
+                    }
+                    .symbol {
+                        color: @theme-main-complimentary-2;
+                    }
+                }
+
+                .read {
+                    .circle {
+                        color: #CCCCCC;
+                    }
+                    .symbol {
+                        color: #FFFFFF;
+                    }
+                }
+            }
+
+            .notification-title {
+                padding-left: 0;
+
+                h4 {
+                    color: black;
+                    font-size: 15px;
+                    word-wrap: break-word;
+                    line-height: 2.3rem;
+
+                    &.unread{
+                        font-weight: bold;
+                    }
+                }
+            }
+
+            .col-xs-1{
+                padding: 0;
+
+                .delete-button-child {
+                    margin-right: 25px;
+                    font-size: 1.6em;
+                }
+            }
+        }
+    }
+}
+
+#notification-detail {
+    margin: 0 15px;
+
+    img {
+        margin: 0 auto;
+    }
+
+    p {
+        font-size: 1.8rem;
+    }
+
+    .notification-additional-text {
+        font-size: 1.5rem;
+        font-style: italic;
+    }
+}
+
+.delete-section {
+    padding: 3px 8px;
+
+    .delete-button-parent {
+        font-size: 1.6em;
+        color: #FFFFFF;
+
+        #cancel-delete-icon {
+            display: none;
+        }
+
+        #delete-icon {
+
+        }
+    }
+}
+
+.fa-relative {
+    position: relative;
+    margin-right: 10px;
+}
+
+.notification-badge {
+    font-size: .35em;
+    display: block;
+    position: absolute;
+    top: -.25em;
+    right: -.9em;
+    width: 2em;
+    height: 2em;
+    line-height: 1.6em;
+    border-radius: 50%;
+    text-align: center;
+    color: #fff;
+    background: rgb(255, 0, 0);
+    border: 1px solid #FFF;
+}
