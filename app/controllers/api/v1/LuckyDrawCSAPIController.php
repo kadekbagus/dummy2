@@ -556,7 +556,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // determine the starting number
             $starting_number_code = DB::table('lucky_draw_numbers')
                 ->where('lucky_draw_id', $luckyDrawId)
-                ->max('lucky_draw_number_code');
+                ->max(DB::raw('CAST(lucky_draw_number_code AS UNSIGNED)'));
 
             if (empty ($starting_number_code)) {
                 $starting_number_code = $activeluckydraw->min_number;
