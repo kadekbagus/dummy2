@@ -451,6 +451,21 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * Get domain name
+     *
+     * @return mixed
+     */
+    protected function get_domain($url)
+    {
+        $pieces = parse_url($url);
+        $domain = isset($pieces['host']) ? $pieces['host'] : '';
+        if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', $domain, $regs)) {
+            return $regs['domain'];
+        }
+        return false;
+    }
+
+    /**
      * GET - Sign in page
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
@@ -470,7 +485,13 @@ class MobileCIAPIController extends ControllerAPI
             $_COOKIE['orbit_email'] = '';
         }
 
+        // get it from the query string first. if query string exists then set cookie to remember it.
         $mac = \Input::get('mac_address', '');
+        if ($mac !== '') {
+            // Set cookie
+            $expireTime = time() + 3600 * 24 * 365 * 5;
+            setcookie('orbit_mac_address', $mac, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        }
         /** @var \MacAddress $mac_model */
         $mac_model = null;
         if ($mac !== '') {
@@ -482,6 +503,11 @@ class MobileCIAPIController extends ControllerAPI
         $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (isset($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
         $display_name = '';
+
+        // if not in query string but has cookie, use it (but not for auto login, only to ensure that the manual login will be associated with the cookie mac)
+        if ($mac === '') {
+            $mac = isset($_COOKIE['orbit_mac_address']) ? $_COOKIE['orbit_mac_address'] : '';
+        }
 
         if (! empty($cookie_email)) {
             $display_name = $cookie_email;
