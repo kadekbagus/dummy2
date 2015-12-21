@@ -92,9 +92,9 @@
                                 <div class="row catalogue-top">
                                     <div class="col-xs-3 catalogue-img">
                                         @if(!empty($tenant->newsPromotions->image))
-                                        <a href="{{ asset($tenant->newsPromotions->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($tenant->newsPromotions->image) }}"></a>
+                                            <img class="img-responsive" alt="" src="{{ asset($tenant->newsPromotions->image) }}">
                                         @else
-                                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                         @endif
                                     </div>
                                     <div class="col-xs-6">
@@ -125,9 +125,9 @@
                                 <div class="row catalogue-top">
                                     <div class="col-xs-3 catalogue-img">
                                         @if(!empty($tenant->news->image))
-                                        <a href="{{ asset($tenant->news->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($tenant->news->image) }}"></a>
+                                            <img class="img-responsive" alt="" src="{{ asset($tenant->news->image) }}">
                                         @else
-                                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                         @endif
                                     </div>
                                     <div class="col-xs-6">
