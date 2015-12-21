@@ -56,3 +56,10 @@ Route::post('/app/v1/activate-account', 'IntermediateLoginController@Login_postA
  * Update Service Agreement
  */
 Route::post('/app/v1/service-agreement/update', 'IntermediateLoginController@Login_postUpdateServiceAgreement');
+
+/**
+ * Check Email Sign Up
+ */
+Route::group(['before' => 'orbit-settings'], function() {
+    Route::post('/app/v1/customer/checkemailsignup', 'IntermediateLoginController@checkEmailSignUp');
+});
