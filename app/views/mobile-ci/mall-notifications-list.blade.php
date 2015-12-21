@@ -5,11 +5,15 @@
 @stop
 
 @section('content')
-    <div id="search-tool" class="delete-section text-right">
-        <span class="delete-button-parent">
-            <i id="delete-icon" class="fa fa-trash"></i>
-            <i id="cancel-delete-icon" class="fa fa-times"></i>
-        </span>
+    <div id="delete-bar" class="row text-right">
+        <div class="col-xs-10 text-delete-mode">
+            <p>Delete Mode</p>
+        </div>
+        <div class="col-xs-2 button-delete-mode">
+            <span class="delete-button-parent">
+                <i id="delete-icon" class="fa fa-trash"></i>
+            </span>
+        </div>
     </div>
     <div id="notification">
         @for ($i = 1; $i <= 10; $i++)
@@ -38,7 +42,7 @@
                         </div>
                         <div class="col-xs-1">
                             <span class="delete-button-child">
-                                <i class="fa fa-trash"></i>
+                                <i class="fa fa-times"></i>
                             </span>
                         </div>
                     </a>
@@ -152,6 +156,15 @@
                 path = updateQueryStringParameter(path, 'fid', $(this).data('floor'));
                 console.log(path);
                 window.location.replace(path);
+            });
+
+            $('.delete-button-parent').click(function(){
+                $('.delete-button-child').animate({
+                    width: [ "toggle", "swing" ],
+                    height: [ "toggle", "swing" ],
+                    opacity: "toggle"
+                }, 300);
+                $('.delete-button-parent').toggleClass('active');
             });
         });
     </script>
