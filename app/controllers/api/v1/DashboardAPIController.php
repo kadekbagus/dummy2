@@ -884,6 +884,35 @@ class DashboardAPIController extends ControllerAPI
                             ];
                         }
                         break;
+                        
+                // show lucky draws
+                case 'lucky_draws':
+                        foreach ($periods as $period) {
+
+                            $start_date = $period['start_date'];
+                            $end_date = $period['end_date'];
+
+                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
+                                ->where('activities.activity_name', '=', 'view_lucky_draw')
+                                ->where('activities.module_name', '=', 'LuckyDraw')
+                                ->where('activities.activity_type', '=', 'view')
+                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
+                                ->where('activities.group', '=', 'mobile-ci')
+                                ->where('activities.location_id', '=', $merchant_id)
+                                ->where('activities.object_id', '=', $object_id)
+                                ->where("activities.created_at", '>=', $start_date)
+                                ->where("activities.created_at", '<=', $end_date)
+                                ->first();
+
+                            $result = (int)$query->score;
+
+                            $responses[] = [
+                                'start_date' => $start_date,
+                                'end_date' => $end_date,
+                                'score' => $result
+                            ];
+                        }
+                        break;
 
                 // by default do nothing
                 default:
@@ -3726,12 +3755,12 @@ class DashboardAPIController extends ControllerAPI
 
             // Less Than Equals
             OrbitInput::get('start_date', function($date) use ($coupons) {
-                $coupons->where('redeemed_date', '>=', $date);
+                $coupons->orWhere('redeemed_date', '>=', $date);
             });
 
             // Greater Than Equals
             OrbitInput::get('end_date', function($date) use ($coupons) {
-                $coupons->where('redeemed_date', '<=', $date);
+                $coupons->orWhere('redeemed_date', '<=', $date);
             });
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -3740,7 +3769,7 @@ class DashboardAPIController extends ControllerAPI
 
             // Get the take args
             $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+            OrbitInput::get('take_top', function ($_take) use (&$take, $maxRecord) {
                 if ($_take > $maxRecord) {
                     $_take = $maxRecord;
                 }
@@ -3764,10 +3793,10 @@ class DashboardAPIController extends ControllerAPI
             $coupons->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotion_name';
+            $sortBy = 'total_issued';
 
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
