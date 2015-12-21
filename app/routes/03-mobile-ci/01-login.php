@@ -139,20 +139,36 @@ Route::group(
             }
         );
 
+        // Route::get(
+        //     '/customer/notifications',
+        //     function () {
+
+        //         return MobileCI\MobileCIControllerNotifications::create()->getNotificationsView();
+        //     }
+        // );
+
         Route::get(
-            '/customer/notifications',
+            '/customer/messages',
             function () {
 
-                return MobileCI\MobileCIControllerNotifications::create()->getNotificationsView();
+                return MobileCI\MobileCIAPIController::create()->getNotificationsView();
             }
         );
 
+        // Route::get(
+        //     '/customer/notification/detail',
+        //     function () {
+
+        //         return MobileCI\MobileCIControllerNotifications::create()->getNotificationDetailView();
+        //         //return View::make('mobile-ci.mall-notifications-list');
+        //     }
+        // );
+
         Route::get(
-            '/customer/notification/detail',
+            '/customer/message/detail',
             function () {
 
-                return MobileCI\MobileCIControllerNotifications::create()->getNotificationDetailView();
-                //return View::make('mobile-ci.mall-notifications-list');
+                return MobileCI\MobileCIAPIController::create()->getNotificationDetailView();
             }
         );
 
