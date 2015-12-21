@@ -1,0 +1,129 @@
+#notification {
+
+    .list-notification {
+        padding: 10px 0;
+        color: black;
+
+        a {
+            display: flex;
+
+            .notification-icon {
+                flex: 1;
+                align-self: center;
+
+                .unread {
+                    .circle {
+                        color: @theme-main-complimentary;
+                    }
+                    .symbol {
+                        color: @theme-main-complimentary-2;
+                    }
+                }
+
+                .read {
+                    .circle {
+                        color: #CCCCCC;
+                    }
+                    .symbol {
+                        color: #FFFFFF;
+                    }
+                }
+            }
+
+            .notification-title {
+                padding-left: 0;
+
+                h4 {
+                    color: black;
+                    font-size: 15px;
+                    word-wrap: break-word;
+                    line-height: 2.3rem;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+
+                    &.unread{
+                        font-weight: bold;
+                    }
+                }
+            }
+
+            .col-xs-1{
+                padding: 0;
+
+                .delete-button-child {
+                    font-size: 1.6em;
+                    color: @theme-main-complimentary;
+                    display: none;
+                }
+            }
+        }
+    }
+}
+
+#notification-detail {
+    margin: 0 15px;
+
+    img {
+        margin: 0 auto;
+    }
+
+    p {
+        font-size: 1.8rem;
+    }
+
+    .notification-additional-text {
+        font-size: 1.5rem;
+        font-style: italic;
+    }
+}
+
+#delete-bar {
+    padding: 3px 8px;
+    display: block;
+    border-bottom: 1px solid #E4E4E4;
+
+    .text-delete-mode {
+        padding-left: 0;
+
+        p {
+            text-align: left;
+            padding-top: 7px;
+            margin-bottom: 0;
+        }
+    }
+
+    .button-delete-mode {
+        padding-right: 0;
+    }
+
+    .delete-button-parent {
+        font-size: 1.6em;
+        color: #CCCCCC;
+
+        &.active{
+            color: @theme-main-complimentary;
+        }
+    }
+}
+
+.fa-relative {
+    position: relative;
+    margin-right: 10px;
+}
+
+.notification-badge {
+    font-size: .35em;
+    display: block;
+    position: absolute;
+    top: -.25em;
+    right: -.9em;
+    width: 2em;
+    height: 2em;
+    line-height: 1.6em;
+    border-radius: 50%;
+    text-align: center;
+    color: #fff;
+    background: rgb(255, 0, 0);
+    border: 1px solid #FFF;
+}
