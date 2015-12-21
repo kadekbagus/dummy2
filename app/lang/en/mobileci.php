@@ -35,6 +35,7 @@ return array(
         'membership'        => 'MEMBERSHIP',
         'orbit_tour'        => 'ORBIT TOUR',
         'lucky_draws'       => 'LUCKY DRAWS',
+        'my_messages'       => 'MY MESSAGES',
     ),
 
     'widgets' => array(
