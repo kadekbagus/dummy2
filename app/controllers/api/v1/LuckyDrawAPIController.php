@@ -2084,6 +2084,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->data->translation_default = $lucky_draw_announcement_translation_default;
             $this->response->data->prize_winners = $prize_winners_response;
 
+            $lucky_draw->touch();
             // Commit the changes
             $this->commit();
 
