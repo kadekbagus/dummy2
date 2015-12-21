@@ -1958,6 +1958,8 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postnewluckydrawannouncement.after.validation', array($this, $validator));
 
+            $lucky_draw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
+
             $lucky_draw_announcement = new LuckyDrawAnnouncement();
             $lucky_draw_announcement->title = $title;
             $lucky_draw_announcement->description = $description;
