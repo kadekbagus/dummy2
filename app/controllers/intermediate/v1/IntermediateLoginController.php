@@ -767,6 +767,9 @@ class IntermediateLoginController extends IntermediateBaseController
                 $macModel->mac_address = $mac;
                 $macModel->user_email = $email;
                 $macModel->status = 'active';
+            } else {
+                // always update updated_at
+                $macModel->setUpdatedAt($macModel->freshTimestamp());
             }
 
             $macModel->ip_address = $ip;
