@@ -495,7 +495,7 @@ class MobileCIAPIController extends ControllerAPI
         /** @var \MacAddress $mac_model */
         $mac_model = null;
         if ($mac !== '') {
-            $mac_model = \MacAddress::excludeDeleted()->with('user')->where('mac_address', $mac)->orderBy('mac_addresses.created_at', 'desc')->first();
+            $mac_model = \MacAddress::excludeDeleted()->with('user')->where('mac_address', $mac)->orderBy('mac_addresses.updated_at', 'desc')->first();
         }
 
         $landing_url = URL::route('ci-customer-home');
@@ -3582,6 +3582,10 @@ class MobileCIAPIController extends ControllerAPI
                         $addr_entity->mac_address = $mac;
                         $addr_entity->status = 'active';
                         $addr_entity->save();
+                    } else {
+                        // exists: update the timestamp so that *this* particular email address will be used
+                        // the next time this mac address appears (if there is more than 1 email for this mac)
+                        $addr_entity->touch();
                     }
                 }
             }
