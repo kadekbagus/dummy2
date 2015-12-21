@@ -35,6 +35,7 @@ return array(
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
         'lucky_draws'        => '抽奖',
+        'my_messages'       => 'zh:MY MESSAGES',
     ),
 
     'widgets' => array(
