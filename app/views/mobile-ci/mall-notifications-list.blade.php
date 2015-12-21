@@ -49,6 +49,9 @@
                 </div>
             </div>
         @endfor
+        <div class="row">
+            <button class="col-xs-offset-2 col-xs-8 btn btn-default loadmore">Load More...</button>
+        </div>
     </div>
 @stop
 
