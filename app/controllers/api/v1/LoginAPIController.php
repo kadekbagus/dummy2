@@ -255,7 +255,7 @@ class LoginAPIController extends ControllerAPI
 
             // Successfull registration
             $inbox = new Inbox();
-            $inbox->addToInbox($newuser->user_id, $newuser, $mall_id, 'coupon_issuance');
+            $inbox->addToInbox($newuser->user_id, $newuser, $mall_id, 'activation');
 
             $activity->setUser($newuser)
                      ->setActivityName('registration_ok')
