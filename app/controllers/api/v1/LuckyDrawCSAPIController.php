@@ -711,6 +711,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $data = new stdclass();
             $data->total_records = count($issued_lucky_draw_numbers);
             $data->returned_records = count($issued_lucky_draw_numbers);
+            $data->expected_issued_numbers = $numberOfLuckyDraw;
             $data->records = $issued_lucky_draw_numbers_obj;
 
             $this->response->data = $data;
@@ -1481,7 +1482,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             return TRUE;
         });
-        
+
         // Check the existance of merchant id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $mall = Mall::excludeDeleted()

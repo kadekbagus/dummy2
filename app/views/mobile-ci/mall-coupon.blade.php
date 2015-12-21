@@ -71,7 +71,7 @@
                         <li style="margin-bottom : 10px;">{{{ Lang::get('mobileci.coupon.all_cs') }}}</li>
                     @endif
 
-                    @if ($link_to_all_tenant === TRUE)
+                    @if ($link_to_all_tenant === true)
                         {{{ Lang::get('mobileci.coupon.all_tenants') }}}
                     @else
                         @foreach($tenants as $tenant)
@@ -79,7 +79,7 @@
                         @endforeach
                     @endif
 
-                    @if(count($tenants) <=0)
+                    @if(count($tenants) <=0 && $cs_reedem == false)
                         <li> - </li>
                     @endif
                 </ul>

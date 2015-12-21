@@ -899,7 +899,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name,minimum_amount,updated_at',
+                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name,minimum_amount,updated_at,draw_date',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.lucky_draw_sortby'),
@@ -944,6 +944,16 @@ class LuckyDrawAPIController extends ControllerAPI
                                     ->joinLuckyDrawNumbers()
                                     ->joinMerchant()
                                     ->groupBy('lucky_draws.lucky_draw_id');
+
+                // Filter by user_ids
+                if ($user->isConsumer()) {
+                    $luckydraws->where('lucky_draw_numbers.user_id', $user->user_id);
+                } else {
+                    OrbitInput::get('user_id', function ($arg) use ($luckydraws)
+                    {
+                        $luckydraws->whereIn('lucky_draw_numbers.user_id', (array)$arg);
+                    });
+                }
             }
 
             // Filter lucky draw by ids
@@ -2280,6 +2290,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postupdateluckydrawannouncement.after.validation', array($this, $validator));
 
+            $lucky_draw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
             $lucky_draw_announcement = LuckyDrawAnnouncement::where('lucky_draw_announcement_id', $lucky_draw_announcement_id)->first();
             $lucky_draw_announcement_translation_default = LuckyDrawAnnouncementTranslation::excludeDeleted()->where('lucky_draw_announcement_id', $lucky_draw_announcement_id)->where('merchant_language_id', $id_language_default)->first();
 
@@ -2404,6 +2415,8 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->data = $lucky_draw_announcement;
             $this->response->data->translation_default = $lucky_draw_announcement_translation_default;
             $this->response->data->prize_winners = $prize_winners_response;
+
+            $lucky_draw->touch();
             // Commit the changes
             $this->commit();
 
@@ -3396,6 +3409,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $this->response->data = $lucky_draw_prizes;
 
+            $lucky_draw->touch();
             // Commit the changes
             $this->commit();
 

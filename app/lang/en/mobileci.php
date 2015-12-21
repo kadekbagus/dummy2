@@ -35,6 +35,7 @@ return array(
         'membership'        => 'MEMBERSHIP',
         'orbit_tour'        => 'ORBIT TOUR',
         'lucky_draws'       => 'LUCKY DRAWS',
+        'my_messages'       => 'MY MESSAGES',
     ),
 
     'widgets' => array(
@@ -365,7 +366,7 @@ return array(
         'lucky_draw_total_info_3'   => 'image to download,',
         'lucky_draw_total_info_4'   => 'each image contain maximum ',
         'lucky_draw_total_info_5'   => 'lucky draw number. It sorted by highest to lowest number.',
-        'lucky_draw_total_info_6'   => 'Your download should be started automatically. If it doesnt try to click button below.',
+        'lucky_draw_total_info_6'   => "Your download should be started automatically. If it doesn't, try to click button below.",
         'download_image'            => 'Download Image',
         'description'               => 'Description',
         'period'                    => 'Period',
