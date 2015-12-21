@@ -3571,7 +3571,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             // if a valid MAC specified, associate the MAC with the given email if not associated yet
-            $mac = OrbitInput::get('mac_address', '');
+            $mac = OrbitInput::get('mac_address', OrbitInput::post('mac_address', ''));
             if ($mac !== '') {
                 $addr_object = new MacAddr($mac);
                 if ($addr_object->isValid()) {
