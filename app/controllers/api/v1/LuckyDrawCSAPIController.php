@@ -1439,14 +1439,15 @@ class LuckyDrawCSAPIController extends ControllerAPI
         // Check the existance of lucky draw id
         Validator::extend('orbit.empty.lucky_draw', function ($attribute, $value, $parameters) {
             $luckyDraw = LuckyDraw::active()->where('lucky_draw_id', $value)->first();
+            $mall = App::make('orbit.empty.mall');
 
             if (empty($luckyDraw)) {
                 $errorMessage = sprintf('Lucky draw ID is not found.', $value);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
-            $now = strtotime(date('Y-m-d'));
-            $luckyDrawDate = strtotime(date('Y-m-d', strtotime($luckyDraw->end_date)));
+            $now = strtotime(Carbon::now($mall->timezone->timezone_name));
+            $luckyDrawDate = strtotime($luckyDraw->end_date);
 
             if ($now > $luckyDrawDate) {
                 $errorMessage = sprintf('The lucky draw already expired on %s.', date('d/m/Y', strtotime($luckyDraw->end_date)));
@@ -1485,7 +1486,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Mall::excludeDeleted()
+            $mall = Mall::with('timezone')->excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
