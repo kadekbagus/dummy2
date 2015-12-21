@@ -1130,7 +1130,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     break;
 
                 case 'google':
-                    $activityNameLong = 'Sign In'; //Sign In via Facebook
+                    $activityNameLong = 'Sign In'; //Sign In via Google
                     break;
 
                 case 'form':
