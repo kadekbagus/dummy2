@@ -179,6 +179,13 @@
     {
         var custEmail = $('#signinForm #email').val().trim();
 
+        // Flag the processing
+        if (orbitSignUpForm.isProcessing) {
+            return;
+        }
+        orbitSignUpForm.isProcessing = true;
+        orbitSignUpForm.disableEnableAllButton();
+
         // Check if this email already registered or not
         // We suppose to not let user login when they are not registered yet
         // which is different from the old Orbit behavior
@@ -192,6 +199,9 @@
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }}
                 }
             }).done(function (resp, status, xhr) {
+                orbitSignUpForm.isProcessing = false;
+                orbitSignUpForm.disableEnableAllButton();
+
                 if (resp.status === 'error') {
                     // do something
                     return;
@@ -220,6 +230,12 @@
                 }
 
                 window.location.replace(landing_url);
+            }).fail(function (data) {
+                orbitSignUpForm.isProcessing = false;
+
+                // Something bad happens
+                // @todo isplay this the error
+                orbitSignUpForm.disableEnableAllButton();
             });
         }
 
@@ -243,6 +259,13 @@
     orbitSignUpForm.doRegister = function()
     {
         var custEmail = $('#signupForm #email').val().trim();
+
+        // Flag the processing
+        if (orbitSignUpForm.isProcessing) {
+            return;
+        }
+        orbitSignUpForm.isProcessing = true;
+        orbitSignUpForm.disableEnableAllButton();
 
         // Check if this email already registered or not
         // We suppose to not let user login when they are not registered yet
@@ -268,6 +291,9 @@
                     birthdate: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
                 }
             }).done(function (resp, status, xhr) {
+                orbitSignUpForm.isProcessing = false;
+                orbitSignUpForm.disableEnableAllButton();
+
                 if (resp.status === 'error') {
                     // do something
                     return;
@@ -296,18 +322,41 @@
                 }
 
                 window.location.replace(landing_url);
+            }).fail(function (data) {
+                orbitSignUpForm.isProcessing = false;
+
+                // Something bad happens
+                // @todo isplay this the error
+                orbitSignUpForm.disableEnableAllButton();
             });
         }
 
         orbitSignUpForm.checkCustomerEmail(custEmail,
             saveUser,
 
-            // Send back to sign up form for unknown email
+            // Send back to sign in form if it is known user
             function() {
                 $('#signinForm #email').val(custEmail);
-                orbitSignUpForm.switchForm('sign');
+                orbitSignUpForm.switchForm('signin');
             }
         );
+    }
+
+   /**
+     * Disable or enable the sign up and sign in button.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    orbitSignUpForm.disableEnableAllButton = function()
+    {
+        if (orbitSignUpForm.isProcessing) {
+            $('#btn-signin-form').val('Please wait...');
+            $('#btn-signup-form').val('Please wait...');
+        } else {
+            $('#btn-signin-form').val('Sign in');
+            $('#btn-signup-form').val('Sign up');
+        }
     }
 
     /**
