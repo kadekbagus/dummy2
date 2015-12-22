@@ -251,7 +251,6 @@ return array(
         'no_coupon'          => 'You do not have any coupons.',
         'product_label'      => 'Product',
         'category_label'     => 'Category',
-        'view_coupons_btn'   => 'View Your Coupon(s)',
     ),
 
     'coupon_detail' => array(
@@ -387,7 +386,14 @@ return array(
         'prizes_and_winners'        => 'Prizes &amp; Winners',
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
+    ),
+    
+    'notification' => array(
+        'delete_mode'               => 'Delete mode',
         'view_lucky_draw_btn'       => 'View Lucky Draws',
+        'no_notif'                  => 'You have no message(s)',
+        'load_more_btn'             => 'Load More',
+        'view_coupons_btn'          => 'View Your Coupon(s)',
     ),
 
     'tour' => array(

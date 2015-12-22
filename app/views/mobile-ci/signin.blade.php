@@ -2,33 +2,12 @@
 
 @section('ext_style')
     <style>
-        /*TODO move css to less file*/
-        /* Sticky footer styles
--------------------------------------------------- */
-        html {
-            position: relative;
-            min-height: 100%;
-        }
-
-        .header-signin {
-            background-color: #fcfcfc;
-            height: 50px;
-        }
-
-        .header-signin .header-logo {
-            width: 200px;
-            padding: 8px 0;
-        }
-
-        .close.close-form {
-            color: #000;
-            font-size: 22px;
-            padding-bottom: 10px;
-            opacity: 1;
-        }
-
         .content-signin {
-            background: url('{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_tenants.jpg') }}');
+        @if(!empty($bg) && !empty($bg->path))
+            background: url('{{ asset($bg->path) }}');
+        @else
+            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
+        @endif
             background-size: 100% 100%;
             background-repeat: no-repeat;
             background-position: center;
@@ -36,97 +15,6 @@
             height: 478px;
             display: table;
             width: 100%;
-        }
-
-        .content-signin .social-media-wraper {
-            display: table-cell;
-            vertical-align: middle;
-        }
-
-        .content-signin .social-media-container {
-            background-color: rgba(252, 252, 252, 0.8);
-            padding: 30px 0;
-            border-radius: 0.6em;
-            width: 89%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .footer-form-modal .social-media-container .col-xs-2,
-        .footer-form-modal .social-media-container .col-xs-8 {
-            padding-left: 0;
-            padding-right: 0;
-        }
-
-        .content-signin .social-media-container .icon-button {
-            opacity: 1;
-            width: 68px;
-            height: 70px;
-        }
-
-        .footer-form-modal .social-media-container .icon-button.facebook,
-        .footer-form-modal .social-media-container .icon-button.google{
-            opacity: 1;
-            width: 35px;
-            padding-left: 0;
-            padding-right: 0;
-        }
-
-        .content-signin .social-media-container .icon-button.facebook,
-        .footer-form-modal .social-media-container .icon-button.facebook{
-            background-color: #3B5999 ;
-        }
-
-        .content-signin .social-media-container .icon-button.google,
-        .footer-form-modal .social-media-container .icon-button.google {
-            background-color: #DD4B39;
-        }
-
-        .content-signin .social-media-container .icon-button.form,
-        .footer-form-modal .social-media-container .icon-button.form {
-            background-color: #0AA5D5;
-        }
-
-        .footer {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            margin: 0;
-            /* Set the fixed height of the footer here */
-            height: 40px;
-            background-color: #fcfcfc;
-        }
-
-        .footer .container-footer {
-            margin-top: 12px;
-            padding: 0 8px;
-        }
-
-        .footer .version-and-privacy {
-            padding: 0;
-            font-size: .9rem
-        }
-
-        .footer .powered-by {
-            padding: 0;
-        }
-        .footer .powered-by span {
-            font-size: 7px;
-            font-weight: bold;
-        }
-
-        .footer .container-footer .img-responsive.image-footer {
-            width: 55px;
-            display: inline;
-        }
-
-        #formModal .modal-dialog {
-            margin-top: 50px;
-        }
-
-        #formModal .modal-content {
-            background-color: rgba(255, 255, 255, 0.8);
         }
 
         .modal-backdrop {
@@ -145,15 +33,7 @@
             display: none;
         }
 
-        @if(!empty($bg))
-            @if(!empty($bg->path))
-                body.bg {
-                    background: url('{{ asset($bg->path) }}');
-                    background-size: cover;
-                    background-repeat: no-repeat;
-                }
-            @endif
-        @endif
+        
     </style>
     <script type="text/javascript">
     </script>
