@@ -2246,6 +2246,8 @@ class MobileCIAPIController extends ControllerAPI
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
 
+                $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
+
                 if (!empty($luckyDrawTranslation)) {
                     foreach (['lucky_draw_name', 'description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
@@ -2523,7 +2525,7 @@ class MobileCIAPIController extends ControllerAPI
                 $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.prizes');
             } elseif ($mallTime >= $luckydraw->draw_date && $mallTime < $luckydraw->grace_period_date) {
                 $ongoing = FALSE;
-                $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.winners_and_prizes');
+                $pagetitle = Lang::get('mobileci.lucky_draw.prizes_and_winners');
             }
 
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Winning Numbers & Prizes');
