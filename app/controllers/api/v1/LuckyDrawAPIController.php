@@ -2037,6 +2037,14 @@ class LuckyDrawAPIController extends ControllerAPI
                                 $errorMessage = 'Lucky draw winner number not found.';
                                 OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
+
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_code', $winner->lucky_draw_winner_code)->first();
+                            if (is_object($lucky_draw_number_winner_prev)) {
+                                $this->rollBack();
+                                $errorMessage = 'Winning number is duplicated.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+
                             $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
                             $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
                             $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
@@ -2068,6 +2076,13 @@ class LuckyDrawAPIController extends ControllerAPI
                                     $errorMessage = $winner->lucky_draw_number_code . ' has already won the same prize.';
                                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                                 }
+                            }
+
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_code', $winner->lucky_draw_winner_code)->first();
+                            if (is_object($lucky_draw_number_winner_prev)) {
+                                $this->rollBack();
+                                $errorMessage = 'Winning number is duplicated.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
 
                             $lucky_draw_number_winner = new LuckyDrawWinner();
@@ -2372,6 +2387,14 @@ class LuckyDrawAPIController extends ControllerAPI
                                 $errorMessage = 'Lucky draw winner number not found.';
                                 OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
+
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_code', $winner->lucky_draw_winner_code)->first();
+                            if (is_object($lucky_draw_number_winner_prev)) {
+                                $this->rollBack();
+                                $errorMessage = 'Winning number is duplicated.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+
                             $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
                             $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
                             $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
@@ -2401,6 +2424,13 @@ class LuckyDrawAPIController extends ControllerAPI
                                     $errorMessage = $winner->lucky_draw_number_code . ' has already won the same prize.';
                                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                                 }
+                            }
+
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_code', $winner->lucky_draw_winner_code)->first();
+                            if (is_object($lucky_draw_number_winner_prev)) {
+                                $this->rollBack();
+                                $errorMessage = 'Winning number is duplicated.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
 
                             $lucky_draw_number_winner = new LuckyDrawWinner();
