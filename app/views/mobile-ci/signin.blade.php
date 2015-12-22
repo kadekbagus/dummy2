@@ -3,7 +3,11 @@
 @section('ext_style')
     <style>
         .content-signin {
-            background: url('{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_tenants.jpg') }}');
+        @if(!empty($bg) && !empty($bg->path))
+            background: url('{{ asset($bg->path) }}');
+        @else
+            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
+        @endif
             background-size: 100% 100%;
             background-repeat: no-repeat;
             background-position: center;
@@ -29,15 +33,7 @@
             display: none;
         }
 
-        @if(!empty($bg))
-            @if(!empty($bg->path))
-                body.bg {
-                    background: url('{{ asset($bg->path) }}');
-                    background-size: cover;
-                    background-repeat: no-repeat;
-                }
-            @endif
-        @endif
+        
     </style>
     <script type="text/javascript">
     </script>
