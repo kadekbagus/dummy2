@@ -19,6 +19,7 @@
 
     </div>
     <div class="col-xs-12 text-center" id="spinner"><i class="fa fa-circle-o-notch fa-spin"></i></div>
+    <div class="col-xs-12 text-center vertically-spaced" style="display:none;" id="no-notification">There is no notification right now.</div>
     <div class="row">
         <button class="col-xs-offset-2 col-xs-8 btn btn-default loadmore">Load More...</button>
     </div>
@@ -71,18 +72,24 @@
                     } else {
                         $('.loadmore').hide();
                     }
-                    for(var i = 0; i < data.data.records.length; i++) {
-                        var inBox = data.data.records[i];
-                        var isRead = inBox.is_read == 'Y' ? true : false;
-                        var read = isRead ? 'read' : 'unread';
-                        var mark = isRead ? 'check' : 'exclamation';
-                        var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-3 notification-icon"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1"><span class="delete-button-child deleteNotif" data-id="'+inBox.inbox_id+'"><i class="fa fa-times"></i></span></div></div></div>';
-                        $('#notification').append(individualList);
+                    if(data.data.records) {
+                        for(var i = 0; i < data.data.records.length; i++) {
+                            var inBox = data.data.records[i];
+                            var isRead = inBox.is_read == 'Y' ? true : false;
+                            var read = isRead ? 'read' : 'unread';
+                            var mark = isRead ? 'check' : 'exclamation';
+                            var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-3 notification-icon"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
+                            $('#notification').append(individualList);
+                        }
+                        skip = skip + {{ Config::get('orbit.pagination.inbox.per_page', 15) }};
+                    } else {
+                        $('#no-notification').show();
                     }
-                    skip = skip + {{ Config::get('orbit.pagination.inbox.per_page', 15) }};
+                    $('#spinner').hide();
                 }).fail(function(data){
                     $('#spinner').hide();
                 }).always(function(data){
+                    console.log('xxx');
                     $('#spinner').hide();
                 });
             }
@@ -128,7 +135,7 @@
                         var isRead = inBox.is_read == 'Y' ? true : false;
                         var read = isRead ? 'read' : 'unread';
                         var mark = isRead ? 'check' : 'exclamation';
-                        var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-3 notification-icon"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1"><span class="delete-button-child deleteNotif" data-id="'+inBox.inbox_id+'"><i class="fa fa-times"></i></span></div></div></div>';
+                        var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-3 notification-icon"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
                         $('#notification').append(individualList);
                         if(openDelete){
                             $('.delete-button-child').css('display', 'inline-block');
