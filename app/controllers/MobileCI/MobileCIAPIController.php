@@ -2224,21 +2224,6 @@ class MobileCIAPIController extends ControllerAPI
             $languages = $this->getListLanguages($retailer);
 
             if (empty($luckydraw)) {
-                // return View::make('mobile-ci.luckydraw', [
-                //                 'page_title'    => 'LUCKY DRAW',
-                //                 'user'          => $user,
-                //                 'retailer'      => $retailer,
-                //                 'luckydraw'     => null,
-                //                 'numbers'       => [],
-                //                 'total_number'  => null,
-                //                 'prev_url'      => null,
-                //                 'next_url'      => null,
-                //                 'total_pages'   => null,
-                //                 'current_page'  => null,
-                //                 'per_page'      => null,
-                //                 'servertime'    => null,
-                // ]);
-
                 return View::make('mobile-ci.404', [
                                 'page_title'    => Lang::get('mobileci.page_title.not_found'),
                                 'user'          => $user,
@@ -2349,6 +2334,10 @@ class MobileCIAPIController extends ControllerAPI
                         for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
                             $paginationPage[] = $x;
                         }
+                    }
+                } else {
+                    for ($x = 1; $x <= $pageNumber; $x++) {
+                        $paginationPage[] = $x;
                     }
                 }
             }
