@@ -101,7 +101,7 @@
 
 <div class="row text-center vertically-spaced">
     <div class="col-xs-12">
-        <a href="{{ url('customer/luckydraws') }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.modals.ok') }}</a>
+        <a href="javascript:history.back()" class="btn btn-info btn-block">{{ Lang::get('mobileci.modals.ok') }}</a>
     </div>
 </div>
 
