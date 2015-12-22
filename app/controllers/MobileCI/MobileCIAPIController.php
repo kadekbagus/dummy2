@@ -2338,7 +2338,7 @@ class MobileCIAPIController extends ControllerAPI
                         }
                     }
                 } else {
-                    for ($x = 1; $x <= $pageNumber; $x++) {
+                    for ($x = 1; $x <= $totalPages; $x++) {
                         $paginationPage[] = $x;
                     }
                 }
