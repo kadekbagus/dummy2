@@ -7,12 +7,12 @@
             <!-- <li><a id="barcodeBtn"><span><i class="glyphicon glyphicon-barcode"></i></span></a></li> -->
             <li id="orbit-tour-search"><a id="searchBtn"><span><i class="glyphicon glyphicon-search"></i></span></a></li>
             <li id="orbit-tour-tenant"><a href="{{ url('/customer/tenants') }}"><span class="fa fa-list-ul"></span></a></li>
-            <li id="orbit-tour-profile"><a data-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span><i class="glyphicon glyphicon-cog"><span class="notification-badge">3</span></i></span></a>
+            <li id="orbit-tour-profile"><a data-toggle="dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span><i class="glyphicon glyphicon-cog"><span class="notification-badge">0</span></i></span></a>
                 <ul class="dropdown-menu" role="menu">
                     <li class="complimentary-bg">
-                        <a href="{{ url('/customer/notifications') }}">
+                        <a href="{{ url('/customer/messages') }}">
                             <span>
-                                <i class="fa fa-inbox fa-relative"><span class="notification-badge">3</span></i>
+                                <i class="fa fa-inbox fa-relative"><span class="notification-badge">0</span></i>
                                 {{ ucwords(strtolower(Lang::get('mobileci.page_title.my_messages'))) }}
                             </span>
                         </a>

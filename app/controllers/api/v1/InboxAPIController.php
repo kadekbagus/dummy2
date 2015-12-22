@@ -11,9 +11,14 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
+use DominoPOS\OrbitSession\Session;
+use DominoPOS\OrbitSession\SessionConfig;
 
 class InboxAPIController extends ControllerAPI
 {   
+    const APPLICATION_ID = 1;
+    protected $session = null;
+
     /**
      * GET - List of inboxes
      *
@@ -28,21 +33,12 @@ class InboxAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.inbox.getsearchinbox.before.auth', array($this));
-
-            // Require authentication
-            $this->checkAuth();
-
-            Event::fire('orbit.inbox.getsearchinbox.after.auth', array($this));
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
 
             $alerts = Inbox::excludeDeleted()
                             ->where('user_id', $user->user_id)
-                            ->where('merchant_id', $mall_id);
+                            ->where('merchant_id', $retailer->merchant_id);
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -178,20 +174,11 @@ class InboxAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.inbox.getalert.before.auth', array($this));
-
-            // Require authentication
-            $this->checkAuth();
-
-            Event::fire('orbit.inbox.getalert.after.auth', array($this));
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
-            $mall_id = App::make('orbitSetting')->getSetting('current_retailer');
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
 
             $alerts = Inbox::where('user_id', $user->user_id)
-                            ->where('merchant_id', $mall_id)
+                            ->where('merchant_id', $retailer->merchant_id)
                             ->isNotRead();
 
             // Clone the query builder which still does not include the take,
@@ -284,16 +271,8 @@ class InboxAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.inbox.postreadalert.before.auth', array($this));
-
-            // Require authentication
-            $this->checkAuth();
-
-            Event::fire('orbit.inbox.postreadalert.after.auth', array($this));
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
 
             $this->registerCustomValidation();
 
@@ -404,16 +383,8 @@ class InboxAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.inbox.postdeletedalert.before.auth', array($this));
-
-            // Require authentication
-            $this->checkAuth();
-
-            Event::fire('orbit.inbox.postdeletedalert.after.auth', array($this));
-
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
 
             $this->registerCustomValidation();
 
@@ -444,6 +415,8 @@ class InboxAPIController extends ControllerAPI
             $inbox->save();
 
             Event::fire('orbit.inbox.postdeletedalert.after.save', array($this, $inbox));
+            $this->response->code = 0;
+            $this->response->status = 'success';
             $this->response->message = 'Message has been deleted.';
             $this->response->data = NULL;
 
@@ -512,7 +485,7 @@ class InboxAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
-        $user = $this->api->user;
+        $user = $this->getLoggedInUser();
         Validator::extend('orbit.empty.alert', function ($attribute, $value, $parameters) use ($user) {
             $alert = Inbox::active()
                           ->where('inbox_id', $value)
@@ -520,7 +493,7 @@ class InboxAPIController extends ControllerAPI
                           ->first();
 
             if (empty($alert)) {
-                $errorMessage = sprintf('Alert not found.');
+                $errorMessage = sprintf('Notification not found.');
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -528,5 +501,133 @@ class InboxAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    /**
+     * Redirect user if not logged in to sign page
+     *
+     * @param object $e - Error object
+     *
+     * @return Illuminate\Support\Facades\Redirect
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function redirectIfNotLoggedIn($e)
+    {
+        if (Config::get('app.debug')) {
+            return $e;
+        }
+
+        switch ($e->getCode()) {
+            case Session::ERR_UNKNOWN;
+            case Session::ERR_IP_MISS_MATCH;
+            case Session::ERR_UA_MISS_MATCH;
+            case Session::ERR_SESS_NOT_FOUND;
+            case Session::ERR_SESS_EXPIRE;
+                return \Redirect::to('/customer/logout');
+                break;
+
+            default:
+                return \Redirect::to('/customer');
+        }
+    }
+
+    /**
+     * Get current logged in user used in view related page.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return User $user
+     */
+    protected function getLoggedInUser()
+    {
+        $this->prepareSession();
+
+        $userId = $this->session->read('user_id');
+
+        if ($this->session->read('logged_in') !== true || ! $userId) {
+            throw new Exception('Invalid session data.');
+        }
+
+        $retailer = $this->getRetailerInfo();
+
+        $user = User::with(['userDetail',
+            'membershipNumbers' => function($q) use ($retailer) {
+                $q->select('membership_numbers.*')
+                    ->with('membership.media')
+                    ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
+                    ->excludeDeleted('membership_numbers')
+                    ->excludeDeleted('memberships')
+                    ->where('memberships.merchant_id', $retailer->merchant_id);
+            }])->where('user_id', $userId)->first();
+
+        if (! $user) {
+            throw new Exception('Session error: user not found.');
+        } else {
+            $_user = clone($user);
+            if (count($_user->membershipNumbers)) {
+               $user->membership_number = $_user->membershipNumbers[0]->membership_number;
+            }
+        }
+
+        return $user;
+    }
+
+    /**
+     * Prepare session.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return void
+     */
+    protected function prepareSession()
+    {
+        if (! is_object($this->session)) {
+            // This user assumed are Consumer, which has been checked at login process
+            $config = new SessionConfig(Config::get('orbit.session'));
+            $config->setConfig('session_origin.header.name', 'X-Orbit-Session');
+            $config->setConfig('session_origin.query_string.name', 'orbit_session');
+            $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
+            $config->setConfig('application_id', InboxAPIController::APPLICATION_ID);
+            $this->session = new Session($config);
+            $this->session->start();
+        }
+    }
+
+    /**
+     * GET - Get current active mall
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     *
+     * @return \Mall
+     */
+    public function getRetailerInfo()
+    {
+        try {
+            $retailer_id = App::make('orbitSetting')->getSetting('current_retailer');
+            $retailer = Mall::with('parent')->where('merchant_id', $retailer_id)->first();
+            $membership_card = Setting::where('setting_name','enable_membership_card')->where('object_id',$retailer_id)->first();
+
+            if (! empty($membership_card)){
+                $retailer->enable_membership=$membership_card->setting_value;
+            } else {
+                $retailer->enable_membership='false';
+            }
+
+            return $retailer;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
     }
 }
