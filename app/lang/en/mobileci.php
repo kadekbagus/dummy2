@@ -385,7 +385,7 @@ return array(
         'prizes_and_winners'        => 'Prizes &amp; Winners',
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
-        'view_lucky_draw_btn'       => 'View Your Lucky Draw Number(s)',
+        'view_lucky_draw_btn'       => 'View Lucky Draws',
     ),
 
     'tour' => array(
