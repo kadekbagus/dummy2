@@ -32,6 +32,8 @@ return array(
     'Orbit\\Queue\\' => array($baseDir . '/app/queue'),
     'Orbit\\Database\\' => array($vendorDir . '/dominopos/orbit-database'),
     'OrbitShop\\API\\' => array($vendorDir . '/dominopos/orbit-shop-api'),
+    'OAuth\\Unit' => array($vendorDir . '/lusitanian/oauth/tests'),
+    'OAuth' => array($vendorDir . '/lusitanian/oauth/src'),
     'Normalizer' => array($vendorDir . '/patchwork/utf8/class'),
     'Net' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'Math' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
@@ -50,4 +52,5 @@ return array(
     'ClassPreloader' => array($vendorDir . '/classpreloader/classpreloader/src'),
     'Carbon' => array($vendorDir . '/nesbot/carbon/src'),
     'Boris' => array($vendorDir . '/d11wtq/boris/lib'),
+    'Artdarek\\OAuth' => array($vendorDir . '/artdarek/oauth-4-laravel/src'),
 );

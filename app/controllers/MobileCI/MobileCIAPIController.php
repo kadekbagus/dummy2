@@ -67,6 +67,7 @@ use \News;
 use \Object;
 use \App;
 use \Media;
+use Artdarek\OAuth\Facade\OAuth;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -488,6 +489,9 @@ class MobileCIAPIController extends ControllerAPI
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
 
+
+        $googlePlusUrl = URL::route('mobile-ci.social_google_callback');
+
         if (\Input::get('payload', false) !== false) {
             // has payload, clear out prev cookies
             $_COOKIE['orbit_firstname'] = '';
@@ -521,6 +525,7 @@ class MobileCIAPIController extends ControllerAPI
         $internet_info = 'no';
         $viewData = [
             'orbitTime' => time(),
+            'googlePlusUrl' => $googlePlusUrl,
             'orbitOriginName' => 'orbit_origin',
             'orbitOriginValue' => 'default',
             'orbitToFacebookOriginValue' => 'redirect_to_facebook',
@@ -668,6 +673,75 @@ class MobileCIAPIController extends ControllerAPI
         return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
     }
 
+    public function getGoogleCallbackView()
+    {
+        $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
+        Config::set('orbit.session.availability.query_string', false);
+
+        $recognized = \Input::get('recognized', 'none');
+        $code = \Input::get('code', NULL);
+
+
+        $googleService = OAuth::consumer( 'Google' );
+
+        if ( !empty( $code ) ) {
+            try {
+
+                Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
+                $token = $googleService->requestAccessToken( $code );
+
+                $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
+
+                $userEmail = isset($user['email']) ? $user['email'] : '';
+                $firstName = isset($user['given_name']) ? $user['given_name'] : '';
+                $lastName = isset($user['family_name']) ? $user['family_name'] : '';
+                $gender = isset($user['gender']) ? $user['gender'] : '';
+
+                $data = [
+                    'email' => $userEmail,
+                    'fname' => $firstName,
+                    'lname' => $lastName,
+                    'gender' => $gender,
+                    'login_from'  => 'google',
+                    'mac' => \Input::get('mac_address', ''),
+                    'ip' => $_SERVER['REMOTE_ADDR'],
+                    'is_captive' => 'yes',
+                    'recognized' => $recognized
+                ];
+
+                $orbit_origin = \Input::get('orbit_origin', 'google');
+                $this->prepareSession();
+
+                // There is a chance that user not 'grant' his email while approving our app
+                // so we double check it here
+                if (empty($userEmail)) {
+                    return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.']);
+                }
+
+                $key = $this->getPayloadEncryptionKey();
+                $payload = (new Encrypter($key))->encrypt(http_build_query($data));
+                $query = ['payload' => $payload, 'email' => $userEmail, 'from_captive' => 'yes', 'auto_login' => 'yes'];
+
+                // todo can we not do this directly
+                return Redirect::route('mobile-ci.signin', $query);
+
+            } catch (Exception $e) {
+                $errorMessage = 'Error: ' . $e->getMessage();
+                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+            }
+
+        } else {
+            try {
+                // get googleService authorization
+                $url = $googleService->getAuthorizationUri();
+                return Redirect::to( (string)$url );
+            } catch (Exception $e) {
+                $errorMessage = 'Error: ' . $e->getMessage();
+                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+            }
+        }
+    }
+
     public function getSocialLoginCallbackView()
     {
         $recognized = \Input::get('recognized', 'none');
@@ -682,7 +756,10 @@ class MobileCIAPIController extends ControllerAPI
             return $this->getFacebookError();
         }
 
+        $orbit_origin = \Input::get('orbit_origin', 'facebook');
         $this->prepareSession();
+
+
         $fb = new \Facebook\Facebook([
             'persistent_data_handler' => new \Orbit\FacebookSessionAdapter($this->session),
             'app_id' => Config::get('orbit.social_login.facebook.app_id'),
@@ -700,6 +777,7 @@ class MobileCIAPIController extends ControllerAPI
         $firstName = isset($user['first_name']) ? $user['first_name'] : '';
         $lastName = isset($user['last_name']) ? $user['last_name'] : '';
         $gender = isset($user['gender']) ? $user['gender'] : '';
+
         $data = [
             'email' => $userEmail,
             'fname' => $firstName,
@@ -711,6 +789,7 @@ class MobileCIAPIController extends ControllerAPI
             'is_captive' => 'yes',
             'recognized' => $recognized
         ];
+
 
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
@@ -2345,7 +2424,7 @@ class MobileCIAPIController extends ControllerAPI
                         for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
                             $paginationPage[] = $x;
                         }
-                    } else { 
+                    } else {
                         for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
                             $paginationPage[] = $x;
                         }

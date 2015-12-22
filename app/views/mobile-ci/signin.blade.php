@@ -200,6 +200,23 @@
                     </div>
                     <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="no"/>
                 </form>
+                <form class="row" name="googleLoginForm" id="googleLoginForm"
+                      action="{{ $googlePlusUrl }}" method="get">
+                    <div class="form-group">
+                        <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
+                        <input type="hidden" class="form-control" name="mac_address"
+                               value="{{{ Input::get('mac_address', '') }}}"/>
+                        <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}"
+                               value="{{{ $orbitToFacebookOriginValue }}}"/>
+                    </div>
+                    <div class="form-group">
+                        <button style="background-color:#3B5998;" type="submit"
+                                class="btn btn-info btn-block submit-btn" id="btn-login-form-google"><i
+                                class="fa fa-google-plus"></i> {{{ trans('mobileci.signin.login_via_google') }}}
+                        </button>
+                    </div>
+                    <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="no"/>
+                </form>
                 <div class="row vertically-spaced">
                     <div class="col-xs-12 text-center">
                         <p>{{{ trans('mobileci.signin.or_between_email_and_fb') }}}</p>
@@ -246,6 +263,12 @@
                     </div>
                 </form>
             </div>
+
+            <input class="agree_to_terms" type="hidden" name="agree_to_terms" value="no" />
+        </form>
+
+        <div class="checkbox">
+            <label><input type="checkbox" id="agree_to_terms" value="yes" /> {{ $agreeToTermsLabel  }}</label>
         </div>
         @if (! Config::get('orbit.shop.guest_mode'))
             <div class="col-xs-12 text-center vertically-spaced orbit-auto-login">
@@ -256,6 +279,12 @@
             </div>
         @endif
     </div>
+    @if (! Config::get('orbit.shop.guest_mode'))
+    <div class="col-xs-12 text-center vertically-spaced orbit-auto-login">
+        <a id="notMe">{{ Lang::get('mobileci.signin.not') }} <span class="signedUser">{{{ $user_email or '' }}}</span><span class="userName">{{{ $display_name or '' }}}</span>, {{ Lang::get('mobileci.signin.click_here') }}.</a>
+    </div>
+    @endif
+</div>
 @stop
 
 @section('footer')
@@ -296,6 +325,7 @@
             </div>
         </div>
     </div>
+</div>
 
     <!-- Privacy Policy -->
     <div class="modal fade" id="privacyModal" tabindex="-1" role="dialog" aria-labelledby="privacyModalLabel"
@@ -318,6 +348,7 @@
             </div>
         </div>
     </div>
+</div>
 
     <!-- Term and Condition -->
     <div class="modal fade" id="tosModal" tabindex="-1" role="dialog" aria-labelledby="tosModalLabel"
@@ -340,6 +371,7 @@
             </div>
         </div>
     </div>
+</div>
 
     <!-- Ask to Accept Privacy Policy -->
     <div class="modal fade" id="acceptTnCModal" tabindex="-1" role="dialog" aria-labelledby="acceptTnCModalLabel"
@@ -359,6 +391,9 @@
             </div>
         </div>
     </div>
+</div>
+
+
 @stop
 
 @section('ext_script_bot')
@@ -402,6 +437,14 @@
             this.innerHTML = '<i class="fa fa-facebook"></i> ' + {{  json_encode(trans('mobileci.signin.connecting_to_facebook')); }};
         });
 
+        $('#btn-login-form-google').click(function(e) {
+            if (! term_accepted) {
+                e.preventDefault();
+                $('#acceptTnCModal').modal();
+                return false;
+            }
+            this.innerHTML = '<i class="fa fa-google-plus"></i> ' + {{  json_encode(trans('mobileci.signin.connecting_to_google')); }};
+        });
 
         /**
          * Get Query String from the URL
@@ -428,7 +471,7 @@
             // To do: replace this hardcode session name
             var session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
             var prefix = '?';
-            console.log('Session ID: ' + session_id);
+            console.log('Session ID: '  + session_id);
 
             // We will pass this session id to the application inside real browser
             // so the it can recreate the session information and able to recognize
@@ -436,7 +479,7 @@
             var create_session_url = '{{ URL::Route("captive-portal") }}';
             console.log('Create session URL: ' + create_session_url);
 
-            var fname = $('.userName')[0].innerHTML;
+            var fname = $('.userName').val();
             var email = $('#email').val();
 
             // Check for the '?' mark
@@ -456,6 +499,7 @@
          * @author Rio Astamal <me@rioastamal.net>
          */
         function callLoginAPI() {
+
             if (term_accepted == false && no_ajax == false) {
                 $('#acceptTnCModal').modal();
 
@@ -499,6 +543,7 @@
                         // @Todo: Replace the hardcoded name
                         session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
                         var landing_url = '{{ $landing_url }}';
+
                         if (session_id) {
                             if (landing_url.indexOf('orbit_session=') < 0) {
                                 // orbit_session= is not exists, append manually
@@ -507,6 +552,7 @@
                                 landing_url = landing_url.replace(/orbit_session=(.*)$/, 'orbit_session=' + session_id);
                             }
                         }
+
                         window.location.replace(landing_url);
                     }
                 }
@@ -527,12 +573,6 @@
             var em;
             var user_em = '{{ strtolower($user_email) }}';
 
-            function isValidEmailAddress(emailAddress) {
-                var pattern = new
-                        RegExp(/^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)
-                            +(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i);
-                return pattern.test(emailAddress);
-            };
             if (user_em != '') {
                 $('#signedIn').show();
                 $('#signIn').hide();
@@ -547,10 +587,10 @@
                     callLoginAPI();
                 }
             }
-            if ($('.userName')[0].innerHTML.length > 0) {
+            /*if ( $('.userName').val().length > 0) {
                 $('.signedUser').hide();
                 $('.userName').show();
-            }
+            }*/
             $.removeCookie('dismiss_activation_popup', {path: '/', domain: window.location.hostname});
             $('#notMe').click(function () {
                 var currentDomain = orbitGetDomainName();
@@ -577,5 +617,5 @@
                 }
             });
         });
-    </script>
+  </script>
 @stop
