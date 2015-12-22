@@ -949,6 +949,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
                 // Filter by user_ids
                 if ($user->isConsumer()) {
+                    $luckydraws->where('lucky_draws.status', 'active');
                     $luckydraws->where('lucky_draw_numbers.user_id', $user->user_id);
                 } else {
                     OrbitInput::get('user_id', function ($arg) use ($luckydraws)
