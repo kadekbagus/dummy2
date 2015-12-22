@@ -389,7 +389,7 @@ return array(
     ),
     
     'notification' => array(
-        'delete_mode'               => 'Delete mode'
+        'delete_mode'               => 'Delete mode',
         'view_lucky_draw_btn'       => 'View Lucky Draws',
         'no_notif'                  => 'You have no message(s)',
         'load_more_btn'             => 'Load More',
