@@ -377,7 +377,7 @@ return array(
         'no_lucky_draw_number_1'    => '今あなたの抽選番号を入手！',
         'no_lucky_draw_number_2'    => '参加方法の顧客サービスに確認してください',
         'see_prizes'                => '賞を参照してください。',
-        'see_prizes_and_winner'     => '賞と受賞者を参照してください。',
+        'see_prizes_and_winner'     => '賞と受賞者を参照してください',
         'prizes'                    => '賞',
         'winners_and_prizes'        => '勝者と賞',
         'default_announcement_winner_title' => 'すべての最愛の受賞者を祝福',
