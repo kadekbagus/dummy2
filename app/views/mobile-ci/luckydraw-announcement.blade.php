@@ -42,7 +42,6 @@
 <div class="row">
     <div class="col-xs-12 text-left">
         @if(isset($luckydraw->announcements[0]))
-            <h4>{{ Lang::get('mobileci.lucky_draw.information') }}</h4>
             <p>
                 {{ $luckydraw->announcements[0]->description }}
             </p>

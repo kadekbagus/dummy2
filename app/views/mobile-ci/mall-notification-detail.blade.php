@@ -5,13 +5,21 @@
 @stop
 
 @section('content')
-    <div id="notification-detail">
-        <div class="row">
-            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
-            <p>An email has been sent to "lanang@dominopos.com". Please follow the instructions to activate your account</p>
-            <p class="notification-additional-text">if for some reason you don't see an e-mail from us in a couple of hours, please check your Spam or Junk folder</p>
+    {{ $inbox->content }}
+
+    @if($inbox->inbox_type == 'lucky_draw_issuance')
+    <div class="row vertically-spaced">
+        <div class="col-xs-12">
+        <a href="{{ url('customer/luckydraws') }}" class="btn btn-block btn-info">{{ Lang::get('mobileci.lucky_draw.view_lucky_draw_btn') }}</a>
         </div>
     </div>
+    @elseif($inbox->inbox_type == 'coupon_issuance')
+    <div class="row vertically-spaced">
+        <div class="col-xs-12">
+        <a href="{{ url('customer/mallcoupons') }}" class="btn btn-block btn-info">{{ Lang::get('mobileci.coupon_list.view_coupons_btn') }}</a>
+        </div>
+    </div>
+    @endif
 @stop
 
 @section('ext_script_bot')
