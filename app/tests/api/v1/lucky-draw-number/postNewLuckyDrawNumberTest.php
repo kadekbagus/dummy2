@@ -24,13 +24,14 @@ class postNewLuckyDrawNumberTest extends TestCase
         $this->luckydraw = Factory::create('LuckyDraw');
 
         Config::set('orbit.shop.id', $this->luckydraw->mall->merchant_id);
+
+        $_GET = [];
+        $_POST = [];
     }
 
     public function testIssueFiveLuckyDrawNumber()
     {
         $user = Factory::create('User');
-
-        $this->genLuckyDrawNumber(1001, 1050);
 
         // Set the client API Keys
         $_GET['apikey'] = $this->apikey->api_key;
@@ -60,7 +61,6 @@ class postNewLuckyDrawNumberTest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertSame('Request OK', $response->message);
         $this->assertSame('5', (string)$response->data->total_records);
-        $this->assertSame('5', (string)$response->data->returned_records);
 
         // Number of receipt which has the same receipt group (hash) should be 4
         $hash = $response->data->records[0]->hash;
@@ -73,13 +73,16 @@ class postNewLuckyDrawNumberTest extends TestCase
         foreach ($response->data->records as $number) {
             $this->assertSame((string)$user->user_id, (string)$number->user_id);
         }
+
+        // Check the number of records in lucky_draw_numbers table
+        $expectedNumbers = ['1001', '1002', '1003', '1004', '1005'];
+        $ldNumberCount = LuckyDrawNumber::active()->whereIn('lucky_draw_number_code', $expectedNumbers)->count();
+        $this->assertSame(5, $ldNumberCount);
     }
 
     public function testIssueFiveLuckyDrawNumberThenThree()
     {
         $user = Factory::create('User');
-
-        $this->genLuckyDrawNumber(1001, 1050);
 
         // Set the client API Keys
         // -- First Request
@@ -139,7 +142,6 @@ class postNewLuckyDrawNumberTest extends TestCase
         $this->assertSame('success', $response->status);
         $this->assertSame('Request OK', $response->message);
         $this->assertSame('3', (string)$response->data->total_records);
-        $this->assertSame('3', (string)$response->data->returned_records);
 
         $last = end($response->data->records);
         $this->assertSame('1008', (string)$last->lucky_draw_number_code);
@@ -155,22 +157,6 @@ class postNewLuckyDrawNumberTest extends TestCase
         foreach ($response->data->records as $number) {
             $this->assertSame((string)$user->user_id, (string)$number->user_id);
         }
-    }
-
-    protected function genLuckyDrawNumber($min, $max)
-    {
-        DB::connection()->getPdo()->beginTransaction();
-
-        // Generate X lucky draw number
-        $args = [
-            $min,
-            $max,
-            $this->luckydraw->lucky_draw_id,
-            $this->apikey->user_id
-        ];
-
-        DB::statement("call generate_lucky_draw_number(?, ?, ?, ?)", $args);
-        DB::connection()->getPdo()->commit();
     }
 
     protected function genReceipts($mall, $user, $number)

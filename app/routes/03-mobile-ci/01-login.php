@@ -29,6 +29,14 @@ Route::group(
         );
 
         Route::get(
+            '/customer/social-google-callback', ['as' => 'mobile-ci.social_google_callback',
+                function () {
+                    return MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
+                },
+            ]
+        );
+
+        Route::get(
             '/customer/signup',
             function () {
 
@@ -136,6 +144,23 @@ Route::group(
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getPromotionList();
+            }
+        );
+
+        Route::get(
+            '/customer/notifications',
+            function () {
+
+                return MobileCI\MobileCIControllerNotifications::create()->getNotificationsView();
+            }
+        );
+
+        Route::get(
+            '/customer/notification/detail',
+            function () {
+
+                return MobileCI\MobileCIControllerNotifications::create()->getNotificationDetailView();
+                //return View::make('mobile-ci.mall-notifications-list');
             }
         );
 
@@ -420,12 +445,26 @@ Route::group(
                     }]
                 );
 
+                Route::get(
+                    '/customer/luckydraws', ['as' => 'ci-luckydraw-list',
+                    function () {
+                        return MobileCI\MobileCIAPIController::create()->getLuckyDrawListView();
+                    }]
+                );
+
                 Route::post(
                     '/app/v1/customer/luckydrawnumberpopup',
                     function () {
 
                         return MobileCI\MobileCIAPIController::create()->postLuckyNumberPopup();
                     }
+                );
+
+                Route::get(
+                    '/customer/luckydraw-announcement', ['as' => 'ci-luckydraw-announcement',
+                    function () {
+                        return MobileCI\MobileCIAPIController::create()->getLuckyDrawAnnouncementView();
+                    }]
                 );
             }
         );

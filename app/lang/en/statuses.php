@@ -28,6 +28,7 @@ return array(
             'mall'           => 'Mall has been successfully deleted.',
             'mallgroup'      => 'Mall group has been successfully deleted.',
             'tenant'         => 'Tenant has been successfully deleted.',
+            'membership'     => 'Membership has been successfully deleted.',
         ),
         'updated'   => array(
             'user'           => 'User has been successfully updated.',
@@ -57,12 +58,14 @@ return array(
             'lucky_draw'    => 'There is no lucky draw that matched your search criteria.',
             'lucky_draw_number_receipt' => 'There is no lucky draw number receipt that matched your search criteria.',
             'lucky_draw_number' => 'There is no lucky draw number that matched your search criteria.',
+            'lucky_draw_prize' => 'There is no lucky draw prize that matched your search criteria.',
             'news'          => 'There is no news that matched your search criteria.',
             'object'        => 'There is no object that matched your search criteria.',
             'activity'      => 'There is no activity that matched your search criteria.',
             'mall'          => 'There is no mall that matched your search criteria.',
             'mallgroup'     => 'There is no mall group that matched your search criteria.',
             'tenant'        => 'There is no tenant that matched your search criteria.',
+            'membership'    => 'There is no membership that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
@@ -112,9 +115,17 @@ return array(
                 'main'          => 'Lucky Draw image has been successfully uploaded.',
                 'delete_image'  => 'Lucky Draw image has been successfully deleted.'
             ),
+            'lucky_draw_translation' => array(
+                'main'          => 'Lucky Draw Translation image has been successfully uploaded.',
+                'delete_image'  => 'Lucky Draw Translation image has been successfully deleted.'
+            ),
             'news' => array(
                 'main'          => 'News image has been successfully uploaded.',
                 'delete_image'  => 'News image has been successfully deleted.'
+            ),
+            'membership' => array(
+                'main'          => 'Membership image has been successfully uploaded.',
+                'delete_image'  => 'Membership image has been successfully deleted.'
             ),
         ),
         'activate'   => array(

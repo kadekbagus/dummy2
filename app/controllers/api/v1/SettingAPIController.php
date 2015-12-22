@@ -432,16 +432,6 @@ class SettingAPIController extends ControllerAPI
                     throw new \Exception($response->message, $response->code);
                 }
 
-                if (is_null($backgroundSetting)) {
-                    $backgroundSetting = new Setting();
-                    $backgroundSetting->setting_name = 'background_image';
-                    $backgroundSetting->object_id = $mall->merchant_id;
-                    $backgroundSetting->object_type = 'merchant';
-                }
-                $backgroundSetting->setting_value = $response->data[0]->path;
-                $backgroundSetting->modified_by = $user->user_id;
-                $backgroundSetting->save();
-
                 $mall->setRelation('mediaBackground', $response->data);
                 $mall->media_background = $response->data;
             });

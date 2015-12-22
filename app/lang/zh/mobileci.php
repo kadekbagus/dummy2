@@ -34,6 +34,8 @@ return array(
         'news'               => '信息',
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
+        'lucky_draws'        => '幸运大抽奖',
+        'my_messages'       => 'zh:MY MESSAGES',
     ),
 
     'widgets' => array(
@@ -42,7 +44,7 @@ return array(
         'promotion'     => '促销活动',
         'coupon'        => '我的优惠券',
         'tenant'        => '店铺',
-        'lucky_draw'    => '抽奖',
+        'lucky_draw'    => '幸运大抽奖',
         'news'          => '消息',
     ),
 
@@ -69,7 +71,7 @@ return array(
         'delete_coupon_title'   => '删除优惠券',
         'close_cart_title'      => '关闭车',
         'reset_cart_title'      => '复位车',
-        'membership_title'      => '会员信息',
+        'membership_title'      => '会员',
         'language_title'        => '选语言',
         'activate_account'      => 'アカウントを有効に',
 
@@ -102,7 +104,7 @@ return array(
         'membership_notfound'    => '会员不存在',
         'membership_want_member' => '想要成为会员?',
         'membership_great_deal'  => '取特殊伟大交易',
-        'membership_contact_our' => '请联系客户服务取您的会员号码',
+        'membership_contact_our' => '请联系客户服务取您的会员',
 
         'enjoy_free'             => '享受免费的',
         'unlimited'              => '无限',
@@ -144,11 +146,13 @@ return array(
         'start_button_mall' => '进入商城',
         'register'          => '定位',
         'login_via_facebook'            => '通过 Facebook 登录',
+        'login_via_google'            => '通过谷歌首页',
         'or_between_email_and_fb'       => '或',
         'agree_to_terms'                => '我同意 Orbit <a href="%s" id="orbit-privacy-policy-anchor">隐私政策</a> 和 <a href="%s" id="orbit-tos-anchor">条款和条件</a>',
         'must_accept_terms'             => '在您能继续登录前，您必须赞成 Orbit <strong>隐私政策</strong> 和 <strong>条款和条件</strong>',
         'accept_modal_button_text'      => '是',
         'connecting_to_facebook'        => '连接到 Facebook...',
+        'connecting_to_google'        => '连接到 Google...',
     ),
 
     'catalogue' => array(
@@ -217,9 +221,11 @@ return array(
     ),
 
     'coupon' => array(
+        'all_tenants'                      => '所有租户',
+        'all_cs'                           => '客户服务柜台',
         'tenant_based'                     => '基于租户',
         'mall_based'                       => '基于商城',
-        'tenant_redeem'                    => '店铺挽回',
+         'tenant_redeem'                   => '在哪里兑换',
         'coupon_value'                     => '优惠券余额',
         'use_coupon'                       => '使优惠券',
         'enter_tenant_verification_number' => '请收入店铺验证码',
@@ -348,9 +354,9 @@ return array(
         'lucky_draw_got_info_3'     => '抽奖号码。祝您好运！',
         'lucky_draw_got_info_4'     => '这份清单显示',
         'lucky_draw_got_info_5'     => '每页抽奖号码。',
-        'save_numbers'              => '保存号码',
+        'save_numbers'              => '节省数字',
         'to_save_the_numbers'       => '想保存号码如同形象在您的手机上请点击',
-        'save_numbers'              => '保存号码',
+        'save_numbers'              => '节省数字',
         'lucky_draw_info'           => '抽奖信息',
         'page'                      => '页',
         'of'                        => '的',
@@ -364,6 +370,22 @@ return array(
         'lucky_draw_total_info_5'   => '抽奖号码。它通过高排序，以最低的数字。',
         'lucky_draw_total_info_6'   => '您下载马上自动开始，如不下载，请点击下面按键。',
         'download_image'            => '下载图片',
+        'description'               => '描述',
+        'period'                    => '期间',
+        'draw_date'                 => '抽奖日期',
+        'my_lucky_draw_number'      => '我的幸运大抽奖号码',
+        'no_lucky_draw_number_1'    => '让您的抽奖号码吧！',
+        'no_lucky_draw_number_2'    => '请就如何参与客户服务',
+        'see_prizes'                => '见奖品',
+        'see_prizes_and_winner'     => '见奖品和获奖者',
+        'prizes'                    => '奖品',
+        'winners_and_prizes'        => '获奖者及奖品',
+        'default_announcement_winner_title' => '恭喜所有获奖者钟爱',
+        'information'               => '信息',
+        'winning_numbers'           => '中奖号码',
+        'prizes_and_winners'        => '奖品和获奖者',
+        'lucky_draw_prizes'         => '幸运抽奖',
+        'no_prize'                  => '该奖项即将到来',
     ),
 
     'tour' => array(

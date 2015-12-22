@@ -41,14 +41,14 @@
     <div class="col-xs-12 text-center">
         @for ($i=1; $i<=$total_image; $i++)
         <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
-            <a href="{{ URL::route('ci-luckydrawnumber-download') }}?mode=download&page={{ $i }}" class="btn btn-info" id="save">{{ Lang::get('mobileci.lucky_draw.download_image') }} #{{ $i }}</a>
+            <a href="{{ URL::route('ci-luckydrawnumber-download') }}&mode=download&page={{ $i }}&id={{ $lucky_draw_id }}" class="btn btn-info" id="save">{{ Lang::get('mobileci.lucky_draw.download_image') }} #{{ $i }}</a>
         </div>
         @endfor
     </div>
 </div>
 
 @if ($total_number <= 160)
-<script>window.location.href = '{{ URL::route("ci-luckydrawnumber-download") }}?mode=download&amp;page=1'</script>
+<script>window.location.href = '{{ URL::route("ci-luckydrawnumber-download") }}&mode=download&page=1&id={{ $lucky_draw_id }}'</script>
 @endif
 
 @stop

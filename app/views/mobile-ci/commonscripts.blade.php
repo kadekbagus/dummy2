@@ -30,36 +30,40 @@
                 <h4 class="modal-title">{{ Lang::get('mobileci.modals.membership_title') }}</h4>
             </div>
             <div class="modal-body">
-                @if (! empty($user->membership_number))
-                <div class="member-card">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/membership_card.png') }}">
-                    <h2>
-                        <span>
-                            <strong>
-                                {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
-                            </strong>
-                            <span class='spacery'></span>
-                            <br>
-                            <span class='spacery'></span>
-                            <strong>
-                                {{ $user->membership_number }}
-                            </strong>
-                        </span>
-                    </h2>
-                </div>
-                @else
-                <div class="no-member-card text-center">
-                    <h3><strong><i>{{ Lang::get('mobileci.modals.membership_notfound') }}</i></strong></h3>
-                    <h4><strong>{{ Lang::get('mobileci.modals.membership_want_member') }}</strong></h4>
-                    <p>{{ Lang::get('mobileci.modals.membership_great_deal') }}</p>
-                    <p><i>{{ Lang::get('mobileci.modals.membership_contact_our') }}</i></p>
-                    <br>
-                    <p><small>Lippo Mall Management</small></p>
-                </div>
+                @if (! empty($user))
+                    @if (! empty($user->membershipNumbers->first()) && ($user->membershipNumbers[0]->status === 'active'))
+                    <div class="member-card">
+                        @if (empty($user->membershipNumbers[0]->membership->media->first()))
+                        <img class="img-responsive membership-card" src="{{ asset('mobile-ci/images/membership_card_default.png') }}">
+                        @else
+                        <img class="img-responsive membership-card" src="{{ asset($user->membershipNumbers[0]->membership->media[0]->path) }}">
+                        @endif
+                        <h2>
+                            <span class="membership-number">
+                                <strong>
+                                    {{ (mb_strlen($user->user_firstname . ' ' . $user->user_lastname) >= 20) ? substr($user->user_firstname . ' ' . $user->user_lastname, 0, 20) : $user->user_firstname . ' ' . $user->user_lastname }}
+                                </strong>
+                                <span class='spacery'></span>
+                                <br>
+                                <span class='spacery'></span>
+                                <strong>
+                                    {{ $user->membership_number }}
+                                </strong>
+                            </span>
+                        </h2>
+                    </div>
+                    @else
+                    <div class="no-member-card text-center">
+                        <h3><strong><i>{{ Lang::get('mobileci.modals.membership_notfound') }}</i></strong></h3>
+                        <h4><strong>{{ Lang::get('mobileci.modals.membership_want_member') }}</strong></h4>
+                        <p>{{ Lang::get('mobileci.modals.membership_great_deal') }}</p>
+                        <p><i>{{ Lang::get('mobileci.modals.membership_contact_our') }}</i></p>
+                        <br>
+                    </div>
+                    @endif
                 @endif
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-info" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button>
             </div>
         </div>
     </div>
@@ -92,6 +96,7 @@
 </div>
 
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
+{{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
         var run = function () {
@@ -150,128 +155,103 @@
         $('#membership-card').click(function(){
             $('#membership-card-popup').modal();
         });
+        $('#dropdown-disable').click(function(){ event.stopPropagation(); });
         @endif
         $('#multi-language').click(function(){
             $('#multi-language-popup').modal();
         });
-    });
-
-    // pinch zoom using hammerjs
-    $(document).on('click', '.zoomer', function(){
-        function scaletime (scale, x, y) {
-            var transforms = [];
-            transforms.push('scale('+scale+')');
-            transforms.push('translate('+x+'px,'+y+'px)');
-            $('.featherlight-content img').css('transform', transforms.join(' '));
-        }
 
         function resetImage() {
+            $('.featherlight-image').css('margin', '0 auto');
             $('.featherlight-content').css('width', '100%');
-            $('.featherlight-content img').css('margin', '0 auto');
-            if($(window).height() < $(window).width()) {
-                $('.featherlight-content img').css({
-                    'height': '100%',
-                    'width': 'auto'
-                });
-            } else {
-                $('.featherlight-content img').css({
-                    'height': 'auto',
-                    'width': '100%' 
-                });
-            }
-        }
-
-        setTimeout(function(){
-            resetImage();
-            var currentmodal = $.featherlight.current();
-            
-            $("body").addClass("modal-open");
-            var el = $('.featherlight-content').get(0);
-
-            var mc = new Hammer.Manager(el);
-            var pinch = new Hammer.Pinch();
-            var pan = new Hammer.Pan();
-            var tap = new Hammer.Tap();
-            var doubletap = new Hammer.Tap({event: 'doubletap', taps: 2 });
-
-            pinch.recognizeWith(pan);
-            doubletap.recognizeWith(tap);
-            mc.add([pinch, pan, tap, doubletap]);
-
-            var initialScale = 1;
-            var initialDeltaX = 0;
-            var initialDeltaY = 0;
-
-            var adjustScale = 1;
-            var adjustDeltaX = 0;
-            var adjustDeltaY = 0;
-
-            var currentScale = null;
-            var currentDeltaX = null;
-            var currentDeltaY = null;
-
-            mc.on("pinch pan tap swipe", function(ev) {
-                ev.preventDefault();
-                var transforms = [];
-
-                // Adjusting the current pinch/pan event properties using the previous ones set when they finished touching
-                currentScale = adjustScale * ev.scale;
-                currentDeltaX = adjustDeltaX + (ev.deltaX / currentScale);
-                currentDeltaY = adjustDeltaY + (ev.deltaY / currentScale);
-
-                if(currentScale > initialScale) {
-                    scaletime(currentScale, currentDeltaX, currentDeltaY);
-                }
-            });
-
-            mc.on("panend pinchend", function (ev) {
-                ev.preventDefault();
-                var transforms = [];
-                var afterScale = adjustScale * ev.scale;
-                if(afterScale > initialScale) { // Saving the final transforms for adjustment next time the user interacts.
-                    adjustScale = currentScale;
-                    adjustDeltaX = currentDeltaX;
-                    adjustDeltaY = currentDeltaY;
-                } else { // reset image to initial state if zoomed out smaller than initial scale
-                    adjustScale = initialScale;
-                    adjustDeltaX = initialDeltaX;
-                    adjustDeltaY = initialDeltaY;
-                    resetImage();
-                    scaletime(initialScale, initialDeltaX, initialDeltaY);
-                }
-            });
-
-            mc.on("tap doubletap", function(ev) {
-                currentmodal.close();
-                $("body").removeClass("modal-open");
-            });
-
-
-        }, 50);
-    });
-
-    $(document).on('click', '.featherlight-close', function(){
-        $("body").removeClass("modal-open");
-    });
-
-    $(window).on('resize', function(){
-        //reset the image transform
-        var transforms = [];
-        transforms.push('scale(1)');
-        transforms.push('translate(0px,0px)');
-        $('.featherlight-content img').css("transform", transforms.join(' '));
-        $('.featherlight-content').css('width', '100%');
-        $('.featherlight-content img').css('margin', '0 auto');
-        if($(window).height() < $(window).width()) {
-            $('.featherlight-image').css({
-                'height': '100%',
-                'width': 'auto'
-            });
-        } else {
             $('.featherlight-image').css({
                 'height': 'auto',
-                'width': '100%' 
+                'width': '100%'
             });
+            // this cause problems when zoomed
+            // if($(window).height() < $(window).width()) {
+            //     $('.featherlight-image').css({
+            //         'height': '100%',
+            //         'width': 'auto'
+            //     });
+            // } else {
+            //     $('.featherlight-image').css({
+            //         'height': 'auto',
+            //         'width': '100%'
+            //     });
+            // }
         }
+
+        function parseMatrix (_str) {
+            return _str.replace(/^matrix(3d)?\((.*)\)$/,'$2').split(/, /);
+        }
+
+        function getScaleDegrees (obj) {
+            var matrix = this.parseMatrix(this.getMatrix(obj)),
+                scale = 1;
+
+            if(matrix[0] !== 'none') {
+                var a = matrix[0],
+                    b = matrix[1],
+                    d = 10;
+                scale = Math.round( Math.sqrt( a*a + b*b ) * d ) / d;
+            }
+
+            return scale;
+        }
+        var zoomer, fl;
+        $(document).on('click', '.zoomer', function(){
+            zoomer = $(this);
+            setTimeout(function(){
+                resetImage();
+                fl = $.featherlight.current();
+                $("body").addClass("modal-open");
+                $(".featherlight-image").panzoom({
+                    minScale: 1,
+                    maxScale: 5,
+                    $zoomRange: $("input[type='range']"),
+                    contain: 'invert',
+                    onStart: function() {
+                        $('.featherlight-image').css('margin', '0 auto');
+                        $('.featherlight-content').css('width', '100%');
+                    },
+                    onChange: function(){
+                        var matrix = parseMatrix($(this).panzoom('getTransform'));
+                        var currentScale = matrix[3];
+                        if (currentScale <= 1) {
+                            resetImage();
+                        }
+                        $('.featherlight-image').css('margin', '0 auto');
+                        $('.featherlight-content').css('width', '100%');
+                    }
+                });
+                $(".featherlight-image").on('panzoomend', function(e, panzoom, matrix, changed) {
+                    if(! changed) {
+                        fl.close();
+                        $("body").removeClass("modal-open");
+                    }
+                });
+            }, 50);
+        });
+
+        $(window).on('resize', function() {
+            var transforms = [];
+            transforms.push('scale(1)');
+            transforms.push('translate(0px,0px)');
+            $('.featherlight-image').css("transform", transforms.join(' '));
+            $(".featherlight-image").panzoom('resetDimensions');
+            zoomer.featherlight();
+            resetImage();
+        });
+
+        $(document).on('click', '.featherlight-close', function(){
+            $("body").removeClass("modal-open");
+        });
+
+        $(document).on('click', '.featherlight-content, .featherlight-image', function(){
+            fl.close();
+            $("body").removeClass("modal-open");
+        });
+
     });
 </script>

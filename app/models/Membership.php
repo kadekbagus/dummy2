@@ -14,9 +14,9 @@ class Membership extends Eloquent
 
     protected $primaryKey = 'membership_id';
 
-    public function merchant()
+    public function mall()
     {
-        return $this->belongsTo('Merchant', 'merchant_id', 'merchant_id');
+        return $this->belongsTo('Mall', 'merchant_id', 'merchant_id');
     }
 
     public function creator()
@@ -27,6 +27,17 @@ class Membership extends Eloquent
     public function modifier()
     {
         return $this->belongsTo('User', 'modified_by', 'user_id');
+    }
+
+    /**
+     * Membership has many uploaded media.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function media()
+    {
+        return $this->hasMany('Media', 'object_id', 'membership_id')
+                    ->where('object_name', 'membership');
     }
 
 }

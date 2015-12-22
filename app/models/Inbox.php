@@ -1,4 +1,7 @@
 <?php
+
+use \Carbon\Carbon as Carbon;
+
 /**
  * Model for Inbox or alert.
  *
@@ -41,5 +44,89 @@ class Inbox extends Eloquent
     public function scopeAlert($query)
     {
         return $query->where('inbox_type', 'alert');
+    }
+
+    /**
+     * Get the inbox read status.
+     */
+    public function scopeIsNotRead($query)
+    {
+        return $query->where('is_read', 'N');
+    }
+
+    /**
+     * Insert issued lucky draw numbers into inbox table.
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @param int $userId - The user id
+     * @param array $response - Object
+     * @param int $retailerId - The retailer
+     * @return void
+     */
+    public function addToInbox($userId, $response, $retailerId, $type, $subject)
+    {
+        $user = User::find($userId);
+
+        if (empty($user)) {
+            throw new Exception ('Customer user ID not found.');
+        }
+
+        if (empty($subject)) {
+            $subject = 'Orbit Notification';
+        }
+
+        if (empty($type)) {
+            $type = 'alert';
+        }
+
+        $name = $user->getFullName();
+        $name = $name ? $name : $user->email;
+
+        $inbox = new Inbox();
+        $inbox->user_id = $userId;
+        $inbox->merchant_id = $retailerId;
+        $inbox->from_id = 0;
+        $inbox->from_name = 'Orbit';
+        $inbox->subject = $subject;
+        $inbox->content = '';
+        $inbox->inbox_type = $type;
+        $inbox->status = 'active';
+        $inbox->is_read = 'N';
+        $inbox->save();
+
+        $retailer = Mall::where('merchant_id', $retailerId)->first();
+
+        $dateIssued = Carbon::now($retailer->timezone->timezone_name);
+
+        $listItem = null;
+        switch ($type) {
+            case 'lucky_draw_issuance':
+                $listItem = $response->records;
+                break;
+
+            case 'coupon_issuance':
+                $listItem = $response->coupon_names;
+                break;
+            
+            default:
+                break;
+        }
+
+        $data = [
+            'fullName'              => $name,
+            'subject'               => $subject,
+            'inbox'                 => $inbox,
+            'item'                  => $response,
+            'listItem'              => $listItem,
+            'mallName'              => $retailer->name,
+            'dateIssued'            => $dateIssued,
+            'user'                  => $user
+        ];
+
+        $template = View::make('mobile-ci.mall-push-notification-content', $data);
+        $template = $template->render();
+
+        $inbox->content = $template;
+        $inbox->save();
     }
 }

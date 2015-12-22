@@ -351,6 +351,7 @@ class MallAPIController extends ControllerAPI
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
+     * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -689,6 +690,16 @@ class MallAPIController extends ControllerAPI
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($malls) {
                 $with = (array) $with;
+
+                if (in_array('settings', $with)) {
+                    $malls->addSelect('media.path as mall_image');
+                    $malls->leftJoin('media', function($join) {
+                        $join->on('media.object_id', '=', 'merchants.merchant_id')
+                            ->where('media.media_name_id', '=', 'retailer_background')
+                            ->where('media.media_name_long', '=', 'retailer_background_orig')
+                            ->where('media.object_name', '=', 'mall');
+                    });
+                }
 
                 // Make sure the with_count also in array format
                 $withCount = array();

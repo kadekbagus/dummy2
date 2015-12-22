@@ -29,9 +29,17 @@ Route::group(
 		/**
 		 * Poll new alert
 		 */
-		Route::post('/api/v1/alert/poll', function()
+		Route::get('/api/v1/inbox/unread-count', function()
 		{
 		    return InboxAPIController::create()->getPollAlert();
+		});
+
+		/**
+		 * Search inbox
+		 */
+		Route::get('/api/v1/inbox/list', function()
+		{
+		    return InboxAPIController::create()->getSearchInbox();
 		});
 	}
 );
@@ -39,10 +47,19 @@ Route::group(
 /**
  * Read / flag the alert as read
  */
-Route::post('/api/v1/alert/read', function()
+Route::post('/api/v1/inbox/read', function()
 {
     return InboxAPIController::create()->postReadAlert();
 });
+
+/**
+ * Delete the alert
+ */
+Route::post('/api/v1/inbox/delete', function()
+{
+    return InboxAPIController::create()->postDeleteAlert();
+});
+
 
 /**
  * Get server time
