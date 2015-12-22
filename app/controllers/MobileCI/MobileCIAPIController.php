@@ -67,11 +67,12 @@ use \News;
 use \Object;
 use \App;
 use \Media;
-use \OAuth;
+use Artdarek\OAuth\Facade\OAuth;
 
 class MobileCIAPIController extends ControllerAPI
 {
     const APPLICATION_ID = 1;
+    const PAYLOAD_KEY = '--orbit-mall--';
     protected $session = null;
 
     /**
@@ -111,6 +112,8 @@ class MobileCIAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $payloadFromReg = $this->validateRegistrationData($email);
+
             $retailer = $this->getRetailerInfo();
 
             $this->beginTransaction();
@@ -149,6 +152,10 @@ class MobileCIAPIController extends ControllerAPI
             $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
 
             if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
+                if (empty($payload)) {
+                    $payload = $payloadFromReg;
+                }
+
                 return $this->redirectToCloud($email, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
                 return $this->loginStage2($user, $retailer);
@@ -488,7 +495,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
-       
+
 
         $googlePlusUrl = URL::route('mobile-ci.social_google_callback');
 
@@ -680,18 +687,18 @@ class MobileCIAPIController extends ControllerAPI
 
         $recognized = \Input::get('recognized', 'none');
         $code = \Input::get('code', NULL);
-        
-        
+
+
         $googleService = OAuth::consumer( 'Google' );
-        
+
         if ( !empty( $code ) ) {
             try {
 
                 Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
                 $token = $googleService->requestAccessToken( $code );
-                
+
                 $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
-                
+
                 $userEmail = isset($user['email']) ? $user['email'] : '';
                 $firstName = isset($user['given_name']) ? $user['given_name'] : '';
                 $lastName = isset($user['family_name']) ? $user['family_name'] : '';
@@ -715,7 +722,7 @@ class MobileCIAPIController extends ControllerAPI
 
                 $orbit_origin = \Input::get('orbit_origin', 'google');
                 $this->prepareSession();
-                
+
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
                 if (empty($userEmail)) {
@@ -798,7 +805,7 @@ class MobileCIAPIController extends ControllerAPI
             'recognized' => $recognized
         ];
 
-        
+
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
@@ -2311,21 +2318,6 @@ class MobileCIAPIController extends ControllerAPI
             $languages = $this->getListLanguages($retailer);
 
             if (empty($luckydraw)) {
-                // return View::make('mobile-ci.luckydraw', [
-                //                 'page_title'    => 'LUCKY DRAW',
-                //                 'user'          => $user,
-                //                 'retailer'      => $retailer,
-                //                 'luckydraw'     => null,
-                //                 'numbers'       => [],
-                //                 'total_number'  => null,
-                //                 'prev_url'      => null,
-                //                 'next_url'      => null,
-                //                 'total_pages'   => null,
-                //                 'current_page'  => null,
-                //                 'per_page'      => null,
-                //                 'servertime'    => null,
-                // ]);
-
                 return View::make('mobile-ci.404', [
                                 'page_title'    => Lang::get('mobileci.page_title.not_found'),
                                 'user'          => $user,
@@ -2347,6 +2339,8 @@ class MobileCIAPIController extends ControllerAPI
                 $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+
+                $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
 
                 if (!empty($luckyDrawTranslation)) {
                     foreach (['lucky_draw_name', 'description'] as $field) {
@@ -2436,6 +2430,10 @@ class MobileCIAPIController extends ControllerAPI
                         for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
                             $paginationPage[] = $x;
                         }
+                    }
+                } else {
+                    for ($x = 1; $x <= $totalPages; $x++) {
+                        $paginationPage[] = $x;
                     }
                 }
             }
@@ -2537,6 +2535,8 @@ class MobileCIAPIController extends ControllerAPI
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
 
+                $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
+
                 if (!empty($luckyDrawTranslation)) {
                     foreach (['lucky_draw_name', 'description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
@@ -2621,7 +2621,7 @@ class MobileCIAPIController extends ControllerAPI
                 $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.prizes');
             } elseif ($mallTime >= $luckydraw->draw_date && $mallTime < $luckydraw->grace_period_date) {
                 $ongoing = FALSE;
-                $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.winners_and_prizes');
+                $pagetitle = Lang::get('mobileci.lucky_draw.prizes_and_winners');
             }
 
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Winning Numbers & Prizes');
@@ -4567,6 +4567,7 @@ class MobileCIAPIController extends ControllerAPI
             'full_data' => 'no',
             'check_only' => 'no',
         ];
+
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
         $this->response->data = [
@@ -4643,9 +4644,10 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $payload = OrbitInput::get('payload');
+
             if (! empty($payload)) {
                 // Decrypt the payload
-                $key = md5('--orbit-mall--');
+                $key = md5(static::PAYLOAD_KEY);
                 $payload = (new Encrypter($key))->decrypt($payload);
 
                 // The data is in url encoded
@@ -4755,5 +4757,74 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return TRUE;
+    }
+
+    /**
+     * Validate the registration data.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param string $email Consumer's email
+     * @return array|string
+     * @throws Exception
+     */
+    protected function validateRegistrationData($email)
+    {
+        // Only do the validation if there is 'mode=registration' on post body.
+        $mode = OrbitInput::post('mode');
+        if ($mode !== 'registration') {
+            return '';
+        }
+
+        $firstname = OrbitInput::post('first_name');
+        $lastname = OrbitInput::post('last_name');
+        $gender = OrbitInput::post('gender');
+        $birthdate = OrbitInput::post('birth_date');
+
+        $input = array(
+            'first_name' => $firstname,
+            'last_name'  => $lastname,
+            'gender'     => $gender,
+            'birth_date' => $birthdate,
+        );
+
+        $validator = Validator::make(
+            array(
+                'first_name' => $firstname,
+                'last_name'  => $lastname,
+                'gender'     => $gender,
+                'birth_date' => $birthdate,
+            ),
+            array(
+                'first_name' => 'required',
+                'last_name'  => 'required',
+                'gender'     => 'required|in:m,f',
+                'birth_date' => 'required|date_format:d-m-Y',
+            ),
+            array(
+                'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date')
+            )
+        );
+
+        if ($validator->fails()) {
+            $errorMessage = $validator->messages()->first();
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
+
+        // Transform the d-m-y to Y-m-d for storing
+        list($d, $m, $y) = explode('-', $birthdate);
+
+        $payloadData = [
+            'fname'         => $firstname,
+            'lname'         => $lastname,
+            'gender'        => $gender,
+            'birthdate'     => sprintf('%s-%s-%s', $y, $m, $d),
+            'login_from'    => 'form',
+            'email'         => $email
+        ];
+
+        $key = md5(static::PAYLOAD_KEY);
+        $data = http_build_query($payloadData);
+
+        return (new Encrypter($key))->encrypt($data);
     }
 }

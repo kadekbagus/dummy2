@@ -2,33 +2,12 @@
 
 @section('ext_style')
     <style>
-        /*TODO move css to less file*/
-        /* Sticky footer styles
--------------------------------------------------- */
-        html {
-            position: relative;
-            min-height: 100%;
-        }
-
-        .header-signin {
-            background-color: #fcfcfc;
-            height: 50px;
-        }
-
-        .header-signin .header-logo {
-            width: 200px;
-            padding: 8px 0;
-        }
-
-        .close.close-form {
-            color: #000;
-            font-size: 22px;
-            padding-bottom: 10px;
-            opacity: 1;
-        }
-
         .content-signin {
-            background: url('{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_tenants.jpg') }}');
+        @if(!empty($bg) && !empty($bg->path))
+            background: url('{{ asset($bg->path) }}');
+        @else
+            background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
+        @endif
             background-size: 100% 100%;
             background-repeat: no-repeat;
             background-position: center;
@@ -36,97 +15,6 @@
             height: 478px;
             display: table;
             width: 100%;
-        }
-
-        .content-signin .social-media-wraper {
-            display: table-cell;
-            vertical-align: middle;
-        }
-
-        .content-signin .social-media-container {
-            background-color: rgba(252, 252, 252, 0.8);
-            padding: 30px 0;
-            border-radius: 0.6em;
-            width: 89%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .footer-form-modal .social-media-container .col-xs-2,
-        .footer-form-modal .social-media-container .col-xs-8 {
-            padding-left: 0;
-            padding-right: 0;
-        }
-
-        .content-signin .social-media-container .icon-button {
-            opacity: 1;
-            width: 68px;
-            height: 70px;
-        }
-
-        .footer-form-modal .social-media-container .icon-button.facebook,
-        .footer-form-modal .social-media-container .icon-button.google{
-            opacity: 1;
-            width: 35px;
-            padding-left: 0;
-            padding-right: 0;
-        }
-
-        .content-signin .social-media-container .icon-button.facebook,
-        .footer-form-modal .social-media-container .icon-button.facebook{
-            background-color: #3B5999 ;
-        }
-
-        .content-signin .social-media-container .icon-button.google,
-        .footer-form-modal .social-media-container .icon-button.google {
-            background-color: #DD4B39;
-        }
-
-        .content-signin .social-media-container .icon-button.form,
-        .footer-form-modal .social-media-container .icon-button.form {
-            background-color: #0AA5D5;
-        }
-
-        .footer {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            margin: 0;
-            /* Set the fixed height of the footer here */
-            height: 40px;
-            background-color: #fcfcfc;
-        }
-
-        .footer .container-footer {
-            margin-top: 12px;
-            padding: 0 8px;
-        }
-
-        .footer .version-and-privacy {
-            padding: 0;
-            font-size: .9rem
-        }
-
-        .footer .powered-by {
-            padding: 0;
-        }
-        .footer .powered-by span {
-            font-size: 7px;
-            font-weight: bold;
-        }
-
-        .footer .container-footer .img-responsive.image-footer {
-            width: 55px;
-            display: inline;
-        }
-
-        #formModal .modal-dialog {
-            margin-top: 50px;
-        }
-
-        #formModal .modal-content {
-            background-color: rgba(255, 255, 255, 0.8);
         }
 
         .modal-backdrop {
@@ -145,15 +33,7 @@
             display: none;
         }
 
-        @if(!empty($bg))
-            @if(!empty($bg->path))
-                body.bg {
-                    background: url('{{ asset($bg->path) }}');
-                    background-size: cover;
-                    background-repeat: no-repeat;
-                }
-            @endif
-        @endif
+        
     </style>
     <script type="text/javascript">
     </script>
@@ -211,7 +91,7 @@
                     </div>
                     <div class="form-group">
                         <button style="background-color:#3B5998;" type="submit"
-                                class="btn btn-info btn-block submit-btn" id="btn-login-form-google"><i 
+                                class="btn btn-info btn-block submit-btn" id="btn-login-form-google"><i
                                 class="fa fa-google-plus"></i> {{{ trans('mobileci.signin.login_via_google') }}}
                         </button>
                     </div>
@@ -573,11 +453,6 @@
             var em;
             var user_em = '{{ strtolower($user_email) }}';
 
-            function isValidEmailAddress(emailAddress) {
-                var pattern = new
-                        RegExp(/^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i);
-                return pattern.test(emailAddress);
-            };
             if (user_em != '') {
                 $('#signedIn').show();
                 $('#signIn').hide();

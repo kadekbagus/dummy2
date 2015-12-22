@@ -337,6 +337,9 @@ return array(
             'translation' => array(
                 'key' => 'An invalid key for translation was specified.',
                 'value' => 'An invalid value for translation was specified.',
+            ),
+            'date' => array(
+                'dmy_date' => 'The :attribute does not match the format dd-mm-yyyy'
             )
         ),
         'actionlist' => array(

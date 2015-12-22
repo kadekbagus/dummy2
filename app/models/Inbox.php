@@ -76,7 +76,7 @@ class Inbox extends Eloquent
         }
 
         $name = $user->getFullName();
-        $name = $name ? $name : $user->user_email;
+        $name = ! empty(trim($name)) ? $name : $user->user_email;
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
@@ -95,7 +95,7 @@ class Inbox extends Eloquent
         $listItem = null;
         switch ($type) {
             case 'activation':
-                $inbox->subject = "Activation";
+                $inbox->subject = "Account Activation";
                 break;
 
             case 'lucky_draw_issuance':
@@ -107,7 +107,7 @@ class Inbox extends Eloquent
                 $inbox->subject = "You've got coupon(s)";
                 $listItem = $response;
                 break;
-            
+
             default:
                 break;
         }
