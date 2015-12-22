@@ -2310,21 +2310,6 @@ class MobileCIAPIController extends ControllerAPI
             $languages = $this->getListLanguages($retailer);
 
             if (empty($luckydraw)) {
-                // return View::make('mobile-ci.luckydraw', [
-                //                 'page_title'    => 'LUCKY DRAW',
-                //                 'user'          => $user,
-                //                 'retailer'      => $retailer,
-                //                 'luckydraw'     => null,
-                //                 'numbers'       => [],
-                //                 'total_number'  => null,
-                //                 'prev_url'      => null,
-                //                 'next_url'      => null,
-                //                 'total_pages'   => null,
-                //                 'current_page'  => null,
-                //                 'per_page'      => null,
-                //                 'servertime'    => null,
-                // ]);
-
                 return View::make('mobile-ci.404', [
                                 'page_title'    => Lang::get('mobileci.page_title.not_found'),
                                 'user'          => $user,
@@ -2346,6 +2331,8 @@ class MobileCIAPIController extends ControllerAPI
                 $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+
+                $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
 
                 if (!empty($luckyDrawTranslation)) {
                     foreach (['lucky_draw_name', 'description'] as $field) {
@@ -2435,6 +2422,10 @@ class MobileCIAPIController extends ControllerAPI
                         for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
                             $paginationPage[] = $x;
                         }
+                    }
+                } else {
+                    for ($x = 1; $x <= $totalPages; $x++) {
+                        $paginationPage[] = $x;
                     }
                 }
             }
@@ -2620,7 +2611,7 @@ class MobileCIAPIController extends ControllerAPI
                 $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.prizes');
             } elseif ($mallTime >= $luckydraw->draw_date && $mallTime < $luckydraw->grace_period_date) {
                 $ongoing = FALSE;
-                $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.winners_and_prizes');
+                $pagetitle = Lang::get('mobileci.lucky_draw.prizes_and_winners');
             }
 
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Winning Numbers & Prizes');
@@ -2978,7 +2969,7 @@ class MobileCIAPIController extends ControllerAPI
                             if ($category->category_name !== 'Customer Service') {
                                 $cso_flag = 1;
                             } else {
-                                $cso_exists = TRUE;
+                                $cso_exists = true;
                             }
                         }
                         if($cso_flag === 1) {
@@ -3003,18 +2994,25 @@ class MobileCIAPIController extends ControllerAPI
             $cs_reedem = false;
 
             // Check exist customer verification number per mall
-            $employeeVerificationNumbers = \UserVerificationNumber::where('merchant_id', $retailer->merchant_id)->count();
-            if ($employeeVerificationNumbers > 0 || $coupons->is_all_employee === 'Y') {
-                $cs_reedem = true;
-            }
+            $employeeVerNumbersActive = \UserVerificationNumber::
+                        join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
+                        ->where('users.status', 'active')
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->count('users.user_id');
 
-            // check if coupon linked to mall cs
-            if ($coupons->is_all_employee === 'N') {
-                $couponcs = Coupon::select(DB::raw("count('promotion_employee.promotion_id') as totalcs"))
-                    ->excludeDeleted('promotions')
-                    ->leftJoin('promotion_employee','promotion_employee.promotion_id','=','promotions.promotion_id')
-                    ->where('promotions.promotion_id','=', $coupons->promotion_id)->first();
-                if ($couponcs->totalcs > 0) {
+            if ($coupons->is_all_employee === 'Y') {
+                if ($employeeVerNumbersActive > 0) {
+                    $cs_reedem = true;
+                }
+            } elseif ($coupons->is_all_employee === 'N') {
+                // Check exist link to cs, and cs must have active status
+                $promotionEmployee = \CouponEmployee::
+                                join('users', 'users.user_id', '=', 'promotion_employee.user_id')
+                                ->where('users.status', 'active')
+                                ->where('promotion_employee.promotion_id', $coupons->promotion_id)
+                                ->count('promotion_employee_id');
+
+                if ($promotionEmployee > 0) {
                     $cs_reedem = true;
                 }
             }
@@ -3619,6 +3617,178 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityNameLong('View News Detail Failed')
                 ->setObject(null)
                 ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Message list page
+     *
+     * @param integer    `id`        (required) - The inbox ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getNotificationsView()
+    {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $languages = $this->getListLanguages($retailer);
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_notification_list')
+                ->setActivityNameLong('View Notification List')
+                ->setObject(null)
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            $view_data = array(
+                'page_title' => Lang::get('mobileci.page_title.my_messages'),
+                'retailer' => $retailer,
+                'active_user' => ($user->status === 'active'),
+                'languages' => $languages,
+                'user_email' => $user->user_email,
+                'user' => $user
+            );
+            return View::make('mobile-ci.mall-notifications-list', $view_data);
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Notification List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_notification_list')
+                ->setActivityNameLong('View Notification List')
+                ->setObject(null)
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Message detail page
+     *
+     * @param integer    `id`        (required) - The inbox ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getNotificationDetailView()
+    {
+        $user = null;
+        $inbox = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $languages = $this->getListLanguages($retailer);
+
+            $inbox_id = OrbitInput::get('id');
+
+            $inbox = Inbox::excludeDeleted()
+                        ->where('user_id', $user->user_id)
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->where('inbox_id', $inbox_id)
+                        ->first();
+
+            if (! is_object($inbox)) {
+                return View::make('mobile-ci.404', [
+                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                                'user'          => $user,
+                                'languages'     => $languages,
+                                'retailer'      => $retailer
+                ]);
+            }
+            
+            $inbox->is_read = 'Y';
+            $inbox->save();
+
+
+            
+            switch ($inbox->inbox_type) {
+                case 'activation':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Activation Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Activation')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+
+                case 'lucky_draw_issuance':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Lucky Draw Number Issuance')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+
+                case 'coupon_issuance':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Coupon Issuance Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Coupon Issuance')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+                
+                default:
+                    break;
+            }
+
+            $view_data = array(
+                'page_title' => $inbox->subject,
+                'retailer' => $retailer,
+                'active_user' => ($user->status === 'active'),
+                'languages' => $languages,
+                'user_email' => $user->user_email,
+                'user' => $user,
+                'inbox' => $inbox
+            );
+            return View::make('mobile-ci.mall-notification-detail', $view_data);
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Notification Detail');
+            $activityPage->setUser($user)
+                ->setActivityName('read_notification')
+                ->setActivityNameLong('Read Notification')
+                ->setObject(null)
+                ->setModuleName('Inbox')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -4307,16 +4477,7 @@ class MobileCIAPIController extends ControllerAPI
                 $retailerId = Config::get('orbit.shop.id');
 
                 $inbox = new Inbox();
-                $inbox->user_id = $user->user_id;
-                $inbox->merchant_id = $retailerId;
-                $inbox->from_id = 0;
-                $inbox->from_name = 'Orbit';
-                $inbox->subject = $subject;
-                $inbox->content = '';
-                $inbox->inbox_type = 'alert';
-                $inbox->status = 'active';
-                $inbox->is_read = 'N';
-                $inbox->save();
+                $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailerId, 'coupon_issuance');
 
                 foreach ($objectCoupons as $object) {
                     $activity = Activity::mobileci()
@@ -4332,22 +4493,6 @@ class MobileCIAPIController extends ControllerAPI
                             ->responseOK()
                             ->save();
                 }
-
-                $retailer = Mall::where('merchant_id', $retailerId)->first();
-                $data = [
-                    'fullName'          => $name,
-                    'subject'           => 'Coupon',
-                    'inbox'             => $inbox,
-                    'retailerName'      => $retailer->name,
-                    'numberOfCoupon'    => count($issuedCoupons),
-                    'coupons'           => $issuedCouponNames,
-                    'mallName'          => $retailer->name
-                ];
-
-                $template = View::make('mobile-ci.push-notification-coupon', $data);
-
-                $inbox->content = $template;
-                $inbox->save();
             }
 
             $this->response->data = $user;
