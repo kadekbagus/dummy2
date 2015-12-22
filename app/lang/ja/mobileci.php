@@ -35,7 +35,7 @@ return array(
         'membership'         => '会員',
         'orbit_tour'         => 'ORBIT ツアー',
         'lucky_draws'        => '抽選',
-        'my_messages'       => 'ja:MY MESSAGES',
+        'my_messages'        => '私のメッセージ',
     ),
 
     'widgets' => array(
@@ -386,6 +386,14 @@ return array(
         'prizes_and_winners'        => '賞と受賞者',
         'lucky_draw_prizes'         => '幸運な抽選賞',
         'no_prize'                  => '賞金はすぐに来ています',
+    ),
+    
+    'notification' => array(
+        'delete_mode'               => '删除模式',
+        'view_lucky_draw_btn'       => '查看幸运大抽奖',
+        'no_notif'                  => '你有没有消息',
+        'load_more_btn'             => '载入更多',
+        'view_coupons_btn'          => 'あなたのクーポンを表示',
     ),
 
     'tour' => array(
