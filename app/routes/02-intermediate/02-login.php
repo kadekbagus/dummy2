@@ -61,5 +61,5 @@ Route::post('/app/v1/service-agreement/update', 'IntermediateLoginController@Log
  * Check Email Sign Up
  */
 Route::group(['before' => 'orbit-settings'], function() {
-    Route::post('/app/v1/customer/checkemailsignup', 'IntermediateLoginController@checkEmailSignUp');
+    Route::post('/app/v1/customer/basic-data', 'IntermediateLoginController@checkEmailSignUp');
 });
