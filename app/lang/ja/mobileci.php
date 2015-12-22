@@ -146,11 +146,13 @@ return array(
         'start_button_mall' => 'モールを入力してください',
         'register'          => '登録',
         'login_via_facebook'        => 'Facebook経由でログイン',
+        'login_via_google'        => 'グーグル経由でログイン',
         'or_between_email_and_fb'   => 'または',
         'agree_to_terms'            => '私はOrbit<a href="%s" id="orbit-privacy-policy-anchor">プライバシー規約</a>および<a href="%s" id="orbit-tos-anchor">契約条件</a>に同意する',
         'must_accept_terms'         => 'ログインすることを進むことができる前にOrbit<a href="%s" id="orbit-privacy-policy-anchor">プライバシー規約</a>および<a href="%s" id="orbit-tos-anchor">契約条件</a>に同意しなければならない',
         'accept_modal_button_text'  => 'はい',
         'connecting_to_facebook'    => 'Facebookへの接続...',
+        'connecting_to_google'    => 'Googleへの接続...',
     ),
 
     'catalogue' => array(
@@ -375,7 +377,7 @@ return array(
         'no_lucky_draw_number_1'    => '今あなたの抽選番号を入手！',
         'no_lucky_draw_number_2'    => '参加方法の顧客サービスに確認してください',
         'see_prizes'                => '賞を参照してください。',
-        'see_prizes_and_winner'     => '賞と受賞者を参照してください。',
+        'see_prizes_and_winner'     => '賞と受賞者を参照してください',
         'prizes'                    => '賞',
         'winners_and_prizes'        => '勝者と賞',
         'default_announcement_winner_title' => 'すべての最愛の受賞者を祝福',
