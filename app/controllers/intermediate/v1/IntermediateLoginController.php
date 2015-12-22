@@ -1110,7 +1110,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 $customer->userdetail->gender = 'f';
             }
 
-            if ($from === 'facebook' && $customer->status === 'pending') {
+            if (($from === 'google' || $from === 'facebook') && $customer->status === 'pending') {
                 // Only set if the previous status is pending
                 $customer->status = 'active';   // make it active
             }
@@ -1167,6 +1167,18 @@ class IntermediateLoginController extends IntermediateBaseController
                     } else if ($from === 'form') {
                         $registration_activity->activity_name_long = 'Sign Up with email address';
                         $registration_activity->save();
+                    } else if ($from === 'google') {
+                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Google+)';
+                        $registration_activity->save();
+
+                        // @author Irianto Pratama <irianto@dominopos.com>
+                        // send email if user status active
+                        if ($customer->status === 'active') {
+                            // Send email process to the queue
+                            \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                                'user_id' => $customer->user_id
+                            ]);
+                        }
                     }
                 }
             }
@@ -1177,6 +1189,10 @@ class IntermediateLoginController extends IntermediateBaseController
             switch ($from) {
                 case 'facebook':
                     $activityNameLong = 'Sign In'; //Sign In via Facebook
+                    break;
+
+                case 'google':
+                    $activityNameLong = 'Sign In'; //Sign In via Google
                     break;
 
                 case 'form':

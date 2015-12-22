@@ -67,6 +67,7 @@ use \News;
 use \Object;
 use \App;
 use \Media;
+use \OAuth;
 
 class MobileCIAPIController extends ControllerAPI
 {
@@ -487,6 +488,9 @@ class MobileCIAPIController extends ControllerAPI
     {
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
+       
+
+        $googlePlusUrl = URL::route('mobile-ci.social_google_callback');
 
         if (\Input::get('payload', false) !== false) {
             // has payload, clear out prev cookies
@@ -521,6 +525,7 @@ class MobileCIAPIController extends ControllerAPI
         $internet_info = 'no';
         $viewData = [
             'orbitTime' => time(),
+            'googlePlusUrl' => $googlePlusUrl,
             'orbitOriginName' => 'orbit_origin',
             'orbitOriginValue' => 'default',
             'orbitToFacebookOriginValue' => 'redirect_to_facebook',
@@ -668,6 +673,79 @@ class MobileCIAPIController extends ControllerAPI
         return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
     }
 
+    public function getGoogleCallbackView()
+    {
+        $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
+        Config::set('orbit.session.availability.query_string', false);
+
+        $recognized = \Input::get('recognized', 'none');
+        $code = \Input::get('code', NULL);
+        
+        
+        $googleService = OAuth::consumer( 'Google' );
+        
+        if ( !empty( $code ) ) {
+            try {
+
+                Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
+                $token = $googleService->requestAccessToken( $code );
+                
+                $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
+                
+                $userEmail = isset($user['email']) ? $user['email'] : '';
+                $firstName = isset($user['given_name']) ? $user['given_name'] : '';
+                $lastName = isset($user['family_name']) ? $user['family_name'] : '';
+                $gender = isset($user['gender']) ? $user['gender'] : '';
+                $socialid = isset($user['id']) ? $user['id'] : '';
+                $socialurl = isset($user['link']) ? $user['link'] : '';
+
+                $data = [
+                    'email' => $userEmail,
+                    'fname' => $firstName,
+                    'lname' => $lastName,
+                    'gender' => $gender,
+                    'login_from'  => 'google',
+                    'social_id'  => $socialid,
+                    'social_url'  => $socialurl,
+                    'mac' => \Input::get('mac_address', ''),
+                    'ip' => $_SERVER['REMOTE_ADDR'],
+                    'is_captive' => 'yes',
+                    'recognized' => $recognized
+                ];
+
+                $orbit_origin = \Input::get('orbit_origin', 'google');
+                $this->prepareSession();
+                
+                // There is a chance that user not 'grant' his email while approving our app
+                // so we double check it here
+                if (empty($userEmail)) {
+                    return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.']);
+                }
+
+                $key = $this->getPayloadEncryptionKey();
+                $payload = (new Encrypter($key))->encrypt(http_build_query($data));
+                $query = ['payload' => $payload, 'email' => $userEmail, 'from_captive' => 'yes', 'auto_login' => 'yes'];
+
+                // todo can we not do this directly
+                return Redirect::route('mobile-ci.signin', $query);
+
+            } catch (Exception $e) {
+                $errorMessage = 'Error: ' . $e->getMessage();
+                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+            }
+
+        } else {
+            try {
+                // get googleService authorization
+                $url = $googleService->getAuthorizationUri();
+                return Redirect::to( (string)$url );
+            } catch (Exception $e) {
+                $errorMessage = 'Error: ' . $e->getMessage();
+                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+            }
+        }
+    }
+
     public function getSocialLoginCallbackView()
     {
         $recognized = \Input::get('recognized', 'none');
@@ -682,7 +760,10 @@ class MobileCIAPIController extends ControllerAPI
             return $this->getFacebookError();
         }
 
+        $orbit_origin = \Input::get('orbit_origin', 'facebook');
         $this->prepareSession();
+
+
         $fb = new \Facebook\Facebook([
             'persistent_data_handler' => new \Orbit\FacebookSessionAdapter($this->session),
             'app_id' => Config::get('orbit.social_login.facebook.app_id'),
@@ -695,23 +776,29 @@ class MobileCIAPIController extends ControllerAPI
 
         $response = $fb->get('/me?fields=email,name,first_name,last_name,gender', $accessToken->getValue());
         $user = $response->getGraphUser();
-
+        
         $userEmail = isset($user['email']) ? $user['email'] : '';
         $firstName = isset($user['first_name']) ? $user['first_name'] : '';
         $lastName = isset($user['last_name']) ? $user['last_name'] : '';
         $gender = isset($user['gender']) ? $user['gender'] : '';
+        $socialid = isset($user['id']) ? $user['id'] : '';
+        $socialurl = 'https://www.facebook.com/' . $socialid;
+
         $data = [
             'email' => $userEmail,
             'fname' => $firstName,
             'lname' => $lastName,
             'gender' => $gender,
             'login_from'  => 'facebook',
+            'social_id'  => $socialid,
+            'social_url'  => $socialurl,
             'mac' => \Input::get('mac_address', ''),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'is_captive' => 'yes',
             'recognized' => $recognized
         ];
 
+        
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
@@ -4517,6 +4604,9 @@ class MobileCIAPIController extends ControllerAPI
             $email = OrbitInput::get('email');
             $from = OrbitInput::get('from');
 
+            $socialid = null;
+            $socialurl = null;
+
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
                 ->where('user_email', $email)
@@ -4562,6 +4652,8 @@ class MobileCIAPIController extends ControllerAPI
                 parse_str($payload, $data);
 
                 $from = isset($data['login_from']) ? $data['login_from'] : '';
+                $socialid = isset($data['social_id']) ? $data['social_id'] : '';
+                $socialurl = isset($data['social_url']) ? $data['social_url'] : '';
             }
 
             // @author Irianto Pratama <irianto@dominopos.com>
@@ -4598,6 +4690,9 @@ class MobileCIAPIController extends ControllerAPI
                 $acq = new \UserAcquisition();
                 $acq->user_id = $user->user_id;
                 $acq->acquirer_id = $retailer->merchant_id;
+                $acq->signup_via = $from;
+                $acq->social_id = $socialid;
+                $acq->social_url = $socialurl;
                 $acq->save();
                 $acq->forceBoxReloadUserData($forceReload);
                 // cannot use $user as $user has extra properties added and would fail
