@@ -411,6 +411,7 @@ class InboxAPIController extends ControllerAPI
             Event::fire('orbit.inbox.postdeletedalert.after.validation', array($this, $validator));
 
             $inbox = App::make('orbit.empty.alert');
+            $inbox->is_read = 'Y';
             $inbox->status = 'deleted';
             $inbox->save();
 
