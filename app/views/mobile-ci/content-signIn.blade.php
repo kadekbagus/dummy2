@@ -81,16 +81,16 @@
                             <input type="text" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                         </div>
                         <div class="form-group">
-                            <input type="text" class="form-control userName" value="" placeholder="First Name" name="firstname">
+                            <input type="text" class="form-control userName" value="" placeholder="First Name" name="first_name">
                         </div>
                         <div class="form-group">
-                            <input type="text" class="form-control" placeholder="Last Name" name="lastname">
+                            <input type="text" class="form-control" placeholder="Last Name" name="last_name">
                         </div>
                         <div class="form-group">
                             <input type="text" class="form-control" placeholder="Gender" name="gender">
                         </div>
                         <div class="form-group">
-                            <input type="text" class="form-control" placeholder="Date of Birth (dd/mm/yyyy)" name="birthdate">
+                            <input type="text" class="form-control" placeholder="Date of Birth (dd/mm/yyyy)" name="birth_date">
                         </div>
                         <div class="form-group">
                                 By clicking <strong>Sign up</strong> you confirm that you accept
@@ -126,10 +126,11 @@
     };
 
     var orbitSignUpForm = {};
+    orbitSignUpForm.isProcessing = false;
     orbitSignUpForm.userActive = false;
     orbitSignUpForm.dataCompleted = false;
     orbitSignUpForm.activeForm = 'signin';
-    orbitSignUpForm.formElements = ['#signupForm [name=firstname]', '#signupForm [name=lastname]', '#signupForm [name=gender]', '#signupForm [name=birthdate]'];
+    orbitSignUpForm.formElements = ['#signupForm [name=first_name]', '#signupForm [name=last_name]', '#signupForm [name=gender]', '#signupForm [name=birth_date]'];
 
     /**
      * Log in the user.
@@ -140,6 +141,13 @@
     orbitSignUpForm.doLogin = function()
     {
         var custEmail = $('#signinForm #email').val().trim();
+
+        // Flag the processing
+        if (orbitSignUpForm.isProcessing) {
+            return;
+        }
+        orbitSignUpForm.isProcessing = true;
+        orbitSignUpForm.disableEnableAllButton();
 
         // Check if this email already registered or not
         // We suppose to not let user login when they are not registered yet
@@ -154,6 +162,9 @@
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }}
                 }
             }).done(function (resp, status, xhr) {
+                orbitSignUpForm.isProcessing = false;
+                orbitSignUpForm.disableEnableAllButton();
+
                 if (resp.status === 'error') {
                     // do something
                     return;
@@ -182,6 +193,12 @@
                 }
 
                 window.location.replace(landing_url);
+            }).fail(function (data) {
+                orbitSignUpForm.isProcessing = false;
+
+                // Something bad happens
+                // @todo isplay this the error
+                orbitSignUpForm.disableEnableAllButton();
             });
         }
 
@@ -206,6 +223,13 @@
     {
         var custEmail = $('#signupForm #email').val().trim();
 
+        // Flag the processing
+        if (orbitSignUpForm.isProcessing) {
+            return;
+        }
+        orbitSignUpForm.isProcessing = true;
+        orbitSignUpForm.disableEnableAllButton();
+
         // Check if this email already registered or not
         // We suppose to not let user login when they are not registered yet
         // which is different from the old Orbit behavior
@@ -218,12 +242,15 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     mode: 'registration',
-                    firstname: $('#signupForm #firstname').val(),
-                    lastname: $('#signupForm #lastname').val(),
-                    gender: $('#signupForm #gender').val(),
-                    birthdate: $('#signupForm #lastname').val()
+                    first_name: $('#signupForm [name=first_name]').val(),
+                    last_name: $('#signupForm [name=last_name]').val(),
+                    gender: $('#signupForm [name=gender]').val(),
+                    birth_date: $('#signupForm [name=birth_date]').val()
                 }
             }).done(function (resp, status, xhr) {
+                orbitSignUpForm.isProcessing = false;
+                orbitSignUpForm.disableEnableAllButton();
+
                 if (resp.status === 'error') {
                     // do something
                     return;
@@ -254,18 +281,41 @@
                 }
 
                 window.location.replace(landing_url);
+            }).fail(function (data) {
+                orbitSignUpForm.isProcessing = false;
+
+                // Something bad happens
+                // @todo isplay this the error
+                orbitSignUpForm.disableEnableAllButton();
             });
         }
 
         orbitSignUpForm.checkCustomerEmail(custEmail,
             saveUser,
 
-            // Send back to sign up form for unknown email
+            // Send back to sign in form if it is known user
             function() {
                 $('#signinForm #email').val(custEmail);
-                orbitSignUpForm.switchForm('sign');
+                orbitSignUpForm.switchForm('signin');
             }
         );
+    }
+
+   /**
+     * Disable or enable the sign up and sign in button.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    orbitSignUpForm.disableEnableAllButton = function()
+    {
+        if (orbitSignUpForm.isProcessing) {
+            $('#btn-signin-form').val('Please wait...');
+            $('#btn-signup-form').val('Please wait...');
+        } else {
+            $('#btn-signin-form').val('Sign in');
+            $('#btn-signup-form').val('Sign up');
+        }
     }
 
     /**
@@ -346,10 +396,10 @@
      */
     orbitSignUpForm.enableDisableSignup = function()
     {
-        orbitSignUpForm.dataCompleted = $('#signupForm [name=firstname]').val() &&
-            $('#signupForm [name=lastname]').val() &&
+        orbitSignUpForm.dataCompleted = $('#signupForm [name=first_name]').val() &&
+            $('#signupForm [name=last_name]').val() &&
             $('#signupForm [name=gender]').val() &&
-            $('#signupForm [name=birthdate]').val();
+            $('#signupForm [name=birth_date]').val();
 
         if (orbitSignUpForm.dataCompleted) {
             $('#btn-signup-form').removeAttr('disabled');

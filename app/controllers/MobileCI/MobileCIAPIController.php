@@ -72,6 +72,7 @@ use Artdarek\OAuth\Facade\OAuth;
 class MobileCIAPIController extends ControllerAPI
 {
     const APPLICATION_ID = 1;
+    const PAYLOAD_KEY = '--orbit-mall--';
     protected $session = null;
 
     /**
@@ -111,6 +112,8 @@ class MobileCIAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $payloadFromReg = $this->validateRegistrationData($email);
+
             $retailer = $this->getRetailerInfo();
 
             $this->beginTransaction();
@@ -149,6 +152,10 @@ class MobileCIAPIController extends ControllerAPI
             $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
 
             if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
+                if (empty($payload)) {
+                    $payload = $payloadFromReg;
+                }
+
                 return $this->redirectToCloud($email, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
                 return $this->loginStage2($user, $retailer);
@@ -4405,6 +4412,7 @@ class MobileCIAPIController extends ControllerAPI
             'full_data' => 'no',
             'check_only' => 'no',
         ];
+
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
         $this->response->data = [
@@ -4478,9 +4486,10 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $payload = OrbitInput::get('payload');
+
             if (! empty($payload)) {
                 // Decrypt the payload
-                $key = md5('--orbit-mall--');
+                $key = md5(static::PAYLOAD_KEY);
                 $payload = (new Encrypter($key))->decrypt($payload);
 
                 // The data is in url encoded
@@ -4585,5 +4594,74 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return TRUE;
+    }
+
+    /**
+     * Validate the registration data.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param string $email Consumer's email
+     * @return array|string
+     * @throws Exception
+     */
+    protected function validateRegistrationData($email)
+    {
+        // Only do the validation if there is 'mode=registration' on post body.
+        $mode = OrbitInput::post('mode');
+        if ($mode !== 'registration') {
+            return '';
+        }
+
+        $firstname = OrbitInput::post('first_name');
+        $lastname = OrbitInput::post('last_name');
+        $gender = OrbitInput::post('gender');
+        $birthdate = OrbitInput::post('birth_date');
+
+        $input = array(
+            'first_name' => $firstname,
+            'last_name'  => $lastname,
+            'gender'     => $gender,
+            'birth_date' => $birthdate,
+        );
+
+        $validator = Validator::make(
+            array(
+                'first_name' => $firstname,
+                'last_name'  => $lastname,
+                'gender'     => $gender,
+                'birth_date' => $birthdate,
+            ),
+            array(
+                'first_name' => 'required',
+                'last_name'  => 'required',
+                'gender'     => 'required|in:m,f',
+                'birth_date' => 'required|date_format:d-m-Y',
+            ),
+            array(
+                'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date')
+            )
+        );
+
+        if ($validator->fails()) {
+            $errorMessage = $validator->messages()->first();
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
+
+        // Transform the d-m-y to Y-m-d for storing
+        list($d, $m, $y) = explode('-', $birthdate);
+
+        $payloadData = [
+            'fname'         => $firstname,
+            'lname'         => $lastname,
+            'gender'        => $gender,
+            'birthdate'     => sprintf('%s-%s-%s', $y, $m, $d),
+            'login_from'    => 'form',
+            'email'         => $email
+        ];
+
+        $key = md5(static::PAYLOAD_KEY);
+        $data = http_build_query($payloadData);
+
+        return (new Encrypter($key))->encrypt($data);
     }
 }
