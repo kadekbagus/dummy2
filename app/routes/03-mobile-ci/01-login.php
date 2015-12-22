@@ -29,6 +29,14 @@ Route::group(
         );
 
         Route::get(
+            '/customer/social-google-callback', ['as' => 'mobile-ci.social_google_callback',
+                function () {
+                    return MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
+                },
+            ]
+        );
+
+        Route::get(
             '/customer/signup',
             function () {
 
