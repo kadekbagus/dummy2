@@ -2261,6 +2261,8 @@ class MobileCIAPIController extends ControllerAPI
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
 
+                $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
+
                 if (!empty($luckyDrawTranslation)) {
                     foreach (['lucky_draw_name', 'description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
