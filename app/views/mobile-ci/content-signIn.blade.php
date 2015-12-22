@@ -5,8 +5,17 @@
 </div>
 
 <div class="content-signin">
+    <div class="slogan-container">
+        <div class="slogan">
+            Feel The New Shopping Experience
+        </div>
+    </div>
     <div class="social-media-wraper">
         <div class="social-media-container">
+            <div class="row">
+                <div class="col-xs-12 text-center label">
+                    You can connect with:
+            </div>
             <div class="row">
                 <div class="col-xs-4 text-center">
                     <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
