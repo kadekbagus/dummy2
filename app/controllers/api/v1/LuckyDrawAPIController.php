@@ -1068,7 +1068,7 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($luckydraws) {
+            OrbitInput::get('with', function ($with) use ($luckydraws, $user) {
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
@@ -1079,8 +1079,11 @@ class LuckyDrawAPIController extends ControllerAPI
                     } elseif ($relation === 'winners') {
                         $luckydraws->with('winners');
                     } elseif ($relation === 'numbers') {
-                        $luckydraws->with(array ('numbers' => function($q) {
+                        $luckydraws->with(array ('numbers' => function($q) use ($user){
                             $q->whereNotNull('lucky_draw_numbers.user_id');
+                            if ($user->isConsumer()){
+                              $q->where('lucky_draw_numbers.user_id', '=', $user->user_id);
+                            }
                         }));
                     } elseif ($relation === 'issued_numbers') {
                         $luckydraws->with('issuedNumbers');
