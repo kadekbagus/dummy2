@@ -9,8 +9,7 @@
         <div class="social-media-container">
             <div class="row">
                 <div class="col-xs-4 text-center">
-                    <!-- <button type="button" class="btn btn-primary icon-button facebook text-center"><i class="fa fa-facebook fa-4x"></i></button> -->
-                    <form class="row" name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
+                    <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                         <div class="form-group">
                             <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
                             <input type="hidden" class="form-control" name="mac_address"
@@ -27,8 +26,7 @@
                     </form>
                 </div>
                 <div class="col-xs-4 text-center">
-                    <!-- <button type="button" class="btn btn-danger icon-button google text-center"><i class="fa fa-google-plus fa-4x"></i></button> -->
-                    <form class="row" name="googleLoginForm" id="googleLoginForm" action="{{ $googlePlusUrl }}" method="get">
+                    <form name="googleLoginForm" id="googleLoginForm" action="{{ $googlePlusUrl }}" method="get">
                         <div class="form-group">
                             <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
                             <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
@@ -42,7 +40,7 @@
                     </form>
                 </div>
                 <div class="col-xs-4 text-center">
-                    <button type="button" class="btn btn-info icon-button form text-center" data-toggle="modal" data-target="#formModal"><i class="fa fa-envelope fa-3x"></i></button>
+                    <button type="button" class="btn btn-info icon-button form text-center" data-toggle="modal" data-target="#formModal"><i class="fa fa-pencil fa-3x"></i></button>
                 </div>
             </div>
         </div>
@@ -81,16 +79,46 @@
                             <input type="text" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                         </div>
                         <div class="form-group">
-                            <input type="text" class="form-control userName" value="" placeholder="First Name" name="firstname">
+                            <input type="text" class="form-control userName" value="" placeholder="First Name" name="firstname" id="firstName">
                         </div>
                         <div class="form-group">
-                            <input type="text" class="form-control" placeholder="Last Name" name="lastname">
+                            <input type="text" class="form-control" placeholder="Last Name" name="lastname" id="lastName">
                         </div>
                         <div class="form-group">
-                            <input type="text" class="form-control" placeholder="Gender" name="gender">
+                            <select class="form-control" name="gender" id="gender">
+                                <option value="">Select Gender</option>
+                                <option value="m">Male</option>
+                                <option value="f">Female</option>
+                            </select>
+
                         </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control" placeholder="Date of Birth (dd/mm/yyyy)" name="birthdate">
+                        <div class="form-group date-of-birth">
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    <select class="form-control" name="day">
+                                        <option value="">Day</option>
+                                    @for ($i = 1; $i <= 31; $i++)
+                                        <option value="{{$i}}">{{$i}}</option>
+                                    @endfor
+                                    </select>
+                                </div>
+                                <div class="col-xs-4">
+                                    <select class="form-control" name="month">
+                                        <option value="">Month</option>
+                                    @for ($i = 1; $i <= 12; $i++)
+                                        <option value="{{$i}}">{{$i}}</option>
+                                    @endfor
+                                    </select>
+                                </div>
+                                <div class="col-xs-4">
+                                    <select class="form-control" name="year">
+                                        <option value="">Year</option>
+                                    @for ($i = date("Y"); $i >= 1970; $i--)
+                                        <option value="{{$i}}">{{$i}}</option>
+                                    @endfor
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                                 By clicking <strong>Sign up</strong> you confirm that you accept
@@ -125,11 +153,12 @@
         return pattern.test(emailAddress);
     };
 
-    var orbitSignUpForm = {};
-    orbitSignUpForm.userActive = false;
-    orbitSignUpForm.dataCompleted = false;
-    orbitSignUpForm.activeForm = 'signin';
-    orbitSignUpForm.formElements = ['#signupForm [name=firstname]', '#signupForm [name=lastname]', '#signupForm [name=gender]', '#signupForm [name=birthdate]'];
+    var orbitSignUpForm = {
+        'userActive': false,
+        'dataCompleted': false,
+        'activeForm': 'signin',
+        'formElements': ['#signupForm [name=firstname]', '#signupForm [name=lastname]', '#signupForm [name=gender]', '#signupForm [name=birthdate]']
+    }
 
     /**
      * Log in the user.
@@ -210,6 +239,12 @@
         // We suppose to not let user login when they are not registered yet
         // which is different from the old Orbit behavior
         var saveUser = function() {
+            var birthdate = {
+                'day': $('#signupForm [name=day]'.val,
+                'month': $('#signupForm [name=month]').val,
+                'year': $('#signupForm [name=firstname]').val
+            };
+
             $.ajax({
                 method: 'post',
                 url: apiPath + 'customer/login',
@@ -218,18 +253,16 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     mode: 'registration',
-                    firstname: $('#signupForm #firstname').val(),
-                    lastname: $('#signupForm #lastname').val(),
-                    gender: $('#signupForm #gender').val(),
-                    birthdate: $('#signupForm #lastname').val()
+                    firstname: $('#firstName').val(),
+                    lastname: $('#lastName').val(),
+                    gender: $('#gender').val(),
+                    birthdate: day + '-' + month + '-' + year
                 }
             }).done(function (resp, status, xhr) {
                 if (resp.status === 'error') {
                     // do something
                     return;
                 }
-
-                console.log(resp);
 
                 // Cloud redirection?
                 if (resp.data.redirect_to) {
@@ -275,8 +308,7 @@
      * @param string formName
      * @return void
      */
-    orbitSignUpForm.switchForm = function(formName)
-    {
+    orbitSignUpForm.switchForm = function(formName) {
         theForm = formName || 'signin';
 
         if (theForm === 'signin') {
@@ -286,7 +318,7 @@
             $('#signin-form-wrapper').addClass('hide');
             $('#signup-form-wrapper').removeClass('hide');
         }
-    }
+    };
 
     /**
      * Get the basic data to determine the way we show the form to the user.
@@ -297,8 +329,7 @@
      * @param callback dataCallback - Callback called when user data is found
      * @return void|object
      */
-    orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback)
-    {
+    orbitSignUpForm.checkCustomerEmail = function(custEmail, emptyCallback, dataCallback) {
         $.ajax({
             method: 'POST',
             url: apiPath + 'customer/basic-data',
@@ -321,8 +352,7 @@
      * @param string cssClass - Valid value: 'hide' or 'show'
      * @return void
      */
-    orbitSignUpForm.showFullForm = function(callback, cssClass)
-    {
+    orbitSignUpForm.showFullForm = function(callback, cssClass) {
         theClass = cssClass || 'hide';
 
         if (cssClass !== 'hide') {
@@ -344,8 +374,7 @@
      * @author Rio Astamal <rio@dominopos.com>
      * @return void
      */
-    orbitSignUpForm.enableDisableSignup = function()
-    {
+    orbitSignUpForm.enableDisableSignup = function() {
         orbitSignUpForm.dataCompleted = $('#signupForm [name=firstname]').val() &&
             $('#signupForm [name=lastname]').val() &&
             $('#signupForm [name=gender]').val() &&
@@ -360,8 +389,7 @@
         console.log('orbitSignUpForm.dataCompleted: ' + orbitSignUpForm.dataCompleted);
     }
 
-    orbitSignUpForm.boot = function()
-    {
+    orbitSignUpForm.boot = function() {
         for (var i=0; i<orbitSignUpForm.formElements.length; i++) {
             $(orbitSignUpForm.formElements[i]).keyup(function(e) {
                 orbitSignUpForm.enableDisableSignup();
@@ -414,6 +442,7 @@
 
         if (isValidEmailAddress( $('#signinForm #email').val() )) {
             $('#btn-signin-form').removeAttr('disabled');
+            $('#firstName').focus();
         } else {
             $('#btn-signin-form').attr('disabled', 'disabled');
         }
