@@ -113,7 +113,7 @@
                                 <div class="col-xs-4">
                                     <select class="form-control" name="year">
                                         <option value="">Year</option>
-                                    @for ($i = date("Y"); $i >= 1970; $i--)
+                                    @for ($i = date('Y'); $i >= date('Y') - 150; $i--)
                                         <option value="{{$i}}">{{$i}}</option>
                                     @endfor
                                     </select>
@@ -243,7 +243,11 @@
             // Send back to sign up form for unknown email
             function() {
                 $('#signupForm #email').val(custEmail);
+                orbitSignUpForm.isProcessing = false;
+                orbitSignUpForm.disableEnableAllButton();
+
                 orbitSignUpForm.switchForm('signup');
+                $('#signupForm #firstName').focus();
             },
             // Proceed the login for identified user
             userIdentified
@@ -272,9 +276,9 @@
         // which is different from the old Orbit behavior
         var saveUser = function() {
             var birthdate = {
-                'day': $('#signupForm [name=day]').val,
-                'month': $('#signupForm [name=month]').val,
-                'year': $('#signupForm [name=firstname]').val
+                'day': $('#signupForm [name=day]').val(),
+                'month': $('#signupForm [name=month]').val(),
+                'year': $('#signupForm [name=year]').val()
             };
 
             $.ajax({
@@ -285,10 +289,10 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     mode: 'registration',
-                    firstname: $('#firstName').val(),
-                    lastname: $('#lastName').val(),
+                    first_name: $('#firstName').val(),
+                    last_name: $('#lastName').val(),
                     gender: $('#gender').val(),
-                    birthdate: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
+                    birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
                 }
             }).done(function (resp, status, xhr) {
                 orbitSignUpForm.isProcessing = false;
@@ -337,6 +341,9 @@
             // Send back to sign in form if it is known user
             function() {
                 $('#signinForm #email').val(custEmail);
+                orbitSignUpForm.isProcessing = false;
+                orbitSignUpForm.disableEnableAllButton();
+
                 orbitSignUpForm.switchForm('signin');
             }
         );
@@ -453,7 +460,7 @@
                 orbitSignUpForm.enableDisableSignup();
             });
         }
-        
+
         for (var i=0; i<orbitSignUpForm.formElementsSelect.length; i++) {
             $(orbitSignUpForm.formElementsSelect[i]).change(function(e) {
                 orbitSignUpForm.enableDisableSignup();
@@ -473,7 +480,6 @@
 
             if (isValidEmailAddress(value)) {
                 $('#btn-signin-form').removeAttr('disabled');
-                $('#firstName').focus();
             } else {
                 $('#btn-signin-form').attr('disabled', 'disabled');
             }
@@ -501,6 +507,9 @@
             orbitSignUpForm.switchForm('signin');
         });
 
+        if (isValidEmailAddress( $('#signinForm #email').val() )) {
+            $('#btn-signin-form').removeAttr('disabled');
+        }
     }
 
     orbitSignUpForm.boot();
