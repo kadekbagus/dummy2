@@ -1079,7 +1079,9 @@ class LuckyDrawAPIController extends ControllerAPI
                     } elseif ($relation === 'winners') {
                         $luckydraws->with('winners');
                     } elseif ($relation === 'numbers') {
-                        $luckydraws->with('numbers');
+                        $luckydraws->with(array ('numbers' => function($q) {
+                            $q->whereNotNull('lucky_draw_numbers.user_id');
+                        }));
                     } elseif ($relation === 'issued_numbers') {
                         $luckydraws->with('issuedNumbers');
                     } elseif ($relation === 'translations') {
