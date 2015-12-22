@@ -388,6 +388,14 @@ return array(
         'no_prize'                  => '该奖项即将到来',
     ),
 
+    'notification' => array(
+        'delete_mode'               => '削除モード',
+        'view_lucky_draw_btn'       => '抽選のビュー',
+        'no_notif'                  => 'あなたはここにメッセージを持っていません',
+        'load_more_btn'             => 'よりロード',
+        'view_coupons_btn'          => ' 查看您的优惠券',
+    ),
+
     'tour' => array(
         'home' => array(
             'title'   => '主页',
