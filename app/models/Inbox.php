@@ -63,7 +63,7 @@ class Inbox extends Eloquent
      * @param int $retailerId - The retailer
      * @return void
      */
-    public function addToInbox($userId, $response, $retailerId, $type, $subject)
+    public function addToInbox($userId, $response, $retailerId, $type)
     {
         $user = User::find($userId);
 
@@ -71,28 +71,22 @@ class Inbox extends Eloquent
             throw new Exception ('Customer user ID not found.');
         }
 
-        if (empty($subject)) {
-            $subject = 'Orbit Notification';
-        }
-
         if (empty($type)) {
             $type = 'alert';
         }
 
         $name = $user->getFullName();
-        $name = $name ? $name : $user->email;
+        $name = $name ? $name : $user->user_email;
 
         $inbox = new Inbox();
         $inbox->user_id = $userId;
         $inbox->merchant_id = $retailerId;
         $inbox->from_id = 0;
         $inbox->from_name = 'Orbit';
-        $inbox->subject = $subject;
         $inbox->content = '';
         $inbox->inbox_type = $type;
         $inbox->status = 'active';
         $inbox->is_read = 'N';
-        $inbox->save();
 
         $retailer = Mall::where('merchant_id', $retailerId)->first();
 
@@ -100,21 +94,29 @@ class Inbox extends Eloquent
 
         $listItem = null;
         switch ($type) {
+            case 'activation':
+                $inbox->subject = "Activation";
+                break;
+
             case 'lucky_draw_issuance':
+                $inbox->subject = "You've got lucky number(s)";
                 $listItem = $response->records;
                 break;
 
             case 'coupon_issuance':
-                $listItem = $response->coupon_names;
+                $inbox->subject = "You've got coupon(s)";
+                $listItem = $response;
                 break;
             
             default:
                 break;
         }
 
+        $inbox->save();
+
         $data = [
             'fullName'              => $name,
-            'subject'               => $subject,
+            'subject'               => $inbox->subject,
             'inbox'                 => $inbox,
             'item'                  => $response,
             'listItem'              => $listItem,

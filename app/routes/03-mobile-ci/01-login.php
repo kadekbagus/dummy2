@@ -139,20 +139,36 @@ Route::group(
             }
         );
 
+        // Route::get(
+        //     '/customer/notifications',
+        //     function () {
+
+        //         return MobileCI\MobileCIControllerNotifications::create()->getNotificationsView();
+        //     }
+        // );
+
         Route::get(
-            '/customer/notifications',
+            '/customer/messages',
             function () {
 
-                return MobileCI\MobileCIControllerNotifications::create()->getNotificationsView();
+                return MobileCI\MobileCIAPIController::create()->getNotificationsView();
             }
         );
 
+        // Route::get(
+        //     '/customer/notification/detail',
+        //     function () {
+
+        //         return MobileCI\MobileCIControllerNotifications::create()->getNotificationDetailView();
+        //         //return View::make('mobile-ci.mall-notifications-list');
+        //     }
+        // );
+
         Route::get(
-            '/customer/notification/detail',
+            '/customer/message/detail',
             function () {
 
-                return MobileCI\MobileCIControllerNotifications::create()->getNotificationDetailView();
-                //return View::make('mobile-ci.mall-notifications-list');
+                return MobileCI\MobileCIAPIController::create()->getNotificationDetailView();
             }
         );
 
@@ -519,6 +535,39 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->postLanguagebySelected();
             }
         );
+
+
+        /**
+         * Read / flag the alert as read
+         */
+        Route::post('/app/v1/inbox/read', function()
+        {
+            return InboxAPIController::create()->postReadAlert();
+        });
+
+        /**
+         * Delete the alert
+         */
+        Route::post('/app/v1/inbox/delete', function()
+        {
+            return InboxAPIController::create()->postDeleteAlert();
+        });
+
+        /**
+         * Poll new alert
+         */
+        Route::get('/app/v1/inbox/unread-count', function()
+        {
+            return InboxAPIController::create()->getPollAlert();
+        });
+
+        /**
+         * Search inbox
+         */
+        Route::get('/app/v1/inbox/list', function()
+        {
+            return InboxAPIController::create()->getSearchInbox();
+        });
 
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
         Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);

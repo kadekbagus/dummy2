@@ -212,32 +212,6 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="userActivationModal" tabindex="-1" role="dialog" aria-labelledby="userActivationModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="userActivationModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.promotion.info') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <p style="font-size:15px;">
-                            {{{ sprintf(Lang::get('mobileci.modals.message_user_activation'), $user_email) }}}
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 @stop
 
 @section('ext_script_bot')
@@ -280,24 +254,25 @@
             }
         });
 
-        $('#userActivationModal').on('hidden.bs.modal', function () {
-            $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
-        });
+        // $('#userActivationModal').on('hidden.bs.modal', function () {
+        //     $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
+        // });
 
         {{-- a sequence of modals... --}}
         var modals = [
             {
                 selector: '#verifyModal',
                 display: get('internet_info') == 'yes' && !$.cookie(cookie_dismiss_name)
-            },
-            {
-                selector: '#userActivationModal',
-                @if ($active_user)
-                    display: false
-                @else
-                    display: get('from_login') === 'yes' && !$.cookie(cookie_dismiss_name_2)
-                @endif
             }
+            // ,
+            // {
+            //     selector: '#userActivationModal',
+            //     @if ($active_user)
+            //         display: false
+            //     @else
+            //         display: get('from_login') === 'yes' && !$.cookie(cookie_dismiss_name_2)
+            //     @endif
+            // }
         ];
         var modalIndex;
 
