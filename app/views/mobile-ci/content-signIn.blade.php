@@ -157,8 +157,17 @@
         'userActive': false,
         'dataCompleted': false,
         'activeForm': 'signin',
-        'formElements': ['#signupForm [name=firstname]', '#signupForm [name=lastname]', '#signupForm [name=gender]', '#signupForm [name=birthdate]']
-    }
+        'formElementsInput': [
+            '#firstName',
+            '#lastName'
+        ],
+        'formElementsSelect': [
+            '#gender',
+            '#signupForm [name=day]',
+            '#signupForm [name=month]',
+            '#signupForm [name=year]'
+        ]
+    };
 
     /**
      * Log in the user.
@@ -240,7 +249,7 @@
         // which is different from the old Orbit behavior
         var saveUser = function() {
             var birthdate = {
-                'day': $('#signupForm [name=day]'.val,
+                'day': $('#signupForm [name=day]').val,
                 'month': $('#signupForm [name=month]').val,
                 'year': $('#signupForm [name=firstname]').val
             };
@@ -256,7 +265,7 @@
                     firstname: $('#firstName').val(),
                     lastname: $('#lastName').val(),
                     gender: $('#gender').val(),
-                    birthdate: day + '-' + month + '-' + year
+                    birthdate: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
                 }
             }).done(function (resp, status, xhr) {
                 if (resp.status === 'error') {
@@ -375,23 +384,29 @@
      * @return void
      */
     orbitSignUpForm.enableDisableSignup = function() {
-        orbitSignUpForm.dataCompleted = $('#signupForm [name=firstname]').val() &&
-            $('#signupForm [name=lastname]').val() &&
-            $('#signupForm [name=gender]').val() &&
-            $('#signupForm [name=birthdate]').val();
+        orbitSignUpForm.dataCompleted = $('#firstName').val() &&
+            $('#lastName').val() &&
+            $('#gender').val() &&
+            $('#signupForm [name=day]').val() &&
+            $('#signupForm [name=month]').val() &&
+            $('#signupForm [name=year]').val();
 
         if (orbitSignUpForm.dataCompleted) {
             $('#btn-signup-form').removeAttr('disabled');
         } else {
             $('#btn-signup-form').attr('disabled', 'disabled');
         }
-
-        console.log('orbitSignUpForm.dataCompleted: ' + orbitSignUpForm.dataCompleted);
     }
 
     orbitSignUpForm.boot = function() {
-        for (var i=0; i<orbitSignUpForm.formElements.length; i++) {
-            $(orbitSignUpForm.formElements[i]).keyup(function(e) {
+        for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
+            $(orbitSignUpForm.formElementsInput[i]).keyup(function(e) {
+                orbitSignUpForm.enableDisableSignup();
+            });
+        }
+        
+        for (var i=0; i<orbitSignUpForm.formElementsSelect.length; i++) {
+            $(orbitSignUpForm.formElementsSelect[i]).change(function(e) {
                 orbitSignUpForm.enableDisableSignup();
             });
         }
@@ -409,43 +424,34 @@
 
             if (isValidEmailAddress(value)) {
                 $('#btn-signin-form').removeAttr('disabled');
+                $('#firstName').focus();
             } else {
                 $('#btn-signin-form').attr('disabled', 'disabled');
             }
         });
 
-        $('#btn-signin-form').click(function(e)
-        {
+        $('#btn-signin-form').click(function(e) {
             orbitSignUpForm.doLogin();
             return false;
         });
 
-        $('#btn-signup-form').click(function(e)
-        {
+        $('#btn-signup-form').click(function(e) {
             orbitSignUpForm.doRegister();
             return false;
         });
 
-        $('#signinForm, #signupForm').submit(function(e)
-        {
+        $('#signinForm, #signupForm').submit(function(e) {
             e.preventDefault();
         });
 
-        $('#sign-up-link').click(function(e)
-        {
+        $('#sign-up-link').click(function(e) {
             orbitSignUpForm.switchForm('signup');
         });
-        $('#sign-in-link').click(function(e)
-        {
+
+        $('#sign-in-link').click(function(e) {
             orbitSignUpForm.switchForm('signin');
         });
 
-        if (isValidEmailAddress( $('#signinForm #email').val() )) {
-            $('#btn-signin-form').removeAttr('disabled');
-            $('#firstName').focus();
-        } else {
-            $('#btn-signin-form').attr('disabled', 'disabled');
-        }
     }
 
     orbitSignUpForm.boot();
