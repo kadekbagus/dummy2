@@ -33,6 +33,14 @@ Route::group(
 		{
 		    return InboxAPIController::create()->getPollAlert();
 		});
+
+		/**
+		 * Search inbox
+		 */
+		Route::get('/api/v1/alert/search', function()
+		{
+		    return InboxAPIController::create()->getSearchInbox();
+		});
 	}
 );
 
@@ -43,6 +51,15 @@ Route::post('/api/v1/alert/read', function()
 {
     return InboxAPIController::create()->postReadAlert();
 });
+
+/**
+ * Delete the alert
+ */
+Route::post('/api/v1/alert/delete', function()
+{
+    return InboxAPIController::create()->postDeleteAlert();
+});
+
 
 /**
  * Get server time

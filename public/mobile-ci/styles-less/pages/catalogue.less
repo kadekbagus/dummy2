@@ -80,12 +80,28 @@ a:hover{
       margin-left: 0px; 
       margin-right: 0px;
       h4{
+        font-size: 15px;
+        font-weight: bold;
         word-wrap: break-word;
+      }
+      h3{
+        font-size: 14px;
+        font-weight: normal;
+        margin-top:-2px;
+      }
+      h5{
+        font-size: 14px;
+        font-weight: normal;
       }
     }
 }
 .catalogue.promo-list{
     border-bottom: 1px solid #dedede;
+}
+.catalogue-info{
+    a{
+        color:#000;
+    }
 }
 .catalogue:first-child {
     border-top:0px;
@@ -165,6 +181,14 @@ a:hover{
         padding: 0px;
     }
 }
+.middle-earth{
+    &:before {
+        content: ' ';
+        display: inline-block;
+        vertical-align: middle;
+        height: 100%;
+    }
+}
 .catalogue-control-cart {
     margin-top: 28px;
 }
@@ -174,10 +198,16 @@ a:hover{
         display: block;
     }
     img {
-        max-height: 120px;
+        max-height: 80px;
         margin-top: 4px;
         //margin: 0 auto;
     }
+    /*&:before {
+        content: ' ';
+        display: inline-block;
+        vertical-align: middle;
+        height: 100%;
+    }*/
 }
 .ribbon-wrapper-red {
     width: 80px;
@@ -514,7 +544,7 @@ h3.currency.currency-promo{
 .link-spanner{
     position:absolute; 
     width:100%;
-    height:100%;
+    height:130px; //same as .catalogue height
     top:0;
     left: 0;
     z-index: 1;
@@ -587,4 +617,10 @@ h5.tenant-category{
     position:absolute;
     pointer-events:none;
     display:block;
+}
+.catalogue-tenant{
+    height:130px;
+}
+.catalogue-other{
+    height:86px;
 }

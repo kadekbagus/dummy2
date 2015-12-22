@@ -131,6 +131,7 @@
             <th style="text-align:left;">Events</th>
             <th style="text-align:left;">Promotions</th>
             <th style="text-align:left;">Coupons</th>
+            <th style="text-align:left;">Lucky Draws</th>
         </thead>
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
@@ -145,6 +146,7 @@
                 <td><?php echo $me->printUtf8($row->event_name); ?></td>
                 <td><?php echo $me->printUtf8($row->promotion_news_name); ?></td>
                 <td><?php echo $me->printUtf8($row->coupon_name); ?></td>
+                <td><?php echo $me->printUtf8($row->object_display_name); ?></td>
             </tr>
         <?php $count++; endwhile; ?>
         </tbody>

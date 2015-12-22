@@ -141,7 +141,6 @@
             <th style="text-align:left;">Issued Date</th>
             <th style="text-align:left;">Full Name</th>
             <th style="text-align:left;">Email</th>
-            <th style="text-align:left;">Membership</th>
         </thead>
         <tbody>
         <?php while ($row = $result->fetch(PDO::FETCH_OBJ)) : ?>
@@ -151,7 +150,6 @@
                 <td><?php echo ($formatDate($row->issued_date)); ?></td>
                 <td><?php echo htmlentities($getFullName($row, 'no_email')); ?></td>
                 <td><?php echo htmlentities($row->user_email); ?></td>
-                <td><?php echo ($row->membership_number); ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>

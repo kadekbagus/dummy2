@@ -510,6 +510,11 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 }
             }
 
+            if ((int)$totalAmount < $luckyDraw->minimum_amount) {
+                $errorMessage = 'Amount spent cannot be less than minimum spend requirement.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $numberOfLuckyDraw = floor($totalAmount / $luckyDraw->minimum_amount);
 
             foreach ($receiptDates as $i=>$receiptDate) {
@@ -523,12 +528,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.before.save', array($this, $luckyDraw, $customer));
 
-            $mall = Mall::active()->where('merchant_id', $mallId)->first();
+            $mall = Mall::with('timezone')->active()->where('merchant_id', $mallId)->first();
 
             $activeluckydraw = DB::table('lucky_draws')
                 ->where('status', 'active')
-                ->where('start_date', '<=', Carbon::now())
-                ->where('end_date', '>=', Carbon::now())
+                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
                 ->where('lucky_draw_id', $luckyDrawId)
                 ->lockForUpdate()
                 ->first();
@@ -608,7 +613,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 ->whereIn('lucky_draw_number_id', $issued_lucky_draw_numbers)
                 ->update(array(
                     'user_id'       => $userId,
-                    'issued_date'   => Carbon::now(),
+                    'issued_date'   => Carbon::now($mall->timezone->timezone_name),
                     'modified_by'   => $user->user_id,
                     'status'        => 'active',
                     'hash'          => $hash
@@ -617,8 +622,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // update free_number_batch
             DB::table('lucky_draws')
                 ->where('status', 'active')
-                ->where('start_date', '<=', Carbon::now())
-                ->where('end_date', '>=', Carbon::now())
+                ->where('start_date', '<=', Carbon::now($mall->timezone->timezone_name))
+                ->where('end_date', '>=', Carbon::now($mall->timezone->timezone_name))
                 ->where('lucky_draw_id', $luckyDrawId)
                 ->update(array('free_number_batch' => ($_free_number_batch - count($issued_lucky_draw_numbers))));
 
@@ -693,9 +698,13 @@ class LuckyDrawCSAPIController extends ControllerAPI
                                         ->count();
 
             $issued_lucky_draw_numbers_obj = DB::table('lucky_draw_numbers')
-                    ->where('lucky_draw_id', $luckyDrawId)
+                    ->select('lucky_draw_numbers.*', 'lucky_draws.lucky_draw_name')
+                    ->leftJoin('lucky_draws', function($q) {
+                        $q->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_numbers.lucky_draw_id');
+                    })
+                    ->where('lucky_draw_numbers.lucky_draw_id', $luckyDrawId)
                     ->where('user_id', $customer->user_id)
-                    ->orderBy('lucky_draw_number_code', 'desc')
+                    ->orderByRaw('CAST(lucky_draw_number_code as UNSIGNED) DESC')
                     ->limit($numberOfLuckyDraw)
                     ->get();
 
@@ -707,7 +716,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $this->response->data = $data;
 
             // Insert to alert system
-            $this->insertLuckyDrawNumberInbox($userId, $data, $mallId);
+            $inbox = new Inbox();
+            $inbox->addToInbox($userId, $data, $mallId, 'lucky_draw_issuance', "You've got lucky number(s)");
 
             // Commit the changes
             $this->commit();
@@ -717,7 +727,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
                     ->setStaff($user)
                     ->setActivityName('issue_lucky_draw')
                     ->setActivityNameLong('Lucky Draw Number Issuance')
-                    ->setObject($luckyDraw)
+                    ->setLocation($mall)
+                    ->setObject($luckyDraw, TRUE)
                     ->responseOK();
 
             Event::fire('orbit.luckydrawnumbercs.postnewluckydrawnumbercs.after.commit', array($this, $hash, $luckyDraw, $customer, $mallId));
@@ -736,7 +747,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Lucky Draw Number Issuance Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (InvalidArgsException $e) {
@@ -754,7 +765,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Lucky Draw Number Issuance Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (QueryException $e) {
@@ -778,7 +789,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // Creation failed Activity log
             $activity->setUser($user)
                     ->setActivityName('issue_lucky_draw')
-                    ->setActivityNameLong('Issue Lucky Draw Failed')
+                    ->setActivityNameLong('Lucky Draw Number Issuance Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         } catch (Exception $e) {
@@ -1429,7 +1440,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $luckyDraw = LuckyDraw::active()->where('lucky_draw_id', $value)->first();
 
             if (empty($luckyDraw)) {
-                $errorMessage = sprintf('Lucky draw ID %s is not found.', $value);
+                $errorMessage = sprintf('Lucky draw ID is not found.', $value);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
@@ -1451,12 +1462,12 @@ class LuckyDrawCSAPIController extends ControllerAPI
             $user = User::excludeDeleted()->where('user_id', $value)->first();
 
             if (empty($user)) {
-                $errorMessage = sprintf('User ID %s is not found.', $value);
+                $errorMessage = sprintf('User ID is not found.', $value);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
             if (strtolower($user->status) !== 'active') {
-                $errorMessage = sprintf('Status of user %s is not active.', $value);
+                $errorMessage = sprintf('Status of user is not active.', $value);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
