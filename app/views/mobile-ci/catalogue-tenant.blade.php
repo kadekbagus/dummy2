@@ -82,7 +82,11 @@
                                 <h3><i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
                                 <h5 class="tenant-category">
                                     <i class="fa fa-tags" style="padding-left: 2px;padding-right: 4px;"></i>
-                                    <span>{{ mb_strlen($product->category_string) > 30 ? mb_substr($product->category_string, 0, 30, 'UTF-8') . '...' : $product->category_string }}</span>
+                                    @if(empty($product->category_string))
+                                        <span>-</span>
+                                    @else
+                                        <span>{{ mb_strlen($product->category_string) > 30 ? mb_substr($product->category_string, 0, 30, 'UTF-8') . '...' : $product->category_string }}</span>
+                                    @endif
                                 </h5>
                             </a>
                         </div>

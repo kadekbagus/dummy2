@@ -148,6 +148,23 @@ Route::group(
         );
 
         Route::get(
+            '/customer/notifications',
+            function () {
+
+                return MobileCI\MobileCIControllerNotifications::create()->getNotificationsView();
+            }
+        );
+
+        Route::get(
+            '/customer/notification/detail',
+            function () {
+
+                return MobileCI\MobileCIControllerNotifications::create()->getNotificationDetailView();
+                //return View::make('mobile-ci.mall-notifications-list');
+            }
+        );
+
+        Route::get(
             '/customer/coupon',
             function () {
 

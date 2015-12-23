@@ -2432,7 +2432,7 @@ class MobileCIAPIController extends ControllerAPI
                         for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
                             $paginationPage[] = $x;
                         }
-                    } else { 
+                    } else {
                         for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
                             $paginationPage[] = $x;
                         }
@@ -2979,7 +2979,7 @@ class MobileCIAPIController extends ControllerAPI
                             if ($category->category_name !== 'Customer Service') {
                                 $cso_flag = 1;
                             } else {
-                                $cso_exists = TRUE;
+                                $cso_exists = true;
                             }
                         }
                         if($cso_flag === 1) {
@@ -3004,18 +3004,25 @@ class MobileCIAPIController extends ControllerAPI
             $cs_reedem = false;
 
             // Check exist customer verification number per mall
-            $employeeVerificationNumbers = \UserVerificationNumber::where('merchant_id', $retailer->merchant_id)->count();
-            if ($employeeVerificationNumbers > 0 || $coupons->is_all_employee === 'Y') {
-                $cs_reedem = true;
-            }
+            $employeeVerNumbersActive = \UserVerificationNumber::
+                        join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
+                        ->where('users.status', 'active')
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->count('users.user_id');
 
-            // check if coupon linked to mall cs
-            if ($coupons->is_all_employee === 'N') {
-                $couponcs = Coupon::select(DB::raw("count('promotion_employee.promotion_id') as totalcs"))
-                    ->excludeDeleted('promotions')
-                    ->leftJoin('promotion_employee','promotion_employee.promotion_id','=','promotions.promotion_id')
-                    ->where('promotions.promotion_id','=', $coupons->promotion_id)->first();
-                if ($couponcs->totalcs > 0) {
+            if ($coupons->is_all_employee === 'Y') {
+                if ($employeeVerNumbersActive > 0) {
+                    $cs_reedem = true;
+                }
+            } elseif ($coupons->is_all_employee === 'N') {
+                // Check exist link to cs, and cs must have active status
+                $promotionEmployee = \CouponEmployee::
+                                join('users', 'users.user_id', '=', 'promotion_employee.user_id')
+                                ->where('users.status', 'active')
+                                ->where('promotion_employee.promotion_id', $coupons->promotion_id)
+                                ->count('promotion_employee_id');
+
+                if ($promotionEmployee > 0) {
                     $cs_reedem = true;
                 }
             }
