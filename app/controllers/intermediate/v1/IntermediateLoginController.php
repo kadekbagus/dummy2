@@ -962,10 +962,16 @@ class IntermediateLoginController extends IntermediateBaseController
         // save to user signin table  
         if ($response->code === 0) {    
             
-            $payload = OrbitInput::post('payload');
             $signin_via = 'form';
+            $payload = '';
 
-            if (!empty($payload)) {
+            if (! empty(OrbitInput::get('payload'))) {
+                $payload = OrbitInput::get('payload');
+            } else {
+                $payload = OrbitInput::post('payload');
+            }
+
+            if (! empty($payload)) {
                 $key = md5('--orbit-mall--');
                 $payload = (new Encrypter($key))->decrypt($payload);
                 Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload)); 
@@ -975,9 +981,9 @@ class IntermediateLoginController extends IntermediateBaseController
                     $signin_via = 'facebook';
                 } else if ($data['login_from'] === 'google') {
                     $signin_via = 'google';
-                } 
+                }
             }
-
+             
             $newUserSignin = new UserSignin();
             $newUserSignin->user_id = $user->user_id;
             $newUserSignin->signin_via = $signin_via;
