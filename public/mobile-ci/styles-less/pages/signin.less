@@ -102,17 +102,34 @@ html {
 }
 
 .content-signin {
+    .slogan-container {
+        position: absolute;
+        top: 55px;
+        left: 0;
+        right: 0;
+        .slogan {
+            text-align: center;
+            font-size: 2.2em;
+            color: #fff;
+            text-shadow: 2px 2px 2px #000;
+        }
+    }
     .social-media-wraper {
         display: table-cell;
         vertical-align: middle;
     }
     .social-media-container {
         background-color: rgba(252, 252, 252, 0.8);
-        padding: 30px 0;
+        padding: 15px 0 30px 0;
         border-radius: 0.6em;
         width: 89%;
         margin-left: auto;
         margin-right: auto;
+        .label {
+            color: #000;
+            padding-bottom: 15px;
+            font-size: 13px;
+        }
         .form-group {
             margin-bottom: 0;
         }
@@ -134,29 +151,30 @@ html {
 }
 
 .footer-form-modal {
+    border-top: 1px solid #D8CDCD;
     .social-media-container {
-        .col-xs-2,
+        .col-xs-4,
         .col-xs-8 {
             padding-left: 0;
             padding-right: 0;
         }
-        .icon-button {
-            &.facebook,
-            &.google {
-                opacity: 1;
-                width: 35px;
-                padding-left: 0;
-                padding-right: 0;
-            }
-            &.facebook {
-                background-color: #3B5999 ;
-            }
-            &.google {
-                background-color: #DD4B39;
-            }
-            &.form {
-                background-color: #0AA5D5;
-            }
+    }
+    .icon-button {
+        &.facebook,
+        &.google {
+            opacity: 1;
+            width: 35px;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        &.facebook {
+            background-color: #3B5999 ;
+        }
+        &.google {
+            background-color: #DD4B39;
+        }
+        &.form {
+            background-color: #0AA5D5;
         }
     }
 }
