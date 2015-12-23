@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class LuckyDrawAPIController extends ControllerAPI
 {
@@ -894,12 +895,13 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $details_view = OrbitInput::get('details');
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name,minimum_amount,updated_at',
+                    'sort_by' => 'in:registered_date,lucky_draw_name,description,start_date,end_date,status,total_issued_lucky_draw_number,external_lucky_draw_id,mall_name,minimum_amount,updated_at,draw_date',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.lucky_draw_sortby'),
@@ -947,6 +949,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
                 // Filter by user_ids
                 if ($user->isConsumer()) {
+                    $luckydraws->where('lucky_draws.status', 'active');
                     $luckydraws->where('lucky_draw_numbers.user_id', $user->user_id);
                 } else {
                     OrbitInput::get('user_id', function ($arg) use ($luckydraws)
@@ -1066,7 +1069,7 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($luckydraws) {
+            OrbitInput::get('with', function ($with) use ($luckydraws, $user) {
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
@@ -1077,7 +1080,12 @@ class LuckyDrawAPIController extends ControllerAPI
                     } elseif ($relation === 'winners') {
                         $luckydraws->with('winners');
                     } elseif ($relation === 'numbers') {
-                        $luckydraws->with('numbers');
+                        $luckydraws->with(array ('numbers' => function($q) use ($user){
+                            $q->whereNotNull('lucky_draw_numbers.user_id');
+                            if ($user->isConsumer()){
+                              $q->where('lucky_draw_numbers.user_id', '=', $user->user_id);
+                            }
+                        }));
                     } elseif ($relation === 'issued_numbers') {
                         $luckydraws->with('issuedNumbers');
                     } elseif ($relation === 'translations') {
@@ -1958,6 +1966,8 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postnewluckydrawannouncement.after.validation', array($this, $validator));
 
+            $lucky_draw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
+
             $lucky_draw_announcement = new LuckyDrawAnnouncement();
             $lucky_draw_announcement->title = $title;
             $lucky_draw_announcement->description = $description;
@@ -2031,6 +2041,14 @@ class LuckyDrawAPIController extends ControllerAPI
                                 $errorMessage = 'Lucky draw winner number not found.';
                                 OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
+
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)->first();
+                            if (is_object($lucky_draw_number_winner_prev)) {
+                                $this->rollBack();
+                                $errorMessage = 'Winning number is duplicated.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+
                             $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
                             $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
                             $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
@@ -2064,6 +2082,13 @@ class LuckyDrawAPIController extends ControllerAPI
                                 }
                             }
 
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)->first();
+                            if (is_object($lucky_draw_number_winner_prev)) {
+                                $this->rollBack();
+                                $errorMessage = 'Winning number is duplicated.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+
                             $lucky_draw_number_winner = new LuckyDrawWinner();
                             $lucky_draw_number_winner->lucky_draw_id = $lucky_draw_id;
                             $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
@@ -2084,6 +2109,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->data->translation_default = $lucky_draw_announcement_translation_default;
             $this->response->data->prize_winners = $prize_winners_response;
 
+            $lucky_draw->touch();
             // Commit the changes
             $this->commit();
 
@@ -2290,6 +2316,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postupdateluckydrawannouncement.after.validation', array($this, $validator));
 
+            $lucky_draw = LuckyDraw::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->first();
             $lucky_draw_announcement = LuckyDrawAnnouncement::where('lucky_draw_announcement_id', $lucky_draw_announcement_id)->first();
             $lucky_draw_announcement_translation_default = LuckyDrawAnnouncementTranslation::excludeDeleted()->where('lucky_draw_announcement_id', $lucky_draw_announcement_id)->where('merchant_language_id', $id_language_default)->first();
 
@@ -2364,6 +2391,14 @@ class LuckyDrawAPIController extends ControllerAPI
                                 $errorMessage = 'Lucky draw winner number not found.';
                                 OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
+
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)->first();
+                            if (is_object($lucky_draw_number_winner_prev)) {
+                                $this->rollBack();
+                                $errorMessage = 'Winning number is duplicated.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+
                             $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
                             $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
                             $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
@@ -2395,6 +2430,13 @@ class LuckyDrawAPIController extends ControllerAPI
                                 }
                             }
 
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)->first();
+                            if (is_object($lucky_draw_number_winner_prev)) {
+                                $this->rollBack();
+                                $errorMessage = 'Winning number is duplicated.';
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+
                             $lucky_draw_number_winner = new LuckyDrawWinner();
                             $lucky_draw_number_winner->lucky_draw_id = $lucky_draw_id;
                             $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
@@ -2414,6 +2456,8 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->data = $lucky_draw_announcement;
             $this->response->data->translation_default = $lucky_draw_announcement_translation_default;
             $this->response->data->prize_winners = $prize_winners_response;
+
+            $lucky_draw->touch();
             // Commit the changes
             $this->commit();
 
@@ -3406,6 +3450,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
             $this->response->data = $lucky_draw_prizes;
 
+            $lucky_draw->touch();
             // Commit the changes
             $this->commit();
 

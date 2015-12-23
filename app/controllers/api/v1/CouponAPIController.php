@@ -547,7 +547,9 @@ class CouponAPIController extends ControllerAPI
      * @param string     `is_cumulative_with_promotions`     (optional) - Cumulative with other promotions. Valid value: Y, N.
      * @param decimal    `coupon_redeem_rule_value`          (optional) - Coupon redeem rule value
      * @param array      `retailer_ids`                      (optional) - Retailer IDs
+     * @param array      `employee_user_ids`                 (optional) - User IDs of Employee
      * @param string     `no_retailer`                       (optional) - Flag to delete all retailer links. Valid value: Y.
+     * @param string     `no_employee`                       (optional) - Flag to delete all cs links. Valid value: Y.
      * @param array      `id_language_default`               (required) - ID language default
      *
      * @return Illuminate\Support\Facades\Response
@@ -729,21 +731,21 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_permanent = $is_permanent;
             });
 
-            OrbitInput::post('is_all_employee', function($is_all_employee) use ($updatedcoupon) {
-                $updatedcoupon->is_all_employee = $is_all_employee;
-                if ($is_all_employee == 'Y') {
-                    $deleted_employee_user_ids = CouponEmployee::where('promotion_id', $updatedcoupon->promotion_id)->get(array('user_id'))->toArray();
-                    $updatedcoupon->employee()->detach($deleted_employee_user_ids);
-                    $updatedcoupon->load('employee');
-                }
-            });
-
             OrbitInput::post('is_all_retailer', function($is_all_retailer) use ($updatedcoupon) {
                 $updatedcoupon->is_all_retailer = $is_all_retailer;
                 if ($is_all_retailer == 'Y') {
                     $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
                     $updatedcoupon->tenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('tenants');
+                }
+            });
+
+            OrbitInput::post('is_all_employee', function($is_all_employee) use ($updatedcoupon) {
+                $updatedcoupon->is_all_employee = $is_all_employee;
+                if ($is_all_employee == 'Y') {
+                    $deleted_employee_user_ids = CouponEmployee::where('promotion_id', $updatedcoupon->promotion_id)->get(array('user_id'))->toArray();
+                    $updatedcoupon->employee()->detach($deleted_employee_user_ids);
+                    $updatedcoupon->load('employee');
                 }
             });
 
@@ -926,13 +928,20 @@ class CouponAPIController extends ControllerAPI
             $updatedcoupon->setRelation('couponRule', $couponrule);
             $updatedcoupon->coupon_rule = $couponrule;
 
-
             // save CouponRetailer
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedcoupon) {
                 if ($no_retailer == 'Y') {
                     $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
                     $updatedcoupon->tenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('tenants');
+                }
+            });
+
+            OrbitInput::post('no_employee', function($no_employee) use ($updatedcoupon) {
+                if ($no_employee == 'Y') {
+                    $deleted_employee = CouponEmployee::where('promotion_id', $updatedcoupon->promotion_id)->get(array('user_id'))->toArray();
+                    $updatedcoupon->employee()->detach($deleted_employee);
+                    $updatedcoupon->load('employee');
                 }
             });
 
@@ -2007,7 +2016,7 @@ class CouponAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption (Successful)')
-                    ->setObject($issuedcoupon)
+                    ->setObject($coupon)
                     ->setNotes($activityNotes)
                     ->setLocation($mall)
                     ->setModuleName('Coupon')

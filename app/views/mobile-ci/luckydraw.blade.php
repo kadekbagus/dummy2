@@ -14,7 +14,6 @@
 </div>
 <div class="row">
     <div class="col-xs-12 text-left">
-        <h4>{{ Lang::get('mobileci.lucky_draw.description') }}</h4>
         <p>
             {{ nl2br($luckydraw->description) }}
         </p>

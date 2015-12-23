@@ -35,6 +35,7 @@ return array(
         'membership'        => 'MEMBERSHIP',
         'orbit_tour'        => 'ORBIT TOUR',
         'lucky_draws'       => 'LUCKY DRAWS',
+        'my_messages'       => 'MY MESSAGES',
     ),
 
     'widgets' => array(
@@ -336,8 +337,8 @@ return array(
         'hello'                     => 'Hello',
         'goodluck'                  => 'Goodluck!',
         'congratulation'            => 'Congratulations you get ',
-        'no_lucky_draw'             => 'lucky number draw ',
-        'lucky_draw_info_1'         => 'Here is a lucky number that you can draw on ',
+        'no_lucky_draw'             => 'lucky draw number(s) ',
+        'lucky_draw_info_1'         => ' on ',
         'lucky_draw_info_2'         => 'Note: The numbers shown here are only ',
         'lucky_draw_info_3'         => 'The first number that you can ',
         'lucky_draw_info_4'         => 'Total Currently you have ',
@@ -385,6 +386,14 @@ return array(
         'prizes_and_winners'        => 'Prizes &amp; Winners',
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
+    ),
+    
+    'notification' => array(
+        'delete_mode'               => 'Delete mode',
+        'view_lucky_draw_btn'       => 'View Lucky Draws',
+        'no_notif'                  => 'You have no message(s)',
+        'load_more_btn'             => 'Load More',
+        'view_coupons_btn'          => 'View Your Coupon(s)',
     ),
 
     'tour' => array(

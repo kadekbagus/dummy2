@@ -67,11 +67,12 @@ use \News;
 use \Object;
 use \App;
 use \Media;
-use \OAuth;
+use Artdarek\OAuth\Facade\OAuth;
 
 class MobileCIAPIController extends ControllerAPI
 {
     const APPLICATION_ID = 1;
+    const PAYLOAD_KEY = '--orbit-mall--';
     protected $session = null;
 
     /**
@@ -111,6 +112,8 @@ class MobileCIAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $payloadFromReg = $this->validateRegistrationData($email);
+
             $retailer = $this->getRetailerInfo();
 
             $this->beginTransaction();
@@ -149,6 +152,10 @@ class MobileCIAPIController extends ControllerAPI
             $from_cloud_callback = OrbitInput::get('apikey_id', null) !== null;
 
             if (! is_object($user) || ($user->status === 'pending' && !$from_cloud_callback) ) {
+                if (empty($payload)) {
+                    $payload = $payloadFromReg;
+                }
+
                 return $this->redirectToCloud($email, $retailer, $payload, '', OrbitInput::post('mac_address', ''));
             } else {
                 return $this->loginStage2($user, $retailer);
@@ -488,7 +495,7 @@ class MobileCIAPIController extends ControllerAPI
     {
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
-       
+
 
         $googlePlusUrl = URL::route('mobile-ci.social_google_callback');
 
@@ -680,18 +687,18 @@ class MobileCIAPIController extends ControllerAPI
 
         $recognized = \Input::get('recognized', 'none');
         $code = \Input::get('code', NULL);
-        
-        
+
+
         $googleService = OAuth::consumer( 'Google' );
-        
+
         if ( !empty( $code ) ) {
             try {
 
                 Config::set('orbit.session.availability.query_string', $oldRouteSessionConfigValue);
                 $token = $googleService->requestAccessToken( $code );
-                
+
                 $user = json_decode( $googleService->request( 'https://www.googleapis.com/oauth2/v1/userinfo' ), true );
-                
+
                 $userEmail = isset($user['email']) ? $user['email'] : '';
                 $firstName = isset($user['given_name']) ? $user['given_name'] : '';
                 $lastName = isset($user['family_name']) ? $user['family_name'] : '';
@@ -715,7 +722,7 @@ class MobileCIAPIController extends ControllerAPI
 
                 $orbit_origin = \Input::get('orbit_origin', 'google');
                 $this->prepareSession();
-                
+
                 // There is a chance that user not 'grant' his email while approving our app
                 // so we double check it here
                 if (empty($userEmail)) {
@@ -798,7 +805,7 @@ class MobileCIAPIController extends ControllerAPI
             'recognized' => $recognized
         ];
 
-        
+
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
@@ -2311,21 +2318,6 @@ class MobileCIAPIController extends ControllerAPI
             $languages = $this->getListLanguages($retailer);
 
             if (empty($luckydraw)) {
-                // return View::make('mobile-ci.luckydraw', [
-                //                 'page_title'    => 'LUCKY DRAW',
-                //                 'user'          => $user,
-                //                 'retailer'      => $retailer,
-                //                 'luckydraw'     => null,
-                //                 'numbers'       => [],
-                //                 'total_number'  => null,
-                //                 'prev_url'      => null,
-                //                 'next_url'      => null,
-                //                 'total_pages'   => null,
-                //                 'current_page'  => null,
-                //                 'per_page'      => null,
-                //                 'servertime'    => null,
-                // ]);
-
                 return View::make('mobile-ci.404', [
                                 'page_title'    => Lang::get('mobileci.page_title.not_found'),
                                 'user'          => $user,
@@ -2347,6 +2339,8 @@ class MobileCIAPIController extends ControllerAPI
                 $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
+
+                $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
 
                 if (!empty($luckyDrawTranslation)) {
                     foreach (['lucky_draw_name', 'description'] as $field) {
@@ -2432,10 +2426,14 @@ class MobileCIAPIController extends ControllerAPI
                         for ($x = $totalPages - $pageNumber + 1; $x <= $totalPages; $x++) {
                             $paginationPage[] = $x;
                         }
-                    } else { 
+                    } else {
                         for ($x = $currentPage; $x <= $currentPage + $pageNumber - 1; $x++) {
                             $paginationPage[] = $x;
                         }
+                    }
+                } else {
+                    for ($x = 1; $x <= $totalPages; $x++) {
+                        $paginationPage[] = $x;
                     }
                 }
             }
@@ -2537,6 +2535,8 @@ class MobileCIAPIController extends ControllerAPI
                     ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                     ->where('lucky_draw_id', $luckydraw->lucky_draw_id)->first();
 
+                $luckydraw->lucky_draw_name_display = $luckydraw->lucky_draw_name;
+
                 if (!empty($luckyDrawTranslation)) {
                     foreach (['lucky_draw_name', 'description'] as $field) {
                         //if field translation empty or null, value of field back to english (default)
@@ -2621,7 +2621,7 @@ class MobileCIAPIController extends ControllerAPI
                 $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.prizes');
             } elseif ($mallTime >= $luckydraw->draw_date && $mallTime < $luckydraw->grace_period_date) {
                 $ongoing = FALSE;
-                $pagetitle = $luckydraw->lucky_draw_name . ' ' . Lang::get('mobileci.lucky_draw.winners_and_prizes');
+                $pagetitle = Lang::get('mobileci.lucky_draw.prizes_and_winners');
             }
 
             $activityProductNotes = sprintf('Page viewed: Lucky Draw Winning Numbers & Prizes');
@@ -2979,7 +2979,7 @@ class MobileCIAPIController extends ControllerAPI
                             if ($category->category_name !== 'Customer Service') {
                                 $cso_flag = 1;
                             } else {
-                                $cso_exists = TRUE;
+                                $cso_exists = true;
                             }
                         }
                         if($cso_flag === 1) {
@@ -3004,18 +3004,25 @@ class MobileCIAPIController extends ControllerAPI
             $cs_reedem = false;
 
             // Check exist customer verification number per mall
-            $employeeVerificationNumbers = \UserVerificationNumber::where('merchant_id', $retailer->merchant_id)->count();
-            if ($employeeVerificationNumbers > 0 || $coupons->is_all_employee === 'Y') {
-                $cs_reedem = true;
-            }
+            $employeeVerNumbersActive = \UserVerificationNumber::
+                        join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
+                        ->where('users.status', 'active')
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->count('users.user_id');
 
-            // check if coupon linked to mall cs
-            if ($coupons->is_all_employee === 'N') {
-                $couponcs = Coupon::select(DB::raw("count('promotion_employee.promotion_id') as totalcs"))
-                    ->excludeDeleted('promotions')
-                    ->leftJoin('promotion_employee','promotion_employee.promotion_id','=','promotions.promotion_id')
-                    ->where('promotions.promotion_id','=', $coupons->promotion_id)->first();
-                if ($couponcs->totalcs > 0) {
+            if ($coupons->is_all_employee === 'Y') {
+                if ($employeeVerNumbersActive > 0) {
+                    $cs_reedem = true;
+                }
+            } elseif ($coupons->is_all_employee === 'N') {
+                // Check exist link to cs, and cs must have active status
+                $promotionEmployee = \CouponEmployee::
+                                join('users', 'users.user_id', '=', 'promotion_employee.user_id')
+                                ->where('users.status', 'active')
+                                ->where('promotion_employee.promotion_id', $coupons->promotion_id)
+                                ->count('promotion_employee_id');
+
+                if ($promotionEmployee > 0) {
                     $cs_reedem = true;
                 }
             }
@@ -3620,6 +3627,178 @@ class MobileCIAPIController extends ControllerAPI
                 ->setActivityNameLong('View News Detail Failed')
                 ->setObject(null)
                 ->setModuleName('News')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Message list page
+     *
+     * @param integer    `id`        (required) - The inbox ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getNotificationsView()
+    {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $languages = $this->getListLanguages($retailer);
+
+            $activityPageNotes = sprintf('Page viewed: %s', 'Notification List Page');
+            $activityPage->setUser($user)
+                ->setActivityName('view_notification_list')
+                ->setActivityNameLong('View Notification List')
+                ->setObject(null)
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            $view_data = array(
+                'page_title' => Lang::get('mobileci.page_title.my_messages'),
+                'retailer' => $retailer,
+                'active_user' => ($user->status === 'active'),
+                'languages' => $languages,
+                'user_email' => $user->user_email,
+                'user' => $user
+            );
+            return View::make('mobile-ci.mall-notifications-list', $view_data);
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Notification List');
+            $activityPage->setUser($user)
+                ->setActivityName('view_notification_list')
+                ->setActivityNameLong('View Notification List')
+                ->setObject(null)
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Message detail page
+     *
+     * @param integer    `id`        (required) - The inbox ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getNotificationDetailView()
+    {
+        $user = null;
+        $inbox = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $languages = $this->getListLanguages($retailer);
+
+            $inbox_id = OrbitInput::get('id');
+
+            $inbox = Inbox::excludeDeleted()
+                        ->where('user_id', $user->user_id)
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->where('inbox_id', $inbox_id)
+                        ->first();
+
+            if (! is_object($inbox)) {
+                return View::make('mobile-ci.404', [
+                                'page_title'    => Lang::get('mobileci.page_title.not_found'),
+                                'user'          => $user,
+                                'languages'     => $languages,
+                                'retailer'      => $retailer
+                ]);
+            }
+            
+            $inbox->is_read = 'Y';
+            $inbox->save();
+
+
+            
+            switch ($inbox->inbox_type) {
+                case 'activation':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Activation Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Activation')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+
+                case 'lucky_draw_issuance':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Lucky Draw Number Issuance')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+
+                case 'coupon_issuance':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Coupon Issuance Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('Read Notification Coupon Issuance')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+                
+                default:
+                    break;
+            }
+
+            $view_data = array(
+                'page_title' => $inbox->subject,
+                'retailer' => $retailer,
+                'active_user' => ($user->status === 'active'),
+                'languages' => $languages,
+                'user_email' => $user->user_email,
+                'user' => $user,
+                'inbox' => $inbox
+            );
+            return View::make('mobile-ci.mall-notification-detail', $view_data);
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: %s', 'Notification Detail');
+            $activityPage->setUser($user)
+                ->setActivityName('read_notification')
+                ->setActivityNameLong('Read Notification')
+                ->setObject(null)
+                ->setModuleName('Inbox')
                 ->setNotes($activityPageNotes)
                 ->responseFailed()
                 ->save();
@@ -4308,16 +4487,7 @@ class MobileCIAPIController extends ControllerAPI
                 $retailerId = Config::get('orbit.shop.id');
 
                 $inbox = new Inbox();
-                $inbox->user_id = $user->user_id;
-                $inbox->merchant_id = $retailerId;
-                $inbox->from_id = 0;
-                $inbox->from_name = 'Orbit';
-                $inbox->subject = $subject;
-                $inbox->content = '';
-                $inbox->inbox_type = 'alert';
-                $inbox->status = 'active';
-                $inbox->is_read = 'N';
-                $inbox->save();
+                $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailerId, 'coupon_issuance');
 
                 foreach ($objectCoupons as $object) {
                     $activity = Activity::mobileci()
@@ -4333,22 +4503,6 @@ class MobileCIAPIController extends ControllerAPI
                             ->responseOK()
                             ->save();
                 }
-
-                $retailer = Mall::where('merchant_id', $retailerId)->first();
-                $data = [
-                    'fullName'          => $name,
-                    'subject'           => 'Coupon',
-                    'inbox'             => $inbox,
-                    'retailerName'      => $retailer->name,
-                    'numberOfCoupon'    => count($issuedCoupons),
-                    'coupons'           => $issuedCouponNames,
-                    'mallName'          => $retailer->name
-                ];
-
-                $template = View::make('mobile-ci.push-notification-coupon', $data);
-
-                $inbox->content = $template;
-                $inbox->save();
             }
 
             $this->response->data = $user;
@@ -4413,6 +4567,7 @@ class MobileCIAPIController extends ControllerAPI
             'full_data' => 'no',
             'check_only' => 'no',
         ];
+
         $values = CloudMAC::wrapDataFromBox($values);
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
         $this->response->data = [
@@ -4489,9 +4644,10 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $payload = OrbitInput::get('payload');
+
             if (! empty($payload)) {
                 // Decrypt the payload
-                $key = md5('--orbit-mall--');
+                $key = md5(static::PAYLOAD_KEY);
                 $payload = (new Encrypter($key))->decrypt($payload);
 
                 // The data is in url encoded
@@ -4601,5 +4757,74 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return TRUE;
+    }
+
+    /**
+     * Validate the registration data.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param string $email Consumer's email
+     * @return array|string
+     * @throws Exception
+     */
+    protected function validateRegistrationData($email)
+    {
+        // Only do the validation if there is 'mode=registration' on post body.
+        $mode = OrbitInput::post('mode');
+        if ($mode !== 'registration') {
+            return '';
+        }
+
+        $firstname = OrbitInput::post('first_name');
+        $lastname = OrbitInput::post('last_name');
+        $gender = OrbitInput::post('gender');
+        $birthdate = OrbitInput::post('birth_date');
+
+        $input = array(
+            'first_name' => $firstname,
+            'last_name'  => $lastname,
+            'gender'     => $gender,
+            'birth_date' => $birthdate,
+        );
+
+        $validator = Validator::make(
+            array(
+                'first_name' => $firstname,
+                'last_name'  => $lastname,
+                'gender'     => $gender,
+                'birth_date' => $birthdate,
+            ),
+            array(
+                'first_name' => 'required',
+                'last_name'  => 'required',
+                'gender'     => 'required|in:m,f',
+                'birth_date' => 'required|date_format:d-m-Y',
+            ),
+            array(
+                'birth_date.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date')
+            )
+        );
+
+        if ($validator->fails()) {
+            $errorMessage = $validator->messages()->first();
+            OrbitShopAPI::throwInvalidArgument($errorMessage);
+        }
+
+        // Transform the d-m-y to Y-m-d for storing
+        list($d, $m, $y) = explode('-', $birthdate);
+
+        $payloadData = [
+            'fname'         => $firstname,
+            'lname'         => $lastname,
+            'gender'        => $gender,
+            'birthdate'     => sprintf('%s-%s-%s', $y, $m, $d),
+            'login_from'    => 'form',
+            'email'         => $email
+        ];
+
+        $key = md5(static::PAYLOAD_KEY);
+        $data = http_build_query($payloadData);
+
+        return (new Encrypter($key))->encrypt($data);
     }
 }
