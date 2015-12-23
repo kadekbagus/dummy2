@@ -2042,7 +2042,12 @@ class LuckyDrawAPIController extends ControllerAPI
                                 OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
 
-                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)->first();
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()
+                                ->where('lucky_draw_id', $lucky_draw_id)
+                                ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                ->where('lucky_draw_winner_id', '<>', $winner->lucky_draw_winner_id)
+                                ->first();
+
                             if (is_object($lucky_draw_number_winner_prev)) {
                                 $this->rollBack();
                                 $errorMessage = 'Winning number is duplicated.';
@@ -2082,7 +2087,11 @@ class LuckyDrawAPIController extends ControllerAPI
                                 }
                             }
 
-                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)->first();
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()
+                                ->where('lucky_draw_id', $lucky_draw_id)
+                                ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                ->first();
+
                             if (is_object($lucky_draw_number_winner_prev)) {
                                 $this->rollBack();
                                 $errorMessage = 'Winning number is duplicated.';
@@ -2392,7 +2401,12 @@ class LuckyDrawAPIController extends ControllerAPI
                                 OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
 
-                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)->first();
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()
+                                ->where('lucky_draw_id', $lucky_draw_id)
+                                ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                ->where('lucky_draw_winner_id', '<>', $winner->lucky_draw_winner_id)
+                                ->first();
+
                             if (is_object($lucky_draw_number_winner_prev)) {
                                 $this->rollBack();
                                 $errorMessage = 'Winning number is duplicated.';
@@ -2430,7 +2444,11 @@ class LuckyDrawAPIController extends ControllerAPI
                                 }
                             }
 
-                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)->first();
+                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()
+                                ->where('lucky_draw_id', $lucky_draw_id)
+                                ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                ->first();
+
                             if (is_object($lucky_draw_number_winner_prev)) {
                                 $this->rollBack();
                                 $errorMessage = 'Winning number is duplicated.';

@@ -704,7 +704,6 @@ class MobileCIAPIController extends ControllerAPI
                 $lastName = isset($user['family_name']) ? $user['family_name'] : '';
                 $gender = isset($user['gender']) ? $user['gender'] : '';
                 $socialid = isset($user['id']) ? $user['id'] : '';
-                $socialurl = isset($user['link']) ? $user['link'] : '';
 
                 $data = [
                     'email' => $userEmail,
@@ -713,7 +712,6 @@ class MobileCIAPIController extends ControllerAPI
                     'gender' => $gender,
                     'login_from'  => 'google',
                     'social_id'  => $socialid,
-                    'social_url'  => $socialurl,
                     'mac' => \Input::get('mac_address', ''),
                     'ip' => $_SERVER['REMOTE_ADDR'],
                     'is_captive' => 'yes',
@@ -789,7 +787,6 @@ class MobileCIAPIController extends ControllerAPI
         $lastName = isset($user['last_name']) ? $user['last_name'] : '';
         $gender = isset($user['gender']) ? $user['gender'] : '';
         $socialid = isset($user['id']) ? $user['id'] : '';
-        $socialurl = 'https://www.facebook.com/' . $socialid;
 
         $data = [
             'email' => $userEmail,
@@ -798,7 +795,6 @@ class MobileCIAPIController extends ControllerAPI
             'gender' => $gender,
             'login_from'  => 'facebook',
             'social_id'  => $socialid,
-            'social_url'  => $socialurl,
             'mac' => \Input::get('mac_address', ''),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'is_captive' => 'yes',
@@ -4606,7 +4602,6 @@ class MobileCIAPIController extends ControllerAPI
             $from = OrbitInput::get('from');
 
             $socialid = null;
-            $socialurl = null;
 
             $user = User::with('apikey', 'userdetail', 'role')
                 ->excludeDeleted()
@@ -4655,7 +4650,6 @@ class MobileCIAPIController extends ControllerAPI
 
                 $from = isset($data['login_from']) ? $data['login_from'] : '';
                 $socialid = isset($data['social_id']) ? $data['social_id'] : '';
-                $socialurl = isset($data['social_url']) ? $data['social_url'] : '';
             }
 
             // @author Irianto Pratama <irianto@dominopos.com>
@@ -4694,7 +4688,6 @@ class MobileCIAPIController extends ControllerAPI
                 $acq->acquirer_id = $retailer->merchant_id;
                 $acq->signup_via = $from;
                 $acq->social_id = $socialid;
-                $acq->social_url = $socialurl;
                 $acq->save();
                 $acq->forceBoxReloadUserData($forceReload);
                 // cannot use $user as $user has extra properties added and would fail

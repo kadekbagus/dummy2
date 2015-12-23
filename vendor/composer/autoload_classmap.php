@@ -296,6 +296,7 @@ return array(
     'UserDetail' => $baseDir . '/app/models/UserDetail.php',
     'UserPersonalInterest' => $baseDir . '/app/models/UserPersonalInterest.php',
     'UserRoleTrait' => $baseDir . '/app/models/UserRoleTrait.php',
+    'UserSignin' => $baseDir . '/app/models/UserSignin.php',
     'UserTableSeeder' => $baseDir . '/app/database/seeds/UserTableSeeder.php',
     'UserVerificationNumber' => $baseDir . '/app/models/UserVerificationNumber.php',
     'Whoops\\Module' => $vendorDir . '/filp/whoops/src/deprecated/Zend/Module.php',
