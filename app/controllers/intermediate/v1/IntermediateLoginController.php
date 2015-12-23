@@ -971,9 +971,9 @@ class IntermediateLoginController extends IntermediateBaseController
                 Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload)); 
                 parse_str($payload, $data);
                 
-                if ($data['login_from'] = 'facebook') {
+                if ($data['login_from'] === 'facebook') {
                     $signin_via = 'facebook';
-                } else if ($data['login_from'] = 'google') {
+                } else if ($data['login_from'] === 'google') {
                     $signin_via = 'google';
                 } 
             }

@@ -5,8 +5,17 @@
 </div>
 
 <div class="content-signin">
-    <div class="social-media-wraper">
+    <div class="slogan-container" id="slogan-container">
+        <div class="slogan">
+            Feel The New Shopping Experience
+        </div>
+    </div>
+    <div class="social-media-wraper" id="social-media-wraper">
         <div class="social-media-container">
+            <div class="row">
+                <div class="col-xs-12 text-center label">
+                    You can connect with:
+            </div>
             <div class="row">
                 <div class="col-xs-4 text-center">
                     <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
@@ -49,103 +58,117 @@
 
 <div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-body">
-                <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
-                    <i class="fa fa-times"></i>
-                </button>
-
-                <div id="signin-form-wrapper">
-                    <form  name="signinForm" id="signinForm" action="{{ url('customer/login') }}" method="post">
-                        <div class="form-group">
-                            <input type="text" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
-                        </div>
-                        <div class="modal-footer footer-form-modal">
-                            <div class="row social-media-container">
-                                <div class="col-xs-8 text-left orbit-auto-login">
-                                    <span>Does not have account? <a href="#" id="sign-up-link">Sign up</a></span>
-                                </div>
-                                <div class="col-xs-4 text-right orbit-auto-login">
-                                    <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info icon-button form text-center orbit-auto-login" disabled value="Sign in">
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+        <div class="modal-content" id="signin-form-wrapper">
+            <form  name="signinForm" id="signinForm" action="{{ url('customer/login') }}" method="post">
+                <div class="modal-body">
+                    <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
+                        <i class="fa fa-times"></i>
+                    </button>
+    
+                    <div class="form-group">
+                        <input type="email" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                    </div>
                 </div>
-
-                <div id="signup-form-wrapper" class="hide">
-                    <form  name="signupForm" id="signupForm" action="{{ url('customer/login') }}" method="post">
-                        <div class="form-group">
-                            <input type="text" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                <div class="modal-footer footer-form-modal">
+                    <div class="row">
+                        <div class="col-xs-8 text-left">
+                            <span>Does not have account? <a href="#" id="sign-up-link">Sign up</a></span>
                         </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control userName" value="" placeholder="First Name" name="firstname" id="firstName">
+                        <div class="col-xs-4 text-right">
+                            <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info icon-button form text-center" disabled value="Sign in">
                         </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control" placeholder="Last Name" name="lastname" id="lastName">
-                        </div>
-                        <div class="form-group">
-                            <select class="form-control" name="gender" id="gender">
-                                <option value="">Select Gender</option>
-                                <option value="m">Male</option>
-                                <option value="f">Female</option>
-                            </select>
-
-                        </div>
-                        <div class="form-group date-of-birth">
-                            <div class="row">
-                                <div class="col-xs-4">
-                                    <select class="form-control" name="day">
-                                        <option value="">Day</option>
-                                    @for ($i = 1; $i <= 31; $i++)
-                                        <option value="{{$i}}">{{$i}}</option>
-                                    @endfor
-                                    </select>
-                                </div>
-                                <div class="col-xs-4">
-                                    <select class="form-control" name="month">
-                                        <option value="">Month</option>
-                                    @for ($i = 1; $i <= 12; $i++)
-                                        <option value="{{$i}}">{{$i}}</option>
-                                    @endfor
-                                    </select>
-                                </div>
-                                <div class="col-xs-4">
-                                    <select class="form-control" name="year">
-                                        <option value="">Year</option>
-                                    @for ($i = date('Y'); $i >= date('Y') - 150; $i--)
-                                        <option value="{{$i}}">{{$i}}</option>
-                                    @endfor
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                                By clicking <strong>Sign up</strong> you confirm that you accept
-                                <a target="_blank" href="{{ Config::get('orbit.contact_information.privacy_policy_url') }}">Privacy Policy</a> and
-                                <a target="_blank" href="{{ Config::get('orbit.contact_information.terms_of_service_url') }}">Terms and Conditions</a>
-                        </div>
-                        <div class="modal-footer footer-form-modal">
-                            <div class="row social-media-container">
-                                <div class="col-xs-8 text-left orbit-auto-login">
-                                    <span>Already have an account? <a href="#" id="sign-in-link">Sign in</a></span>
-                                </div>
-                                <div class="col-xs-4 text-right orbit-auto-login">
-                                    <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info icon-button form text-center orbit-auto-login" disabled value="Sign up">
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-
-            </div>
+            </form>
+        </div>
+        <div class="modal-content hide" id="signup-form-wrapper">
+            <form  name="signupForm" id="signupForm" action="{{ url('customer/login') }}" method="post">
+                <div class="modal-body">
+                    <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
+                        <i class="fa fa-times"></i>
+                    </button>
+                    
+                    <span class="mandatory-label">All fields are mandatory</span>
+                    <div class="form-group">
+                        <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control userName" value="" placeholder="First Name" name="firstname" id="firstName">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Last Name" name="lastname" id="lastName">
+                    </div>
+                    <div class="form-group">
+                        <select class="form-control" name="gender" id="gender">
+                            <option value="">Select Gender</option>
+                            <option value="m">Male</option>
+                            <option value="f">Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group date-of-birth">
+                        <div class="row">
+                            <div class="col-xs-4">
+                                <select class="form-control" name="day">
+                                    <option value="">Day</option>
+                                @for ($i = 1; $i <= 31; $i++)
+                                    <option value="{{$i}}">{{$i}}</option>
+                                @endfor
+                                </select>
+                            </div>
+                            <div class="col-xs-4">
+                                <select class="form-control" name="month">
+                                    <option value="">Month</option>
+                                @for ($i = 1; $i <= 12; $i++)
+                                    <option value="{{$i}}">{{$i}}</option>
+                                @endfor
+                                </select>
+                            </div>
+                            <div class="col-xs-4">
+                                <select class="form-control" name="year">
+                                    <option value="">Year</option>
+                                @for ($i = date('Y'); $i >= date('Y') - 150; $i--)
+                                    <option value="{{$i}}">{{$i}}</option>
+                                @endfor
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        By clicking <strong>Sign up</strong> you confirm that you accept
+                        <a target="_blank" href="{{ Config::get('orbit.contact_information.privacy_policy_url') }}">Privacy Policy</a> and
+                        <a target="_blank" href="{{ Config::get('orbit.contact_information.terms_of_service_url') }}">Terms and Conditions</a>
+                    </div>
+                </div>
+                <div class="modal-footer footer-form-modal">
+                    <div class="row">
+                        <div class="col-xs-8 text-left orbit-auto-login">
+                            <span>Already have an account? <a href="#" id="sign-in-link">Sign in</a></span>
+                        </div>
+                        <div class="col-xs-4 text-right orbit-auto-login">
+                            <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info icon-button form text-center orbit-auto-login" disabled value="Sign up">
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script type="text/javascript">
+    toastr.options.closeButton = true;
+    toastr.options.closeDuration = 300;
+    
+    
     var contentHeight = $(window).height() - 90;
     $('.content-signin').height(contentHeight);
+    
+    $('#formModal').on('show.bs.modal', function () {
+        $('#slogan-container, #social-media-wraper').addClass('hide');
+    });
+    
+    $('#formModal').on('hide.bs.modal', function () {
+        $('#slogan-container, #social-media-wraper').removeClass('hide');
+    });
 
     function isValidEmailAddress(emailAddress) {
         var pattern = new RegExp(/^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i);
@@ -198,18 +221,17 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }}
                 }
-            }).done(function (resp, status, xhr) {
-                orbitSignUpForm.isProcessing = false;
+            }).done(function (response, status, xhr) {
                 orbitSignUpForm.disableEnableAllButton();
 
-                if (resp.status === 'error') {
-                    // do something
+                if (response.code !== 0 && response.code !== 302) {
+                    toastr.error(response.message);
                     return;
                 }
 
                 // Cloud redirection?
-                if (resp.data.redirect_to) {
-                    document.location = resp.data.redirect_to;
+                if (response.data.redirect_to) {
+                    document.location = response.data.redirect_to;
                     return;
                 }
 
@@ -355,15 +377,13 @@
      * @author Rio Astamal <rio@dominopos.com>
      * @return void
      */
-    orbitSignUpForm.disableEnableAllButton = function()
-    {
-        if (orbitSignUpForm.isProcessing) {
-            $('#btn-signin-form').val('Please wait...');
-            $('#btn-signup-form').val('Please wait...');
-        } else {
-            $('#btn-signin-form').val('Sign in');
-            $('#btn-signup-form').val('Sign up');
+    orbitSignUpForm.disableEnableAllButton = function () {
+        if (!orbitSignUpForm.isProcessing) {
+            $('#spinner-backdrop').addClass('hide');
+            return;
         }
+        
+        $('#spinner-backdrop').removeClass('hide');
     }
 
     /**
