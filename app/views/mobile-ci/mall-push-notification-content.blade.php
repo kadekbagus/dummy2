@@ -22,21 +22,23 @@
 @elseif($inbox->inbox_type == 'lucky_draw_issuance')
 <div class="row vertically-spaced">
 	<div class="col-xs-12">	
-		<span class="link-spanner" style="height:100%;"></span>
 		<h4>Hello {{$fullName}},</h4>
         <p>{{Lang::get('mobileci.lucky_draw.congratulation')}} {{count($listItem)}} {{Lang::get('mobileci.lucky_draw.no_lucky_draw')}} <strong>{{$item->records[0]->lucky_draw_name}}</strong><br>{{ Lang::get('mobileci.lucky_draw.lucky_draw_info_1') }} {{ date('d M Y H:i', strtotime($dateIssued)) }}.</p>
-        <ol>
-        @foreach ($listItem as $number)
-            <li>{{$number->lucky_draw_number_code}}</li>
-        @endforeach
-        </ol>
+		<p>{{reset($listItem)}} - {{end($listItem)}}</p>        
+        <p style="margin-top:1em">{{Lang::get('mobileci.lucky_draw.goodluck')}}</br><strong>{{$mallName}}</strong></p>
+	</div>
+</div>
+@elseif($inbox->inbox_type == 'lucky_draw_blast')
+<div class="row vertically-spaced">
+	<div class="col-xs-12">	
+		<h4>Hello {{$fullName}},</h4>
+        <p>{{ Lang::get('mobileci.lucky_draw.notification.you_won') }}<b>{{$item->luckyDraw->lucky_draw_name}}</b>{{ Lang::get('mobileci.lucky_draw.notification.to_redeem') }}</p>
         <p style="margin-top:1em">{{Lang::get('mobileci.lucky_draw.goodluck')}}</br><strong>{{$mallName}}</strong></p>
 	</div>
 </div>
 @elseif($inbox->inbox_type == 'coupon_issuance')
 <div class="row vertically-spaced">
 	<div class="col-xs-12">
-		<span class="link-spanner" style="height:100%;"></span>
 		<h4>Hello {{$fullName}},</h4>
         <p>{{Lang::get('mobileci.coupon.congratulations_you_get')}} {{count($listItem)}} @if (count($listItem) > 1) {{Lang::get('mobileci.coupon.here_are_your_coupons')}} @else {{Lang::get('mobileci.coupon.here_is_your_coupon')}} @endif:</p>
         <ol>

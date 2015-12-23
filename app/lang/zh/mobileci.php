@@ -394,6 +394,8 @@ return array(
         'no_notif'                  => 'あなたはここにメッセージを持っていません',
         'load_more_btn'             => 'よりロード',
         'view_coupons_btn'          => ' 查看您的优惠券',
+        'you_won'                   => '你已经赢得了奖品 ',
+        'to_redeem'                 => '。 要兑换您的抽奖奖品，请出示在<b>首页您的抽奖号码 - >幸运抽奖</b>以商场客户服务。',
     ),
 
     'tour' => array(
