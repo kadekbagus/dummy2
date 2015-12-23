@@ -60,7 +60,7 @@
     </div>
 </div>
 <div class="row text-center lucky-number-wrapper">
-    @if((!empty($luckydraw) && $luckydraw->end_date >= $servertime) && $luckydraw->numbers[0]->user_id != NULL)
+    @if(!empty($luckydraw))
     <div class="row vertically-spaced">
         <h4>{{ Lang::get('mobileci.lucky_draw.my_lucky_draw_number') }}</h4>
     </div>

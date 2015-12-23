@@ -2305,7 +2305,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $luckydraw = LuckyDraw::with('translations', 'prizes', 'numbers')->excludeDeleted()->where('mall_id', $retailer->merchant_id)->where('lucky_draw_id', $lucky_draw_id)->first();
+            $luckydraw = LuckyDraw::with('translations', 'prizes')->excludeDeleted()->where('mall_id', $retailer->merchant_id)->where('lucky_draw_id', $lucky_draw_id)->first();
 
             $languages = $this->getListLanguages($retailer);
 
