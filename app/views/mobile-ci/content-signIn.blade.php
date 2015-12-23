@@ -373,14 +373,9 @@
      * @author Rio Astamal <rio@dominopos.com>
      * @return void
      */
-    orbitSignUpForm.disableEnableAllButton = function()
-    {
+    orbitSignUpForm.disableEnableAllButton = function () {
         if (orbitSignUpForm.isProcessing) {
-            $('#btn-signin-form').val('Please wait...');
-            $('#btn-signup-form').val('Please wait...');
-        } else {
-            $('#btn-signin-form').val('Sign in');
-            $('#btn-signup-form').val('Sign up');
+            $('#spinner-backdrop').removeClass('hide');
         }
     }
 
