@@ -24,10 +24,41 @@
                             <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
                                 <span class="link-spanner"></span>
                                 <h4>{{ $luckydraw->lucky_draw_name }}</h4>
+
+                                {{-- Limit description per two line and 64 total character --}}
+                                <?php
+                                    $desc = explode("\n", $luckydraw->description);
+                                ?>
                                 @if (mb_strlen($luckydraw->description) > 64)
-                                <p>{{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') }}} ... </p>
+                                    @if (count($desc) > 2)
+                                        <?php
+                                            $two_row = array_slice($desc, 0, 2);
+                                        ?>
+                                        @foreach ($two_row as $key => $value)
+                                            @if ($key === 0)
+                                                {{{ $value }}} <br>
+                                            @else
+                                                {{{ $value }}} ...
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        {{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') . '...' }}}
+                                    @endif
                                 @else
-                                <p>{{{ $luckydraw->description }}}</p>
+                                    @if (count($desc) > 2)
+                                        <?php
+                                            $two_row = array_slice($desc, 0, 2);
+                                        ?>
+                                        @foreach ($two_row as $key => $value)
+                                            @if ($key === 0)
+                                                {{{ $value }}} <br>
+                                            @else
+                                                {{{ $value }}} ...
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        {{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') }}}
+                                    @endif
                                 @endif
                             </a>
                         </div>
@@ -246,8 +277,8 @@
             var ph = $('.catalogue').height();
             $(this).css('margin-top', ((ph-h)/2) + 'px');
         });
-    }); 
-    
+    });
+
     $(window).resize(function(){
         $('.catalogue-img img').each(function(){
             var h = $(this).height();
