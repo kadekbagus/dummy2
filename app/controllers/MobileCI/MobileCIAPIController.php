@@ -781,7 +781,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $response = $fb->get('/me?fields=email,name,first_name,last_name,gender', $accessToken->getValue());
         $user = $response->getGraphUser();
-        
+
         $userEmail = isset($user['email']) ? $user['email'] : '';
         $firstName = isset($user['first_name']) ? $user['first_name'] : '';
         $lastName = isset($user['last_name']) ? $user['last_name'] : '';
@@ -3730,12 +3730,12 @@ class MobileCIAPIController extends ControllerAPI
                                 'retailer'      => $retailer
                 ]);
             }
-            
+
             $inbox->is_read = 'Y';
             $inbox->save();
 
 
-            
+
             switch ($inbox->inbox_type) {
                 case 'activation':
                     $activityPageNotes = sprintf('Page viewed: %s', 'Activation Notification Detail Page');
@@ -3772,7 +3772,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->responseOK()
                         ->save();
                     break;
-                
+
                 default:
                     break;
             }
@@ -4654,7 +4654,8 @@ class MobileCIAPIController extends ControllerAPI
 
             // @author Irianto Pratama <irianto@dominopos.com>
             // send email if user status pending
-            if ($user->status === 'pending' && $from !== 'facebook') {
+            $socialmediaList = ['facebook', 'google'];
+            if ($user->status === 'pending' && ! in_array($from, $socialmediaList)) {
 
                 $mall_time = Carbon::now($retailer->timezone->timezone_name);
                 $pending_date = $mall_time;
