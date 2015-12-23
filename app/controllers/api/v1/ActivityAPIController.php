@@ -3056,7 +3056,7 @@ class ActivityAPIController extends ControllerAPI
 					from {$tablePrefix}activities
 					-- filter by date
 					where (`group` = 'mobile-ci'
-					    or (`group` = 'portal' and activity_type in ('activation'))
+					    or (`group` = 'portal' and activity_type in ('activation','create'))
 					    or (`group` = 'cs-portal' and activity_type in ('registration')))
 					    and response_status = 'OK' and location_id = ?
 					    and created_at between ? and ?
