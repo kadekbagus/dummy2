@@ -101,6 +101,14 @@ html {
     }
 }
 
+.mandatory-label {
+    display: block;
+    font-size: 12px;
+    font-style: italic;
+    clear: both;
+    margin-bottom: 8px;
+}
+
 .content-signin {
     .slogan-container {
         position: absolute;
@@ -226,5 +234,14 @@ html {
             padding-left: 0;
             padding-right: 0;
         }
+    }
+}
+
+#signinForm {
+    #email:invalid {
+        border: 1px solid #fd0000;
+    }
+    #email:valid {
+        border: 1px solid #55bdf0;
     }
 }

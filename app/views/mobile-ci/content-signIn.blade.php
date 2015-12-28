@@ -66,7 +66,7 @@
                     </button>
     
                     <div class="form-group">
-                        <input type="text" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                        <input type="email" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
                 </div>
                 <div class="modal-footer footer-form-modal">
@@ -88,8 +88,9 @@
                         <i class="fa fa-times"></i>
                     </button>
                     
+                    <span class="mandatory-label">All fields are mandatory</span>
                     <div class="form-group">
-                        <input type="text" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
+                        <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
                     <div class="form-group">
                         <input type="text" class="form-control userName" value="" placeholder="First Name" name="firstname" id="firstName">
@@ -154,6 +155,10 @@
 </div>
 
 <script type="text/javascript">
+    toastr.options.closeButton = true;
+    toastr.options.closeDuration = 300;
+    
+    
     var contentHeight = $(window).height() - 90;
     $('.content-signin').height(contentHeight);
     
@@ -216,18 +221,17 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }}
                 }
-            }).done(function (resp, status, xhr) {
-                orbitSignUpForm.isProcessing = false;
+            }).done(function (response, status, xhr) {
                 orbitSignUpForm.disableEnableAllButton();
 
-                if (resp.status === 'error') {
-                    // do something
+                if (response.code !== 0 && response.code !== 302) {
+                    toastr.error(response.message);
                     return;
                 }
 
                 // Cloud redirection?
-                if (resp.data.redirect_to) {
-                    document.location = resp.data.redirect_to;
+                if (response.data.redirect_to) {
+                    document.location = response.data.redirect_to;
                     return;
                 }
 
@@ -373,15 +377,13 @@
      * @author Rio Astamal <rio@dominopos.com>
      * @return void
      */
-    orbitSignUpForm.disableEnableAllButton = function()
-    {
-        if (orbitSignUpForm.isProcessing) {
-            $('#btn-signin-form').val('Please wait...');
-            $('#btn-signup-form').val('Please wait...');
-        } else {
-            $('#btn-signin-form').val('Sign in');
-            $('#btn-signup-form').val('Sign up');
+    orbitSignUpForm.disableEnableAllButton = function () {
+        if (!orbitSignUpForm.isProcessing) {
+            $('#spinner-backdrop').addClass('hide');
+            return;
         }
+        
+        $('#spinner-backdrop').removeClass('hide');
     }
 
     /**
