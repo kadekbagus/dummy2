@@ -2385,38 +2385,47 @@ class LuckyDrawAPIController extends ControllerAPI
                     // $existing_winning_numbers->delete(TRUE);
 
                     foreach($prize_winner->winners as $winner) {
-                        // check issued number existance
-                        $lucky_draw_number = LuckyDrawNumber::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_number_code', $winner->lucky_draw_number_code)->first();
-                        if (! is_object($lucky_draw_number)) {
-                            $errorMessage = 'Lucky draw number (' . $winner->lucky_draw_number_code . ') is not found.';
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
+                        // check if empty winner code on existing number
+                        //if (! empty($winner->lucky_draw_number_code)) {
 
                         // if the lucky_draw_winner_id is specified then update the lucky draw winner number
                         if (isset($winner->lucky_draw_winner_id)) {
-                            // check already existing number for update
-                            $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_id', $winner->lucky_draw_winner_id)->first();
-                            if (! is_object($lucky_draw_number_winner)) {
-                                $errorMessage = 'Lucky draw winner number not found.';
-                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            if (! empty($winner->lucky_draw_number_code)) {
+                                // check issued number existance
+                                $lucky_draw_number = LuckyDrawNumber::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_number_code', $winner->lucky_draw_number_code)->first();
+                                if (! is_object($lucky_draw_number)) {
+                                    $errorMessage = 'Lucky draw number (' . $winner->lucky_draw_number_code . ') is not found.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+                                // check already existing number for update
+                                $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_id', $winner->lucky_draw_winner_id)->first();
+                                if (! is_object($lucky_draw_number_winner)) {
+                                    $errorMessage = 'Lucky draw winner number not found.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+
+                                $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()
+                                    ->where('lucky_draw_id', $lucky_draw_id)
+                                    ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                    ->where('lucky_draw_winner_id', '<>', $winner->lucky_draw_winner_id)
+                                    ->first();
+
+                                if (is_object($lucky_draw_number_winner_prev)) {
+                                    $this->rollBack();
+                                    $errorMessage = 'Winning number is duplicated.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+
+                                $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
+                                $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
+                                $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
+                                $lucky_draw_number_winner->save();
+                            } else {
+                                $lucky_draw_number_winner->lucky_draw_winner_code = '';
+                                $lucky_draw_number_winner->lucky_draw_number_id = null;
+                                $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
+                                $lucky_draw_number_winner->save();
                             }
-
-                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()
-                                ->where('lucky_draw_id', $lucky_draw_id)
-                                ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
-                                ->where('lucky_draw_winner_id', '<>', $winner->lucky_draw_winner_id)
-                                ->first();
-
-                            if (is_object($lucky_draw_number_winner_prev)) {
-                                $this->rollBack();
-                                $errorMessage = 'Winning number is duplicated.';
-                                OrbitShopAPI::throwInvalidArgument($errorMessage);
-                            }
-
-                            $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
-                            $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
-                            $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
-                            $lucky_draw_number_winner->save();
                         } else {
                             // if these two conditional maybe included in lucky draw campaign setup then it should be changed from config to LuckyDraw
                             // conditional check for someone has already won another prize
@@ -3557,6 +3566,235 @@ class LuckyDrawAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('update_lucky_draw_prize')
                     ->setActivityNameLong('Update Lucky Draw Prize Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+        return $this->render($httpCode);
+    }
+
+    /**
+     * POST - Create New Lucky Draw Announcement
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string   `merchant_id|mall_id`          (required)
+     * @param string   `lucky_draw_id`                (required)
+     * @param string   `lucky_announcement_id`        (required)
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postBlastLuckyDrawAnnouncement()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('create');
+
+        $user = NULL;
+        $lucky_draw_announcement = NULL;
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.before.auth', array($this));
+
+            $this->checkAuth();
+
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.before.authz', array($this, $user));
+
+/*
+            if (! ACL::create($user)->isAllowed('create_lucky_draw')) {
+                Event::fire('orbit.luckydraw.postblastluckydrawannouncement.authz.notallowed', array($this, $user));
+                $createLuckyDrawLang = Lang::get('validation.orbit.actionlist.new_lucky_draw');
+                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createLuckyDrawLang));
+                ACL::throwAccessForbidden($message);
+            }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            // set mall id
+            $mall_id = OrbitInput::post('current_mall', OrbitInput::post('mall_id', OrbitInput::post('merchant_id')));
+            if (trim($mall_id) === '') {
+                // if not being sent, then set to current box mall id
+                $mall_id = Config::get('orbit.shop.id');
+            }
+
+            $lucky_draw_id = OrbitInput::post('lucky_draw_id');
+            $lucky_announcement_id = OrbitInput::post('lucky_draw_announcement_id');
+
+            // set default value for status
+            $status = OrbitInput::post('status');
+            if (trim($status) === '') {
+                $status = 'inactive';
+            }
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            $validator = Validator::make(
+                array(
+                    'mall_id'                  => $mall_id,
+                    'lucky_draw_id'            => $lucky_draw_id,
+                    'lucky_draw_announcement_id'    => $lucky_announcement_id,
+                ),
+                array(
+                    'mall_id'                  => 'required|orbit.empty.mall',
+                    'lucky_draw_id'            => 'required|orbit.empty.lucky_draw',
+                    'lucky_draw_announcement_id'    => 'required|orbit.empty.lucky_draw_announcement',
+                )
+            );
+
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.after.validation', array($this, $validator));
+
+            $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
+
+            $lucky_draw = App::make('orbit.empty.lucky_draw');
+            
+            if (Carbon::now($mall->timezone->timezone_name) < $lucky_draw->draw_date) {
+                $errorMessage = "Cannot blast the winner. This lucky draw's draw date is not reached yet.";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (Carbon::now($mall->timezone->timezone_name) > $lucky_draw->grace_period_date) {
+                $errorMessage = "Cannot blast the winner. This lucky draw has ended.";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $lucky_draw_announcement = LuckyDrawAnnouncement::with('luckyDraw.prizes.winners.number.user')
+                ->excludeDeleted()
+                ->where('lucky_draw_id', $lucky_draw_id)
+                ->where('lucky_draw_announcement_id', $lucky_announcement_id)
+                ->first();
+
+            $lucky_draw_announcement->blasted_at = Carbon::now($mall->timezone->timezone_name);
+            $lucky_draw_announcement->save();
+
+            $this->response->data = $lucky_draw_announcement;
+
+            // create notification
+            foreach ($lucky_draw_announcement->luckyDraw->prizes as $prize) {
+                foreach ($prize->winners as $winner) {
+                    $user_id = $winner->number->user->user_id;
+                    $inbox = new Inbox();
+                    $inbox->addToInbox($user_id, $lucky_draw_announcement, $mall_id, 'lucky_draw_blast');
+                }
+            }
+
+            $lucky_draw->touch();
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('Lucky Draw Winner Announcement Blast: %s', $lucky_draw_announcement->lucky_draw_name);
+            $activity->setUser($user)
+                    ->setActivityName('blast_lucky_draw_announcement')
+                    ->setActivityNameLong('Blast Lucky Draw Winner Announcement')
+                    ->setObject($lucky_draw_announcement)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.after.commit', array($this, $lucky_draw_announcement  ));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('blast_lucky_draw_announcement')
+                    ->setActivityNameLong('Blast Lucky Draw Winner Announcement')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('blast_lucky_draw_announcement')
+                    ->setActivityNameLong('Blast Lucky Draw Winner Announcement')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('blast_lucky_draw_announcement')
+                    ->setActivityNameLong('Blast Lucky Draw Winner Announcement')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.luckydraw.postblastluckydrawannouncement.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = [$e->getLine(), $e->getFile()];
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('blast_lucky_draw_announcement')
+                    ->setActivityNameLong('Blast Lucky Draw Winner Announcement')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
         }
