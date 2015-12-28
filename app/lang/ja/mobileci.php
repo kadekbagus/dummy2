@@ -54,6 +54,7 @@ return array(
         'new_promotions_coming_soon' => 'すぐに来ている我々の新しい昇進をチェックしてください。',
         'how_to_get_coupons'         => 'クーポンを得る方法はカスタマーサービスに確認してください。',
         'find_our_exciting'          => '私たちのエキサイティングなお得な情報や、ここで最新のニュースを検索. 車を獲得するチャンスをあなたのトランザクションの領収書を交換し、取得することを忘れいけません!',
+        'latest_luckydraw_coming_soon' => 'すぐに来ている私たちの最新の抽選をご確認ください。',
     ),
 
     // modal specific lang
@@ -394,6 +395,8 @@ return array(
         'no_notif'                  => '你有没有消息',
         'load_more_btn'             => '载入更多',
         'view_coupons_btn'          => 'あなたのクーポンを表示',
+        'you_won'                   => 'あなたは賞金のために獲得しています ',
+        'to_redeem'                 => '。あなたのラッキードロー賞品を償還するために、<B>ホームページでの抽選番号を表示してください - >ラッキーモールの顧客サービスに</ B>を描画します。',
     ),
 
     'tour' => array(

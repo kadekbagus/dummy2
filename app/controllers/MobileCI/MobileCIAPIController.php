@@ -4649,7 +4649,7 @@ class MobileCIAPIController extends ControllerAPI
                 parse_str($payload, $data);
 
                 $from = isset($data['login_from']) ? $data['login_from'] : '';
-                $socialid = isset($data['social_id']) ? $data['social_id'] : '';
+                $socialid = isset($data['social_id']) ? $data['social_id'] : null;
             }
 
             // @author Irianto Pratama <irianto@dominopos.com>

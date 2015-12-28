@@ -54,6 +54,7 @@ return array(
         'new_promotions_coming_soon' => 'Check out our new promotions coming soon.',
         'how_to_get_coupons'         => 'Please check with customer service how to get coupons.',
         'find_our_exciting'          => 'Find our exciting deals and latest news here. Dont forget to exchange your transaction receipts and get a chance to win a car!',
+        'latest_luckydraw_coming_soon' => 'Check out our lucky draws coming soon.',
     ),
 
     // modal specific lang
@@ -394,6 +395,9 @@ return array(
         'no_notif'                  => 'You have no message(s)',
         'load_more_btn'             => 'Load More',
         'view_coupons_btn'          => 'View Your Coupon(s)',
+        'congratulation'            => 'Congratulations!',
+        'you_won'                   => 'You have won a prize for ',
+        'to_redeem'                 => '. To redeem your lucky draw prize, please show your lucky draw numbers in <b>Home Page -> Lucky Draws</b> to mall customer service.',
     ),
 
     'tour' => array(
