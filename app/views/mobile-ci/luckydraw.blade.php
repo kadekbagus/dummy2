@@ -54,7 +54,7 @@
 @endif
 <div class="row counter">
     <div class="col-xs-12 text-center">
-        <div class="countdown @if($luckydraw->status == 'active' && $total_number > 0) @if(strtotime($servertime) < strtotime($luckydraw->end_date)) active-countdown @else inactive-countdown @endif @elseif($luckydraw->status == 'active' && $total_number === 0) danger-countdown @else danger-countdown @endif">
+        <div class="countdown @if($luckydraw->status == 'active') @if(strtotime($servertime) < strtotime($luckydraw->end_date)) active-countdown @else inactive-countdown @endif @elseif($luckydraw->status == 'active') inactive-countdown @else inactive-countdown @endif">
             <span id="clock" @if(empty($luckydraw)) class="no-luck" @endif></span>
         </div>
     </div>
