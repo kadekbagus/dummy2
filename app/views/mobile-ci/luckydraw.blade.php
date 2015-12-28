@@ -14,7 +14,6 @@
 </div>
 <div class="row">
     <div class="col-xs-12 text-left">
-        <h4>{{ Lang::get('mobileci.lucky_draw.description') }}</h4>
         <p>
             {{ nl2br($luckydraw->description) }}
         </p>
@@ -61,7 +60,7 @@
     </div>
 </div>
 <div class="row text-center lucky-number-wrapper">
-    @if(!empty($luckydraw))
+    @if(!empty($luckydraw) && $luckydraw->end_date >= $servertime)
     <div class="row vertically-spaced">
         <h4>{{ Lang::get('mobileci.lucky_draw.my_lucky_draw_number') }}</h4>
     </div>

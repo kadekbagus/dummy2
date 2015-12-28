@@ -2016,7 +2016,7 @@ class CouponAPIController extends ControllerAPI
             $activity->setUser($user)
                     ->setActivityName('redeem_coupon')
                     ->setActivityNameLong('Coupon Redemption (Successful)')
-                    ->setObject($issuedcoupon)
+                    ->setObject($coupon)
                     ->setNotes($activityNotes)
                     ->setLocation($mall)
                     ->setModuleName('Coupon')

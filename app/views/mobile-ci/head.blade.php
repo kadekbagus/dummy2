@@ -22,7 +22,9 @@
 {{ HTML::style('mobile-ci/stylesheet/bootstrap-tour.min.css') }}
 {{ HTML::style('mobile-ci/stylesheet/' . Orbit\Helper\Asset\Stylesheet::create()->getMallCss()) }}
 {{ HTML::style('mobile-ci/stylesheet/responsiveslides.css') }}
+{{ HTML::style('mobile-ci/vendor/toastr/toastr.min.css') }}
 {{ HTML::script('mobile-ci/scripts/jquery-2.1.1.min.js') }}
 {{ HTML::script('mobile-ci/scripts/bootstrap.min.js') }}
 {{ HTML::script('mobile-ci/scripts/bootstrap-tour.js') }}
 {{ HTML::script('mobile-ci/scripts/config.js') }}
+{{ HTML::script('mobile-ci/vendor/toastr/toastr.min.js') }}

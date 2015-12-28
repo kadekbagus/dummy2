@@ -483,6 +483,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
         // do the usual login stuff
         $_POST['email'] = $email;
+
         $this->postLoginMobileCI(); // sets cookies & inserts activity - we ignore the JSON result
 
         /** @var \MobileCI\MobileCIAPIController $mobile_ci */
@@ -866,6 +867,7 @@ class IntermediateLoginController extends IntermediateBaseController
                             ->setActivityType('login');
 
         $response = MobileCIAPIController::create('raw')->postLoginInShop();
+
         if ($response->code === 0)
         {
             // Register User Mac Address to the Router
@@ -916,6 +918,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
+
             if ($user->role->role_name === 'Consumer') {
                 // For login page
                 $expireTime = time() + 3600 * 24 * 365 * 5;
@@ -934,7 +937,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     setcookie('orbit_firstname', 'Orbit Guest', time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                 }
             }
-
+   
             // Successfull login
             $activity->setUser($user)
                      ->setActivityName('login_ok')
@@ -955,6 +958,39 @@ class IntermediateLoginController extends IntermediateBaseController
 
         // Save the activity
         $activity->setModuleName('Application')->save();
+
+        // save to user signin table  
+        if ($response->code === 0) {    
+            
+            $signin_via = 'form';
+            $payload = '';
+
+            if (! empty(OrbitInput::get('payload'))) {
+                $payload = OrbitInput::get('payload');
+            } else {
+                $payload = OrbitInput::post('payload');
+            }
+
+            if (! empty($payload)) {
+                $key = md5('--orbit-mall--');
+                $payload = (new Encrypter($key))->decrypt($payload);
+                Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload)); 
+                parse_str($payload, $data);
+                
+                if ($data['login_from'] === 'facebook') {
+                    $signin_via = 'facebook';
+                } else if ($data['login_from'] === 'google') {
+                    $signin_via = 'google';
+                }
+            }
+             
+            $newUserSignin = new UserSignin();
+            $newUserSignin->user_id = $user->user_id;
+            $newUserSignin->signin_via = $signin_via;
+            $newUserSignin->location_id = Config::get('orbit.shop.id');
+            $newUserSignin->activity_id = $activity->activity_id;
+            $newUserSignin->save();
+        }          
 
         return $this->render($response);
     }
@@ -1080,7 +1116,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 $customer->userdetail->gender = 'f';
             }
 
-            if ($from === 'facebook' && $customer->status === 'pending') {
+            if (($from === 'google' || $from === 'facebook') && $customer->status === 'pending') {
                 // Only set if the previous status is pending
                 $customer->status = 'active';   // make it active
             }
@@ -1137,6 +1173,18 @@ class IntermediateLoginController extends IntermediateBaseController
                     } else if ($from === 'form') {
                         $registration_activity->activity_name_long = 'Sign Up with email address';
                         $registration_activity->save();
+                    } else if ($from === 'google') {
+                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Google+)';
+                        $registration_activity->save();
+
+                        // @author Irianto Pratama <irianto@dominopos.com>
+                        // send email if user status active
+                        if ($customer->status === 'active') {
+                            // Send email process to the queue
+                            \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                                'user_id' => $customer->user_id
+                            ]);
+                        }
                     }
                 }
             }
@@ -1147,6 +1195,10 @@ class IntermediateLoginController extends IntermediateBaseController
             switch ($from) {
                 case 'facebook':
                     $activityNameLong = 'Sign In'; //Sign In via Facebook
+                    break;
+
+                case 'google':
+                    $activityNameLong = 'Sign In'; //Sign In via Google
                     break;
 
                 case 'form':

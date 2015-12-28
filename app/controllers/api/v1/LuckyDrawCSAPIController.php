@@ -544,7 +544,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_numbers) {
+            if ((($activeluckydraw->max_number - $activeluckydraw->min_number + 1) == $activeluckydraw->generated_numbers) && ($activeluckydraw->free_number_batch === '0')) {
                 $this->rollBack();
                 $errorMessage = Lang::get('validation.orbit.exceed.lucky_draw.max_issuance', ['max_number' => $activeluckydraw->generated_numbers]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -556,7 +556,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
             // determine the starting number
             $starting_number_code = DB::table('lucky_draw_numbers')
                 ->where('lucky_draw_id', $luckyDrawId)
-                ->max('lucky_draw_number_code');
+                ->max(DB::raw('CAST(lucky_draw_number_code AS UNSIGNED)'));
 
             if (empty ($starting_number_code)) {
                 $starting_number_code = $activeluckydraw->min_number;
@@ -718,7 +718,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Insert to alert system
             $inbox = new Inbox();
-            $inbox->addToInbox($userId, $data, $mallId, 'lucky_draw_issuance', "You've got lucky number(s)");
+            $inbox->addToInbox($userId, $data, $mallId, 'lucky_draw_issuance');
 
             // Commit the changes
             $this->commit();
@@ -1311,7 +1311,8 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
             // Insert to alert system
             $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
-            $this->insertCouponInbox($userId, $issuedCoupons, $issuedCouponNames, $mallId);
+            $inbox = new Inbox();
+            $inbox->addToInbox($userId, $issuedCouponNames, $mallId, 'coupon_issuance');
 
             // Commit the changes
             $this->commit();
@@ -1439,14 +1440,15 @@ class LuckyDrawCSAPIController extends ControllerAPI
         // Check the existance of lucky draw id
         Validator::extend('orbit.empty.lucky_draw', function ($attribute, $value, $parameters) {
             $luckyDraw = LuckyDraw::active()->where('lucky_draw_id', $value)->first();
+            $mall = App::make('orbit.empty.mall');
 
             if (empty($luckyDraw)) {
                 $errorMessage = sprintf('Lucky draw ID is not found.', $value);
                 OrbitShopAPI::throwInvalidArgument(htmlentities($errorMessage));
             }
 
-            $now = strtotime(date('Y-m-d'));
-            $luckyDrawDate = strtotime(date('Y-m-d', strtotime($luckyDraw->end_date)));
+            $now = strtotime(Carbon::now($mall->timezone->timezone_name));
+            $luckyDrawDate = strtotime($luckyDraw->end_date);
 
             if ($now > $luckyDrawDate) {
                 $errorMessage = sprintf('The lucky draw already expired on %s.', date('d/m/Y', strtotime($luckyDraw->end_date)));
@@ -1485,7 +1487,7 @@ class LuckyDrawCSAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Mall::excludeDeleted()
+            $mall = Mall::with('timezone')->excludeDeleted()
                         ->where('merchant_id', $value)
                         ->first();
 
