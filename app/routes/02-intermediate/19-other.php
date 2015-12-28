@@ -14,25 +14,25 @@ Route::post('/app/v1/box-control/shutdown', 'IntermediateAuthController@Shutdown
  */
 Route::post('/app/v1/box-control/reboot', 'IntermediateAuthController@Shutdown_postRebootBox');
 
-/**
- * Poll new alert
- */
-Route::get('/app/v1/inbox/unread-count', 'IntermediateAuthController@Inbox_getPollAlert');
+// /**
+//  * Poll new alert
+//  */
+// Route::get('/app/v1/inbox/unread-count', 'IntermediateAuthController@Inbox_getPollAlert');
 
-/**
- * Change the flag of alert to read
- */
-Route::post('/app/v1/inbox/read', 'IntermediateAuthController@Inbox_postReadAlert');
+// /**
+//  * Change the flag of alert to read
+//  */
+// Route::post('/app/v1/inbox/read', 'IntermediateAuthController@Inbox_postReadAlert');
 
-/**
- * Poll new alert
- */
-Route::get('/app/v1/inbox/list', 'IntermediateAuthController@Inbox_getSearchInbox');
+// /**
+//  * Poll new alert
+//  */
+// Route::get('/app/v1/inbox/list', 'IntermediateAuthController@Inbox_getSearchInbox');
 
-/**
- * Change the status of alert to deleted
- */
-Route::post('/app/v1/inbox/delete', 'IntermediateAuthController@Inbox_postDeleteAlert');
+// /**
+//  * Change the status of alert to deleted
+//  */
+// Route::post('/app/v1/inbox/delete', 'IntermediateAuthController@Inbox_postDeleteAlert');
 
 /**
  * Get the server time

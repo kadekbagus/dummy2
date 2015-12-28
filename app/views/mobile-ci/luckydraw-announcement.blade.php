@@ -42,7 +42,6 @@
 <div class="row">
     <div class="col-xs-12 text-left">
         @if(isset($luckydraw->announcements[0]))
-            <h4>{{ Lang::get('mobileci.lucky_draw.information') }}</h4>
             <p>
                 {{ $luckydraw->announcements[0]->description }}
             </p>
@@ -101,7 +100,7 @@
 
 <div class="row text-center vertically-spaced">
     <div class="col-xs-12">
-        <a href="{{ url('customer/luckydraws') }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.modals.ok') }}</a>
+        <a href="javascript:history.back()" class="btn btn-info btn-block">{{ Lang::get('mobileci.modals.ok') }}</a>
     </div>
 </div>
 

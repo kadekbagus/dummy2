@@ -146,11 +146,13 @@ return array(
         'start_button_mall' => 'Enter Mall',
         'register'          => 'Daftar',
         'login_via_facebook' => 'Login via Facebook',
+        'login_via_google' => 'Login via Google+',
         'or_between_email_and_fb' => 'OR',
         'agree_to_terms' => 'I agree to Orbit <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> and <a href="%s" id="orbit-tos-anchor">Terms and Conditions</a>',
         'must_accept_terms' => 'You have to agree to Orbit <strong>Privacy Policy</strong> and <strong>Terms and Conditions</strong> before you can proceed to login',
         'accept_modal_button_text' => 'OK',
         'connecting_to_facebook' => 'Connecting to Facebook...',
+        'connecting_to_google' => 'Connecting to Google...',
     ),
 
     'catalogue' => array(
@@ -335,8 +337,8 @@ return array(
         'hello'                     => 'Hello',
         'goodluck'                  => 'Goodluck!',
         'congratulation'            => 'Congratulations you get ',
-        'no_lucky_draw'             => 'lucky number draw ',
-        'lucky_draw_info_1'         => 'Here is a lucky number that you can draw on ',
+        'no_lucky_draw'             => 'lucky draw number(s) ',
+        'lucky_draw_info_1'         => ' on ',
         'lucky_draw_info_2'         => 'Note: The numbers shown here are only ',
         'lucky_draw_info_3'         => 'The first number that you can ',
         'lucky_draw_info_4'         => 'Total Currently you have ',
@@ -384,6 +386,17 @@ return array(
         'prizes_and_winners'        => 'Prizes &amp; Winners',
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
+    ),
+    
+    'notification' => array(
+        'delete_mode'               => 'Delete mode',
+        'view_lucky_draw_btn'       => 'View Lucky Draws',
+        'no_notif'                  => 'You have no message(s)',
+        'load_more_btn'             => 'Load More',
+        'view_coupons_btn'          => 'View Your Coupon(s)',
+        'congratulation'            => 'Congratulations!',
+        'you_won'                   => 'You have won a prize for ',
+        'to_redeem'                 => '. To redeem your lucky draw prize, please show your lucky draw numbers in <b>Home Page -> Lucky Draws</b> to mall customer service.',
     ),
 
     'tour' => array(

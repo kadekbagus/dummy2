@@ -6,7 +6,7 @@
         border-bottom: 1px solid #E4E4E4;
 
         a {
-            display: flex;
+            display: block;
 
             .notification-icon {
                 flex: 1;
@@ -48,15 +48,14 @@
                     }
                 }
             }
+        }
+        .col-xs-1{
+            padding: 0;
 
-            .col-xs-1{
-                padding: 0;
-
-                .delete-button-child {
-                    font-size: 1.6em;
-                    color: @theme-main-complimentary;
-                    display: none;
-                }
+            .delete-button-child {
+                font-size: 1.6em;
+                color: #FF0000;
+                display: none;
             }
         }
     }
@@ -127,10 +126,18 @@
     right: -.9em;
     width: 2em;
     height: 2em;
-    line-height: 1.6em;
+    line-height: 1.8em;
     border-radius: 50%;
     text-align: center;
     color: #fff;
     background: rgb(255, 0, 0);
     border: 1px solid #FFF;
+    font-family: sans-serif;
+}
+
+.loadmore {
+    background: @theme-main-complimentary;
+    color: @theme-main-complimentary-2;
+    margin-top: 15px;
+    display:none;
 }

@@ -369,6 +369,17 @@ class ActivityAPIController extends ControllerAPI
                 $activities->where('activities.event_name', 'like', "%$name%");
             });
 
+            OrbitInput::get('lucky_draw_names', function($names) use ($activities) {
+                $activities->where('activities.object_name', 'LuckyDraw')
+                           ->whereIn('activities.object_display_name', $names);
+            });
+
+            // Filter by matching object_display_name for lucky draw pattern
+            OrbitInput::get('lucky_draw_name_like', function($name) use ($activities) {
+                $activities->where('activities.object_name', 'LuckyDraw')
+                           ->where('activities.object_display_name', 'like', "%$name%");
+            });
+
             // Filter by staff Ids
             OrbitInput::get('staff_ids', function($staff) use ($activities) {
                 $activities->whereIn('activities.staff_id', $staff);

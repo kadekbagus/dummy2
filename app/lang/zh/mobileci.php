@@ -35,7 +35,7 @@ return array(
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
         'lucky_draws'        => '幸运大抽奖',
-        'my_messages'       => 'zh:MY MESSAGES',
+        'my_messages'        => '我的消息',
     ),
 
     'widgets' => array(
@@ -146,11 +146,13 @@ return array(
         'start_button_mall' => '进入商城',
         'register'          => '定位',
         'login_via_facebook'            => '通过 Facebook 登录',
+        'login_via_google'            => '通过谷歌首页',
         'or_between_email_and_fb'       => '或',
         'agree_to_terms'                => '我同意 Orbit <a href="%s" id="orbit-privacy-policy-anchor">隐私政策</a> 和 <a href="%s" id="orbit-tos-anchor">条款和条件</a>',
         'must_accept_terms'             => '在您能继续登录前，您必须赞成 Orbit <strong>隐私政策</strong> 和 <strong>条款和条件</strong>',
         'accept_modal_button_text'      => '是',
         'connecting_to_facebook'        => '连接到 Facebook...',
+        'connecting_to_google'        => '连接到 Google...',
     ),
 
     'catalogue' => array(
@@ -384,6 +386,16 @@ return array(
         'prizes_and_winners'        => '奖品和获奖者',
         'lucky_draw_prizes'         => '幸运抽奖',
         'no_prize'                  => '该奖项即将到来',
+    ),
+
+    'notification' => array(
+        'delete_mode'               => '削除モード',
+        'view_lucky_draw_btn'       => '抽選のビュー',
+        'no_notif'                  => 'あなたはここにメッセージを持っていません',
+        'load_more_btn'             => 'よりロード',
+        'view_coupons_btn'          => ' 查看您的优惠券',
+        'you_won'                   => '你已经赢得了奖品 ',
+        'to_redeem'                 => '。 要兑换您的抽奖奖品，请出示在<b>首页您的抽奖号码 - >幸运抽奖</b>以商场客户服务。',
     ),
 
     'tour' => array(

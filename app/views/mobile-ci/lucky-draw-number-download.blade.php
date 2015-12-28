@@ -1,13 +1,5 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    <style type="text/css">
-        #ldtitle{
-            cursor: pointer;
-        }
-    </style>
-@stop
-
 @section('content')
 <div class="row">
     <div class="col-xs-12 text-center">
@@ -46,9 +38,14 @@
         @endfor
     </div>
 </div>
+@stop
 
+@section('ext_script_bot')
 @if ($total_number <= 160)
-<script>window.location.href = '{{ URL::route("ci-luckydrawnumber-download") }}&mode=download&page=1&id={{ $lucky_draw_id }}'</script>
+<script type="text/javascript">
+    setTimeout(function(){
+        $('#save').get(0).click();
+    }, 300);
+</script>
 @endif
-
 @stop
