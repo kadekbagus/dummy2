@@ -7,7 +7,8 @@
 @section('content')
     <div id="delete-bar" class="row text-right">
         <div class="col-xs-10 text-delete-mode">
-            <p>{{ Lang::get('mobileci.notification.delete_mode') }}</p>
+            <p class="delete-mode">{{ Lang::get('mobileci.notification.delete_mode') }}</p>
+            <p class="read-mode">{{ Lang::get('mobileci.notification.read_mode') }}</p>
         </div>
         <div class="col-xs-2 button-delete-mode">
             <span class="delete-button-parent">
@@ -16,7 +17,6 @@
         </div>
     </div>
     <div id="notification">
-
     </div>
     <div class="col-xs-12 text-center" id="spinner"><i class="fa fa-circle-o-notch fa-spin"></i></div>
     <div class="col-xs-12 text-center vertically-spaced" style="display:none;" id="no-notification">{{ Lang::get('mobileci.notification.no_notif') }}</div>
@@ -93,7 +93,7 @@
                     $('#spinner').hide();
                 });
             }
-            
+
             getNotifList();
 
             $('body').on('click', '.deleteNotif', function(e){
@@ -151,7 +151,7 @@
                     loadmoreBtn.attr('disabled',false);
                 });
             });
-        
+
             $('body').on('click', '.link-detail', function(e){
                 console.log('x');
                 if(openDelete){
@@ -211,7 +211,7 @@
                 }
             }
             var openDelete = false;
-            $('body').on('click', '.delete-button-parent', function(e){
+            $('body').on('click', '.button-delete-mode', function(e){
                 openDelete = !openDelete ? true : false;
                 $('.delete-button-child').animate({
                     width: [ "toggle", "swing" ],
@@ -219,6 +219,7 @@
                     opacity: "toggle"
                 }, 300);
                 $('.delete-button-parent').toggleClass('active');
+                $('.text-delete-mode').toggleClass('active');
             });
         });
     </script>

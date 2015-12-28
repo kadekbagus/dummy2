@@ -54,6 +54,7 @@ return array(
         'new_promotions_coming_soon' => 'Check out our new promotions coming soon.',
         'how_to_get_coupons'         => 'Please check with customer service how to get coupons.',
         'find_our_exciting'          => 'Find our exciting deals and latest news here. Dont forget to exchange your transaction receipts and get a chance to win a car!',
+        'latest_luckydraw_coming_soon' => 'Check out our lucky draws coming soon.',
     ),
 
     // modal specific lang
@@ -387,9 +388,10 @@ return array(
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
     ),
-    
+
     'notification' => array(
         'delete_mode'               => 'Delete mode',
+        'read_mode'                 => 'Read mode',
         'view_lucky_draw_btn'       => 'View Lucky Draws',
         'no_notif'                  => 'You have no message(s)',
         'load_more_btn'             => 'Load More',

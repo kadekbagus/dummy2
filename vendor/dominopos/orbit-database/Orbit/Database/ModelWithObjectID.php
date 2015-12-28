@@ -24,6 +24,11 @@ class ModelWithObjectID extends Model {
 
             if (ObjectID::isValid($key)) {
                 $key = new ObjectID($key);
+            } else if (preg_match('/^[0-9]+ *$/', (string)$key)) {
+                // XXX to handle LMP ID this has to accept raw integer IDs.
+                // Handle trailing spaces too just in case MySQL decides to
+                // right pad them on read.
+                $key  = (string)$key;
             } else {
                 $key = ObjectID::make();
             }
