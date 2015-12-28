@@ -114,3 +114,11 @@ Route::post('/api/v1/lucky-draw-prize/bulk-update', function()
 {
     return LuckyDrawAPIController::create()->postNewAndUpdateLuckyDrawPrize();
 });
+
+/**
+ * Blast lucky draw winner announcement
+ */
+Route::post('/api/v1/lucky-draw-announcement/blast', function()
+{
+    return LuckyDrawAPIController::create()->postBlastLuckyDrawAnnouncement();
+});
