@@ -394,6 +394,7 @@ return array(
         'no_notif'                  => 'You have no message(s)',
         'load_more_btn'             => 'Load More',
         'view_coupons_btn'          => 'View Your Coupon(s)',
+        'congratulation'            => 'Congratulations!',
         'you_won'                   => 'You have won a prize for ',
         'to_redeem'                 => '. To redeem your lucky draw prize, please show your lucky draw numbers in <b>Home Page -> Lucky Draws</b> to mall customer service.',
     ),

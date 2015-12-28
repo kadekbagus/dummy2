@@ -2,7 +2,7 @@
 	<div class="col-xs-12">
 		@if($inbox->inbox_type == 'lucky_draw_issuance')
 		<img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive side-margin-center">
-		@elseif($inbox->inbox_type == 'lucky_draw_announcement')
+		@elseif($inbox->inbox_type == 'lucky_draw_blast')
 		<img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive side-margin-center">
 		@elseif($inbox->inbox_type == 'coupon_issuance')
 		<img src="{{ asset('mobile-ci/images/default_no_coupon.png') }}" class="img-responsive side-margin-center">
@@ -32,8 +32,8 @@
 <div class="row vertically-spaced">
 	<div class="col-xs-12">	
 		<h4>Hello {{$fullName}},</h4>
-        <p>{{ Lang::get('mobileci.lucky_draw.notification.you_won') }}<b>{{$item->luckyDraw->lucky_draw_name}}</b>{{ Lang::get('mobileci.lucky_draw.notification.to_redeem') }}</p>
-        <p style="margin-top:1em">{{Lang::get('mobileci.lucky_draw.goodluck')}}</br><strong>{{$mallName}}</strong></p>
+        <p>{{ Lang::get('mobileci.notification.you_won') }}<b>{{$item->luckyDraw->lucky_draw_name}}</b>{{ Lang::get('mobileci.notification.to_redeem') }}</p>
+        <p style="margin-top:1em">{{Lang::get('mobileci.notification.congratulation')}}</br><strong>{{$mallName}}</strong></p>
 	</div>
 </div>
 @elseif($inbox->inbox_type == 'coupon_issuance')

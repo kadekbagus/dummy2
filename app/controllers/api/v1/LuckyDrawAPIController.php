@@ -2390,7 +2390,7 @@ class LuckyDrawAPIController extends ControllerAPI
 
                         // if the lucky_draw_winner_id is specified then update the lucky draw winner number
                         if (isset($winner->lucky_draw_winner_id)) {
-                            if (empty($winner->lucky_draw_number_code)) {
+                            if (! empty($winner->lucky_draw_number_code)) {
                                 // check issued number existance
                                 $lucky_draw_number = LuckyDrawNumber::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_number_code', $winner->lucky_draw_number_code)->first();
                                 if (! is_object($lucky_draw_number)) {
@@ -3630,14 +3630,14 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // set mall id
-            $mall_id = OrbitInput::post('mall_id', OrbitInput::post('merchant_id'));
+            $mall_id = OrbitInput::post('current_mall', OrbitInput::post('mall_id', OrbitInput::post('merchant_id')));
             if (trim($mall_id) === '') {
                 // if not being sent, then set to current box mall id
                 $mall_id = Config::get('orbit.shop.id');
             }
 
             $lucky_draw_id = OrbitInput::post('lucky_draw_id');
-            $lucky_announcement_id = OrbitInput::post('lucky_announcement_id');
+            $lucky_announcement_id = OrbitInput::post('lucky_draw_announcement_id');
 
             // set default value for status
             $status = OrbitInput::post('status');
@@ -3652,12 +3652,12 @@ class LuckyDrawAPIController extends ControllerAPI
                 array(
                     'mall_id'                  => $mall_id,
                     'lucky_draw_id'            => $lucky_draw_id,
-                    'lucky_announcement_id'    => $lucky_announcement_id,
+                    'lucky_draw_announcement_id'    => $lucky_announcement_id,
                 ),
                 array(
                     'mall_id'                  => 'required|orbit.empty.mall',
                     'lucky_draw_id'            => 'required|orbit.empty.lucky_draw',
-                    'lucky_announcement_id'    => 'required|orbit.empty.lucky_draw_announcement',
+                    'lucky_draw_announcement_id'    => 'required|orbit.empty.lucky_draw_announcement',
                 )
             );
 
@@ -3671,22 +3671,39 @@ class LuckyDrawAPIController extends ControllerAPI
 
             Event::fire('orbit.luckydraw.postblastluckydrawannouncement.after.validation', array($this, $validator));
 
-            $mall = App::make('orbit.empty.mall');
-            $lucky_draw_announcement = LuckyDrawAnnouncement::with('luckyDraw')
+            $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
+
+            $lucky_draw = App::make('orbit.empty.lucky_draw');
+            
+            if (Carbon::now($mall->timezone->timezone_name) < $lucky_draw->draw_date) {
+                $errorMessage = "Cannot blast the winner. This lucky draw's draw date is not reached yet.";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (Carbon::now($mall->timezone->timezone_name) > $lucky_draw->grace_period_date) {
+                $errorMessage = "Cannot blast the winner. This lucky draw has ended.";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $lucky_draw_announcement = LuckyDrawAnnouncement::with('luckyDraw.prizes.winners.number.user')
                 ->excludeDeleted()
-                ->where('mall_id', $mall_id)
                 ->where('lucky_draw_id', $lucky_draw_id)
-                ->where('lucky_announcement_id', $lucky_announcement_id)
+                ->where('lucky_draw_announcement_id', $lucky_announcement_id)
                 ->first();
 
-            $lucky_draw_announcement->blasted_at = Carbon::now($mall->timezone()->first()->timezone_name);
+            $lucky_draw_announcement->blasted_at = Carbon::now($mall->timezone->timezone_name);
             $lucky_draw_announcement->save();
 
             $this->response->data = $lucky_draw_announcement;
 
             // create notification
-            $inbox = new Inbox();
-            $inbox->addToInbox();
+            foreach ($lucky_draw_announcement->luckyDraw->prizes as $prize) {
+                foreach ($prize->winners as $winner) {
+                    $user_id = $winner->number->user->user_id;
+                    $inbox = new Inbox();
+                    $inbox->addToInbox($user_id, $lucky_draw_announcement, $mall_id, 'lucky_draw_blast');
+                }
+            }
 
             $lucky_draw->touch();
 
@@ -3769,7 +3786,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = [$e->getLine(), $e->getFile()];
 
             // Rollback the changes
             $this->rollBack();
