@@ -7,7 +7,8 @@
 @section('content')
     <div id="delete-bar" class="row text-right">
         <div class="col-xs-10 text-delete-mode">
-            <p>{{ Lang::get('mobileci.notification.delete_mode') }}</p>
+            <p class="delete-mode">{{ Lang::get('mobileci.notification.delete_mode') }}</p>
+            <p class="read-mode">{{ Lang::get('mobileci.notification.read_mode') }}</p>
         </div>
         <div class="col-xs-2 button-delete-mode">
             <span class="delete-button-parent">
@@ -210,7 +211,7 @@
                 }
             }
             var openDelete = false;
-            $('body').on('click', '.delete-button-parent', function(e){
+            $('body').on('click', '.button-delete-mode', function(e){
                 openDelete = !openDelete ? true : false;
                 $('.delete-button-child').animate({
                     width: [ "toggle", "swing" ],
@@ -218,6 +219,7 @@
                     opacity: "toggle"
                 }, 300);
                 $('.delete-button-parent').toggleClass('active');
+                $('.text-delete-mode').toggleClass('active');
             });
         });
     </script>

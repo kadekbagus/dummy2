@@ -390,6 +390,7 @@ return array(
 
     'notification' => array(
         'delete_mode'               => '削除モード',
+        'read_mode'                 => '阅读模式',
         'view_lucky_draw_btn'       => '抽選のビュー',
         'no_notif'                  => 'あなたはここにメッセージを持っていません',
         'load_more_btn'             => 'よりロード',

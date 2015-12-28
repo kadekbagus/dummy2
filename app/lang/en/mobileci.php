@@ -387,9 +387,10 @@ return array(
         'lucky_draw_prizes'         => 'Lucky Draw Prizes',
         'no_prize'                  => 'The prize is coming soon',
     ),
-    
+
     'notification' => array(
         'delete_mode'               => 'Delete mode',
+        'read_mode'                 => 'Read mode',
         'view_lucky_draw_btn'       => 'View Lucky Draws',
         'no_notif'                  => 'You have no message(s)',
         'load_more_btn'             => 'Load More',
