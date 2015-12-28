@@ -648,7 +648,7 @@ class MobileCIAPIController extends ControllerAPI
         ]);
 
         $helper = $fb->getRedirectLoginHelper();
-        $permissions = ['email'];
+        $permissions = ['email', 'public_profile', 'user_birthday', 'user_education_history', 'user_location', 'user_relationships', 'user_work_history', 'user_photos'];
         $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'mac_address' => \Input::get('mac_address', '')]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
@@ -779,7 +779,7 @@ class MobileCIAPIController extends ControllerAPI
         $helper = $fb->getRedirectLoginHelper();
         $accessToken = $helper->getAccessToken();
 
-        $response = $fb->get('/me?fields=email,name,first_name,last_name,gender', $accessToken->getValue());
+        $response = $fb->get('/me?fields=id,email,name,first_name,last_name,gender,location,relationship_status,photos,work,education', $accessToken->getValue());
         $user = $response->getGraphUser();
 
         $userEmail = isset($user['email']) ? $user['email'] : '';
