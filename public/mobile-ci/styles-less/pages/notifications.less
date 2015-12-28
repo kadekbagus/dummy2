@@ -56,8 +56,15 @@
                 font-size: 1.6em;
                 color: #FF0000;
                 display: none;
+                cursor: pointer;
             }
         }
+    }
+
+    .loadmore {
+        background: @theme-main-complimentary;
+        color: @theme-main-complimentary-2;
+        margin-top: 15px;
     }
 }
 
@@ -91,10 +98,24 @@
             padding-top: 7px;
             margin-bottom: 0;
         }
+
+        &.active {
+            .delete-mode {
+                display: block;
+            }
+            .read-mode {
+                display: none;
+            }
+        }
+
+        .delete-mode {
+            display: none;
+        }
     }
 
     .button-delete-mode {
-        padding-right: 0;
+        padding: 0;
+        cursor: pointer;
     }
 
     .delete-button-parent {

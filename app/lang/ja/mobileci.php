@@ -388,9 +388,10 @@ return array(
         'lucky_draw_prizes'         => '幸運な抽選賞',
         'no_prize'                  => '賞金はすぐに来ています',
     ),
-    
+
     'notification' => array(
         'delete_mode'               => '删除模式',
+        'read_mode'                 => '読み取りモード',
         'view_lucky_draw_btn'       => '查看幸运大抽奖',
         'no_notif'                  => '你有没有消息',
         'load_more_btn'             => '载入更多',
