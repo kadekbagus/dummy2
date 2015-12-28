@@ -12,7 +12,7 @@
                     <li class="complimentary-bg">
                         <a href="{{ url('/customer/messages') }}">
                             <span>
-                                <i class="fa fa-inbox fa-relative"><span class="notification-badge">0</span></i>
+                                <i class="fa fa-inbox fa-relative"><span class="notification-badge notification-badge-sub">0</span></i>
                                 {{ ucwords(strtolower(Lang::get('mobileci.page_title.my_messages'))) }}
                             </span>
                         </a>
