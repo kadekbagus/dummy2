@@ -275,7 +275,7 @@ class ActivityAPIController extends ControllerAPI
                       })
                       ->orWhere(function($q) use ($tablePrefix) {
                             $q->whereIn('activities.activity_name', ['activation_ok','issue_lucky_draw'])
-                              ->whereIn('activities.activity_name_long', ['Customer Activation','Lucky Draw Number Issuance'])
+                              ->whereIn('activities.activity_name_long', ['Customer Activation','Read Notification Lucky Draw Number Issuance'])
                               ->where('activities.group', 'portal');
                       });
                     });
@@ -3056,7 +3056,7 @@ class ActivityAPIController extends ControllerAPI
 					from {$tablePrefix}activities
 					-- filter by date
 					where (`group` = 'mobile-ci'
-					    or (`group` = 'portal' and activity_type in ('activation'))
+					    or (`group` = 'portal' and activity_type in ('activation','create'))
 					    or (`group` = 'cs-portal' and activity_type in ('registration')))
 					    and response_status = 'OK' and location_id = ?
 					    and created_at between ? and ?

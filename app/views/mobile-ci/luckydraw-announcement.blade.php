@@ -6,25 +6,21 @@
 
 @section('content')
 <div class="row">
-    @if($ongoing)
-        @if(! empty($luckydraw->image))
-        <a href="{{ asset($luckydraw->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img src="{{ asset($luckydraw->image) }}" class="img-responsive" style="width:100%;"></a>
-        @else
-        <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
-        @endif
-    @else
-        @if(isset($luckydraw->announcements[0]))
-            @if(! empty($luckydraw->announcements[0]->image))
-            <a href="{{ asset($luckydraw->announcements[0]->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img src="{{ asset($luckydraw->announcements[0]->image) }}" class="img-responsive" style="width:100%;"></a>
-            @else
-            <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
-            @endif
+    @if(isset($luckydraw->announcements[0]))
+        @if(! empty($luckydraw->announcements[0]->image))
+        <a href="{{ asset($luckydraw->announcements[0]->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img src="{{ asset($luckydraw->announcements[0]->image) }}" class="img-responsive" style="width:100%;"></a>
         @else
             @if(! empty($luckydraw->image))
             <a href="{{ asset($luckydraw->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img src="{{ asset($luckydraw->image) }}" class="img-responsive" style="width:100%;"></a>
             @else
             <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
             @endif
+        @endif
+    @else
+        @if(! empty($luckydraw->image))
+        <a href="{{ asset($luckydraw->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img src="{{ asset($luckydraw->image) }}" class="img-responsive" style="width:100%;"></a>
+        @else
+        <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
         @endif
     @endif
 </div>
@@ -80,10 +76,17 @@
                 </tr>
                 @if(! empty($prize->winners))
                     @foreach($prize->winners as $winner)
-                    <tr>
-                        <td>{{ $winner->number->user->getFullName() }}</td>
-                        <td>{{ $winner->lucky_draw_winner_code }}</td>
-                    </tr>
+                        @if ($winner->number->user->user_id === $user->user_id)
+                            <tr>
+                                <td><span style="color:#337AB7">{{ $winner->number->user->getFullName() }}</span></td>
+                                <td><span style="color:#337AB7">{{ $winner->lucky_draw_winner_code }}</span></td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td>{{ $winner->number->user->getFullName() }}</td>
+                                <td>{{ $winner->lucky_draw_winner_code }}</td>
+                            </tr>
+                        @endif
                     @endforeach
                 @endif
                 @endforeach

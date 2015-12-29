@@ -103,6 +103,10 @@ class Inbox extends Eloquent
                 $listItem = $response->records;
                 break;
 
+            case 'lucky_draw_blast':
+                $inbox->subject = $response->title;
+                break;
+
             case 'coupon_issuance':
                 $inbox->subject = "You've got coupon(s)";
                 $listItem = $response;

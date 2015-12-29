@@ -54,6 +54,7 @@ return array(
         'new_promotions_coming_soon' => '看看我们最近特色购物.',
         'how_to_get_coupons'         => '请跟客户服务检查关于取优惠券.',
         'find_our_exciting'          => '寻找我们的令人兴奋的交易和这里的最新消息。不要忘记您的兑换交易的收据，并有机会赢取一辆车!',
+        'latest_luckydraw_coming_soon' => '看看我们的幸运抽奖即将推出。',
     ),
 
     // modal specific lang
@@ -390,10 +391,13 @@ return array(
 
     'notification' => array(
         'delete_mode'               => '削除モード',
+        'read_mode'                 => '阅读模式',
         'view_lucky_draw_btn'       => '抽選のビュー',
         'no_notif'                  => 'あなたはここにメッセージを持っていません',
         'load_more_btn'             => 'よりロード',
         'view_coupons_btn'          => ' 查看您的优惠券',
+        'you_won'                   => '你已经赢得了奖品 ',
+        'to_redeem'                 => '。 要兑换您的抽奖奖品，请出示在<b>首页您的抽奖号码 - >幸运抽奖</b>以商场客户服务。',
     ),
 
     'tour' => array(

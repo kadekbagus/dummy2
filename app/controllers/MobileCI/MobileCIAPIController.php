@@ -3785,6 +3785,18 @@ class MobileCIAPIController extends ControllerAPI
                         ->save();
                     break;
 
+                case 'lucky_draw_blast':
+                    $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
+                    $activityPage->setUser($user)
+                        ->setActivityName('read_notification')
+                        ->setActivityNameLong('View Winner Announcement Notification')
+                        ->setObject($inbox)
+                        ->setModuleName('Inbox')
+                        ->setNotes($activityPageNotes)
+                        ->responseOK()
+                        ->save();
+                    break;
+
                 case 'coupon_issuance':
                     $activityPageNotes = sprintf('Page viewed: %s', 'Coupon Issuance Notification Detail Page');
                     $activityPage->setUser($user)
@@ -3901,6 +3913,7 @@ class MobileCIAPIController extends ControllerAPI
         $prefix = DB::getTablePrefix();
         $default = Config::get('database.default');
         $dbConfig = Config::get('database.connections.' . $default);
+        $mall = $this->getRetailerInfo();
 
         $pdo = new PDO("mysql:host=localhost;dbname={$dbConfig['database']}", $dbConfig['username'], $dbConfig['password']);
         $query = $pdo->query("SELECT * FROM {$prefix}lucky_draws
@@ -3951,7 +3964,9 @@ class MobileCIAPIController extends ControllerAPI
         $ypos += $heighPerLine * 2;
         imagestring($im, $fontSize, $xpos, $ypos, $totalSentences, $black);
 
-        $today = date('d/m/Y H:i');
+        $mallTime = $mall->timezone->timezone_name;
+        $today = Carbon::now($mallTime);
+
         $totalSentences = sprintf('%s %s %s.', $today, 'is',$numberOfLuckyDraw);
         $ypos += $heighPerLine;
         imagestring($im, $fontSize, $xpos, $ypos, $totalSentences, $black);
