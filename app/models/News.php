@@ -61,4 +61,14 @@ class News extends Eloquent
                     ->where('object_name', 'news');
     }
 
+    public function genders()
+    {
+        return $this->hasMany('CampaignGender', 'campaign_id', 'news_id');
+    }
+
+    public function ages()
+    {
+        return $this->hasMany('CampaignAge', 'campaign_id', 'news_id');
+    }
+
 }
