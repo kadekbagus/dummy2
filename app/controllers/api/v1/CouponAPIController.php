@@ -95,7 +95,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -144,6 +144,7 @@ class CouponAPIController extends ControllerAPI
             $employee_user_ids = OrbitInput::post('employee_user_ids');
             $employee_user_ids = (array) $employee_user_ids;
             $id_language_default = OrbitInput::post('id_language_default');
+            $is_popup = OrbitInput::post('is_popup');
 
             $validator = Validator::make(
                 array(
@@ -152,6 +153,7 @@ class CouponAPIController extends ControllerAPI
                     'promotion_type'          => $promotion_type,
                     'begin_date'              => $begin_date,
                     'end_date'                => $end_date,
+                    'rule_type'               => $rule_type,
                     'status'                  => $status,
                     'coupon_validity_in_date' => $coupon_validity_in_date,
                     'rule_value'              => $rule_value,
@@ -166,8 +168,9 @@ class CouponAPIController extends ControllerAPI
                     'promotion_type'          => 'required|orbit.empty.coupon_type',
                     'begin_date'              => 'required|date_format:Y-m-d H:i:s',
                     'end_date'                => 'required|date_format:Y-m-d H:i:s',
+                    'rule_type'               => 'required|orbit.empty.coupon_rule_type',
                     'status'                  => 'required|orbit.empty.coupon_status',
-                    'coupon_validity_in_date' => 'required|date_format:Y-m-d H:i:s',
+                    'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'required|numeric|min:0',
                     'discount_value'          => 'required|numeric|min:0',
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
@@ -270,6 +273,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             $newcoupon->coupon_notification = $coupon_notification;
             $newcoupon->created_by = $this->api->user->user_id;
+            $newcoupon->is_popup = $is_popup;
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -586,7 +590,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -635,6 +639,7 @@ class CouponAPIController extends ControllerAPI
                 'status'                  => $status,
                 'begin_date'              => $begin_date,
                 'end_date'                => $end_date,
+                'rule_type'               => $rule_type,
                 'coupon_validity_in_date' => $coupon_validity_in_date,
                 'rule_value'              => $rule_value,
                 'discount_value'          => $discount_value,
@@ -659,6 +664,7 @@ class CouponAPIController extends ControllerAPI
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
                     'end_date'                => 'date_format:Y-m-d H:i:s',
+                    'rule_type'               => 'orbit.empty.coupon_rule_type',
                     'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'numeric|min:0',
                     'discount_value'          => 'numeric|min:0',
@@ -747,6 +753,10 @@ class CouponAPIController extends ControllerAPI
                     $updatedcoupon->employee()->detach($deleted_employee_user_ids);
                     $updatedcoupon->load('employee');
                 }
+            });
+
+            OrbitInput::post('is_popup', function($is_popup) use ($updatedcoupon) {
+                $updatedcoupon->is_popup = $is_popup;
             });
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
@@ -1162,7 +1172,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1401,7 +1411,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -2663,6 +2673,17 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.empty.coupon_status', function ($attribute, $value, $parameters) {
             $valid = false;
             $statuses = array('active', 'inactive', 'pending', 'blocked', 'deleted');
+            foreach ($statuses as $status) {
+                if($value === $status) $valid = $valid || TRUE;
+            }
+
+            return $valid;
+        });
+
+        // Check the existence of the coupon rule type
+        Validator::extend('orbit.empty.coupon_rule_type', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('coupon_blast_upon_sign_up', 'coupon_blast_upon_first_sign_in', 'coupon_blast_every_sign_in');
             foreach ($statuses as $status) {
                 if($value === $status) $valid = $valid || TRUE;
             }
