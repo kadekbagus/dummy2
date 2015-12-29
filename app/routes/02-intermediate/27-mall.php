@@ -43,6 +43,6 @@ Route::post('/app/v1/mall-logo/delete', 'IntermediateAuthController@Upload_postD
 /**
  * List and/or Search mall base price
  */
-Route::get('/app/v1/mall/baseprice', 'IntermediateAuthController@Merchant_getMallBasePrice');
+Route::get('/app/v1/mall/baseprice', 'IntermediateAuthController@Mall_getMallBasePrice');
 
 ?>
