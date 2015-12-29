@@ -2666,4 +2666,11 @@ return array(
         'Read Notification Lucky Draw Number Issuance' => 'Read Notification Lucky Draw Number Issuance',
         'View Winner Announcement Notification'        => 'View Winner Announcement Notification'
     ),
+
+    'genders' => array(
+        'M' => 'Male',
+        'F' => 'Female',
+        'U' => 'Unknown',
+    ),
+
 );
