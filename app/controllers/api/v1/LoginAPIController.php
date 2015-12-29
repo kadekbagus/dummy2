@@ -1002,9 +1002,10 @@ class LoginAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $menus = Config::get('orbit.menus.mall');
+            $menus = array();
             if (in_array($from, ['mall', 'cs-portal'])) {
                 if ($from === 'mall') {
+                    $menus = Config::get('orbit.menus.mall');
                     if (strtolower($user->role->role_name) === 'mall admin') {
                         $mall = $user->employee->retailers[0]->load('timezone');
                     } else {
