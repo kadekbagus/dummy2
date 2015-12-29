@@ -139,7 +139,7 @@ class LoginAPIController extends ControllerAPI
     public function postLoginMall()
     {
         $_GET['from_portal'] = 'mall';
-        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin']);
+        return $this->postLoginRole(['Super Admin', 'Mall Owner', 'Mall Admin', 'Campaign Owner', 'Campaign Employee']);
     }
 
     /**
@@ -1002,12 +1002,17 @@ class LoginAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $menus = array();
             if (in_array($from, ['mall', 'cs-portal'])) {
                 if ($from === 'mall') {
+                    $menus = Config::get('orbit.menus.mall');
                     if (strtolower($user->role->role_name) === 'mall admin') {
                         $mall = $user->employee->retailers[0]->load('timezone');
                     } else {
                         $mall = Mall::with('timezone')->excludeDeleted()->where('user_id', $user->user_id)->first();
+                    }
+                    if ((strtolower($user->role->role_name) === 'campaign owner') || (strtolower($user->role->role_name) === 'campaign employee')) {
+                        $menus = Config::get('orbit.menus.pmp');
                     }
                 } elseif ($from === 'cs-portal') {
                     $mall = $user->employee->retailers[0]->load('timezone');
@@ -1054,6 +1059,8 @@ class LoginAPIController extends ControllerAPI
                     $this->response->data = sprintf(Config::get('orbit.agreement.url'), $token->token_value);
                 }
             }
+
+            $this->response->data->menus = $menus;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
