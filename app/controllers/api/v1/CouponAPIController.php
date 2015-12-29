@@ -95,7 +95,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -152,6 +152,7 @@ class CouponAPIController extends ControllerAPI
                     'promotion_type'          => $promotion_type,
                     'begin_date'              => $begin_date,
                     'end_date'                => $end_date,
+                    'rule_type'               => $rule_type,
                     'status'                  => $status,
                     'coupon_validity_in_date' => $coupon_validity_in_date,
                     'rule_value'              => $rule_value,
@@ -166,8 +167,9 @@ class CouponAPIController extends ControllerAPI
                     'promotion_type'          => 'required|orbit.empty.coupon_type',
                     'begin_date'              => 'required|date_format:Y-m-d H:i:s',
                     'end_date'                => 'required|date_format:Y-m-d H:i:s',
+                    'rule_type'               => 'required|orbit.empty.coupon_rule_type',
                     'status'                  => 'required|orbit.empty.coupon_status',
-                    'coupon_validity_in_date' => 'required|date_format:Y-m-d H:i:s',
+                    'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'required|numeric|min:0',
                     'discount_value'          => 'required|numeric|min:0',
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
@@ -586,7 +588,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -635,6 +637,7 @@ class CouponAPIController extends ControllerAPI
                 'status'                  => $status,
                 'begin_date'              => $begin_date,
                 'end_date'                => $end_date,
+                'rule_type'               => $rule_type,
                 'coupon_validity_in_date' => $coupon_validity_in_date,
                 'rule_value'              => $rule_value,
                 'discount_value'          => $discount_value,
@@ -659,6 +662,7 @@ class CouponAPIController extends ControllerAPI
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
                     'end_date'                => 'date_format:Y-m-d H:i:s',
+                    'rule_type'               => 'orbit.empty.coupon_rule_type',
                     'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'numeric|min:0',
                     'discount_value'          => 'numeric|min:0',
@@ -1162,7 +1166,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1401,7 +1405,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -2663,6 +2667,17 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.empty.coupon_status', function ($attribute, $value, $parameters) {
             $valid = false;
             $statuses = array('active', 'inactive', 'pending', 'blocked', 'deleted');
+            foreach ($statuses as $status) {
+                if($value === $status) $valid = $valid || TRUE;
+            }
+
+            return $valid;
+        });
+
+        // Check the existence of the coupon rule type
+        Validator::extend('orbit.empty.coupon_rule_type', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('coupon_blast_upon_sign_up', 'coupon_blast_upon_first_sign_in', 'coupon_blast_every_sign_in');
             foreach ($statuses as $status) {
                 if($value === $status) $valid = $valid || TRUE;
             }
