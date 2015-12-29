@@ -144,6 +144,7 @@ class CouponAPIController extends ControllerAPI
             $employee_user_ids = OrbitInput::post('employee_user_ids');
             $employee_user_ids = (array) $employee_user_ids;
             $id_language_default = OrbitInput::post('id_language_default');
+            $is_popup = OrbitInput::post('is_popup');
 
             $validator = Validator::make(
                 array(
@@ -272,6 +273,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             $newcoupon->coupon_notification = $coupon_notification;
             $newcoupon->created_by = $this->api->user->user_id;
+            $newcoupon->is_popup = $is_popup;
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -751,6 +753,10 @@ class CouponAPIController extends ControllerAPI
                     $updatedcoupon->employee()->detach($deleted_employee_user_ids);
                     $updatedcoupon->load('employee');
                 }
+            });
+
+            OrbitInput::post('is_popup', function($is_popup) use ($updatedcoupon) {
+                $updatedcoupon->is_popup = $is_popup;
             });
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
