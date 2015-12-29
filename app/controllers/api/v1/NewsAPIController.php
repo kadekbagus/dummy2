@@ -89,6 +89,7 @@ class NewsAPIController extends ControllerAPI
             $id_language_default = OrbitInput::post('id_language_default');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
+            $is_popup = OrbitInput::post('is_popup');
 
             $validator = Validator::make(
                 array(
@@ -163,6 +164,7 @@ class NewsAPIController extends ControllerAPI
             $newnews->sticky_order = $sticky_order;
             $newnews->link_object_type = $link_object_type;
             $newnews->created_by = $this->api->user->user_id;
+            $newnews->is_popup = $is_popup;
 
             Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
 
@@ -453,6 +455,10 @@ class NewsAPIController extends ControllerAPI
 
             OrbitInput::post('end_date', function($end_date) use ($updatednews) {
                 $updatednews->end_date = $end_date;
+            });
+
+            OrbitInput::post('is_popup', function($is_popup) use ($updatednews) {
+                $updatednews->is_popup = $is_popup;
             });
 
             OrbitInput::post('sticky_order', function($sticky_order) use ($updatednews) {
