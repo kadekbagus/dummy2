@@ -46,6 +46,11 @@ return array(
         'tenant'        => 'TENANTS',
         'lucky_draw'    => 'LUCKY DRAW',
         'news'          => 'NEWS',
+        'promotions'     => 'Promotions',
+        'coupons'        => 'Coupons',
+        'tenants'        => 'Tenants',
+        'lucky_draws'    => 'Lucky Draws',
+        'newss'          => 'News',
     ),
 
     'greetings' => array(
