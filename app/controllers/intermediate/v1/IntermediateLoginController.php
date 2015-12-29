@@ -1079,6 +1079,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $fname = isset($data['fname']) ? $data['fname'] : '';
         $lname = isset($data['lname']) ? $data['lname'] : '';
         $gender = isset($data['gender']) ? $data['gender'] : '';
+        $birthdate = isset($data['birthdate']) ? $data['birthdate'] : '';
         $mac = isset($data['mac']) ? $data['mac'] : '';
         $ip = isset($data['ip']) ? $data['ip'] : '';
         $from = isset($data['login_from']) ? $data['login_from'] : '';
@@ -1119,6 +1120,11 @@ class IntermediateLoginController extends IntermediateBaseController
             if (($from === 'google' || $from === 'facebook') && $customer->status === 'pending') {
                 // Only set if the previous status is pending
                 $customer->status = 'active';   // make it active
+            }
+
+            // Update birthdate if necessary
+            if (empty($customer->birthdate)) {
+                $customer->userdetail->birthdate = $birthdate;
             }
 
             $customer->save();

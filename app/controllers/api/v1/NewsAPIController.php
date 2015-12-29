@@ -101,6 +101,7 @@ class NewsAPIController extends ControllerAPI
             $gender_ids = (array) $gender_ids;
             $age_range_ids = OrbitInput::post('age_range_ids');
             $age_range_ids = (array) $age_range_ids;
+            $is_popup = OrbitInput::post('is_popup');
 
             $validator = Validator::make(
                 array(
@@ -222,6 +223,7 @@ class NewsAPIController extends ControllerAPI
             $newnews->is_all_age = $is_all_age;
             $newnews->is_all_gender = $is_all_gender;
             $newnews->created_by = $this->api->user->user_id;
+            $newnews->is_popup = $is_popup;
 
             Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
 
@@ -408,11 +410,10 @@ class NewsAPIController extends ControllerAPI
      * @param string     `no_retailer`           (optional) - Flag to delete all ORID links. Valid value: Y.
      * @param array      `retailer_ids`          (optional) - Retailer IDs
      * @param integer    `id_language_default`   (optional) - ID language default
-     *
      * @param string     `is_all_gender`         (optional) - Is all gender. Valid value: Y, N.
      * @param string     `is_all_age`            (optional) - Is all retailer age group. Valid value: Y, N.
-     * @param string     `genders`               (optional) - for Male, Female. Unknown. Valid value: M, F, U.
-     * @param string     `age_ranges`            (optional) - ID(s) age_range
+     * @param string     `gender_ids`            (optional) - for Male, Female. Unknown. Valid value: M, F, U.
+     * @param string     `age_range_ids`         (optional) - Age Range IDs
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateNews()
@@ -541,6 +542,10 @@ class NewsAPIController extends ControllerAPI
 
             OrbitInput::post('end_date', function($end_date) use ($updatednews) {
                 $updatednews->end_date = $end_date;
+            });
+
+            OrbitInput::post('is_popup', function($is_popup) use ($updatednews) {
+                $updatednews->is_popup = $is_popup;
             });
 
             OrbitInput::post('sticky_order', function($sticky_order) use ($updatednews) {
