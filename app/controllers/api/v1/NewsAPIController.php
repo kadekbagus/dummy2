@@ -282,6 +282,22 @@ class NewsAPIController extends ControllerAPI
 
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
 
+            //save campaign price
+            $campaignbaseprice = CampaignBasePrices::where('merchant_id', '=', $newnews->mall_id)
+                                            ->where('campaign_type', '=', 'news')
+                                            ->first();
+
+            $baseprice = 0;
+            if (! empty($campaignbaseprice->price)) {
+                $baseprice = $campaignbaseprice->price;
+            }
+
+            $campaignprice = new CampaignPrice();
+            $campaignprice->base_price = $baseprice;
+            $campaignprice->campaign_type = 'news';
+            $campaignprice->campaign_id = $newnews->news_id;
+            $campaignprice->save();
+
             // translation for mallnews
             OrbitInput::post('translations', function($translation_json_string) use ($newnews) {
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
@@ -1153,7 +1169,13 @@ class NewsAPIController extends ControllerAPI
             }
 
             // Builder object
-            $news = News::excludeDeleted();
+            $news = News::select('news.*', 'campaign_price.campaign_price_id', 'campaign_price.base_price')
+                        ->leftJoin('campaign_price', function($join)
+                            {
+                                $join->on('news.news_id', '=', 'campaign_price.campaign_id')
+                                     ->where('campaign_price.campaign_type', '=', 'news');
+                            })
+                        ->excludeDeleted('news');
 
             // Filter news by Ids
             OrbitInput::get('news_id', function($newsIds) use ($news)
@@ -1876,7 +1898,7 @@ class NewsAPIController extends ControllerAPI
             $news = Config::get('orbit.genders');
 
             if (! array_key_exists($value, $news)) {
-                return FALSE
+                return FALSE;
             }
 
             App::instance('orbit.empty.gender', $news);

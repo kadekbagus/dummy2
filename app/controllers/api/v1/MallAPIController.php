@@ -1946,4 +1946,85 @@ class MallAPIController extends ControllerAPI
 
         return $output;
     }
+
+    /**
+     * GET - Search merchant
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string merchant_id
+     * @param string (optional) - campaign_type
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getMallBasePrice()
+    {
+        $httpCode = 200;
+        try {
+
+            $this->checkAuth();
+
+            $this->registerCustomValidation();
+            $merchant_id = OrbitInput::get('merchant_id', null);
+
+            $base_price = CampaignBasePrices::where('merchant_id', '=', $merchant_id);
+
+            // Filter base price by campaign_type
+            OrbitInput::get('campaign_type', function ($campaign_type) use ($base_price) {
+                $base_price->where('campaign_type', '=', $campaign_type);
+            });
+
+            $listbaseprice = $base_price->get();
+            $count = count($listbaseprice);
+
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = $count;
+            $this->response->data->returned_records = $count;
+            $this->response->data->records = $listbaseprice;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
 }
