@@ -1898,7 +1898,7 @@ class NewsAPIController extends ControllerAPI
             $news = Config::get('orbit.genders');
 
             if (! array_key_exists($value, $news)) {
-                return FALSE
+                return FALSE;
             }
 
             App::instance('orbit.empty.gender', $news);
