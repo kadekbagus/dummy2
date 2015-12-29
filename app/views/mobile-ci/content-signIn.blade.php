@@ -14,7 +14,7 @@
         <div class="social-media-container">
             <div class="row">
                 <div class="col-xs-12 text-center label">
-                    You can connect with:
+                    Connect with:
             </div>
             <div class="row">
                 <div class="col-xs-4 text-center">
