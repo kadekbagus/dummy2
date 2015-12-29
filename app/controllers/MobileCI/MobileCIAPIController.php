@@ -256,6 +256,8 @@ class MobileCIAPIController extends ControllerAPI
                         ->whereRaw("created_at between ? and ?", [$new_date, $now])
                         ->count();
 
+                    $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
                             if (empty($media->path)) {
@@ -287,6 +289,8 @@ class MobileCIAPIController extends ControllerAPI
                         ->whereRaw("begin_date between ? and ?", [$new_date, $now])
                         ->count();
 
+                    $widget->image = 'mobile-ci/images/default_promotion.png';
+
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
                             if (empty($media->path)) {
@@ -317,6 +321,8 @@ class MobileCIAPIController extends ControllerAPI
                         ->whereRaw("? between begin_date and end_date", [$now])
                         ->whereRaw("begin_date between ? and ?", [$new_date, $now])
                         ->count();
+
+                    $widget->image = 'mobile-ci/images/default_news.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
@@ -363,6 +369,8 @@ class MobileCIAPIController extends ControllerAPI
                         ->whereRaw(DB::getTablePrefix() . "issued_coupons.issued_date between ? and ?", [$new_date, $now])
                         ->count();
 
+                    $widget->image = 'mobile-ci/images/default_coupon.png';
+
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
                             if (empty($media->path)) {
@@ -389,6 +397,8 @@ class MobileCIAPIController extends ControllerAPI
                         ->whereRaw("? between start_date and grace_period_date", [$now])
                         ->whereRaw("start_date between ? and ?", [$new_date, $now])
                         ->count();
+
+                    $widget->image = 'mobile-ci/images/default_lucky_number.png';
 
                     foreach ($widget->media as $media) {
                         if ($media->media_name_long === 'home_widget_orig') {
