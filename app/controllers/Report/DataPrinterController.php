@@ -63,7 +63,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
         $prefix = DB::getTablePrefix();
 
         $mode = OrbitInput::get('export', 'print');
-        $luckyDrawId = (int)OrbitInput::get('lucky_draw_id', 1);
+        $luckyDrawId = OrbitInput::get('lucky_draw_id', 1);
         $start = 0;
         $take = 250000;
         $keyword = OrbitInput::get('keyword', '');
@@ -73,7 +73,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
 
         // Get current mall
         $mallId = Config::get('orbit.shop.id', 0);
-        $result = $this->pdo->query("SELECT * FROM {$prefix}merchants where merchant_id=$mallId limit 1");
+        $result = $this->pdo->query("SELECT * FROM {$prefix}merchants where merchant_id='$mallId' limit 1");
         if (! $result) {
             return 'Could not find mall configuration.';
         }
@@ -86,12 +86,12 @@ class DataPrinterController extends IntermediateAuthBrowserController
         $whereKeyword = '';
         if (! empty($keyword)) {
             $keyword = $this->pdo->quote($keyword);
-            $whereKeyword = "and (u.user_email=$keyword or u.membership_number=$keyword)";
+            $whereKeyword = "and (u.user_email='$keyword' or u.membership_number='$keyword')";
         }
 
         $result = $this->pdo->query("select count(*) as total
                                     from {$prefix}lucky_draw_numbers ldn
-                                    where ldn.lucky_draw_id=$luckyDrawId");
+                                    where ldn.lucky_draw_id='$luckyDrawId'");
         if (! $result) {
             return 'Could not fetch count of lucky draw number data.';
         }
@@ -101,7 +101,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
 
         $result = $this->pdo->query("select count(*) as total
                                     from {$prefix}lucky_draw_numbers ldn
-                                    where ldn.lucky_draw_id=$luckyDrawId and
+                                    where ldn.lucky_draw_id='$luckyDrawId' and
                                     (ldn.user_id is not null or ldn.user_id != 0)");
         if (! $result) {
             return 'Could not fetch issued count of lucky draw number data.';
@@ -110,7 +110,7 @@ class DataPrinterController extends IntermediateAuthBrowserController
         $totalIssuedLuckyDrawNumber = $result->fetch(PDO::FETCH_OBJ);
         $totalIssuedLuckyDrawNumber = $totalIssuedLuckyDrawNumber->total;
 
-        $result = $this->pdo->query("select * from {$prefix}lucky_draws where lucky_draw_id=$luckyDrawId limit 1");
+        $result = $this->pdo->query("select * from {$prefix}lucky_draws where lucky_draw_id='$luckyDrawId' limit 1");
         if (! $result) {
             return 'Could not fetch lucky draw data.';
         }
@@ -122,13 +122,12 @@ class DataPrinterController extends IntermediateAuthBrowserController
                                     u.user_email, u.membership_number,
                                     u.user_firstname, u.user_lastname
                                     from {$prefix}lucky_draw_numbers ldn
-                                    left join {$prefix}users u on u.user_id=ldn.user_id
-                                    where ldn.lucky_draw_id=$luckyDrawId and
+                                    left join {$prefix}users u on u.user_id='ldn.user_id'
+                                    where ldn.lucky_draw_id='$luckyDrawId' and
                                     (ldn.user_id is not null or ldn.user_id != 0)
                                     $whereKeyword
                                     group by ldn.lucky_draw_number_id
-                                    order by ldn.lucky_draw_number_code asc,
-                                    ldn.issued_date desc
+                                    order by ldn.issued_date desc
                                     limit $start, $take");
 
         if (! $result) {
@@ -200,16 +199,15 @@ class DataPrinterController extends IntermediateAuthBrowserController
                 printf("%s,%s,%s,%s,%s,%s\n\n", '', 'Total Unissued Numbers', $totalNumberLeft, '', '', '');
 
                 // CSV Format
-                // #, LUCKY DRAW NUMBER, ISSUED DATE, FULL NAME, EMAIL, MEMBERSHIP
-                printf("NO,LUCKY DRAW NUMBER,ISSUED DATE,FULL NAME,EMAIL,MEMBERSHIP\n");
+                // #, LUCKY DRAW NUMBER, ISSUED DATE, FULL NAME, EMAIL
+                printf("NO,LUCKY DRAW NUMBER,ISSUED DATE,FULL NAME,EMAIL\n");
                 while ($row = $result->fetch(PDO::FETCH_OBJ)) {
-                    printf("%s,%s,%s,%s,%s,\"=\"\"%s\"\"\"\n",
+                    printf("%s,%s,%s,%s,%s",
                             ++$rowCounter,
                             $row->lucky_draw_number_code,
                             $formatDate($row->issued_date, 'csv'),
                             $getFullName($row, 'no_email'),
-                            $row->user_email,
-                            $row->membership_number
+                            $row->user_email
                     );
                 }
 

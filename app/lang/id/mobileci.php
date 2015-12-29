@@ -67,7 +67,7 @@ return array(
         'delete_coupon_title'   => 'Hapus Kupon',
         'close_cart_title'      => 'Tutup Keranjang',
         'reset_cart_title'      => 'Hapus Keranjang',
-        'membership_title'      => 'Informasi Membership',
+        'membership_title'      => 'Membership',
         'language_title'        => 'Pilih Bahasa',
 
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',
@@ -115,11 +115,13 @@ return array(
         'email_not_valid'   => 'Alamat email tidak valid',
         'logging_in_button' => 'Sedang login. Harap tunggu...',
         'login_via_facebook' => 'Login via Facebook',
+        'login_via_google' => 'Login via Google+',
         'or_between_email_and_fb' => 'ATAU',
         'agree_to_terms' => 'Saya setuju dengan <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> dan <a href="%s" id="orbit-tos-anchor">Syarat dan Ketentuan</a>',
         'must_accept_terms' => 'Anda harus menyetujui <strong>Privacy Policy</strong> dan <strong>Syarat dan Ketentuan</strong> Orbit sebelum anda bisa login',
         'accept_modal_button_text' => 'OK',
         'connecting_to_facebook' => 'Menghubungi Facebook...',
+        'connecting_to_google' => 'Menghubungi Google...',
     ),
 
     'catalogue'         => array(

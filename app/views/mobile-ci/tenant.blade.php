@@ -54,13 +54,16 @@
     <div class="col-xs-12 main-theme-mall product-detail where">
         <div class="row">
             <div class="col-xs-12">
-                <h4>{{ Lang::get('mobileci.tenant.where') }}</h4>
             </div>
             <div class="col-xs-12">
-                <p>{{ $tenant->name }} {{ Lang::get('mobileci.tenant.at') }}</p>
-                <p>{{ $retailer->name }}{{{ !empty($tenant->floor) ? ' - ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</p>
-                <p>{{ Lang::get('mobileci.tenant.phone') }} : {{{ (($tenant->phone) != '') ? $tenant->phone : '-' }}}</p>
-                <p style="word-wrap: break-word;">{{ Lang::get('mobileci.tenant.website') }} : {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</p>
+
+                <br/>
+                <p>{{ $tenant->name }}</p>
+                <ul class="where-list">
+                    <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
+                    <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
+                    <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
+                </ul>
 
                 @if ($box_url)
                 <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
@@ -84,30 +87,27 @@
             <div role="tabpanel" class="tab-pane active" id="promotions">
                 @if(sizeof($tenant->newsPromotions) > 0)
                     @foreach($tenant->newsPromotions as $tenant->newsPromotions)
-                        <div class="main-theme-mall catalogue" id="promotions-{{$tenant->newsPromotions->promotion_id}}">
-                            <div class="row catalogue-top">
-                                <div class="col-xs-3 catalogue-img">
-                                    @if(!empty($tenant->newsPromotions->image))
-                                    <a href="{{ asset($tenant->newsPromotions->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($tenant->newsPromotions->image) }}"></a>
-                                    @else
-                                    <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                    @endif
-                                </div>
-                                <div class="col-xs-6">
-                                    <h4>{{ $tenant->newsPromotions->news_name }}</h4>
-                                    @if (strlen($tenant->newsPromotions->description) > 120)
-                                    <p>{{{ mb_substr($tenant->newsPromotions->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallpromotion?id='.$tenant->newsPromotions->news_id) }}">...</a>] </p>
-                                    @else
-                                    <p>{{{ $tenant->newsPromotions->description }}}</p>
-                                    @endif
-                                </div>
-                                <div class="col-xs-3" style="margin-top:20px">
-                                    <div class="circlet btn-blue detail-btn pull-right">
-                                        <a href="{{ url('customer/mallpromotion?id='.$tenant->newsPromotions->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
+                        <a href="{{ url('customer/mallpromotion?id='.$tenant->newsPromotions->news_id) }}">
+                            <div class="main-theme-mall catalogue" id="promotions-{{$tenant->newsPromotions->promotion_id}}">
+                                <div class="row catalogue-top">
+                                    <div class="col-xs-3 catalogue-img">
+                                        @if(!empty($tenant->newsPromotions->image))
+                                            <img class="img-responsive" alt="" src="{{ asset($tenant->newsPromotions->image) }}">
+                                        @else
+                                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                        @endif
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <h4>{{ $tenant->newsPromotions->news_name }}</h4>
+                                        @if (strlen($tenant->newsPromotions->description) > 120)
+                                        <p>{{{ mb_substr($tenant->newsPromotions->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallpromotion?id='.$tenant->newsPromotions->news_id) }}">...</a>] </p>
+                                        @else
+                                        <p>{{{ $tenant->newsPromotions->description }}}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     @endforeach
                 @else
                     <div class="row padded">
@@ -120,30 +120,27 @@
             <div role="tabpanel" class="tab-pane" id="news">
                 @if(sizeof($tenant->news) > 0)
                     @foreach($tenant->news as $tenant->news)
-                        <div class="main-theme-mall catalogue" id="news-{{$tenant->news->promotion_id}}">
-                            <div class="row catalogue-top">
-                                <div class="col-xs-3 catalogue-img">
-                                    @if(!empty($tenant->news->image))
-                                    <a href="{{ asset($tenant->news->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img class="img-responsive" alt="" src="{{ asset($tenant->news->image) }}"></a>
-                                    @else
-                                    <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                    @endif
-                                </div>
-                                <div class="col-xs-6">
-                                    <h4>{{ $tenant->news->news_name }}</h4>
-                                    @if (strlen($tenant->news->description) > 120)
-                                    <p>{{{ mb_substr($tenant->news->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallnewsdetail?id='.$tenant->news->news_id) }}">...</a>] </p>
-                                    @else
-                                    <p>{{{ $tenant->news->description }}}</p>
-                                    @endif
-                                </div>
-                                <div class="col-xs-3" style="margin-top:20px">
-                                    <div class="circlet btn-blue detail-btn pull-right">
-                                        <a href="{{ url('customer/mallnewsdetail?id='.$tenant->news->news_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
+                        <a href="{{ url('customer/mallnewsdetail?id='.$tenant->news->news_id) }}">
+                            <div class="main-theme-mall catalogue" id="news-{{$tenant->news->promotion_id}}">
+                                <div class="row catalogue-top">
+                                    <div class="col-xs-3 catalogue-img">
+                                        @if(!empty($tenant->news->image))
+                                            <img class="img-responsive" alt="" src="{{ asset($tenant->news->image) }}">
+                                        @else
+                                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                        @endif
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <h4>{{ $tenant->news->news_name }}</h4>
+                                        @if (strlen($tenant->news->description) > 120)
+                                        <p>{{{ mb_substr($tenant->news->description, 0, 120, 'UTF-8') }}} [<a href="{{ url('customer/mallnewsdetail?id='.$tenant->news->news_id) }}">...</a>] </p>
+                                        @else
+                                        <p>{{{ $tenant->news->description }}}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     @endforeach
                 @else
                     <div class="row padded">

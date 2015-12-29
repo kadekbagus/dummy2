@@ -1,13 +1,5 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    <style type="text/css">
-        #ldtitle{
-            cursor: pointer;
-        }
-    </style>
-@stop
-
 @section('content')
 <div class="row">
     <div class="col-xs-12 text-center">
@@ -41,14 +33,19 @@
     <div class="col-xs-12 text-center">
         @for ($i=1; $i<=$total_image; $i++)
         <div class="col-xs-6 col-sm-6 col-lg-6 vertically-spaced">
-            <a href="{{ URL::route('ci-luckydrawnumber-download') }}?mode=download&page={{ $i }}" class="btn btn-info" id="save">{{ Lang::get('mobileci.lucky_draw.download_image') }} #{{ $i }}</a>
+            <a href="{{ URL::route('ci-luckydrawnumber-download') }}&mode=download&page={{ $i }}&id={{ $lucky_draw_id }}" class="btn btn-info" id="save">{{ Lang::get('mobileci.lucky_draw.download_image') }} #{{ $i }}</a>
         </div>
         @endfor
     </div>
 </div>
+@stop
 
+@section('ext_script_bot')
 @if ($total_number <= 160)
-<script>window.location.href = '{{ URL::route("ci-luckydrawnumber-download") }}?mode=download&amp;page=1'</script>
+<script type="text/javascript">
+    setTimeout(function(){
+        $('#save').get(0).click();
+    }, 300);
+</script>
 @endif
-
 @stop

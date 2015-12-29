@@ -2028,5 +2028,124 @@
             "proxy",
             "trusted proxy"
         ]
+    },
+    {
+        "name": "lusitanian/oauth",
+        "version": "v0.8.5",
+        "version_normalized": "0.8.5.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/Lusitanian/PHPoAuthLib.git",
+            "reference": "798260e55ac994636a9fa8b61adfdb67aab389c9"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/Lusitanian/PHPoAuthLib/zipball/798260e55ac994636a9fa8b61adfdb67aab389c9",
+            "reference": "798260e55ac994636a9fa8b61adfdb67aab389c9",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.3.0"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "3.7.*",
+            "predis/predis": "0.8.*@dev",
+            "squizlabs/php_codesniffer": "2.*",
+            "symfony/http-foundation": "~2.1"
+        },
+        "suggest": {
+            "ext-openssl": "Allows for usage of secure connections with the stream-based HTTP client.",
+            "predis/predis": "Allows using the Redis storage backend.",
+            "symfony/http-foundation": "Allows using the Symfony Session storage backend."
+        },
+        "time": "2015-12-10 05:40:17",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-master": "0.1-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "OAuth": "src",
+                "OAuth\\Unit": "tests"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "David Desberg",
+                "email": "david@daviddesberg.com"
+            },
+            {
+                "name": "Elliot Chance",
+                "email": "elliotchance@gmail.com"
+            },
+            {
+                "name": "Pieter Hordijk",
+                "email": "info@pieterhordijk.com"
+            }
+        ],
+        "description": "PHP 5.3+ oAuth 1/2 Library",
+        "keywords": [
+            "Authentication",
+            "authorization",
+            "oauth",
+            "security"
+        ]
+    },
+    {
+        "name": "artdarek/oauth-4-laravel",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/artdarek/oauth-4-laravel.git",
+            "reference": "d7226ea17932ee31143bb33b499e6f0aeb7d8ce2"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/artdarek/oauth-4-laravel/zipball/d7226ea17932ee31143bb33b499e6f0aeb7d8ce2",
+            "reference": "d7226ea17932ee31143bb33b499e6f0aeb7d8ce2",
+            "shasum": ""
+        },
+        "require": {
+            "lusitanian/oauth": "~0.3",
+            "php": ">=5.3"
+        },
+        "require-dev": {
+            "illuminate/support": "~4"
+        },
+        "time": "2015-01-08 16:40:21",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-0": {
+                "Artdarek\\OAuth": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Artdarek",
+                "email": "artdarek@gmail.com",
+                "role": "Developer"
+            }
+        ],
+        "description": "OAuth Service Provider for Laravel 4",
+        "homepage": "https://github.com/artdarek/oauth-4-laravel",
+        "keywords": [
+            "Lusitanian",
+            "laravel",
+            "oauth",
+            "php"
+        ]
     }
 ]

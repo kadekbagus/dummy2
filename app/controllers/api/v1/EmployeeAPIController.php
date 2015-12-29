@@ -289,6 +289,7 @@ class EmployeeAPIController extends ControllerAPI
      * POST - Create New Employee
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -302,6 +303,7 @@ class EmployeeAPIController extends ControllerAPI
      * @param string    `password_confirmation`   (required) - Confirmation password
      * @param string    `employee_role`           (required) - Role of the employee, i.e: 'cashier', 'manager', 'supervisor'
      * @param array     `retailer_ids`            (optional) - List of Retailer IDs
+     * @param string    `cs_verification_numbers` (optional) - Unique verification number
      * @param array     `status`                  (optional) - 'active' or 'inactive'
      * @return Illuminate\Support\Facades\Response
      */
@@ -350,6 +352,7 @@ class EmployeeAPIController extends ControllerAPI
             $employeeRole = OrbitInput::post('employee_role');
             $retailerIds = OrbitInput::post('retailer_ids', []);
             $empStatus = OrbitInput::post('status', 'active');
+            $csVerificationNumbers = OrbitInput::post('cs_verification_numbers');
             $myRetailerIds = OrbitInput::post('current_mall');
 
             $errorMessage = [
@@ -371,6 +374,7 @@ class EmployeeAPIController extends ControllerAPI
                     'password_confirmation'   => $password2,
                     'employee_role'           => $employeeRole,
                     'retailer_ids'            => $retailerIds,
+                    'cs_verification_numbers' => $csVerificationNumbers,
                     'status'                  => $empStatus
                 ),
                 array(
@@ -380,13 +384,16 @@ class EmployeeAPIController extends ControllerAPI
                     'date_of_birth'           => 'date_format:Y-m-d',
                     'employee_id_char'        => 'orbit.exists.employeeid:' . $myRetailerIds,
                     'username'                => 'required|orbit.exists.username.mall',
-                    'password'                => 'required|min:5|confirmed',
+                    'password'                => 'required|min:6|confirmed',
                     'employee_role'           => 'required|orbit.empty.employee.role',
                     'retailer_ids'            => 'array|min:1|orbit.empty.retailer',
+                    'cs_verification_numbers' => 'alpha_num|orbit.exist.verification.numbers:' . $myRetailerIds ,
                     'status'                  => 'in:active,inactive'
                 ),
                 array(
                     'orbit.empty.employee.role'        => $errorMessage['orbit.empty.employee.role'],
+                    'orbit.exist.verification.numbers' => 'The verification number already used by other',
+                    'alpha_num' => 'The verification number must letter and number.',
                 )
             );
 
@@ -449,6 +456,17 @@ class EmployeeAPIController extends ControllerAPI
             $newEmployee = $newUser->employee()->save($newEmployee);
 
             $newUser->setRelation('employee', $newEmployee);
+
+            // User verification numbers
+            $newUserVerificationNumber = new UserVerificationNumber();
+            OrbitInput::post('cs_verification_numbers', function($_csVerificationNumbers) use ($newUserVerificationNumber, $newUser, $myRetailerIds) {
+                $newUserVerificationNumber->user_id = $newUser->user_id;
+                $newUserVerificationNumber->verification_number = $_csVerificationNumbers;
+                $newUserVerificationNumber->merchant_id = $myRetailerIds;
+            });
+
+            $newUserVerificationNumber->save();
+            $newUser->setRelation('userVerificationNumber', $newUserVerificationNumber);
 
             // @Todo: Remove this hardcode
             $retailerIds = array_merge($retailerIds, (array)$myRetailerIds);
@@ -841,20 +859,22 @@ class EmployeeAPIController extends ControllerAPI
      * POST - Update Existing Employee
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string    `user_id`               (required) - User ID of the employee
-     * @param string    `firstname`             (required) - Employee first name (Unchangeable)
-     * @param string    `lastname`              (optional) - Employee last name (Unchangeable)
-     * @param string    `birthdate`             (optional) - Employee birthdate
-     * @param string    `position`              (optional) - Employee position, i.e: 'Cashier 1', 'Supervisor'
-     * @param string    `employee_id_char`      (optional) - Employee ID, i.e: 'EMP001', 'CASHIER001'
-     * @param string    `username`              (required) - Username used to login (Unchangable)
-     * @param string    `password`              (required) - Password for the account
-     * @param string    `password_confirmation` (required) - Confirmation password
-     * @param string    `employee_role`         (required) - Role of the employee, i.e: 'cashier', 'manager', 'supervisor'
-     * @param array     `retailer_ids`          (optional) - List of Retailer IDs
+     * @param string    `user_id`                 (required) - User ID of the employee
+     * @param string    `firstname`               (required) - Employee first name (Unchangeable)
+     * @param string    `lastname`                (optional) - Employee last name (Unchangeable)
+     * @param string    `birthdate`               (optional) - Employee birthdate
+     * @param string    `position`                (optional) - Employee position, i.e: 'Cashier 1', 'Supervisor'
+     * @param string    `employee_id_char`        (optional) - Employee ID, i.e: 'EMP001', 'CASHIER001'
+     * @param string    `username`                (required) - Username used to login (Unchangable)
+     * @param string    `password`                (required) - Password for the account
+     * @param string    `password_confirmation`   (required) - Confirmation password
+     * @param string    `employee_role`           (required) - Role of the employee, i.e: 'cashier', 'manager', 'supervisor'
+     * @param array     `retailer_ids`            (optional) - List of Retailer IDs
+     * @param string    `cs_verification_numbers` (optional) - Unique verification number
      * @return Illuminate\Support\Facades\Response
      */
     public function postUpdateMallEmployee()
@@ -902,6 +922,7 @@ class EmployeeAPIController extends ControllerAPI
             $retailerIds = OrbitInput::post('retailer_ids', []);
             $status = OrbitInput::post('status');
             $myRetailerIds = OrbitInput::post('current_mall');
+            $csVerificationNumbers = OrbitInput::post('cs_verification_numbers');
 
             $errorMessage = [
                 'orbit.empty.employee.role'         => Lang::get('validation.orbit.empty.employee.role', array(
@@ -921,22 +942,26 @@ class EmployeeAPIController extends ControllerAPI
                     'employee_role'           => $employeeRole,
                     'username'                => $loginId,
                     'retailer_ids'            => $retailerIds,
+                    'cs_verification_numbers' => $csVerificationNumbers,
                     'status'                  => $status
                 ),
                 array(
                     'current_mall'            => 'required|orbit.empty.mall',
                     'user_id'                 => 'required|orbit.empty.user',
                     'date_of_birth'           => 'date_format:Y-m-d',
-                    'password'                => 'min:5|confirmed',
+                    'password'                => 'min:6|confirmed',
                     'employee_role'           => 'orbit.empty.employee.role',
                     'username'                => 'orbit.exists.username.mall_but_me',
                     'employee_id_char'        => 'orbit.exists.employeeid_but_me:' . $myRetailerIds . ',' . $userId,
                     'retailer_ids'            => 'array|min:1|orbit.empty.retailer',
+                    'cs_verification_numbers' => 'alpha_num|orbit.exist.verification.numbers_but_me:' . $myRetailerIds . ',' . $userId,
                     'status'                  => 'orbit.empty.user_status',
                 ),
                 array(
                     'orbit.empty.employee.role'               => $errorMessage['orbit.empty.employee.role'],
                     'orbit.exists.employeeid_but_me'          => $errorMessage['orbit.exists.employeeid_but_me'],
+                    'orbit.exist.verification.numbers_but_me' => 'The verification number already used by other',
+                    'alpha_num' => 'The verification number must letter and number.',
                 )
             );
 
@@ -983,6 +1008,7 @@ class EmployeeAPIController extends ControllerAPI
             // Get the relation
             $employee = $updatedUser->employee;
             $userDetail = $updatedUser->userDetail;
+            $userVerificationNumber = $updatedUser->userVerificationNumber;
 
             OrbitInput::post('position', function($_position) use ($employee) {
                 $employee->position = $_position;
@@ -1001,6 +1027,33 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             $userDetail->save();
+
+            // User verification numbers
+            OrbitInput::post('cs_verification_numbers', function($_csVerificationNumbers) use ($userVerificationNumber, $userId, $myRetailerIds) {
+                // Validation create, modify, or deleted verification number
+                // If sent empty string, data will be deleted
+                if ($_csVerificationNumbers === '') {
+                    // if any record, will be deleted
+                    if (!empty($userVerificationNumber)) {
+                        $userVerificationNumber->delete();
+
+                        //Delete link to CS
+                        $promotionEmployee = CouponEmployee::where('user_id', $userId);
+                        $promotionEmployee->delete();
+                    }
+                } else {
+                    // Updated data verification number
+                    // Check exist data, if any data will be updated
+                    if (empty($userVerificationNumber)) {
+                        $userVerificationNumber = new UserVerificationNumber();
+                    }
+                    $userVerificationNumber->user_id = $userId;
+                    $userVerificationNumber->verification_number = $_csVerificationNumbers;
+                    $userVerificationNumber->merchant_id = $myRetailerIds;
+                    $userVerificationNumber->touch();
+                    $userVerificationNumber->save();
+                }
+            });
 
             // @Todo: Remove this hardcode
             $retailerIds = array_merge($retailerIds, (array)$myRetailerIds);
@@ -1897,6 +1950,7 @@ class EmployeeAPIController extends ControllerAPI
      * @param string    `firstname_like`        (optional)
      * @param string    `lastname_like`         (optional)
      * @param array     `employee_id_char_like` (optional)
+     * @param array     `cs_coupon_redeem_mall` (optional) - cs was have verification number for coupon redeem
      * @param integer   `take`                  (optional) - limit
      * @param integer   `skip`                  (optional) - limit offset
      * @param array     `with`                  (optional) -
@@ -1942,6 +1996,9 @@ class EmployeeAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby');
             $role_ids = OrbitInput::post('role_ids');
+            $cs_coupon_redeem_mall = OrbitInput::get('cs_coupon_redeem_mall');
+
+
             $listOfRetailerIds = OrbitInput::get('merchant_id', OrbitInput::get('mall_id'));
 
             $validator = Validator::make(
@@ -2167,8 +2224,11 @@ class EmployeeAPIController extends ControllerAPI
 
             // If sortby not active means we should add active as second argument
             // of sorting
-            if ($sortBy !== 'users.status') {
-                $users->orderBy('users.status', 'asc');
+
+            if ($cs_coupon_redeem_mall === '' || $cs_coupon_redeem_mall === null) {
+                if ($sortBy !== 'users.status') {
+                    $users->orderBy('users.status', 'asc');
+                }
             }
 
             OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
@@ -2296,7 +2356,7 @@ class EmployeeAPIController extends ControllerAPI
                         ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
@@ -2313,7 +2373,7 @@ class EmployeeAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('Email Login has already been exists.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
@@ -2516,16 +2576,23 @@ class EmployeeAPIController extends ControllerAPI
         Validator::extend('orbit.exist.verification.numbers', function ($attribute, $value, $parameters) {
             $merchant_id = $parameters[0];
 
-            $verificationNumber = UserVerificationNumber::
+            $csVerificationNumber = UserVerificationNumber::
                         where('verification_number', $value)
                         ->where('merchant_id', $merchant_id)
                         ->first();
 
-            if (!empty($verificationNumber)) {
+            // Check the tenants which has verification number posted
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $merchant_id)
+                    ->first();
+
+            if (! empty($csVerificationNumber) || ! empty($tenantVerificationNumber)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exist.verification.numbers', $verificationNumber);
+            App::instance('orbit.exist.verification.numbers', $csVerificationNumber);
 
             return TRUE;
         });
@@ -2535,16 +2602,24 @@ class EmployeeAPIController extends ControllerAPI
             $merchant_id = $parameters[0];
             $user_id = $parameters[1];
 
-            $verificationNumber = UserVerificationNumber::
+            $csVerificationNumber = UserVerificationNumber::
                         where('verification_number', $value)
                         ->where('merchant_id', $merchant_id)
+                        ->where('user_id', '!=', $user_id)
                         ->first();
 
-            if (!empty($verificationNumber)) {
+            // Check the tenants which has verification number posted
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $merchant_id)
+                    ->first();
+
+            if (! empty($csVerificationNumber) || ! empty($tenantVerificationNumber)) {
                 return FALSE;
             }
 
-            App::instance('orbit.exist.verification.numbers', $verificationNumber);
+            App::instance('orbit.exist.verification.numbers', $csVerificationNumber);
 
             return TRUE;
         });

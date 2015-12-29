@@ -31,8 +31,10 @@ class UserAcquisition extends Eloquent {
      * This is called after saving a new UserAcquisition so we don't have to pass all the data over the web.
      *
      * See: SymmetricDS User Guide section 5.1.5 (Manage > Nodes > Send)
+     *
+     * @param bool $reloadUserData Reload user data (users, user_details, apikeys). user_personal_interests always reloaded.
      */
-    public function forceBoxReloadUserData()
+    public function forceBoxReloadUserData($reloadUserData = true)
     {
         $connections = Config::get('database.connections', array());
         if (!isset($connections['symmetric'])) {
@@ -55,17 +57,20 @@ class UserAcquisition extends Eloquent {
             'event_type' => 'R',  // RELOAD
             'condition' => 'user_id = ' . $quotedId
         ];
-        // RELOAD: users
-        $params['source_table_name'] = $orbPrefix . 'users';
-        $conn->insert($insertQuery, $params);
 
-        // RELOAD: user_details
-        $params['source_table_name'] = $orbPrefix . 'user_details';
-        $conn->insert($insertQuery, $params);
+        if ($reloadUserData) {
+            // RELOAD: users
+            $params['source_table_name'] = $orbPrefix . 'users';
+            $conn->insert($insertQuery, $params);
 
-        // RELOAD: apikey
-        $params['source_table_name'] = $orbPrefix . 'apikeys';
-        $conn->insert($insertQuery, $params);
+            // RELOAD: user_details
+            $params['source_table_name'] = $orbPrefix . 'user_details';
+            $conn->insert($insertQuery, $params);
+
+            // RELOAD: apikey
+            $params['source_table_name'] = $orbPrefix . 'apikeys';
+            $conn->insert($insertQuery, $params);
+        }
 
         // RELOAD: user personal interest
         $params['source_table_name'] = $orbPrefix . 'user_personal_interest';

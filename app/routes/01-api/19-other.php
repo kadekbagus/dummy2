@@ -26,23 +26,40 @@ Route::post('/api/v1/box-control/reboot', ['as' => 'api-box-control-shutdown', f
 Route::group(
     array('before' => 'orbit-settings'),
     function () {
-		/**
-		 * Poll new alert
-		 */
-		Route::post('/api/v1/alert/poll', function()
-		{
-		    return InboxAPIController::create()->getPollAlert();
-		});
+		// /**
+		//  * Poll new alert
+		//  */
+		// Route::get('/api/v1/inbox/unread-count', function()
+		// {
+		//     return InboxAPIController::create()->getPollAlert();
+		// });
+
+		// /**
+		//  * Search inbox
+		//  */
+		// Route::get('/api/v1/inbox/list', function()
+		// {
+		//     return InboxAPIController::create()->getSearchInbox();
+		// });
 	}
 );
 
-/**
- * Read / flag the alert as read
- */
-Route::post('/api/v1/alert/read', function()
-{
-    return InboxAPIController::create()->postReadAlert();
-});
+// /**
+//  * Read / flag the alert as read
+//  */
+// Route::post('/api/v1/inbox/read', function()
+// {
+//     return InboxAPIController::create()->postReadAlert();
+// });
+
+// /**
+//  * Delete the alert
+//  */
+// Route::post('/api/v1/inbox/delete', function()
+// {
+//     return InboxAPIController::create()->postDeleteAlert();
+// });
+
 
 /**
  * Get server time

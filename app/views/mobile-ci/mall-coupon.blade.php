@@ -67,10 +67,19 @@
                     <li>Customer Service</li>
                     @endif
 
-                    @foreach($tenants as $tenant)
-                        <li>{{ $tenant->tenant->name }}</li>
-                    @endforeach
-                    @if(count($tenants) <=0)
+                    @if($cs_reedem)
+                        <li style="margin-bottom : 10px;">{{{ Lang::get('mobileci.coupon.all_cs') }}}</li>
+                    @endif
+
+                    @if ($link_to_all_tenant === true)
+                        {{{ Lang::get('mobileci.coupon.all_tenants') }}}
+                    @else
+                        @foreach($tenants as $tenant)
+                            <li>{{{ $tenant->tenant->name }}}</li>
+                        @endforeach
+                    @endif
+
+                    @if(count($tenants) <=0 && $cs_reedem == false)
                         <li> - </li>
                     @endif
                 </ul>
@@ -89,6 +98,11 @@
         @endif
         <div class="row">
             @if(count($tenants) <=0)
+                @if($cs_reedem)
+                    <div class="col-xs-12 text-center">
+                        <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.modals.coupon_use') }}}</button>
+                    </div>
+                    @endif
             @else
             <div class="col-xs-12 text-center">
                 <button class="btn btn-info btn-block" id="useBtn">{{{ Lang::get('mobileci.modals.coupon_use') }}}</button>
@@ -152,7 +166,7 @@
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced text-center">
                         <h4 style="color:#d9534f" id="errMsg">{{{ Lang::get('mobileci.coupon.wrong_verification_number') }}}</h4>
-                        <small>"{{{ Lang::get('mobileci.coupon.please_check_tenant') }}}"</small>
+                        <small>{{{ Lang::get('mobileci.coupon.please_check_tenant') }}}</small>
                     </div>
                 </div>
             </div>
@@ -171,7 +185,7 @@
                 <div class="row ">
                     <div class="col-xs-12 vertically-spaced text-center">
                         <h4 style="color:#33cc99">{{{ Lang::get('mobileci.coupon.successful') }}}</h4>
-                        <small>"{{{ Lang::get('mobileci.coupon.please_communicate') }}}"</small>
+                        <small>{{{ Lang::get('mobileci.coupon.please_communicate') }}}</small>
                         <div class="form-data">
                             <input id="issuecouponno" type="text" class="form-control text-center" style="font-size:20px;" value="" disabled>
                         </div>

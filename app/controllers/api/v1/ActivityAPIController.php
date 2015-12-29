@@ -103,7 +103,7 @@ class ActivityAPIController extends ControllerAPI
                     'end_date'      => $end_date
                 ),
                 array(
-                    'sort_by'       => 'in:id,ip_address,created,registered_at,email,full_name,object_name,product_name,coupon_name,promotion_name,news_name,promotion_news_name,event_name,action_name,action_name_long,activity_type,gender,staff_name,module_name,retailer_name',
+                    'sort_by'       => 'in:id,ip_address,created,registered_at,email,full_name,object_name,product_name,coupon_name,promotion_name,news_name,promotion_news_name,event_name,action_name,action_name_long,activity_type,gender,staff_name,module_name,retailer_name,object_display_name',
                     'merchant_ids'  => 'orbit.check.merchants',
                     'start_date'    => 'date_format:Y-m-d H:i:s',
                     'end_date'      => 'date_format:Y-m-d H:i:s',
@@ -188,6 +188,7 @@ class ActivityAPIController extends ControllerAPI
                                                     'activities.response_status',
                                                     'activities.created_at',
                                                     'activities.updated_at',
+                                                    'activities.object_display_name',
                                                     DB::Raw("DATE_FORMAT({$tablePrefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"),
                                                     'user_details.gender as gender')
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
@@ -273,8 +274,8 @@ class ActivityAPIController extends ControllerAPI
                               ->where('activities.group', 'cs-portal');
                       })
                       ->orWhere(function($q) use ($tablePrefix) {
-                            $q->where('activities.activity_name', 'activation_ok')
-                              ->where('activities.activity_name_long', 'Customer Activation')
+                            $q->whereIn('activities.activity_name', ['activation_ok','issue_lucky_draw'])
+                              ->whereIn('activities.activity_name_long', ['Customer Activation','Read Notification Lucky Draw Number Issuance'])
                               ->where('activities.group', 'portal');
                       });
                     });
@@ -366,6 +367,17 @@ class ActivityAPIController extends ControllerAPI
             // Filter by matching event_name pattern
             OrbitInput::get('event_name_like', function($name) use ($activities) {
                 $activities->where('activities.event_name', 'like', "%$name%");
+            });
+
+            OrbitInput::get('lucky_draw_names', function($names) use ($activities) {
+                $activities->where('activities.object_name', 'LuckyDraw')
+                           ->whereIn('activities.object_display_name', $names);
+            });
+
+            // Filter by matching object_display_name for lucky draw pattern
+            OrbitInput::get('lucky_draw_name_like', function($name) use ($activities) {
+                $activities->where('activities.object_name', 'LuckyDraw')
+                           ->where('activities.object_display_name', 'like', "%$name%");
             });
 
             // Filter by staff Ids
@@ -477,26 +489,27 @@ class ActivityAPIController extends ControllerAPI
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'id'                => 'activities.activity_id',
-                    'ip_address'        => 'activities.ip_address',
-                    'created'           => 'activities.created_at',
-                    'registered_at'     => 'activities.created_at',
-                    'email'             => 'activities.user_email',
-                    'full_name'         => 'activities.full_name',
-                    'object_name'       => 'activities.object_name',
-                    'product_name'      => 'activities.product_name',
-                    'coupon_name'       => 'activities.coupon_name',
-                    'promotion_name'    => 'activities.promotion_name',
-                    'news_name'         => 'news.news_name',
+                    'id'                  => 'activities.activity_id',
+                    'ip_address'          => 'activities.ip_address',
+                    'created'             => 'activities.created_at',
+                    'registered_at'       => 'activities.created_at',
+                    'email'               => 'activities.user_email',
+                    'full_name'           => 'activities.full_name',
+                    'object_name'         => 'activities.object_name',
+                    'product_name'        => 'activities.product_name',
+                    'coupon_name'         => 'activities.coupon_name',
+                    'promotion_name'      => 'activities.promotion_name',
+                    'news_name'           => 'news.news_name',
                     'promotion_news_name' => DB::raw('promotion_news.news_name'),
-                    'event_name'        => 'activities.event_name',
-                    'action_name'       => 'activities.activity_name',
-                    'action_name_long'  => 'activities.activity_name_long',
-                    'activity_type'     => 'activities.activity_type',
-                    'staff_name'        => 'activities.staff_name',
-                    'gender'            => 'user_details.gender',
-                    'module_name'       => 'activities.module_name',
-                    'retailer_name'     => 'retailer_name',
+                    'event_name'          => 'activities.event_name',
+                    'action_name'         => 'activities.activity_name',
+                    'action_name_long'    => 'activities.activity_name_long',
+                    'activity_type'       => 'activities.activity_type',
+                    'staff_name'          => 'activities.staff_name',
+                    'gender'              => 'user_details.gender',
+                    'module_name'         => 'activities.module_name',
+                    'retailer_name'       => 'retailer_name',
+                    'object_display_name' => 'activities.object_display_name',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -2985,8 +2998,8 @@ class ActivityAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required',
-                    'start_date' => 'required',
-                    'end_date' => 'required',
+                    'start_date' => 'required | date_format:Y-m-d H:i:s',
+                    'end_date' => 'required | date_format:Y-m-d H:i:s',
                 )
             );
 
@@ -3043,7 +3056,7 @@ class ActivityAPIController extends ControllerAPI
 					from {$tablePrefix}activities
 					-- filter by date
 					where (`group` = 'mobile-ci'
-					    or (`group` = 'portal' and activity_type in ('activation'))
+					    or (`group` = 'portal' and activity_type in ('activation','create'))
 					    or (`group` = 'cs-portal' and activity_type in ('registration')))
 					    and response_status = 'OK' and location_id = ?
 					    and created_at between ? and ?

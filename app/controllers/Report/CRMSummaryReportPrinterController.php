@@ -21,6 +21,7 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         $mode = OrbitInput::get('export', 'print');
         $user = $this->loggedUser;
         $flag_7days = false;
+        $flag_noconfig = false;
 
         $current_mall = OrbitInput::get('current_mall');
         $start_date = OrbitInput::get('start_date');
@@ -108,17 +109,26 @@ class CRMSummaryReportPrinterController extends DataPrinterController
         }
 
         $activity_columns = Config::get('orbit.activity_columns');
-        $columns = [];
 
-        $i = 0;
-        foreach ($activity_columns as $key => $value) {
-            $colTemp = [];
-            $colTemp['order'] = $i;
-            $colTemp['value'] = $value;
-            $colTemp['label'] = $key;
-            array_push($columns, $colTemp);
-            $i++;
+        if (count($activity_columns) > 1) {
+            $columns = [];
+
+            $i = 0;
+            foreach ($activity_columns as $key => $value) {
+                $colTemp = [];
+                $colTemp['order'] = $i;
+                $colTemp['value'] = $value;
+                $colTemp['label'] = $key;
+                array_push($columns, $colTemp);
+                $i++;
+            }
         }
+        else {
+            $flag_7days = true;
+            $flag_noconfig = true;
+        }
+
+
 
         if (!$flag_7days) {
 
@@ -157,16 +167,20 @@ class CRMSummaryReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
-                printf("Date,");
-                foreach ($columns as $x => $y) {
-                    if ($x > 0) {
-                        printf(",");
-                    }
-                    printf("\"%s\"", $y['label']);
-                    if (count($columns) - 1 === $x) {
-                        printf("\n");
+
+                if (!$flag_noconfig) {
+                    printf("Date,");
+                    foreach ($columns as $x => $y) {
+                        if ($x > 0) {
+                            printf(",");
+                        }
+                        printf("\"%s\"", $y['label']);
+                        if (count($columns) - 1 === $x) {
+                            printf("\n");
+                        }
                     }
                 }
+
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
 
                 if (!$flag_7days) {
