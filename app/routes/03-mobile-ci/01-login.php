@@ -577,6 +577,14 @@ Route::group(
             return InboxAPIController::create()->getSearchInbox();
         });
 
+        /**
+         * My Account
+         */
+        Route::get('/customer/my-account', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getMyAccountView();
+        });
+
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
         Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }

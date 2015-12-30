@@ -25,7 +25,7 @@
                             @endif
                             <div class="widget-info">
                                 <header class="widget-title">
-                                    <div><strong>{{$widget->display_title}}</strong></div>
+                                    <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
                                 </header>
                                 <header class="widget-subtitle">
                                     @if($widget->item_count > 1)
@@ -53,7 +53,7 @@
                                     @endif
                                     <div class="widget-info">
                                         <header class="widget-title">
-                                            <div><strong>{{$widget->display_title}}</strong></div>
+                                            <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
                                         </header>
                                         <header class="widget-subtitle">
                                             @if($widget->item_count > 1)
@@ -80,7 +80,7 @@
                                     @endif
                                     <div class="widget-info">
                                         <header class="widget-title">
-                                            <div><strong>{{$widget->display_title}}</strong></div>
+                                            <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
                                         </header>
                                         <header class="widget-subtitle">
                                             @if($widget->item_count > 1)
@@ -108,7 +108,7 @@
                                 @endif
                                 <div class="widget-info">
                                     <header class="widget-title">
-                                        <div><strong>{{$widget->display_title}}</strong></div>
+                                        <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
                                     </header>
                                     <header class="widget-subtitle">
                                         @if($widget->item_count > 1)
@@ -218,6 +218,7 @@
 @stop
 
 @section('ext_script_bot')
+{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
 {{ HTML::script('mobile-ci/scripts/responsiveslides.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">

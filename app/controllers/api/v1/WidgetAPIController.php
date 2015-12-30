@@ -433,7 +433,7 @@ class WidgetAPIController extends ControllerAPI
                 }
 
                 if ($widgetOrder != NULL) {
-                    $updatedwidget->widget_slogan = $widgetOrder;
+                    $updatedwidget->widget_order = $widgetOrder;
                 }
 
                 if ($animation != NULL) {

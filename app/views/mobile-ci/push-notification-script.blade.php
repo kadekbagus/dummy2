@@ -47,7 +47,6 @@
                 }
             }).done(function(resp) {
                 // Succeed
-                // console.log(resp.data);
             }).fail(function(resp) {
                 // Fail
             }).always(function(resp) {
@@ -58,7 +57,6 @@
         // Callback function to get the notification
         var getNotif = function() {
             // No need to poll if one is viewing
-            // console.log(orbitIsViewing);
             if (orbitIsViewing) {
                 return;
             }
@@ -69,13 +67,10 @@
                 data: {}
             }).done(function(resp) {
                 // Succeed
-                // console.log(resp.data.records);
                 if (resp.data.records > 0 || resp.data.records === '9+') {
-                    console.log('a');
                     $('.notification-badge').text(resp.data.records);
                     $('.notification-badge').show();
                 } else {
-                    console.log('b');
                     $('.notification-badge').text('0');
                     $('.notification-badge').hide();
                 }
