@@ -271,7 +271,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $tenantsCount;
                     $widget->new_item_count = $newTenantsCount > 9 ? '9+' : $newTenantsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.tenant');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
+                    }
                     $widget->url = 'tenants';
                 }
                 if ($widget->widget_type == 'promotion') {
@@ -305,7 +309,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $promotionsCount;
                     $widget->new_item_count = $newPromotionsCount > 9 ? '9+' : $newPromotionsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.promotion');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
+                    }
                     $widget->url = 'mallpromotions';
                 }
                 if ($widget->widget_type == 'news') {
@@ -339,7 +347,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $newsCount;
                     $widget->new_item_count = $newNewsCount > 9 ? '9+' : $newNewsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.news');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
+                    }
                     $widget->url = 'mallnews';
                 }
                 if ($widget->widget_type == 'coupon') {
@@ -392,7 +404,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $couponsCount;
                     $widget->new_item_count = $newCouponsCount > 9 ? '9+' : $newCouponsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.coupon');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
+                    }
                     $widget->url = 'mallcoupons';
                 }
                 if ($widget->widget_type == 'lucky_draw') {
@@ -422,7 +438,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $luckydrawsCount;
                     $widget->new_item_count = $newLuckydrawsCount > 9 ? '9+' : $newLuckydrawsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.lucky_draw');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
+                    }
                     $widget->url = 'luckydraws';
                 }
             }
