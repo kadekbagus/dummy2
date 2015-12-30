@@ -60,6 +60,19 @@
                 </div>
             </div>
             @foreach($data->records as $product)
+
+                @if($product->promotion_flag)
+                    <i class="fa fa-gift"></i>
+                @endif
+
+                @if($product->news_flag)
+                    <i class="fa fa-newspaper-o"></i>
+                @endif
+
+                @if($product->coupon_flag)
+                    <i class="fa fa-ticket"></i>
+                @endif
+
                 <div class="main-theme-mall catalogue catalogue-tenant" id="product-{{$product->product_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">

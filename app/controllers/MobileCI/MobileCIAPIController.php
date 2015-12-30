@@ -1817,6 +1817,35 @@ class MobileCIAPIController extends ControllerAPI
             //     $tenants->orderBy($sortBy, $sortMode);
             // }
 
+            $prefix = DB::getTablePrefix();
+
+            $news_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
+                        ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
+                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('news.object_type', '=', 'news')
+                        ->where('news.status', '=', 'active')
+                        ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
+                        ->groupBy('merchants.name')->get();
+
+            $promotion_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
+                        ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
+                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('news.object_type', '=', 'promotion')
+                        ->where('news.status', '=', 'active')
+                        ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
+                        ->groupBy('merchants.name')->get();
+
+            $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
+                        ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('promotions.is_coupon', '=', 'Y')
+                        ->where('promotions.status', '=', 'active')
+                        ->whereRaw("NOW() between {$prefix}promotions.begin_date and {$prefix}promotions.end_date")
+                        ->groupBy('merchants.name')->get();
+
             $totalRec = $_tenants->count();
             $listOfRec = $tenants->orderBy(DB::raw('RAND()'))->get(); //randomize
 
@@ -1837,6 +1866,31 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
                 $tenant->category_string = $category_string;
+                $tenant->promotion_flag = FALSE;
+                $tenant->news_flag = FALSE;
+                $tenant->coupon_flag = FALSE;
+
+                foreach ($news_flag as $value1) {
+
+                    if ($tenant->name === $value1->name) {
+                        $tenant->news_flag = TRUE;
+                    }
+                }
+
+                foreach ($promotion_flag as $value2) {
+
+                    if ($tenant->name === $value2->name) {
+                        $tenant->promotion_flag = TRUE;
+                    }
+                }
+
+                foreach ($coupon_flag as $value3) {
+
+                    if ($tenant->name === $value3->name) {
+                        $tenant->coupon_flag = TRUE;
+                    }
+                }
+
             }
 
             // should not be limited for new products - limit only when searching
