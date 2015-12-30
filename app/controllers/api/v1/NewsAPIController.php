@@ -296,7 +296,7 @@ class NewsAPIController extends ControllerAPI
 
             $campaignprice = new CampaignPrice();
             $campaignprice->base_price = $baseprice;
-            $campaignprice->campaign_type = 'news';
+            $campaignprice->campaign_type = $object_type;
             $campaignprice->campaign_id = $newnews->news_id;
             $campaignprice->save();
 
