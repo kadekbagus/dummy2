@@ -645,23 +645,23 @@ class NewsAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatednews) {
-                $updatednews->is_all_gender = $is_all_gender;
-                if ($is_all_gender == 'Y') {
-                    $deleted_campaign_genders = CampaignGender::where('campaign_id', $updatednews->news_id)->get(array('campaign_gender_id'))->toArray();
-                    $updatednews->gender()->detach($deleted_campaign_genders);
-                    $updatednews->load('gender');
-                }
-            });
+            // OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatednews) {
+            //     $updatednews->is_all_gender = $is_all_gender;
+            //     if ($is_all_gender == 'Y') {
+            //         $deleted_campaign_genders = CampaignGender::where('campaign_id', $updatednews->news_id)->get(array('campaign_gender_id'))->toArray();
+            //         $updatednews->genders()->detach($deleted_campaign_genders);
+            //         $updatednews->load('gender');
+            //     }
+            // });
 
-            OrbitInput::post('is_all_age', function($is_all_age) use ($updatednews) {
-                $updatednews->is_all_age = $is_all_age;
-                if ($is_all_age == 'Y') {
-                    $deleted_campaign_ages = CampaignAge::where('campaign_id', $updatednews->news_id)->get(array('campaign_age_id'))->toArray();
-                    $updatednews->age()->detach($deleted_campaign_ages);
-                    $updatednews->load('age');
-                }
-            });
+            // OrbitInput::post('is_all_age', function($is_all_age) use ($updatednews) {
+            //     $updatednews->is_all_age = $is_all_age;
+            //     if ($is_all_age == 'Y') {
+            //         $deleted_campaign_ages = CampaignAge::where('campaign_id', $updatednews->news_id)->get(array('campaign_age_id'))->toArray();
+            //         $updatednews->ages()->detach($deleted_campaign_ages);
+            //         $updatednews->load('age');
+            //     }
+            // });
 
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatednews) {
                 // validate retailer_ids
