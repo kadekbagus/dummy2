@@ -1982,7 +1982,7 @@ class TenantAPIController extends ControllerAPI
                 $tenant_id = $parameters[0];
 
                 // check tenant if exists in coupons.
-                $coupon = CouponRetailer::whereHas('coupon', function($q) {
+                $coupon = CouponRetailerRedeem::whereHas('coupon', function($q) {
                         $q->excludeDeleted();
                     })
                     ->where('retailer_id',$tenant_id)

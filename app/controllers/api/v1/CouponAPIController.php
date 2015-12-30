@@ -386,10 +386,10 @@ class CouponAPIController extends ControllerAPI
             $couponrule = $newcoupon->couponRule()->save($couponrule);
             $newcoupon->coupon_rule = $couponrule;
 
-            // save CouponRetailer
+            // save CouponRetailerRedeem
             $retailers = array();
             foreach ($retailer_ids as $retailer_id) {
-                $retailer = new CouponRetailer();
+                $retailer = new CouponRetailerRedeem();
                 $retailer->retailer_id = $retailer_id;
                 $retailer->promotion_id = $newcoupon->promotion_id;
                 $retailer->save();
@@ -770,7 +770,7 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::post('is_all_retailer', function($is_all_retailer) use ($updatedcoupon) {
                 $updatedcoupon->is_all_retailer = $is_all_retailer;
                 if ($is_all_retailer == 'Y') {
-                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $deleted_retailer_ids = CouponRetailerRedeem::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
                     $updatedcoupon->tenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('tenants');
                 }
@@ -979,7 +979,7 @@ class CouponAPIController extends ControllerAPI
             // save CouponRetailer
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedcoupon) {
                 if ($no_retailer == 'Y') {
-                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $deleted_retailer_ids = CouponRetailerRedeem::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
                     $updatedcoupon->tenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('tenants');
                 }
@@ -1259,7 +1259,7 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postdeletecoupon.before.save', array($this, $deletecoupon));
 
             // hard delete retailer.
-            $deleteretailers = CouponRetailer::where('promotion_id', $deletecoupon->promotion_id)->get();
+            $deleteretailers = CouponRetailerRedeem::where('promotion_id', $deletecoupon->promotion_id)->get();
             foreach ($deleteretailers as $deleteretailer) {
                 $deleteretailer->delete();
             }
@@ -1511,7 +1511,7 @@ class CouponAPIController extends ControllerAPI
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
-                ->select(DB::raw($table_prefix . "promotions.*, " . $table_prefix . "campaign_price.campaign_price_id, " . $table_prefix . "campaign_price.base_price, 
+                ->select(DB::raw($table_prefix . "promotions.*, " . $table_prefix . "campaign_price.campaign_price_id, " . $table_prefix . "campaign_price.base_price,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
                         WHEN 'product_discount_by_percentage' THEN 'percentage'
@@ -2631,8 +2631,8 @@ class CouponAPIController extends ControllerAPI
                             ->first();
             } elseif ($issuedCoupon->coupon->is_all_retailer === 'N') {
                 $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
-                            ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
-                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->join('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'issued_coupons.promotion_id')
+                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where('issued_coupons.issued_coupon_id', $value)
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])

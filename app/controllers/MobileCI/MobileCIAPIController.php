@@ -249,7 +249,7 @@ class MobileCIAPIController extends ControllerAPI
                     $tenantsCount = Tenant::active()
                         ->where('parent_id', $retailer->merchant_id)
                         ->count();
-                    
+
                     // get all new tenant after new_date
                     $newTenantsCount = Tenant::active()
                         ->where('parent_id', $retailer->merchant_id)
@@ -281,7 +281,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->where('object_type', 'promotion')
                         ->whereRaw("? between begin_date and end_date", [$now])
                         ->count();
-                    
+
                     // get all new promotion after new_date
                     $newPromotionsCount = \News::active()
                         ->where('mall_id', $retailer->merchant_id)
@@ -315,7 +315,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->where('object_type', 'news')
                         ->whereRaw("? between begin_date and end_date", [$now])
                         ->count();
-                    
+
                     // get all new news after new_date
                     $newNewsCount = \News::active()
                         ->where('mall_id', $retailer->merchant_id)
@@ -777,7 +777,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $response = $fb->get('/me?fields=id,email,name,first_name,last_name,gender,location,relationship_status,photos,work,education', $accessToken->getValue());
         $user = $response->getGraphUser();
-        
+
         $userEmail = isset($user['email']) ? $user['email'] : '';
         $firstName = isset($user['first_name']) ? $user['first_name'] : '';
         $lastName = isset($user['last_name']) ? $user['last_name'] : '';
@@ -2962,9 +2962,9 @@ class MobileCIAPIController extends ControllerAPI
             } elseif ($coupons->is_all_retailer === 'N') {
                 $linkToAllTenant = FALSE;
 
-                $tenants = \CouponRetailer::with('tenant')->where('promotion_id', $coupon_id)->get();
+                $tenants = \CouponRetailerRedeeem::with('tenant')->where('promotion_id', $coupon_id)->get();
 
-                $tenants = \CouponRetailer::with('tenant', 'tenant.categories')
+                $tenants = \CouponRetailerRedeeem::with('tenant', 'tenant.categories')
                     ->wherehas('tenant', function($q){
                         $q->where('merchants.status', 'active');
                     })
