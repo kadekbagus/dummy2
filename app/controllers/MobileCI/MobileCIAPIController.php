@@ -1110,6 +1110,7 @@ class MobileCIAPIController extends ControllerAPI
 
             return View::make('mobile-ci.mall-my-account',
                 array(
+                    'active_user' => ($user->status === 'active'),
                     'page_title' => $pageTitle,
                     'user_full_name' => $user_full_name,
                     'media' => $media,
