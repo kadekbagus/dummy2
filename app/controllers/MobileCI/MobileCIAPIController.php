@@ -343,35 +343,40 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->url = 'mallnews';
                 }
                 if ($widget->widget_type == 'coupon') {
-                    $couponsCount = Coupon::join('promotion_rules', function ($join) {
-                            $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id');
-                            $join->where('promotions.is_coupon', '=', 'Y');
-                            $join->where('promotions.status', '=', 'active');
-                        })
-                        ->join('issued_coupons', function ($join2) {
-                            $join2->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id');
-                            $join2->where('issued_coupons.status', '=', 'active');
-                        })
-                        ->where('issued_coupons.expired_date', '>=', $now)
-                        ->where('promotions.merchant_id', $retailer->merchant_id)
-                        ->where('issued_coupons.user_id', $user->user_id)
-                        ->count();
+                    $coupons = DB::select(
+                        DB::raw(
+                            'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
+                        inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                        WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
+                            AND p.merchant_id = :merchantid
+                            AND ic.user_id = :userid
+                            ORDER BY RAND()' // randomize
+                        ),
+                        array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+                    );
+                    $couponsCount = count($coupons);
 
-                    $newCouponsCount = Coupon::join('promotion_rules', function ($join) {
-                            $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id');
-                            $join->where('promotions.is_coupon', '=', 'Y');
-                            $join->where('promotions.status', '=', 'active');
-                        })
-                        ->join('issued_coupons', function ($join2) {
-                            $join2->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id');
-                            $join2->where('issued_coupons.status', '=', 'active');
-                        })
-                        ->where('issued_coupons.expired_date', '>=', $now)
-                        ->where('promotions.merchant_id', $retailer->merchant_id)
-                        ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw(DB::getTablePrefix() . "issued_coupons.issued_date between ? and ?", [$new_date, $now])
-                        ->count();
-
+                    $newCoupons = DB::select(
+                        DB::raw(
+                            'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
+                        inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                        WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
+                            AND p.merchant_id = :merchantid
+                            AND ic.user_id = :userid
+                            AND ic.issued_date between :new_date and :now
+                            ORDER BY RAND()' // randomize
+                        ),
+                        array(
+                            'merchantid' => $retailer->merchant_id, 
+                            'userid' => $user->user_id, 
+                            'new_date' => $new_date,
+                            'now' => $now
+                        )
+                    );
+                    $newCouponsCount = count($newCoupons);
+ 
                     $widget->image = 'mobile-ci/images/default_coupon.png';
 
                     foreach ($widget->media as $media) {
@@ -1755,46 +1760,45 @@ class MobileCIAPIController extends ControllerAPI
             );
             $tenants->skip($skip);
 
-            // disable order by to do randomized order
             // Default sort by
-            // $sortBy = 'merchants.name';
-            // // Default sort mode
-            // $sortMode = 'asc';
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
 
-            // OrbitInput::get(
-            //     'sort_by',
-            //     function ($_sortBy) use (&$sortBy) {
-            //         // Map the sortby request to the real column name
-            //         $sortByMapping = array(
-            //             'name'      => 'merchants.name',
-            //         );
-            //         if (array_key_exists($_sortBy, $sortByMapping)) {
-            //             $sortBy = $sortByMapping[$_sortBy];
-            //         }
-            //     }
-            // );
+            OrbitInput::get(
+                'sort_by',
+                function ($_sortBy) use (&$sortBy) {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'name'      => 'merchants.name',
+                    );
+                    if (array_key_exists($_sortBy, $sortByMapping)) {
+                        $sortBy = $sortByMapping[$_sortBy];
+                    }
+                }
+            );
 
-            // OrbitInput::get(
-            //     'sort_mode',
-            //     function ($_sortMode) use (&$sortMode) {
-            //         if (strtolower($_sortMode) !== 'desc') {
-            //             $sortMode = 'asc';
-            //         } else {
-            //             $sortMode = 'desc';
-            //         }
-            //     }
-            // );
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
 
-            // if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
-            //     $prefix = DB::getTablePrefix();
-            //     $tenants->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
-            // }
-            // else {
-            //     $tenants->orderBy($sortBy, $sortMode);
-            // }
+            if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
+                $prefix = DB::getTablePrefix();
+                $tenants->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
+            }
+            else {
+                $tenants->orderBy($sortBy, $sortMode);
+            }
 
             $totalRec = $_tenants->count();
-            $listOfRec = $tenants->orderBy(DB::raw('RAND()'))->get(); //randomize
+            $listOfRec = $tenants->get(); //randomize
 
             foreach ($listOfRec as $tenant) {
                 if (empty($tenant->logo)) {
