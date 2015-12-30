@@ -50,7 +50,7 @@ class Coupon extends Eloquent
 
     public function tenants()
     {
-        return $this->belongsToMany('Tenant', 'promotion_retailer', 'promotion_id', 'retailer_id');
+        return $this->belongsToMany('Tenant', 'promotion_retailer_redeem', 'promotion_id', 'retailer_id');
     }
 
     public function employee()
