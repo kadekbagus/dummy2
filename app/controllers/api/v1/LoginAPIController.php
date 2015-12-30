@@ -1012,6 +1012,7 @@ class LoginAPIController extends ControllerAPI
                         $mall = Mall::with('timezone')->excludeDeleted()->where('user_id', $user->user_id)->first();
                     }
                     if ((strtolower($user->role->role_name) === 'campaign owner') || (strtolower($user->role->role_name) === 'campaign employee')) {
+                        $mall = $user->employee->retailers[0]->load('timezone');
                         $menus = Config::get('orbit.menus.pmp');
                     }
                 } elseif ($from === 'cs-portal') {

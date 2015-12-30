@@ -2683,7 +2683,7 @@ class CouponAPIController extends ControllerAPI
         // Check the existence of the coupon rule type
         Validator::extend('orbit.empty.coupon_rule_type', function ($attribute, $value, $parameters) {
             $valid = false;
-            $statuses = array('coupon_blast_upon_sign_up', 'coupon_blast_upon_first_sign_in', 'coupon_blast_every_sign_in');
+            $statuses = array('auto_issue_on_signup', 'auto_issue_on_first_signin', 'auto_issue_on_every_signin');
             foreach ($statuses as $status) {
                 if($value === $status) $valid = $valid || TRUE;
             }
