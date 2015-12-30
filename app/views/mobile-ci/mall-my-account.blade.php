@@ -5,7 +5,7 @@
 @stop
 
 @section('content')
-    <div class="row vertically-spaced-3">
+    <div class="row">
         <div class="col-xs-12 text-center">
             <div class="profile-img-wrapper">
                 @if(count($media) > 0)
@@ -13,12 +13,14 @@
                 @else
                 <img src="{{ asset('mobile-ci/images/default_my_profile_alternate.png') }}">
                 @endif
+                <div class="list-vignette"></div>
+                <div class="profile-img-title">
+                    <div class="col-xs-12 pad-left text-left">
+                        <h4><strong>{{$user_full_name}}</strong></h4>
+                        <p>{{$user->user_email}}</p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="row vertically-spaced-3">
-        <div class="col-xs-12 text-center">
-            <p><b>{{$user_full_name}}</b></p>
         </div>
     </div>
 @stop

@@ -68,15 +68,15 @@
             }).done(function(resp) {
                 // Succeed
                 if (resp.data.records > 0 || resp.data.records === '9+') {
-                    $('.notification-badge').text(resp.data.records);
-                    $('.notification-badge').show();
+                    $('.notification-badge-txt').text(resp.data.records);
+                    $('.notification-badge-txt').show();
                 } else {
-                    $('.notification-badge').text('0');
-                    $('.notification-badge').hide();
+                    $('.notification-badge-txt').text('0');
+                    $('.notification-badge-txt').hide();
                 }
             }).fail(function(resp) {
-                $('.notification-badge').text('0');
-                $('.notification-badge').hide();
+                $('.notification-badge-txt').text('0');
+                $('.notification-badge-txt').hide();
             }).always(function(resp) {
 
             });

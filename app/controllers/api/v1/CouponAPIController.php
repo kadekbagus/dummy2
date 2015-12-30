@@ -147,6 +147,8 @@ class CouponAPIController extends ControllerAPI
             $is_popup = OrbitInput::post('is_popup');
             $rule_begin_date = OrbitInput::post('rule_begin_date');
             $rule_end_date = OrbitInput::post('rule_end_date');
+            $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
+            $linkToTenantIds = (array) $linkToTenantIds;
 
             $validator = Validator::make(
                 array(
@@ -244,6 +246,29 @@ class CouponAPIController extends ControllerAPI
                     ),
                     array(
                         'employee_user_id'   => 'orbit.empty.employee',
+                    )
+                );
+
+                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
+            }
+
+            // validating linkToTenantIds.
+            foreach ($linkToTenantIds as $retailer_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'retailer_id'   => $retailer_id_check,
+
+                    ),
+                    array(
+                        'retailer_id'   => 'orbit.empty.tenant',
                     )
                 );
 
@@ -407,6 +432,17 @@ class CouponAPIController extends ControllerAPI
             }
 
             $newcoupon->employees = $employees;
+
+            // save CouponRetailer
+            $retailers = array();
+            foreach ($linkToTenantIds as $retailer_id) {
+                $retailer = new CouponRetailer();
+                $retailer->retailer_id = $retailer_id;
+                $retailer->promotion_id = $newcoupon->promotion_id;
+                $retailer->save();
+                $retailers[] = $retailer;
+            }
+            $newcoupon->link_to_tenants = $retailers;
 
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
@@ -726,7 +762,7 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postupdatecoupon.after.validation', array($this, $validator));
 
-            $updatedcoupon = Coupon::with('couponRule', 'tenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
+            $updatedcoupon = Coupon::with('couponRule', 'tenants', 'linkToTenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
 
             $updatedcoupon_default_language = CouponTranslation::excludeDeleted()->where('promotion_id', $promotion_id)->where('merchant_language_id', $id_language_default)->first();
 
@@ -976,7 +1012,7 @@ class CouponAPIController extends ControllerAPI
             $updatedcoupon->setRelation('couponRule', $couponrule);
             $updatedcoupon->coupon_rule = $couponrule;
 
-            // save CouponRetailer
+            // save CouponRetailerRedeem
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedcoupon) {
                 if ($no_retailer == 'Y') {
                     $deleted_retailer_ids = CouponRetailerRedeem::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
@@ -990,6 +1026,15 @@ class CouponAPIController extends ControllerAPI
                     $deleted_employee = CouponEmployee::where('promotion_id', $updatedcoupon->promotion_id)->get(array('user_id'))->toArray();
                     $updatedcoupon->employee()->detach($deleted_employee);
                     $updatedcoupon->load('employee');
+                }
+            });
+
+            // save CouponRetailer
+            OrbitInput::post('no_link_to_tenant', function($no_retailer) use ($updatedcoupon) {
+                if ($no_retailer == 'Y') {
+                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $updatedcoupon->linkToTenants()->detach($deleted_retailer_ids);
+                    $updatedcoupon->load('linkToTenants');
                 }
             });
 
@@ -1051,6 +1096,36 @@ class CouponAPIController extends ControllerAPI
 
                 // reload tenants relation
                 $updatedcoupon->load('employee');
+            });
+
+            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($updatedcoupon) {
+                // validate retailer_ids
+                $retailer_ids = (array) $retailer_ids;
+                foreach ($retailer_ids as $retailer_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'retailer_id'   => $retailer_id_check,
+                        ),
+                        array(
+                            'retailer_id'   => 'orbit.empty.tenant',
+                        )
+                    );
+
+                    Event::fire('orbit.coupon.postupdatecoupon.before.retailervalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
+                }
+                // sync new set of retailer ids
+                $updatedcoupon->linkToTenants()->sync($retailer_ids);
+
+                // reload tenants relation
+                $updatedcoupon->load('linkToTenants');
             });
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
@@ -1798,6 +1873,8 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('translations.media');
                     } elseif ($relation === 'employee') {
                         $coupons->with('employee');
+                    } elseif ($relation === 'link_to_tenants') {
+                        $coupons->with('linkToTenants');
                     }
                 }
             });

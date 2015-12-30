@@ -28,7 +28,7 @@
                                     <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
                                 </header>
                                 <header class="widget-subtitle">
-                                    @if($widget->item_count > 1)
+                                    @if($widget->item_count > 0)
                                     <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
                                     @else
                                     <div>&nbsp;</div>
@@ -56,7 +56,7 @@
                                             <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
                                         </header>
                                         <header class="widget-subtitle">
-                                            @if($widget->item_count > 1)
+                                            @if($widget->item_count > 0)
                                             <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
                                             @else
                                             <div>&nbsp;</div>
@@ -83,7 +83,7 @@
                                             <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
                                         </header>
                                         <header class="widget-subtitle">
-                                            @if($widget->item_count > 1)
+                                            @if($widget->item_count > 0)
                                             <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
                                             @else
                                             <div>&nbsp;</div>
@@ -111,7 +111,7 @@
                                         <div><strong>{{ucwords(strtolower($widget->display_title))}}</strong></div>
                                     </header>
                                     <header class="widget-subtitle">
-                                        @if($widget->item_count > 1)
+                                        @if($widget->item_count > 0)
                                         <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
                                         @else
                                         <div>&nbsp;</div>
