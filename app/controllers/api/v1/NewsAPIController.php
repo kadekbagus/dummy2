@@ -769,7 +769,7 @@ class NewsAPIController extends ControllerAPI
                     $newsAge->save();
                     $newsAges[] = $newsAges;
                 }
-                $newnews->age = $newsAges;
+                $updatednews->age = $newsAges;
 
             });
 
