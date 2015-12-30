@@ -56,7 +56,9 @@ return array(
             'interval'  => 5000
         ],
 
-        'membership' => true
+        'membership' => true,
+
+        'widget_new_threshold' => 1, // in day(s)
     ),
 
     // General contact data

@@ -239,7 +239,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->take(5)
                 ->get();
 
-            $new_offset = 3; //in days
+            $new_offset = Config::get('orbit.shop.widget_new_threshold', 1); //in days
             $now = Carbon::now($retailer->timezone->timezone_name);
             $new_date = Carbon::now($retailer->timezone->timezone_name)->subDays($new_offset);
 
