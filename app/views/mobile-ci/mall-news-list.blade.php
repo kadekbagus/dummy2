@@ -5,6 +5,28 @@
 @stop
 
 @section('content')
+    <div class="container">
+        <div class="mobile-ci list-item-container">
+            <div class="row">
+                <div class="col-xs-12 col-sm-12">
+                    <section class="list-item-single">
+                        <a class="list-item-link" href="{{ url('customer/') }}">
+                            <div class="list-item-info">
+                                <header class="list-item-title">
+                                    <div><strong>News Title</strong></div>
+                                </header>
+                                <header class="list-item-subtitle">
+                                    <div>This is the description mate</div>
+                                </header>
+                            </div>
+                            <div class="list-vignette"></div>
+                            <img class="img-responsive img-fit-not-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}" />
+                        </a>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
             @foreach($data->records as $news)

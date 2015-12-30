@@ -135,7 +135,6 @@
 
 .notification-badge {
     font-size: .35em;
-    display: none;
     position: absolute;
     top: 6px;
     right: 2px;
@@ -149,11 +148,23 @@
     border: 1px solid #FFF;
     font-family: sans-serif;
 }
-
-.notification-badge.notification-badge-sub {
-    font-size: .55em;
-    top: -5px;
-    right: -10px;
+.notification-badge-txt{
+    display: none;
+}
+.notification-badge-sub {
+    font-size: .45em;
+    position: absolute;
+    right: 32%;
+    width: 2em;
+    height: 2em;
+    line-height: 1.8em;
+    border-radius: 50%;
+    text-align: center;
+    color: #fff;
+    background: rgb(255, 0, 0);
+    border: 1px solid #FFF;
+    font-family: sans-serif;
+    margin-top: 6px;
 }
 
 .loadmore {
