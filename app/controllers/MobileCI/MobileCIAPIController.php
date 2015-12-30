@@ -1065,6 +1065,68 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * GET - My Account detail page
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     */
+    public function getMyAccountView()
+    {
+        $user = null;
+        $media = null;
+        $user_full_name = null;
+
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        try {
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $languages = $this->getListLanguages($retailer);
+            $pageTitle = Lang::get('mobileci.page_title.my_account');
+
+            $user_full_name = $user->getFullName();
+            if (empty(trim($user_full_name))) {
+                $user_full_name = $user->email;
+            }
+
+            $media = $user->profilePicture()
+                        ->where('media_name_long', 'user_profile_picture_orig')
+                        ->get();
+
+            $activityPageNotes = sprintf('Page viewed: My Account, user Id: %s', $user->user_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account')
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-my-account',
+                array(
+                    'page_title' => $pageTitle,
+                    'user_full_name' => $user_full_name,
+                    'media' => $media,
+                    'user' => $user,
+                    'retailer' => $retailer,
+                    'languages' => $languages
+                ));
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: My Account, user Id: %s', $user->user_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account Failed')
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
      * Custom validations block
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
