@@ -286,7 +286,7 @@ class NewsAPIController extends ControllerAPI
 
             //save campaign price
             $campaignbaseprice = CampaignBasePrices::where('merchant_id', '=', $newnews->mall_id)
-                                            ->where('campaign_type', '=', 'news')
+                                            ->where('campaign_type', '=', $object_type)
                                             ->first();
 
             $baseprice = 0;
@@ -296,7 +296,7 @@ class NewsAPIController extends ControllerAPI
 
             $campaignprice = new CampaignPrice();
             $campaignprice->base_price = $baseprice;
-            $campaignprice->campaign_type = 'news';
+            $campaignprice->campaign_type = $object_type;
             $campaignprice->campaign_id = $newnews->news_id;
             $campaignprice->save();
 
@@ -1170,13 +1170,14 @@ class NewsAPIController extends ControllerAPI
                 }
             }
 
+            $object_type = OrbitInput::get('object_type');
+
             // Builder object
             $news = News::select('news.*', 'campaign_price.campaign_price_id', 'campaign_price.base_price')
-                        ->leftJoin('campaign_price', function($join)
-                            {
+                        ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
-                                     ->where('campaign_price.campaign_type', '=', 'news');
-                            })
+                                     ->where('campaign_price.campaign_type', '=', $object_type);
+                          })
                         ->excludeDeleted('news');
 
             // Filter news by Ids

@@ -410,6 +410,22 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
+            //save campaign price
+            $campaignbaseprice = CampaignBasePrices::where('merchant_id', '=', $newcoupon->merchant_id)
+                                            ->where('campaign_type', '=', 'coupon')
+                                            ->first();
+
+            $baseprice = 0;
+            if (! empty($campaignbaseprice->price)) {
+                $baseprice = $campaignbaseprice->price;
+            }
+
+            $campaignprice = new CampaignPrice();
+            $campaignprice->base_price = $baseprice;
+            $campaignprice->campaign_type = 'coupon';
+            $campaignprice->campaign_id = $newcoupon->promotion_id;
+            $campaignprice->save();
+
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
             });
@@ -1495,7 +1511,7 @@ class CouponAPIController extends ControllerAPI
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
-                ->select(DB::raw($table_prefix . "promotions.*,
+                ->select(DB::raw($table_prefix . "promotions.*, " . $table_prefix . "campaign_price.campaign_price_id, " . $table_prefix . "campaign_price.base_price, 
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
                         WHEN 'product_discount_by_percentage' THEN 'percentage'
@@ -1522,6 +1538,10 @@ class CouponAPIController extends ControllerAPI
                         {$table_prefix}promotions.status
                     END as 'coupon_status'")
                 )
+                ->leftJoin('campaign_price', function ($join) {
+                         $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
+                              ->where('campaign_price.campaign_type', '=', 'coupon');
+                  })
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
 
