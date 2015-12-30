@@ -29,7 +29,7 @@
                                 </header>
                                 <header class="widget-subtitle">
                                     @if($widget->item_count > 1)
-                                    <div>{{$widget->item_count}} items</div>
+                                    <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
                                     @else
                                     <div>&nbsp;</div>
                                     @endif
@@ -57,7 +57,7 @@
                                         </header>
                                         <header class="widget-subtitle">
                                             @if($widget->item_count > 1)
-                                            <div>{{$widget->item_count}} items</div>
+                                            <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
                                             @else
                                             <div>&nbsp;</div>
                                             @endif
@@ -84,7 +84,7 @@
                                         </header>
                                         <header class="widget-subtitle">
                                             @if($widget->item_count > 1)
-                                            <div>{{$widget->item_count}} items</div>
+                                            <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
                                             @else
                                             <div>&nbsp;</div>
                                             @endif
@@ -112,7 +112,7 @@
                                     </header>
                                     <header class="widget-subtitle">
                                         @if($widget->item_count > 1)
-                                        <div>{{$widget->item_count}} items</div>
+                                        <div>{{$widget->item_count}} {{$widget->display_sub_title}}</div>
                                         @else
                                         <div>&nbsp;</div>
                                         @endif
