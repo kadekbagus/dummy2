@@ -68,7 +68,8 @@ class News extends Eloquent
 
     public function ages()
     {
-        return $this->hasMany('CampaignAge', 'campaign_id', 'news_id');
+        return $this->hasMany('CampaignAge', 'campaign_id', 'news_id')
+                    ->join('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
     }
 
 }
