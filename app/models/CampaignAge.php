@@ -7,12 +7,6 @@ class CampaignAge extends Eloquent
      * @author Firmansyah <firmansyah@dominopos.com>
      */
 
-    /**
-     * Import trait ModelStatusTrait so we can use some common scope dealing
-     * with `status` field.
-     */
-    use ModelStatusTrait;
-
     protected $table = 'campaign_age';
 
     protected $primaryKey = 'campaign_age_id';

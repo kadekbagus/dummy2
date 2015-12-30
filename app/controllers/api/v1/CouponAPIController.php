@@ -145,6 +145,8 @@ class CouponAPIController extends ControllerAPI
             $employee_user_ids = (array) $employee_user_ids;
             $id_language_default = OrbitInput::post('id_language_default');
             $is_popup = OrbitInput::post('is_popup');
+            $rule_begin_date = OrbitInput::post('rule_begin_date');
+            $rule_end_date = OrbitInput::post('rule_end_date');
 
             $validator = Validator::make(
                 array(
@@ -161,6 +163,8 @@ class CouponAPIController extends ControllerAPI
                     'is_all_retailer'         => $is_all_retailer,
                     'is_all_employee'         => $is_all_employee,
                     'id_language_default'     => $id_language_default,
+                    'rule_begin_date'         => $rule_begin_date,
+                    'rule_end_date'           => $rule_end_date,
                 ),
                 array(
                     'current_mall'            => 'required|orbit.empty.merchant',
@@ -176,6 +180,8 @@ class CouponAPIController extends ControllerAPI
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
+                    'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
+                    'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -375,6 +381,8 @@ class CouponAPIController extends ControllerAPI
             $couponrule->is_cumulative_with_coupons = $is_cumulative_with_coupons;
             $couponrule->is_cumulative_with_promotions = $is_cumulative_with_promotions;
             $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
+            $couponrule->rule_begin_date = $rule_begin_date;
+            $couponrule->rule_end_date = $rule_end_date;
             $couponrule = $newcoupon->couponRule()->save($couponrule);
             $newcoupon->coupon_rule = $couponrule;
 
@@ -401,6 +409,22 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->employees = $employees;
 
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
+
+            //save campaign price
+            $campaignbaseprice = CampaignBasePrices::where('merchant_id', '=', $newcoupon->merchant_id)
+                                            ->where('campaign_type', '=', 'coupon')
+                                            ->first();
+
+            $baseprice = 0;
+            if (! empty($campaignbaseprice->price)) {
+                $baseprice = $campaignbaseprice->price;
+            }
+
+            $campaignprice = new CampaignPrice();
+            $campaignprice->base_price = $baseprice;
+            $campaignprice->campaign_type = 'coupon';
+            $campaignprice->campaign_id = $newcoupon->promotion_id;
+            $campaignprice->save();
 
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
@@ -631,6 +655,8 @@ class CouponAPIController extends ControllerAPI
             $discount_value = OrbitInput::post('discount_value');
             $rule_value = OrbitInput::post('rule_value');
             $id_language_default = OrbitInput::post('id_language_default');
+            $rule_begin_date = OrbitInput::post('rule_begin_date');
+            $rule_end_date = OrbitInput::post('rule_end_date');
 
             $data = array(
                 'promotion_id'            => $promotion_id,
@@ -646,7 +672,9 @@ class CouponAPIController extends ControllerAPI
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
-                'maximum_issued_coupon'     => $maximum_issued_coupon,
+                'maximum_issued_coupon'   => $maximum_issued_coupon,
+                'rule_begin_date'         => $rule_begin_date,
+                'rule_end_date'           => $rule_end_date,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -671,7 +699,9 @@ class CouponAPIController extends ControllerAPI
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
-                    'maximum_issued_coupon'     => 'orbit.max.total_issued_coupons:' . $promotion_id,
+                    'maximum_issued_coupon'   => 'orbit.max.total_issued_coupons:' . $promotion_id,
+                    'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
+                    'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                 ),
                 array(
                     'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
@@ -932,6 +962,14 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('coupon_redeem_rule_value', function($coupon_redeem_rule_value) use ($couponrule) {
                 $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
+            });
+
+            OrbitInput::post('rule_begin_date', function($rule_begin_date) use ($couponrule) {
+                $couponrule->rule_begin_date = $rule_begin_date;
+            });
+
+            OrbitInput::post('rule_end_date', function($rule_end_date) use ($couponrule) {
+                $couponrule->rule_end_date = $rule_end_date;
             });
 
             $couponrule->save();
@@ -1473,7 +1511,7 @@ class CouponAPIController extends ControllerAPI
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
-                ->select(DB::raw($table_prefix . "promotions.*,
+                ->select(DB::raw($table_prefix . "promotions.*, " . $table_prefix . "campaign_price.campaign_price_id, " . $table_prefix . "campaign_price.base_price, 
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
                         WHEN 'product_discount_by_percentage' THEN 'percentage'
@@ -1500,6 +1538,10 @@ class CouponAPIController extends ControllerAPI
                         {$table_prefix}promotions.status
                     END as 'coupon_status'")
                 )
+                ->leftJoin('campaign_price', function ($join) {
+                         $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
+                              ->where('campaign_price.campaign_type', '=', 'coupon');
+                  })
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
 
@@ -1715,6 +1757,22 @@ class CouponAPIController extends ControllerAPI
             // Filter
             OrbitInput::get('retailer_name', function ($name) use ($coupons) {
                 $coupons->where('merchants.merchant_name', 'like', "%$name%");
+            });
+
+            // Filter coupon by rule begin date
+            OrbitInput::get('rule_begin_date', function ($beginDate) use ($coupons)
+            {
+                $coupons->whereHas('couponrule', function ($q) use ($beginDate) {
+                    $q->where('rule_begin_date', '<=', $beginDate);
+                });
+            });
+
+            // Filter coupon by end date
+            OrbitInput::get('rule_end_date', function ($endDate) use ($coupons)
+            {
+                $coupons->whereHas('couponrule', function ($q) use ($endDate) {
+                    $q->where('rule_end_date', '>=', $endDate);
+                });
             });
 
             $from_cs = OrbitInput::get('from_cs', 'no');
