@@ -153,6 +153,10 @@ return array(
             'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
+            'age'                  => 'The Age Range ID you specified is not found.',
+            'gender'               => 'The Gender must be M or F or U.',
+            'is_all_gender'        => 'The All Gender must be Y or N.',
+            'is_all_age'           => 'The All Age must be Y or N.',
             'status_link_to'       => 'The Link To must be Y or N.',
             'role'                 => 'The Role ID you specified is not found.',
             'consumer_role'        => 'The Consumer role does not exist.',

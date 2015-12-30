@@ -2,7 +2,6 @@
 /**
  * An API controller for managing News.
  */
-use Config;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -15,6 +14,9 @@ use Carbon\Carbon as Carbon;
 
 class NewsAPIController extends ControllerAPI
 {
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
     /**
      * POST - Create New News
      *
@@ -73,7 +75,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->newsViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -94,7 +96,7 @@ class NewsAPIController extends ControllerAPI
             $link_object_type = OrbitInput::post('link_object_type');
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
-            $is_all_age = OrbitInput::post('is_all_age');
+            $is_all_age = OrbitInput::post('is_all_age_range');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
             $gender_ids = OrbitInput::post('gender_ids');
@@ -183,7 +185,7 @@ class NewsAPIController extends ControllerAPI
                 Event::fire('orbit.news.postnewnews.after.retailervalidation', array($this, $validator));
             }
 
-            foreach ($age_ids as $age_id_check) {
+            foreach ($age_range_ids as $age_id_check) {
                 $validator = Validator::make(
                     array(
                         'age_id'   => $age_id_check,
@@ -258,7 +260,7 @@ class NewsAPIController extends ControllerAPI
 
             // save CampaignAge
             $newsAges = array();
-            foreach ($age_ranges as $age_range) {
+            foreach ($age_range_ids as $age_range) {
                 $newsAge = new CampaignAge();
                 $newsAge->campaign_type = $object_type;
                 $newsAge->campaign_id = $newnews->news_id;
@@ -270,7 +272,7 @@ class NewsAPIController extends ControllerAPI
 
             // save CampaignGender
             $newsGenders = array();
-            foreach ($genders as $gender) {
+            foreach ($gender_ids as $gender) {
                 $newsGender = new CampaignGender();
                 $newsGender->campaign_type = $object_type;
                 $newsGender->campaign_id = $newnews->news_id;
@@ -464,7 +466,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -700,10 +702,10 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->load('genders');
             });
 
-            OrbitInput::post('age_ids', function($age_ids) use ($updatednews) {
+            OrbitInput::post('age_ids', function($age_range_ids) use ($updatednews) {
                 // validate age_ids
-                $age_ids = (array) $age_ids;
-                foreach ($age_ids as $ages_check) {
+                $age_range_ids = (array) $age_range_ids;
+                foreach ($age_range_ids as $ages_check) {
                     $validator = Validator::make(
                         array(
                             'age_id'   => $ages_check,
@@ -882,7 +884,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1117,7 +1119,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1725,12 +1727,12 @@ class NewsAPIController extends ControllerAPI
                         ->first();
 
             if (empty($news)) {
-                return FALSE;
+                return false;
             }
 
             App::instance('orbit.empty.language_default', $news);
 
-            return TRUE;
+            return true;
         });
 
         // Validate the time format for over 23 hour
@@ -1741,10 +1743,10 @@ class NewsAPIController extends ControllerAPI
             $timeExplode = explode(':', $dateTimeExplode[1]);
             // get the Hour format
             if($timeExplode[0] > 23){
-                return FALSE;
+                return false;
             }
 
-            return TRUE;
+            return true;
         });
 
         // Check the existance of news id
@@ -1754,12 +1756,12 @@ class NewsAPIController extends ControllerAPI
                         ->first();
 
             if (empty($news)) {
-                return FALSE;
+                return false;
             }
 
             App::instance('orbit.empty.news', $news);
 
-            return TRUE;
+            return true;
         });
 
         // Check the existance of mall id
@@ -1769,12 +1771,12 @@ class NewsAPIController extends ControllerAPI
                         ->first();
 
             if (empty($mall)) {
-                return FALSE;
+                return false;
             }
 
             App::instance('orbit.empty.mall', $mall);
 
-            return TRUE;
+            return true;
         });
 
         // Check news name, it should not exists
@@ -1796,12 +1798,12 @@ class NewsAPIController extends ControllerAPI
                     ->first();
 
             if (! empty($newsName)) {
-                return FALSE;
+                return false;
             }
 
             App::instance('orbit.validation.news_name', $newsName);
 
-            return TRUE;
+            return true;
         });
 
         // Check news name, it should not exists (for update)
@@ -1818,12 +1820,12 @@ class NewsAPIController extends ControllerAPI
                         ->first();
 
             if (! empty($news)) {
-                return FALSE;
+                return false;
             }
 
             App::instance('orbit.validation.news_name', $news);
 
-            return TRUE;
+            return true;
         });
 
         // Check the existence of the news status
@@ -1831,7 +1833,7 @@ class NewsAPIController extends ControllerAPI
             $valid = false;
             $statuses = array('active', 'inactive', 'pending', 'blocked', 'deleted');
             foreach ($statuses as $status) {
-                if($value === $status) $valid = $valid || TRUE;
+                if($value === $status) $valid = $valid || true;
             }
 
             return $valid;
@@ -1842,7 +1844,7 @@ class NewsAPIController extends ControllerAPI
             $valid = false;
             $objectTypes = array('promotion', 'news');
             foreach ($objectTypes as $objectType) {
-                if($value === $objectType) $valid = $valid || TRUE;
+                if($value === $objectType) $valid = $valid || true;
             }
 
             return $valid;
@@ -1853,7 +1855,7 @@ class NewsAPIController extends ControllerAPI
             $valid = false;
             $linkobjecttypes = array('tenant', 'tenant_category');
             foreach ($linkobjecttypes as $linkobjecttype) {
-                if($value === $linkobjecttype) $valid = $valid || TRUE;
+                if($value === $linkobjecttype) $valid = $valid || true;
             }
 
             return $valid;
@@ -1866,19 +1868,20 @@ class NewsAPIController extends ControllerAPI
                         ->first();
 
             if (empty($tenant)) {
-                return FALSE;
+                return false;
             }
 
             App::instance('orbit.empty.tenant', $tenant);
 
-            return TRUE;
+            return true;
         });
 
         Validator::extend('orbit.empty.is_all_age', function ($attribute, $value, $parameters) {
             $valid = false;
             $statuses = array('Y', 'N');
-            foreach ($statuses as $status) {
-                if($value === $status) $valid = $valid || TRUE;
+
+            if (in_array($value, $statuses)) {
+                $valid = true;
             }
 
             return $valid;
@@ -1887,23 +1890,23 @@ class NewsAPIController extends ControllerAPI
         Validator::extend('orbit.empty.is_all_gender', function ($attribute, $value, $parameters) {
             $valid = false;
             $statuses = array('Y', 'N');
-            foreach ($statuses as $status) {
-                if($value === $status) $valid = $valid || TRUE;
+
+            if (in_array($value, $statuses)) {
+                $valid = true;
             }
 
             return $valid;
         });
 
         Validator::extend('orbit.empty.gender', function ($attribute, $value, $parameters) {
-            $news = Config::get('orbit.genders');
+            $valid = false;
+            $statuses = array('M', 'F', 'U');
 
-            if (! array_key_exists($value, $news)) {
-                return FALSE;
+            if (in_array($value, $statuses)) {
+                $valid = true;
             }
 
-            App::instance('orbit.empty.gender', $news);
-
-            return TRUE;
+            return $valid;
         });
 
         Validator::extend('orbit.empty.age', function ($attribute, $value, $parameters) {
@@ -1912,12 +1915,12 @@ class NewsAPIController extends ControllerAPI
                         ->first();
 
             if (empty($news)) {
-                return FALSE;
+                return false;
             }
 
             App::instance('orbit.empty.age', $news);
 
-            return TRUE;
+            return true;
         });
 
 /*
@@ -1940,7 +1943,7 @@ class NewsAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            return TRUE;
+            return true;
         });
 */
     }
@@ -1995,7 +1998,7 @@ class NewsAPIController extends ControllerAPI
                 $operations[] = ['delete', $existing_translation];
             } else {
                 foreach ($translations as $field => $value) {
-                    if (!in_array($field, $valid_fields, TRUE)) {
+                    if (!in_array($field, $valid_fields, true)) {
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
                     }
                     if ($value !== null && !is_string($value)) {
