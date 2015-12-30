@@ -630,15 +630,21 @@ h5.tenant-category{
       color: @theme-main-complimentary-2;
       //background-color: @theme-main;
       //font-size: 3vw;
-      font-size: 2.2rem;
+      font-size: 22px;
       overflow: hidden;
+      text-overflow: ellipsis;
       div {
-        width:500px;
+          height:28px;
+          overflow: hidden;
       }
-      &.list-item-subtitle{
+    }
+    .list-item-subtitle{
         //font-size:2.5vw;
-        font-size:1rem;
-      }
+        font-size:14px;
+        div{
+            height:20px;
+            overflow: hidden;
+        }
     }
     .list-item-single {
       background-color: #fff;
