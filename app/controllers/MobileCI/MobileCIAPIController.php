@@ -638,7 +638,7 @@ class MobileCIAPIController extends ControllerAPI
         ]);
 
         $helper = $fb->getRedirectLoginHelper();
-        $permissions = ['email'];
+        $permissions = ['email', 'public_profile', 'user_birthday', 'user_education_history', 'user_location', 'user_relationships', 'user_work_history', 'user_photos'];
         $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'mac_address' => \Input::get('mac_address', '')]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
@@ -670,6 +670,14 @@ class MobileCIAPIController extends ControllerAPI
         return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
     }
 
+    /**
+     * Handle google account POST and callback
+     *
+     * @author shelgi <shelgi@dominopos.com>
+     *
+     * @return void
+     *
+     */
     public function getGoogleCallbackView()
     {
         $oldRouteSessionConfigValue = Config::get('orbit.session.availability.query_string');
@@ -751,6 +759,9 @@ class MobileCIAPIController extends ControllerAPI
         // &state=28d0463ac4dc53131ae19826476bff74#_=_
         $error = \Input::get('error', NULL);
 
+        $city = '';
+        $country = '';
+
         if (! is_null($error)) {
             return $this->getFacebookError();
         }
@@ -769,14 +780,23 @@ class MobileCIAPIController extends ControllerAPI
         $helper = $fb->getRedirectLoginHelper();
         $accessToken = $helper->getAccessToken();
 
-        $response = $fb->get('/me?fields=email,name,first_name,last_name,gender', $accessToken->getValue());
+        $response = $fb->get('/me?fields=id,email,name,first_name,last_name,gender,location,relationship_status,photos,work,education', $accessToken->getValue());
         $user = $response->getGraphUser();
-
+        
         $userEmail = isset($user['email']) ? $user['email'] : '';
         $firstName = isset($user['first_name']) ? $user['first_name'] : '';
         $lastName = isset($user['last_name']) ? $user['last_name'] : '';
         $gender = isset($user['gender']) ? $user['gender'] : '';
         $socialid = isset($user['id']) ? $user['id'] : '';
+        $relationship = isset($user['relationship_status']) ? $user['relationship_status'] : '';
+        $work = isset($user['work']) ? $user['work'][0]['employer']['name'] : '';
+        $education = isset($user['education']) ? $user['education'][0]['type'] : '';
+
+        if (isset($user['location']['name'])) {
+            $location = explode(',', $user['location']['name']);
+            $city = isset($location[0]) ? $location[0] : '';
+            $country = isset($location[1]) ? $location[1] : '';
+        }
 
         $data = [
             'email' => $userEmail,
@@ -785,12 +805,16 @@ class MobileCIAPIController extends ControllerAPI
             'gender' => $gender,
             'login_from'  => 'facebook',
             'social_id'  => $socialid,
+            'relationship'  => $relationship,
+            'work'  => $work,
+            'education'  => $education,
+            'city'  => $city,
+            'country'  => $country,
             'mac' => \Input::get('mac_address', ''),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'is_captive' => 'yes',
             'recognized' => $recognized
         ];
-
 
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here

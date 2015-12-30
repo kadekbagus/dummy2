@@ -2691,4 +2691,10 @@ return array(
             'pmp_employee'
         )
     ),
+
+    'genders' => array(
+        'M' => 'Male',
+        'F' => 'Female',
+        'U' => 'Unknown',
+    ),
 );
