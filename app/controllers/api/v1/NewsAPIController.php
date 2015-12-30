@@ -14,6 +14,9 @@ use Carbon\Carbon as Carbon;
 
 class NewsAPIController extends ControllerAPI
 {
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
     /**
      * POST - Create New News
      *
@@ -72,7 +75,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->newsViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -463,7 +466,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -881,7 +884,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1116,7 +1119,7 @@ class NewsAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
