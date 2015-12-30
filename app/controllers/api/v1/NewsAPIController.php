@@ -648,7 +648,7 @@ class NewsAPIController extends ControllerAPI
             OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatednews) {
                 $updatednews->is_all_gender = $is_all_gender;
                 if ($is_all_gender == 'Y') {
-                    $deleted_campaign_genders = CampaignGender::where('campaign_id', $updatednews->news_id)->get(array('campaign_age_id'))->toArray();
+                    $deleted_campaign_genders = CampaignGender::where('campaign_id', $updatednews->news_id)->get(array('campaign_gender_id'))->toArray();
                     $updatednews->gender()->detach($deleted_campaign_genders);
                     $updatednews->load('gender');
                 }
