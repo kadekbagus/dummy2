@@ -9,7 +9,7 @@
         <div class="col-xs-12 text-center">
             <div class="profile-img-wrapper">
                 @if(count($media) > 0)
-                <img src="{{ asset($media->path) }}">
+                <img src="{{ asset($media[0]->path) }}">
                 @else
                 <img src="{{ asset('mobile-ci/images/default_my_profile_alternate.png') }}">
                 @endif
