@@ -44,7 +44,7 @@ return array(
         'promotion'     => 'PROMOTIONS',
         'coupon'        => 'MY COUPONS',
         'tenant'        => 'TENANTS',
-        'lucky_draw'    => 'LUCKY DRAW',
+        'lucky_draw'    => 'LUCKY DRAWS',
         'news'          => 'NEWS',
         'promotions'     => 'Promotions',
         'coupons'        => 'Coupons',
