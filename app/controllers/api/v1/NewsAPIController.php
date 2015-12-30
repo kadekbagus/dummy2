@@ -1952,15 +1952,15 @@ class NewsAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.age', function ($attribute, $value, $parameters) {
-            $news = AgeRanges::excludeDeleted()
+            $exist = AgeRanges::excludeDeleted()
                         ->where('age_range_id', $value)
                         ->first();
 
-            if (empty($news)) {
+            if (empty($exist)) {
                 return false;
             }
 
-            App::instance('orbit.empty.age', $news);
+            App::instance('orbit.empty.age', $exist);
 
             return true;
         });

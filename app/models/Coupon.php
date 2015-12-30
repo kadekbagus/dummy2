@@ -68,6 +68,17 @@ class Coupon extends Eloquent
         return $this->hasMany('IssuedCoupon', 'promotion_id', 'promotion_id');
     }
 
+    public function genders()
+    {
+        return $this->hasMany('CampaignGender', 'campaign_id', 'promotion_id');
+    }
+
+    public function ages()
+    {
+        return $this->hasMany('CampaignAge', 'campaign_id', 'promotion_id')
+                    ->join('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+    }
+
     /**
      * Coupon strings can be translated to many languages.
      */
