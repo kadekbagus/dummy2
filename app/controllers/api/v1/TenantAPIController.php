@@ -1290,7 +1290,7 @@ class TenantAPIController extends ControllerAPI
             // TODO : remove this with something like is_all_retailer just like on orbit-shop
             if ($limit) {
                 $tenants = Tenant::with('link_to_tenant')
-                                 ->select('merchant_id', 'name')
+                                 ->select('merchant_id', 'name', 'status')
                                  ->excludeDeleted('merchants');
             } else {
                 $tenants = Tenant::with('link_to_tenant')
