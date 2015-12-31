@@ -3,41 +3,17 @@
 @section('ext_style')
     {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
     {{ HTML::style('mobile-ci/stylesheet/lightslider.min.css') }}
-    <style type="text/css">
-        .product-detail{
-
-        }
-        .product-detail img{
-            position: absolute;
-            top:0em;
-            width: 100%;
-            height: 270px;
-            width:100%;
-            object-fit:cover;
-            z-index: -1;
-        }
-        .product-info{
-            position: static;
-            margin-top: 269px;
-            background: #0AA5D5;
-            color:#fff;
-            font-size: 1.3em;
-            z-index: 2;
-            -webkit-box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
-            -moz-box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
-            box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
-        }
-        .product-info {
-
-        }
-    </style>
 @stop
 
 @section('content')
 <!-- product -->
 <div class="row">
     <div class="col-xs-12 main-theme product-detail">
+        @if(($product->image!='mobile-ci/images/default_product.png'))
+        <a href="{{{ asset($product->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($product->image) }}"></a>
+        @else
         <img src="{{ asset($product->image) }}">
+        @endif
     </div>
 </div>
 <div class="row product-info padded">
