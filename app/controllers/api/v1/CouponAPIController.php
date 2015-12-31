@@ -3334,7 +3334,7 @@ class CouponAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.age', function ($attribute, $value, $parameters) {
-            $exist = AgeRanges::excludeDeleted()
+            $exist = AgeRange::excludeDeleted()
                         ->where('age_range_id', $value)
                         ->first();
 
