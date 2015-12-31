@@ -32,6 +32,9 @@ Artisan::add(new ConfigAgreement);
 // Delete Inactive CI sessions
 Artisan::add(new DeleteInactiveCISessions);
 
+// Insert campaign base price for merchant
+Artisan::add(new BasePrice);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
