@@ -3,20 +3,6 @@
 @section('ext_style')
     {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
     {{ HTML::style('mobile-ci/stylesheet/lightslider.min.css') }}
-    <style type="text/css">
-        .modal-spinner{
-            display: none;
-            font-size: 2.5em;
-            color: #fff;
-            position: absolute;
-            top: 50%;
-            margin: 0 auto;
-            width: 100%;
-        }
-        .where .row a{
-            margin:20px auto;
-        }
-    </style>
 @stop
 
 @section('content')
