@@ -32,7 +32,8 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
             $session->start([], 'no-session-creation');
             return $session->getSessionId();
         } catch (\Exception $e) {
-            if ($e->getCode() === Session::ERR_SESS_NOT_FOUND) {
+            $code = $e->getCode();
+            if (in_array($code, [Session::ERR_SESS_NOT_FOUND, Session::ERR_IP_MISS_MATCH, Session::ERR_UA_MISS_MATCH, Session::ERR_SESS_EXPIRE], true)) {
                 return null;
             }
             throw $e;
