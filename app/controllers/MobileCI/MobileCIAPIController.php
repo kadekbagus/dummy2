@@ -466,7 +466,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             $data = array(
-                'page_title' => Lang::get('mobileci.page_title.home'),
+                'page_title' => null,
                 'retailer' => $retailer,
                 'widgets' => $widgets,
                 'widget_flags' => $widget_flags,
@@ -3023,6 +3023,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $retailer = $this->getRetailerInfo();
             $issued_coupon_id = trim(OrbitInput::get('id'));
+            $languages = $this->getListLanguages($retailer);
 
             $coupons = Coupon::with(array(
                 'couponRule',
@@ -3044,7 +3045,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $issued_coupon_id . ' not found');
-                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer));
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
             }
 
             $coupon_id = $coupons->promotion_id;
@@ -3144,8 +3145,6 @@ class MobileCIAPIController extends ControllerAPI
             if (empty($coupons->image)) {
                 $coupons->image = 'mobile-ci/images/default_product.png';
             }
-
-            $languages = $this->getListLanguages($retailer);
 
             // Check coupon have condition cs reedem
             $cs_reedem = false;

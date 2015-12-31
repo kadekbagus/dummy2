@@ -24,19 +24,16 @@
 
 @section('content')
 <div class="row product">
-    <div class="col-xs-12 product-img">
-        @if(($coupon->image!='mobile-ci/images/default_product.png'))
-        <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img alt="" src="{{{ asset('mobile-ci/images/product-zoom.png') }}}" ></a></div>
-        </div>
-        @endif
+    <div class="col-xs-12  main-theme product-detail">
         @if(($coupon->image!='mobile-ci/images/default_product.png'))
         <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
         @else
         <img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" >
         @endif
     </div>
-    <div class="col-xs-12 main-theme product-detail">
+</div>
+<div class="row product-info">
+    <div class="col-xs-12 padded">
         <div class="row">
             <div class="col-xs-12">
                 <h3>{{{ $coupon->promotion_name }}}</h3>
@@ -59,35 +56,48 @@
                     <p>{{{ Lang::get('mobileci.coupon.mall_based') }}}</p>
                 @endif
             </div>
+            <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="headingOne">
+                        <h4 class="panel-title">
+                        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            {{{ Lang::get('mobileci.coupon.tenant_redeem') }}}
+                        </a>
+                        </h4>
+                    </div>
+                    <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+                        <div class="panel-body">
+                            <ul class="tenant-list">
+                                @if($cso_exists)
+                                <li>Customer Service</li>
+                                @endif
 
-            <div class="col-xs-12">
-                <h4>{{{ Lang::get('mobileci.coupon.tenant_redeem') }}}</h4>
-                <ul class="tenant-list">
-                    @if($cso_exists)
-                    <li>Customer Service</li>
-                    @endif
+                                @if($cs_reedem)
+                                    <li style="margin-bottom : 10px;">{{{ Lang::get('mobileci.coupon.all_cs') }}}</li>
+                                @endif
 
-                    @if($cs_reedem)
-                        <li style="margin-bottom : 10px;">{{{ Lang::get('mobileci.coupon.all_cs') }}}</li>
-                    @endif
+                                @if ($link_to_all_tenant === true)
+                                    {{{ Lang::get('mobileci.coupon.all_tenants') }}}
+                                @else
+                                    @foreach($tenants as $tenant)
+                                        <li>{{{ $tenant->tenant->name }}}</li>
+                                    @endforeach
+                                @endif
 
-                    @if ($link_to_all_tenant === true)
-                        {{{ Lang::get('mobileci.coupon.all_tenants') }}}
-                    @else
-                        @foreach($tenants as $tenant)
-                            <li>{{{ $tenant->tenant->name }}}</li>
-                        @endforeach
-                    @endif
-
-                    @if(count($tenants) <=0 && $cs_reedem == false)
-                        <li> - </li>
-                    @endif
-                </ul>
+                                @if(count($tenants) <=0 && $cs_reedem == false)
+                                    <li> - </li>
+                                @endif
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-xs-12 main-theme-mall product-detail where">
+<div class="row vertically-spaced">
+    <div class="col-xs-12 padded">
         @if(! empty((float) $coupon->couponRule->discount_value))
         <div class="row">
             <div class="col-xs-12 text-center">

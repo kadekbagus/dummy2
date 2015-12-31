@@ -29,7 +29,7 @@ return array(
         'promotions_tenants'=> 'PROMOTIONS TENANTS',
         'news_tenants'      => 'NEWS TENANTS',
         'events_tenants'    => 'EVENTS TENANTS',
-        'coupons'           => 'COUPONS',
+        'coupons'           => 'MY COUPONS',
         'promotions'        => 'PROMOTIONS',
         'news'              => 'NEWS',
         'membership'        => 'MEMBERSHIP',
@@ -83,7 +83,7 @@ return array(
         'close_cart_title'       => 'Close Cart',
         'reset_cart_title'       => 'Reset Cart',
         'membership_title'       => 'Membership',
-        'language_title'         => 'Select Language',
+        'language_title'         => 'Language',
         'activate_account'       => 'Activate Account',
 
         'message_no_coupon'      => 'Sorry, you do not have any coupons yet.',
