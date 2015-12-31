@@ -2115,6 +2115,9 @@ class MobileCIAPIController extends ControllerAPI
                     },
                     'newsPromotions' => function($q) {
                         $q->whereRaw("NOW() between begin_date and end_date");
+                    },
+                    'coupons' => function($q) {
+                        $q->whereRaw("NOW() between begin_date and end_date");
                     }
                 ))
                 ->active('merchants')
@@ -2213,6 +2216,53 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
             }
+
+
+            // Coupons per tenant
+            if (!empty($alternateLanguage) && !empty($tenant->coupons)) {
+                foreach ($tenant->coupons as $keycoupons => $coupons) {
+
+                    $couponsTranslation = \CouponTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('promotion_id', $coupons->promotion_id)->first();
+
+                    if (!empty($couponsTranslation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($couponsTranslation->{$field}) && $couponsTranslation->{$field} !== '') {
+                                $tenant->coupons[$keycoupons]->{$field} = $couponsTranslation->{$field};
+                            }
+                        }
+
+                        $media = $couponsTranslation->find($couponsTranslation->coupon_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $coupons->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('promotion_id', $coupons->promotion_id)->first();
+
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                    ->media_orig()
+                                    ->first();
+
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $coupons->image = $mediaDefaultLanguage->path;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
 
             if (empty($tenant)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
