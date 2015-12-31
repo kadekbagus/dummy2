@@ -25,7 +25,7 @@ return array(
         'promotion'         => 'PROMOTION',
         'not_found'         => 'ERROR',
         'recognize_me'      => 'RECOGNIZE ME',
-        'tenant_directory'  => 'TENANT DIRECTORY',
+        'tenant_directory'  => 'TENANTS',
         'promotions_tenants'=> 'PROMOTIONS TENANTS',
         'news_tenants'      => 'NEWS TENANTS',
         'events_tenants'    => 'EVENTS TENANTS',
