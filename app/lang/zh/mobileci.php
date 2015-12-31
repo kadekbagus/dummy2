@@ -51,6 +51,11 @@ return array(
         'tenants'        => '店铺',
         'lucky_draws'    => '幸运大抽奖',
         'newss'          => '消息',
+        'promotions_single'      => '促销活动',
+        'coupons_single'        => '券',
+        'tenants_single'        => '店铺',
+        'lucky_draws_single'    => '幸运大抽奖',
+        'newss_single'          => '消息',
     ),
 
     'greetings' => array(
