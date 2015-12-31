@@ -64,7 +64,7 @@
                     <div class="row">
                     @foreach($data->records as $product)
                         <div class="col-xs-12 col-sm-12" id="item-{{$product->merchant_id}}">
-                            <section class="list-item-single">
+                            <section class="list-item-single-tenant">
                                 <a class="list-item-link" href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
                                     <div class="list-item-info">
                                         <header class="list-item-title">
@@ -102,11 +102,11 @@
                                     </div>
                                     <div class="list-vignette-non-tenant"></div>
                                     @if(!count($product->mediaLogo) > 0)
-                                    <img class="img-responsive img-fit-not-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
                                     @endif
                                     @foreach($product->mediaLogo as $media)
                                     @if($media->media_name_long == 'retailer_logo_orig')
-                                    <img class="img-responsive img-fit-not-tenant" alt="" src="{{ asset($media->path) }}"/>
+                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
                                     @endif
                                     @endforeach
                                 </a>
