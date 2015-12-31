@@ -29,7 +29,7 @@ return array(
         'promotions_tenants' => '促销店铺',
         'news_tenants'       => '新店铺',
         'events_tenants'     => '店铺事件',
-        'coupons'            => '优惠券',
+        'coupons'            => '我的优惠券',
         'promotions'         => '促销活动',
         'news'               => '信息',
         'membership'         => '会员',

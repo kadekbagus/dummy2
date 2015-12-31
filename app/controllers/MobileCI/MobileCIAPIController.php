@@ -466,7 +466,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             $data = array(
-                'page_title' => Lang::get('mobileci.page_title.home'),
+                'page_title' => null,
                 'retailer' => $retailer,
                 'widgets' => $widgets,
                 'widget_flags' => $widget_flags,
