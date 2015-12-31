@@ -73,6 +73,11 @@ class Tenant extends Eloquent
         return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')->where('news.object_type', 'promotion')->active();
     }
 
+    public function coupons()
+    {
+        return $this->belongsToMany('Coupon', 'promotion_retailer', 'retailer_id', 'promotion_id')->active();
+    }
+
     /**
      * A Retailer has many and belongs to an employee
      */
