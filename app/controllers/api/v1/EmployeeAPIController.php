@@ -14,6 +14,8 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class EmployeeAPIController extends ControllerAPI
 {
+    protected $employeeViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $employeeModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     /**
      * POST - Create New Employee
      *
@@ -55,6 +57,7 @@ class EmployeeAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.employee.postnewemployee.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('create_employee')) {
                 Event::fire('orbit.employee.postnewemployee.authz.notallowed', array($this, $user));
 
@@ -63,6 +66,15 @@ class EmployeeAPIController extends ControllerAPI
 
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->employeeModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.employee.postnewemployee.after.authz', array($this, $user));
             // dd();
             $this->registerCustomValidation();
@@ -329,6 +341,7 @@ class EmployeeAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.employee.postnewemployee.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('create_employee')) {
                 Event::fire('orbit.employee.postnewemployee.authz.notallowed', array($this, $user));
 
@@ -337,6 +350,15 @@ class EmployeeAPIController extends ControllerAPI
 
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->employeeModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.employee.postnewemployee.after.authz', array($this, $user));
             // dd();
             $this->registerCustomValidation();
@@ -623,6 +645,7 @@ class EmployeeAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.employee.postupdateemployee.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('update_employee')) {
                 Event::fire('orbit.employee.postupdateemployee.authz.notallowed', array($this, $user));
 
@@ -631,6 +654,15 @@ class EmployeeAPIController extends ControllerAPI
 
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->employeeModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.employee.postupdateemployee.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -899,6 +931,7 @@ class EmployeeAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.employee.postupdateemployee.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('update_employee')) {
                 Event::fire('orbit.employee.postupdateemployee.authz.notallowed', array($this, $user));
 
@@ -907,6 +940,15 @@ class EmployeeAPIController extends ControllerAPI
 
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->employeeModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.employee.postupdateemployee.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1204,6 +1246,7 @@ class EmployeeAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.employee.postdeleteemployee.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('delete_employee')) {
                 Event::fire('orbit.employee.postdeleteemployee.authz.notallowed', array($this, $user));
 
@@ -1212,6 +1255,15 @@ class EmployeeAPIController extends ControllerAPI
 
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->employeeModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.employee.postdeleteemployee.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1612,12 +1664,22 @@ class EmployeeAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.user.getsearchuser.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_user')) {
                 Event::fire('orbit.user.getsearchuser.authz.notallowed', array($this, $user));
                 $viewUserLang = Lang::get('validation.orbit.actionlist.view_user');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewUserLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->employeeViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.user.getsearchuser.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1981,10 +2043,9 @@ class EmployeeAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 */
-
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = $this->employeeViewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);

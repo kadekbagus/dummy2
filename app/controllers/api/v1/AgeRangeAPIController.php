@@ -37,7 +37,7 @@ class AgeRangeAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $ageRanges = AgeRanges::excludeDeleted()
+            $ageRanges = AgeRange::excludeDeleted()
                             ->where('merchant_id', '=', $merchant_id)
                             ->get();
 

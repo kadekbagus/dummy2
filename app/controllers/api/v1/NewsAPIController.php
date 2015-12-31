@@ -279,14 +279,6 @@ class NewsAPIController extends ControllerAPI
                 $newsGender->gender_value = $gender;
                 $newsGender->save();
                 $gender_name = null;
-
-                foreach (Config::get('orbit.genders') as $key => $value) {
-                    if ($key === $gender) {
-                        $gender_name = $value;
-                    }
-                }
-                $newsGender->gender_name = $gender_name;
-
                 $newsGenders[] = $newsGender;
             }
             $newnews->gender = $newsGenders;
@@ -645,23 +637,23 @@ class NewsAPIController extends ControllerAPI
                 }
             });
 
-            // OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatednews) {
-            //     $updatednews->is_all_gender = $is_all_gender;
-            //     if ($is_all_gender == 'Y') {
-            //         $deleted_campaign_genders = CampaignGender::where('campaign_id', $updatednews->news_id)->get(array('campaign_gender_id'))->toArray();
-            //         $updatednews->genders()->detach($deleted_campaign_genders);
-            //         $updatednews->load('gender');
-            //     }
-            // });
+            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatednews, $news_id, $object_type) {
+                $updatednews->is_all_gender = $is_all_gender;
+                if ($is_all_gender == 'Y') {
+                    $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $news_id)
+                                                            ->where('campaign_type', '=', $object_type);
+                    $deleted_campaign_genders->delete();
+                }
+            });
 
-            // OrbitInput::post('is_all_age', function($is_all_age) use ($updatednews) {
-            //     $updatednews->is_all_age = $is_all_age;
-            //     if ($is_all_age == 'Y') {
-            //         $deleted_campaign_ages = CampaignAge::where('campaign_id', $updatednews->news_id)->get(array('campaign_age_id'))->toArray();
-            //         $updatednews->ages()->detach($deleted_campaign_ages);
-            //         $updatednews->load('age');
-            //     }
-            // });
+            OrbitInput::post('is_all_age', function($is_all_age) use ($updatednews, $news_id, $object_type) {
+                $updatednews->is_all_age = $is_all_age;
+                if ($is_all_age == 'Y') {
+                    $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $news_id)
+                                                            ->where('campaign_type', '=', $object_type);
+                    $deleted_campaign_ages->delete();
+                }
+            });
 
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatednews) {
                 // validate retailer_ids
@@ -695,7 +687,7 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->load('tenants');
             });
 
-            OrbitInput::post('gender_ids', function($gender_ids) use ($updatednews) {
+            OrbitInput::post('gender_ids', function($gender_ids) use ($updatednews, $news_id, $object_type) {
                 // validate gender_ids
                 $gender_ids = (array) $gender_ids;
                 foreach ($gender_ids as $gender_id_check) {
@@ -718,14 +710,27 @@ class NewsAPIController extends ControllerAPI
 
                     Event::fire('orbit.news.postupdatenews.after.gendervalidation', array($this, $validator));
                 }
-                // sync new set of retailer ids
-                // $updatednews->genders()->sync($gender_ids);
 
-                // reload genders relation
-                $updatednews->load('genders');
+                // Delete old data
+                $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $news_id)
+                                                        ->where('campaign_type', '=', $object_type);
+                $deleted_campaign_genders->delete();
+
+                // Insert new data
+                $newsGenders = array();
+                foreach ($gender_ids as $gender) {
+                    $newsGender = new CampaignGender();
+                    $newsGender->campaign_type = $object_type;
+                    $newsGender->campaign_id = $news_id;
+                    $newsGender->gender_value = $gender;
+                    $newsGender->save();
+                    $newsGenders[] = $newsGenders;
+                }
+                $updatednews->gender = $newsGenders;
+
             });
 
-            OrbitInput::post('age_range_ids', function($age_range_ids) use ($updatednews) {
+            OrbitInput::post('age_range_ids', function($age_range_ids) use ($updatednews, $news_id, $object_type) {
                 // validate age_range_ids
                 $age_range_ids = (array) $age_range_ids;
                 foreach ($age_range_ids as $age_range_id_check) {
@@ -748,11 +753,24 @@ class NewsAPIController extends ControllerAPI
 
                     Event::fire('orbit.news.postupdatenews.after.agevalidation', array($this, $validator));
                 }
-                // sync new set of retailer ids
-                // $updatednews->ages()->sync($ages);
 
-                // reload ages relation
-                $updatednews->load('ages');
+                // Delete old data
+                $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $news_id)
+                                                        ->where('campaign_type', '=', $object_type);
+                $deleted_campaign_ages->delete();
+
+                // Insert new data
+                $newsAges = array();
+                foreach ($age_range_ids as $age_range) {
+                    $newsAge = new CampaignAge();
+                    $newsAge->campaign_type = $object_type;
+                    $newsAge->campaign_id = $news_id;
+                    $newsAge->age_range_id = $age_range;
+                    $newsAge->save();
+                    $newsAges[] = $newsAges;
+                }
+                $updatednews->age = $newsAges;
+
             });
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
@@ -1934,15 +1952,15 @@ class NewsAPIController extends ControllerAPI
         });
 
         Validator::extend('orbit.empty.age', function ($attribute, $value, $parameters) {
-            $news = AgeRanges::excludeDeleted()
+            $exist = AgeRange::excludeDeleted()
                         ->where('age_range_id', $value)
                         ->first();
 
-            if (empty($news)) {
+            if (empty($exist)) {
                 return false;
             }
 
-            App::instance('orbit.empty.age', $news);
+            App::instance('orbit.empty.age', $exist);
 
             return true;
         });
