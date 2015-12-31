@@ -88,9 +88,15 @@
                                         </header>
                                         <header class="list-item-badges">
                                             <div class="col-xs-12 badges-wrapper text-right">
+                                                @if($product->promotion_flag)
                                                 <span class="badges promo-badges text-center"><i class="fa fa-gift"></i></span>
+                                                @endif
+                                                @if($product->news_flag)
                                                 <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
+                                                @endif
+                                                @if($product->coupon_flag)
                                                 <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
+                                                @endif
                                             </div>
                                         </header>
                                     </div>
@@ -106,40 +112,6 @@
                                 </a>
                             </section>
                         </div>
-                        <!--
-                        <div class="main-theme-mall catalogue catalogue-tenant" id="product-{{$product->product_id}}">
-                            <div class="row catalogue-top">
-                                <div class="col-xs-3 catalogue-img">
-                                    <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
-                                        <span class="link-spanner"></span>
-                                        @if(!count($product->mediaLogo) > 0)
-                                        <img class="img-responsive side-margin-center" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                        @endif
-                                        @foreach($product->mediaLogo as $media)
-                                        @if($media->media_name_long == 'retailer_logo_orig')
-                                        <img class="img-responsive side-margin-center" alt="" src="{{ asset($media->path) }}"/>
-                                        @endif
-                                        @endforeach
-                                    </a>
-                                </div>
-                                <div class="col-xs-9 catalogue-info">
-                                    <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
-                                        <span class="link-spanner"></span>
-                                        <h4>{{ mb_strlen($product->name) > 64 ? mb_substr($product->name, 0, 64) . '...' : $product->name }}</h4>
-                                        <h3><i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
-                                        <h5 class="tenant-category">
-                                            <i class="fa fa-tags" style="padding-left: 2px;padding-right: 4px;"></i>
-                                            @if(empty($product->category_string))
-                                                <span>-</span>
-                                            @else
-                                                <span>{{ mb_strlen($product->category_string) > 30 ? mb_substr($product->category_string, 0, 30, 'UTF-8') . '...' : $product->category_string }}</span>
-                                            @endif
-                                        </h5>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        -->
                     @endforeach
                     </div>
                 </div>
