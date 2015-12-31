@@ -6,6 +6,7 @@
 
 @section('content')
 <div class="row">
+    <div class="col-xs-12 main-theme product-detail">
     @if(isset($luckydraw->announcements[0]))
         @if(! empty($luckydraw->announcements[0]->image))
         <a href="{{ asset($luckydraw->announcements[0]->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img src="{{ asset($luckydraw->announcements[0]->image) }}" class="img-responsive" style="width:100%;"></a>
@@ -23,31 +24,35 @@
         <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
         @endif
     @endif
+    </div>
 </div>
-@if(!$ongoing)
-<div class="row vertically-spaced">
-    <div class="col-xs-12 text-center">
-        <h4>
+<div class="row product-info padded">
+    @if(!$ongoing)
+    <div class="row vertically-spaced">
+        <div class="col-xs-12 text-center">
+            <h4>
+                @if(isset($luckydraw->announcements[0]))
+                {{ $luckydraw->announcements[0]->title }}
+                @endif
+            </h4>
+        </div>
+    </div>
+    @endif
+    <div class="row">
+        <div class="col-xs-12 text-left">
             @if(isset($luckydraw->announcements[0]))
-            {{ $luckydraw->announcements[0]->title }}
+                <p>
+                    {{ $luckydraw->announcements[0]->description }}
+                </p>
             @endif
-        </h4>
+        </div>
     </div>
 </div>
-@endif
-<div class="row">
-    <div class="col-xs-12 text-left">
-        @if(isset($luckydraw->announcements[0]))
-            <p>
-                {{ $luckydraw->announcements[0]->description }}
-            </p>
-        @endif
-    </div>
-</div>
+
 @if($ongoing)
     @if(isset($luckydraw->prizes[0]))
-    <div class="row vertically-spaced">
-        <div class="col-xs-12 text-left">
+    <div class="row" style="background:#fff;position:relative;">
+        <div class="col-xs-12 text-left padded">
             <h4>{{ Lang::get('mobileci.lucky_draw.prizes') }}</h4>
             <table class="table">
                 @foreach($luckydraw->prizes as $prize)
@@ -59,14 +64,18 @@
         </div>
     </div>
     @else
-    <div class="text-center vertically-spaced">
-        <img class="img-responsive vertically-spaced side-margin-center" src="{{ asset('mobile-ci/images/default_prize.png') }}">
-        <p class="vertically-spaced"><b>{{ Lang::get('mobileci.lucky_draw.no_prize') }}</b></p>
+    <div class="row" style="background:#fff;position:relative;">
+        <div class="col-xs-12 text-left padded">
+            <div class="text-center vertically-spaced">
+                <img class="img-responsive vertically-spaced side-margin-center" src="{{ asset('mobile-ci/images/default_prize.png') }}">
+                <p class="vertically-spaced"><b>{{ Lang::get('mobileci.lucky_draw.no_prize') }}</b></p>
+            </div>
+        </div>
     </div>
     @endif
 @else
-<div class="row">
-    <div class="col-xs-12">
+<div class="row" style="background:#fff;position:relative;">
+    <div class="col-xs-12 padded">
         @if(isset($luckydraw->prizes[0]))
             <h4 style="margin-top:20px;">{{ Lang::get('mobileci.lucky_draw.prizes_and_winners') }}</h4>
             <table class="table">
@@ -100,9 +109,8 @@
     </div>
 </div>
 @endif
-
-<div class="row text-center vertically-spaced">
-    <div class="col-xs-12">
+<div class="row text-center vertically-spaced" style="position:relative;">
+    <div class="col-xs-12 padded">
         <a href="javascript:history.back()" class="btn btn-info btn-block">{{ Lang::get('mobileci.modals.ok') }}</a>
     </div>
 </div>
@@ -151,4 +159,13 @@
     {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
     {{ HTML::script('mobile-ci/scripts/jquery.plugin.min.js') }}
     {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $(window).scroll(function(){
+                s = $(window).scrollTop();
+                $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
+            });
+
+        });
+    </script>
 @stop
