@@ -6,7 +6,7 @@
     </head>
     <body>
         @include('mobile-ci.toolbar')
-        <div class="headed-layout content-container">
+        <div class="headed-layout content-container" @if(is_null($page_title)) style="padding-top:3.1em;"  @endif>
             @yield('content')
         </div>
         @include('mobile-ci.footer')
