@@ -239,7 +239,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->take(5)
                 ->get();
 
-            $new_offset = 3; //in days
+            $new_offset = Config::get('orbit.shop.widget_new_threshold', 1); //in days
             $now = Carbon::now($retailer->timezone->timezone_name);
             $new_date = Carbon::now($retailer->timezone->timezone_name)->subDays($new_offset);
 
@@ -249,7 +249,7 @@ class MobileCIAPIController extends ControllerAPI
                     $tenantsCount = Tenant::active()
                         ->where('parent_id', $retailer->merchant_id)
                         ->count();
-                    
+
                     // get all new tenant after new_date
                     $newTenantsCount = Tenant::active()
                         ->where('parent_id', $retailer->merchant_id)
@@ -271,7 +271,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $tenantsCount;
                     $widget->new_item_count = $newTenantsCount > 9 ? '9+' : $newTenantsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.tenant');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
+                    }
                     $widget->url = 'tenants';
                 }
                 if ($widget->widget_type == 'promotion') {
@@ -281,7 +285,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->where('object_type', 'promotion')
                         ->whereRaw("? between begin_date and end_date", [$now])
                         ->count();
-                    
+
                     // get all new promotion after new_date
                     $newPromotionsCount = \News::active()
                         ->where('mall_id', $retailer->merchant_id)
@@ -305,7 +309,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $promotionsCount;
                     $widget->new_item_count = $newPromotionsCount > 9 ? '9+' : $newPromotionsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.promotion');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
+                    }
                     $widget->url = 'mallpromotions';
                 }
                 if ($widget->widget_type == 'news') {
@@ -315,7 +323,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->where('object_type', 'news')
                         ->whereRaw("? between begin_date and end_date", [$now])
                         ->count();
-                    
+
                     // get all new news after new_date
                     $newNewsCount = \News::active()
                         ->where('mall_id', $retailer->merchant_id)
@@ -339,39 +347,48 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $newsCount;
                     $widget->new_item_count = $newNewsCount > 9 ? '9+' : $newNewsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.news');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
+                    }
                     $widget->url = 'mallnews';
                 }
                 if ($widget->widget_type == 'coupon') {
-                    $couponsCount = Coupon::join('promotion_rules', function ($join) {
-                            $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id');
-                            $join->where('promotions.is_coupon', '=', 'Y');
-                            $join->where('promotions.status', '=', 'active');
-                        })
-                        ->join('issued_coupons', function ($join2) {
-                            $join2->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id');
-                            $join2->where('issued_coupons.status', '=', 'active');
-                        })
-                        ->where('issued_coupons.expired_date', '>=', $now)
-                        ->where('promotions.merchant_id', $retailer->merchant_id)
-                        ->where('issued_coupons.user_id', $user->user_id)
-                        ->count();
+                    $coupons = DB::select(
+                        DB::raw(
+                            'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
+                        inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                        WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
+                            AND p.merchant_id = :merchantid
+                            AND ic.user_id = :userid
+                            ORDER BY RAND()' // randomize
+                        ),
+                        array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+                    );
+                    $couponsCount = count($coupons);
 
-                    $newCouponsCount = Coupon::join('promotion_rules', function ($join) {
-                            $join->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id');
-                            $join->where('promotions.is_coupon', '=', 'Y');
-                            $join->where('promotions.status', '=', 'active');
-                        })
-                        ->join('issued_coupons', function ($join2) {
-                            $join2->on('promotions.promotion_id', '=', 'promotion_rules.promotion_id');
-                            $join2->where('issued_coupons.status', '=', 'active');
-                        })
-                        ->where('issued_coupons.expired_date', '>=', $now)
-                        ->where('promotions.merchant_id', $retailer->merchant_id)
-                        ->where('issued_coupons.user_id', $user->user_id)
-                        ->whereRaw(DB::getTablePrefix() . "issued_coupons.issued_date between ? and ?", [$new_date, $now])
-                        ->count();
-
+                    $newCoupons = DB::select(
+                        DB::raw(
+                            'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
+                        inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                        WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
+                            AND p.merchant_id = :merchantid
+                            AND ic.user_id = :userid
+                            AND ic.issued_date between :new_date and :now
+                            ORDER BY RAND()' // randomize
+                        ),
+                        array(
+                            'merchantid' => $retailer->merchant_id, 
+                            'userid' => $user->user_id, 
+                            'new_date' => $new_date,
+                            'now' => $now
+                        )
+                    );
+                    $newCouponsCount = count($newCoupons);
+ 
                     $widget->image = 'mobile-ci/images/default_coupon.png';
 
                     foreach ($widget->media as $media) {
@@ -387,7 +404,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $couponsCount;
                     $widget->new_item_count = $newCouponsCount > 9 ? '9+' : $newCouponsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.coupon');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
+                    }
                     $widget->url = 'mallcoupons';
                 }
                 if ($widget->widget_type == 'lucky_draw') {
@@ -417,7 +438,11 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->item_count = $luckydrawsCount;
                     $widget->new_item_count = $newLuckydrawsCount > 9 ? '9+' : $newLuckydrawsCount;
                     $widget->display_title = Lang::get('mobileci.widgets.lucky_draw');
-                    $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
+                    }
                     $widget->url = 'luckydraws';
                 }
             }
@@ -777,7 +802,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $response = $fb->get('/me?fields=id,email,name,first_name,last_name,gender,location,relationship_status,photos,work,education', $accessToken->getValue());
         $user = $response->getGraphUser();
-        
+
         $userEmail = isset($user['email']) ? $user['email'] : '';
         $firstName = isset($user['first_name']) ? $user['first_name'] : '';
         $lastName = isset($user['last_name']) ? $user['last_name'] : '';
@@ -1062,6 +1087,69 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return $this->render();
+    }
+
+    /**
+     * GET - My Account detail page
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     */
+    public function getMyAccountView()
+    {
+        $user = null;
+        $media = null;
+        $user_full_name = null;
+
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        try {
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $languages = $this->getListLanguages($retailer);
+            $pageTitle = Lang::get('mobileci.page_title.my_account');
+
+            $user_full_name = $user->getFullName();
+            if (empty(trim($user_full_name))) {
+                $user_full_name = $user->email;
+            }
+
+            $media = $user->profilePicture()
+                        ->where('media_name_long', 'user_profile_picture_orig')
+                        ->get();
+
+            $activityPageNotes = sprintf('Page viewed: My Account, user Id: %s', $user->user_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account')
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-my-account',
+                array(
+                    'active_user' => ($user->status === 'active'),
+                    'page_title' => $pageTitle,
+                    'user_full_name' => $user_full_name,
+                    'media' => $media,
+                    'user' => $user,
+                    'retailer' => $retailer,
+                    'languages' => $languages
+                ));
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: My Account, user Id: %s', $user->user_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_my_account')
+                ->setActivityNameLong('View My Account Failed')
+                ->setModuleName('Inbox')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
     }
 
     /**
@@ -1779,43 +1867,42 @@ class MobileCIAPIController extends ControllerAPI
             );
             $tenants->skip($skip);
 
-            // disable order by to do randomized order
             // Default sort by
-            // $sortBy = 'merchants.name';
-            // // Default sort mode
-            // $sortMode = 'asc';
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
 
-            // OrbitInput::get(
-            //     'sort_by',
-            //     function ($_sortBy) use (&$sortBy) {
-            //         // Map the sortby request to the real column name
-            //         $sortByMapping = array(
-            //             'name'      => 'merchants.name',
-            //         );
-            //         if (array_key_exists($_sortBy, $sortByMapping)) {
-            //             $sortBy = $sortByMapping[$_sortBy];
-            //         }
-            //     }
-            // );
+            OrbitInput::get(
+                'sort_by',
+                function ($_sortBy) use (&$sortBy) {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'name'      => 'merchants.name',
+                    );
+                    if (array_key_exists($_sortBy, $sortByMapping)) {
+                        $sortBy = $sortByMapping[$_sortBy];
+                    }
+                }
+            );
 
-            // OrbitInput::get(
-            //     'sort_mode',
-            //     function ($_sortMode) use (&$sortMode) {
-            //         if (strtolower($_sortMode) !== 'desc') {
-            //             $sortMode = 'asc';
-            //         } else {
-            //             $sortMode = 'desc';
-            //         }
-            //     }
-            // );
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
 
-            // if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
-            //     $prefix = DB::getTablePrefix();
-            //     $tenants->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
-            // }
-            // else {
-            //     $tenants->orderBy($sortBy, $sortMode);
-            // }
+            if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
+                $prefix = DB::getTablePrefix();
+                $tenants->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
+            }
+            else {
+                $tenants->orderBy($sortBy, $sortMode);
+            }
 
             $prefix = DB::getTablePrefix();
 
@@ -1847,7 +1934,7 @@ class MobileCIAPIController extends ControllerAPI
                         ->groupBy('merchants.name')->get();
 
             $totalRec = $_tenants->count();
-            $listOfRec = $tenants->orderBy(DB::raw('RAND()'))->get(); //randomize
+            $listOfRec = $tenants->get(); //randomize
 
             foreach ($listOfRec as $tenant) {
                 if (empty($tenant->logo)) {
@@ -3016,9 +3103,9 @@ class MobileCIAPIController extends ControllerAPI
             } elseif ($coupons->is_all_retailer === 'N') {
                 $linkToAllTenant = FALSE;
 
-                $tenants = \CouponRetailer::with('tenant')->where('promotion_id', $coupon_id)->get();
+                $tenants = \CouponRetailerRedeeem::with('tenant')->where('promotion_id', $coupon_id)->get();
 
-                $tenants = \CouponRetailer::with('tenant', 'tenant.categories')
+                $tenants = \CouponRetailerRedeeem::with('tenant', 'tenant.categories')
                     ->wherehas('tenant', function($q){
                         $q->where('merchants.status', 'active');
                     })

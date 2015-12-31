@@ -6,7 +6,8 @@
     height: 5.5em;
     z-index: 1000;
     .header-buttons-container {
-        background-color: @theme-main;
+        background-color: @theme-main-complimentary-2;
+        height:44px;
     }
     .header-location-banner {
         background-color: @theme-main-complimentary;
@@ -24,12 +25,21 @@
             font-size: 1.6em;
             cursor: pointer;
             &:hover {
-                background-color: @theme-main-complimentary;
+                background-color: @theme-main;
             }
             a {
-                color: @theme-main-complimentary-2;
+                color: @theme-main;
                 display: block;
                 padding: .3em;
+                &:hover{
+                    color: @theme-main-complimentary-2;
+                }
+                &.active{
+                    color: @theme-main-complimentary-2;
+                }
+            }
+            &.active{
+                background-color: @theme-main;
             }
         }
     }
@@ -94,4 +104,53 @@ footer {
         text-shadow: -1px 0 #000, 0 1px #000, 1px 0 #000, 0 -1px #000;
         text-transform: uppercase;
     }
+}
+ul.slide-menu{
+    margin:0;
+    padding:0;
+    li{
+        list-style-type:none;
+        padding: 12px 0 12px 12px;
+        a{
+            cursor: pointer;
+            display:block;
+            color: @theme-main-complimentary-2;
+            font-size: 19px;
+        }
+        &.fa-pad-left{
+            padding-left:14px;
+        }
+        &:hover{
+            background: @theme-main-complimentary;
+        }
+    }
+}
+img.toolbar-header-logo{
+    max-width:none;
+    width:auto;
+    height: 36px;
+    margin-top:4px;
+}
+.slide-menu-container{
+    background:@theme-main;
+    height:100%;
+    width:100%;
+    position:fixed;
+    top:44px;
+    left:30%;
+    z-index:2;
+    display:none;
+}
+.slide-menu-backdrop{
+    background:rgba(0,0,0,.8);
+    height:100%;
+    width:100%;
+    position:fixed;
+    top:44px;
+    left:0;
+    z-index:0;
+    display:none;
+}
+#dropdown-disable{
+    font-size:19px;
 }
