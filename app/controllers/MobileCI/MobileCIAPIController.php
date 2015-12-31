@@ -1904,6 +1904,35 @@ class MobileCIAPIController extends ControllerAPI
                 $tenants->orderBy($sortBy, $sortMode);
             }
 
+            $prefix = DB::getTablePrefix();
+
+            $news_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
+                        ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
+                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('news.object_type', '=', 'news')
+                        ->where('news.status', '=', 'active')
+                        ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
+                        ->groupBy('merchants.name')->get();
+
+            $promotion_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
+                        ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
+                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('news.object_type', '=', 'promotion')
+                        ->where('news.status', '=', 'active')
+                        ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
+                        ->groupBy('merchants.name')->get();
+
+            $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
+                        ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('promotions.is_coupon', '=', 'Y')
+                        ->where('promotions.status', '=', 'active')
+                        ->whereRaw("NOW() between {$prefix}promotions.begin_date and {$prefix}promotions.end_date")
+                        ->groupBy('merchants.name')->get();
+
             $totalRec = $_tenants->count();
             $listOfRec = $tenants->get(); //randomize
 
@@ -1924,6 +1953,31 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
                 $tenant->category_string = $category_string;
+                $tenant->promotion_flag = FALSE;
+                $tenant->news_flag = FALSE;
+                $tenant->coupon_flag = FALSE;
+
+                foreach ($news_flag as $value1) {
+
+                    if ($tenant->name === $value1->name) {
+                        $tenant->news_flag = TRUE;
+                    }
+                }
+
+                foreach ($promotion_flag as $value2) {
+
+                    if ($tenant->name === $value2->name) {
+                        $tenant->promotion_flag = TRUE;
+                    }
+                }
+
+                foreach ($coupon_flag as $value3) {
+
+                    if ($tenant->name === $value3->name) {
+                        $tenant->coupon_flag = TRUE;
+                    }
+                }
+
             }
 
             // should not be limited for new products - limit only when searching
@@ -2061,6 +2115,9 @@ class MobileCIAPIController extends ControllerAPI
                     },
                     'newsPromotions' => function($q) {
                         $q->whereRaw("NOW() between begin_date and end_date");
+                    },
+                    'coupons' => function($q) {
+                        $q->whereRaw("NOW() between begin_date and end_date");
                     }
                 ))
                 ->active('merchants')
@@ -2159,6 +2216,53 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
             }
+
+
+            // Coupons per tenant
+            if (!empty($alternateLanguage) && !empty($tenant->coupons)) {
+                foreach ($tenant->coupons as $keycoupons => $coupons) {
+
+                    $couponsTranslation = \CouponTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('promotion_id', $coupons->promotion_id)->first();
+
+                    if (!empty($couponsTranslation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($couponsTranslation->{$field}) && $couponsTranslation->{$field} !== '') {
+                                $tenant->coupons[$keycoupons]->{$field} = $couponsTranslation->{$field};
+                            }
+                        }
+
+                        $media = $couponsTranslation->find($couponsTranslation->coupon_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $coupons->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('promotion_id', $coupons->promotion_id)->first();
+
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                    ->media_orig()
+                                    ->first();
+
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $coupons->image = $mediaDefaultLanguage->path;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
 
             if (empty($tenant)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
