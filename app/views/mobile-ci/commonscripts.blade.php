@@ -253,5 +253,12 @@
             $("body").removeClass("modal-open");
         });
 
+        $('#slide-trigger, .slide-menu-backdrop').click(function(){
+            $('.slide-menu-container').toggle('slide', {direction: 'right'}, 'slow');
+            $('.slide-menu-backdrop').toggle('fade', 'slow');
+            $('html').toggleClass('modal-open');
+            $('#orbit-tour-profile').toggleClass('active');
+            $('#slide-trigger').toggleClass('active');
+        });
     });
 </script>

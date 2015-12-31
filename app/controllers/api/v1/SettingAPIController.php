@@ -13,6 +13,10 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class SettingAPIController extends ControllerAPI
 {
+
+    protected $settingViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $settingModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
     /**
      * POST - Update Setting
      *
@@ -688,13 +692,23 @@ class SettingAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.setting.getsearchsetting.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('view_setting')) {
                 Event::fire('orbit.setting.getsearchsetting.authz.notallowed', array($this, $user));
                 $viewSettingLang = Lang::get('validation.orbit.actionlist.view_setting');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewSettingLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->settingViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+
             Event::fire('orbit.setting.getsearchsetting.after.authz', array($this, $user));
 
             $this->registerCustomValidation();

@@ -153,6 +153,10 @@ return array(
             'agreement'              => 'Agreement is not accepted yet',
         ),
         'empty' => array(
+            'age'                  => 'The Age Range ID you specified is not found.',
+            'gender'               => 'The Gender must be M or F or U.',
+            'is_all_gender'        => 'The All Gender must be Y or N.',
+            'is_all_age'           => 'The All Age must be Y or N.',
             'status_link_to'       => 'The Link To must be Y or N.',
             'role'                 => 'The Role ID you specified is not found.',
             'consumer_role'        => 'The Consumer role does not exist.',
@@ -202,6 +206,7 @@ return array(
             'discount_object_id4'  => 'The discount object ID4 you specified is not found.',
             'discount_object_id5'  => 'The discount object ID5 you specified is not found.',
             'coupon_status'        => 'The coupon status you specified is not found.',
+            'coupon_rule_type'     => 'The coupon rule type you specified is not found.',
             'coupon_sortby'        => 'The sort by argument you specified is not valid, the valid values are: registered_date, promotion_name, promotion_type, description, begin_date, end_date, status, is_permanent, rule_type, tenant_name, is_auto_issuance, display_discount_value.',
             'coupon_by_issue_retailer_sortby' => 'The sort by argument you specified is not valid, the valid values are: issue_retailer_name, registered_date, promotion_name, promotion_type, description, begin_date, end_date, is_permanent, status.',
             'coupon_type'          => 'The coupon type you specified is not found.',
