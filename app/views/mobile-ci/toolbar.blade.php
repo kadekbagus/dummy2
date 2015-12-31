@@ -2,7 +2,7 @@
     <div class="header-buttons-container">
         <div class="col-xs-2 pull-right text-right">
             <ul class="buttons-list">
-                <li id="orbit-tour-profile"><a id="slide-trigger"><span><i class="fa fa-bars"><span class="notification-badge-txt notification-badge">0</span></i></span></a></li>
+                <li id="orbit-tour-profile"><a id="slide-trigger"><span><i class="fa fa-bars" style="font-size: 26px;font-weight: bold;"><span class="notification-badge-txt notification-badge">0</span></i></span></a></li>
             </ul>
         </div>
 
@@ -15,6 +15,7 @@
             <img class="img-responsive toolbar-header-logo img-center" src="{{asset($retailer->logo)}}" />
         </div>
     </div>
+    @if(!is_null($page_title))
     <div class="header-location-banner">
         <span>
             @if(is_null($page_title))
@@ -28,6 +29,7 @@
             @endif
         </span>
     </div>
+    @endif
     <div class="slide-menu-container">
         <ul class="slide-menu" role="menu">
             @if($retailer->enable_membership === 'true')
