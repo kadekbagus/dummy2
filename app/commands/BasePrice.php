@@ -61,10 +61,14 @@ class BasePrice extends Command {
             $campaignbaseprice->campaign_type = $type;
             $campaignbaseprice->status = 'active';
             $campaignbaseprice->save();
+
+            $this->info("Success, Data Inserted!");
         } else {
             // Update
             $baseprice->price = $price;
             $baseprice->save();
+
+            $this->info("Success, Data Updated!");
         }
 	}
 
