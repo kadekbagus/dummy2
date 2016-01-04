@@ -13,7 +13,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponReportAPIController extends ControllerAPI
 {
-    protected $couponReportViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $couponReportViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
     /**
      * Flag to return the query builder.
      *
