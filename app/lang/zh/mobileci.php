@@ -404,7 +404,7 @@ return array(
         'delete_mode'               => '削除モード',
         'read_mode'                 => '阅读模式',
         'view_lucky_draw_btn'       => '抽選のビュー',
-        'no_notif'                  => 'あなたはここにメッセージを持っていません',
+        'no_notif'                  => '你有没有消息',
         'load_more_btn'             => 'よりロード',
         'view_coupons_btn'          => ' 查看您的优惠券',
         'you_won'                   => '你已经赢得了奖品 ',
