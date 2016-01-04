@@ -22,6 +22,7 @@ return array(
         'promotions'         => '促销活动',
         'my_coupons'         => '我的优惠券',
         'coupon_single'      => '优惠券',
+        'coupon_plural'      => '优惠券',
         'promotion'          => '促销',
         'not_found'          => '失误',
         'recognize_me'       => '认识我',

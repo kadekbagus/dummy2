@@ -22,6 +22,7 @@ return array(
         'promotions'         => '販促',
         'my_coupons'         => '私のクーポン',
         'coupon_single'      => 'クーポン',
+        'coupon_plural'      => 'クーポン',
         'promotion'          => '販促',
         'not_found'          => 'エラー ',
         'recognize_me'       => '私を認識」',
