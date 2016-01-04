@@ -3317,19 +3317,28 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
+            $gender = $user->user_detail->gender;
+
+            if (is_null($gender)) {
+                $gender = 'u';
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $promotions = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
                             ->whereRaw("? between begin_date and end_date", [$mallTime])
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=','news.news_id')
+                            ->where('campaign_gender.campaign_type', '=', 'promotion')
+                            ->where('campaign_gender.gender_value', '=', $gender)
                             // ->orderBy('sticky_order', 'desc')
                             // ->orderBy('created_at', 'desc')
                             ->orderBy(DB::raw('RAND()')) //randomize
                             ->get();
 
             if (!empty($alternateLanguage) && !empty($promotions)) {
-                foreach ($promotions as $key => $val) {
 
+                foreach ($promotions as $key => $val) {
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
@@ -3606,7 +3615,18 @@ class MobileCIAPIController extends ControllerAPI
             $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
             $userGender =  $user->userDetail->gender;
 
+            if ($userAge === null) {
+                $userAge = 0;
+            }
+
+            if ($userGender === null) {
+                $userGender = 'U';
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
+            $prefix = DB::getTablePrefix();
+
             $news = \News::with('translations')
                             // ->active()
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
@@ -3614,15 +3634,30 @@ class MobileCIAPIController extends ControllerAPI
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'news')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime])
-                            ->where('gender_value', '=', $userGender)
-                            ->where('min_value', '<=', $userAge)
-                            ->where('max_value', '>=', $userAge)
-                            ->where('news.status', '=', 'active')
-                            // ->orderBy('sticky_order', 'desc')
-                            // ->orderBy('created_at', 'desc')
-                            ->orderBy(DB::raw('RAND()')) // randomize
-                            ->get();
+                            ->whereRaw("? between begin_date and end_date", [$mallTime]);
+
+            if ($userGender !== null) {
+                $news = $news->where('gender_value', '=', $userGender);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $news = $news->where('min_value', '=', $userAge);
+                    $news = $news->where('max_value', '=', $userAge);
+                } else {
+                    $news = $news->where('min_value', '<=', $userAge);
+                    $news = $news->where('max_value', '>=', $userAge);
+                }
+            }
+
+            $news = $news->where('news.status', '=', 'active')
+                        ->orWhereRaw("{$prefix}news.is_all_gender = 'Y' AND {$prefix}news.object_type = 'news' ")
+                        ->orWhereRaw("{$prefix}news.is_all_age = 'Y' AND {$prefix}news.object_type = 'news' ")
+                        // ->orderBy('sticky_order', 'desc')
+                        // ->orderBy('created_at', 'desc')
+                        ->groupBy('news.news_id') // randomize
+                        ->orderBy(DB::raw('RAND()')) // randomize
+                        ->get();
 
             if (!empty($alternateLanguage) && !empty($news)) {
                 foreach ($news as $key => $val) {

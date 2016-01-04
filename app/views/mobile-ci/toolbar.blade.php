@@ -30,6 +30,7 @@
         </span>
     </div>
     @endif
+    @yield('tenant_tab')
     <div class="slide-menu-container">
         <ul class="slide-menu" role="menu">
             @if($retailer->enable_membership === 'true')
