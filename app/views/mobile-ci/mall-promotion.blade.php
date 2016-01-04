@@ -31,10 +31,6 @@
         <div class="col-xs-12 text-center padded">
             <a href="{{{ url('customer/tenants?promotion_id='.$product->news_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
         </div>
-        @elseif(count($product->tenants) == 1 )
-        <div class="col-xs-12 text-center padded">
-            <a href="{{{ url('customer/tenant?id='.$product->tenants[0]->merchant_id.'&nid='.$product->news_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
-        </div>
         @endif
     @endif
 </div>

@@ -86,6 +86,13 @@
 
 <div class="row vertically-spaced">
     <div class="col-xs-12 padded">
+        @if(count($tenants) > 1 )
+        <div class="row vertically-spaced">
+            <div class="col-xs-12 text-center padded">
+                <a href="{{{ url('customer/tenants?coupon_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
+            </div>
+        </div>
+        @endif
         @if(! empty((float) $coupon->couponRule->discount_value))
         <div class="row">
             <div class="col-xs-12 text-center">

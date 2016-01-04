@@ -1787,6 +1787,27 @@ class MobileCIAPIController extends ControllerAPI
             );
 
             OrbitInput::get(
+                'coupon_id',
+                function ($pid) use ($tenants, $retailer, &$notfound) {
+                    if (! empty($pid)) {
+                        $news = \Coupon::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('promotion_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
+                        $retailers = \CouponRetailerRedeeem::whereHas('tenant', function($q) use($pid) {
+                            $q->where('promotion_id', $pid);
+                        })->whereHas('coupon')
+                        ->get()
+                        ->lists('merchant_id');
+                        // <-- should add exception if retailers not found
+                        $tenants->whereIn('merchants.merchant_id', $retailers);
+                    }
+                }
+            );
+
+            OrbitInput::get(
                 'news_id',
                 function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
@@ -2000,6 +2021,20 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Promotion Tenant List')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty(OrbitInput::get('coupon_id'))) {
+                $pagetitle = Lang::get('mobileci.page_title.coupons_tenants');
+
+                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Coupon Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)

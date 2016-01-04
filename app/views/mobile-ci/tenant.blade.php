@@ -257,9 +257,7 @@
 <div class="row padded vertically-spaced">
     <div class="col-xs-12 font-1-3">
         @foreach($tenant->mediaMapOrig as $map)
-        <p>
             <a href="{{ asset($map->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive maps" src="{{ asset($map->path) }}"></a>
-        </p>
         @endforeach
     </div>
 
