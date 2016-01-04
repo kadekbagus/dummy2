@@ -26,7 +26,7 @@ return array(
         'promotion'          => '促销',
         'not_found'          => '失误',
         'recognize_me'       => '认识我',
-        'tenant_directory'   => '租户名录',
+        'tenant_directory'   => '店铺',
         'promotions_tenants' => '促销店铺',
         'coupons_tenants'    => '优惠券店铺',
         'news_tenants'       => '新店铺',
@@ -85,7 +85,7 @@ return array(
         'close_cart_title'      => '关闭车',
         'reset_cart_title'      => '复位车',
         'membership_title'      => '会员',
-        'language_title'        => '选语言',
+        'language_title'        => '语言',
         'activate_account'      => 'アカウントを有効に',
 
         'message_no_coupon'     => '抱歉，您没有优惠券',
