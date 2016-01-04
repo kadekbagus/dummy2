@@ -36,7 +36,7 @@
             @foreach($tenant->newsPromotions as $promotab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" href="{{ url('customer/mallnewsdetail?id='.$promotab->news_id) }}">
+                        <a class="list-item-link" href="{{ url('customer/mallpromotion?id='.$promotab->news_id) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{ $promotab->news_name }}</strong></div>
@@ -91,12 +91,6 @@
                     </section>
                 </div>
             @endforeach
-        @else
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <p>{{ Lang::get('mobileci.tenant.check_our_new_promo') }}</p>
-                </div>
-            </div>
         @endif
     </div>
     <div id="slide-tab-news-container">
@@ -159,16 +153,69 @@
                     </section>
                 </div>
             @endforeach
-        @else
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <p>{{ Lang::get('mobileci.tenant.check_our_new_promo') }}</p>
-                </div>
-            </div>
         @endif
     </div>
     <div id="slide-tab-coupon-container">
-        
+        @if(sizeof($tenant->coupons) > 0)
+            @foreach($tenant->coupons as $coupontab)
+                <div class="col-xs-12 col-sm-12">
+                    <section class="list-item-single-tenant">
+                        <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupontab->promotion_id) }}">
+                            <div class="list-item-info">
+                                <header class="list-item-title">
+                                    <div><strong>{{ $coupontab->promotion_name }}</strong></div>
+                                </header>
+                                <header class="list-item-subtitle">
+                                    <div>
+                                        {{-- Limit description per two line and 45 total character --}}
+                                        <?php
+                                            $desc = explode("\n", $coupontab->description);
+                                        ?>
+                                        @if (mb_strlen($coupontab->description) > 45)
+                                            @if (count($desc) > 1)
+                                                <?php
+                                                    $two_row = array_slice($desc, 0, 1);
+                                                ?>
+                                                @foreach ($two_row as $key => $value)
+                                                    @if ($key === 0)
+                                                        {{{ $value }}} <br>
+                                                    @else
+                                                        {{{ $value }}} ...
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                {{{ mb_substr($coupontab->description, 0, 45, 'UTF-8') . '...' }}}
+                                            @endif
+                                        @else
+                                            @if (count($desc) > 1)
+                                                <?php
+                                                    $two_row = array_slice($desc, 0, 1);
+                                                ?>
+                                                @foreach ($two_row as $key => $value)
+                                                    @if ($key === 0)
+                                                        {{{ $value }}} <br>
+                                                    @else
+                                                        {{{ $value }}} ...
+                                                    @endif
+                                                @endforeach
+                                            @else
+                                                {{{ mb_substr($coupontab->description, 0, 45, 'UTF-8') }}}
+                                            @endif
+                                        @endif
+                                    </div>
+                                </header>
+                            </div>
+                            <div class="list-vignette-non-tenant"></div>
+                            @if(!empty($coupontab->image))
+                            <img class="img-responsive img-fit-tenant" src="{{ asset($coupontab->image) }}" />
+                            @else
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            @endif
+                        </a>
+                    </section>
+                </div>
+            @endforeach
+        @endif
     </div>
 </div>
 <div class="slide-menu-backdrop-tab"></div>
@@ -200,21 +247,15 @@
 <div class="row padded">
     <div class="col-xs-12 font-1-3">
         <p>{{ $tenant->description }}</p>
-    </div>
-</div>
-<div class="row padded">
-    <div class="col-xs-12 font-1-3">
-        
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
             <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
         </ul>
-
-        @if ($box_url)
-        <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
-        @endif
-
+    </div>
+</div>
+<div class="row padded vertically-spaced">
+    <div class="col-xs-12 font-1-3">
         @foreach($tenant->mediaMapOrig as $map)
         <p>
             <a href="{{ asset($map->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive maps" src="{{ asset($map->path) }}"></a>
@@ -222,6 +263,13 @@
         @endforeach
     </div>
 
+</div>
+<div class="row padded">
+    <div class="col-xs-12 font-1-3">
+        @if ($box_url)
+        <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
+        @endif
+    </div>
 </div>
 
 <!-- end of product -->
