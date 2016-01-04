@@ -3340,8 +3340,9 @@ class MobileCIAPIController extends ControllerAPI
 
                 foreach ($promotions as $key => $val) {
                     if ($val->is_all_gender === 'N') {
-                        $val = ->where('campaign_gender.gender_value', '=', $gender);
+                        $val = $val->where('campaign_gender.gender_value', '=', $gender);
                     }
+
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
