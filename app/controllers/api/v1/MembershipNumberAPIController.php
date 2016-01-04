@@ -110,7 +110,7 @@ class MembershipNumberAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             // Builder membership
             $record = MembershipNumber::select('membership_numbers.membership_number_id', 'membership_numbers.membership_id', 'membership_numbers.user_id', 'membership_numbers.membership_number', 'membership_numbers.expired_date', 'membership_numbers.join_date', 'membership_numbers.issuer_merchant_id', 'memberships.merchant_id', 'merchants.name AS merchant_name', 'memberships.membership_name', DB::raw("CASE WHEN {$prefix}settings.setting_value = 'true' THEN {$prefix}membership_numbers.status ELSE 'inactive' END AS status"))
-                                      ->where('membership_numbers.status', '=', 'activate')
+                                      ->where('membership_numbers.status', '=', 'active')
                                       ->join('memberships', 'memberships.membership_id', '=', 'membership_numbers.membership_id')
                                       ->join('merchants', 'merchants.merchant_id', '=', 'memberships.merchant_id')
                                       ->excludeDeleted('memberships')
