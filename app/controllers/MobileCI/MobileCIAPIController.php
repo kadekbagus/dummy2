@@ -3635,7 +3635,6 @@ class MobileCIAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $news = \News::with('translations')
-                            // ->active()
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -3658,10 +3657,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $news = $news->where('news.status', '=', 'active')
-                        ->orWhereRaw("{$prefix}news.is_all_gender = 'Y' AND {$prefix}news.object_type = 'news' ")
-                        ->orWhereRaw("{$prefix}news.is_all_age = 'Y' AND {$prefix}news.object_type = 'news' ")
-                        // ->orderBy('sticky_order', 'desc')
-                        // ->orderBy('created_at', 'desc')
+                        ->orWhereRaw("{$prefix}news.is_all_gender = 'Y' AND {$prefix}news.object_type = 'news' AND {$prefix}news.mall_id = ? ",[$retailer->merchant_id])
+                        ->orWhereRaw("{$prefix}news.is_all_age = 'Y' AND {$prefix}news.object_type = 'news' AND {$prefix}news.mall_id = ? ",[$retailer->merchant_id])
                         ->groupBy('news.news_id') // randomize
                         ->orderBy(DB::raw('RAND()')) // randomize
                         ->get();
