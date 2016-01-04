@@ -381,14 +381,14 @@ class MobileCIAPIController extends ControllerAPI
                             ORDER BY RAND()' // randomize
                         ),
                         array(
-                            'merchantid' => $retailer->merchant_id, 
-                            'userid' => $user->user_id, 
+                            'merchantid' => $retailer->merchant_id,
+                            'userid' => $user->user_id,
                             'new_date' => $new_date,
                             'now' => $now
                         )
                     );
                     $newCouponsCount = count($newCoupons);
- 
+
                     $widget->image = 'mobile-ci/images/default_coupon.png';
 
                     foreach ($widget->media as $media) {
@@ -3463,6 +3463,7 @@ class MobileCIAPIController extends ControllerAPI
             // Require authentication
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
+
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -3499,11 +3500,22 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 250;
             }
 
+            $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            $userGender =  $user->userDetail->gender;
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
-            $news = \News::with('translations')->active()
+            $news = \News::with('translations')
+                            // ->active()
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'news')
                             ->whereRaw("? between begin_date and end_date", [$mallTime])
+                            ->where('gender_value', '=', $userGender)
+                            ->where('min_value', '<=', $userAge)
+                            ->where('max_value', '>=', $userAge)
+                            ->where('news.status', '=', 'active')
                             // ->orderBy('sticky_order', 'desc')
                             // ->orderBy('created_at', 'desc')
                             ->orderBy(DB::raw('RAND()')) // randomize
@@ -4847,6 +4859,24 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         return $this->render();
+    }
+
+    /**
+     * Calculate the Age
+     *
+     * @author Firmansyah <firmansyah@myorbit.com>
+     * @param string $birth_date format date : YYYY-MM-DD
+     * @return string
+     */
+    public function calculateAge($birth_date)
+    {
+        $age = date_diff(date_create($birth_date), date_create('today'))->y;
+
+        if ($birth_date === null) {
+            return null;
+        }
+
+        return $age;
     }
 
     /**
