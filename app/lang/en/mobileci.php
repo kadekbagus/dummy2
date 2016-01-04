@@ -22,6 +22,7 @@ return array(
         'promotions'        => 'PROMOTIONS',
         'my_coupons'        => 'MY COUPONS',
         'coupon_single'     => 'COUPON',
+        'coupon_plural'     => 'COUPONS',
         'promotion'         => 'PROMOTION',
         'not_found'         => 'ERROR',
         'recognize_me'      => 'RECOGNIZE ME',

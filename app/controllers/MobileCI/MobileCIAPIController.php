@@ -3625,6 +3625,8 @@ class MobileCIAPIController extends ControllerAPI
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
+            $prefix = DB::getTablePrefix();
+
             $news = \News::with('translations')
                             // ->active()
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
@@ -3649,8 +3651,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $news = $news->where('news.status', '=', 'active')
-                        ->orWhere('is_all_gender', 'Y')
-                        ->orWhere('is_all_age', 'Y')
+                        ->orWhereRaw("{$prefix}news.is_all_gender = 'Y' AND {$prefix}news.object_type = 'news' ")
+                        ->orWhereRaw("{$prefix}news.is_all_age = 'Y' AND {$prefix}news.object_type = 'news' ")
                         // ->orderBy('sticky_order', 'desc')
                         // ->orderBy('created_at', 'desc')
                         ->groupBy('news.news_id') // randomize
