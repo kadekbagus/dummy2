@@ -24,19 +24,16 @@
 
 @section('content')
 <div class="row product">
-    <div class="col-xs-12 product-img">
-        @if(($coupon->image!='mobile-ci/images/default_product.png'))
-        <div class="zoom-wrapper">
-            <div class="zoom"><a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img alt="" src="{{{ asset('mobile-ci/images/product-zoom.png') }}}" ></a></div>
-        </div>
-        @endif
+    <div class="col-xs-12  main-theme product-detail">
         @if(($coupon->image!='mobile-ci/images/default_product.png'))
         <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
         @else
         <img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" >
         @endif
     </div>
-    <div class="col-xs-12 main-theme product-detail">
+</div>
+<div class="row product-info">
+    <div class="col-xs-12 padded">
         <div class="row">
             <div class="col-xs-12">
                 <h3>{{{ $coupon->promotion_name }}}</h3>
@@ -59,7 +56,6 @@
                     <p>{{{ Lang::get('mobileci.coupon.mall_based') }}}</p>
                 @endif
             </div>
-
             <div class="col-xs-12">
                 <h4>{{{ Lang::get('mobileci.coupon.tenant_redeem') }}}</h4>
                 <ul class="tenant-list">
@@ -86,8 +82,10 @@
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-xs-12 main-theme-mall product-detail where">
+<div class="row vertically-spaced">
+    <div class="col-xs-12 padded">
         @if(! empty((float) $coupon->couponRule->discount_value))
         <div class="row">
             <div class="col-xs-12 text-center">
