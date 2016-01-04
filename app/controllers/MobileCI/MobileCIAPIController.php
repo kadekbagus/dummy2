@@ -3319,6 +3319,10 @@ class MobileCIAPIController extends ControllerAPI
 
             $gender = $user->user_detail->gender;
 
+            if (is_null($gender)) {
+                $gender = 'u';
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $promotions = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
@@ -3334,11 +3338,6 @@ class MobileCIAPIController extends ControllerAPI
             if (!empty($alternateLanguage) && !empty($promotions)) {
 
                 foreach ($promotions as $key => $val) {
-
-                    if ($val->is_all_gender === 'N') {
-                        $promotions = $val->where('campaign_gender.gender_value', '=', $gender);
-                    }
-
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
