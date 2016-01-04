@@ -3317,18 +3317,27 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
+            $gender = $user->user_detail->gender;
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $promotions = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
                             ->whereRaw("? between begin_date and end_date", [$mallTime])
+                            ->join('campaign_gender', 'campaign_gender.campaign_id', '=','news.news_id')
+                            ->where('campaign_gender.campaign_type', '=', 'promotion')
                             // ->orderBy('sticky_order', 'desc')
                             // ->orderBy('created_at', 'desc')
                             ->orderBy(DB::raw('RAND()')) //randomize
                             ->get();
 
             if (!empty($alternateLanguage) && !empty($promotions)) {
+
                 foreach ($promotions as $key => $val) {
+
+                    if ($val->is_all_gender === 'N') {
+                        $promotions = $val->where('campaign_gender.gender_value', '=', $gender);
+                    }
 
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
