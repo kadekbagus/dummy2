@@ -3615,6 +3615,14 @@ class MobileCIAPIController extends ControllerAPI
             $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
             $userGender =  $user->userDetail->gender;
 
+            if ($userAge === null) {
+                $userAge = 0;
+            }
+
+            if ($userGender === null) {
+                $userGender = 'U';
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
             $news = \News::with('translations')
@@ -3626,13 +3634,18 @@ class MobileCIAPIController extends ControllerAPI
                             ->where('object_type', 'news')
                             ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
-            if ($userGender != null) {
+            if ($userGender !== null) {
                 $news = $news->where('gender_value', '=', $userGender);
             }
 
-            if ($userAge != null) {
-                $news = $news->where('min_value', '<=', $userAge);
-                $news = $news->where('max_value', '>=', $userAge);
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $news = $news->where('min_value', '=', $userAge);
+                    $news = $news->where('max_value', '=', $userAge);
+                } else {
+                    $news = $news->where('min_value', '<=', $userAge);
+                    $news = $news->where('max_value', '>=', $userAge);
+                }
             }
 
             $news = $news->where('news.status', '=', 'active')
