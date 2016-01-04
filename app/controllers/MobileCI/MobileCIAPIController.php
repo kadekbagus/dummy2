@@ -3454,7 +3454,14 @@ class MobileCIAPIController extends ControllerAPI
 
             $product_id = trim(OrbitInput::get('id'));
 
-            $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'promotion')->where('news_id', $product_id)->first();
+            $coupons = \News::with(['tenants' => function($q) {
+                    $q->where('merchants.status', 'active');
+                }])
+                ->active()
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('object_type', 'promotion')
+                ->where('news_id', $product_id)
+                ->first();
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
@@ -3774,7 +3781,14 @@ class MobileCIAPIController extends ControllerAPI
 
             $product_id = trim(OrbitInput::get('id'));
 
-            $news = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'news')->where('news_id', $product_id)->first();
+            $news = \News::with(['tenants' => function($q) {
+                    $q->where('merchants.status', 'active');
+                }])
+                ->active()
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('object_type', 'news')
+                ->where('news_id', $product_id)
+                ->first();
 
             if (empty($news)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
