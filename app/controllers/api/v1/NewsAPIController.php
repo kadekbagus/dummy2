@@ -96,7 +96,7 @@ class NewsAPIController extends ControllerAPI
             $link_object_type = OrbitInput::post('link_object_type');
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
-            $is_all_age = OrbitInput::post('is_all_age_range');
+            $is_all_age = OrbitInput::post('is_all_age');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
             $gender_ids = OrbitInput::post('gender_ids');
@@ -485,7 +485,7 @@ class NewsAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
-            $is_all_age = OrbitInput::post('is_all_age_range');
+            $is_all_age = OrbitInput::post('is_all_age');
 
             $data = array(
                 'news_id'             => $news_id,
