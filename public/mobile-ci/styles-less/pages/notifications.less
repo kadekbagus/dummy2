@@ -173,3 +173,63 @@
     margin-top: 15px;
     display:none;
 }
+.list-item-container .list-item-subtitle div.badges-wrapper{
+    height:25px;
+    margin-top: -5px;
+    padding-right:1px;
+}
+.badges-wrapper{
+    height:24px;
+    .badges {
+        font-size: .9em;
+        color: #fff;
+        font-family: sans-serif;
+        &.news-badges{
+            font-size:.8em;
+        }
+        &.news-badges:before{
+            content:'';
+            border-radius: 50%;
+            border: 1px solid #FFF;
+            width:20px;
+            height:20px;
+            background:#FF8300;
+            display: inline-block;
+            position: relative;
+            z-index: -1;
+            right: -16px;
+            top: 5px;
+        }
+        &.promo-badges:before{
+            content:'';
+            border-radius: 50%;
+            border: 1px solid #FFF;
+            width:20px;
+            height:20px;
+            background:#FF0000;
+            display: inline-block;
+            position: relative;
+            z-index: -1;
+            right: -15px;
+            top: 5px;
+        }
+        &.coupon-badges:before{
+            content:'';
+            border-radius: 50%;
+            border: 1px solid #FFF;
+            width:20px;
+            height:20px;
+            background:#0DAD04;
+            display: inline-block;
+            position: relative;
+            z-index: -1;
+            right: -16px;
+            top: 5px;
+        }
+    }
+}
+.list-item-badges{
+    position:absolute;
+    bottom:8px;
+    right:10px;
+}
