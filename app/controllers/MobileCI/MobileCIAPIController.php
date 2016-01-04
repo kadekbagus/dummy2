@@ -3650,8 +3650,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $news = $news->where('news.status', '=', 'active')
-                        ->orWhereRaw("{$prefix}news.is_all_gender = 'Y' AND {$prefix}news.object_type = 'news' AND {$prefix}news.mall_id = ? ",[$retailer->merchant_id])
-                        ->orWhereRaw("{$prefix}news.is_all_age = 'Y' AND {$prefix}news.object_type = 'news' AND {$prefix}news.mall_id = ? ",[$retailer->merchant_id])
+                        ->orWhereRaw("{$prefix}news.is_all_gender = 'Y' AND {$prefix}news.object_type = 'news' AND {$prefix}news.status = 'active' AND {$prefix}news.mall_id = ? ",[$retailer->merchant_id])
+                        ->orWhereRaw("{$prefix}news.is_all_age = 'Y' AND {$prefix}news.object_type = 'news' AND {$prefix}news.status = 'active' AND {$prefix}news.mall_id = ? ",[$retailer->merchant_id])
                         ->groupBy('news.news_id') // randomize
                         ->orderBy(DB::raw('RAND()')) // randomize
                         ->get();
