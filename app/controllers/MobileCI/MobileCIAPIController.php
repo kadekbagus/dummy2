@@ -3328,8 +3328,9 @@ class MobileCIAPIController extends ControllerAPI
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
                             ->whereRaw("? between begin_date and end_date", [$mallTime])
-                            ->join('campaign_gender', 'campaign_gender.campaign_id', '=','news.news_id')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=','news.news_id')
                             ->where('campaign_gender.campaign_type', '=', 'promotion')
+                            ->where('campaign_gender.gender_value', '=', $gender)
                             // ->orderBy('sticky_order', 'desc')
                             // ->orderBy('created_at', 'desc')
                             ->orderBy(DB::raw('RAND()')) //randomize
