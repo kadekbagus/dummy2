@@ -9,7 +9,7 @@
 <!-- product -->
 <div class="row">
     <div class="col-xs-12 main-theme product-detail">
-        @if(($product->image!='mobile-ci/images/default_product.png'))
+        @if(($product->image!='mobile-ci/images/default_promotion.png'))
         <a href="{{{ asset($product->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($product->image) }}"></a>
         @else
         <img src="{{ asset($product->image) }}">

@@ -85,7 +85,7 @@
                             @if(!empty($promotab->image))
                             <img class="img-responsive img-fit-tenant" src="{{ asset($promotab->image) }}" />
                             @else
-                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
                             @endif
                         </a>
                     </section>
@@ -147,7 +147,7 @@
                             @if(!empty($newstab->image))
                             <img class="img-responsive img-fit-tenant" src="{{ asset($newstab->image) }}" />
                             @else
-                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
                             @endif
                         </a>
                     </section>
@@ -209,7 +209,7 @@
                             @if(!empty($coupontab->image))
                             <img class="img-responsive img-fit-tenant" src="{{ asset($coupontab->image) }}" />
                             @else
-                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
                             @endif
                         </a>
                     </section>
@@ -225,9 +225,9 @@
     <div class="col-xs-12">
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
             @if(!count($tenant->mediaLogoOrig) > 0)
-            <li data-thumb="{{ asset('mobile-ci/images/default_product.png') }}">
+            <li data-thumb="{{ asset('mobile-ci/images/default_tenants_directory.png') }}">
                 <span class="gallery-helper"></span>
-                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
             </li>
             @endif
             @foreach($tenant->mediaLogoOrig as $media)

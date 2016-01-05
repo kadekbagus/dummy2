@@ -102,7 +102,7 @@
                                     </div>
                                     <div class="list-vignette-non-tenant"></div>
                                     @if(!count($product->mediaLogo) > 0)
-                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
                                     @endif
                                     @foreach($product->mediaLogo as $media)
                                     @if($media->media_name_long == 'retailer_logo_orig')
