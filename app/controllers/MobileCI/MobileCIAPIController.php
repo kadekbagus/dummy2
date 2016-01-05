@@ -1959,7 +1959,7 @@ class MobileCIAPIController extends ControllerAPI
 
             foreach ($listOfRec as $tenant) {
                 if (empty($tenant->logo)) {
-                    $tenant->logo = 'mobile-ci/images/default_product.png';
+                    $tenant->logo = 'mobile-ci/images/default_tenants_directory.png';
                 }
                 if (!empty($tenant->phone)) {
                     $phone = explode('|#|', $tenant->phone);
@@ -2305,7 +2305,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (empty($tenant->logo)) {
-                $tenant->logo = 'mobile-ci/images/default_product.png';
+                $tenant->logo = 'mobile-ci/images/default_tenants_directory.png';
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -3228,7 +3228,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (empty($coupons->image)) {
-                $coupons->image = 'mobile-ci/images/default_product.png';
+                $coupons->image = 'mobile-ci/images/default_coupon.png';
             }
 
             // Check coupon have condition cs reedem
@@ -3352,24 +3352,43 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $gender = $user->user_detail->gender;
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
 
-            if (is_null($gender)) {
-                $gender = 'u';
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
             }
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
-            $promotions = \News::active()
-                            ->where('mall_id', $retailer->merchant_id)
-                            ->where('object_type', 'promotion')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime])
-                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=','news.news_id')
-                            ->where('campaign_gender.campaign_type', '=', 'promotion')
-                            ->where('campaign_gender.gender_value', '=', $gender)
-                            // ->orderBy('sticky_order', 'desc')
-                            // ->orderBy('created_at', 'desc')
-                            ->orderBy(DB::raw('RAND()')) //randomize
-                            ->get();
+
+            $promotions = \News::with('translations')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+            if ($userGender !== null) {
+                $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $promotions = $promotions->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    $promotions = $promotions->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                }
+            }
+
+            $promotions = $promotions->where('news.status', '=', 'active')
+                        ->where('mall_id', $retailer->merchant_id)
+                        ->where('object_type', 'promotion')
+                        ->whereRaw("? between begin_date and end_date", [$mallTime])
+                        ->groupBy('news.news_id') // randomize
+                        ->orderBy(DB::raw('RAND()')) // randomize
+                        ->get();
+
 
             if (!empty($alternateLanguage) && !empty($promotions)) {
 
@@ -3504,7 +3523,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (empty($coupons->image)) {
-                $coupons->image = 'mobile-ci/images/default_product.png';
+                $coupons->image = 'mobile-ci/images/default_promotion.png';
             }
 
             // checking if all tenant linked to this promotion inactive or not
@@ -3654,20 +3673,17 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 250;
             }
 
-            $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
-            $userGender =  $user->userDetail->gender;
-
-            if ($userAge === null) {
-                $userAge = 0;
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
             }
 
-            if ($userGender === null) {
-                $userGender = 'U';
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
             }
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
-
-            $prefix = DB::getTablePrefix();
 
             $news = \News::with('translations')
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
@@ -3680,9 +3696,9 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($userAge !== null) {
                 if ($userAge === 0){
-                    $news = $news->whereRaw(" ( (min_value = ? and max_value >= ? ) or is_all_age = 'Y' ) ", array($userAge, $userAge));
+                    $news = $news->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
-                    $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array($userAge, $userAge));
+                    $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 }
             }
 
@@ -3827,7 +3843,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (empty($news->image)) {
-                $news->image = 'mobile-ci/images/default_product.png';
+                $news->image = 'mobile-ci/images/default_news.png';
             }
 
             // checking if all tenant linked to this news inactive or not
