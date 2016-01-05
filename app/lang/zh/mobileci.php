@@ -33,7 +33,7 @@ return array(
         'events_tenants'     => '店铺事件',
         'coupons'            => '我的优惠券',
         'promotions'         => '促销活动',
-        'news'               => '信息',
+        'news'               => '消息',
         'membership'         => '会员',
         'orbit_tour'         => 'ORBIT巡视',
         'lucky_draws'        => '幸运大抽奖',
