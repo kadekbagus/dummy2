@@ -88,7 +88,7 @@
                         <i class="fa fa-times"></i>
                     </button>
                     
-                    <span class="mandatory-label">All fields are mandatory</span>
+                    <span class="mandatory-label">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
