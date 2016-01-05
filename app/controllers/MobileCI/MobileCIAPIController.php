@@ -1843,23 +1843,46 @@ class MobileCIAPIController extends ControllerAPI
                 }
             );
 
+            $couponTenantRedeem = new stdclass();
+            $couponTenantRedeem->linkedToTenant = FALSE;
+            $couponTenantRedeem->linkedToCS = FALSE;
+
             OrbitInput::get(
                 'coupon_id',
-                function ($pid) use ($tenants, $retailer, &$notfound) {
+                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
                     if (! empty($pid)) {
-                        $news = \Coupon::active()
-                            ->where('mall_id', $retailer->merchant_id)
+                        $coupon = \Coupon::with('employee')->active()
+                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('promotion_id', $pid)->first();
-                        if (!is_object($news)) {
+                        if (!is_object($coupon)) {
                             $notfound = TRUE;
                         }
-                        $retailers = \CouponRetailerRedeeem::whereHas('tenant', function($q) use($pid) {
-                            $q->where('promotion_id', $pid);
-                        })->whereHas('coupon')
-                        ->get()
-                        ->lists('merchant_id');
-                        // <-- should add exception if retailers not found
-                        $tenants->whereIn('merchants.merchant_id', $retailers);
+
+                        if ($coupon->is_all_retailer === 'Y') {
+                            $couponTenantRedeem->linkedToTenant = TRUE;
+                        } else {
+                            //get link tenant redeem
+                            $retailers = \CouponRetailerRedeem::whereHas('tenant', function($q) use($pid) {
+                                $q->where('promotion_id', $pid);
+                            })->has('coupon')
+                            ->get()
+                            ->lists('merchant_id');
+
+                            if (empty($retailers)) {
+                                $tenants->whereNull('merchants.merchant_id');
+                            } else {
+                                $couponTenantRedeem->linkedToTenant = TRUE;
+                                $tenants->whereIn('merchants.merchant_id', $retailers);
+                            }
+                        }
+                        if ($coupon->is_all_employee === 'Y') {
+                            $couponTenantRedeem->linkedToCS = TRUE;
+                        } else {
+                            $employee = \CouponEmployee::where('promotion_id', $pid)->first();
+                            if (is_object($employee)) {
+                                $couponTenantRedeem->linkedToCS = TRUE;
+                            }
+                        }
                     }
                 }
             );
@@ -2127,7 +2150,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id'))) {
+            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id')) && empty(OrbitInput::get('coupon_id'))) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -2151,7 +2174,8 @@ class MobileCIAPIController extends ControllerAPI
                 'active_user' => ($user->status === 'active'),
                 'floorList' => $floorList,
                 'user_email' => $user->user_email,
-                'languages' => $languages));
+                'languages' => $languages,
+                'link_to_coupon_data' => $couponTenantRedeem));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
@@ -3353,7 +3377,6 @@ class MobileCIAPIController extends ControllerAPI
         }
     }
 
-
     /**
      * GET - Get promotion list in mall
      *
@@ -4115,7 +4138,7 @@ class MobileCIAPIController extends ControllerAPI
                     $activityPageNotes = sprintf('Page viewed: %s', 'Activation Notification Detail Page');
                     $activityPage->setUser($user)
                         ->setActivityName('read_notification')
-                        ->setActivityNameLong('Read Notification Activation')
+                        ->setActivityNameLong('Read Activation Notification')
                         ->setObject($inbox)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
@@ -4127,7 +4150,7 @@ class MobileCIAPIController extends ControllerAPI
                     $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
                     $activityPage->setUser($user)
                         ->setActivityName('read_notification')
-                        ->setActivityNameLong('Read Notification Lucky Draw Number Issuance')
+                        ->setActivityNameLong('Read Lucky Draw Number Issuance Notification')
                         ->setObject($inbox)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
@@ -4139,7 +4162,7 @@ class MobileCIAPIController extends ControllerAPI
                     $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
                     $activityPage->setUser($user)
                         ->setActivityName('read_notification')
-                        ->setActivityNameLong('View Winner Announcement Notification')
+                        ->setActivityNameLong('Read Winner Announcement Notification')
                         ->setObject($inbox)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
@@ -4151,7 +4174,7 @@ class MobileCIAPIController extends ControllerAPI
                     $activityPageNotes = sprintf('Page viewed: %s', 'Coupon Issuance Notification Detail Page');
                     $activityPage->setUser($user)
                         ->setActivityName('read_notification')
-                        ->setActivityNameLong('Read Notification Coupon Issuance')
+                        ->setActivityNameLong('Read Coupon Issuance Notification')
                         ->setObject($inbox)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)

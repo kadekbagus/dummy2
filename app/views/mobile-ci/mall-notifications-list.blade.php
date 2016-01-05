@@ -97,7 +97,7 @@
             getNotifList();
 
             $('body').on('click', '.deleteNotif', function(e){
-                $('body').addClass('freeze-scroll');
+                $('body').addClass('modal-open');
                 var inbox_id = $(this).data('id');
                 $.ajax({
                     method: 'POST',
@@ -112,7 +112,7 @@
                         });
                     }
                 }).always(function(data){
-                    $('body').removeClass('freeze-scroll');
+                    $('body').removeClass('modal-open');
                 });
             });
 
