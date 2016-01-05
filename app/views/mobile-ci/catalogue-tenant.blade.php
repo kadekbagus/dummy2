@@ -62,49 +62,62 @@
             <div class="container">
                 <div class="mobile-ci list-item-container">
                     <div class="row">
-                    @foreach($data->records as $product)
-                        <div class="col-xs-12 col-sm-12" id="item-{{$product->merchant_id}}">
+                    @if($link_to_coupon_data->linkedToCS)
+                        <div class="col-xs-12 col-sm-12" id="item-cs">
                             <section class="list-item-single-tenant">
-                                <a class="list-item-link" href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
+                                <div class="list-item-info">
+                                    <header class="list-item-title">
+                                        <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
+                                    </header>
+                                </div>
+                                <div class="list-vignette-non-tenant"></div>
+                                <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_my_profile.png') }}"/>
+                            </section>
+                        </div>
+                    @endif
+                    @foreach($data->records as $tenant)
+                        <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
+                            <section class="list-item-single-tenant">
+                                <a class="list-item-link" href="{{ url('customer/tenant?id='.$tenant->merchant_id) }}">
                                     <div class="list-item-info">
                                         <header class="list-item-title">
-                                            <div><strong>{{ $product->name }}</strong></div>
+                                            <div><strong>{{ $tenant->name }}</strong></div>
                                         </header>
                                         <header class="list-item-subtitle">
                                             <div>
                                                 <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> 
-                                                {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}
+                                                {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
                                             </div>
                                             <div>
                                                 <div class="col-xs-6">
                                                     <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
-                                                    @if(empty($product->category_string))
+                                                    @if(empty($tenant->category_string))
                                                         <span>-</span>
                                                     @else
-                                                        <span>{{ mb_strlen($product->category_string) > 30 ? mb_substr($product->category_string, 0, 30, 'UTF-8') . '...' : $product->category_string }}</span>
+                                                        <span>{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}</span>
                                                     @endif
                                                 </div>
                                             </div>
                                         </header>
                                         <header class="list-item-badges">
                                             <div class="col-xs-12 badges-wrapper text-right">
-                                                @if($product->promotion_flag)
+                                                @if($tenant->promotion_flag)
                                                 <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
                                                 @endif
-                                                @if($product->news_flag)
+                                                @if($tenant->news_flag)
                                                 <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
                                                 @endif
-                                                @if($product->coupon_flag)
+                                                @if($tenant->coupon_flag)
                                                 <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
                                                 @endif
                                             </div>
                                         </header>
                                     </div>
                                     <div class="list-vignette-non-tenant"></div>
-                                    @if(!count($product->mediaLogo) > 0)
+                                    @if(!count($tenant->mediaLogo) > 0)
                                     <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
                                     @endif
-                                    @foreach($product->mediaLogo as $media)
+                                    @foreach($tenant->mediaLogo as $media)
                                     @if($media->media_name_long == 'retailer_logo_orig')
                                     <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
                                     @endif
