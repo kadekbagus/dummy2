@@ -349,7 +349,11 @@
                     $('#slide-tab-coupon').blur();
                 }
             }
+            // set the slide tab container so it could be scrolled
             $('.slide-tab-container').css('height', ($(window).height()-92) + 'px');
+            $(window).resize(function(){
+                $('.slide-tab-container').css('height', ($(window).height()-92) + 'px');
+            });
             $('.slide-tab-container').click(function(){
                 hideOpenTabs();
                 $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
