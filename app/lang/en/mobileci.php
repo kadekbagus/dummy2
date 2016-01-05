@@ -152,6 +152,7 @@ return array(
         'email_placeholder' => 'Insert your email address',
         'login_button'      => 'Enter',
         'start_button'      => 'Start Shopping',
+        'welcome_message'   => 'Feel The New Shopping Experience',
         'not'               => 'Not',
         'click_here'        => 'click here',
         'email_not_valid'   => 'Email address is not valid',
@@ -167,6 +168,26 @@ return array(
         'accept_modal_button_text' => 'OK',
         'connecting_to_facebook' => 'Connecting to Facebook...',
         'connecting_to_google' => 'Connecting to Google...',
+        'connecting_with' => 'Connect with',
+        'sign_in' => 'Sign In',
+        'sign_up' => 'Sign up',
+        'doesnt_have_account' => 'Does not have account',
+    ),
+
+    'signup' => array(
+        'first_name' => 'First Name',
+        'last_name' => 'Last Name',
+        'gender' => 'Select Gender',
+        'male' => 'Male',
+        'female' => 'Female',
+        'day' => 'Day',
+        'month' => 'Month',
+        'year' => 'Year',
+        'policy_terms_message' => 'By clicking <strong>Sign up</strong> you confirm that you accept
+                        <a target="_blank" href="%s">Privacy Policy</a> and
+                        <a target="_blank" href="%s">Terms and Conditions</a>',
+        'already_have_an_account' => 'Already have an account',
+        'fields_are_mandatory' => 'All fields are mandatory',
     ),
 
     'catalogue' => array(

@@ -152,6 +152,7 @@ return array(
         'email_placeholder' => '将您的电子邮件地址',
         'login_button'      => '登录',
         'start_button'      => '开始购物',
+        'welcome_message'   => 'zh:Feel The New Shopping Experience',
         'not'               => '不是',
         'click_here'        => '点击',
         'email_not_valid'   => '邮件无有效',
@@ -167,6 +168,26 @@ return array(
         'accept_modal_button_text'      => '是',
         'connecting_to_facebook'        => '连接到 Facebook...',
         'connecting_to_google'        => '连接到 Google...',
+        'connecting_with' => 'zh:Connect with',
+        'sign_in' => 'zh:Sign In',
+        'sign_up' => 'zh:Sign up',
+        'doesnt_have_account' => 'zh:Does not have account',
+    ),
+
+    'signup' => array(
+        'first_name' => 'zh:First Name',
+        'last_name' => 'zh:Last Name',
+        'gender' => 'zh:Select Gender',
+        'male' => 'zh:Male',
+        'female' => 'zh:Female',
+        'day' => 'zh:Day',
+        'month' => 'zh:Month',
+        'year' => 'zh:Year',
+        'policy_terms_message' => 'zh:By clicking <strong>Sign up</strong> you confirm that you accept
+                        <a target="_blank" href="%s">Privacy Policy</a> and
+                        <a target="_blank" href="%s">Terms and Conditions</a>',
+        'already_have_an_account' => 'zh:Already have an account',
+        'fields_are_mandatory' => 'zh:All fields are mandatory',
     ),
 
     'catalogue' => array(
