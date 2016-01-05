@@ -137,7 +137,7 @@ return array(
         'all'                   => '全部',
         'check_our_new_promo'   => '看看我们最近特色购物',
         'check_our_latest_news' => '看看我们特新货',
-        'news'                  => '信息',
+        'news'                  => '消息',
         'promotions'            => '促销活动',
         'see_tenants'           => '看店铺',
         'redemption_places'     => '赎回位置',
