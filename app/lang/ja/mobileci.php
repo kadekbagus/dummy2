@@ -175,7 +175,7 @@ return array(
     ),
 
     'signup' => array(
-        'fist_name' => 'jp:First Name',
+        'first_name' => 'jp:First Name',
         'last_name' => 'jp:Last Name',
         'gender' => 'jp:Select Gender',
         'male' => 'jp:Male',
