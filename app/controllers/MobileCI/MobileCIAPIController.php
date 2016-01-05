@@ -4716,15 +4716,16 @@ class MobileCIAPIController extends ControllerAPI
             // check available autho-issuance coupon that already obtainde by user
             $obtained_coupons = DB::select(
                 DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                    'SELECT * FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id
-                WHERE pr.rule_type = "auto_issue_on_signup"
-                    AND p.merchant_id = :merchantid
+                WHERE
+                    p.merchant_id = :merchantid
                     AND ic.user_id = :userid
                     AND p.is_coupon = "Y" AND p.status = "active"
-                    AND p.begin_date <= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
-                    AND p.end_date >= "' . Carbon::createFromFormat('Y-m-d H:i:s', $user->created_at)->timezone($retailer->timezone->timezone_name) . '"
+                    AND p.begin_date <= "' . $mallTime . '"
+                    AND p.end_date >= "' . $mallTime . '"
+                    AND pr.rule_type != "auto_issue_on_every_signin"
                     '
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
@@ -4769,32 +4770,39 @@ class MobileCIAPIController extends ControllerAPI
                 $issuedCouponNames = [];
                 $prefix = DB::getTablePrefix();
 
-                foreach ($couponIds as $couponId) {
-                    $coupon = Coupon::select('promotions.*',
-                        DB::raw("(select count(ic.issued_coupon_id) from {$prefix}issued_coupons ic
-                                                      where ic.promotion_id={$prefix}promotions.promotion_id
-                                                      and ic.status!='deleted') as total_issued_coupon"))
-                        ->active('promotions')
-                        ->where('promotion_id', $couponId)
-                        ->first();
+                foreach ($coupons_to_be_obtained as $coupon) {
+                    $issued = false;
+                    if ($coupon->rule_type === 'auto_issue_on_signup') {
+                        $issued = UserAcquisition::where('acquirer_id', $retailer->merchant_id)
+                                                ->where('user_id', $user->user_id)
+                                                ->whereRaw("created_at between ? and ?", [$coupon->rule_begin_date, $coupon->rule_end_date]->first());
+                    } elseif ($coupon->rule_type === 'auto_issue_on_first_signin') {
+                        $issued = UserSignin::where('location_id', $retailer->merchant_id)
+                                                ->where('user_id', $user->user_id)
+                                                ->whereRaw("created_at between ? and ?", [$coupon->rule_begin_date, $coupon->rule_end_date]->first());
+                    } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
+                        $issued = true;
+                    }
 
-                    $issuedCoupon = new IssuedCoupon();
-                    $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user);
+                    if (! empty($issued)) {
+                        $issuedCoupon = new IssuedCoupon();
+                        $tmp = $issuedCoupon->issue($coupon, $user->user_id, $user);
 
-                    $obj = new stdClass();
-                    $obj->coupon_number = $tmp->issued_coupon_code;
-                    $obj->coupon_name = $coupon->promotion_name;
-                    $obj->promotion_id = $coupon->promotion_id;
+                        $obj = new stdClass();
+                        $obj->coupon_number = $tmp->issued_coupon_code;
+                        $obj->coupon_name = $coupon->promotion_name;
+                        $obj->promotion_id = $coupon->promotion_id;
 
-                    $objectCoupons[] = $coupon;
-                    $issuedCoupons[] = $obj;
-                    $applicableCouponNames[] = $coupon->promotion_name;
-                    $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
+                        $objectCoupons[] = $coupon;
+                        $issuedCoupons[] = $obj;
+                        $applicableCouponNames[] = $coupon->promotion_name;
+                        $issuedCouponNames[$tmp->issued_coupon_code] = $coupon->promotion_name;
 
-                    $tmp = NULL;
-                    $obj = NULL;
+                        $tmp = NULL;
+                        $obj = NULL;
 
-                    $numberOfCouponIssued++;
+                        $numberOfCouponIssued++;
+                    }
                 }
 
                 // Insert to alert system
@@ -4804,10 +4812,8 @@ class MobileCIAPIController extends ControllerAPI
                 $name = trim($name) ? trim($name) : $user->user_email;
                 $subject = 'Coupon';
 
-                $retailerId = Config::get('orbit.shop.id');
-
                 $inbox = new Inbox();
-                $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailerId, 'coupon_issuance');
+                $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailer->merchant_id, 'coupon_issuance');
 
                 foreach ($objectCoupons as $object) {
                     $activity = Activity::mobileci()
