@@ -1788,7 +1788,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $couponTenantRedeem = new stdclass();
             $couponTenantRedeem->linkedToTenant = FALSE;
-            $couponTenantRedeem->linkedToCS = TRUE;
+            $couponTenantRedeem->linkedToCS = FALSE;
 
             OrbitInput::get(
                 'coupon_id',
