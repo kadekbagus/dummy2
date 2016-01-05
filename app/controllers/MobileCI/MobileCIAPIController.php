@@ -1787,6 +1787,27 @@ class MobileCIAPIController extends ControllerAPI
             );
 
             OrbitInput::get(
+                'coupon_id',
+                function ($pid) use ($tenants, $retailer, &$notfound) {
+                    if (! empty($pid)) {
+                        $news = \Coupon::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('promotion_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
+                        $retailers = \CouponRetailerRedeeem::whereHas('tenant', function($q) use($pid) {
+                            $q->where('promotion_id', $pid);
+                        })->whereHas('coupon')
+                        ->get()
+                        ->lists('merchant_id');
+                        // <-- should add exception if retailers not found
+                        $tenants->whereIn('merchants.merchant_id', $retailers);
+                    }
+                }
+            );
+
+            OrbitInput::get(
                 'news_id',
                 function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
@@ -2000,6 +2021,20 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Promotion Tenant List')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty(OrbitInput::get('coupon_id'))) {
+                $pagetitle = Lang::get('mobileci.page_title.coupons_tenants');
+
+                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Coupon Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -3637,28 +3672,24 @@ class MobileCIAPIController extends ControllerAPI
             $news = \News::with('translations')
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                            ->where('mall_id', $retailer->merchant_id)
-                            ->where('object_type', 'news')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime]);
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
             if ($userGender !== null) {
-                $news = $news->where('gender_value', '=', $userGender);
+                $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
             }
 
             if ($userAge !== null) {
                 if ($userAge === 0){
-                    $news = $news->where('min_value', '=', $userAge);
-                    $news = $news->where('max_value', '=', $userAge);
+                    $news = $news->whereRaw(" ( (min_value = ? and max_value >= ? ) or is_all_age = 'Y' ) ", array($userAge, $userAge));
                 } else {
-                    $news = $news->where('min_value', '<=', $userAge);
-                    $news = $news->where('max_value', '>=', $userAge);
+                    $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array($userAge, $userAge));
                 }
             }
 
             $news = $news->where('news.status', '=', 'active')
-                        ->orWhereRaw("{$prefix}news.is_all_gender = 'Y' AND {$prefix}news.object_type = 'news' AND {$prefix}news.status = 'active' AND {$prefix}news.mall_id = ? ",[$retailer->merchant_id])
-                        ->orWhereRaw("{$prefix}news.is_all_age = 'Y' AND {$prefix}news.object_type = 'news' AND {$prefix}news.status = 'active' AND {$prefix}news.mall_id = ? ",[$retailer->merchant_id])
+                        ->where('mall_id', $retailer->merchant_id)
+                        ->where('object_type', 'news')
+                        ->whereRaw("? between begin_date and end_date", [$mallTime])
                         ->groupBy('news.news_id') // randomize
                         ->orderBy(DB::raw('RAND()')) // randomize
                         ->get();
