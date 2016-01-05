@@ -7,7 +7,7 @@
 <div class="content-signin">
     <div class="slogan-container" id="slogan-container">
         <div class="slogan">
-            {{ Lang::get('mobileci.signin.welcome_message') }}
+            {{ Config::get('shop.start_button_label') }}
         </div>
     </div>
     <div class="social-media-wraper" id="social-media-wraper">
