@@ -3375,7 +3375,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($userAge !== null) {
                 if ($userAge === 0){
-                    $promotions = $promotions->whereRaw(" ( (min_value = ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    $promotions = $promotions->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
                     $promotions = $promotions->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 }
@@ -3696,7 +3696,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if ($userAge !== null) {
                 if ($userAge === 0){
-                    $news = $news->whereRaw(" ( (min_value = ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    $news = $news->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
                     $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 }
