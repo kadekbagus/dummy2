@@ -1787,6 +1787,27 @@ class MobileCIAPIController extends ControllerAPI
             );
 
             OrbitInput::get(
+                'coupon_id',
+                function ($pid) use ($tenants, $retailer, &$notfound) {
+                    if (! empty($pid)) {
+                        $news = \Coupon::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('promotion_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
+                        $retailers = \CouponRetailerRedeeem::whereHas('tenant', function($q) use($pid) {
+                            $q->where('promotion_id', $pid);
+                        })->whereHas('coupon')
+                        ->get()
+                        ->lists('merchant_id');
+                        // <-- should add exception if retailers not found
+                        $tenants->whereIn('merchants.merchant_id', $retailers);
+                    }
+                }
+            );
+
+            OrbitInput::get(
                 'news_id',
                 function ($pid) use ($tenants, $retailer, &$notfound) {
                     if (! empty($pid)) {
@@ -2000,6 +2021,20 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Promotion Tenant List')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty(OrbitInput::get('coupon_id'))) {
+                $pagetitle = Lang::get('mobileci.page_title.coupons_tenants');
+
+                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Coupon Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -3317,19 +3352,28 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
+            $gender = $user->user_detail->gender;
+
+            if (is_null($gender)) {
+                $gender = 'u';
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $promotions = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
                             ->whereRaw("? between begin_date and end_date", [$mallTime])
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=','news.news_id')
+                            ->where('campaign_gender.campaign_type', '=', 'promotion')
+                            ->where('campaign_gender.gender_value', '=', $gender)
                             // ->orderBy('sticky_order', 'desc')
                             // ->orderBy('created_at', 'desc')
                             ->orderBy(DB::raw('RAND()')) //randomize
                             ->get();
 
             if (!empty($alternateLanguage) && !empty($promotions)) {
-                foreach ($promotions as $key => $val) {
 
+                foreach ($promotions as $key => $val) {
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('news_id', $val->news_id)->first();
@@ -3445,7 +3489,14 @@ class MobileCIAPIController extends ControllerAPI
 
             $product_id = trim(OrbitInput::get('id'));
 
-            $coupons = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'promotion')->where('news_id', $product_id)->first();
+            $coupons = \News::with(['tenants' => function($q) {
+                    $q->where('merchants.status', 'active');
+                }])
+                ->active()
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('object_type', 'promotion')
+                ->where('news_id', $product_id)
+                ->first();
 
             if (empty($coupons)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
@@ -3606,23 +3657,42 @@ class MobileCIAPIController extends ControllerAPI
             $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
             $userGender =  $user->userDetail->gender;
 
+            if ($userAge === null) {
+                $userAge = 0;
+            }
+
+            if ($userGender === null) {
+                $userGender = 'U';
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
+            $prefix = DB::getTablePrefix();
+
             $news = \News::with('translations')
-                            // ->active()
                             ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                            ->where('mall_id', $retailer->merchant_id)
-                            ->where('object_type', 'news')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime])
-                            ->where('gender_value', '=', $userGender)
-                            ->where('min_value', '<=', $userAge)
-                            ->where('max_value', '>=', $userAge)
-                            ->where('news.status', '=', 'active')
-                            // ->orderBy('sticky_order', 'desc')
-                            // ->orderBy('created_at', 'desc')
-                            ->orderBy(DB::raw('RAND()')) // randomize
-                            ->get();
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+            if ($userGender !== null) {
+                $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $news = $news->whereRaw(" ( (min_value = ? and max_value >= ? ) or is_all_age = 'Y' ) ", array($userAge, $userAge));
+                } else {
+                    $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array($userAge, $userAge));
+                }
+            }
+
+            $news = $news->where('news.status', '=', 'active')
+                        ->where('mall_id', $retailer->merchant_id)
+                        ->where('object_type', 'news')
+                        ->whereRaw("? between begin_date and end_date", [$mallTime])
+                        ->groupBy('news.news_id') // randomize
+                        ->orderBy(DB::raw('RAND()')) // randomize
+                        ->get();
 
             if (!empty($alternateLanguage) && !empty($news)) {
                 foreach ($news as $key => $val) {
@@ -3742,7 +3812,14 @@ class MobileCIAPIController extends ControllerAPI
 
             $product_id = trim(OrbitInput::get('id'));
 
-            $news = \News::with('tenants')->active()->where('mall_id', $retailer->merchant_id)->where('object_type', 'news')->where('news_id', $product_id)->first();
+            $news = \News::with(['tenants' => function($q) {
+                    $q->where('merchants.status', 'active');
+                }])
+                ->active()
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('object_type', 'news')
+                ->where('news_id', $product_id)
+                ->first();
 
             if (empty($news)) {
                 // throw new Exception('Product id ' . $product_id . ' not found');
