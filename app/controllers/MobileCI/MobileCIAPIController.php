@@ -3369,6 +3369,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
+            // filter by age and gender
             if ($userGender !== null) {
                 $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
             }
@@ -3377,7 +3378,11 @@ class MobileCIAPIController extends ControllerAPI
                 if ($userAge === 0){
                     $promotions = $promotions->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
-                    $promotions = $promotions->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    if ($userAge >= 55) {
+                        $promotions = $promotions->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $promotions = $promotions->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
                 }
             }
 
@@ -3690,6 +3695,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
+            // filter by age and gender
             if ($userGender !== null) {
                 $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
             }
@@ -3698,7 +3704,11 @@ class MobileCIAPIController extends ControllerAPI
                 if ($userAge === 0){
                     $news = $news->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
-                    $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    if ($userAge >= 55) {
+                        $news = $news->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
                 }
             }
 
