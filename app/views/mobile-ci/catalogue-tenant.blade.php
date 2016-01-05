@@ -89,7 +89,7 @@
                                         <header class="list-item-badges">
                                             <div class="col-xs-12 badges-wrapper text-right">
                                                 @if($product->promotion_flag)
-                                                <span class="badges promo-badges text-center"><i class="fa fa-gift"></i></span>
+                                                <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
                                                 @endif
                                                 @if($product->news_flag)
                                                 <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
