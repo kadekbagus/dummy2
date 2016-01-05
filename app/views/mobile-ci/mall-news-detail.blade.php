@@ -12,7 +12,7 @@
         @if(($product->image!='mobile-ci/images/default_news.png'))
         <a href="{{{ asset($product->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($product->image) }}"></a>
         @else
-        <img src="{{ asset($product->image) }}">
+        <img class="img-responsive" src="{{ asset($product->image) }}">
         @endif
     </div>
 </div>

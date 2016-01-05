@@ -317,20 +317,77 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->url = 'mallpromotions';
                 }
                 if ($widget->widget_type == 'news') {
-                    // get all news count
-                    $newsCount = \News::active()
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'news')
-                        ->whereRaw("? between begin_date and end_date", [$now])
-                        ->count();
 
-                    // get all new news after new_date
-                    $newNewsCount = \News::active()
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'news')
-                        ->whereRaw("? between begin_date and end_date", [$now])
-                        ->whereRaw("begin_date between ? and ?", [$new_date, $now])
-                        ->count();
+                    $userAge = 0;
+                    if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                        $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+                    }
+
+                    $userGender = 'U'; // default is Unknown
+                    if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                        $userGender =  $user->userDetail->gender;
+                    }
+
+                    // get all news count filter by age range and gender
+                    $newsCount = \News::
+                                    // active()
+                                    leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+                    if ($userGender !== null) {
+                        $newsCount = $newsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                    }
+
+                    if ($userAge !== null) {
+                        if ($userAge === 0){
+                            $newsCount = $newsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        } else {
+                            if ($userAge >= 55) {
+                                $newsCount = $newsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                            } else {
+                                $newsCount = $newsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            }
+                        }
+                    }
+
+                    $newsCount = $newsCount->where('news.status', '=', 'active')
+                                ->where('mall_id', $retailer->merchant_id)
+                                ->where('object_type', 'news')
+                                ->whereRaw("? between begin_date and end_date", [$now])
+                                // ->groupBy('news.news_id')
+                                ->count();
+
+                    // get all new news after new_date filter by age range and gender
+                    $newNewsCount = \News::
+                                    // active()
+                                    leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+                    if ($userGender !== null) {
+                        $newNewsCount = $newNewsCount->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                    }
+
+                    if ($userAge !== null) {
+                        if ($userAge === 0){
+                            $newNewsCount = $newNewsCount->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        } else {
+                            if ($userAge >= 55) {
+                                $newNewsCount = $newNewsCount->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                            } else {
+                                $newNewsCount = $newNewsCount->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            }
+                        }
+                    }
+
+                    $newNewsCount = $newNewsCount->where('news.status', '=', 'active')
+                                ->where('mall_id', $retailer->merchant_id)
+                                ->where('object_type', 'news')
+                                ->whereRaw("? between begin_date and end_date", [$now])
+                                ->whereRaw("begin_date between ? and ?", [$new_date, $now])
+                                // ->groupBy('news_id')
+                                ->count();
 
                     $widget->image = 'mobile-ci/images/default_news.png';
 
@@ -1786,23 +1843,46 @@ class MobileCIAPIController extends ControllerAPI
                 }
             );
 
+            $couponTenantRedeem = new stdclass();
+            $couponTenantRedeem->linkedToTenant = FALSE;
+            $couponTenantRedeem->linkedToCS = FALSE;
+
             OrbitInput::get(
                 'coupon_id',
-                function ($pid) use ($tenants, $retailer, &$notfound) {
+                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
                     if (! empty($pid)) {
-                        $news = \Coupon::active()
-                            ->where('mall_id', $retailer->merchant_id)
+                        $coupon = \Coupon::with('employee')->active()
+                            ->where('merchant_id', $retailer->merchant_id)
                             ->where('promotion_id', $pid)->first();
-                        if (!is_object($news)) {
+                        if (!is_object($coupon)) {
                             $notfound = TRUE;
                         }
-                        $retailers = \CouponRetailerRedeeem::whereHas('tenant', function($q) use($pid) {
-                            $q->where('promotion_id', $pid);
-                        })->whereHas('coupon')
-                        ->get()
-                        ->lists('merchant_id');
-                        // <-- should add exception if retailers not found
-                        $tenants->whereIn('merchants.merchant_id', $retailers);
+
+                        if ($coupon->is_all_retailer === 'Y') {
+                            $couponTenantRedeem->linkedToTenant = TRUE;
+                        } else {
+                            //get link tenant redeem
+                            $retailers = \CouponRetailerRedeem::whereHas('tenant', function($q) use($pid) {
+                                $q->where('promotion_id', $pid);
+                            })->has('coupon')
+                            ->get()
+                            ->lists('merchant_id');
+
+                            if (empty($retailers)) {
+                                $tenants->whereNull('merchants.merchant_id');
+                            } else {
+                                $couponTenantRedeem->linkedToTenant = TRUE;
+                                $tenants->whereIn('merchants.merchant_id', $retailers);
+                            }
+                        }
+                        if ($coupon->is_all_employee === 'Y') {
+                            $couponTenantRedeem->linkedToCS = TRUE;
+                        } else {
+                            $employee = \CouponEmployee::where('promotion_id', $pid)->first();
+                            if (is_object($employee)) {
+                                $couponTenantRedeem->linkedToCS = TRUE;
+                            }
+                        }
                     }
                 }
             );
@@ -2070,7 +2150,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id'))) {
+            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id')) && empty(OrbitInput::get('coupon_id'))) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -2094,7 +2174,8 @@ class MobileCIAPIController extends ControllerAPI
                 'active_user' => ($user->status === 'active'),
                 'floorList' => $floorList,
                 'user_email' => $user->user_email,
-                'languages' => $languages));
+                'languages' => $languages,
+                'link_to_coupon_data' => $couponTenantRedeem));
 
         } catch (Exception $e) {
             $activityPageNotes = sprintf('Failed to view: Tenant Listing Page');
@@ -3296,7 +3377,6 @@ class MobileCIAPIController extends ControllerAPI
         }
     }
 
-
     /**
      * GET - Get promotion list in mall
      *
@@ -3369,6 +3449,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
+            // filter by age and gender
             if ($userGender !== null) {
                 $promotions = $promotions->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
             }
@@ -3377,7 +3458,11 @@ class MobileCIAPIController extends ControllerAPI
                 if ($userAge === 0){
                     $promotions = $promotions->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
-                    $promotions = $promotions->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    if ($userAge >= 55) {
+                        $promotions = $promotions->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $promotions = $promotions->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
                 }
             }
 
@@ -3690,6 +3775,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
+            // filter by age and gender
             if ($userGender !== null) {
                 $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
             }
@@ -3698,7 +3784,11 @@ class MobileCIAPIController extends ControllerAPI
                 if ($userAge === 0){
                     $news = $news->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
-                    $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    if ($userAge >= 55) {
+                        $news = $news->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
                 }
             }
 
