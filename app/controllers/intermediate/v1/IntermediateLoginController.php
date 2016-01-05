@@ -1109,12 +1109,12 @@ class IntermediateLoginController extends IntermediateBaseController
             $gender = strtolower($gender);
             $male = ['male', 'm', 'men', 'man'];
             if (in_array($gender, $male)) {
-                $customer->userdetail->gender = 'M';
+                $customer->userdetail->gender = 'm';
             }
 
             $female = ['female', 'f', 'women', 'woman'];
             if (in_array($gender, $female)) {
-                $customer->userdetail->gender = 'F';
+                $customer->userdetail->gender = 'f';
             }
 
             if (($from === 'google' || $from === 'facebook') && $customer->status === 'pending') {
