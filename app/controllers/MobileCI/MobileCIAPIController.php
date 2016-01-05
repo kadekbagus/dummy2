@@ -1959,7 +1959,7 @@ class MobileCIAPIController extends ControllerAPI
 
             foreach ($listOfRec as $tenant) {
                 if (empty($tenant->logo)) {
-                    $tenant->logo = 'mobile-ci/images/default_product.png';
+                    $tenant->logo = 'mobile-ci/images/default_tenants_directory.png';
                 }
                 if (!empty($tenant->phone)) {
                     $phone = explode('|#|', $tenant->phone);
@@ -2305,7 +2305,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (empty($tenant->logo)) {
-                $tenant->logo = 'mobile-ci/images/default_product.png';
+                $tenant->logo = 'mobile-ci/images/default_tenants_directory.png';
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -3228,7 +3228,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (empty($coupons->image)) {
-                $coupons->image = 'mobile-ci/images/default_product.png';
+                $coupons->image = 'mobile-ci/images/default_coupon.png';
             }
 
             // Check coupon have condition cs reedem
@@ -3523,7 +3523,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (empty($coupons->image)) {
-                $coupons->image = 'mobile-ci/images/default_product.png';
+                $coupons->image = 'mobile-ci/images/default_promotion.png';
             }
 
             // checking if all tenant linked to this promotion inactive or not
@@ -3843,7 +3843,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             if (empty($news->image)) {
-                $news->image = 'mobile-ci/images/default_product.png';
+                $news->image = 'mobile-ci/images/default_news.png';
             }
 
             // checking if all tenant linked to this news inactive or not
