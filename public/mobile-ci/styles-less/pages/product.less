@@ -205,7 +205,11 @@ span.attribute-title {
     font-size:1em;
     line-height:1.8em;
     ul{
-        display:flex;
+        display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+        display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+        display: -ms-flexbox;      /* TWEENER - IE 10 */
+        display: -webkit-flex;     /* NEW - Chrome */
+        display: flex;
         flex-direction:row;
         margin:0;
         padding:0;
@@ -214,6 +218,11 @@ span.attribute-title {
             border-right:1px solid #dedede;
             background:#F2F2F2;
             list-style:none;
+            -webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
+            -moz-box-flex: 1;         /* OLD - Firefox 19- */
+            -webkit-flex: 1;          /* Chrome */
+            -ms-flex: 1;              /* IE 10 */
+            flex: 1;
             flex-grow:1;
             text-align:center;
             width:100%;
@@ -235,7 +244,7 @@ span.attribute-title {
                 border-right:none;
             }
             &.active{
-                background:@theme-main-complimentary;
+                background:@theme-main;
                 a{
                     color:@theme-main-complimentary-2;
                 }
@@ -273,4 +282,9 @@ span.attribute-title {
     left:0;
     z-index:1;
     display:none;
+}
+.freeze-scroll{
+    position:fixed;
+    overflow:hidden;
+    -webkit-overflow-scrolling: touch;
 }

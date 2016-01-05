@@ -9,7 +9,7 @@
 <!-- product -->
 <div class="row">
     <div class="col-xs-12 main-theme product-detail">
-        @if(($product->image!='mobile-ci/images/default_product.png'))
+        @if(($product->image!='mobile-ci/images/default_news.png'))
         <a href="{{{ asset($product->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($product->image) }}"></a>
         @else
         <img src="{{ asset($product->image) }}">
@@ -27,13 +27,9 @@
 </div>
 <div class="row vertically-spaced">
     @if(!$all_tenant_inactive)
-        @if(count($product->tenants) > 1 )
+        @if(count($product->tenants) > 0)
         <div class="col-xs-12 text-center padded">
             <a href="{{{ url('customer/tenants?news_id='.$product->news_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
-        </div>
-        @elseif(count($product->tenants) == 1 )
-        <div class="col-xs-12 text-center padded">
-            <a href="{{{ url('customer/tenant?id='.$product->tenants[0]->merchant_id.'&nid='.$product->news_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.see_tenants') }}}</a>
         </div>
         @endif
     @endif

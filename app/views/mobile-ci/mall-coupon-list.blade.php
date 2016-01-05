@@ -62,7 +62,7 @@
                                     @if(!empty($coupon->image))
                                     <img class="img-responsive img-fit-tenant" src="{{ asset($coupon->image) }}" />
                                     @else
-                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
                                     @endif
                                 </a>
                             </section>

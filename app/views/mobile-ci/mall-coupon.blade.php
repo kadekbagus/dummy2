@@ -25,7 +25,7 @@
 @section('content')
 <div class="row product">
     <div class="col-xs-12  main-theme product-detail">
-        @if(($coupon->image!='mobile-ci/images/default_product.png'))
+        @if(($coupon->image!='mobile-ci/images/default_coupon.png'))
         <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
         @else
         <img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" >
@@ -86,6 +86,13 @@
 
 <div class="row vertically-spaced">
     <div class="col-xs-12 padded">
+        @if(count($tenants) > 0)
+        <div class="row vertically-spaced">
+            <div class="col-xs-12 text-center padded">
+                <a href="{{{ url('customer/tenants?coupon_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
+            </div>
+        </div>
+        @endif
         @if(! empty((float) $coupon->couponRule->discount_value))
         <div class="row">
             <div class="col-xs-12 text-center">
