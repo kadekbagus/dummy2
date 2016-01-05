@@ -62,7 +62,7 @@
                                     @if(!empty($luckydraw->image))
                                     <img class="img-responsive img-fit-tenant" src="{{ asset($luckydraw->image) }}" />
                                     @else
-                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}"/>
                                     @endif
                                 </a>
                             </section>

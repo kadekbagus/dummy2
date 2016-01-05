@@ -85,7 +85,7 @@
                             @if(!empty($promotab->image))
                             <img class="img-responsive img-fit-tenant" src="{{ asset($promotab->image) }}" />
                             @else
-                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
                             @endif
                         </a>
                     </section>
@@ -147,7 +147,7 @@
                             @if(!empty($newstab->image))
                             <img class="img-responsive img-fit-tenant" src="{{ asset($newstab->image) }}" />
                             @else
-                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
                             @endif
                         </a>
                     </section>
@@ -209,7 +209,7 @@
                             @if(!empty($coupontab->image))
                             <img class="img-responsive img-fit-tenant" src="{{ asset($coupontab->image) }}" />
                             @else
-                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                            <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
                             @endif
                         </a>
                     </section>
@@ -225,9 +225,9 @@
     <div class="col-xs-12">
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
             @if(!count($tenant->mediaLogoOrig) > 0)
-            <li data-thumb="{{ asset('mobile-ci/images/default_product.png') }}">
+            <li data-thumb="{{ asset('mobile-ci/images/default_tenants_directory.png') }}">
                 <span class="gallery-helper"></span>
-                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
             </li>
             @endif
             @foreach($tenant->mediaLogoOrig as $media)
@@ -334,18 +334,28 @@
             })
             function hideOpenTabs() {
                 if($('#slide-tab-news-container').is(':visible')) {
-                    console.log('a');
                     $('#slide-tab-news-container').hide();
+                    $('#slide-tab-news').closest('li').toggleClass('active');
+                    $('#slide-tab-news').blur();
                 }
                 if($('#slide-tab-promo-container').is(':visible')) {
-                    console.log('b');
                     $('#slide-tab-promo-container').hide();
+                    $('#slide-tab-promo').closest('li').toggleClass('active');
+                    $('#slide-tab-promo').blur();
                 }
                 if($('#slide-tab-coupon-container').is(':visible')) {
                     $('#slide-tab-coupon-container').hide();
+                    $('#slide-tab-coupon').closest('li').toggleClass('active');
+                    $('#slide-tab-coupon').blur();
                 }
             }
             $('.slide-tab-container').css('height', ($(window).height()-92) + 'px');
+            $('.slide-tab-container').click(function(){
+                hideOpenTabs();
+                $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
+                $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
+                $('html').toggleClass('freeze-scroll');
+            });
             $('#slide-tab-promo').click(function(){
                 if($('#slide-tab-news-container').is(':visible') || $('#slide-tab-coupon-container').is(':visible')) {
                     $('#slide-tab-news-container').hide();
@@ -355,7 +365,7 @@
                 } else {
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
-                    $('html').toggleClass('modal-open');
+                    $('html').toggleClass('freeze-scroll');
                 }
                 $('#slide-tab-promo-container').toggle('fade', 'slow');
                 $('#slide-tab-promo').closest('li').toggleClass('active');
@@ -370,7 +380,7 @@
                 } else {
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
-                    $('html').toggleClass('modal-open');
+                    $('html').toggleClass('freeze-scroll');
                 }
                 $('#slide-tab-news-container').toggle('fade', 'slow');
                 $('#slide-tab-news').closest('li').toggleClass('active');
@@ -385,7 +395,7 @@
                 } else {
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
-                    $('html').toggleClass('modal-open');
+                    $('html').toggleClass('freeze-scroll');
                 }
                 $('#slide-tab-coupon-container').toggle('fade', 'slow');
                 $('#slide-tab-coupon').closest('li').toggleClass('active');

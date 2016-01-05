@@ -2665,8 +2665,10 @@ return array(
         'View Lucky Draw List'                         => 'View Lucky Draw List',
         'View Lucky Draw Detail'                       => 'View Lucky Draw Detail',
         'View Prizes & Winning Numbers'                => 'View Winning Numbers & Prizes',
-        'Read Notification Lucky Draw Number Issuance' => 'Read Notification Lucky Draw Number Issuance',
-        'View Winner Announcement Notification'        => 'View Winner Announcement Notification'
+        'Read Lucky Draw Number Issuance Notification' => 'Read Lucky Draw Number Issuance Notification',
+        'Read Winner Announcement Notification'        => 'Read Winner Announcement Notification',
+        'Read Coupon Issuance Notification'            => 'Read Coupon Issuance Notification',
+        'Read Activation Notification'                 => 'Read Activation Notification'
     ),
 
     'menus' => array(
