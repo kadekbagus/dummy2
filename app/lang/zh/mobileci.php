@@ -187,6 +187,7 @@ return array(
                         <a target="_blank" href="%s">Privacy Policy</a> and
                         <a target="_blank" href="%s">Terms and Conditions</a>',
         'already_have_an_account' => 'zh:Already have an account',
+        'fields_are_mandatory' => 'zh:All fields are mandatory',
     ),
 
     'catalogue' => array(

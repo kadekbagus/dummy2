@@ -175,7 +175,7 @@ return array(
     ),
 
     'signup' => array(
-        'fist_name' => 'First Name',
+        'first_name' => 'First Name',
         'last_name' => 'Last Name',
         'gender' => 'Select Gender',
         'male' => 'Male',
@@ -187,6 +187,7 @@ return array(
                         <a target="_blank" href="%s">Privacy Policy</a> and
                         <a target="_blank" href="%s">Terms and Conditions</a>',
         'already_have_an_account' => 'Already have an account',
+        'fields_are_mandatory' => 'All fields are mandatory',
     ),
 
     'catalogue' => array(
