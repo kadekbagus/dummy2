@@ -29,7 +29,7 @@ return array(
         'tenant_directory'   => 'テナント',
         'promotions_tenants' => 'テナントの販促',
         'coupons_tenants'    => 'クーポンのテナント',
-        'news_tenants'       => 'テナント　ニュース',
+        'news_tenants'       => 'テナントのニュース',
         'events_tenants'     => 'イベント テナント',
         'coupons'            => '私のクーポン',
         'promotions'         => '販促',
