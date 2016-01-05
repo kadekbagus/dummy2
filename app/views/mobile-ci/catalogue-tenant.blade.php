@@ -71,7 +71,7 @@
                                     </header>
                                 </div>
                                 <div class="list-vignette-non-tenant"></div>
-                                <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_my_profile.png') }}"/>
+                                <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
                             </section>
                         </div>
                     @endif
