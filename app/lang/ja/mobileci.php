@@ -175,7 +175,7 @@ return array(
     ),
 
     'signup' => array(
-        'fist_name' => 'jp:First Name',
+        'first_name' => 'jp:First Name',
         'last_name' => 'jp:Last Name',
         'gender' => 'jp:Select Gender',
         'male' => 'jp:Male',
@@ -187,6 +187,7 @@ return array(
                         <a target="_blank" href="%s">Privacy Policy</a> and
                         <a target="_blank" href="%s">Terms and Conditions</a>',
         'already_have_an_account' => 'jp:Already have an account',
+        'fields_are_mandatory' => 'ja:All fields are mandatory',
     ),
 
     'catalogue' => array(
