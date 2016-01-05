@@ -247,28 +247,27 @@
 <div class="row padded">
     <div class="col-xs-12 font-1-3">
         <p>{{ $tenant->description }}</p>
-    </div>
-</div>
-<div class="row padded">
-    <div class="col-xs-12 font-1-3">
-        
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
             <li><i class="fa fa-phone-square fa-lg"></i>  @if($tenant->phone != '') <a href="tel:{{{ $tenant->phone }}}"> {{{ $tenant->phone }}}</a> @else - @endif</li>
         </ul>
-
-        @if ($box_url)
-        <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
-        @endif
-
+    </div>
+</div>
+<div class="row padded vertically-spaced">
+    <div class="col-xs-12 font-1-3">
         @foreach($tenant->mediaMapOrig as $map)
-        <p>
             <a href="{{ asset($map->path) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive maps" src="{{ asset($map->path) }}"></a>
-        </p>
         @endforeach
     </div>
 
+</div>
+<div class="row padded">
+    <div class="col-xs-12 font-1-3">
+        @if ($box_url)
+        <a style="position:relative;margin-bottom:16px;" class="btn btn-danger btn-block" href="{{ $box_url }}">{{ $enter_shop_text or 'Go to Store' }}</a>
+        @endif
+    </div>
 </div>
 
 <!-- end of product -->
