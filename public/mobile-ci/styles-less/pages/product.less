@@ -244,7 +244,7 @@ span.attribute-title {
                 border-right:none;
             }
             &.active{
-                background:@theme-main-complimentary;
+                background:@theme-main;
                 a{
                     color:@theme-main-complimentary-2;
                 }
@@ -282,4 +282,10 @@ span.attribute-title {
     left:0;
     z-index:1;
     display:none;
+}
+.freeze-scroll{
+    position:fixed;
+    overflow:hidden;
+    width:100%;
+    -webkit-overflow-scrolling: touch;
 }

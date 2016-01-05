@@ -29,7 +29,7 @@ return array(
         'tenant_directory'   => 'テナント',
         'promotions_tenants' => 'テナントの販促',
         'coupons_tenants'    => 'クーポンのテナント',
-        'news_tenants'       => 'テナント　ニュース',
+        'news_tenants'       => 'テナントのニュース',
         'events_tenants'     => 'イベント テナント',
         'coupons'            => '私のクーポン',
         'promotions'         => '販促',
@@ -152,6 +152,7 @@ return array(
         'email_placeholder' => 'あなたのメールアドレスを入力してください',
         'login_button'      => '入力',
         'start_button'      => 'スタート　ショッピング',
+        'welcome_message'      => 'jp:Feel The New Shopping Experience',
         'not'               => '無い',
         'click_here'        => 'ここをクリックしてください',
         'email_not_valid'   => 'メール　アドレスは　有効ではありません',
@@ -167,6 +168,26 @@ return array(
         'accept_modal_button_text'  => 'はい',
         'connecting_to_facebook'    => 'Facebookへの接続...',
         'connecting_to_google'    => 'Googleへの接続...',
+        'connecting_with' => 'jp:Connect with',
+        'sign_in' => 'jp:Sign In',
+        'sign_up' => 'jp:Sign up',
+        'doesnt_have_account' => 'jp:Does not have account',
+    ),
+
+    'signup' => array(
+        'first_name' => 'jp:First Name',
+        'last_name' => 'jp:Last Name',
+        'gender' => 'jp:Select Gender',
+        'male' => 'jp:Male',
+        'female' => 'jp:Female',
+        'day' => 'jp:Day',
+        'month' => 'jp:Month',
+        'year' => 'jp:Year',
+        'policy_terms_message' => 'jp:By clicking <strong>Sign up</strong> you confirm that you accept
+                        <a target="_blank" href="%s">Privacy Policy</a> and
+                        <a target="_blank" href="%s">Terms and Conditions</a>',
+        'already_have_an_account' => 'jp:Already have an account',
+        'fields_are_mandatory' => 'ja:All fields are mandatory',
     ),
 
     'catalogue' => array(

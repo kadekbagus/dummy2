@@ -23,21 +23,18 @@
 @stop
 
 @section('content')
-<div class="row product">
+<div class="row">
     <div class="col-xs-12  main-theme product-detail">
-        @if(($coupon->image!='mobile-ci/images/default_product.png'))
+        @if(($coupon->image!='mobile-ci/images/default_coupon.png'))
         <a href="{{{ asset($coupon->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" ></a>
         @else
         <img class="img-responsive" alt="" src="{{{ asset($coupon->image) }}}" >
         @endif
     </div>
 </div>
-<div class="row product-info">
-    <div class="col-xs-12 padded">
+<div class="row product-info padded">
+    <div class="col-xs-12">
         <div class="row">
-            <div class="col-xs-12">
-                <h3>{{{ $coupon->promotion_name }}}</h3>
-            </div>
             <div class="col-xs-12">
                 <p>{{{ $coupon->description }}}</p>
             </div>
@@ -45,40 +42,8 @@
                 <p>{{{ $coupon->long_description }}}</p>
             </div>
             <div class="col-xs-12">
-                <h4>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</h4>
+                <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
                 <p>{{{ date('d M Y', strtotime($coupon->coupon_validity_in_date)) }}}</p>
-            </div>
-            <div class="hide col-xs-12">
-                <h4>Coupon Type</h4>
-                @if($coupon->promotion_type == 'tenant')
-                    <p>{{{ Lang::get('mobileci.coupon.tenant_based') }}}</p>
-                @elseif($coupon->promotion_type == 'mall')
-                    <p>{{{ Lang::get('mobileci.coupon.mall_based') }}}</p>
-                @endif
-            </div>
-            <div class="col-xs-12">
-                <h4>{{{ Lang::get('mobileci.coupon.tenant_redeem') }}}</h4>
-                <ul class="tenant-list">
-                    @if($cso_exists)
-                    <li>Customer Service</li>
-                    @endif
-
-                    @if($cs_reedem)
-                        <li style="margin-bottom : 10px;">{{{ Lang::get('mobileci.coupon.all_cs') }}}</li>
-                    @endif
-
-                    @if ($link_to_all_tenant === true)
-                        {{{ Lang::get('mobileci.coupon.all_tenants') }}}
-                    @else
-                        @foreach($tenants as $tenant)
-                            <li>{{{ $tenant->tenant->name }}}</li>
-                        @endforeach
-                    @endif
-
-                    @if(count($tenants) <=0 && $cs_reedem == false)
-                        <li> - </li>
-                    @endif
-                </ul>
             </div>
         </div>
     </div>
@@ -88,16 +53,8 @@
     <div class="col-xs-12 padded">
         @if(count($tenants) > 0)
         <div class="row vertically-spaced">
-            <div class="col-xs-12 text-center padded">
-                <a href="{{{ url('customer/tenants?coupon_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
-            </div>
-        </div>
-        @endif
-        @if(! empty((float) $coupon->couponRule->discount_value))
-        <div class="row">
             <div class="col-xs-12 text-center">
-                <h4>{{{ Lang::get('mobileci.coupon.coupon_value') }}}</h4>
-                <p>{{{ $retailer->currency }}} <span class="formatted-numx">{{{ $coupon->couponRule->discount_value }}}</span></p>
+                <a href="{{{ url('customer/tenants?coupon_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
             </div>
         </div>
         @endif
@@ -210,23 +167,9 @@
     <script type="text/javascript">
         $(document).ready(function(){
             $('.formatted-numx').text(parseFloat($('.formatted-numx').text()).toFixed(2)).autoNumeric('init', {aSep: ',', aDec: '.', mDec: 2, vMin: -9999999999.99});
-
-            $('#image-gallery').lightSlider({
-                gallery:true,
-                item:1,
-                thumbItem:3,
-                slideMargin: 0,
-                speed:500,
-                auto:true,
-                loop:true,
-                onSliderLoad: function() {
-                    $('.zoom a').attr('href', $('.lslide.active img').attr('src'));
-                    $('#image-gallery').removeClass('cS-hidden');
-                },
-                onAfterSlide: function() {
-                    console.log('asd');
-                    $('.zoom a').attr('href', $('.lslide.active img').attr('src'));
-                }
+            $(window).scroll(function(){
+                s = $(window).scrollTop();
+                $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
             });
             $('#useBtn').click(function(){
                 $('#hasCouponModal').modal();

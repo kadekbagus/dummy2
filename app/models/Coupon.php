@@ -246,7 +246,7 @@ class Coupon extends Eloquent
     public function getImageAttribute($value)
     {
         if (empty($value)) {
-            return 'mobile-ci/images/default_product.png';
+            return 'mobile-ci/images/default_coupon.png';
         }
         return ($value);
     }

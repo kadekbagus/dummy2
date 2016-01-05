@@ -62,7 +62,7 @@
                                     @if(!empty($news->image))
                                     <img class="img-responsive img-fit-tenant" src="{{ asset($news->image) }}" />
                                     @else
-                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_news.png') }}"/>
                                     @endif
                                 </a>
                             </section>
