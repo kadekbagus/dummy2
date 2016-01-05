@@ -4777,7 +4777,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $user->setHidden(array('user_password', 'apikey'));
 
-            $mallTime = Carbon::now($mall->timezone->timezone_name);
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
             // check available coupon campaigns
             $coupons = DB::select(
@@ -4863,11 +4863,11 @@ class MobileCIAPIController extends ControllerAPI
                 foreach ($coupons_to_be_obtained as $coupon) {
                     $issued = false;
                     if ($coupon->rule_type === 'auto_issue_on_signup') {
-                        $issued = UserAcquisition::where('acquirer_id', $retailer->merchant_id)
+                        $issued = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
                                                 ->where('user_id', $user->user_id)
                                                 ->whereRaw("created_at between ? and ?", [$coupon->rule_begin_date, $coupon->rule_end_date])->first();
                     } elseif ($coupon->rule_type === 'auto_issue_on_first_signin') {
-                        $issued = UserSignin::where('location_id', $retailer->merchant_id)
+                        $issued = \UserSignin::where('location_id', $retailer->merchant_id)
                                                 ->where('user_id', $user->user_id)
                                                 ->whereRaw("created_at between ? and ?", [$coupon->rule_begin_date, $coupon->rule_end_date])->first();
                     } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
@@ -4906,14 +4906,16 @@ class MobileCIAPIController extends ControllerAPI
                 $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailer->merchant_id, 'coupon_issuance');
 
                 foreach ($objectCoupons as $object) {
+                    $activity_coupon = Coupon::where('promotion_id', $object->promotion_id)->first();
+
                     $activity = Activity::mobileci()
                                         ->setActivityType('view');
                     $activityPageNotes = sprintf('Page viewed: %s', 'Coupon List Page');
                     $activity->setUser($user)
                             ->setActivityName('view_coupon_list')
                             ->setActivityNameLong('Coupon Issuance')
-                            ->setObject($object)
-                            ->setCoupon($object)
+                            ->setObject($activity_coupon)
+                            ->setCoupon($activity_coupon)
                             ->setModuleName('Coupon')
                             ->setNotes($activityPageNotes)
                             ->responseOK()
