@@ -4032,7 +4032,7 @@ class MobileCIAPIController extends ControllerAPI
                     $activityPageNotes = sprintf('Page viewed: %s', 'Activation Notification Detail Page');
                     $activityPage->setUser($user)
                         ->setActivityName('read_notification')
-                        ->setActivityNameLong('Read Notification Activation')
+                        ->setActivityNameLong('Read Activation Notification')
                         ->setObject($inbox)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
@@ -4044,7 +4044,7 @@ class MobileCIAPIController extends ControllerAPI
                     $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
                     $activityPage->setUser($user)
                         ->setActivityName('read_notification')
-                        ->setActivityNameLong('Read Notification Lucky Draw Number Issuance')
+                        ->setActivityNameLong('Read Lucky Draw Number Issuance Notification')
                         ->setObject($inbox)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
@@ -4056,7 +4056,7 @@ class MobileCIAPIController extends ControllerAPI
                     $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw Number Issuance Notification Detail Page');
                     $activityPage->setUser($user)
                         ->setActivityName('read_notification')
-                        ->setActivityNameLong('View Winner Announcement Notification')
+                        ->setActivityNameLong('Read Winner Announcement Notification')
                         ->setObject($inbox)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
@@ -4068,7 +4068,7 @@ class MobileCIAPIController extends ControllerAPI
                     $activityPageNotes = sprintf('Page viewed: %s', 'Coupon Issuance Notification Detail Page');
                     $activityPage->setUser($user)
                         ->setActivityName('read_notification')
-                        ->setActivityNameLong('Read Notification Coupon Issuance')
+                        ->setActivityNameLong('Read Coupon Issuance Notification')
                         ->setObject($inbox)
                         ->setModuleName('Inbox')
                         ->setNotes($activityPageNotes)
