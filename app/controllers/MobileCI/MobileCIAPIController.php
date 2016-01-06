@@ -3515,6 +3515,7 @@ class MobileCIAPIController extends ControllerAPI
             $coupons = Coupon::with(array('couponRule'))
                 ->where('merchant_id', $retailer->merchant_id)
                 ->where('promotions.status', 'active')
+                ->where('promotions.promotion_id', $coupon_id)
                 ->first();
 
             if (empty($coupons)) {
