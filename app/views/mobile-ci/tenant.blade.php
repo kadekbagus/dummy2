@@ -21,7 +21,7 @@
             @if(sizeof($tenant->newsProfiling))
             <li><a id="slide-tab-news">{{Lang::get('mobileci.page_title.news')}}</a></li>
             @endif
-            @if(sizeof($tenant->newsProfiling))
+            @if(sizeof($tenant->couponsProfiling))
             <li><a id="slide-tab-coupon">{{Lang::get('mobileci.page_title.coupon_plural')}}</a></li>
             @endif
         </ul>
