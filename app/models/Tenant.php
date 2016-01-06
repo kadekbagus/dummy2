@@ -57,6 +57,16 @@ class Tenant extends Eloquent
         return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')->where('news.object_type', 'news')->active();
     }
 
+    public function newsProfiling()
+    {
+        return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')
+                    ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                    ->where('news.object_type', 'news')
+                    ->where('news.status', '=', 'active');
+    }
+
     /**
      * Event strings can be translated to many languages.
      */
@@ -71,6 +81,16 @@ class Tenant extends Eloquent
     public function newsPromotions()
     {
         return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')->where('news.object_type', 'promotion')->active();
+    }
+
+    public function newsPromotionsProfiling()
+    {
+        return $this->belongsToMany('News', 'news_merchant', 'merchant_id', 'news_id')
+                    ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                    ->where('news.object_type', 'promotion')
+                    ->where('news.status', '=', 'active');
     }
 
     public function coupons()
