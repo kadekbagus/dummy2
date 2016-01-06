@@ -3341,9 +3341,7 @@ class MobileCIAPIController extends ControllerAPI
             } elseif ($coupons->is_all_retailer === 'N') {
                 $linkToAllTenant = FALSE;
 
-                $tenants = \CouponRetailerRedeeem::with('tenant')->where('promotion_id', $coupon_id)->get();
-
-                $tenants = \CouponRetailerRedeeem::with('tenant', 'tenant.categories')
+                $tenants = \CouponRetailerRedeem::with('tenant', 'tenant.categories')
                     ->wherehas('tenant', function($q){
                         $q->where('merchants.status', 'active');
                     })
@@ -3524,52 +3522,15 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             //Check link to tenant is all tenant
-            if ($coupons->is_all_retailer === 'Y') {
-                $linkToAllTenant = TRUE;
-                $cso_exists = FALSE;
-                $tenants = \Tenant::where('parent_id','=', $retailer->merchant_id)
-                ->where('status', 'active')
-                ->get();
-            } elseif ($coupons->is_all_retailer === 'N') {
-                $linkToAllTenant = FALSE;
+            $linkToAllTenant = FALSE;
 
-                $tenants = \CouponRetailerRedeeem::with('tenant')->where('promotion_id', $coupon_id)->get();
+            $tenants = \CouponRetailer::with('tenant', 'tenant.categories')
+                ->wherehas('tenant', function($q){
+                    $q->where('merchants.status', 'active');
+                })
+                ->where('promotion_id', $coupon_id)->get();
 
-                $tenants = \CouponRetailerRedeeem::with('tenant', 'tenant.categories')
-                    ->wherehas('tenant', function($q){
-                        $q->where('merchants.status', 'active');
-                    })
-                    ->where('promotion_id', $coupon_id)->get();
-
-                // -- START hack
-                // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
-
-                $cso_exists = FALSE;
-
-                $pure_tenants = array();
-
-                foreach ($tenants as $tenant) {
-                    $cso_flag = 0;
-
-                    if (count($tenant->tenant->categories) > 0) { // check if tenant has category
-                        foreach ($tenant->tenant->categories as $category) {
-                            if ($category->category_name !== 'Customer Service') {
-                                $cso_flag = 1;
-                            } else {
-                                $cso_exists = true;
-                            }
-                        }
-                        if($cso_flag === 1) {
-                            $pure_tenants[] = $tenant;
-                        }
-                    } else { // if not, add it right away
-                        $pure_tenants[] = $tenant;
-                    }
-                }
-
-                $tenants = $pure_tenants; // 100% pure tenant ready to be served
-                // -- END of hack
-            }
+            $cso_exists = FALSE;
 
             if (empty($coupons->image)) {
                 $coupons->image = 'mobile-ci/images/default_coupon.png';
@@ -3577,30 +3538,6 @@ class MobileCIAPIController extends ControllerAPI
 
             // Check coupon have condition cs reedem
             $cs_reedem = false;
-
-            // Check exist customer verification number per mall
-            $employeeVerNumbersActive = \UserVerificationNumber::
-                        join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
-                        ->where('users.status', 'active')
-                        ->where('merchant_id', $retailer->merchant_id)
-                        ->count('users.user_id');
-
-            if ($coupons->is_all_employee === 'Y') {
-                if ($employeeVerNumbersActive > 0) {
-                    $cs_reedem = true;
-                }
-            } elseif ($coupons->is_all_employee === 'N') {
-                // Check exist link to cs, and cs must have active status
-                $promotionEmployee = \CouponEmployee::
-                                join('users', 'users.user_id', '=', 'promotion_employee.user_id')
-                                ->where('users.status', 'active')
-                                ->where('promotion_employee.promotion_id', $coupons->promotion_id)
-                                ->count('promotion_employee_id');
-
-                if ($promotionEmployee > 0) {
-                    $cs_reedem = true;
-                }
-            }
 
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $coupon_id);
             $activityPage->setUser($user)
