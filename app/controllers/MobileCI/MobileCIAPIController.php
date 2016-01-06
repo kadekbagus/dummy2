@@ -2457,7 +2457,21 @@ class MobileCIAPIController extends ControllerAPI
                         }
                         $q->whereRaw("NOW() between begin_date and end_date");
                     },
-                    'coupons' => function($q) {
+                    'couponsProfiling' => function($q) use ($userGender, $userAge) {
+                        if ($userGender !== null) {
+                            $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                        }
+                        if ($userAge !== null) {
+                            if ($userAge === 0){
+                                $q->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            } else {
+                                if ($userAge >= 55) {
+                                    $q->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                                } else {
+                                    $q->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                                }
+                            }
+                        }
                         $q->whereRaw("NOW() between begin_date and end_date");
                     }
                 ))
@@ -2560,8 +2574,8 @@ class MobileCIAPIController extends ControllerAPI
 
 
             // Coupons per tenant
-            if (!empty($alternateLanguage) && !empty($tenant->coupons)) {
-                foreach ($tenant->coupons as $keycoupons => $coupons) {
+            if (!empty($alternateLanguage) && !empty($tenant->couponsProfiling)) {
+                foreach ($tenant->couponsProfiling as $keycoupons => $coupons) {
 
                     $couponsTranslation = \CouponTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -3321,7 +3335,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->first();
 
                         if (isset($media->path)) {
-                            $coupon->promo_image = $media->path;
+                            $coupon->image = $media->path;
                         } else {
                             // back to default image if in the content multilanguage not have image
                             // check the system language
@@ -3337,7 +3351,7 @@ class MobileCIAPIController extends ControllerAPI
                                     ->first();
 
                                 if (isset($mediaDefaultLanguage->path)) {
-                                    $coupon->promo_image = $mediaDefaultLanguage->path;
+                                    $coupon->image = $mediaDefaultLanguage->path;
                                 }
                             }
                         }

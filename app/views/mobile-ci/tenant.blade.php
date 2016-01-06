@@ -156,8 +156,8 @@
         @endif
     </div>
     <div id="slide-tab-coupon-container">
-        @if(sizeof($tenant->coupons) > 0)
-            @foreach($tenant->coupons as $coupontab)
+        @if(sizeof($tenant->couponsProfiling) > 0)
+            @foreach($tenant->couponsProfiling as $coupontab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" href="{{ url('customer/mallcouponcampaign?id='.$coupontab->promotion_id) }}">

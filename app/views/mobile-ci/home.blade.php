@@ -125,7 +125,7 @@
                     </div>
                 @endif
             @endforeach
-        </div>  
+        </div>
     </div>
 </div>
 @stop
@@ -692,7 +692,7 @@
             loadTutorial();
         });
 
-        if (displayTutorial || !$.cookie('orbit-tour')) {
+        if ((displayTutorial || !$.cookie('orbit-tour')) && false) {
             loadTutorial();
         } else {
             loadModal();
