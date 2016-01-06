@@ -18,7 +18,7 @@
 </div>
 <div class="row product-info padded">
     <div class="col-xs-12">
-        <p>{{{ nl2br($product->description) }}}</p>
+        <p>{{ nl2br($product->description) }}</p>
     </div>
     <div class="col-xs-12">
         <h4><strong>{{{ Lang::get('mobileci.promotion.validity') }}}</strong></h4>
