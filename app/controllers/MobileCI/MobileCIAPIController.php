@@ -1918,8 +1918,9 @@ class MobileCIAPIController extends ControllerAPI
             $couponTenantRedeem->linkedToTenant = FALSE;
             $couponTenantRedeem->linkedToCS = FALSE;
 
+            // this is came fron my coupon (or issued coupon) page
             OrbitInput::get(
-                'coupon_id',
+                'coupon_redeem_id',
                 function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
                     if (! empty($pid)) {
                         $coupon = \Coupon::with('employee')->active()
@@ -1953,6 +1954,35 @@ class MobileCIAPIController extends ControllerAPI
                             if (is_object($employee)) {
                                 $couponTenantRedeem->linkedToCS = TRUE;
                             }
+                        }
+                    }
+                }
+            );
+
+            // this is came fron coupon campaign page
+            OrbitInput::get(
+                'coupon_id',
+                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
+                    if (! empty($pid)) {
+                        $coupon = \Coupon::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('promotion_id', $pid)->first();
+                        if (!is_object($coupon)) {
+                            $notfound = TRUE;
+                        }
+
+                        //get link tenant redeem
+                        $retailers = \CouponRetailer::whereHas('tenant', function($q) use($pid) {
+                            $q->where('promotion_id', $pid);
+                        })->has('coupon')
+                        ->get()
+                        ->lists('merchant_id');
+
+                        if (empty($retailers)) {
+                            $notfound = TRUE;
+                        } else {
+                            $couponTenantRedeem->linkedToTenant = TRUE;
+                            $tenants->whereIn('merchants.merchant_id', $retailers);
                         }
                     }
                 }
@@ -2185,6 +2215,20 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Coupon Promotor Tenant List')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty(OrbitInput::get('coupon_redeem_id'))) {
+                $pagetitle = Lang::get('mobileci.page_title.coupons_tenants');
+
+                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
@@ -2221,7 +2265,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id')) && empty(OrbitInput::get('coupon_id'))) {
+            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id')) && empty(OrbitInput::get('coupon_id')) && empty(OrbitInput::get('coupon_redeem_id'))) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
