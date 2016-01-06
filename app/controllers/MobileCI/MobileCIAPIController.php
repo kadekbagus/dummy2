@@ -4833,31 +4833,69 @@ class MobileCIAPIController extends ControllerAPI
 
             $user->setHidden(array('user_password', 'apikey'));
 
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
+
+            //filter by age and gender
+            $queryAgeGender = '';
+
+            if ($userGender !== null) {
+                $queryAgeGender .= " AND ( gender_value = '" . $userGender . "' OR is_all_gender = 'Y' ) ";
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $queryAgeGender .= " AND ( (min_value = " . $userAge . " and max_value = " . $userAge . " ) or is_all_age = 'Y' ) ";
+                } else {
+                    if ($userAge >= 55) {
+                        $queryAgeGender .=  " AND ( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ";
+                    } else {
+                        $queryAgeGender .=  " AND ( (min_value <= " . $userAge . " and max_value >= " . $userAge . " ) or is_all_age = 'Y' ) ";
+                    }
+                }
+            }
 
             // check available coupon campaigns
             $coupons = DB::select(
-                DB::raw(
-                    'SELECT *,
-                    (select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
-                          where ic.promotion_id = p.promotion_id
-                          and ic.status != "deleted") as total_issued_coupon
-                FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
-                WHERE
-                    p.merchant_id = :merchantid
-                    AND p.is_coupon = "Y" AND p.status = "active"
-                    AND p.begin_date <= "' . $mallTime . '"
-                    AND p.end_date >= "' . $mallTime . '"
-                    AND p.coupon_validity_in_date >= "' . $mallTime . '"
-                HAVING
-                    (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
-                    OR
-                    (p.maximum_issued_coupon = 0)
-                    '
-                ),
-                array('merchantid' => $retailer->merchant_id)
-            );
+                DB::raw('
+                            SELECT *,
+                            (
+                            select count(ic.issued_coupon_id) from ' . DB::getTablePrefix() . 'issued_coupons ic
+                            where ic.promotion_id = p.promotion_id
+                            and ic.status != "deleted") as total_issued_coupon
+                            FROM ' . DB::getTablePrefix() . 'promotions p
+                            inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id
+
+                            left join ' . DB::getTablePrefix() . 'campaign_gender cg on cg.campaign_id = p.promotion_id
+                            left join ' . DB::getTablePrefix() . 'campaign_age ca on ca.campaign_id = p.promotion_id
+                            left join ' . DB::getTablePrefix() . 'age_ranges ar on ar.age_range_id = ca.age_range_id
+
+                            WHERE 1=1
+                                ' . $queryAgeGender . '
+                                AND p.merchant_id = :merchantid
+                                AND p.is_coupon = "Y" AND p.status = "active"
+                                AND p.begin_date <= "' . $mallTime . '"
+                                AND p.end_date >= "' . $mallTime . '"
+                                AND p.coupon_validity_in_date >= "' . $mallTime . '"
+                            HAVING
+                                (p.maximum_issued_coupon > total_issued_coupon AND p.maximum_issued_coupon <> 0)
+                                OR
+                                (p.maximum_issued_coupon = 0)
+                        '),
+                    array(
+                            'merchantid' => $retailer->merchant_id
+                        )
+                );
 
             // check available autho-issuance coupon that already obtainde by user
             $obtained_coupons = DB::select(
