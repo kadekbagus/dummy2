@@ -1938,7 +1938,7 @@ class MobileCIAPIController extends ControllerAPI
                                 $q->where('promotion_id', $pid);
                             })->has('coupon')
                             ->get()
-                            ->lists('merchant_id');
+                            ->lists('retailer_id');
 
                             if (empty($retailers)) {
                                 $tenants->whereNull('merchants.merchant_id');
@@ -1976,7 +1976,7 @@ class MobileCIAPIController extends ControllerAPI
                             $q->where('promotion_id', $pid);
                         })->has('coupon')
                         ->get()
-                        ->lists('merchant_id');
+                        ->lists('retailer_id');
 
                         if (empty($retailers)) {
                             $notfound = TRUE;
