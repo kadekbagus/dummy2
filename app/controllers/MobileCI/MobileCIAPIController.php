@@ -3264,7 +3264,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->first();
 
                         if (isset($media->path)) {
-                            $coupon->promo_image = $media->path;
+                            $coupon->image = $media->path;
                         } else {
                             // back to default image if in the content multilanguage not have image
                             // check the system language
@@ -3280,7 +3280,7 @@ class MobileCIAPIController extends ControllerAPI
                                     ->first();
 
                                 if (isset($mediaDefaultLanguage->path)) {
-                                    $coupon->promo_image = $mediaDefaultLanguage->path;
+                                    $coupon->image = $mediaDefaultLanguage->path;
                                 }
                             }
                         }
