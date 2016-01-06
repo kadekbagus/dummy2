@@ -473,8 +473,28 @@
             $('#btn-signup-form').attr('disabled', 'disabled');
         }
     }
+    
+    var errorValidationFn = function () {
+        var errorMessage = {{isset($error) ? $error : 'No Error'}};
+        if (typeof errorMessage !== 'No Error') {
+            toastr(errorMessage);
+            $('#spinner-backdrop').addClass('hide');
+        }
+    },
+    inProgressFn = function () {
+        var progressStatus = {{isset($isInProgress) ? $isInProgress : FALSE}};
+        if (progressStatus === TRUE) {
+            $('#spinner-backdrop').removeClass('hide');
+            return;
+        }
+        $('#spinner-backdrop').addClass('hide');
+    };
+    
 
     orbitSignUpForm.boot = function() {
+        inProgressFn();
+        errorValidationFn();
+        
         for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
             $(orbitSignUpForm.formElementsInput[i]).keyup(function(e) {
                 orbitSignUpForm.enableDisableSignup();
