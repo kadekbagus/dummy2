@@ -21,6 +21,7 @@
                     <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                         <div class="form-group">
                             <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
+                            <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                             <input type="hidden" class="form-control" name="mac_address"
                                    value="{{{ Input::get('mac_address', '') }}}"/>
                             <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}"
@@ -38,6 +39,7 @@
                     <form name="googleLoginForm" id="googleLoginForm" action="{{ $googlePlusUrl }}" method="get">
                         <div class="form-group">
                             <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
+                            <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                             <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                         </div>
                         <div class="form-group">
@@ -59,7 +61,7 @@
 <div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel">
     <div class="modal-dialog">
         <div class="modal-content" id="signin-form-wrapper">
-            <form  name="signinForm" id="signinForm" action="{{ url('customer/login') }}" method="post">
+            <form  name="signinForm" id="signinForm" method="post">
                 <div class="modal-body">
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
@@ -82,7 +84,7 @@
             </form>
         </div>
         <div class="modal-content hide" id="signup-form-wrapper">
-            <form  name="signupForm" id="signupForm" action="{{ url('customer/login') }}" method="post">
+            <form  name="signupForm" id="signupForm" method="post">
                 <div class="modal-body">
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
@@ -198,8 +200,7 @@
      * @author Rio Astamal <rio@dominopos.com>
      * @return void
      */
-    orbitSignUpForm.doLogin = function()
-    {
+    orbitSignUpForm.doLogin = function() {
         var custEmail = $('#signinForm #email').val().trim();
 
         // Flag the processing
@@ -222,8 +223,6 @@
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }}
                 }
             }).done(function (response, status, xhr) {
-                orbitSignUpForm.disableEnableAllButton();
-
                 if (response.code !== 0 && response.code !== 302) {
                     toastr.error(response.message);
                     return;
@@ -259,7 +258,7 @@
                 // @todo isplay this the error
                 orbitSignUpForm.disableEnableAllButton();
             });
-        }
+        };
 
         orbitSignUpForm.checkCustomerEmail(custEmail,
             // Send back to sign up form for unknown email
@@ -317,9 +316,6 @@
                     birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
                 }
             }).done(function (resp, status, xhr) {
-                orbitSignUpForm.isProcessing = false;
-                orbitSignUpForm.disableEnableAllButton();
-
                 if (resp.status === 'error') {
                     // do something
                     return;
@@ -475,15 +471,15 @@
     }
     
     var errorValidationFn = function () {
-        var errorMessage = {{isset($error) ? $error : 'No Error'}};
-        if (typeof errorMessage !== 'No Error') {
+        var errorMessage = '{{isset($error) ? $error : 'No Error'}}';
+        if (errorMessage !== 'No Error') {
             toastr(errorMessage);
             $('#spinner-backdrop').addClass('hide');
         }
     },
     inProgressFn = function () {
-        var progressStatus = {{isset($isInProgress) ? $isInProgress : FALSE}};
-        if (progressStatus === TRUE) {
+        var progressStatus = {{isset($isInProgress) ? $isInProgress : 'false'}};
+        if (progressStatus === true) {
             $('#spinner-backdrop').removeClass('hide');
             return;
         }
@@ -515,7 +511,7 @@
             }
         });
 
-        $('#signinForm #email').keyup(function(e) {
+        $('#signinForm #email').on('input', function(e) {
             var value = $(this).val();
 
             if (isValidEmailAddress(value)) {
