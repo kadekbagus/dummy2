@@ -501,6 +501,14 @@ Route::group(
         );
 
         Route::get(
+            '/customer/mallcouponcampaign',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallCouponCampaignDetailView();
+            }
+        );
+
+        Route::get(
             '/customer/mallpromotions', ['as' => 'ci-mall-promotions',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallPromotionList();
