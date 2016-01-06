@@ -2335,16 +2335,55 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
             $tenant = Tenant::with( // translated
                 array(
                     'media',
                     'mediaLogoOrig',
                     'mediaMapOrig',
                     'mediaImageOrig',
-                    'news' => function($q) {
+                    'newsProfiling' => function($q) use ($userGender, $userAge) {
+                        if ($userGender !== null) {
+                            $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                        }
+                        if ($userAge !== null) {
+                            if ($userAge === 0){
+                                $q->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            } else {
+                                if ($userAge >= 55) {
+                                    $q->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                                } else {
+                                    $q->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                                }
+                            }
+                        }
                         $q->whereRaw("NOW() between begin_date and end_date");
+
                     },
-                    'newsPromotions' => function($q) {
+                    'newsPromotionsProfiling' => function($q) use ($userGender, $userAge){
+                        if ($userGender !== null) {
+                            $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                        }
+                        if ($userAge !== null) {
+                            if ($userAge === 0){
+                                $q->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            } else {
+                                if ($userAge >= 55) {
+                                    $q->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                                } else {
+                                    $q->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                                }
+                            }
+                        }
                         $q->whereRaw("NOW() between begin_date and end_date");
                     },
                     'coupons' => function($q) {
@@ -2359,8 +2398,8 @@ class MobileCIAPIController extends ControllerAPI
             $tenant = $tenant->first();
 
             // News per tenant
-            if (!empty($alternateLanguage) && !empty($tenant->news)) {
-                foreach ($tenant->news as $keyNews => $news) {
+            if (!empty($alternateLanguage) && !empty($tenant->newsProfiling)) {
+                foreach ($tenant->newsProfiling as $keyNews => $news) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -2370,7 +2409,7 @@ class MobileCIAPIController extends ControllerAPI
                         foreach (['news_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($newsTranslation->{$field}) && $newsTranslation->{$field} !== '') {
-                                $tenant->news[$keyNews]->{$field} = $newsTranslation->{$field};
+                                $tenant->newsProfiling[$keyNews]->{$field} = $newsTranslation->{$field};
                             }
                         }
 
@@ -2404,8 +2443,8 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             // Promotions per tenant
-            if (!empty($alternateLanguage) && !empty($tenant->newsPromotions)) {
-                foreach ($tenant->newsPromotions as $keyNewsPromotions => $newsPromotions) {
+            if (!empty($alternateLanguage) && !empty($tenant->newsPromotionsProfiling)) {
+                foreach ($tenant->newsPromotionsProfiling as $keyNewsPromotions => $newsPromotions) {
 
                     $newsPromotionsTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -2415,7 +2454,7 @@ class MobileCIAPIController extends ControllerAPI
                         foreach (['news_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($newsPromotionsTranslation->{$field}) && $newsPromotionsTranslation->{$field} !== '') {
-                                $tenant->newsPromotions[$keyNewsPromotions]->{$field} = $newsPromotionsTranslation->{$field};
+                                $tenant->newsPromotionsProfiling[$keyNewsPromotions]->{$field} = $newsPromotionsTranslation->{$field};
                             }
                         }
 
