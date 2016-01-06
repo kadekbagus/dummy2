@@ -2514,7 +2514,7 @@ class MobileCIAPIController extends ControllerAPI
                         foreach (['news_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($couponsTranslation->{$field}) && $couponsTranslation->{$field} !== '') {
-                                $tenant->coupons[$keycoupons]->{$field} = $couponsTranslation->{$field};
+                                $tenant->couponsProfiling[$keycoupons]->{$field} = $couponsTranslation->{$field};
                             }
                         }
 
