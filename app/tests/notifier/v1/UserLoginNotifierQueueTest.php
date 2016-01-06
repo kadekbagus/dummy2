@@ -127,7 +127,7 @@ class UserLoginNotifierQueueTest extends TestCase
 
     public function testFail_EmptyConfigData()
     {
-        $retailer = Factory::create('Retailer');
+        $retailer = Factory::create('Mall');
         $user = $retailer->user;
         $qNotifier = new QUserLoginNotifier();
 
@@ -143,7 +143,7 @@ class UserLoginNotifierQueueTest extends TestCase
 
     public function testFail_ConfigDataExists_butDisabled()
     {
-        $retailer = Factory::create('Retailer');
+        $retailer = Factory::create('Mall');
         $user = $retailer->user;
         $qNotifier = new QUserLoginNotifier();
 
@@ -163,7 +163,7 @@ class UserLoginNotifierQueueTest extends TestCase
 
     public function testFail_Non200OK_Status()
     {
-        $retailer = Factory::create('Retailer');
+        $retailer = Factory::create('Mall');
         $user = $retailer->user;
 
         // Replace the getTransferInfo() method to return 404
@@ -190,7 +190,7 @@ class UserLoginNotifierQueueTest extends TestCase
 
     public function testFail_NonZero_ReturnCode()
     {
-        $retailer = Factory::create('Retailer');
+        $retailer = Factory::create('Mall');
         $user = $retailer->user;
 
         // Replace the getTransferInfo() method to return 404
@@ -223,7 +223,7 @@ class UserLoginNotifierQueueTest extends TestCase
 
     public function testFail_userIdReturned_NotSame()
     {
-        $retailer = Factory::create('Retailer');
+        $retailer = Factory::create('Mall');
         $user = $retailer->user;
 
         // Replace the getTransferInfo() method to return 200
@@ -253,7 +253,7 @@ class UserLoginNotifierQueueTest extends TestCase
 
     public function testFail_userEmailReturned_NotSame()
     {
-        $retailer = Factory::create('Retailer');
+        $retailer = Factory::create('Mall');
         $user = $retailer->user;
 
         // Replace the getTransferInfo() method to return 200
@@ -428,7 +428,7 @@ class UserLoginNotifierQueueTest extends TestCase
 
     public function testOK_MembershipNotUpdated_EmailNotRecognizedOnExternalSystem()
     {
-        $retailer = Factory::create('Retailer');
+        $retailer = Factory::create('Mall');
         $user = $retailer->user;
 
         // Replace the getTransferInfo() method to return 200
