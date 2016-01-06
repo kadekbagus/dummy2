@@ -1918,8 +1918,9 @@ class MobileCIAPIController extends ControllerAPI
             $couponTenantRedeem->linkedToTenant = FALSE;
             $couponTenantRedeem->linkedToCS = FALSE;
 
+            // this is came fron my coupon (or issued coupon) page
             OrbitInput::get(
-                'coupon_id',
+                'coupon_redeem_id',
                 function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
                     if (! empty($pid)) {
                         $coupon = \Coupon::with('employee')->active()
@@ -1937,7 +1938,7 @@ class MobileCIAPIController extends ControllerAPI
                                 $q->where('promotion_id', $pid);
                             })->has('coupon')
                             ->get()
-                            ->lists('merchant_id');
+                            ->lists('retailer_id');
 
                             if (empty($retailers)) {
                                 $tenants->whereNull('merchants.merchant_id');
@@ -1953,6 +1954,35 @@ class MobileCIAPIController extends ControllerAPI
                             if (is_object($employee)) {
                                 $couponTenantRedeem->linkedToCS = TRUE;
                             }
+                        }
+                    }
+                }
+            );
+
+            // this is came fron coupon campaign page
+            OrbitInput::get(
+                'coupon_id',
+                function ($pid) use ($tenants, $retailer, &$notfound, &$couponTenantRedeem) {
+                    if (! empty($pid)) {
+                        $coupon = \Coupon::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('promotion_id', $pid)->first();
+                        if (!is_object($coupon)) {
+                            $notfound = TRUE;
+                        }
+
+                        //get link tenant redeem
+                        $retailers = \CouponRetailer::whereHas('tenant', function($q) use($pid) {
+                            $q->where('promotion_id', $pid);
+                        })->has('coupon')
+                        ->get()
+                        ->lists('retailer_id');
+
+                        if (empty($retailers)) {
+                            $notfound = TRUE;
+                        } else {
+                            $couponTenantRedeem->linkedToTenant = TRUE;
+                            $tenants->whereIn('merchants.merchant_id', $retailers);
                         }
                     }
                 }
@@ -2185,6 +2215,20 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
+                    ->setActivityNameLong('View Coupon Promotor Tenant List')
+                    ->setObject(null)
+                    ->setModuleName('Tenant')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+            }
+
+            if (! empty(OrbitInput::get('coupon_redeem_id'))) {
+                $pagetitle = Lang::get('mobileci.page_title.coupons_tenants');
+
+                $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
+                $activityPage->setUser($user)
+                    ->setActivityName('view_retailer')
                     ->setActivityNameLong('View Coupon Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
@@ -2221,7 +2265,7 @@ class MobileCIAPIController extends ControllerAPI
                     ->save();
             }
 
-            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id')) && empty(OrbitInput::get('coupon_id'))) {
+            if (empty(OrbitInput::get('event_id')) && empty(OrbitInput::get('promotion_id')) && empty(OrbitInput::get('news_id')) && empty(OrbitInput::get('coupon_id')) && empty(OrbitInput::get('coupon_redeem_id'))) {
                 $activityPageNotes = sprintf('Page viewed: Tenant Listing Page');
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
@@ -3341,9 +3385,7 @@ class MobileCIAPIController extends ControllerAPI
             } elseif ($coupons->is_all_retailer === 'N') {
                 $linkToAllTenant = FALSE;
 
-                $tenants = \CouponRetailerRedeeem::with('tenant')->where('promotion_id', $coupon_id)->get();
-
-                $tenants = \CouponRetailerRedeeem::with('tenant', 'tenant.categories')
+                $tenants = \CouponRetailerRedeem::with('tenant', 'tenant.categories')
                     ->wherehas('tenant', function($q){
                         $q->where('merchants.status', 'active');
                     })
@@ -3473,6 +3515,7 @@ class MobileCIAPIController extends ControllerAPI
             $coupons = Coupon::with(array('couponRule'))
                 ->where('merchant_id', $retailer->merchant_id)
                 ->where('promotions.status', 'active')
+                ->where('promotions.promotion_id', $coupon_id)
                 ->first();
 
             if (empty($coupons)) {
@@ -3524,52 +3567,15 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             //Check link to tenant is all tenant
-            if ($coupons->is_all_retailer === 'Y') {
-                $linkToAllTenant = TRUE;
-                $cso_exists = FALSE;
-                $tenants = \Tenant::where('parent_id','=', $retailer->merchant_id)
-                ->where('status', 'active')
-                ->get();
-            } elseif ($coupons->is_all_retailer === 'N') {
-                $linkToAllTenant = FALSE;
+            $linkToAllTenant = FALSE;
 
-                $tenants = \CouponRetailerRedeeem::with('tenant')->where('promotion_id', $coupon_id)->get();
+            $tenants = \CouponRetailer::with('tenant', 'tenant.categories')
+                ->wherehas('tenant', function($q){
+                    $q->where('merchants.status', 'active');
+                })
+                ->where('promotion_id', $coupon_id)->get();
 
-                $tenants = \CouponRetailerRedeeem::with('tenant', 'tenant.categories')
-                    ->wherehas('tenant', function($q){
-                        $q->where('merchants.status', 'active');
-                    })
-                    ->where('promotion_id', $coupon_id)->get();
-
-                // -- START hack
-                // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
-
-                $cso_exists = FALSE;
-
-                $pure_tenants = array();
-
-                foreach ($tenants as $tenant) {
-                    $cso_flag = 0;
-
-                    if (count($tenant->tenant->categories) > 0) { // check if tenant has category
-                        foreach ($tenant->tenant->categories as $category) {
-                            if ($category->category_name !== 'Customer Service') {
-                                $cso_flag = 1;
-                            } else {
-                                $cso_exists = true;
-                            }
-                        }
-                        if($cso_flag === 1) {
-                            $pure_tenants[] = $tenant;
-                        }
-                    } else { // if not, add it right away
-                        $pure_tenants[] = $tenant;
-                    }
-                }
-
-                $tenants = $pure_tenants; // 100% pure tenant ready to be served
-                // -- END of hack
-            }
+            $cso_exists = FALSE;
 
             if (empty($coupons->image)) {
                 $coupons->image = 'mobile-ci/images/default_coupon.png';
@@ -3577,30 +3583,6 @@ class MobileCIAPIController extends ControllerAPI
 
             // Check coupon have condition cs reedem
             $cs_reedem = false;
-
-            // Check exist customer verification number per mall
-            $employeeVerNumbersActive = \UserVerificationNumber::
-                        join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
-                        ->where('users.status', 'active')
-                        ->where('merchant_id', $retailer->merchant_id)
-                        ->count('users.user_id');
-
-            if ($coupons->is_all_employee === 'Y') {
-                if ($employeeVerNumbersActive > 0) {
-                    $cs_reedem = true;
-                }
-            } elseif ($coupons->is_all_employee === 'N') {
-                // Check exist link to cs, and cs must have active status
-                $promotionEmployee = \CouponEmployee::
-                                join('users', 'users.user_id', '=', 'promotion_employee.user_id')
-                                ->where('users.status', 'active')
-                                ->where('promotion_employee.promotion_id', $coupons->promotion_id)
-                                ->count('promotion_employee_id');
-
-                if ($promotionEmployee > 0) {
-                    $cs_reedem = true;
-                }
-            }
 
             $activityPageNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $coupon_id);
             $activityPage->setUser($user)
