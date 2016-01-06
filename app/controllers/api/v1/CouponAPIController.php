@@ -149,7 +149,7 @@ class CouponAPIController extends ControllerAPI
             $employee_user_ids = (array) $employee_user_ids;
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
-            $is_all_age = OrbitInput::post('is_all_age_range');
+            $is_all_age = OrbitInput::post('is_all_age');
             $is_popup = OrbitInput::post('is_popup');
             $rule_begin_date = OrbitInput::post('rule_begin_date');
             $rule_end_date = OrbitInput::post('rule_end_date');
@@ -783,7 +783,7 @@ class CouponAPIController extends ControllerAPI
             $rule_begin_date = OrbitInput::post('rule_begin_date');
             $rule_end_date = OrbitInput::post('rule_end_date');
             $is_all_gender = OrbitInput::post('is_all_gender');
-            $is_all_age = OrbitInput::post('is_all_age_range');
+            $is_all_age = OrbitInput::post('is_all_age');
 
             $data = array(
                 'promotion_id'            => $promotion_id,

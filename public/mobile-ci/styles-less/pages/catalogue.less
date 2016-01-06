@@ -626,32 +626,38 @@ h5.tenant-category{
 }
 
 .list-item-container{
-    .list-item-title {
-      color: @theme-main-complimentary-2;
-      //background-color: @theme-main;
-      //font-size: 3vw;
-      font-size: 22px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      div {
-          height:28px;
-          overflow: hidden;
-      }
-    }
-    .list-item-subtitle{
-        //font-size:2.5vw;
-        font-size:14px;
-        div{
-            height:20px;
-            overflow: hidden;
-        }
-    }
-    .list-item-single {
-      background-color: #fff;
-      height:96px;
-    }
+    
 }
 
+.list-item-title {
+  color: @theme-main-complimentary-2;
+  //background-color: @theme-main;
+  //font-size: 3vw;
+  font-size: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  div {
+      height:28px;
+      overflow: hidden;
+  }
+}
+.list-item-subtitle{
+    //font-size:2.5vw;
+    font-size:14px;
+    div{
+        height:20px;
+        overflow: hidden;
+    }
+}
+.list-item-single {
+  background-color: #fff;
+  height:96px;
+}
+.list-item-single-tenant {
+  background-color: #fff;
+  height:150px;
+}
+    
 .list-item-info{
   position:absolute;
   bottom:0;
@@ -665,6 +671,12 @@ h5.tenant-category{
 .img-fit-not-tenant{
   width:100%;
   height:96px;
+  object-fit:cover;
+}
+
+.img-fit-tenant{
+  width:100%;
+  height:150px;
   object-fit:cover;
 }
 

@@ -12,7 +12,7 @@
                 @if(sizeof($data->records) > 0)
                     @foreach($data->records as $promo)
                         <div class="col-xs-12 col-sm-12" id="item-{{$promo->promotion_id}}">
-                            <section class="list-item-single">
+                            <section class="list-item-single-tenant">
                                 <a class="list-item-link" href="{{ url('customer/mallpromotion?id='.$promo->news_id) }}">
                                     <div class="list-item-info">
                                         <header class="list-item-title">
@@ -60,9 +60,9 @@
                                     </div>
                                     <div class="list-vignette-non-tenant"></div>
                                     @if(!empty($promo->image))
-                                    <img class="img-responsive img-fit-not-tenant" src="{{ asset($promo->image) }}" />
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset($promo->image) }}" />
                                     @else
-                                    <img class="img-responsive img-fit-not-tenant" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_promotion.png') }}"/>
                                     @endif
                                 </a>
                             </section>
