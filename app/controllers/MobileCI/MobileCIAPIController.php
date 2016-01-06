@@ -3435,6 +3435,198 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * GET - Coupon detail page
+     *
+     * @param integer    `id`        (required) - The product ID
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
+     */
+    public function getMallCouponCampaignDetailView()
+    {
+        $user = null;
+        $coupon_id = 0;
+        $activityPage = Activity::mobileci()
+                                   ->setActivityType('view');
+        try {
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+            $coupon_id = trim(OrbitInput::get('id'));
+            $languages = $this->getListLanguages($retailer);
+
+            $coupons = Coupon::with(array('couponRule'))
+                ->where('merchant_id', $retailer->merchant_id)
+                ->where('promotions.status', 'active')
+                ->first();
+
+            if (empty($coupons)) {
+                return View::make('mobile-ci.404', array('page_title'=>Lang::get('mobileci.page_title.not_found'), 'retailer'=>$retailer, 'languages' => $languages));
+            }
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            if (! empty($alternateLanguage)) {
+                $couponTranslation = \CouponTranslation::excludeDeleted()
+                    ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                    ->where('promotion_id', $coupons->promotion_id)->first();
+
+                if (! empty($couponTranslation)) {
+                    foreach (['promotion_name', 'description', 'long_description'] as $field) {
+                        //if field translation empty or null, value of field back to english (default)
+                        if (isset($couponTranslation->{$field}) && $couponTranslation->{$field} !== '') {
+                            $coupons->{$field} = $couponTranslation->{$field};
+                        }
+                    }
+
+                    $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
+                        ->media_orig()
+                        ->first();
+
+                    if (isset($media->path)) {
+                        $coupons->image = $media->path;
+                    } else {
+                        // back to default image if in the content multilanguage not have image
+                        // check the system language
+                        $defaultLanguage = $this->getDefaultLanguage($retailer);
+                        if ($defaultLanguage !== NULL) {
+                            $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                ->where('promotion_id', $coupons->promotion_id)->first();
+
+                            // get default image
+                            $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (isset($mediaDefaultLanguage->path)) {
+                                $coupons->image = $mediaDefaultLanguage->path;
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            //Check link to tenant is all tenant
+            if ($coupons->is_all_retailer === 'Y') {
+                $linkToAllTenant = TRUE;
+                $cso_exists = FALSE;
+                $tenants = \Tenant::where('parent_id','=', $retailer->merchant_id)
+                ->where('status', 'active')
+                ->get();
+            } elseif ($coupons->is_all_retailer === 'N') {
+                $linkToAllTenant = FALSE;
+
+                $tenants = \CouponRetailerRedeeem::with('tenant')->where('promotion_id', $coupon_id)->get();
+
+                $tenants = \CouponRetailerRedeeem::with('tenant', 'tenant.categories')
+                    ->wherehas('tenant', function($q){
+                        $q->where('merchants.status', 'active');
+                    })
+                    ->where('promotion_id', $coupon_id)->get();
+
+                // -- START hack
+                // 2015-9-23 17:33:00 : extracting multiple CSOs from Tenants so they won't showed up on coupon detail view
+
+                $cso_exists = FALSE;
+
+                $pure_tenants = array();
+
+                foreach ($tenants as $tenant) {
+                    $cso_flag = 0;
+
+                    if (count($tenant->tenant->categories) > 0) { // check if tenant has category
+                        foreach ($tenant->tenant->categories as $category) {
+                            if ($category->category_name !== 'Customer Service') {
+                                $cso_flag = 1;
+                            } else {
+                                $cso_exists = true;
+                            }
+                        }
+                        if($cso_flag === 1) {
+                            $pure_tenants[] = $tenant;
+                        }
+                    } else { // if not, add it right away
+                        $pure_tenants[] = $tenant;
+                    }
+                }
+
+                $tenants = $pure_tenants; // 100% pure tenant ready to be served
+                // -- END of hack
+            }
+
+            if (empty($coupons->image)) {
+                $coupons->image = 'mobile-ci/images/default_coupon.png';
+            }
+
+            // Check coupon have condition cs reedem
+            $cs_reedem = false;
+
+            // Check exist customer verification number per mall
+            $employeeVerNumbersActive = \UserVerificationNumber::
+                        join('users', 'users.user_id', '=', 'user_verification_numbers.user_id')
+                        ->where('users.status', 'active')
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->count('users.user_id');
+
+            if ($coupons->is_all_employee === 'Y') {
+                if ($employeeVerNumbersActive > 0) {
+                    $cs_reedem = true;
+                }
+            } elseif ($coupons->is_all_employee === 'N') {
+                // Check exist link to cs, and cs must have active status
+                $promotionEmployee = \CouponEmployee::
+                                join('users', 'users.user_id', '=', 'promotion_employee.user_id')
+                                ->where('users.status', 'active')
+                                ->where('promotion_employee.promotion_id', $coupons->promotion_id)
+                                ->count('promotion_employee_id');
+
+                if ($promotionEmployee > 0) {
+                    $cs_reedem = true;
+                }
+            }
+
+            $activityPageNotes = sprintf('Page viewed: Coupon Detail, Coupon Id: %s', $coupon_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Campaign Detail')
+                ->setObject($coupons)
+                ->setCoupon($coupons)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseOK()
+                ->save();
+
+            return View::make('mobile-ci.mall-coupon-campaign', array(
+                'page_title' => $coupons->promotion_name,
+                'user' => $user,
+                'retailer' => $retailer,
+                'coupon' => $coupons,
+                'tenants' => $tenants,
+                'languages' => $languages,
+                'cso_exists' => $cso_exists,
+                'cs_reedem' => $cs_reedem,
+                'link_to_all_tenant' => $linkToAllTenant
+                ));
+
+        } catch (Exception $e) {
+            $activityPageNotes = sprintf('Failed to view Page: Coupon Detail, Coupon Id: %s', $coupon_id);
+            $activityPage->setUser($user)
+                ->setActivityName('view_coupon')
+                ->setActivityNameLong('View Coupon Detail Failed')
+                ->setObject(null)
+                ->setModuleName('Coupon')
+                ->setNotes($activityPageNotes)
+                ->responseFailed()
+                ->save();
+
+            return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
      * GET - Get promotion list in mall
      *
      * @return Illuminate\View\View
