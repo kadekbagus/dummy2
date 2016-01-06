@@ -1487,7 +1487,16 @@ class UserAPIController extends ControllerAPI
                          ->select('users.user_id', 'users.username', 'users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_last_login', 'users.user_ip', 'users.user_role_id', 'users.status', 'users.remember_token', 'users.external_user_id', 'users.modified_by', 'users.created_at', 'users.updated_at', 'user_details.gender', 'user_details.phone')
                          ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
                          ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                         ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories', 'banks'))
+                         ->with(array('userDetail', 'userDetail.lastVisitedShop', 'categories'))
+                         ->with(array('banks' => function ($q) use ($listOfMallIds) {
+                            if (empty($listOfMallIds)) { // invalid mall id
+                                $q->whereRaw('0');
+                            } elseif ($listOfMallIds[0] === 1) { // if super admin
+                                // show all users
+                            } else { // valid mall id
+                                $q->whereIn('objects.merchant_id', $listOfMallIds);
+                            }
+                         }))
                          ->excludeDeleted('users')
                          ->groupBy('users.user_id')
                          ->with(array('membershipNumbers' => function ($q) use ($listOfMallIds) {
