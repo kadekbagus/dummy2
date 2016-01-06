@@ -182,9 +182,9 @@ return array(
         'day' => '日',
         'month' => '月',
         'year' => '年',
-        'policy_terms_message' => 'jp:By clicking <strong>Sign up</strong> you confirm that you accept
-                        <a target="_blank" href="%s">Privacy Policy</a> and
-                        <a target="_blank" href="%s">Terms and Conditions</a>',
+        'policy_terms_message' => '<strong>サインアップ</strong>クリックすると、あなたは
+            <a target="_blank" href="%s">プライバシーポリシーと利用規約に同意するこ</a>と
+            <a target="_blank" href="%s">を確認します</a>',
         'already_have_an_account' => 'すでにアカウントをお持ちですか',
         'fields_are_mandatory' => 'すべてのフィールドが必須です',
     ),
