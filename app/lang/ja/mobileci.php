@@ -46,6 +46,16 @@ return array(
         'tenant'        => 'テナント',
         'lucky_draw'    => '抽選',
         'news'          => 'ニュース',
+        'promotions'     => '販促',
+        'coupons'        => '券',
+        'tenants'        => 'テナント',
+        'lucky_draws'    => '抽選',
+        'newss'          => 'ニュース',
+        'promotions_single'      => '販促',
+        'coupons_single'        => '券',
+        'tenants_single'        => 'テナント',
+        'lucky_draws_single'    => '抽選',
+        'newss_single'          => 'ニュース',
     ),
 
     'greetings' => array(
