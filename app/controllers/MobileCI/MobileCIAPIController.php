@@ -4992,12 +4992,14 @@ class MobileCIAPIController extends ControllerAPI
                 // Insert to alert system
                 $issuedCouponNames = $this->flipArrayElement($issuedCouponNames);
 
-                $name = $user->getFullName();
-                $name = trim($name) ? trim($name) : $user->user_email;
-                $subject = 'Coupon';
+                if (! empty($issuedCouponNames)) {
+                    $name = $user->getFullName();
+                    $name = trim($name) ? trim($name) : $user->user_email;
+                    $subject = 'Coupon';
 
-                $inbox = new Inbox();
-                $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailer->merchant_id, 'coupon_issuance');
+                    $inbox = new Inbox();
+                    $inbox->addToInbox($user->user_id, $issuedCouponNames, $retailer->merchant_id, 'coupon_issuance');
+                }
 
                 foreach ($objectCoupons as $object) {
                     $activity_coupon = Coupon::where('promotion_id', $object->promotion_id)->first();
