@@ -5144,14 +5144,21 @@ class MobileCIAPIController extends ControllerAPI
 
                 foreach ($coupons_to_be_obtained as $coupon) {
                     $issued = false;
+
+                    $ruleBeginDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->rule_begin_date, $retailer->timezone->timezone_name);
+                    $ruleBeginDateUTC->setTimezone('UTC');
+
+                    $ruleEndDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->rule_end_date, $retailer->timezone->timezone_name);
+                    $ruleEndDateUTC->setTimezone('UTC');
+
                     if ($coupon->rule_type === 'auto_issue_on_signup') {
                         $issued = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
                                                 ->where('user_id', $user->user_id)
-                                                ->whereRaw("created_at between ? and ?", [$coupon->rule_begin_date, $coupon->rule_end_date])->first();
+                                                ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
                     } elseif ($coupon->rule_type === 'auto_issue_on_first_signin') {
                         $issued = \UserSignin::where('location_id', $retailer->merchant_id)
                                                 ->where('user_id', $user->user_id)
-                                                ->whereRaw("created_at between ? and ?", [$coupon->rule_begin_date, $coupon->rule_end_date])->first();
+                                                ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
                     } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
                         $issued = true;
                     }
