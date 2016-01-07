@@ -98,6 +98,16 @@ class Tenant extends Eloquent
         return $this->belongsToMany('Coupon', 'promotion_retailer', 'retailer_id', 'promotion_id')->active();
     }
 
+    public function couponsProfiling()
+    {
+        return $this->belongsToMany('Coupon', 'promotion_retailer', 'retailer_id', 'promotion_id')
+                    ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                    ->where('promotions.is_coupon', 'Y')
+                    ->where('promotions.status', '=', 'active');
+    }
+
     /**
      * A Retailer has many and belongs to an employee
      */

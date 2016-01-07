@@ -152,13 +152,12 @@ return array(
         'email_placeholder' => 'あなたのメールアドレスを入力してください',
         'login_button'      => '入力',
         'start_button'      => 'スタート　ショッピング',
-        'welcome_message'      => 'jp:Feel The New Shopping Experience',
         'not'               => '無い',
         'click_here'        => 'ここをクリックしてください',
         'email_not_valid'   => 'メール　アドレスは　有効ではありません',
         'logging_in_button' => 'ログインしています.しばらくお待ちください...',
         'loading_orbit'     => 'オービットをロードすると、待機してください...',
-        'start_button_mall' => '',
+        'start_button_mall' => '新しいショッピング体験を感じます',
         'register'          => '登録',
         'login_via_facebook'        => 'Facebook経由でログイン',
         'login_via_google'        => 'グーグル経由でログイン',
@@ -183,9 +182,9 @@ return array(
         'day' => '日',
         'month' => '月',
         'year' => '年',
-        'policy_terms_message' => 'jp:By clicking <strong>Sign up</strong> you confirm that you accept
-                        <a target="_blank" href="%s">Privacy Policy</a> and
-                        <a target="_blank" href="%s">Terms and Conditions</a>',
+        'policy_terms_message' => '<strong>サインアップ</strong>クリックすると、あなたは
+            <a target="_blank" href="%s">プライバシーポリシーと利用規約に同意するこ</a>と
+            <a target="_blank" href="%s">を確認します</a>',
         'already_have_an_account' => 'すでにアカウントをお持ちですか',
         'fields_are_mandatory' => 'すべてのフィールドが必須です',
     ),
