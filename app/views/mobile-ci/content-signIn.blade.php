@@ -158,9 +158,7 @@
     toastr.options.closeButton = true;
     toastr.options.closeDuration = 300;
     
-    
-    var contentHeight = $(window).height() - 90;
-    $('.content-signin').height(contentHeight);
+    $('.content-signin').height('100%');
     
     $('#formModal').on('show.bs.modal', function () {
         $('#slogan-container, #social-media-wraper').addClass('hide');
