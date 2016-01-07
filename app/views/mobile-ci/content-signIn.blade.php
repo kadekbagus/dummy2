@@ -7,20 +7,21 @@
 <div class="content-signin">
     <div class="slogan-container" id="slogan-container">
         <div class="slogan">
-            Feel The New Shopping Experience
+            {{ Config::get('shop.start_button_label') }}
         </div>
     </div>
     <div class="social-media-wraper" id="social-media-wraper">
         <div class="social-media-container">
             <div class="row">
                 <div class="col-xs-12 text-center label">
-                    You can connect with:
+                    {{ Lang::get('mobileci.signin.connecting_with') }}:
             </div>
             <div class="row">
                 <div class="col-xs-4 text-center">
                     <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                         <div class="form-group">
                             <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
+                            <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                             <input type="hidden" class="form-control" name="mac_address"
                                    value="{{{ Input::get('mac_address', '') }}}"/>
                             <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}"
@@ -38,6 +39,7 @@
                     <form name="googleLoginForm" id="googleLoginForm" action="{{ $googlePlusUrl }}" method="get">
                         <div class="form-group">
                             <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
+                            <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                             <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                         </div>
                         <div class="form-group">
@@ -59,7 +61,7 @@
 <div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel">
     <div class="modal-dialog">
         <div class="modal-content" id="signin-form-wrapper">
-            <form  name="signinForm" id="signinForm" action="{{ url('customer/login') }}" method="post">
+            <form  name="signinForm" id="signinForm" method="post">
                 <div class="modal-body">
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
@@ -72,44 +74,44 @@
                 <div class="modal-footer footer-form-modal">
                     <div class="row">
                         <div class="col-xs-8 text-left">
-                            <span>Does not have account? <a href="#" id="sign-up-link">Sign up</a></span>
+                            <span>{{ Lang::get('mobileci.signin.doesnt_have_account') }}? <a href="#" id="sign-up-link">{{ Lang::get('mobileci.signin.sign_up') }}</a></span>
                         </div>
                         <div class="col-xs-4 text-right">
-                            <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info icon-button form text-center" disabled value="Sign in">
+                            <input type="submit" name="submit" id="btn-signin-form" class="btn btn-info icon-button form text-center" disabled value="{{ Lang::get('mobileci.signin.sign_in') }}">
                         </div>
                     </div>
                 </div>
             </form>
         </div>
         <div class="modal-content hide" id="signup-form-wrapper">
-            <form  name="signupForm" id="signupForm" action="{{ url('customer/login') }}" method="post">
+            <form  name="signupForm" id="signupForm" method="post">
                 <div class="modal-body">
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
                     
-                    <span class="mandatory-label">All fields are mandatory</span>
+                    <span class="mandatory-label">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
                     <div class="form-group">
-                        <input type="text" class="form-control userName" value="" placeholder="First Name" name="firstname" id="firstName">
+                        <input type="text" class="form-control userName" value="" placeholder="{{ Lang::get('mobileci.signup.first_name') }}" name="firstname" id="firstName">
                     </div>
                     <div class="form-group">
-                        <input type="text" class="form-control" placeholder="Last Name" name="lastname" id="lastName">
+                        <input type="text" class="form-control" placeholder="{{ Lang::get('mobileci.signup.last_name') }}" name="lastname" id="lastName">
                     </div>
                     <div class="form-group">
                         <select class="form-control" name="gender" id="gender">
-                            <option value="">Select Gender</option>
-                            <option value="m">Male</option>
-                            <option value="f">Female</option>
+                            <option value="">{{ Lang::get('mobileci.signup.gender') }}</option>
+                            <option value="m">{{ Lang::get('mobileci.signup.male') }}</option>
+                            <option value="f">{{ Lang::get('mobileci.signup.female') }}</option>
                         </select>
                     </div>
                     <div class="form-group date-of-birth">
                         <div class="row">
                             <div class="col-xs-4">
                                 <select class="form-control" name="day">
-                                    <option value="">Day</option>
+                                    <option value="">{{ Lang::get('mobileci.signup.day') }}</option>
                                 @for ($i = 1; $i <= 31; $i++)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
@@ -117,7 +119,7 @@
                             </div>
                             <div class="col-xs-4">
                                 <select class="form-control" name="month">
-                                    <option value="">Month</option>
+                                    <option value="">{{ Lang::get('mobileci.signup.month') }}</option>
                                 @for ($i = 1; $i <= 12; $i++)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
@@ -125,7 +127,7 @@
                             </div>
                             <div class="col-xs-4">
                                 <select class="form-control" name="year">
-                                    <option value="">Year</option>
+                                    <option value="">{{ Lang::get('mobileci.signup.year') }}</option>
                                 @for ($i = date('Y'); $i >= date('Y') - 150; $i--)
                                     <option value="{{$i}}">{{$i}}</option>
                                 @endfor
@@ -134,18 +136,16 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        By clicking <strong>Sign up</strong> you confirm that you accept
-                        <a target="_blank" href="{{ Config::get('orbit.contact_information.privacy_policy_url') }}">Privacy Policy</a> and
-                        <a target="_blank" href="{{ Config::get('orbit.contact_information.terms_of_service_url') }}">Terms and Conditions</a>
+                        {{ sprintf(Lang::get('mobileci.signup.policy_terms_message'), Config::get('orbit.contact_information.privacy_policy_url'), Config::get('orbit.contact_information.terms_of_service_url')) }}
                     </div>
                 </div>
                 <div class="modal-footer footer-form-modal">
                     <div class="row">
                         <div class="col-xs-8 text-left orbit-auto-login">
-                            <span>Already have an account? <a href="#" id="sign-in-link">Sign in</a></span>
+                            <span>{{{ Lang::get('mobileci.signup.already_have_an_account') }}}? <a href="#" id="sign-in-link">{{{ Lang::get('mobileci.signin.sign_in') }}}</a></span>
                         </div>
                         <div class="col-xs-4 text-right orbit-auto-login">
-                            <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info icon-button form text-center orbit-auto-login" disabled value="Sign up">
+                            <input type="submit" name="submit" id="btn-signup-form" class="btn btn-info icon-button form text-center orbit-auto-login" disabled value="{{ Lang::get('mobileci.signin.sign_up') }}">
                         </div>
                     </div>
                 </div>
@@ -198,8 +198,7 @@
      * @author Rio Astamal <rio@dominopos.com>
      * @return void
      */
-    orbitSignUpForm.doLogin = function()
-    {
+    orbitSignUpForm.doLogin = function() {
         var custEmail = $('#signinForm #email').val().trim();
 
         // Flag the processing
@@ -222,8 +221,6 @@
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }}
                 }
             }).done(function (response, status, xhr) {
-                orbitSignUpForm.disableEnableAllButton();
-
                 if (response.code !== 0 && response.code !== 302) {
                     toastr.error(response.message);
                     return;
@@ -259,7 +256,7 @@
                 // @todo isplay this the error
                 orbitSignUpForm.disableEnableAllButton();
             });
-        }
+        };
 
         orbitSignUpForm.checkCustomerEmail(custEmail,
             // Send back to sign up form for unknown email
@@ -317,9 +314,6 @@
                     birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
                 }
             }).done(function (resp, status, xhr) {
-                orbitSignUpForm.isProcessing = false;
-                orbitSignUpForm.disableEnableAllButton();
-
                 if (resp.status === 'error') {
                     // do something
                     return;
@@ -473,8 +467,28 @@
             $('#btn-signup-form').attr('disabled', 'disabled');
         }
     }
+    
+    var errorValidationFn = function () {
+        var errorMessage = '{{isset($error) ? $error : 'No Error'}}';
+        if (errorMessage !== 'No Error') {
+            toastr(errorMessage);
+            $('#spinner-backdrop').addClass('hide');
+        }
+    },
+    inProgressFn = function () {
+        var progressStatus = {{isset($isInProgress) ? $isInProgress : 'false'}};
+        if (progressStatus === true) {
+            $('#spinner-backdrop').removeClass('hide');
+            return;
+        }
+        $('#spinner-backdrop').addClass('hide');
+    };
+    
 
     orbitSignUpForm.boot = function() {
+        inProgressFn();
+        errorValidationFn();
+        
         for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
             $(orbitSignUpForm.formElementsInput[i]).keyup(function(e) {
                 orbitSignUpForm.enableDisableSignup();
@@ -495,7 +509,7 @@
             }
         });
 
-        $('#signinForm #email').keyup(function(e) {
+        $('#signinForm #email').on('input', function(e) {
             var value = $(this).val();
 
             if (isValidEmailAddress(value)) {

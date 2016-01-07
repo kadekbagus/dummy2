@@ -61,6 +61,10 @@ class CouponAPIController extends ControllerAPI
      * @param array      `retailer_ids`                      (optional) - Tenant IDs
      * @param array      `employee_user_ids`                 (optional) - User IDs of Employee
      * @param array      `id_language_default`               (required) - ID language default
+     * @param string     `is_all_gender`                     (optional) - Is all gender. Valid value: Y, N.
+     * @param string     `is_all_age`                        (optional) - Is all retailer age group. Valid value: Y, N.
+     * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
+     * @param string     `age_range_ids`                     (optional) - Age Range IDs
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -95,7 +99,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -144,6 +148,17 @@ class CouponAPIController extends ControllerAPI
             $employee_user_ids = OrbitInput::post('employee_user_ids');
             $employee_user_ids = (array) $employee_user_ids;
             $id_language_default = OrbitInput::post('id_language_default');
+            $is_all_gender = OrbitInput::post('is_all_gender');
+            $is_all_age = OrbitInput::post('is_all_age');
+            $is_popup = OrbitInput::post('is_popup');
+            $rule_begin_date = OrbitInput::post('rule_begin_date');
+            $rule_end_date = OrbitInput::post('rule_end_date');
+            $gender_ids = OrbitInput::post('gender_ids');
+            $gender_ids = (array) $gender_ids;
+            $age_range_ids = OrbitInput::post('age_range_ids');
+            $age_range_ids = (array) $age_range_ids;
+            $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
+            $linkToTenantIds = (array) $linkToTenantIds;
 
             $validator = Validator::make(
                 array(
@@ -152,6 +167,7 @@ class CouponAPIController extends ControllerAPI
                     'promotion_type'          => $promotion_type,
                     'begin_date'              => $begin_date,
                     'end_date'                => $end_date,
+                    'rule_type'               => $rule_type,
                     'status'                  => $status,
                     'coupon_validity_in_date' => $coupon_validity_in_date,
                     'rule_value'              => $rule_value,
@@ -159,6 +175,10 @@ class CouponAPIController extends ControllerAPI
                     'is_all_retailer'         => $is_all_retailer,
                     'is_all_employee'         => $is_all_employee,
                     'id_language_default'     => $id_language_default,
+                    'rule_begin_date'         => $rule_begin_date,
+                    'rule_end_date'           => $rule_end_date,
+                    'is_all_gender'           => $is_all_gender,
+                    'is_all_age'              => $is_all_age,
                 ),
                 array(
                     'current_mall'            => 'required|orbit.empty.merchant',
@@ -166,13 +186,18 @@ class CouponAPIController extends ControllerAPI
                     'promotion_type'          => 'required|orbit.empty.coupon_type',
                     'begin_date'              => 'required|date_format:Y-m-d H:i:s',
                     'end_date'                => 'required|date_format:Y-m-d H:i:s',
+                    'rule_type'               => 'required|orbit.empty.coupon_rule_type',
                     'status'                  => 'required|orbit.empty.coupon_status',
-                    'coupon_validity_in_date' => 'required|date_format:Y-m-d H:i:s',
+                    'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'required|numeric|min:0',
                     'discount_value'          => 'required|numeric|min:0',
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
+                    'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
+                    'rule_end_date'           => 'date_format:Y-m-d H:i:s',
+                    'is_all_gender'           => 'required|orbit.empty.is_all_gender',
+                    'is_all_age'              => 'required|orbit.empty.is_all_age',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -249,6 +274,72 @@ class CouponAPIController extends ControllerAPI
                 Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
             }
 
+            // validating linkToTenantIds.
+            foreach ($linkToTenantIds as $retailer_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'retailer_id'   => $retailer_id_check,
+
+                    ),
+                    array(
+                        'retailer_id'   => 'orbit.empty.tenant',
+                    )
+                );
+
+                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
+            }
+
+            foreach ($gender_ids as $gender_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'gender_id'   => $gender_id_check,
+                    ),
+                    array(
+                        'gender_id'   => 'orbit.empty.gender',
+                    )
+                );
+
+                Event::fire('orbit.coupon.postnewcoupon.before.gendervalidation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
+            }
+
+            foreach ($age_range_ids as $age_range_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'age_range_id'   => $age_range_id_check,
+                    ),
+                    array(
+                        'age_range_id'   => 'orbit.empty.age',
+                    )
+                );
+
+                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
+            }
+
+
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
             // save Coupon.
@@ -270,6 +361,9 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             $newcoupon->coupon_notification = $coupon_notification;
             $newcoupon->created_by = $this->api->user->user_id;
+            $newcoupon->is_all_age = $is_all_age;
+            $newcoupon->is_all_gender = $is_all_gender;
+            $newcoupon->is_popup = $is_popup;
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -371,13 +465,15 @@ class CouponAPIController extends ControllerAPI
             $couponrule->is_cumulative_with_coupons = $is_cumulative_with_coupons;
             $couponrule->is_cumulative_with_promotions = $is_cumulative_with_promotions;
             $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
+            $couponrule->rule_begin_date = $rule_begin_date;
+            $couponrule->rule_end_date = $rule_end_date;
             $couponrule = $newcoupon->couponRule()->save($couponrule);
             $newcoupon->coupon_rule = $couponrule;
 
-            // save CouponRetailer
+            // save CouponRetailerRedeem
             $retailers = array();
             foreach ($retailer_ids as $retailer_id) {
-                $retailer = new CouponRetailer();
+                $retailer = new CouponRetailerRedeem();
                 $retailer->retailer_id = $retailer_id;
                 $retailer->promotion_id = $newcoupon->promotion_id;
                 $retailer->save();
@@ -396,7 +492,60 @@ class CouponAPIController extends ControllerAPI
 
             $newcoupon->employees = $employees;
 
+            // save CouponRetailer
+            $retailers = array();
+            foreach ($linkToTenantIds as $retailer_id) {
+                $retailer = new CouponRetailer();
+                $retailer->retailer_id = $retailer_id;
+                $retailer->promotion_id = $newcoupon->promotion_id;
+                $retailer->save();
+                $retailers[] = $retailer;
+            }
+            $newcoupon->link_to_tenants = $retailers;
+
+            // save CampaignAge
+            $couponAges = array();
+            foreach ($age_range_ids as $age_range) {
+                $couponAge = new CampaignAge();
+                $couponAge->campaign_type = 'coupon';
+                $couponAge->campaign_id = $newcoupon->promotion_id;
+                $couponAge->age_range_id = $age_range;
+                $couponAge->save();
+                $couponAges[] = $couponAge;
+            }
+            $newcoupon->age = $couponAges;
+
+            // save CampaignGender
+            $couponGenders = array();
+            foreach ($gender_ids as $gender) {
+                $couponGender = new CampaignGender();
+                $couponGender->campaign_type = 'coupon';
+                $couponGender->campaign_id = $newcoupon->promotion_id;
+                $couponGender->gender_value = $gender;
+                $couponGender->save();
+                $gender_name = null;
+                $couponGenders[] = $couponGender;
+            }
+            $newcoupon->gender = $couponGenders;
+
+
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
+
+            //save campaign price
+            $campaignbaseprice = CampaignBasePrices::where('merchant_id', '=', $newcoupon->merchant_id)
+                                            ->where('campaign_type', '=', 'coupon')
+                                            ->first();
+
+            $baseprice = 0;
+            if (! empty($campaignbaseprice->price)) {
+                $baseprice = $campaignbaseprice->price;
+            }
+
+            $campaignprice = new CampaignPrice();
+            $campaignprice->base_price = $baseprice;
+            $campaignprice->campaign_type = 'coupon';
+            $campaignprice->campaign_id = $newcoupon->promotion_id;
+            $campaignprice->save();
 
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
@@ -551,6 +700,10 @@ class CouponAPIController extends ControllerAPI
      * @param string     `no_retailer`                       (optional) - Flag to delete all retailer links. Valid value: Y.
      * @param string     `no_employee`                       (optional) - Flag to delete all cs links. Valid value: Y.
      * @param array      `id_language_default`               (required) - ID language default
+     * @param string     `is_all_gender`         (optional) - Is all gender. Valid value: Y, N.
+     * @param string     `is_all_age`            (optional) - Is all retailer age group. Valid value: Y, N.
+     * @param string     `gender_ids`            (optional) - for Male, Female. Unknown. Valid value: M, F, U.
+     * @param string     `age_range_ids`         (optional) - Age Range IDs
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -586,7 +739,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -627,6 +780,10 @@ class CouponAPIController extends ControllerAPI
             $discount_value = OrbitInput::post('discount_value');
             $rule_value = OrbitInput::post('rule_value');
             $id_language_default = OrbitInput::post('id_language_default');
+            $rule_begin_date = OrbitInput::post('rule_begin_date');
+            $rule_end_date = OrbitInput::post('rule_end_date');
+            $is_all_gender = OrbitInput::post('is_all_gender');
+            $is_all_age = OrbitInput::post('is_all_age');
 
             $data = array(
                 'promotion_id'            => $promotion_id,
@@ -635,13 +792,18 @@ class CouponAPIController extends ControllerAPI
                 'status'                  => $status,
                 'begin_date'              => $begin_date,
                 'end_date'                => $end_date,
+                'rule_type'               => $rule_type,
                 'coupon_validity_in_date' => $coupon_validity_in_date,
                 'rule_value'              => $rule_value,
                 'discount_value'          => $discount_value,
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
-                'maximum_issued_coupon'     => $maximum_issued_coupon,
+                'maximum_issued_coupon'   => $maximum_issued_coupon,
+                'rule_begin_date'         => $rule_begin_date,
+                'rule_end_date'           => $rule_end_date,
+                'is_all_gender'           => $is_all_gender,
+                'is_all_age'              => $is_all_age,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -659,13 +821,18 @@ class CouponAPIController extends ControllerAPI
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
                     'end_date'                => 'date_format:Y-m-d H:i:s',
+                    'rule_type'               => 'orbit.empty.coupon_rule_type',
                     'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'numeric|min:0',
                     'discount_value'          => 'numeric|min:0',
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
-                    'maximum_issued_coupon'     => 'orbit.max.total_issued_coupons:' . $promotion_id,
+                    'maximum_issued_coupon'   => 'orbit.max.total_issued_coupons:' . $promotion_id,
+                    'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
+                    'rule_end_date'           => 'date_format:Y-m-d H:i:s',
+                    'is_all_gender'           => 'required|orbit.empty.is_all_gender',
+                    'is_all_age'              => 'required|orbit.empty.is_all_age',
                 ),
                 array(
                     'coupon_name_exists_but_me' => Lang::get('validation.orbit.exists.coupon_name'),
@@ -690,7 +857,7 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postupdatecoupon.after.validation', array($this, $validator));
 
-            $updatedcoupon = Coupon::with('couponRule', 'tenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
+            $updatedcoupon = Coupon::with('couponRule', 'tenants', 'linkToTenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
 
             $updatedcoupon_default_language = CouponTranslation::excludeDeleted()->where('promotion_id', $promotion_id)->where('merchant_language_id', $id_language_default)->first();
 
@@ -734,7 +901,7 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::post('is_all_retailer', function($is_all_retailer) use ($updatedcoupon) {
                 $updatedcoupon->is_all_retailer = $is_all_retailer;
                 if ($is_all_retailer == 'Y') {
-                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $deleted_retailer_ids = CouponRetailerRedeem::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
                     $updatedcoupon->tenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('tenants');
                 }
@@ -749,6 +916,10 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
+            OrbitInput::post('is_popup', function($is_popup) use ($updatedcoupon) {
+                $updatedcoupon->is_popup = $is_popup;
+            });
+
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
                 $updatedcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
             });
@@ -759,6 +930,14 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('coupon_validity_in_days', function($coupon_validity_in_days) use ($updatedcoupon) {
                 $updatedcoupon->coupon_validity_in_days = $coupon_validity_in_days;
+            });
+
+            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatedcoupon) {
+                $updatedcoupon->is_all_gender = $is_all_gender;
+            });
+
+            OrbitInput::post('is_all_age', function($is_all_age) use ($updatedcoupon) {
+                $updatedcoupon->is_all_age = $is_all_age;
             });
 
             OrbitInput::post('coupon_validity_in_date', function($coupon_validity_in_date) use ($updatedcoupon, $end_date) {
@@ -924,14 +1103,22 @@ class CouponAPIController extends ControllerAPI
                 $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
             });
 
+            OrbitInput::post('rule_begin_date', function($rule_begin_date) use ($couponrule) {
+                $couponrule->rule_begin_date = $rule_begin_date;
+            });
+
+            OrbitInput::post('rule_end_date', function($rule_end_date) use ($couponrule) {
+                $couponrule->rule_end_date = $rule_end_date;
+            });
+
             $couponrule->save();
             $updatedcoupon->setRelation('couponRule', $couponrule);
             $updatedcoupon->coupon_rule = $couponrule;
 
-            // save CouponRetailer
+            // save CouponRetailerRedeem
             OrbitInput::post('no_retailer', function($no_retailer) use ($updatedcoupon) {
                 if ($no_retailer == 'Y') {
-                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $deleted_retailer_ids = CouponRetailerRedeem::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
                     $updatedcoupon->tenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('tenants');
                 }
@@ -942,6 +1129,34 @@ class CouponAPIController extends ControllerAPI
                     $deleted_employee = CouponEmployee::where('promotion_id', $updatedcoupon->promotion_id)->get(array('user_id'))->toArray();
                     $updatedcoupon->employee()->detach($deleted_employee);
                     $updatedcoupon->load('employee');
+                }
+            });
+
+            // save CouponRetailer
+            OrbitInput::post('no_link_to_tenant', function($no_retailer) use ($updatedcoupon) {
+                if ($no_retailer == 'Y') {
+                    $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
+                    $updatedcoupon->linkToTenants()->detach($deleted_retailer_ids);
+                    $updatedcoupon->load('linkToTenants');
+                }
+            });
+
+
+            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatedcoupon, $promotion_id) {
+                $updatedcoupon->is_all_gender = $is_all_gender;
+                if ($is_all_gender == 'Y') {
+                    $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $promotion_id)
+                                                            ->where('campaign_type', '=', 'coupon');
+                    $deleted_campaign_genders->delete();
+                }
+            });
+
+            OrbitInput::post('is_all_age', function($is_all_age) use ($updatedcoupon, $promotion_id) {
+                $updatedcoupon->is_all_age = $is_all_age;
+                if ($is_all_age == 'Y') {
+                    $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $promotion_id)
+                                                            ->where('campaign_type', '=', 'coupon');
+                    $deleted_campaign_ages->delete();
                 }
             });
 
@@ -1004,6 +1219,123 @@ class CouponAPIController extends ControllerAPI
                 // reload tenants relation
                 $updatedcoupon->load('employee');
             });
+
+            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($updatedcoupon) {
+                // validate retailer_ids
+                $retailer_ids = (array) $retailer_ids;
+                foreach ($retailer_ids as $retailer_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'retailer_id'   => $retailer_id_check,
+                        ),
+                        array(
+                            'retailer_id'   => 'orbit.empty.tenant',
+                        )
+                    );
+
+                    Event::fire('orbit.coupon.postupdatecoupon.before.retailervalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
+                }
+                // sync new set of retailer ids
+                $updatedcoupon->linkToTenants()->sync($retailer_ids);
+
+                // reload tenants relation
+                $updatedcoupon->load('linkToTenants');
+            });
+
+            OrbitInput::post('gender_ids', function($gender_ids) use ($updatedcoupon, $promotion_id) {
+                // validate gender_ids
+                $gender_ids = (array) $gender_ids;
+                foreach ($gender_ids as $gender_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'gender_id'   => $gender_id_check,
+                        ),
+                        array(
+                            'gender_id'   => 'orbit.empty.gender',
+                        )
+                    );
+
+                    Event::fire('orbit.coupon.postupdatecoupon.before.gendervalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.coupon.postupdatecoupon.after.gendervalidation', array($this, $validator));
+                }
+
+                // Delete old data
+                $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $promotion_id)
+                                                        ->where('campaign_type', '=', 'coupon');
+                $deleted_campaign_genders->delete();
+
+                // Insert new data
+                $couponGenders = array();
+                foreach ($gender_ids as $gender) {
+                    $couponGender = new CampaignGender();
+                    $couponGender->campaign_type = 'coupon';
+                    $couponGender->campaign_id = $promotion_id;
+                    $couponGender->gender_value = $gender;
+                    $couponGender->save();
+                    $couponGenders[] = $couponGenders;
+                }
+                $updatedcoupon->gender = $couponGenders;
+
+            });
+
+            OrbitInput::post('age_range_ids', function($age_range_ids) use ($updatedcoupon, $promotion_id) {
+                // validate age_range_ids
+                $age_range_ids = (array) $age_range_ids;
+                foreach ($age_range_ids as $age_range_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'age_range_id'   => $age_range_id_check,
+                        ),
+                        array(
+                            'age_range_id'   => 'orbit.empty.age',
+                        )
+                    );
+
+                    Event::fire('orbit.coupon.postupdatecoupon.before.agevalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.coupon.postupdatecoupon.after.agevalidation', array($this, $validator));
+                }
+
+                // Delete old data
+                $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $promotion_id)
+                                                        ->where('campaign_type', '=', 'coupon');
+                $deleted_campaign_ages->delete();
+
+                // Insert new data
+                $couponAges = array();
+                foreach ($age_range_ids as $age_range) {
+                    $couponAge = new CampaignAge();
+                    $couponAge->campaign_type = 'coupon';
+                    $couponAge->campaign_id = $promotion_id;
+                    $couponAge->age_range_id = $age_range;
+                    $couponAge->save();
+                    $couponAges[] = $couponAges;
+                }
+                $updatedcoupon->age = $couponAges;
+
+            });
+
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
@@ -1162,7 +1494,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1211,7 +1543,7 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postdeletecoupon.before.save', array($this, $deletecoupon));
 
             // hard delete retailer.
-            $deleteretailers = CouponRetailer::where('promotion_id', $deletecoupon->promotion_id)->get();
+            $deleteretailers = CouponRetailerRedeem::where('promotion_id', $deletecoupon->promotion_id)->get();
             foreach ($deleteretailers as $deleteretailer) {
                 $deleteretailer->delete();
             }
@@ -1401,7 +1733,7 @@ class CouponAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service', 'campaign owner', 'campaign employee'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1463,7 +1795,7 @@ class CouponAPIController extends ControllerAPI
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
-                ->select(DB::raw($table_prefix . "promotions.*,
+                ->select(DB::raw($table_prefix . "promotions.*, " . $table_prefix . "campaign_price.campaign_price_id, " . $table_prefix . "campaign_price.base_price,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
                         WHEN 'product_discount_by_percentage' THEN 'percentage'
@@ -1490,6 +1822,10 @@ class CouponAPIController extends ControllerAPI
                         {$table_prefix}promotions.status
                     END as 'coupon_status'")
                 )
+                ->leftJoin('campaign_price', function ($join) {
+                         $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
+                              ->where('campaign_price.campaign_type', '=', 'coupon');
+                  })
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
 
@@ -1707,6 +2043,22 @@ class CouponAPIController extends ControllerAPI
                 $coupons->where('merchants.merchant_name', 'like', "%$name%");
             });
 
+            // Filter coupon by rule begin date
+            OrbitInput::get('rule_begin_date', function ($beginDate) use ($coupons)
+            {
+                $coupons->whereHas('couponrule', function ($q) use ($beginDate) {
+                    $q->where('rule_begin_date', '<=', $beginDate);
+                });
+            });
+
+            // Filter coupon by end date
+            OrbitInput::get('rule_end_date', function ($endDate) use ($coupons)
+            {
+                $coupons->whereHas('couponrule', function ($q) use ($endDate) {
+                    $q->where('rule_end_date', '>=', $endDate);
+                });
+            });
+
             $from_cs = OrbitInput::get('from_cs', 'no');
 
             // Add new relation based on request
@@ -1730,6 +2082,12 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('translations.media');
                     } elseif ($relation === 'employee') {
                         $coupons->with('employee');
+                    } elseif ($relation === 'link_to_tenants') {
+                        $coupons->with('linkToTenants');
+                    } elseif ($relation === 'genders') {
+                        $coupons->with('genders');
+                    } elseif ($relation === 'ages') {
+                        $coupons->with('ages');
                     }
                 }
             });
@@ -2563,8 +2921,8 @@ class CouponAPIController extends ControllerAPI
                             ->first();
             } elseif ($issuedCoupon->coupon->is_all_retailer === 'N') {
                 $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
-                            ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'issued_coupons.promotion_id')
-                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->join('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'issued_coupons.promotion_id')
+                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where('issued_coupons.issued_coupon_id', $value)
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
@@ -2663,6 +3021,17 @@ class CouponAPIController extends ControllerAPI
         Validator::extend('orbit.empty.coupon_status', function ($attribute, $value, $parameters) {
             $valid = false;
             $statuses = array('active', 'inactive', 'pending', 'blocked', 'deleted');
+            foreach ($statuses as $status) {
+                if($value === $status) $valid = $valid || TRUE;
+            }
+
+            return $valid;
+        });
+
+        // Check the existence of the coupon rule type
+        Validator::extend('orbit.empty.coupon_rule_type', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('auto_issue_on_signup', 'auto_issue_on_first_signin', 'auto_issue_on_every_signin');
             foreach ($statuses as $status) {
                 if($value === $status) $valid = $valid || TRUE;
             }
@@ -2930,6 +3299,54 @@ class CouponAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        Validator::extend('orbit.empty.is_all_age', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('Y', 'N');
+
+            if (in_array($value, $statuses)) {
+                $valid = true;
+            }
+
+            return $valid;
+        });
+
+        Validator::extend('orbit.empty.is_all_gender', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('Y', 'N');
+
+            if (in_array($value, $statuses)) {
+                $valid = true;
+            }
+
+            return $valid;
+        });
+
+        Validator::extend('orbit.empty.gender', function ($attribute, $value, $parameters) {
+            $valid = false;
+            $statuses = array('M', 'F', 'U');
+
+            if (in_array($value, $statuses)) {
+                $valid = true;
+            }
+
+            return $valid;
+        });
+
+        Validator::extend('orbit.empty.age', function ($attribute, $value, $parameters) {
+            $exist = AgeRange::excludeDeleted()
+                        ->where('age_range_id', $value)
+                        ->first();
+
+            if (empty($exist)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.age', $exist);
+
+            return true;
+        });
+
     }
 
     /**

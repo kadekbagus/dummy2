@@ -135,10 +135,9 @@
 
 .notification-badge {
     font-size: .35em;
-    display: none;
     position: absolute;
-    top: -.25em;
-    right: -.9em;
+    top: 6px;
+    right: 2px;
     width: 2em;
     height: 2em;
     line-height: 1.8em;
@@ -149,9 +148,23 @@
     border: 1px solid #FFF;
     font-family: sans-serif;
 }
-
-.notification-badge.notification-badge-sub {
-    font-size: .55em;
+.notification-badge-txt{
+    display: none;
+}
+.notification-badge-sub {
+    font-size: .6em;
+    position: absolute;
+    right: 32%;
+    width: 2em;
+    height: 2em;
+    line-height: 1.8em;
+    border-radius: 50%;
+    text-align: center;
+    color: #fff;
+    background: rgb(255, 0, 0);
+    border: 1px solid #FFF;
+    font-family: sans-serif;
+    margin-top: 2px;
 }
 
 .loadmore {
@@ -159,4 +172,64 @@
     color: @theme-main-complimentary-2;
     margin-top: 15px;
     display:none;
+}
+.list-item-container .list-item-subtitle div.badges-wrapper{
+    height:25px;
+    margin-top: -5px;
+    padding-right:1px;
+}
+.badges-wrapper{
+    height:24px;
+    .badges {
+        font-size: .9em;
+        color: #fff;
+        font-family: sans-serif;
+        &.news-badges{
+            font-size:.8em;
+        }
+        &.news-badges:before{
+            content:'';
+            border-radius: 50%;
+            border: 1px solid #FFF;
+            width:20px;
+            height:20px;
+            background:#FF8300;
+            display: inline-block;
+            position: relative;
+            z-index: -1;
+            right: -16px;
+            top: 5px;
+        }
+        &.promo-badges:before{
+            content:'';
+            border-radius: 50%;
+            border: 1px solid #FFF;
+            width:20px;
+            height:20px;
+            background:#FF0000;
+            display: inline-block;
+            position: relative;
+            z-index: -1;
+            right: -16px;
+            top: 5px;
+        }
+        &.coupon-badges:before{
+            content:'';
+            border-radius: 50%;
+            border: 1px solid #FFF;
+            width:20px;
+            height:20px;
+            background:#0DAD04;
+            display: inline-block;
+            position: relative;
+            z-index: -1;
+            right: -16px;
+            top: 5px;
+        }
+    }
+}
+.list-item-badges{
+    position:absolute;
+    bottom:8px;
+    right:10px;
 }

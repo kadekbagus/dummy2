@@ -205,7 +205,7 @@
             setTimeout(function(){
                 resetImage();
                 fl = $.featherlight.current();
-                $("body").addClass("modal-open");
+                $("body").addClass("freeze-scroll");
                 $(".featherlight-image").panzoom({
                     minScale: 1,
                     maxScale: 5,
@@ -228,7 +228,7 @@
                 $(".featherlight-image").on('panzoomend', function(e, panzoom, matrix, changed) {
                     if(! changed) {
                         fl.close();
-                        $("body").removeClass("modal-open");
+                        $("body").removeClass("freeze-scroll");
                     }
                 });
             }, 50);
@@ -245,13 +245,20 @@
         });
 
         $(document).on('click', '.featherlight-close', function(){
-            $("body").removeClass("modal-open");
+            $("body").removeClass("freeze-scroll");
         });
 
         $(document).on('click', '.featherlight-content, .featherlight-image', function(){
             fl.close();
-            $("body").removeClass("modal-open");
+            $("body").removeClass("freeze-scroll");
         });
 
+        $('#slide-trigger, .slide-menu-backdrop').click(function(){
+            $('.slide-menu-container').toggle('slide', {direction: 'right'}, 'slow');
+            $('.slide-menu-backdrop').toggle('fade', 'slow');
+            $('html').toggleClass('freeze-scroll');
+            $('#orbit-tour-profile').toggleClass('active');
+            $('#slide-trigger').toggleClass('active');
+        });
     });
 </script>

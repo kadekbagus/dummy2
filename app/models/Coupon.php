@@ -50,7 +50,7 @@ class Coupon extends Eloquent
 
     public function tenants()
     {
-        return $this->belongsToMany('Tenant', 'promotion_retailer', 'promotion_id', 'retailer_id');
+        return $this->belongsToMany('Tenant', 'promotion_retailer_redeem', 'promotion_id', 'retailer_id');
     }
 
     public function employee()
@@ -58,9 +58,25 @@ class Coupon extends Eloquent
         return $this->belongsToMany('User', 'promotion_employee', 'promotion_id', 'user_id');
     }
 
+    public function linkToTenants()
+    {
+        return $this->belongsToMany('Tenant', 'promotion_retailer', 'promotion_id', 'retailer_id');
+    }
+
     public function issuedCoupons()
     {
         return $this->hasMany('IssuedCoupon', 'promotion_id', 'promotion_id');
+    }
+
+    public function genders()
+    {
+        return $this->hasMany('CampaignGender', 'campaign_id', 'promotion_id');
+    }
+
+    public function ages()
+    {
+        return $this->hasMany('CampaignAge', 'campaign_id', 'promotion_id')
+                    ->join('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
     }
 
     /**
@@ -230,7 +246,7 @@ class Coupon extends Eloquent
     public function getImageAttribute($value)
     {
         if (empty($value)) {
-            return 'mobile-ci/images/default_product.png';
+            return 'mobile-ci/images/default_coupon.png';
         }
         return ($value);
     }

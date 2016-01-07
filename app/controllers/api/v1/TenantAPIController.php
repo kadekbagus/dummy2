@@ -13,6 +13,10 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class TenantAPIController extends ControllerAPI
 {
+
+    protected $tenantViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service'];
+    protected $tenantModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
     /**
      * POST - Delete Tenant
      *
@@ -1225,13 +1229,22 @@ class TenantAPIController extends ControllerAPI
             // perform this action
             $user = $this->api->user;
             Event::fire('orbit.tenant.getsearchtenant.before.authz', array($this, $user));
-
+/*
             if (! ACL::create($user)->isAllowed('view_tenant')) {
                 Event::fire('orbit.tenant.getsearchtenant.authz.notallowed', array($this, $user));
                 $viewTenantLang = Lang::get('validation.orbit.actionlist.view_tenant');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewTenantLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->tenantViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.tenant.getsearchtenant.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
@@ -1290,7 +1303,7 @@ class TenantAPIController extends ControllerAPI
             // TODO : remove this with something like is_all_retailer just like on orbit-shop
             if ($limit) {
                 $tenants = Tenant::with('link_to_tenant')
-                                 ->select('merchant_id', 'name')
+                                 ->select('merchant_id', 'name', 'status')
                                  ->excludeDeleted('merchants');
             } else {
                 $tenants = Tenant::with('link_to_tenant')
@@ -1982,7 +1995,7 @@ class TenantAPIController extends ControllerAPI
                 $tenant_id = $parameters[0];
 
                 // check tenant if exists in coupons.
-                $coupon = CouponRetailer::whereHas('coupon', function($q) {
+                $coupon = CouponRetailerRedeem::whereHas('coupon', function($q) {
                         $q->excludeDeleted();
                     })
                     ->where('retailer_id',$tenant_id)

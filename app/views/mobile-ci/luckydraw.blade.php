@@ -6,30 +6,28 @@
 
 @section('content')
 <div class="row">
-    @if(! empty($luckydraw->image))
-    <a href="{{ asset($luckydraw->image) }}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer text-left"><img src="{{ asset($luckydraw->image) }}" class="img-responsive" style="width:100%;"></a>
-    @else
-    <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
-    @endif
+    <div class="col-xs-12 main-theme product-detail">
+        @if(! empty($luckydraw->image))
+        <a href="{{{ asset($luckydraw->image) }}}" data-featherlight="image" data-featherlight-close-on-esc="false" data-featherlight-close-on-click="false" class="zoomer"><img src="{{ asset($luckydraw->image) }}"></a>
+        @else
+        <img src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" class="img-responsive" style="width:100%;">
+        @endif
+    </div>
 </div>
-<div class="row">
+<div class="row product-info padded">
     <div class="col-xs-12 text-left">
         <p>
             {{ nl2br($luckydraw->description) }}
         </p>
     </div>
-</div>
-<div class="row">
     <div class="col-xs-12 text-left">
-        <h4>{{ Lang::get('mobileci.lucky_draw.period') }}</h4>
+        <h4><strong>{{ Lang::get('mobileci.lucky_draw.period') }}</strong></h4>
         <p>
             {{ date('d M Y', strtotime($luckydraw->start_date)) }} - {{ date('d M Y', strtotime($luckydraw->end_date)) }}
         </p>
     </div>
-</div>
-<div class="row">
     <div class="col-xs-12 text-left">
-        <h4>{{ Lang::get('mobileci.lucky_draw.draw_date') }}</h4>
+        <h4><strong>{{ Lang::get('mobileci.lucky_draw.draw_date') }}</strong></h4>
         <p>
             {{ date('d M Y', strtotime($luckydraw->draw_date)) }}
         </p>
@@ -39,14 +37,14 @@
     @if(strtotime($servertime) > strtotime($luckydraw->draw_date))
         @if(! empty($luckydraw->prizes))
         <div class="row text-center vertically-spaced">
-            <div class="col-xs-12">
+            <div class="col-xs-12 padded">
                 <a href="{{ url('/customer/luckydraw-announcement?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</a>
             </div>
         </div>
         @endif
     @else
         <div class="row text-center vertically-spaced">
-            <div class="col-xs-12">
+            <div class="col-xs-12 padded">
                 <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
             </div>
         </div>
@@ -60,61 +58,61 @@
     </div>
 </div>
 <div class="row text-center lucky-number-wrapper">
-    @if(!empty($luckydraw) && $luckydraw->end_date >= $servertime)
-    <div class="row vertically-spaced">
-        <h4>{{ Lang::get('mobileci.lucky_draw.my_lucky_draw_number') }}</h4>
-    </div>
-
-    <div class="row">
-        <div class="col-xs-12">    
-            @if ($total_number === 0)
-                <div class="text-center">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" style="margin:0 auto" />
-                </div>
-                <h4>{{ Lang::get('mobileci.lucky_draw.no_lucky_draw_number_1') }}</h4>
-                <small>
-                    {{ Lang::get('mobileci.lucky_draw.no_lucky_draw_number_2') }}
-                </small>
-            @endif
-            <a name="ln-nav" id="ln-nav"></a>
+    @if(!empty($luckydraw))
+        <div class="row vertically-spaced">
+            <h4>{{ Lang::get('mobileci.lucky_draw.my_lucky_draw_number') }}</h4>
         </div>
-    </div>
 
-   <!--  <div class="row">
-        <p>&nbsp;</p>
-    </div> -->
-
-    <div class="row">
-        <div class="col-xs-12 lucky-number-row">
-            @if(count($numbers) == 1)
-                <div class="col-xs-12 lucky-number-col">
-                    <div class="lucky-number-container" data-number="{{$numbers[0]->lucky_draw_number_id}}">{{ $numbers[0]->lucky_draw_number_code }}</div>
-                </div>
-            @else
-                @foreach($numbers as $i=>$number)
-                <div class="col-xs-6 col-sm-6 col-lg-6 lucky-number-col">
-                    <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
-                </div>
-                @endforeach
-
-                @if ($total_number % 2 !== 0)
-                <!-- <div class="col-xs-12 col-sm-6 col-lg-6">
-                    <div class="lucky-number-container" data-number=""></div>
-                </div> -->
+        <div class="row">
+            <div class="col-xs-12">    
+                @if ($total_number === 0)
+                    <div class="text-center">
+                        <img class="img-responsive" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" style="margin:0 auto" />
+                    </div>
+                    <h4>{{ Lang::get('mobileci.lucky_draw.no_lucky_draw_number_1') }}</h4>
+                    <small>
+                        {{ Lang::get('mobileci.lucky_draw.no_lucky_draw_number_2') }}
+                    </small>
                 @endif
-            @endif
+                <a name="ln-nav" id="ln-nav"></a>
+            </div>
         </div>
-    </div>
-    @if ($total_number > 0)
-    <div class="row text-center save-btn vertically-spaced">
-        <div class="col-xs-1"></div>
-        <div class="col-xs-10">
-            <a href="{{ url('/customer/luckydrawnumber/download?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
+
+       <!--  <div class="row">
+            <p>&nbsp;</p>
+        </div> -->
+
+        <div class="row">
+            <div class="col-xs-12 lucky-number-row">
+                @if(count($numbers) == 1)
+                    <div class="col-xs-12 lucky-number-col">
+                        <div class="lucky-number-container" data-number="{{$numbers[0]->lucky_draw_number_id}}">{{ $numbers[0]->lucky_draw_number_code }}</div>
+                    </div>
+                @else
+                    @foreach($numbers as $i=>$number)
+                    <div class="col-xs-6 col-sm-6 col-lg-6 lucky-number-col">
+                        <div class="lucky-number-container" data-number="{{$number->lucky_draw_number_id}}">{{ $number->lucky_draw_number_code }}</div>
+                    </div>
+                    @endforeach
+
+                    @if ($total_number % 2 !== 0)
+                    <!-- <div class="col-xs-12 col-sm-6 col-lg-6">
+                        <div class="lucky-number-container" data-number=""></div>
+                    </div> -->
+                    @endif
+                @endif
+            </div>
         </div>
-        <div class="col-xs-1"></div>
-    </div>
-    @endif
-    @if ($total_pages > 1)
+        @if ($total_number > 0)
+        <div class="row text-center save-btn vertically-spaced">
+            <div class="col-xs-1"></div>
+            <div class="col-xs-10">
+                <a href="{{ url('/customer/luckydrawnumber/download?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.save_numbers') }}</a>
+            </div>
+            <div class="col-xs-1"></div>
+        </div>
+        @endif
+        @if ($total_pages > 1)
         <div class="row">
             <div class="col-xs-12 text-center">
                 <div class="col-xs-12">
@@ -187,6 +185,11 @@
             });
 
             $('#datenow').text(new Date().toDateString() + ' ' + new Date().getHours() + ':' + new Date().getMinutes());
+
+            $(window).scroll(function(){
+                s = $(window).scrollTop();
+                $('.product-detail img').css('-webkit-transform', 'translateY('+(s/3)+'px)');
+            });
         });
     </script>
 @stop

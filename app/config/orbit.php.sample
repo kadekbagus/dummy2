@@ -56,7 +56,9 @@ return array(
             'interval'  => 5000
         ],
 
-        'membership' => true
+        'membership' => true,
+
+        'widget_new_threshold' => 1, // in day(s)
     ),
 
     // General contact data
@@ -2663,7 +2665,40 @@ return array(
         'View Lucky Draw List'                         => 'View Lucky Draw List',
         'View Lucky Draw Detail'                       => 'View Lucky Draw Detail',
         'View Prizes & Winning Numbers'                => 'View Winning Numbers & Prizes',
-        'Read Notification Lucky Draw Number Issuance' => 'Read Notification Lucky Draw Number Issuance',
-        'View Winner Announcement Notification'        => 'View Winner Announcement Notification'
+        'Read Lucky Draw Number Issuance Notification' => 'Read Lucky Draw Number Issuance Notification',
+        'Read Winner Announcement Notification'        => 'Read Winner Announcement Notification',
+        'Read Coupon Issuance Notification'            => 'Read Coupon Issuance Notification',
+        'Read Activation Notification'                 => 'Read Activation Notification'
+    ),
+
+    'menus' => array(
+        'mall' => array(
+            'mall_dashboard',
+            'mall_settings',
+            'mall_widgets',
+            'mall_tenants',
+            'mall_luckydraws',
+            'mall_employee',
+            'mall_membership',
+            'mall_crm_detail',
+            'mall_crm_summary',
+            'mall_consumer'
+        ),
+        'pmp' => array(
+            'pmp_dashboard',
+            'pmp_news',
+            'pmp_coupons',
+            'pmp_promotions',
+            'pmp_report_news',
+            'pmp_report_promotions',
+            'pmp_report_coupons',
+            'pmp_employee'
+        )
+    ),
+
+    'genders' => array(
+        'M' => 'Male',
+        'F' => 'Female',
+        'U' => 'Unknown',
     ),
 );

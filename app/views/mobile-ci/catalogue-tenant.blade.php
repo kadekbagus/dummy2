@@ -59,40 +59,76 @@
                     </div>
                 </div>
             </div>
-            @foreach($data->records as $product)
-                <div class="main-theme-mall catalogue catalogue-tenant" id="product-{{$product->product_id}}">
-                    <div class="row catalogue-top">
-                        <div class="col-xs-3 catalogue-img">
-                            <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
-                                <span class="link-spanner"></span>
-                                @if(!count($product->mediaLogo) > 0)
-                                <img class="img-responsive side-margin-center" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                @endif
-                                @foreach($product->mediaLogo as $media)
-                                @if($media->media_name_long == 'retailer_logo_orig')
-                                <img class="img-responsive side-margin-center" alt="" src="{{ asset($media->path) }}"/>
-                                @endif
-                                @endforeach
-                            </a>
+            <div class="container">
+                <div class="mobile-ci list-item-container">
+                    <div class="row">
+                    @if($link_to_coupon_data->linkedToCS)
+                        <div class="col-xs-12 col-sm-12" id="item-cs">
+                            <section class="list-item-single-tenant">
+                                <div class="list-item-info">
+                                    <header class="list-item-title">
+                                        <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
+                                    </header>
+                                </div>
+                                <div class="list-vignette-non-tenant"></div>
+                                <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
+                            </section>
                         </div>
-                        <div class="col-xs-9 catalogue-info">
-                            <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
-                                <span class="link-spanner"></span>
-                                <h4>{{ mb_strlen($product->name) > 64 ? mb_substr($product->name, 0, 64) . '...' : $product->name }}</h4>
-                                <h3><i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> {{{ !empty($product->floor) ? ' ' . $product->floor : '' }}}{{{ !empty($product->unit) ? ' - ' . $product->unit : '' }}}</h3>
-                                <h5 class="tenant-category">
-                                    <i class="fa fa-tags" style="padding-left: 2px;padding-right: 4px;"></i>
-                                    @if(empty($product->category_string))
-                                        <span>-</span>
-                                    @else
-                                        <span>{{ mb_strlen($product->category_string) > 30 ? mb_substr($product->category_string, 0, 30, 'UTF-8') . '...' : $product->category_string }}</span>
+                    @endif
+                    @foreach($data->records as $tenant)
+                        <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
+                            <section class="list-item-single-tenant">
+                                <a class="list-item-link" href="{{ url('customer/tenant?id='.$tenant->merchant_id) }}">
+                                    <div class="list-item-info">
+                                        <header class="list-item-title">
+                                            <div><strong>{{ $tenant->name }}</strong></div>
+                                        </header>
+                                        <header class="list-item-subtitle">
+                                            <div>
+                                                <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> 
+                                                {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
+                                            </div>
+                                            <div>
+                                                <div class="col-xs-6">
+                                                    <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
+                                                    @if(empty($tenant->category_string))
+                                                        <span>-</span>
+                                                    @else
+                                                        <span>{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </header>
+                                        <header class="list-item-badges">
+                                            <div class="col-xs-12 badges-wrapper text-right">
+                                                @if($tenant->promotion_flag)
+                                                <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
+                                                @endif
+                                                @if($tenant->news_flag)
+                                                <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
+                                                @endif
+                                                @if($tenant->coupon_flag)
+                                                <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
+                                                @endif
+                                            </div>
+                                        </header>
+                                    </div>
+                                    <div class="list-vignette-non-tenant"></div>
+                                    @if(!count($tenant->mediaLogo) > 0)
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
                                     @endif
-                                </h5>
-                            </a>
+                                    @foreach($tenant->mediaLogo as $media)
+                                    @if($media->media_name_long == 'retailer_logo_orig')
+                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
+                                    @endif
+                                    @endforeach
+                                </a>
+                            </section>
                         </div>
+                    @endforeach
                     </div>
                 </div>
-            @endforeach
+            </div>
         @else
             <div id="search-tool">
                 <div class="row">

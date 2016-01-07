@@ -2421,6 +2421,13 @@ class LuckyDrawAPIController extends ControllerAPI
                                 $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
                                 $lucky_draw_number_winner->save();
                             } else {
+                                // check already existing number for update
+                                $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()->where('lucky_draw_winner_id', $winner->lucky_draw_winner_id)->first();
+                                if (! is_object($lucky_draw_number_winner)) {
+                                    $errorMessage = 'Lucky draw winner number not found.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+
                                 $lucky_draw_number_winner->lucky_draw_winner_code = '';
                                 $lucky_draw_number_winner->lucky_draw_number_id = null;
                                 $lucky_draw_number_winner->modified_by = $this->api->user->user_id;

@@ -501,6 +501,14 @@ Route::group(
         );
 
         Route::get(
+            '/customer/mallcouponcampaign',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallCouponCampaignDetailView();
+            }
+        );
+
+        Route::get(
             '/customer/mallpromotions', ['as' => 'ci-mall-promotions',
             function () {
                 return MobileCI\MobileCIAPIController::create()->getMallPromotionList();
@@ -575,6 +583,14 @@ Route::group(
         Route::get('/app/v1/inbox/list', function()
         {
             return InboxAPIController::create()->getSearchInbox();
+        });
+
+        /**
+         * My Account
+         */
+        Route::get('/customer/my-account', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getMyAccountView();
         });
 
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);

@@ -821,7 +821,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
 
     /**
-     * Mobile-CI Intermediate call by registering client mac address when login
+     * Mobile-CI Intermediate check email exist in sign in mobile CI
      * succeed.
      *
      * @author Firmansyah <firmansyah@dominopos.com>
@@ -937,7 +937,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     setcookie('orbit_firstname', 'Orbit Guest', time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                 }
             }
-   
+
             // Successfull login
             $activity->setUser($user)
                      ->setActivityName('login_ok')
@@ -959,9 +959,9 @@ class IntermediateLoginController extends IntermediateBaseController
         // Save the activity
         $activity->setModuleName('Application')->save();
 
-        // save to user signin table  
-        if ($response->code === 0) {    
-            
+        // save to user signin table
+        if ($response->code === 0) {
+
             $signin_via = 'form';
             $payload = '';
 
@@ -974,23 +974,23 @@ class IntermediateLoginController extends IntermediateBaseController
             if (! empty($payload)) {
                 $key = md5('--orbit-mall--');
                 $payload = (new Encrypter($key))->decrypt($payload);
-                Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload)); 
+                Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload));
                 parse_str($payload, $data);
-                
+
                 if ($data['login_from'] === 'facebook') {
                     $signin_via = 'facebook';
                 } else if ($data['login_from'] === 'google') {
                     $signin_via = 'google';
                 }
             }
-             
+
             $newUserSignin = new UserSignin();
             $newUserSignin->user_id = $user->user_id;
             $newUserSignin->signin_via = $signin_via;
             $newUserSignin->location_id = Config::get('orbit.shop.id');
             $newUserSignin->activity_id = $activity->activity_id;
             $newUserSignin->save();
-        }          
+        }
 
         return $this->render($response);
     }
@@ -1079,6 +1079,7 @@ class IntermediateLoginController extends IntermediateBaseController
         $fname = isset($data['fname']) ? $data['fname'] : '';
         $lname = isset($data['lname']) ? $data['lname'] : '';
         $gender = isset($data['gender']) ? $data['gender'] : '';
+        $birthdate = isset($data['birthdate']) ? $data['birthdate'] : '';
         $mac = isset($data['mac']) ? $data['mac'] : '';
         $ip = isset($data['ip']) ? $data['ip'] : '';
         $from = isset($data['login_from']) ? $data['login_from'] : '';
@@ -1119,6 +1120,11 @@ class IntermediateLoginController extends IntermediateBaseController
             if (($from === 'google' || $from === 'facebook') && $customer->status === 'pending') {
                 // Only set if the previous status is pending
                 $customer->status = 'active';   // make it active
+            }
+
+            // Update birthdate if necessary
+            if (empty($customer->birthdate)) {
+                $customer->userdetail->birthdate = $birthdate;
             }
 
             $customer->save();

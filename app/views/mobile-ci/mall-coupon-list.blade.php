@@ -5,49 +5,86 @@
 @stop
 
 @section('content')
-    @if($data->status === 1)
-        @if(sizeof($data->records) > 0)
-            @foreach($data->records as $coupon)
-                <div class="main-theme-mall catalogue catalogue-other" id="product-{{$coupon->promotion_id}}">
-                    <div class="row catalogue-top">
-                        <div class="col-xs-3 catalogue-img">
-                            <a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">
-                                <span class="link-spanner"></span>
-                                @if(!empty($coupon->promo_image))
-                                <img class="img-responsive" alt="" src="{{ asset($coupon->promo_image) }}">
-                                @else
-                                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                                @endif
-                            </a>
+    <div class="container">
+        <div class="mobile-ci list-item-container">
+            <div class="row">
+            @if($data->status === 1)
+                @if(sizeof($data->records) > 0)
+                    @foreach($data->records as $coupon)
+                        <div class="col-xs-12 col-sm-12" id="item-{{$coupon->issued_coupon_id}}">
+                            <section class="list-item-single-tenant">
+                                <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">
+                                    <div class="list-item-info">
+                                        <header class="list-item-title">
+                                            <div><strong>{{ $coupon->promotion_name }}</strong></div>
+                                        </header>
+                                        <header class="list-item-subtitle">
+                                            <div>
+                                                {{-- Limit description per two line and 45 total character --}}
+                                                <?php
+                                                    $desc = explode("\n", $coupon->description);
+                                                ?>
+                                                @if (mb_strlen($coupon->description) > 45)
+                                                    @if (count($desc) > 1)
+                                                        <?php
+                                                            $two_row = array_slice($desc, 0, 1);
+                                                        ?>
+                                                        @foreach ($two_row as $key => $value)
+                                                            @if ($key === 0)
+                                                                {{{ $value }}} <br>
+                                                            @else
+                                                                {{{ $value }}} ...
+                                                            @endif
+                                                        @endforeach
+                                                    @else
+                                                        {{{ mb_substr($coupon->description, 0, 45, 'UTF-8') . '...' }}}
+                                                    @endif
+                                                @else
+                                                    @if (count($desc) > 1)
+                                                        <?php
+                                                            $two_row = array_slice($desc, 0, 1);
+                                                        ?>
+                                                        @foreach ($two_row as $key => $value)
+                                                            @if ($key === 0)
+                                                                {{{ $value }}} <br>
+                                                            @else
+                                                                {{{ $value }}} ...
+                                                            @endif
+                                                        @endforeach
+                                                    @else
+                                                        {{{ mb_substr($coupon->description, 0, 45, 'UTF-8') }}}
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        </header>
+                                    </div>
+                                    <div class="list-vignette-non-tenant"></div>
+                                    @if(!empty($coupon->image))
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset($coupon->image) }}" />
+                                    @else
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
+                                    @endif
+                                </a>
+                            </section>
                         </div>
-                        <div class="col-xs-9 catalogue-info">
-                            <a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">
-                                <span class="link-spanner"></span>
-                                <h4>{{ $coupon->promotion_name }}</h4>
-                                @if (mb_strlen($coupon->description) > 64)
-                                <p>{{{ mb_substr($coupon->description, 0, 64, 'UTF-8') }}} ... </p>
-                                @else
-                                <p>{{{ $coupon->description }}}</p>
-                                @endif
-                            </a>
+                    @endforeach
+                @else
+                    <div class="row padded">
+                        <div class="col-xs-12">
+                            <h4>{{ Lang::get('mobileci.greetings.how_to_get_coupons') }}</h4>
                         </div>
                     </div>
+                @endif
+            @else
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.greetings.how_to_get_coupons') }}</h4>
+                    </div>
                 </div>
-            @endforeach
-        @else
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.greetings.how_to_get_coupons') }}</h4>
-                </div>
-            </div>
-        @endif
-    @else
-        <div class="row padded">
-            <div class="col-xs-12">
-                <h4>{{ Lang::get('mobileci.greetings.how_to_get_coupons') }}</h4>
+            @endif
             </div>
         </div>
-    @endif
+    </div>
 @stop
 
 @section('modals')
