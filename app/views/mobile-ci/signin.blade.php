@@ -19,7 +19,7 @@
             height: 478px;
             display: table;
             width: 100%;
-            top: 30%;
+            top: 40%;
         }
         }
         .modal-backdrop {
