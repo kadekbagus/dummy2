@@ -118,7 +118,7 @@ html {
     min-height: 390px;
     .slogan-container {
         position: absolute;
-        top: 55px;
+        top: -70px;
         left: 0;
         right: 0;
         .slogan {
@@ -129,8 +129,8 @@ html {
         }
     }
     .social-media-wraper {
-        display: table-cell;
-        vertical-align: middle;
+        //display: table-cell;
+        //vertical-align: middle;
     }
     .social-media-container {
         background-color: rgba(252, 252, 252, 0.8);
@@ -249,5 +249,13 @@ html {
     }
     #email:valid {
         border: 1px solid #55bdf0;
+    }
+}
+
+@media (max-width: 300px) {
+    .footer {
+        .container-footer {
+            margin-top: 5px;
+        }
     }
 }

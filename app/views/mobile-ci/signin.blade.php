@@ -2,7 +2,7 @@
 
 @section('ext_style')
     <style>
-        .content-signin {
+        body {
         @if(!empty($bg) && !empty($bg->path))
             background: url('{{ asset($bg->path) }}');
         @else
@@ -11,12 +11,17 @@
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
+            width: 100%;
+        }
+
+        .content-signin{
             position: absolute;
             height: 478px;
             display: table;
             width: 100%;
+            top: 30%;
         }
-
+        }
         .modal-backdrop {
             z-index: 0;
         }
