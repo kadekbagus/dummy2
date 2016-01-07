@@ -193,7 +193,7 @@ class UserAPIController extends ControllerAPI
                     ->setLocation($captive_location)
                     ->setUser($newuser)
                     ->setActivityName('registration_ok')
-                    ->setActivityNameLong('Sign Up with email address')  // todo make this configurable?
+                    ->setActivityNameLong('Sign Up via Mobile (Email Address)')  // todo make this configurable?
                     ->setModuleName('Application')
                     ->responseOK();
                 $registration_activity->save();
