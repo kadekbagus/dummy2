@@ -12,16 +12,16 @@
 
 @section('tenant_tab')
     {{-- todo: create flag for this tabs --}}
-    @if(sizeof($tenant->newsPromotions) > 0 || sizeof($tenant->news) > 0 || sizeof($tenant->coupons) > 0)
+    @if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->coupons) > 0)
     <div class="header-tenant-tab">
         <ul>
-            @if(sizeof($tenant->newsPromotions))
+            @if(sizeof($tenant->newsPromotionsProfiling))
             <li><a id="slide-tab-promo">{{Lang::get('mobileci.page_title.promotions')}}</a></li>
             @endif
-            @if(sizeof($tenant->news))
+            @if(sizeof($tenant->newsProfiling))
             <li><a id="slide-tab-news">{{Lang::get('mobileci.page_title.news')}}</a></li>
             @endif
-            @if(sizeof($tenant->coupons))
+            @if(sizeof($tenant->couponsProfiling))
             <li><a id="slide-tab-coupon">{{Lang::get('mobileci.page_title.coupon_plural')}}</a></li>
             @endif
         </ul>
@@ -32,8 +32,8 @@
 @section('content')
 <div class="slide-tab-container">
     <div id="slide-tab-promo-container">
-        @if(sizeof($tenant->newsPromotions) > 0)
-            @foreach($tenant->newsPromotions as $promotab)
+        @if(sizeof($tenant->newsPromotionsProfiling) > 0)
+            @foreach($tenant->newsPromotionsProfiling as $promotab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" href="{{ url('customer/mallpromotion?id='.$promotab->news_id) }}">
@@ -94,8 +94,8 @@
         @endif
     </div>
     <div id="slide-tab-news-container">
-        @if(sizeof($tenant->news) > 0)
-            @foreach($tenant->news as $newstab)
+        @if(sizeof($tenant->newsProfiling) > 0)
+            @foreach($tenant->newsProfiling as $newstab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" href="{{ url('customer/mallnewsdetail?id='.$newstab->news_id) }}">
@@ -156,11 +156,11 @@
         @endif
     </div>
     <div id="slide-tab-coupon-container">
-        @if(sizeof($tenant->coupons) > 0)
-            @foreach($tenant->coupons as $coupontab)
+        @if(sizeof($tenant->couponsProfiling) > 0)
+            @foreach($tenant->couponsProfiling as $coupontab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
-                        <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupontab->promotion_id) }}">
+                        <a class="list-item-link" href="{{ url('customer/mallcouponcampaign?id='.$coupontab->promotion_id) }}">
                             <div class="list-item-info">
                                 <header class="list-item-title">
                                     <div><strong>{{ $coupontab->promotion_name }}</strong></div>
@@ -246,7 +246,7 @@
 </div>
 <div class="row padded">
     <div class="col-xs-12 font-1-3">
-        <p>{{ $tenant->description }}</p>
+        <p>{{ nl2br($tenant->description) }}</p>
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>

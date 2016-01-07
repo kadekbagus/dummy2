@@ -11,9 +11,9 @@
             @if($data->status === 1)
                 @if(sizeof($data->records) > 0)
                     @foreach($data->records as $coupon)
-                        <div class="col-xs-12 col-sm-12" id="item-{{$coupon->promotion_id}}">
+                        <div class="col-xs-12 col-sm-12" id="item-{{$coupon->issued_coupon_id}}">
                             <section class="list-item-single-tenant">
-                                <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupon->promotion_id) }}">
+                                <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">
                                     <div class="list-item-info">
                                         <header class="list-item-title">
                                             <div><strong>{{ $coupon->promotion_name }}</strong></div>

@@ -36,10 +36,10 @@
     <div class="col-xs-12">
         <div class="row">
             <div class="col-xs-12">
-                <p>{{{ $coupon->description }}}</p>
+                <p>{{ nl2br($coupon->description) }}</p>
             </div>
             <div class="col-xs-12">
-                <p>{{{ $coupon->long_description }}}</p>
+                <p>{{ nl2br($coupon->long_description) }}</p>
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
@@ -54,7 +54,7 @@
         @if(count($tenants) > 0)
         <div class="row vertically-spaced">
             <div class="col-xs-12 text-center">
-                <a href="{{{ url('customer/tenants?coupon_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
+                <a href="{{{ url('customer/tenants?coupon_redeem_id='.$coupon->promotion_id) }}}" class="btn btn-info btn-block">{{{ Lang::get('mobileci.tenant.redemption_places') }}}</a>
             </div>
         </div>
         @endif
