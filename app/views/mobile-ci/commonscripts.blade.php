@@ -240,7 +240,9 @@
             transforms.push('translate(0px,0px)');
             $('.featherlight-image').css("transform", transforms.join(' '));
             $(".featherlight-image").panzoom('resetDimensions');
-            zoomer.featherlight();
+            if(zoomer){
+                zoomer.featherlight();
+            }
             resetImage();
         });
 
