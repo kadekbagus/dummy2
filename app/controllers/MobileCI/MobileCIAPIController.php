@@ -641,6 +641,8 @@ class MobileCIAPIController extends ControllerAPI
         $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (isset($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
         $display_name = '';
+        $error = \Input::get('error') !== '' ? \Input::get('error') : 'No Error';
+        $isInProgress = \Input::get('isInProgress') !== '' ? \Input::get('isInProgress') : false;
 
         if (! empty($cookie_email)) {
             $display_name = $cookie_email;
@@ -731,6 +733,8 @@ class MobileCIAPIController extends ControllerAPI
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
                 'mac' => $mac,
+                'error' => $error,
+                'isInProgress' => $isInProgress,
             ));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
@@ -746,6 +750,8 @@ class MobileCIAPIController extends ControllerAPI
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
                 'mac' => $mac,
+                'error' => $error,
+                'isInProgress' => $isInProgress,
             ));
         }
 
@@ -773,7 +779,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = Config::get('orbit.social.facebook.scope', ['email', 'public_profile']);
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'mac_address' => \Input::get('mac_address', '')]);
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'from_captive' => OrbitInput::post('from_captive'), 'mac_address' => \Input::get('mac_address', '')]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
         $rerequest = '&auth_type=rerequest';
@@ -801,7 +807,7 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         $errorMessage = 'Facebook Error: ' . $fbError;
-        return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+        return Redirect::route('mobile-ci.signin', ['error' => $errorMessage, 'isInProgress' => 'true']);
     }
 
     /**
@@ -861,7 +867,10 @@ class MobileCIAPIController extends ControllerAPI
 
                 $key = $this->getPayloadEncryptionKey();
                 $payload = (new Encrypter($key))->encrypt(http_build_query($data));
-                $query = ['payload' => $payload, 'email' => $userEmail, 'from_captive' => 'yes', 'auto_login' => 'yes'];
+                $query = ['payload' => $payload, 'email' => $userEmail, 'auto_login' => 'yes', 'isInProgress' => 'true'];
+                if (\Input::get('from_captive') === 'yes') {
+                    $query['from_captive'] = 'yes';
+                }
 
                 // todo can we not do this directly
                 return Redirect::route('mobile-ci.signin', $query);
@@ -878,7 +887,7 @@ class MobileCIAPIController extends ControllerAPI
                 return Redirect::to( (string)$url );
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage, 'isInProgress' => 'true']);
             }
         }
     }
@@ -937,7 +946,7 @@ class MobileCIAPIController extends ControllerAPI
             'mac' => \Input::get('mac_address', ''),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'is_captive' => 'yes',
-            'recognized' => $recognized
+            'recognized' => $recognized,
         ];
         $extendedData = [];
 
@@ -967,12 +976,15 @@ class MobileCIAPIController extends ControllerAPI
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
-            return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.']);
+            return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.', 'isInProgress' => 'true']);
         }
 
         $key = $this->getPayloadEncryptionKey();
         $payload = (new Encrypter($key))->encrypt(http_build_query($data));
-        $query = ['payload' => $payload, 'email' => $userEmail, 'from_captive' => 'yes', 'auto_login' => 'yes'];
+        $query = ['payload' => $payload, 'email' => $userEmail, 'auto_login' => 'yes', 'isInProgress' => 'true'];
+        if (\Input::get('from_captive') === 'yes') {
+            $query['from_captive'] = 'yes';
+        }
 
         // todo can we not do this directly
         return Redirect::route('mobile-ci.signin', $query);
