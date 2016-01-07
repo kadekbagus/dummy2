@@ -2,7 +2,7 @@
 
 @section('ext_style')
     <style>
-        .body {
+        body {
         @if(!empty($bg) && !empty($bg->path))
             background: url('{{ asset($bg->path) }}');
         @else
