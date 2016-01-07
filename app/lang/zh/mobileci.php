@@ -152,13 +152,12 @@ return array(
         'email_placeholder' => '将您的电子邮件地址',
         'login_button'      => '登录',
         'start_button'      => '开始购物',
-        'welcome_message'   => 'zh:Feel The New Shopping Experience',
         'not'               => '不是',
         'click_here'        => '点击',
         'email_not_valid'   => '邮件无有效',
         'logging_in_button' => '登录，请稍候',
         'loading_orbit'     => '轨道加载中，请稍候...',
-        'start_button_mall' => '',
+        'start_button_mall' => '感受新的购物体验',
         'register'          => '定位',
         'login_via_facebook'            => '通过 Facebook 登录',
         'login_via_google'            => '通过谷歌首页',
@@ -183,9 +182,9 @@ return array(
         'day' => '日',
         'month' => '月',
         'year' => '年',
-        'policy_terms_message' => 'zh:By clicking <strong>Sign up</strong> you confirm that you accept
-                        <a target="_blank" href="%s">Privacy Policy</a> and
-                        <a target="_blank" href="%s">Terms and Conditions</a>',
+        'policy_terms_message' => '通过点击<strong>签署</strong>您证实您接受
+                        <a target="_blank" href="%s">隐私权政策</a>和
+                        <a target="_blank" href="%s">期限和条件</a>',
         'already_have_an_account' => '已经有一个帐户',
         'fields_are_mandatory' => '所有字段是强制性的',
     ),

@@ -21,7 +21,7 @@
             @if(sizeof($tenant->newsProfiling))
             <li><a id="slide-tab-news">{{Lang::get('mobileci.page_title.news')}}</a></li>
             @endif
-            @if(sizeof($tenant->coupons))
+            @if(sizeof($tenant->couponsProfiling))
             <li><a id="slide-tab-coupon">{{Lang::get('mobileci.page_title.coupon_plural')}}</a></li>
             @endif
         </ul>
@@ -156,8 +156,8 @@
         @endif
     </div>
     <div id="slide-tab-coupon-container">
-        @if(sizeof($tenant->coupons) > 0)
-            @foreach($tenant->coupons as $coupontab)
+        @if(sizeof($tenant->couponsProfiling) > 0)
+            @foreach($tenant->couponsProfiling as $coupontab)
                 <div class="col-xs-12 col-sm-12">
                     <section class="list-item-single-tenant">
                         <a class="list-item-link" href="{{ url('customer/mallcouponcampaign?id='.$coupontab->promotion_id) }}">
@@ -246,7 +246,7 @@
 </div>
 <div class="row padded">
     <div class="col-xs-12 font-1-3">
-        <p>{{ $tenant->description }}</p>
+        <p>{{ nl2br($tenant->description) }}</p>
         <ul class="where-list">
             <li><i class="fa fa-map-marker fa-lg" style="padding-left: 11px;"></i>  {{{ !empty($tenant->floor) ? $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}</li>
             <li><i class="fa fa-globe fa-lg"></i>  {{{ (($tenant->url) != '') ? 'http://'.$tenant->url : '-' }}}</li>
