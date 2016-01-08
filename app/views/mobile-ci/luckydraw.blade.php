@@ -36,11 +36,21 @@
 @if(!empty($luckydraw))
     @if(strtotime($servertime) > strtotime($luckydraw->draw_date))
         @if(! empty($luckydraw->prizes))
-        <div class="row text-center vertically-spaced">
-            <div class="col-xs-12 padded">
-                <a href="{{ url('/customer/luckydraw-announcement?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</a>
-            </div>
-        </div>
+            @if(isset($luckydraw->announcements[0]))
+                @if($luckydraw->announcements[0]->status == 'active')
+                <div class="row text-center vertically-spaced">
+                    <div class="col-xs-12 padded">
+                        <a href="{{ url('/customer/luckydraw-announcement?id=' . $luckydraw->lucky_draw_id) }}" class="btn btn-info btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</a>
+                    </div>
+                </div>
+                @else
+                <div class="row text-center vertically-spaced">
+                    <div class="col-xs-12 padded">
+                        <button class="btn btn-disabled-ld btn-block">{{ Lang::get('mobileci.lucky_draw.see_prizes_and_winner') }}</button>
+                    </div>
+                </div>
+                @endif
+            @endif
         @endif
     @else
         <div class="row text-center vertically-spaced">
@@ -65,7 +75,7 @@
 
         <div class="row">
             <div class="col-xs-12">    
-                @if ($total_number === 0)
+                @if (($total_number === 0) && ($luckydraw->end_date > \Carbon\Carbon::now($retailer->timezone->timezone_name)))
                     <div class="text-center">
                         <img class="img-responsive" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}" style="margin:0 auto" />
                     </div>
