@@ -193,7 +193,7 @@ class UserAPIController extends ControllerAPI
                     ->setLocation($captive_location)
                     ->setUser($newuser)
                     ->setActivityName('registration_ok')
-                    ->setActivityNameLong('Sign Up with email address')  // todo make this configurable?
+                    ->setActivityNameLong('Sign Up via Mobile (Email Address)')  // todo make this configurable?
                     ->setModuleName('Application')
                     ->responseOK();
                 $registration_activity->save();
@@ -2536,6 +2536,9 @@ class UserAPIController extends ControllerAPI
             // set mall id
             $mallId = OrbitInput::post('current_mall');
 
+            // get user mall_ids
+            $listOfMallIds = $user->getUserMallIds($mallId);
+
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
             $lastname = OrbitInput::post('lastname');
@@ -2803,7 +2806,7 @@ class UserAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('category_ids', function($category_ids) use ($updateduser, $mallId) {
+            OrbitInput::post('category_ids', function($category_ids) use ($updateduser, $listOfMallIds) {
                 // validate category_ids
                 $category_ids = (array) $category_ids;
                 foreach ($category_ids as $category_id_check) {
@@ -2831,9 +2834,20 @@ class UserAPIController extends ControllerAPI
                 $syncData = array_combine($category_ids, $pivotData);
 
                 $deleted_category_ids = UserPersonalInterest::where('user_id', $updateduser->user_id)
-                                                                ->where('object_type', 'category')
-                                                                ->get(array('personal_interest_id'))
-                                                                ->toArray();
+                                                            ->where('object_type', 'category')
+                                                            ->join('categories', 'categories.category_id', '=', 'user_personal_interest.personal_interest_id');
+
+                if (empty($listOfMallIds)) { // invalid mall id
+                    $deleted_category_ids->whereRaw('0');
+                } elseif ($listOfMallIds[0] === 1) { // if super admin
+                    // show all users
+                } else { // valid mall id
+                    $deleted_category_ids->whereIn('categories.merchant_id', $listOfMallIds);
+                }
+
+                $deleted_category_ids = $deleted_category_ids->get(array('personal_interest_id'))
+                                                             ->toArray();
+
                 // detach old relation
                 if (sizeof($deleted_category_ids) > 0) {
                     $updateduser->categories()->detach($deleted_category_ids);
