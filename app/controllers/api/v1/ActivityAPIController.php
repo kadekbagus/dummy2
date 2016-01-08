@@ -2299,7 +2299,7 @@ class ActivityAPIController extends ControllerAPI
                     $binds['sign_up_method'] = 'Sign Up via Mobile (Facebook)';
                 } else if ($sign_up_method === 'email') {
                     $sign_up_method_condition = ' and ((registration.registration = :sign_up_method_1) OR (registration.registration = :sign_up_method_2))';
-                    $binds['sign_up_method_1'] = 'Sign Up with email address';
+                    $binds['sign_up_method_1'] = 'Sign Up via Mobile (Email Address)';
                     $binds['sign_up_method_2'] = 'Sign Up';
                 }
                 else {
