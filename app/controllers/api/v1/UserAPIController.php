@@ -2873,7 +2873,7 @@ class UserAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('bank_object_ids', function($bank_object_ids) use ($updateduser, $mallId) {
+            OrbitInput::post('bank_object_ids', function($bank_object_ids) use ($updateduser, $mallId, $listOfMallIds) {
                 // validate bank_object_ids
                 $bank_object_ids = (array) $bank_object_ids;
                 foreach ($bank_object_ids as $bank_object_id_check) {
@@ -2899,7 +2899,30 @@ class UserAPIController extends ControllerAPI
                 // sync new set of bank_object_ids
                 $pivotData = array_fill(0, count($bank_object_ids), ['main_object_type' => 'bank', 'secondary_object_type' => 'user']);
                 $syncData = array_combine($bank_object_ids, $pivotData);
-                $updateduser->banks()->sync($syncData);
+
+                $deleted_bank_ids = ObjectRelation::where('secondary_object_id', $updateduser->user_id)
+                                                  ->where('secondary_object_type', 'user')
+                                                  ->where('main_object_type', 'bank')
+                                                  ->join('objects', 'objects.object_id', '=', 'object_relation.main_object_id');
+
+                if (empty($listOfMallIds)) { // invalid mall id
+                    $deleted_bank_ids->whereRaw('0');
+                } elseif ($listOfMallIds[0] === 1) { // if super admin
+                    // show all users
+                } else { // valid mall id
+                    $deleted_bank_ids->whereIn('objects.merchant_id', $listOfMallIds);
+                }
+
+                $deleted_bank_ids = $deleted_bank_ids->get(array('main_object_id'))
+                                                     ->toArray();
+
+                // detach old relation
+                if (sizeof($deleted_bank_ids) > 0) {
+                    $updateduser->banks()->detach($deleted_bank_ids);
+                }
+
+                // attach new relation
+                $updateduser->banks()->attach($syncData);
 
                 // reload banks relation
                 $updateduser->load('banks');
