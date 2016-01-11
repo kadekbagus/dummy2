@@ -15,6 +15,9 @@ use CurlWrapperCurlException;
 use Exception;
 use Validator;
 use DB;
+use Mall;
+use Membership;
+use MembershipNumber;
 
 class UserUpdateNotifier
 {
@@ -211,6 +214,38 @@ class UserUpdateNotifier
                 $user->membership_number = $response->data->membership_number;
                 $user->membership_since = $response->data->membership_since;
                 $user->save();
+
+                // Note
+                // ----
+                // Update the membership number on membership_numbers table
+                // As of v1.3 - v2.0 there is only one membership card per mall
+                // so we only select the first active membership number
+                // Once we implements multiple membership card this routine code
+                // SHOULD be updated
+                $card = Membership::active()->where('merchant_id', $retailer->merchant_id)->first();
+                if (! is_object($card)) {
+                    $errorMessage = sprintf('Can not find membership card for mall or retailer: %s.', $retailer->name);
+                    throw new Exception($errorMessage);
+                }
+
+                $membershipNumber = MembershipNumber::active()
+                                                    ->where('user_id', $user->user_id)
+                                                    ->where('issuer_merchant_id', $retailer->merchant_id)
+                                                    ->where('membership_id', $card->membership_id)
+                                                    ->first();
+                // Create new membership number if not exists
+                if (! is_object($membershipNumber)) {
+                    Log::info( sprintf('Membership number not found for user %s not found, creating new one.', $user->user_id) );
+                    $membershipNumber = new MembershipNumber();
+                    $membershipNumber->user_id = $user->user_id;
+                    $membershipNumber->issuer_merchant_id = $retailer->merchant_id;
+                    $membershipNumber->membership_id = $card->membership_id;
+                    $membershipNumber->status = MembershipNumber::STATUS_ACTIVE;
+                }
+
+                $membershipNumber->join_date = $response->data->membership_since;
+                $membershipNumber->membership_number = $response->data->membership_number;
+                $membershipNumber->save();
             }
 
             // Everything seems fine lets delete the job
