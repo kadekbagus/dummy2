@@ -43,7 +43,7 @@
             </div>
             <div class="col-xs-12">
                 <h4><strong>{{{ Lang::get('mobileci.coupon_detail.validity_label') }}}</strong></h4>
-                <p>{{{ date('d M Y', strtotime($coupon->coupon_validity_in_date)) }}}</p>
+                <p>{{{ date('d M Y', strtotime($coupon->begin_date)) }}} - {{{ date('d M Y', strtotime($coupon->end_date)) }}}</p>
             </div>
         </div>
     </div>
