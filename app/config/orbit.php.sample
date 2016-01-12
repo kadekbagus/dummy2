@@ -2691,7 +2691,6 @@ return array(
             'pmp_promotions',
             'pmp_report_news',
             'pmp_report_promotions',
-            'pmp_report_coupons',
             'pmp_employee'
         )
     ),
