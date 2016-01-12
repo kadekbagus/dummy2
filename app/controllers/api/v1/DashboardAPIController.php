@@ -1075,13 +1075,13 @@ class DashboardAPIController extends ControllerAPI
 
             $expiringCampaign = DB::select(
                 DB::raw("
-                        SELECT promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, IF(is_coupon = 'Y','coupon', '')
+                        SELECT promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, IF(is_coupon = 'Y','coupon', '') type
                         FROM {$tablePrefix}promotions
                         WHERE is_coupon = 'Y'
                         AND end_date > '".$now_date."'
                         AND merchant_id = '".$merchant_id."'
                         union all
-                        SELECT news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, object_type
+                        SELECT news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, object_type type
                         FROM {$tablePrefix}news
                         WHERE end_date > '".$now_date."'
                         AND mall_id = '".$merchant_id."'
