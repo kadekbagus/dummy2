@@ -986,8 +986,6 @@ class DashboardAPIController extends ControllerAPI
      * ------------------
      * @param integer `merchant_id`   (optional) - mall id
      * @param string  `now_date`      (optional) - now_date of mall
-     * @param date    `start_date`    (optional) - filter start date
-     * @param date    `end_date`      (optional) - filter end date
      * @return Illuminate\Support\Facades\Response
      */
     public function getExpiringCampaign()
@@ -1025,20 +1023,18 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::get('merchant_id');
+            $current_mall = OrbitInput::get('current_mall');
             $now_date = OrbitInput::get('now_date');
             $take = OrbitInput::get('take');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $merchant_id,
-                    'now_date' => $now_date,
-                    'take' => $take
+                    'current_mall' => $current_mall,
+                    'now_date' => $now_date
                 ),
                 array(
-                    'merchant_id' => 'required | orbit.empty.merchant',
-                    'now_date' => 'required | date_format:Y-m-d H:i:s',
-                    'take' => 'numeric',
+                    'current_mall' => 'required | orbit.empty.merchant',
+                    'now_date' => 'required | date_format:Y-m-d H:i:s'
                 )
             );
 
@@ -1079,12 +1075,12 @@ class DashboardAPIController extends ControllerAPI
                         FROM {$tablePrefix}promotions
                         WHERE is_coupon = 'Y'
                         AND end_date > '".$now_date."'
-                        AND merchant_id = '".$merchant_id."'
+                        AND merchant_id = '".$current_mall."'
                         union all
                         SELECT news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, object_type type
                         FROM {$tablePrefix}news
                         WHERE end_date > '".$now_date."'
-                        AND mall_id = '".$merchant_id."'
+                        AND mall_id = '".$current_mall."'
                         ORDER BY expire_days ASC
                         LIMIT 0, 10
                     ")
