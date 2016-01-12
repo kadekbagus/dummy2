@@ -14,6 +14,10 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class DashboardAPIController extends ControllerAPI
 {
+
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
     /**
      * Flag to return the query builder.
      *
@@ -884,7 +888,7 @@ class DashboardAPIController extends ControllerAPI
                             ];
                         }
                         break;
-                        
+
                 // show lucky draws
                 case 'lucky_draws':
                         foreach ($periods as $period) {
@@ -973,11 +977,166 @@ class DashboardAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * GET - The expiring campaign (news, promotion, coupon)
+     *
+     * @author firmansyah <firmansyah@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`   (optional) - mall id
+     * @param string  `now_date`      (optional) - now_date of mall
+     * @param date    `start_date`    (optional) - filter start date
+     * @param date    `end_date`      (optional) - filter end date
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getExpiringCampaign()
+    {
+        try {
+            $httpCode = 200;
 
+            Event::fire('orbit.dashboard.getexpiringcampaign.before.auth', array($this));
 
+            // Require authentication
+            $this->checkAuth();
 
+            Event::fire('orbit.dashboard.getexpiringcampaign.after.auth', array($this));
 
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getexpiringcampaign.before.authz', array($this, $user));
 
+            // if (! ACL::create($user)->isAllowed('view_product')) {
+            //     Event::fire('orbit.dashboard.getexpiringcampaign.authz.notallowed', array($this, $user));
+            //     $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            $role = $user->role;
+            $validRoles = $this->newsViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getexpiringcampaign.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $merchant_id = OrbitInput::get('merchant_id');
+            $now_date = OrbitInput::get('now_date');
+            $take = OrbitInput::get('take');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchant_id,
+                    'now_date' => $now_date,
+                    'take' => $take
+                ),
+                array(
+                    'merchant_id' => 'required | orbit.empty.merchant',
+                    'now_date' => 'required | date_format:Y-m-d H:i:s',
+                    'take' => 'numeric',
+                )
+            );
+
+            Event::fire('orbit.dashboard.getexpiringcampaign.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            Event::fire('orbit.dashboard.getexpiringcampaign.after.validation', array($this, $validator));
+
+            $tablePrefix = DB::getTablePrefix();
+
+            // @todo change to eloquent if posible
+            // $coupon = Coupon::select(DB::raw("
+            //                             promotion_id AS campaign_id,
+            //                             promotion_name AS campaign_name,
+            //                             DATEDIFF(end_date, '".$now_date."') AS expire_days
+            //                         "))
+            //                     ->where('end_date', '>=', $now_date)
+            //                     ->where('merchant_id', $merchant_id);
+
+            // $newsAndPromotion = News::select(DB::raw("
+            //                             news_id AS campaign_id,
+            //                             news_name AS campaign_name,
+            //                             DATEDIFF(end_date, '".$now_date."') AS expire_days
+            //                         "))
+            //                     ->where('end_date', '>=', $now_date)
+            //                     ->where('mall_id', $merchant_id);
+
+            // $expiringCampaign = $newsAndPromotion->union($coupon)->take(30)->get();
+
+            $expiringCampaign = DB::select(
+                DB::raw("
+                        SELECT promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days
+                        FROM {$tablePrefix}promotions
+                        WHERE is_coupon = 'Y'
+                        AND end_date > '".$now_date."'
+                        AND merchant_id = '".$merchant_id."'
+                        union all
+                        SELECT news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days
+                        FROM {$tablePrefix}news
+                        WHERE end_date > '".$now_date."'
+                        AND mall_id = '".$merchant_id."'
+                        ORDER BY expire_days ASC
+                        LIMIT 0, 10
+                    ")
+            );
+
+            $this->response->data = $expiringCampaign;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getexpiringcampaign.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getexpiringcampaign.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getexpiringcampaign.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getexpiringcampaign.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getexpiringcampaign.before.render', array($this, &$output));
+
+        return $output;
+    }
 
     /**
      * GET - TOP Product
