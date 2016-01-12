@@ -48,3 +48,6 @@ Route::get('/app/v1/dashboard/top-tenant-redeem', "IntermediateAuthController@Da
 
 // Get Dashboard detail of top customer view
 Route::get('/app/v1/dashboard/detail-top-customer-view', "IntermediateAuthController@Dashboard_getDetailTopCustomerView");
+
+// Get Dashboard expiring
+Route::get('/app/v1/dashboard/expiring-campaign', "IntermediateAuthController@Dashboard_getExpiringCampaign");

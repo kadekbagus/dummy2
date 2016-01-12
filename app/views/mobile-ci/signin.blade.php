@@ -455,6 +455,7 @@
         }
         @endif
         $(document).ready(function () {
+            $.removeCookie('dismiss_campaign_cards'); // remove campaign cards popup flags from cookie
             var em;
             var user_em = '{{ strtolower($user_email) }}';
 
