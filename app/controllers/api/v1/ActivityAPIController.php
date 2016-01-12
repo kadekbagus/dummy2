@@ -3026,7 +3026,7 @@ class ActivityAPIController extends ControllerAPI
             $days = abs(floor($dateDiff/(60*60*24)));
 
             if ( $days > 7 ) {
-                $errorMessage = 'Date cannot be more than 7 days';
+                $errorMessage = 'The date range can not be more than 7 days';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
