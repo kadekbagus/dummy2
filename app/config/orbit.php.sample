@@ -2683,6 +2683,9 @@ return array(
         ),
         'pmp' => array(
             'pmp_dashboard',
+            'pmp_campaign_dashboard',
+            'pmp_campaign_detail',
+            'pmp_campaigns',
             'pmp_news',
             'pmp_coupons',
             'pmp_promotions',
