@@ -1,7 +1,6 @@
 @extends('mobile-ci.layout')
 
 @section('ext_style')
-{{ HTML::style('mobile-ci/stylesheet/lightslider.min.css') }}
 {{ HTML::style('mobile-ci/stylesheet/jquery-ui.min.css') }}
 <style type="text/css">
 .img-responsive{
@@ -133,127 +132,6 @@
 @stop
 
 @section('modals')
-<style type="text/css">
-    .campaign-cards-container{
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top:0;
-        left:0;
-        overflow-y: scroll;
-        display: none;
-    }
-    .campaign-cards-container #image-gallery li img{
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
-    }
-    .campaign-cards-container .lSSlideOuter .lSPager.lSpg>li a{
-        border-radius: 6px;
-    }
-    .campaign-cards-wrapper{
-        position: fixed;
-        top: 0px;
-        left: 5%;
-        z-index: 99999;
-        width: 90%;
-        height:100%;
-        overflow: auto;
-        padding-top: 20px;
-        padding-bottom: 20px;
-    }
-    .campaign-cards-back-drop{
-        display: none;
-        position: fixed;
-        background: rgba(0,0,0,.5);
-        z-index: 9999;
-        top: 0;
-        height: 100%;
-        width: 100%;
-    }
-    .campaign-cards-info{
-        background: #fff;
-        padding: 10px;
-        margin-top: 0px;
-        -webkit-box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
-        -moz-box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
-        box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
-        border-bottom-left-radius: 16px;
-        border-bottom-right-radius: 16px;
-    }
-    .campaign-cards-info p{
-        overflow: hidden;
-        text-overflow: ellipsis;
-        height: 40px;
-    }
-    .campaign-cards-close-btn{
-        position: absolute;
-        z-index: 1;
-        right: 12px;
-        top: 24px;
-    }
-</style>
-<div class="campaign-cards-container">
-    <div class="row campaign-cards-wrapper">
-        <div class="col-xs-12 text-right campaign-cards-close-btn">
-            <button class="close" id='campaign-cards-close-btn'>&times;</button>
-        </div>
-        <div class="col-xs-12 text-center">
-            <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
-                <li data-thumb="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_coupon.jpg') }}">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_coupon.jpg') }}"/>
-                    <div class="campaign-cards-info">
-                        <h4>This Is The Campaign Cards 1</h4>
-                        <p>
-                            And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions.
-                        </p>
-                        <a href="#">Go to page</a>
-                    </div>
-                </li>
-                <li data-thumb="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_lucky_draw.jpg') }}">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_lucky_draw.jpg') }}"/>
-                    <div class="campaign-cards-info">
-                        <h4>This Is The Campaign Cards 2</h4>
-                        <p>
-                            And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions.
-                        </p>
-                        <a href="#">Go to page</a>
-                    </div>
-                </li>
-                <li data-thumb="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_promotion.jpg') }}">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_promotion.jpg') }}"/>
-                    <div class="campaign-cards-info">
-                        <h4>This Is The Campaign Cards 3</h4>
-                        <p>
-                            And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions.
-                        </p>
-                        <a href="#">Go to page</a>
-                    </div>
-                </li>
-                <li data-thumb="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_news.jpg') }}">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_news.jpg') }}"/>
-                    <div class="campaign-cards-info">
-                        <h4>This Is The Campaign Cards 4</h4>
-                        <p>
-                            And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions.
-                        </p>
-                        <a href="#">Go to page</a>
-                    </div>
-                </li>
-                <li data-thumb="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_tenants.jpg') }}">
-                    <img class="img-responsive" src="{{ asset('mobile-ci/images/lmp-widgets/lippo_mall_puri_widget_tenants.jpg') }}"/>
-                    <div class="campaign-cards-info">
-                        <h4>This Is The Campaign Cards 5</h4>
-                        <p>
-                            And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions. And this the Campaign Cards litle descriptions.
-                        </p>
-                        <a href="#">Go to page</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </div>
-</div>
-<div class="row campaign-cards-back-drop"></div>
 <!-- Modal -->
 <div class="modal fade" id="noModal" tabindex="-1" role="dialog" aria-labelledby="noModalLabel" aria-hidden="true">
     <div class="modal-dialog orbit-modal">
@@ -343,8 +221,6 @@
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
 {{ HTML::script('mobile-ci/scripts/responsiveslides.min.js') }}
-{{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     var cookie_dismiss_name = 'dismiss_verification_popup';
     var cookie_dismiss_name_2 = 'dismiss_activation_popup';
@@ -394,35 +270,6 @@
     }
 
     $(document).ready(function() {
-        setTimeout(function(){
-            $('body').addClass('freeze-scroll');
-            $('.content-container, .header-container, footer').addClass('blurred');
-            $('.campaign-cards-back-drop').fadeIn('slow');
-            $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
-            $('#image-gallery').lightSlider({
-                gallery:false,
-                item:1,
-                slideMargin: 20,
-                speed:500,
-                pause:2000,
-                auto:true,
-                loop:true,
-                pager: true,
-                onSliderLoad: function() {
-                    $('#image-gallery').removeClass('cS-hidden');
-                },
-                onAfterSlide: function() {
-                }
-            });
-        }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
-
-        $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
-            $('body').removeClass('freeze-scroll');
-            $('.content-container, .header-container, footer').removeClass('blurred');
-            $('.campaign-cards-back-drop').fadeOut('slow');
-            $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
-        });
-
         var homescreenPopover = {};
         function homescreenPopup() {
             // get the os first

@@ -2,6 +2,7 @@
 <html>
     <head>
         @include('mobile-ci.head')
+        {{ HTML::style('mobile-ci/stylesheet/lightslider.min.css') }}
         @yield('ext_style')
     </head>
     <body>
@@ -14,9 +15,9 @@
         <script type="text/javascript">
             var orbitIsViewing = false;
         </script>
-        @yield('ext_script_bot')
         @include('mobile-ci.commonscripts')
         @include('mobile-ci.push-notification-script')
+        @yield('ext_script_bot')
         {{-- @include('mobile-ci.orbit-tour') --}}
 
     </body>

@@ -493,4 +493,8 @@ return array(
         'header'  => '获取新的数字化购物体验',
         'message' => '请连接到商场的无线网络',
     ),
+
+    'campaign_cards' => array(
+        'go_to_page' => '转到页面',
+    ),
 );
