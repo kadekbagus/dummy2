@@ -1,6 +1,7 @@
 @extends('mobile-ci.layout')
 
 @section('ext_style')
+{{ HTML::style('mobile-ci/stylesheet/jquery-ui.min.css') }}
 <style type="text/css">
 .img-responsive{
     margin:0 auto;
@@ -220,7 +221,6 @@
 @section('ext_script_bot')
 {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
 {{ HTML::script('mobile-ci/scripts/responsiveslides.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     var cookie_dismiss_name = 'dismiss_verification_popup';
     var cookie_dismiss_name_2 = 'dismiss_activation_popup';

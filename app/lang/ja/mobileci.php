@@ -492,4 +492,8 @@ return array(
         'header'  => 'と新しいデジタルショッピング体験を取得',
         'message' => 'モールの無線LANに接続してください',
     ),
+    
+    'campaign_cards' => array(
+        'go_to_page' => 'ページに移動',
+    ),
 );
