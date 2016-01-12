@@ -2642,13 +2642,10 @@ return array(
         'Network Check Out'                            => 'Network Check Out',
         'Sign Out'                                     => 'Sign Out',
         'View (Home Page)'                             => 'View (Home Page)',
-        'Event View (Pop Up)'                          => 'Event View (Pop Up)',
-        'Event Click'                                  => 'Event Click',
         'View Coupon List'                             => 'View Coupon List',
         'View Coupon Detail'                           => 'View Coupon Detail',
         'Coupon Redemption Successful'                 => 'Coupon Redemption (Successful)',
         'Coupon Issuance'                              => 'Coupon Issuance',
-        'View Events Tenant List'                      => 'View Events Tenant List',
         'View News List'                               => 'View News List',
         'View News Detail'                             => 'View News Detail',
         'View News Tenant List'                        => 'View News Tenant List',
@@ -2691,7 +2688,6 @@ return array(
             'pmp_promotions',
             'pmp_report_news',
             'pmp_report_promotions',
-            'pmp_report_coupons',
             'pmp_employee'
         )
     ),
