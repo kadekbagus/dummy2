@@ -4862,7 +4862,7 @@ class MobileCIAPIController extends ControllerAPI
             $data->returned_records = count($end_results);
             $data->records = $end_results;
 
-            if (count($end_results === 0)) {
+            if (count($end_results) === 0) {
                 $data->records = null;
                 $this->response->message = 'T_T .No campaign for you. T_T';
             }
