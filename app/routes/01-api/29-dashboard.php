@@ -54,3 +54,6 @@ Route::get('/api/v1/dashboard/top-tenant-redeem', "DashboardAPIController@getTop
 
 // Get Dashboard detail of top customer view
 Route::get('/api/v1/dashboard/detail-top-customer-view', "DashboardAPIController@getDetailTopCustomerView");
+
+// Get Dashboard expiting campaigns
+Route::get('/api/v1/dashboard/expiring-campaign', "DashboardAPIController@getExpiringCampaign");

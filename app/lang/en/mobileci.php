@@ -152,13 +152,12 @@ return array(
         'email_placeholder' => 'Insert your email address',
         'login_button'      => 'Enter',
         'start_button'      => 'Start Shopping',
-        'welcome_message'   => 'Feel The New Shopping Experience',
         'not'               => 'Not',
         'click_here'        => 'click here',
         'email_not_valid'   => 'Email address is not valid',
         'logging_in_button' => 'Logging in. Please wait...',
         'loading_orbit'     => 'Loading Orbit, please wait...',
-        'start_button_mall' => '',
+        'start_button_mall' => 'Feel The New Shopping Experience',
         'register'          => 'Daftar',
         'login_via_facebook' => 'Login via Facebook',
         'login_via_google' => 'Login via Google+',
@@ -292,7 +291,7 @@ return array(
         'exp_coupon'        => 'You do not have this coupon.',
         'back_label'        => 'Back',
         'coupon_code_label' => 'Coupon code',
-        'validity_label'    => 'Valid until',
+        'validity_label'    => 'Validity',
     ),
 
     'search' => array(

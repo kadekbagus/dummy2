@@ -641,6 +641,8 @@ class MobileCIAPIController extends ControllerAPI
         $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (isset($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
         $display_name = '';
+        $error = \Input::get('error') !== '' ? \Input::get('error') : 'No Error';
+        $isInProgress = \Input::get('isInProgress') !== '' ? \Input::get('isInProgress') : false;
 
         if (! empty($cookie_email)) {
             $display_name = $cookie_email;
@@ -731,6 +733,8 @@ class MobileCIAPIController extends ControllerAPI
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
                 'mac' => $mac,
+                'error' => $error,
+                'isInProgress' => $isInProgress,
             ));
         } catch (Exception $e) {
             $retailer = $this->getRetailerInfo();
@@ -746,6 +750,8 @@ class MobileCIAPIController extends ControllerAPI
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
                 'mac' => $mac,
+                'error' => $error,
+                'isInProgress' => $isInProgress,
             ));
         }
 
@@ -773,7 +779,7 @@ class MobileCIAPIController extends ControllerAPI
 
         $helper = $fb->getRedirectLoginHelper();
         $permissions = Config::get('orbit.social.facebook.scope', ['email', 'public_profile']);
-        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'mac_address' => \Input::get('mac_address', '')]);
+        $facebookCallbackUrl = URL::route('mobile-ci.social_login_callback', ['orbit_origin' => 'facebook', 'from_captive' => OrbitInput::post('from_captive'), 'mac_address' => \Input::get('mac_address', '')]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user
         $rerequest = '&auth_type=rerequest';
@@ -801,7 +807,7 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         $errorMessage = 'Facebook Error: ' . $fbError;
-        return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+        return Redirect::route('mobile-ci.signin', ['error' => $errorMessage, 'isInProgress' => 'true']);
     }
 
     /**
@@ -861,7 +867,10 @@ class MobileCIAPIController extends ControllerAPI
 
                 $key = $this->getPayloadEncryptionKey();
                 $payload = (new Encrypter($key))->encrypt(http_build_query($data));
-                $query = ['payload' => $payload, 'email' => $userEmail, 'from_captive' => 'yes', 'auto_login' => 'yes'];
+                $query = ['payload' => $payload, 'email' => $userEmail, 'auto_login' => 'yes', 'isInProgress' => 'true'];
+                if (\Input::get('from_captive') === 'yes') {
+                    $query['from_captive'] = 'yes';
+                }
 
                 // todo can we not do this directly
                 return Redirect::route('mobile-ci.signin', $query);
@@ -878,7 +887,7 @@ class MobileCIAPIController extends ControllerAPI
                 return Redirect::to( (string)$url );
             } catch (Exception $e) {
                 $errorMessage = 'Error: ' . $e->getMessage();
-                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage]);
+                return Redirect::route('mobile-ci.signin', ['error' => $errorMessage, 'isInProgress' => 'true']);
             }
         }
     }
@@ -937,7 +946,7 @@ class MobileCIAPIController extends ControllerAPI
             'mac' => \Input::get('mac_address', ''),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'is_captive' => 'yes',
-            'recognized' => $recognized
+            'recognized' => $recognized,
         ];
         $extendedData = [];
 
@@ -967,12 +976,15 @@ class MobileCIAPIController extends ControllerAPI
         // There is a chance that user not 'grant' his email while approving our app
         // so we double check it here
         if (empty($userEmail)) {
-            return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.']);
+            return Redirect::route('mobile-ci.signin', ['error' => 'Email is required.', 'isInProgress' => 'true']);
         }
 
         $key = $this->getPayloadEncryptionKey();
         $payload = (new Encrypter($key))->encrypt(http_build_query($data));
-        $query = ['payload' => $payload, 'email' => $userEmail, 'from_captive' => 'yes', 'auto_login' => 'yes'];
+        $query = ['payload' => $payload, 'email' => $userEmail, 'auto_login' => 'yes', 'isInProgress' => 'true'];
+        if (\Input::get('from_captive') === 'yes') {
+            $query['from_captive'] = 'yes';
+        }
 
         // todo can we not do this directly
         return Redirect::route('mobile-ci.signin', $query);
@@ -1752,6 +1764,7 @@ class MobileCIAPIController extends ControllerAPI
      * @return Illuminate\View\View
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      */
     public function getTenantsView()
     {
@@ -2108,32 +2121,102 @@ class MobileCIAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
             $news_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
                         ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
                         ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
-                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
-                        ->where('news.object_type', '=', 'news')
-                        ->where('news.status', '=', 'active')
-                        ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
-                        ->groupBy('merchants.name')->get();
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+                        // filter by age and gender
+                        if ($userGender !== null) {
+                            $news_flag = $news_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                        }
+                        if ($userAge !== null) {
+                            if ($userAge === 0){
+                                $news_flag = $news_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            } else {
+                                if ($userAge >= 55) {
+                                    $news_flag = $news_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                                } else {
+                                    $news_flag = $news_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                                }
+                            }
+                        }
+
+                        $news_flag = $news_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                                    ->where('news.object_type', '=', 'news')
+                                    ->where('news.status', '=', 'active')
+                                    ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
+                                    ->groupBy('merchants.name')->get();
 
             $promotion_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
                         ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
                         ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
-                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
-                        ->where('news.object_type', '=', 'promotion')
-                        ->where('news.status', '=', 'active')
-                        ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
-                        ->groupBy('merchants.name')->get();
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+                        // filter by age and gender
+                        if ($userGender !== null) {
+                            $promotion_flag = $promotion_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                        }
+                        if ($userAge !== null) {
+                            if ($userAge === 0){
+                                $promotion_flag = $promotion_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            } else {
+                                if ($userAge >= 55) {
+                                    $promotion_flag = $promotion_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                                } else {
+                                    $promotion_flag = $promotion_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                                }
+                            }
+                        }
+
+                        $promotion_flag = $promotion_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                                    ->where('news.object_type', '=', 'promotion')
+                                    ->where('news.status', '=', 'active')
+                                    ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
+                                    ->groupBy('merchants.name')->get();
 
             $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
                         ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
                         ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
-                        ->where('merchants.parent_id', '=', $retailer->merchant_id)
-                        ->where('promotions.is_coupon', '=', 'Y')
-                        ->where('promotions.status', '=', 'active')
-                        ->whereRaw("NOW() between {$prefix}promotions.begin_date and {$prefix}promotions.end_date")
-                        ->groupBy('merchants.name')->get();
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+                        // filter by age and gender
+                        if ($userGender !== null) {
+                            $coupon_flag = $coupon_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                        }
+                        if ($userAge !== null) {
+                            if ($userAge === 0){
+                                $coupon_flag = $coupon_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            } else {
+                                if ($userAge >= 55) {
+                                    $coupon_flag = $coupon_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                                } else {
+                                    $coupon_flag = $coupon_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                                }
+                            }
+                        }
+
+                        $coupon_flag = $coupon_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                                    ->where('promotions.is_coupon', '=', 'Y')
+                                    ->where('promotions.status', '=', 'active')
+                                    ->whereRaw("NOW() between {$prefix}promotions.begin_date and {$prefix}promotions.end_date")
+                                    ->groupBy('merchants.name')->get();
 
             $totalRec = $_tenants->count();
             $listOfRec = $tenants->get(); //randomize
@@ -2386,7 +2469,21 @@ class MobileCIAPIController extends ControllerAPI
                         }
                         $q->whereRaw("NOW() between begin_date and end_date");
                     },
-                    'coupons' => function($q) {
+                    'couponsProfiling' => function($q) use ($userGender, $userAge) {
+                        if ($userGender !== null) {
+                            $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                        }
+                        if ($userAge !== null) {
+                            if ($userAge === 0){
+                                $q->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                            } else {
+                                if ($userAge >= 55) {
+                                    $q->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                                } else {
+                                    $q->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                                }
+                            }
+                        }
                         $q->whereRaw("NOW() between begin_date and end_date");
                     }
                 ))
@@ -2489,8 +2586,8 @@ class MobileCIAPIController extends ControllerAPI
 
 
             // Coupons per tenant
-            if (!empty($alternateLanguage) && !empty($tenant->coupons)) {
-                foreach ($tenant->coupons as $keycoupons => $coupons) {
+            if (!empty($alternateLanguage) && !empty($tenant->couponsProfiling)) {
+                foreach ($tenant->couponsProfiling as $keycoupons => $coupons) {
 
                     $couponsTranslation = \CouponTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -2500,7 +2597,7 @@ class MobileCIAPIController extends ControllerAPI
                         foreach (['news_name', 'description'] as $field) {
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($couponsTranslation->{$field}) && $couponsTranslation->{$field} !== '') {
-                                $tenant->coupons[$keycoupons]->{$field} = $couponsTranslation->{$field};
+                                $tenant->couponsProfiling[$keycoupons]->{$field} = $couponsTranslation->{$field};
                             }
                         }
 
@@ -2780,7 +2877,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $luckydraw = LuckyDraw::with('translations', 'prizes')->excludeDeleted()->where('mall_id', $retailer->merchant_id)->where('lucky_draw_id', $lucky_draw_id)->first();
+            $luckydraw = LuckyDraw::with('translations', 'prizes', 'announcements')->excludeDeleted()->where('mall_id', $retailer->merchant_id)->where('lucky_draw_id', $lucky_draw_id)->first();
 
             $languages = $this->getListLanguages($retailer);
 

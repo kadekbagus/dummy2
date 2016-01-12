@@ -1177,7 +1177,7 @@ class IntermediateLoginController extends IntermediateBaseController
                             ]);
                         }
                     } else if ($from === 'form') {
-                        $registration_activity->activity_name_long = 'Sign Up with email address';
+                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Email Address)';
                         $registration_activity->save();
                     } else if ($from === 'google') {
                         $registration_activity->activity_name_long = 'Sign Up via Mobile (Google+)';
