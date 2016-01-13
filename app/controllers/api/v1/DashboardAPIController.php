@@ -1105,37 +1105,38 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            // @todo change to eloquent if posible
-            // $coupon = Coupon::select(DB::raw("
-            //                             promotion_id AS campaign_id,
-            //                             promotion_name AS campaign_name,
-            //                             DATEDIFF(end_date, '".$now_date."') AS expire_days
-            //                         "))
-            //                     ->where('end_date', '>=', $now_date)
-            //                     ->where('merchant_id', $merchant_id);
+            // @todo change to eloquent if posible for orderby
+            // $coupon = DB::table('promotions')
+            //     ->selectRaw("promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '" . $now_date . "') expire_days, IF(is_coupon = 'Y','coupon', '') type")
+            //     ->where('is_coupon', '=', 'Y')
+            //     ->where('end_date', '>', $now_date)
+            //     ->where('merchant_id', $current_mall)
+            //     ->where('status', '=', 'active')
+            //     ->orderBy('expire_days','asc');
 
-            // $newsAndPromotion = News::select(DB::raw("
-            //                             news_id AS campaign_id,
-            //                             news_name AS campaign_name,
-            //                             DATEDIFF(end_date, '".$now_date."') AS expire_days
-            //                         "))
-            //                     ->where('end_date', '>=', $now_date)
-            //                     ->where('mall_id', $merchant_id);
+            // $newsAndPromotion = DB::table('news')
+            //     ->selectRaw("news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '" . $now_date . "') expire_days, object_type type")
+            //     ->where('end_date', '>', $now_date)
+            //     ->where('mall_id', $current_mall)
+            //     ->where('status', '=', 'active')
+            //     ->orderBy('expire_days','asc');
 
-            // $expiringCampaign = $newsAndPromotion->union($coupon)->take(30)->get();
+            // $expiringCampaign = $newsAndPromotion->union($coupon)->orderBy('expire_days','asc')->take(10)->get();
 
             $expiringCampaign = DB::select(
                 DB::raw("
-                        SELECT promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, IF(is_coupon = 'Y','coupon', '') type
+                        SELECT promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '" . $now_date . "') expire_days, IF(is_coupon = 'Y','coupon', '') type
                         FROM {$tablePrefix}promotions
                         WHERE is_coupon = 'Y'
-                        AND end_date > '".$now_date."'
-                        AND merchant_id = '".$current_mall."'
+                        AND end_date > '" . $now_date . "'
+                        AND merchant_id = '" . $current_mall . "'
+                        AND status = 'active'
                         union all
-                        SELECT news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, object_type type
+                        SELECT news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '" . $now_date . "') expire_days, object_type type
                         FROM {$tablePrefix}news
-                        WHERE end_date > '".$now_date."'
-                        AND mall_id = '".$current_mall."'
+                        WHERE end_date > '" . $now_date . "'
+                        AND mall_id = '" . $current_mall . "'
+                        AND status = 'active'
                         ORDER BY expire_days ASC
                         LIMIT 0, 10
                     ")
@@ -4460,4 +4461,37 @@ class DashboardAPIController extends ControllerAPI
         });
 
     }
+
+    /**
+     * Get campaign status
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @return \OrbitShop\API\v1\ResponseProvider | string
+     */
+    public function getCampaignStatus()
+    {
+        // Promotions
+        $activePromotionCount = News::isPromotion()->runsToday()->active()->count();
+        $inactivePromotionCount = News::isPromotion()->runsToday()->inactive()->count();
+
+        // News
+        $activeNewsCount = News::isNews()->runsToday()->active()->count();
+        $inactiveNewsCount = News::isNews()->runsToday()->inactive()->count();
+
+        // Coupons
+        $activeCouponCount = Promotion::where('is_coupon', 'Y')->runsToday()->active()->count();
+        $inactiveCouponCount = Promotion::where('is_coupon', 'N')->runsToday()->inactive()->count();
+
+        $this->response->data = array(
+            'promotions_active'    => $activePromotionCount,
+            'promotions_inactive'  => $inactivePromotionCount,
+            'news_active'          => $activeNewsCount,
+            'news_inactive'        => $inactiveNewsCount,
+            'coupons_active'       => $activeCouponCount,
+            'coupons_inactive'     => $inactiveCouponCount,
+        );
+
+        return $this->render(200);
+    }
+
 }
