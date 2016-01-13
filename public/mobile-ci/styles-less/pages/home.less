@@ -260,12 +260,18 @@ i.disableds{
     left:0;
     overflow-y: scroll;
     display: none;
+    z-index:1001;
     #campaign-cards li {
         background: #fff;
         border-top-left-radius: 16px;
         border-top-right-radius: 16px;
         border-bottom-left-radius: 16px;
         border-bottom-right-radius: 16px;
+        h4{
+          height: 22px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
         img{
             border-top-left-radius: 16px;
             border-top-right-radius: 16px;
@@ -281,7 +287,7 @@ i.disableds{
             }
             &.active {
                 a {
-                    background-color: @theme-main;
+                    background-color: @theme-main-complimentary;
                 }
             }
             &:hover{
@@ -316,7 +322,7 @@ i.disableds{
     display: none;
     position: fixed;
     background: rgba(0,0,0,.5);
-    z-index: 9999;
+    z-index: 1000;
     top: 0;
     height: 100%;
     width: 100%;
