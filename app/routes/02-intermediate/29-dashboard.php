@@ -54,3 +54,6 @@ Route::get('/app/v1/dashboard/expiring-campaign', "IntermediateAuthController@Da
 
 // Get Dashboard campaign status
 Route::get('/app/v1/dashboard/campaign-statuses', "IntermediateAuthController@Dashboard_getCampaignStatus");
+
+// Get Dashboard campaign status
+Route::get('/app/v1/dashboard/total-page-view', "IntermediateAuthController@Dashboard_getTotalPageView");

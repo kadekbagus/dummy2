@@ -4494,4 +4494,147 @@ class DashboardAPIController extends ControllerAPI
         return $this->render(200);
     }
 
+
+
+    /**
+     * GET - Total page views
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `current_mall`  (optional) - mall id
+     * @param date    `start_date`    (optional) - filter date start
+     * @param date    `end_date`      (optional) - filter date end
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getTotalPageView()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.gettotalpageview.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.gettotalpageview.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.gettotalpageview.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.gettotalpageview.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ),
+                array(
+                    'current_mall' => 'required|orbit.empty.mall',
+                    'start_date' => 'required',
+                    'end_date' => 'required',
+                )
+            );
+
+            Event::fire('orbit.dashboard.gettotalpageview.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.gettotalpageview.after.validation', array($this, $validator));
+
+            $tablePrefix = DB::getTablePrefix();
+
+            $result = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as total_page_view"))
+                        ->whereRaw("(({$tablePrefix}activities.activity_name = 'view_promotion' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View Promotion Detail' AND
+                                     {$tablePrefix}activities.module_name = 'Promotion' AND
+                                     {$tablePrefix}activities.activity_type = 'view') OR
+                                     
+                                     ({$tablePrefix}activities.activity_name = 'view_news' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View News Detail' AND
+                                     {$tablePrefix}activities.module_name = 'News' AND
+                                     {$tablePrefix}activities.activity_type = 'view') OR
+                                     
+                                     ({$tablePrefix}activities.activity_name = 'view_coupon' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View Coupon Detail' AND
+                                     {$tablePrefix}activities.module_name = 'Coupon' AND
+                                     {$tablePrefix}activities.activity_type = 'view'))
+                                ")
+                        ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
+                        ->where('activities.location_id','=', $current_mall)
+                        ->where('activities.created_at', '>=', $start_date)
+                        ->where('activities.created_at', '<=', $end_date)->first();
+
+
+            if (empty($result)) {
+                $this->response->message = Lang::get('statuses.orbit.nodata.object');
+            }
+
+            $this->response->data = $result;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.gettotalpageview.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.gettotalpageview.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.gettotalpageview.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.gettotalpageview.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.gettotalpageview.before.render', array($this, &$output));
+
+        return $output;
+    }
 }
