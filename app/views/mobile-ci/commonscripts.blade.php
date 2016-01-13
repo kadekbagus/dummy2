@@ -122,17 +122,18 @@
                     method: 'GET'
                 }).done(function(data) {
                     if(data.data.total_records) {
-                        for(var i = 0; i < data.data.total_records.size; i++) {
+                        for(var i = 0; i < data.data.records.length; i++) {
                             var list = '<li data-thumb="'+ data.data.records[i].campaign_image +'">\
                                     <img class="img-responsive" src="'+ data.data.records[i].campaign_image +'"/>\
                                     <div class="campaign-cards-info">\
-                                        <h4>'+ data.data.records[i].campaign_name +'</h4>\
+                                        <h4><strong>'+ data.data.records[i].campaign_name +'</strong></h4>\
                                         <p>'+ data.data.records[i].campaign_description +'</p>\
-                                        <a href="'+ data.data.records[i].campaign_url +'">'+ data.data.records[i].campaign_link +'</a>\
+                                        <a class="campaign-cards-link" href="'+ data.data.records[i].campaign_url +'"><i>'+ data.data.records[i].campaign_link +'</i></a>\
                                     </div>\
                                 </li>';
                             $('#campaign-cards').append(list);
                         }
+                        var autoSliderOption = data.data.records.length > 1 ? true : false;
                         $('body').addClass('freeze-scroll');
                         $('.content-container, .header-container, footer').addClass('blurred');
                         $('.campaign-cards-back-drop').fadeIn('slow');
@@ -143,9 +144,9 @@
                             slideMargin: 20,
                             speed:500,
                             pause:2000,
-                            auto:true,
-                            loop:true,
-                            pager: true,
+                            auto:autoSliderOption,
+                            loop:autoSliderOption,
+                            pager: autoSliderOption,
                             onSliderLoad: function() {
                                 $('#campaign-cards').removeClass('cS-hidden');
                             },
@@ -155,14 +156,21 @@
                     }
                 });
             }
-        }, ({{ Config::get('orbit.shop.event_delay', 1) }} * 1000));
+        }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
 
         $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
-            $.cookie('dismiss_campaign_cards', 't', {expires: 3650});
+            $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             $('body').removeClass('freeze-scroll');
             $('.content-container, .header-container, footer').removeClass('blurred');
             $('.campaign-cards-back-drop').fadeOut('slow');
             $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+        });
+
+
+        $('body').on('click', '.campaign-cards-link', function(e){
+            e.preventDefault();
+            $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
+            window.location = $(this).attr('href');
         });
 
         var run = function () {

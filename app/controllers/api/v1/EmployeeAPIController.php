@@ -686,7 +686,7 @@ class EmployeeAPIController extends ControllerAPI
                 'orbit.empty.employee.role'         => Lang::get('validation.orbit.empty.employee.role', array(
                     'role' => $employeeRole
                 )),
-                'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
+                'orbit.exists.employeeid_but_me'    => 'The employee ID is not available'
             ];
 
             $validator = Validator::make(
@@ -974,7 +974,7 @@ class EmployeeAPIController extends ControllerAPI
                 'orbit.empty.employee.role'         => Lang::get('validation.orbit.empty.employee.role', array(
                     'role' => $employeeRole
                 )),
-                'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
+                'orbit.exists.employeeid_but_me'    => 'The employee ID is not available'
             ];
 
             $validator = Validator::make(
@@ -2422,7 +2422,7 @@ class EmployeeAPIController extends ControllerAPI
                         ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
@@ -2439,7 +2439,7 @@ class EmployeeAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
