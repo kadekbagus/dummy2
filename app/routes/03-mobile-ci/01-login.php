@@ -562,6 +562,14 @@ Route::group(
         });
 
         /**
+         * Flag the alert as read / unread
+         */
+        Route::post('/app/v1/inbox/read-unread', function()
+        {
+            return InboxAPIController::create()->postReadUnreadAlert();
+        });
+
+        /**
          * Delete the alert
          */
         Route::post('/app/v1/inbox/delete', function()

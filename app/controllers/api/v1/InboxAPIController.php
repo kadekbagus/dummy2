@@ -370,6 +370,118 @@ class InboxAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Change flag of the alert on/off
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postReadUnreadAlert()
+    {
+        try {
+            $httpCode = 200;
+
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $this->registerCustomValidation();
+
+            $alertId = OrbitInput::post('inbox_id');
+            $validator = Validator::make(
+                array(
+                    'inbox_id'             => $alertId,
+                ),
+                array(
+                    'inbox_id'             => 'required|orbit.empty.alert',
+                )
+            );
+
+            Event::fire('orbit.inbox.postreadalert.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.inbox.postreadalert.after.validation', array($this, $validator));
+
+            $inbox = App::make('orbit.empty.alert');
+            $inbox->is_read = $inbox->is_read === 'Y' ? 'N' : 'Y';
+            $inbox->save();
+
+            Event::fire('orbit.inbox.postreadalert.after.save', array($this, $inbox));
+            $this->response->message = $inbox->is_read === 'Y' ? 'Message has been flagged as read' : 'Message has been flagged as unread';
+            $this->response->data = $inbox->is_read === 'Y' ? 'read' : 'unread';
+
+            // Commit the changes
+            $this->commit();
+
+            Event::fire('orbit.inbox.postreadalert.after.commit', array($this, $inbox));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.inbox.postreadalert.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.inbox.postreadalert.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (QueryException $e) {
+            Event::fire('orbit.inbox.postreadalert.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (Exception $e) {
+            Event::fire('orbit.inbox.postreadalert.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes
+            $this->rollBack();
+        }
+
+        return $this->render($httpCode);
+    }
+
+    /**
      * POST - Change status of the alert to deleted
      *
      * @author Ahmad <ahmad@dominopos.com>

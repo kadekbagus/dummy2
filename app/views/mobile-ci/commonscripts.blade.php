@@ -163,7 +163,7 @@
             $('body').removeClass('freeze-scroll');
             $('.content-container, .header-container, footer').removeClass('blurred');
             $('.campaign-cards-back-drop').fadeOut('slow');
-            $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+            $('.campaign-cards-container').toggle('slide', {direction: 'up'}, 'fast');
         });
 
 
