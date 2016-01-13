@@ -72,19 +72,19 @@ class News extends Eloquent
                     ->join('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
     }
 
-    public function scopeIsNews()
+    public function scopeIsNews($query)
     {
-        return $this->where('object_type', 'news');
+        return $query->where('object_type', 'news');
     }
 
-    public function scopeIsPromotion()
+    public function scopeIsPromotion($query)
     {
-        return $this->where('object_type', 'promotion');
+        return $query->where('object_type', 'promotion');
     }
 
-    public function scopeRunsToday()
+    public function scopeRunsToday($query)
     {
-        return $this->where('begin_date', '>=', date('Y-m-d H:i:s'))->where('end_date', '<=', date('Y-m-d H:i:s'));
+        return $query->where('begin_date', '>=', date('Y-m-d H:i:s'))->where('end_date', '<=', date('Y-m-d H:i:s'));
     }
 
 }

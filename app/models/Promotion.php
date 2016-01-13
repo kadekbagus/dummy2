@@ -148,8 +148,8 @@ class Promotion extends Eloquent
      * @author Qosdil A. <qosdil@dominopos.com>
      * @todo Make a trait for such method
      */
-    public function scopeRunsToday()
+    public function scopeRunsToday($query)
     {
-        return $this->where('begin_date', '>=', date('Y-m-d H:i:s'))->where('end_date', '<=', date('Y-m-d H:i:s'));
+        return $query->where('begin_date', '>=', date('Y-m-d H:i:s'))->where('end_date', '<=', date('Y-m-d H:i:s'));
     }
 }
