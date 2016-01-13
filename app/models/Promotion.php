@@ -143,13 +143,13 @@ class Promotion extends Eloquent
     }
 
     /**
-     * Runs Today scope
+     * Runnning Date dynamic scope
      * 
      * @author Qosdil A. <qosdil@dominopos.com>
      * @todo Make a trait for such method
      */
-    public function scopeRunsToday($query)
+    public function scopeOfRunningDate($query, $date)
     {
-        return $query->where('begin_date', '<=', date('Y-m-d'))->where('end_date', '>=', date('Y-m-d'));
+        return $query->where('begin_date', '<=', $date)->where('end_date', '>=', $date);
     }
 }

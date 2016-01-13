@@ -82,9 +82,9 @@ class News extends Eloquent
         return $query->where('object_type', 'promotion');
     }
 
-    public function scopeRunsToday($query)
+    public function scopeOfRunningDate($query, $date)
     {
-        return $query->where('begin_date', '<=', date('Y-m-d'))->where('end_date', '>=', date('Y-m-d'));
+        return $query->where('begin_date', '<=', $date)->where('end_date', '>=', $date);
     }
 
 }
