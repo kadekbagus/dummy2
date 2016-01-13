@@ -561,7 +561,7 @@ class CouponAPIController extends ControllerAPI
 
                 $newKeywordObject = new KeywordObject();
                 $newKeywordObject->keyword_id = $keyword_id;
-                $newKeywordObject->object_id = $newcoupon->news_id;
+                $newKeywordObject->object_id = $newcoupon->promotion_id;
                 $newKeywordObject->object_type = 'coupon';
                 $newKeywordObject->save();
 
@@ -2170,7 +2170,7 @@ class CouponAPIController extends ControllerAPI
                     } elseif ($relation === 'ages') {
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
-                        $news->with('keywords');
+                        $coupons->with('keywords');
                     }
                 }
             });
