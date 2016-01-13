@@ -143,11 +143,11 @@ class Promotion extends Eloquent
     }
 
     /**
-    * Runs Today scope
-    * 
-    * @author Qosdil A. <qosdil@dominopos.com>
-    * @todo Make a trait for such method
-    */
+     * Runs Today scope
+     * 
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Make a trait for such method
+     */
     public function scopeRunsToday()
     {
         return $this->where('begin_date', '>=', date('Y-m-d H:i:s'))->where('end_date', '<=', date('Y-m-d H:i:s'));
