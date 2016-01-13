@@ -84,7 +84,7 @@ class News extends Eloquent
 
     public function scopeRunsToday($query)
     {
-        return $query->where('begin_date', '>=', date('Y-m-d H:i:s'))->where('end_date', '<=', date('Y-m-d H:i:s'));
+        return $query->where('begin_date', '<=', date('Y-m-d'))->where('end_date', '>=', date('Y-m-d'));
     }
 
 }
