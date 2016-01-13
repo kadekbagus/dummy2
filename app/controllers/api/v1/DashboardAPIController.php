@@ -4471,20 +4471,20 @@ class DashboardAPIController extends ControllerAPI
      */
     public function getCampaignStatus()
     {
-        $time = OrbitInput::get('date');
-        $date = substr($time, 0, 10);
+        $date = OrbitInput::get('date');
+        $mallId = OrbitInput::get('current_mall');
 
         // Promotions
-        $activePromotionCount = News::isPromotion()->ofRunningDate($date)->active()->count();
-        $inactivePromotionCount = News::isPromotion()->ofRunningDate($date)->inactive()->count();
+        $activePromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->active()->count();
+        $inactivePromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->inactive()->count();
 
         // News
-        $activeNewsCount = News::isNews()->ofRunningDate($date)->active()->count();
-        $inactiveNewsCount = News::isNews()->ofRunningDate($date)->inactive()->count();
+        $activeNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->active()->count();
+        $inactiveNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->inactive()->count();
 
         // Coupons
-        $activeCouponCount = Promotion::where('is_coupon', 'Y')->ofRunningDate($date)->active()->count();
-        $inactiveCouponCount = Promotion::where('is_coupon', 'N')->ofRunningDate($date)->inactive()->count();
+        $activeCouponCount = Promotion::ofMerchantId($mallId)->where('is_coupon', 'Y')->ofRunningDate($date)->active()->count();
+        $inactiveCouponCount = Promotion::ofMerchantId($mallId)->where('is_coupon', 'Y')->ofRunningDate($date)->inactive()->count();
 
         $this->response->data = array(
             'promotions_active'    => $activePromotionCount,
