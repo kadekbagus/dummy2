@@ -60,3 +60,6 @@ Route::get('/api/v1/dashboard/expiring-campaign', "DashboardAPIController@getExp
 
 // Get Dashboard campaign status
 Route::get('/api/v1/dashboard/campaign-statuses', "DashboardAPIController@getCampaignStatus");
+
+// Get Dashboard total page view
+Route::get('/api/v1/dashboard/total-page-view', "DashboardAPIController@getTotalPageView");

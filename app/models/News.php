@@ -72,6 +72,12 @@ class News extends Eloquent
                     ->join('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
     }
 
+    public function keywords()
+    {
+        return $this->hasMany('KeywordObject', 'object_id', 'news_id')
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+    }
+
     public function scopeIsNews($query)
     {
         return $query->where('object_type', 'news');
