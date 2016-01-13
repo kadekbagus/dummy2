@@ -159,7 +159,7 @@
         }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
 
         $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
-            $.cookie('dismiss_campaign_cards', 't', {expires: 3650});
+            $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             $('body').removeClass('freeze-scroll');
             $('.content-container, .header-container, footer').removeClass('blurred');
             $('.campaign-cards-back-drop').fadeOut('slow');
@@ -169,7 +169,7 @@
 
         $('body').on('click', '.campaign-cards-link', function(e){
             e.preventDefault();
-            $.cookie('dismiss_campaign_cards', 't', {expires: 3650});
+            $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             window.location = $(this).attr('href');
         });
 
