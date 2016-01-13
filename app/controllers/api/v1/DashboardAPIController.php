@@ -4616,25 +4616,195 @@ class DashboardAPIController extends ControllerAPI
 
     }
 
-    /**
+	/**
+     * GET - Estimated Total Cost
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`   (optional) - mall id
+     * @param date    `begin_date`    (optional) - filter date begin
+     * @param date    `end_date`      (optional) - filter date end
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getEstimateTotalCost()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getgeneralcustomerview.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.activity.gettopten.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.activity.gettopten.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->newsViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.activity.gettopten.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $merchant_id = OrbitInput::get('merchant_id');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id'         => $merchant_id,
+                    'start_date'          => $start_date,
+                    'end_date'            => $end_date,
+                ),
+                array(
+                    'merchant_id'         => 'orbit.empty.merchant',
+                    'start_date'          => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'            => 'required|date_format:Y-m-d H:i:s',
+                )
+            );
+
+            Event::fire('orbit.activity.gettopten.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.activity.gettopten.after.validation', array($this, $validator));
+
+            // registrations from start to end grouped by date part and activity name long.
+            // activity name long should include source.
+
+            $tablePrefix = DB::getTablePrefix();
+
+            //get total cost news
+            $news = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
+                        ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
+                        ->where('news.mall_id', '=', $merchant_id)
+                        ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
+                            $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
+                            ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
+                        })
+                        ->where('campaign_price.campaign_type', '=', 'news')
+                        ->where('news.object_type', '=', 'news')
+                        ->groupBy('news.news_id');
+
+            $promotions = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
+                                ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
+                                ->where('news.mall_id', '=', $merchant_id)
+                                ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
+                                    $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
+                                    ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
+                                })
+                                ->where('campaign_price.campaign_type', '=', 'promotion')
+                                ->where('news.object_type', '=', 'promotion')
+                                ->groupBy('news.news_id');
+
+            $coupons = DB::table('promotions')->selectraw(DB::raw("COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS total"))
+                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                        ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
+                        ->where('promotions.merchant_id', '=', $merchant_id)
+                        ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
+                            $q->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
+                            ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
+                        })
+                        ->where('campaign_price.campaign_type', '=', 'coupon')
+                        ->groupBy('promotions.promotion_id');
+
+            $data = $news->unionAll($promotions)->unionAll($coupons);
+            $sql = $data->toSql();
+            foreach($data->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : "'".$binding."'";
+              $sql = preg_replace('/\?/', $value, $sql, 1);
+            }
+
+            $grandtotal = DB::table(DB::raw('(' . $sql . ') as a'))->sum('total');
+            
+            $this->response->data = $grandtotal;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getgeneralcustomerview.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getgeneralcustomerview.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getgeneralcustomerview.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getgeneralcustomerview.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getgeneralcustomerview.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+	/**
      * Get campaign status
      *
      * @author Qosdil A. <qosdil@dominopos.com>
      * @return \OrbitShop\API\v1\ResponseProvider | string
+     * @todo Validations
      */
     public function getCampaignStatus()
     {
+        $date = OrbitInput::get('date');
+        $mallId = OrbitInput::get('current_mall');
+
         // Promotions
-        $activePromotionCount = News::isPromotion()->runsToday()->active()->count();
-        $inactivePromotionCount = News::isPromotion()->runsToday()->inactive()->count();
+        $activePromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->active()->count();
+        $inactivePromotionCount = News::ofMallId($mallId)->isPromotion()->ofRunningDate($date)->inactive()->count();
 
         // News
-        $activeNewsCount = News::isNews()->runsToday()->active()->count();
-        $inactiveNewsCount = News::isNews()->runsToday()->inactive()->count();
+        $activeNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->active()->count();
+        $inactiveNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->inactive()->count();
 
         // Coupons
-        $activeCouponCount = Promotion::where('is_coupon', 'Y')->runsToday()->active()->count();
-        $inactiveCouponCount = Promotion::where('is_coupon', 'N')->runsToday()->inactive()->count();
+        $activeCouponCount = Promotion::ofMerchantId($mallId)->where('is_coupon', 'Y')->ofRunningDate($date)->active()->count();
+        $inactiveCouponCount = Promotion::ofMerchantId($mallId)->where('is_coupon', 'Y')->ofRunningDate($date)->inactive()->count();
 
         $this->response->data = array(
             'promotions_active'    => $activePromotionCount,
@@ -4646,6 +4816,150 @@ class DashboardAPIController extends ControllerAPI
         );
 
         return $this->render(200);
+    }
+
+
+
+    /**
+     * GET - Total page views
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `current_mall`  (optional) - mall id
+     * @param date    `start_date`    (optional) - filter date start
+     * @param date    `end_date`      (optional) - filter date end
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getTotalPageView()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.gettotalpageview.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.gettotalpageview.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.gettotalpageview.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.gettotalpageview.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ),
+                array(
+                    'current_mall' => 'required|orbit.empty.mall',
+                    'start_date' => 'required',
+                    'end_date' => 'required',
+                )
+            );
+
+            Event::fire('orbit.dashboard.gettotalpageview.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.gettotalpageview.after.validation', array($this, $validator));
+
+            $tablePrefix = DB::getTablePrefix();
+
+            $result = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as total_page_view"))
+                        ->whereRaw("(({$tablePrefix}activities.activity_name = 'view_promotion' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View Promotion Detail' AND
+                                     {$tablePrefix}activities.module_name = 'Promotion' AND
+                                     {$tablePrefix}activities.activity_type = 'view') OR
+                                     
+                                     ({$tablePrefix}activities.activity_name = 'view_news' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View News Detail' AND
+                                     {$tablePrefix}activities.module_name = 'News' AND
+                                     {$tablePrefix}activities.activity_type = 'view') OR
+                                     
+                                     ({$tablePrefix}activities.activity_name = 'view_coupon' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View Coupon Detail' AND
+                                     {$tablePrefix}activities.module_name = 'Coupon' AND
+                                     {$tablePrefix}activities.activity_type = 'view'))
+                                ")
+                        ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
+                        ->where('activities.location_id','=', $current_mall)
+                        ->where('activities.created_at', '>=', $start_date)
+                        ->where('activities.created_at', '<=', $end_date)->first();
+
+
+            if (empty($result)) {
+                $this->response->message = Lang::get('statuses.orbit.nodata.object');
+            }
+
+            $this->response->data = $result;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.gettotalpageview.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.gettotalpageview.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.gettotalpageview.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.gettotalpageview.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.gettotalpageview.before.render', array($this, &$output));
+
+        return $output;
     }
 
 }

@@ -137,7 +137,7 @@
                         $('body').addClass('freeze-scroll');
                         $('.content-container, .header-container, footer').addClass('blurred');
                         $('.campaign-cards-back-drop').fadeIn('slow');
-                        $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+                        $('.campaign-cards-container').toggle('slide', {direction: 'down'}, 'slow');
                         $('#campaign-cards').lightSlider({
                             gallery:false,
                             item:1,
@@ -163,7 +163,7 @@
             $('body').removeClass('freeze-scroll');
             $('.content-container, .header-container, footer').removeClass('blurred');
             $('.campaign-cards-back-drop').fadeOut('slow');
-            $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+            $('.campaign-cards-container').toggle('slide', {direction: 'up'}, 'fast');
         });
 
 
