@@ -4814,6 +4814,12 @@ class MobileCIAPIController extends ControllerAPI
 
                                     if (isset($mediaDefaultLanguage->path)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
+                                    } else {
+                                        if ($near_end_result->campaign_type === 'promo') {
+                                            $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
+                                        } elseif ($near_end_result->campaign_type === 'news') {
+                                            $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
+                                        }
                                     }
                                 }
                             }
@@ -4849,6 +4855,8 @@ class MobileCIAPIController extends ControllerAPI
 
                                     if (isset($mediaDefaultLanguage->path)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
+                                    } else {
+                                        $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                                     }
                                 }
                             }
