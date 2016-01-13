@@ -103,6 +103,8 @@ class NewsAPIController extends ControllerAPI
             $gender_ids = (array) $gender_ids;
             $age_range_ids = OrbitInput::post('age_range_ids');
             $age_range_ids = (array) $age_range_ids;
+            $keywords = OrbitInput::post('keywords');
+            $keywords = (array) $keywords;
             $is_popup = OrbitInput::post('is_popup');
 
             $validator = Validator::make(
@@ -117,11 +119,12 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => $id_language_default,
                     'is_all_gender'       => $is_all_gender,
                     'is_all_age'          => $is_all_age,
+                    'is_popup'            => $is_popup,
                 ),
                 array(
                     'current_mall'        => 'required|orbit.empty.mall',
                     'news_name'           => 'required|max:255|orbit.exists.news_name',
-                    'object_type'         => 'orbit.empty.news_object_type',
+                    'object_type'         => 'required|orbit.empty.news_object_type',
                     'status'              => 'required|orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
                     'begin_date'          => 'required|date|orbit.empty.hour_format',
@@ -129,6 +132,10 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => 'required|orbit.empty.language_default',
                     'is_all_gender'       => 'required|orbit.empty.is_all_gender',
                     'is_all_age'          => 'required|orbit.empty.is_all_age',
+                    'is_popup'            => 'required|in:Y,N',
+                ),
+                array(
+                    'is_popup.in' => 'is popup must Y or N',
                 )
             );
 
@@ -282,6 +289,41 @@ class NewsAPIController extends ControllerAPI
                 $newsGenders[] = $newsGender;
             }
             $newnews->gender = $newsGenders;
+
+            // save Keyword
+            $newsKeywords = array();
+            foreach ($keywords as $keyword) {
+                $keyword_id = null;
+
+                $existKeyword = Keyword::excludeDeleted()
+                    ->where('keyword', '=', $keyword)
+                    ->where('merchant_id', '=', $newnews->mall_id)
+                    ->first();
+
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = $newnews->mall_id;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
+
+                    $keyword_id = $newKeyword->keyword_id;
+                    $newsKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $newsKeywords[] = $existKeyword;
+                }
+
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newnews->news_id;
+                $newKeywordObject->object_type = $object_type;
+                $newKeywordObject->save();
+
+            }
+            $newnews->keywords = $newsKeywords;
 
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
 
