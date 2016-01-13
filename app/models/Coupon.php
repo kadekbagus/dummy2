@@ -79,6 +79,12 @@ class Coupon extends Eloquent
                     ->join('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
     }
 
+    public function keywords()
+    {
+        return $this->hasMany('KeywordObject', 'object_id', 'promotion_id')
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+    }
+
     /**
      * Coupon strings can be translated to many languages.
      */
