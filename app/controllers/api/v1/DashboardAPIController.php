@@ -4578,7 +4578,7 @@ class DashboardAPIController extends ControllerAPI
               $sql = preg_replace('/\?/', $value, $sql, 1);
             }
 
-            $grandtotal = DB::table(DB::raw('(' . $sql . ') as a'))->sum('total');
+            $grandtotal['estimated_total_cost'] = DB::table(DB::raw('(' . $sql . ') as a'))->sum('total');
             
             $this->response->data = $grandtotal;
 
