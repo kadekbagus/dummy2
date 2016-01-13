@@ -142,6 +142,11 @@ class Promotion extends Eloquent
         return ($value);
     }
 
+    public function scopeOfMerchantId($query, $merchantId)
+    {
+        return $query->where('merchant_id', $merchantId);
+    }
+
     /**
      * Runnning Date dynamic scope
      * 

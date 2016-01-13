@@ -77,6 +77,11 @@ class News extends Eloquent
         return $query->where('object_type', 'news');
     }
 
+    public function scopeOfMallId($query, $mallId)
+    {
+        return $query->where('mall_id', $mallId);
+    }
+
     public function scopeIsPromotion($query)
     {
         return $query->where('object_type', 'promotion');
