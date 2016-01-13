@@ -4800,8 +4800,7 @@ class MobileCIAPIController extends ControllerAPI
                             } else {
                                 // back to default image if in the content multilanguage not have image
                                 // check the system language
-                                //$defaultLanguage = $this->getDefaultLanguage($retailer);
-                                $defaultLanguage = getDefaultLanguage($retailer);
+                                $defaultLanguage = $this->getDefaultLanguage($retailer);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
@@ -4841,8 +4840,7 @@ class MobileCIAPIController extends ControllerAPI
                             } else {
                                 // back to default image if in the content multilanguage not have image
                                 // check the system language
-                                //$defaultLanguage = $this->getDefaultLanguage($retailer);
-                                $defaultLanguage = getDefaultLanguage($retailer);
+                                $defaultLanguage = $this->getDefaultLanguage($retailer);
                                 if ($defaultLanguage !== NULL) {
                                     $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
