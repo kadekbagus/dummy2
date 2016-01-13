@@ -126,9 +126,9 @@
                             var list = '<li data-thumb="'+ data.data.records[i].campaign_image +'">\
                                     <img class="img-responsive" src="'+ data.data.records[i].campaign_image +'"/>\
                                     <div class="campaign-cards-info">\
-                                        <h4>'+ data.data.records[i].campaign_name +'</h4>\
+                                        <h4><strong>'+ data.data.records[i].campaign_name +'</strong></h4>\
                                         <p>'+ data.data.records[i].campaign_description +'</p>\
-                                        <a class="campaign-cards-link" href="'+ data.data.records[i].campaign_url +'">'+ data.data.records[i].campaign_link +'</a>\
+                                        <a class="campaign-cards-link" href="'+ data.data.records[i].campaign_url +'"><i>'+ data.data.records[i].campaign_link +'</i></a>\
                                     </div>\
                                 </li>';
                             $('#campaign-cards').append(list);
@@ -137,7 +137,7 @@
                         $('body').addClass('freeze-scroll');
                         $('.content-container, .header-container, footer').addClass('blurred');
                         $('.campaign-cards-back-drop').fadeIn('slow');
-                        $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+                        $('.campaign-cards-container').toggle('slide', {direction: 'down'}, 'slow');
                         $('#campaign-cards').lightSlider({
                             gallery:false,
                             item:1,
@@ -159,17 +159,17 @@
         }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
 
         $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
-            $.cookie('dismiss_campaign_cards', 't', {expires: 3650});
+            $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             $('body').removeClass('freeze-scroll');
             $('.content-container, .header-container, footer').removeClass('blurred');
             $('.campaign-cards-back-drop').fadeOut('slow');
-            $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+            $('.campaign-cards-container').toggle('slide', {direction: 'up'}, 'fast');
         });
 
 
         $('body').on('click', '.campaign-cards-link', function(e){
             e.preventDefault();
-            $.cookie('dismiss_campaign_cards', 't', {expires: 3650});
+            $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             window.location = $(this).attr('href');
         });
 

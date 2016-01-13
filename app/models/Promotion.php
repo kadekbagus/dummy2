@@ -141,4 +141,20 @@ class Promotion extends Eloquent
         }
         return ($value);
     }
+
+    public function scopeOfMerchantId($query, $merchantId)
+    {
+        return $query->where('merchant_id', $merchantId);
+    }
+
+    /**
+     * Runnning Date dynamic scope
+     * 
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Make a trait for such method
+     */
+    public function scopeOfRunningDate($query, $date)
+    {
+        return $query->where('begin_date', '<=', $date)->where('end_date', '>=', $date);
+    }
 }

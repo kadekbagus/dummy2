@@ -54,3 +54,9 @@ Route::get('/app/v1/dashboard/expiring-campaign', "IntermediateAuthController@Da
 
 // Get Dashboard estimate total cost
 Route::get('/app/v1/dashboard/estimate-total-cost', "IntermediateAuthController@Dashboard_getEstimateTotalCost");
+
+// Get Dashboard campaign status
+Route::get('/app/v1/dashboard/campaign-statuses', "IntermediateAuthController@Dashboard_getCampaignStatus");
+
+// Get Dashboard campaign status
+Route::get('/app/v1/dashboard/total-page-view', "IntermediateAuthController@Dashboard_getTotalPageView");

@@ -78,7 +78,8 @@
                             var isRead = inBox.is_read == 'Y' ? true : false;
                             var read = isRead ? 'read' : 'unread';
                             var mark = isRead ? 'check' : 'exclamation';
-                            var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-3 notification-icon text-center"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
+                            var readUnread = isRead ? 'read-unread' : '';
+                            var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a data-id='+inBox.inbox_id+' class="'+readUnread+'"><div class="col-xs-3 notification-icon text-center"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div></a><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
                             $('#notification').append(individualList);
                         }
                         skip = skip + {{ Config::get('orbit.pagination.inbox.per_page', 15) }};
@@ -89,12 +90,44 @@
                 }).fail(function(data){
                     $('#spinner').hide();
                 }).always(function(data){
-                    console.log('xxx');
                     $('#spinner').hide();
                 });
             }
 
             getNotifList();
+
+            $('body').on('click', '.read-unread', function(e){
+                $('body').addClass('modal-open');
+                var inbox_id = $(this).data('id');
+                $.ajax({
+                    method: 'POST',
+                    url: apiPath + 'inbox/read-unread',
+                    data: {
+                        inbox_id: inbox_id
+                    }
+                }).done(function(data){
+                    if(data.status === 'success') {
+                        if (data.data === 'read') {
+                            $('#notification-'+inbox_id+' .link-detail h4').addClass('read');
+                            $('#notification-'+inbox_id+' .link-detail h4').removeClass('unread');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack').removeClass('unread');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack').addClass('read');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack .fa-stack-1x').addClass('fa-check');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack .fa-stack-1x').removeClass('fa-exclamation');
+                        } else {
+                            $('#notification-'+inbox_id+' .link-detail h4').addClass('unread');
+                            $('#notification-'+inbox_id+' .link-detail h4').removeClass('read');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack').removeClass('read');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack').addClass('unread');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack .fa-stack-1x').addClass('fa-exclamation');
+                            $('#notification-'+inbox_id+' .read-unread .fa-stack .fa-stack-1x').removeClass('fa-check');
+                            $('#notification-'+inbox_id+' .read-unread').removeClass('read-unread'); // disable read on unread notif
+                        }
+                    }
+                }).always(function(data){
+                    $('body').removeClass('modal-open');
+                });
+            });
 
             $('body').on('click', '.deleteNotif', function(e){
                 $('body').addClass('modal-open');
@@ -135,7 +168,8 @@
                         var isRead = inBox.is_read == 'Y' ? true : false;
                         var read = isRead ? 'read' : 'unread';
                         var mark = isRead ? 'check' : 'exclamation';
-                        var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-3 notification-icon"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
+                        var readUnread = isRead ? 'read-unread' : '';
+                        var individualList = '<div class="main-theme-mall list-notification" id="notification-'+inBox.inbox_id+'"><div class="row catalogue-top"><a data-id='+inBox.inbox_id+' class="'+readUnread+'"><div class="col-xs-3 notification-icon text-center"><span class="fa-stack fa-lg '+read+'"><i class="fa fa-circle fa-stack-2x circle"></i><i class="fa fa-'+mark+' fa-stack-1x symbol"></i></span></div></a><a class="link-detail" href="{{ url('/customer/message/detail?id=') }}'+inBox.inbox_id+'"><div class="col-xs-8 notification-title" style=""><h4 class="'+read+'">'+inBox.subject+'</h4></div></a><div class="col-xs-1 deleteNotif" data-id="'+inBox.inbox_id+'"><span class="delete-button-child"><i class="fa fa-times"></i></span></div></div></div>';
                         $('#notification').append(individualList);
                         if(openDelete){
                             $('.delete-button-child').css('display', 'inline-block');
@@ -153,9 +187,7 @@
             });
 
             $('body').on('click', '.link-detail', function(e){
-                console.log('x');
                 if(openDelete){
-                    console.log('y');
                     e.preventDefault();
                 }
             });
