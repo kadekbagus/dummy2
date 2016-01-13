@@ -157,6 +157,8 @@ class CouponAPIController extends ControllerAPI
             $gender_ids = (array) $gender_ids;
             $age_range_ids = OrbitInput::post('age_range_ids');
             $age_range_ids = (array) $age_range_ids;
+            $keywords = OrbitInput::post('keywords');
+            $keywords = (array) $keywords;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
 
@@ -179,6 +181,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => $rule_end_date,
                     'is_all_gender'           => $is_all_gender,
                     'is_all_age'              => $is_all_age,
+                    'is_popup'            => $is_popup,
                 ),
                 array(
                     'current_mall'            => 'required|orbit.empty.merchant',
@@ -198,6 +201,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
+                    'is_popup'            => 'required|in:Y,N',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -206,6 +210,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.required' => 'The coupon value is required',
                     'discount_value.numeric'  => 'The coupon value must be a number',
                     'discount_value.min'      => 'The coupon value must be greater than zero',
+                    'is_popup.in' => 'is popup must Y or N',
                 )
             );
 
@@ -528,6 +533,40 @@ class CouponAPIController extends ControllerAPI
             }
             $newcoupon->gender = $couponGenders;
 
+            // save Keyword
+            $couponKeywords = array();
+            foreach ($keywords as $keyword) {
+                $keyword_id = null;
+
+                $existKeyword = Keyword::excludeDeleted()
+                    ->where('keyword', '=', $keyword)
+                    ->where('merchant_id', '=', $newcoupon->merchant_id)
+                    ->first();
+
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = $newcoupon->merchant_id;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
+
+                    $keyword_id = $newKeyword->keyword_id;
+                    $couponKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $couponKeywords[] = $existKeyword;
+                }
+
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newcoupon->news_id;
+                $newKeywordObject->object_type = 'coupon';
+                $newKeywordObject->save();
+
+            }
+            $newcoupon->keywords = $couponKeywords;
 
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
@@ -1336,6 +1375,48 @@ class CouponAPIController extends ControllerAPI
 
             });
 
+            // Delete old data
+            $deleted_keyword_object = KeywordObject::where('object_id', '=', $promotion_id)
+                                                    ->where('object_type', '=', 'coupon');
+            $deleted_keyword_object->delete();
+
+            OrbitInput::post('keywords', function($keywords) use ($updatedcoupon, $merchant_id, $user, $promotion_id) {
+                // Insert new data
+                $couponKeywords = array();
+                foreach ($keywords as $keyword) {
+                    $keyword_id = null;
+
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', $merchant_id)
+                        ->first();
+
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = $merchant_id;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
+
+                        $keyword_id = $newKeyword->keyword_id;
+                        $couponKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $couponKeywords[] = $existKeyword;
+                    }
+
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $promotion_id;
+                    $newKeywordObject->object_type = 'coupon';
+                    $newKeywordObject->save();
+
+                }
+                $updatedcoupon->keywords = $couponKeywords;
+            });
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
@@ -2088,6 +2169,8 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('genders');
                     } elseif ($relation === 'ages') {
                         $coupons->with('ages');
+                    } elseif ($relation === 'keywords') {
+                        $news->with('keywords');
                     }
                 }
             });
