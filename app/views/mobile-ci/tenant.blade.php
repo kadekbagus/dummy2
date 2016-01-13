@@ -2,7 +2,6 @@
 
 @section('ext_style')
     {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
-    {{ HTML::style('mobile-ci/stylesheet/lightslider.min.css') }}
     <style type="text/css">
     .product-detail .tab-pane p {
         font-size: .9em;
@@ -306,9 +305,7 @@
 @stop
 
 @section('ext_script_bot')
-    {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
     {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
     {{ HTML::script('mobile-ci/scripts/autoNumeric.js') }}
     <script type="text/javascript">
         $(document).ready(function(){

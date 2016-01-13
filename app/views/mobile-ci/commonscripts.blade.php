@@ -94,11 +94,85 @@
         </div>
     </div>
 </div>
+<div class="campaign-cards-container">
+    <div class="row campaign-cards-wrapper">
+        <div class="col-xs-12 text-right campaign-cards-close-btn">
+            <button class="close" id='campaign-cards-close-btn'>&times;</button>
+        </div>
+        <div class="col-xs-12 text-center">
+            <ul id="campaign-cards" class="gallery list-unstyled cS-hidden">
+                
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="row campaign-cards-back-drop"></div>
 
+{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
+{{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
+{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
+        setTimeout(function(){
+            if ($.cookie('dismiss_campaign_cards') !== 't') {
+                $.ajax({
+                    url: apiPath + 'campaign/list',
+                    method: 'GET'
+                }).done(function(data) {
+                    if(data.data.total_records) {
+                        for(var i = 0; i < data.data.records.length; i++) {
+                            var list = '<li data-thumb="'+ data.data.records[i].campaign_image +'">\
+                                    <img class="img-responsive" src="'+ data.data.records[i].campaign_image +'"/>\
+                                    <div class="campaign-cards-info">\
+                                        <h4>'+ data.data.records[i].campaign_name +'</h4>\
+                                        <p>'+ data.data.records[i].campaign_description +'</p>\
+                                        <a class="campaign-cards-link" href="'+ data.data.records[i].campaign_url +'">'+ data.data.records[i].campaign_link +'</a>\
+                                    </div>\
+                                </li>';
+                            $('#campaign-cards').append(list);
+                        }
+                        var autoSliderOption = data.data.records.length > 1 ? true : false;
+                        $('body').addClass('freeze-scroll');
+                        $('.content-container, .header-container, footer').addClass('blurred');
+                        $('.campaign-cards-back-drop').fadeIn('slow');
+                        $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+                        $('#campaign-cards').lightSlider({
+                            gallery:false,
+                            item:1,
+                            slideMargin: 20,
+                            speed:500,
+                            pause:2000,
+                            auto:autoSliderOption,
+                            loop:autoSliderOption,
+                            pager: autoSliderOption,
+                            onSliderLoad: function() {
+                                $('#campaign-cards').removeClass('cS-hidden');
+                            },
+                            onAfterSlide: function() {
+                            }
+                        });
+                    }
+                });
+            }
+        }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
+
+        $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
+            $.cookie('dismiss_campaign_cards', 't', {expires: 3650});
+            $('body').removeClass('freeze-scroll');
+            $('.content-container, .header-container, footer').removeClass('blurred');
+            $('.campaign-cards-back-drop').fadeOut('slow');
+            $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+        });
+
+
+        $('body').on('click', '.campaign-cards-link', function(e){
+            e.preventDefault();
+            $.cookie('dismiss_campaign_cards', 't', {expires: 3650});
+            window.location = $(this).attr('href');
+        });
+
         var run = function () {
             if (Offline.state === 'up') {
               $('#offlinemark').attr('class', 'fa fa-check fa-stack-1x').css({
@@ -240,7 +314,9 @@
             transforms.push('translate(0px,0px)');
             $('.featherlight-image').css("transform", transforms.join(' '));
             $(".featherlight-image").panzoom('resetDimensions');
-            zoomer.featherlight();
+            if(zoomer){
+                zoomer.featherlight();
+            }
             resetImage();
         });
 

@@ -14,6 +14,10 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class DashboardAPIController extends ControllerAPI
 {
+
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
     /**
      * Flag to return the query builder.
      *
@@ -434,6 +438,45 @@ class DashboardAPIController extends ControllerAPI
                         $flag_type = true;
                         break;
 
+                // show coupons
+                case 'coupons':
+                        $query = Coupon::select(
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
+                                select
+                                    count(ac.activity_id) as total
+                                from
+                                    {$tablePrefix}promotions pr
+                                        inner join
+                                    {$tablePrefix}activities ac ON pr.promotion_id = ac.object_id
+                                where ac.module_name = 'Coupon'
+                                and ac.activity_name = 'view_coupon'
+                                and ac.activity_type = 'view'
+                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
+                                and ac.group = 'mobile-ci'
+                                and ac.location_id = '{$merchant_id}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
+                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
+                            ) * 100 as percentage"),
+                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
+                            "promotions.promotion_name as name",
+                            "promotions.promotion_id as object_id"
+                        )
+                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
+                            $join->on('promotions.promotion_id', '=', 'activities.object_id');
+                            $join->where('activities.activity_name', '=', 'view_coupon');
+                            $join->where('activities.module_name', '=', 'Coupon');
+                            $join->where('activities.activity_type', '=', 'view');
+                            $join->where('activities.group', '=', 'mobile-ci');
+                            $join->where('activities.location_id', '=', $merchant_id);
+                            $join->where("activities.created_at", '>=', $start_date);
+                            $join->where("activities.created_at", '<=', $end_date);
+                        })
+                        ->groupBy('promotions.promotion_id')
+                        ->orderBy('score', 'DESC')
+                        ->take($take);
+                        $flag_type = true;
+                        break;
+
                 // by default do nothing
                 default:
                      $query = null;
@@ -565,13 +608,6 @@ class DashboardAPIController extends ControllerAPI
                             ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
-            $events = Activity::select(DB::raw("count(distinct activity_id) as total"))
-                            ->where('activities.activity_name', '=', 'event_view')
-                            ->where('activities.module_name', '=', 'Event')
-                            ->where('activities.activity_type', '=', 'view')
-                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                            ->where('activities.group', '=', 'mobile-ci');
-
             $promotions = Activity::select(DB::raw("count(distinct activity_id) as total"))
                             ->where('activities.activity_name', '=', 'view_promotion')
                             ->where('activities.module_name', '=', 'Promotion')
@@ -579,49 +615,43 @@ class DashboardAPIController extends ControllerAPI
                             ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
-            $luckydraws = Activity::select(DB::raw("count(distinct activity_id) as total"))
-                            ->where('activities.activity_name', '=', 'view_lucky_draw')
-                            ->where('activities.module_name', '=', 'LuckyDraw')
+            $coupons = Activity::select(DB::raw("count(distinct activity_id) as total"))
+                            ->where('activities.activity_name', '=', 'view_coupon')
+                            ->where('activities.module_name', '=', 'Coupon')
                             ->where('activities.activity_type', '=', 'view')
                             ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
-            OrbitInput::get('merchant_id', function ($merchant_id) use ($news, $promotions, $events, $luckydraws) {
+            OrbitInput::get('merchant_id', function ($merchant_id) use ($news, $promotions, $coupons) {
                 $news->where('activities.location_id', '=', $merchant_id);
                 $promotions->where('activities.location_id', '=', $merchant_id);
-                $events->where('activities.location_id', '=', $merchant_id);
-                $luckydraws->where('activities.location_id', '=', $merchant_id);
+                $coupons->where('activities.location_id', '=', $merchant_id);
             });
 
-            OrbitInput::get('start_date', function ($beginDate) use ($news, $promotions, $events, $luckydraws) {
+            OrbitInput::get('start_date', function ($beginDate) use ($news, $promotions, $coupons) {
                 $news->where('activities.created_at', '>=', $beginDate);
                 $promotions->where('activities.created_at', '>=', $beginDate);
-                $events->where('activities.created_at', '>=', $beginDate);
-                $luckydraws->where('activities.created_at', '>=', $beginDate);
+                $coupons->where('activities.created_at', '>=', $beginDate);
             });
 
-            OrbitInput::get('end_date', function ($endDate) use ($news, $promotions, $events, $luckydraws) {
+            OrbitInput::get('end_date', function ($endDate) use ($news, $promotions, $coupons) {
                 $news->where('activities.created_at', '<=', $endDate);
                 $promotions->where('activities.created_at', '<=', $endDate);
-                $events->where('activities.created_at', '<=', $endDate);
-                $luckydraws->where('activities.created_at', '<=', $endDate);
+                $coupons->where('activities.created_at', '<=', $endDate);
             });
 
             $news = $news->first();
-            $events = $events->first();
             $promotions = $promotions->first();
-            $luckydraws = $luckydraws->first();
+            $coupons = $coupons->first();
 
             $news->label = 'News';
-            $events->label = 'Events';
             $promotions->label = 'Promotions';
-            $luckydraws->label = 'Lucky Draws';
+            $coupons->label = 'Coupons';
 
             $data = new stdclass();
             $data->news = $news;
-            $data->events = $events;
             $data->promotions = $promotions;
-            $data->lucky_draws = $luckydraws;
+            $data->coupons = $coupons;
 
             $this->response->data = $data;
 
@@ -884,7 +914,7 @@ class DashboardAPIController extends ControllerAPI
                             ];
                         }
                         break;
-                        
+
                 // show lucky draws
                 case 'lucky_draws':
                         foreach ($periods as $period) {
@@ -895,6 +925,35 @@ class DashboardAPIController extends ControllerAPI
                             $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
                                 ->where('activities.activity_name', '=', 'view_lucky_draw')
                                 ->where('activities.module_name', '=', 'LuckyDraw')
+                                ->where('activities.activity_type', '=', 'view')
+                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
+                                ->where('activities.group', '=', 'mobile-ci')
+                                ->where('activities.location_id', '=', $merchant_id)
+                                ->where('activities.object_id', '=', $object_id)
+                                ->where("activities.created_at", '>=', $start_date)
+                                ->where("activities.created_at", '<=', $end_date)
+                                ->first();
+
+                            $result = (int)$query->score;
+
+                            $responses[] = [
+                                'start_date' => $start_date,
+                                'end_date' => $end_date,
+                                'score' => $result
+                            ];
+                        }
+                        break;
+
+                // show coupons
+                case 'coupons':
+                        foreach ($periods as $period) {
+
+                            $start_date = $period['start_date'];
+                            $end_date = $period['end_date'];
+
+                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
+                                ->where('activities.activity_name', '=', 'view_coupon')
+                                ->where('activities.module_name', '=', 'Coupon')
                                 ->where('activities.activity_type', '=', 'view')
                                 ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                                 ->where('activities.group', '=', 'mobile-ci')
@@ -973,11 +1032,162 @@ class DashboardAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * GET - The expiring campaign (news, promotion, coupon)
+     *
+     * @author firmansyah <firmansyah@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param integer `merchant_id`   (optional) - mall id
+     * @param string  `now_date`      (optional) - now_date of mall
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getExpiringCampaign()
+    {
+        try {
+            $httpCode = 200;
 
+            Event::fire('orbit.dashboard.getexpiringcampaign.before.auth', array($this));
 
+            // Require authentication
+            $this->checkAuth();
 
+            Event::fire('orbit.dashboard.getexpiringcampaign.after.auth', array($this));
 
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getexpiringcampaign.before.authz', array($this, $user));
 
+            // if (! ACL::create($user)->isAllowed('view_product')) {
+            //     Event::fire('orbit.dashboard.getexpiringcampaign.authz.notallowed', array($this, $user));
+            //     $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            $role = $user->role;
+            $validRoles = $this->newsViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getexpiringcampaign.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $now_date = OrbitInput::get('now_date');
+            $take = OrbitInput::get('take');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'now_date' => $now_date
+                ),
+                array(
+                    'current_mall' => 'required | orbit.empty.merchant',
+                    'now_date' => 'required | date_format:Y-m-d H:i:s'
+                )
+            );
+
+            Event::fire('orbit.dashboard.getexpiringcampaign.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            Event::fire('orbit.dashboard.getexpiringcampaign.after.validation', array($this, $validator));
+
+            $tablePrefix = DB::getTablePrefix();
+
+            // @todo change to eloquent if posible
+            // $coupon = Coupon::select(DB::raw("
+            //                             promotion_id AS campaign_id,
+            //                             promotion_name AS campaign_name,
+            //                             DATEDIFF(end_date, '".$now_date."') AS expire_days
+            //                         "))
+            //                     ->where('end_date', '>=', $now_date)
+            //                     ->where('merchant_id', $merchant_id);
+
+            // $newsAndPromotion = News::select(DB::raw("
+            //                             news_id AS campaign_id,
+            //                             news_name AS campaign_name,
+            //                             DATEDIFF(end_date, '".$now_date."') AS expire_days
+            //                         "))
+            //                     ->where('end_date', '>=', $now_date)
+            //                     ->where('mall_id', $merchant_id);
+
+            // $expiringCampaign = $newsAndPromotion->union($coupon)->take(30)->get();
+
+            $expiringCampaign = DB::select(
+                DB::raw("
+                        SELECT promotion_id campaign_id, promotion_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, IF(is_coupon = 'Y','coupon', '') type
+                        FROM {$tablePrefix}promotions
+                        WHERE is_coupon = 'Y'
+                        AND end_date > '".$now_date."'
+                        AND merchant_id = '".$current_mall."'
+                        union all
+                        SELECT news_id campaign_id, news_name campaign_name, DATEDIFF(end_date, '".$now_date."') expire_days, object_type type
+                        FROM {$tablePrefix}news
+                        WHERE end_date > '".$now_date."'
+                        AND mall_id = '".$current_mall."'
+                        ORDER BY expire_days ASC
+                        LIMIT 0, 10
+                    ")
+            );
+
+            $this->response->data = $expiringCampaign;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getexpiringcampaign.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getexpiringcampaign.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getexpiringcampaign.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getexpiringcampaign.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getexpiringcampaign.before.render', array($this, &$output));
+
+        return $output;
+    }
 
     /**
      * GET - TOP Product
