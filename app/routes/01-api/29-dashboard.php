@@ -66,3 +66,6 @@ Route::get('/api/v1/dashboard/campaign-statuses', "DashboardAPIController@getCam
 
 // Get Dashboard total page view
 Route::get('/api/v1/dashboard/total-page-view', "DashboardAPIController@getTotalPageView");
+
+// Get Dashboard campaign total spending
+Route::get('/api/v1/dashboard/campaign-total-spending', "DashboardAPIController@getCampaignTotalSpending");
