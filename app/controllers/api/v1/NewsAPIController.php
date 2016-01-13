@@ -552,7 +552,7 @@ class NewsAPIController extends ControllerAPI
                     'news_id'             => 'required|orbit.empty.news',
                     'current_mall'        => 'orbit.empty.mall',
                     'news_name'           => 'sometimes|required|min:5|max:255|news_name_exists_but_me',
-                    'object_type'         => 'orbit.empty.news_object_type',
+                    'object_type'         => 'required|orbit.empty.news_object_type',
                     'status'              => 'orbit.empty.news_status',
                     'link_object_type'    => 'orbit.empty.link_object_type',
                     'end_date'            => 'date||orbit.empty.hour_format',
@@ -813,6 +813,49 @@ class NewsAPIController extends ControllerAPI
                 }
                 $updatednews->age = $newsAges;
 
+            });
+
+            // Delete old data
+            $deleted_keyword_object = KeywordObject::where('object_id', '=', $news_id)
+                                                    ->where('object_type', '=', $object_type);
+            $deleted_keyword_object->delete();
+
+            OrbitInput::post('keywords', function($keywords) use ($updatednews, $mall_id, $user, $news_id, $object_type) {
+                // Insert new data
+                $newsKeywords = array();
+                foreach ($keywords as $keyword) {
+                    $keyword_id = null;
+
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', $mall_id)
+                        ->first();
+
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = $mall_id;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
+
+                        $keyword_id = $newKeyword->keyword_id;
+                        $newsKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $newsKeywords[] = $existKeyword;
+                    }
+
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $news_id;
+                    $newKeywordObject->object_type = $object_type;
+                    $newKeywordObject->save();
+
+                }
+                $updatednews->keywords = $newsKeywords;
             });
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
