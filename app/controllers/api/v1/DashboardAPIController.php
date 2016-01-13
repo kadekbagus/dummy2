@@ -4378,6 +4378,160 @@ class DashboardAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Dashboard Campaign Total Spending
+     *
+     * @author Tian <tian@dominopos.com>
+     *
+     * @param datetime   `start_date`                   (required) - Start date
+     * @param datetime   `end_date`                     (required) - End date
+     * @param array      `mall_id`                      (optional) - Mall ID
+     */
+    public function getCampaignTotalSpending()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getcampaigntotalspending.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getcampaigntotalspending.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getcampaigntotalspending.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'mall customer service', 'campaign owner'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getcampaigntotalspending.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+            $mall_id = OrbitInput::post('mall_id');
+
+            // get user mall_ids
+            $listOfMallIds = $user->getUserMallIds($mall_id);
+
+            $validator = Validator::make(
+                array(
+                    'start_date'    => $start_date,
+                    'end_date'      => $end_date,
+                ),
+                array(
+                    'start_date'    => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'      => 'required|date_format:Y-m-d H:i:s'
+                )
+            );
+
+            Event::fire('orbit.dashboard.getcampaigntotalspending.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getcampaigntotalspending.after.validation', array($this, $validator));
+
+
+            $prefix = DB::getTablePrefix();
+
+            $activities = DB::table('activities')
+                ->select(
+                    DB::raw("DATE({$tablePrefix}activities.created_at) as date"),
+                    DB::raw("COUNT(DISTINCT {$tablePrefix}activities.user_id) as count")
+                )
+                ->where('activities.module_name', '=', 'Application')
+                ->where('activities.group', '=', 'mobile-ci')
+                ->where('activities.activity_type', '=', 'login')
+                ->where('activities.activity_name', '=', 'login_ok')
+                ->where('activities.created_at', '>=', $start_date)
+                ->where('activities.created_at', '<=', $end_date)
+                ->groupBy(DB::raw('1'))
+                ->orderByRaw('1');
+
+            // Only shows activities which belongs to this merchant
+            if ($user->isSuperAdmin() !== TRUE) {
+                $locationIds = $this->getLocationIdsForUser($user);
+
+                // Filter by user location id
+                $activities->whereIn('activities.location_id', $locationIds);
+            } else {
+                // Filter by user location id
+                OrbitInput::get('location_ids', function($locationIds) use ($activities) {
+                    $activities->whereIn('activities.location_id', $locationIds);
+                });
+            }
+
+            $this->response->data = [
+                'start_date' => $start_date,
+                'end_date'   => $end_date,
+                'today'      => $activities->get()
+            ];
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getcampaigntotalspending.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getcampaigntotalspending.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getcampaigntotalspending.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.dashboard.getcampaigntotalspending.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getcampaigntotalspending.before.render', array($this, &$output));
+
+        return $output;
+    }
+
     public static function calculateSummaryPercentage($summary = array(), $totalField = 'total')
     {
         if (! ($summary && property_exists((object) $summary, $totalField)))
