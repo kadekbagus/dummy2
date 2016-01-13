@@ -4751,7 +4751,7 @@ class MobileCIAPIController extends ControllerAPI
             $coupon->orderBy(DB::raw('RAND()'))->limit(5);
 
             $results = $promo->unionAll($news)->unionAll($coupon)->orderBy(DB::raw('RAND()'))->get();
-            
+
             //$campaign_card_total = Config::get('campaign_card_popup_number', 5); <----------- should create config for this number
             $campaign_card_total = 5;
             $max_campaign = count($results) > $campaign_card_total ? $campaign_card_total : count($results);
@@ -4762,11 +4762,11 @@ class MobileCIAPIController extends ControllerAPI
             foreach($end_results as $near_end_result) {
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
                 if ($near_end_result->campaign_type === 'promo') {
-                    $near_end_result->campaign_url = 'customer/mallpromotion?id=' . $near_end_result->campaign_id;
+                    $near_end_result->campaign_url = URL::to('/mallpromotion?id=' . $near_end_result->campaign_id);
                 } elseif ($near_end_result->campaign_type === 'news') {
-                    $near_end_result->campaign_url = 'customer/mallnewsdetail?id=' . $near_end_result->campaign_id;
+                    $near_end_result->campaign_url = URL::to('/mallnewsdetail?id=' . $near_end_result->campaign_id);
                 } elseif ($near_end_result->campaign_type === 'coupon') {
-                    $near_end_result->campaign_url = 'customer/mallcouponcampaign?id=' . $near_end_result->campaign_id;
+                    $near_end_result->campaign_url = URL::to('/mallcouponcampaign?id=' . $near_end_result->campaign_id);
                 }
 
                 if (!empty($alternateLanguage)) {
@@ -4782,7 +4782,7 @@ class MobileCIAPIController extends ControllerAPI
 
                     if (!empty($campaignTranslation)) {
                         if ($near_end_result->campaign_type === 'promo' || $near_end_result->campaign_type === 'news') {
-                            
+
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($campaignTranslation->news_name) && $campaignTranslation->news_name !== '') {
                                 $near_end_result->campaign_name = $campaignTranslation->news_name;
@@ -4806,12 +4806,12 @@ class MobileCIAPIController extends ControllerAPI
                                     $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                                         ->where('news_id', $near_end_result->campaign_id)->first();
-                                    
+
                                     // get default image
                                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
                                         ->media_orig()
                                         ->first();
-                                    
+
                                     if (isset($mediaDefaultLanguage->path)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     }
@@ -4825,11 +4825,11 @@ class MobileCIAPIController extends ControllerAPI
                             if (isset($campaignTranslation->description) && $campaignTranslation->description !== '') {
                                 $near_end_result->campaign_description = $campaignTranslation->description;
                             }
-                            
+
                             $media = $campaignTranslation->find($campaignTranslation->coupon_translation_id)
                                 ->media_orig()
                                 ->first();
-                            
+
                             if (isset($media->path)) {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
@@ -4841,12 +4841,12 @@ class MobileCIAPIController extends ControllerAPI
                                     $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
                                         ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
                                         ->where('promotion_id', $near_end_result->campaign_id)->first();
-                                    
+
                                     // get default image
                                     $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
                                         ->media_orig()
                                         ->first();
-                                    
+
                                     if (isset($mediaDefaultLanguage->path)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     }
