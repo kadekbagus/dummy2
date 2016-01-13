@@ -411,7 +411,11 @@ class InboxAPIController extends ControllerAPI
             Event::fire('orbit.inbox.postreadalert.after.validation', array($this, $validator));
 
             $inbox = App::make('orbit.empty.alert');
-            $inbox->is_read = $inbox->is_read === 'Y' ? 'N' : 'Y';
+            if ($inbox->is_read === 'Y') {
+                $inbox->is_read = 'N';
+            } else {
+                $inbox->is_read = 'Y';
+            }
             $inbox->save();
 
             Event::fire('orbit.inbox.postreadalert.after.save', array($this, $inbox));
