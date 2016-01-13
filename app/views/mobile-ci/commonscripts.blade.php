@@ -137,7 +137,7 @@
                         $('body').addClass('freeze-scroll');
                         $('.content-container, .header-container, footer').addClass('blurred');
                         $('.campaign-cards-back-drop').fadeIn('slow');
-                        $('.campaign-cards-container').toggle('slide', {direction: 'right'}, 'slow');
+                        $('.campaign-cards-container').toggle('slide', {direction: 'down'}, 'slow');
                         $('#campaign-cards').lightSlider({
                             gallery:false,
                             item:1,
