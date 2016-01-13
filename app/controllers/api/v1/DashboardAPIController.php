@@ -4405,4 +4405,37 @@ class DashboardAPIController extends ControllerAPI
         });
 
     }
+
+    /**
+     * Get campaign status
+     * 
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @return \OrbitShop\API\v1\ResponseProvider | string
+     */
+    public function getCampaignStatus()
+    {
+        // Promotions
+        $activePromotionCount = News::isPromotion()->runsToday()->active()->count();
+        $inactivePromotionCount = News::isPromotion()->runsToday()->inactive()->count();
+
+        // News
+        $activeNewsCount = News::isNews()->runsToday()->active()->count();
+        $inactiveNewsCount = News::isNews()->runsToday()->inactive()->count();
+
+        // Coupons
+        $activeCouponCount = Promotion::where('is_coupon', 'Y')->runsToday()->active()->count();
+        $inactiveCouponCount = Promotion::where('is_coupon', 'N')->runsToday()->inactive()->count();
+
+        $this->response->data = array(
+            'promotions_active'    => $activePromotionCount,
+            'promotions_inactive'  => $inactivePromotionCount,
+            'news_active'          => $activeNewsCount,
+            'news_inactive'        => $inactiveNewsCount,
+            'coupons_active'       => $activeCouponCount,
+            'coupons_inactive'     => $inactiveCouponCount,
+        );
+
+        return $this->render(200);
+    }
+
 }
