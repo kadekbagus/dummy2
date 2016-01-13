@@ -4467,20 +4467,24 @@ class DashboardAPIController extends ControllerAPI
      *
      * @author Qosdil A. <qosdil@dominopos.com>
      * @return \OrbitShop\API\v1\ResponseProvider | string
+     * @todo Validations
      */
     public function getCampaignStatus()
     {
+        $time = OrbitInput::get('date');
+        $date = substr($time, 0, 10);
+
         // Promotions
-        $activePromotionCount = News::isPromotion()->runsToday()->active()->count();
-        $inactivePromotionCount = News::isPromotion()->runsToday()->inactive()->count();
+        $activePromotionCount = News::isPromotion()->ofRunningDate($date)->active()->count();
+        $inactivePromotionCount = News::isPromotion()->ofRunningDate($date)->inactive()->count();
 
         // News
-        $activeNewsCount = News::isNews()->runsToday()->active()->count();
-        $inactiveNewsCount = News::isNews()->runsToday()->inactive()->count();
+        $activeNewsCount = News::isNews()->ofRunningDate($date)->active()->count();
+        $inactiveNewsCount = News::isNews()->ofRunningDate($date)->inactive()->count();
 
         // Coupons
-        $activeCouponCount = Promotion::where('is_coupon', 'Y')->runsToday()->active()->count();
-        $inactiveCouponCount = Promotion::where('is_coupon', 'N')->runsToday()->inactive()->count();
+        $activeCouponCount = Promotion::where('is_coupon', 'Y')->ofRunningDate($date)->active()->count();
+        $inactiveCouponCount = Promotion::where('is_coupon', 'N')->ofRunningDate($date)->inactive()->count();
 
         $this->response->data = array(
             'promotions_active'    => $activePromotionCount,
