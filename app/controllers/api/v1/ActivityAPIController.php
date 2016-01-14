@@ -3239,7 +3239,7 @@ class ActivityAPIController extends ControllerAPI
                     SUM(case when age >= 0 then 1 else 0 end) as 'total'
                 FROM(
                     SELECT activity_id, activity_name, {$tablePrefix}activities.user_id, user_email, {$tablePrefix}user_details.gender, birthdate ,TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) AS age
-                    FROM orbitmall_uuid_allmall.{$tablePrefix}activities
+                    FROM {$tablePrefix}activities
                     LEFT JOIN {$tablePrefix}user_details
                     ON {$tablePrefix}activities.user_id = {$tablePrefix}user_details.user_id
                     WHERE 1 = 1
