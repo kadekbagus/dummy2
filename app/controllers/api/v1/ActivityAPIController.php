@@ -3171,17 +3171,17 @@ class ActivityAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this));
+            Event::fire('orbit.dashboard.getcampaigndemographic.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.dashboard.getcrmsummaryreport.after.auth', array($this));
+            Event::fire('orbit.dashboard.getcampaigndemographic.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this, $user));
+            Event::fire('orbit.dashboard.getcampaigndemographic.before.auth', array($this, $user));
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -3191,7 +3191,7 @@ class ActivityAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.dashboard.getcrmsummaryreport.after.auth', array($this, $user));
+            Event::fire('orbit.dashboard.getcampaigndemographic.after.auth', array($this, $user));
 
             $tablePrefix = DB::getTablePrefix();
 
@@ -3214,14 +3214,14 @@ class ActivityAPIController extends ControllerAPI
                 )
             );
 
-            Event::fire('orbit.dashboard.getcrmsummaryreport.before.validation', array($this, $validator));
+            Event::fire('orbit.dashboard.getcampaigndemographic.before.validation', array($this, $validator));
 
             // Run the validation
             if ( $validator->fails() ) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.dashboard.getcrmsummaryreport.after.validation', array($this, $validator));
+            Event::fire('orbit.dashboard.getcampaigndemographic.after.validation', array($this, $validator));
 
             // start date cannot be bigger than end date
             if ( $start_date > $end_date ) {
@@ -3238,7 +3238,7 @@ class ActivityAPIController extends ControllerAPI
                     SUM(case when age >= 55 then 1 else 0 end) as '55 +',
                     SUM(case when age >= 0 then 1 else 0 end) as 'total'
                 FROM(
-                    SELECT activity_id, activity_name, {$tablePrefix}activities.user_id, user_email, {$tablePrefix}user_details.gender, birthdate ,TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) AS age
+                    SELECT activity_id, activity_name, user_email, {$tablePrefix}user_details.gender, birthdate ,TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) AS age
                     FROM {$tablePrefix}activities
                     LEFT JOIN {$tablePrefix}user_details
                     ON {$tablePrefix}activities.user_id = {$tablePrefix}user_details.user_id
@@ -3292,7 +3292,7 @@ class ActivityAPIController extends ControllerAPI
             $this->response->data = $responses;
 
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.dashboard.getcrmsummaryreport.access.forbidden', array($this, $e));
+            Event::fire('orbit.dashboard.getcampaigndemographic.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -3300,7 +3300,7 @@ class ActivityAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.dashboard.getcrmsummaryreport.invalid.arguments', array($this, $e));
+            Event::fire('orbit.dashboard.getcampaigndemographic.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -3308,7 +3308,7 @@ class ActivityAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.dashboard.getcrmsummaryreport.query.error', array($this, $e));
+            Event::fire('orbit.dashboard.getcampaigndemographic.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -3323,7 +3323,7 @@ class ActivityAPIController extends ControllerAPI
             $httpCode = 500;
         } catch (Exception $e) {
             $httpCode = 500;
-            Event::fire('orbit.dashboard.getcrmsummaryreport.general.exception', array($this, $e));
+            Event::fire('orbit.dashboard.getcampaigndemographic.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -3332,11 +3332,10 @@ class ActivityAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.dashboard.getcrmsummaryreport.before.render', array($this, &$output));
+        Event::fire('orbit.dashboard.getcampaigndemographic.before.render', array($this, &$output));
 
         return $output;
     }
-
 
 
     protected function registerCustomValidation()
