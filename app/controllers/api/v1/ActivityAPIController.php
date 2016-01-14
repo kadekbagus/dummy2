@@ -3229,7 +3229,7 @@ class ActivityAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $q = "SELECT
+            $query = "SELECT
                     SUM(case when age >= 0 and age <= 14 then 1 else 0 end) as '0 - 14',
                     SUM(case when age >= 15 and age <= 24 then 1 else 0 end) as '15 - 24',
                     SUM(case when age >= 25 and age <= 34 then 1 else 0 end) as '25 - 34',
@@ -3250,14 +3250,14 @@ class ActivityAPIController extends ControllerAPI
                     AND location_id = ?
                 ";
 
-            $demograhicFemale = DB::select($q . "
+            $demograhicFemale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'f'
                         AND {$tablePrefix}activities.created_at between ? and ?
                         group by {$tablePrefix}activities.user_id
                     ) as A
             ", array($current_mall, $start_date, $end_date));
 
-            $demograhicMale = DB::select($q . "
+            $demograhicMale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'm'
                         AND {$tablePrefix}activities.created_at between ? and ?
                         group by {$tablePrefix}activities.user_id
@@ -3267,109 +3267,24 @@ class ActivityAPIController extends ControllerAPI
             $female = array();
             $percent = 0;
 
-            for ($i=0; $i < 6; $i++) {
-                if ($i == 0) {
-                    $ageRange = '0 - 14';
-                    if($demograhicFemale[0]->total !== 0){
-                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
-                    }
-                    $female[$i]['age_range'] = $ageRange;
-                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
-                    $female[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 1) {
-                    $ageRange = '15 - 24';
-                    if($demograhicFemale[0]->total !== 0){
-                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
-                    }
-                    $female[$i]['age_range'] = $ageRange;
-                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
-                    $female[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 2) {
-                    $ageRange = '25 - 34';
-                    if($demograhicFemale[0]->total !== 0){
-                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
-                    }
-                    $female[$i]['age_range'] = $ageRange;
-                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
-                    $female[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 3) {
-                    $ageRange = '35 - 44';
-                    if($demograhicFemale[0]->total !== 0){
-                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
-                    }
-                    $female[$i]['age_range'] = $ageRange;
-                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
-                    $female[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 4) {
-                    $ageRange = '45 - 54';
-                    if($demograhicFemale[0]->total !== 0){
-                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
-                    }
-                    $female[$i]['age_range'] = $ageRange;
-                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
-                    $female[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 5) {
-                    $ageRange = '55 +';
-                    if($demograhicFemale[0]->total !== 0){
-                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
-                    }
-                    $female[$i]['age_range'] = $ageRange;
-                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
-                    $female[$i]['percent'] = round($percent, 2) . ' %';
+            foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
+                if($demograhicFemale[0]->total !== 0){
+                    $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
                 }
+                $female[$key]['age_range'] = $ageRange;
+                $female[$key]['total'] = $demograhicFemale[0]->$ageRange;
+                $female[$key]['percent'] = round($percent, 2) . ' %';
             }
 
-            for ($i=0; $i < 6; $i++) {
-                if ($i == 0) {
-                    $ageRange = '0 - 14';
-                    if($demograhicMale[0]->total !== 0){
-                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
-                    }
-                    $male[$i]['age_range'] = $ageRange;
-                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
-                    $male[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 1) {
-                    $ageRange = '15 - 24';
-                    if($demograhicMale[0]->total !== 0){
-                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
-                    }
-                    $male[$i]['age_range'] = $ageRange;
-                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
-                    $male[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 2) {
-                    $ageRange = '25 - 34';
-                    if($demograhicMale[0]->total !== 0){
-                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
-                    }
-                    $male[$i]['age_range'] = $ageRange;
-                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
-                    $male[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 3) {
-                    $ageRange = '35 - 44';
-                    if($demograhicMale[0]->total !== 0){
-                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
-                    }
-                    $male[$i]['age_range'] = $ageRange;
-                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
-                    $male[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 4) {
-                    $ageRange = '45 - 54';
-                    if($demograhicMale[0]->total !== 0){
-                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
-                    }
-                    $male[$i]['age_range'] = $ageRange;
-                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
-                    $male[$i]['percent'] = round($percent, 2) . ' %';
-                } elseif ($i == 5) {
-                    $ageRange = '55 +';
-                    if($demograhicMale[0]->total !== 0){
-                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
-                    }
-                    $male[$i]['age_range'] = $ageRange;
-                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
-                    $male[$i]['percent'] = round($percent, 2) . ' %';
+            foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
+                if($demograhicMale[0]->total !== 0){
+                    $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
                 }
+                $male[$key]['age_range'] = $ageRange;
+                $male[$key]['total'] = $demograhicMale[0]->$ageRange;
+                $male[$key]['percent'] = round($percent, 2) . ' %';
             }
+
             // get column name from config
             $responses['female'] = $female;
             $responses['male'] = $male;
