@@ -4905,7 +4905,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->media_orig()
                                 ->first();
 
-                            if (isset($media->path)) {
+                            if (empty($media->path) || $media->path == 'null') {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
                                 // back to default image if in the content multilanguage not have image
@@ -4921,7 +4921,7 @@ class MobileCIAPIController extends ControllerAPI
                                         ->media_orig()
                                         ->first();
 
-                                    if (isset($mediaDefaultLanguage->path)) {
+                                    if (empty($mediaDefaultLanguage->path) || $mediaDefaultLanguage->path == 'null') {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     } else {
                                         if ($near_end_result->campaign_type === 'promotion') {
@@ -4945,7 +4945,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->media_orig()
                                 ->first();
 
-                            if (isset($media->path)) {
+                            if (empty($media->path) || $media->path == 'null') {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
                                 // back to default image if in the content multilanguage not have image
@@ -4961,7 +4961,7 @@ class MobileCIAPIController extends ControllerAPI
                                         ->media_orig()
                                         ->first();
 
-                                    if (isset($mediaDefaultLanguage->path)) {
+                                    if (empty($mediaDefaultLanguage->path) || $mediaDefaultLanguage->path == 'null') {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     } else {
                                         $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
