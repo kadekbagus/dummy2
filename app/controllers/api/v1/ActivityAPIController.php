@@ -16,6 +16,9 @@ class ActivityAPIController extends ControllerAPI
 {
     private $returnQuery = false;
 
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
     /**
      * GET - List of Activities history
      *
@@ -3052,15 +3055,15 @@ class ActivityAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $activities = DB::select("
-					select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
-					from {$tablePrefix}activities
-					-- filter by date
-					where (`group` = 'mobile-ci'
-					    or (`group` = 'portal' and activity_type in ('activation','create'))
-					    or (`group` = 'cs-portal' and activity_type in ('registration')))
-					    and response_status = 'OK' and location_id = ?
-					    and created_at between ? and ?
-					group by 1, 2;
+                    select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
+                    from {$tablePrefix}activities
+                    -- filter by date
+                    where (`group` = 'mobile-ci'
+                        or (`group` = 'portal' and activity_type in ('activation','create'))
+                        or (`group` = 'cs-portal' and activity_type in ('registration')))
+                        and response_status = 'OK' and location_id = ?
+                        and created_at between ? and ?
+                    group by 1, 2;
                 ", array($timezoneOffset, $current_mall, $start_date, $end_date));
 
             $responses = [];
@@ -3150,6 +3153,276 @@ class ActivityAPIController extends ControllerAPI
 
         return $output;
     }
+
+    /**
+     * GET - Campaign demographic
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param string  `merchant_id`   (required) - mall id
+     * @param date    `start_date`    (required) - start date, default is 1 month
+     * @param date    `end_date`      (required) - end date
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCampaignDemographic()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.auth', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->newsViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.auth', array($this, $user));
+
+            $tablePrefix = DB::getTablePrefix();
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ),
+                array(
+                    'current_mall' => 'required',
+                    'start_date' => 'required | date_format:Y-m-d H:i:s',
+                    'end_date' => 'required | date_format:Y-m-d H:i:s',
+                )
+            );
+
+            Event::fire('orbit.dashboard.getcrmsummaryreport.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ( $validator->fails() ) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getcrmsummaryreport.after.validation', array($this, $validator));
+
+            // start date cannot be bigger than end date
+            if ( $start_date > $end_date ) {
+                $errorMessage = 'Start date cannot be greater than end date';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $q = "SELECT
+                    SUM(case when age >= 0 and age <= 14 then 1 else 0 end) as '0 - 14',
+                    SUM(case when age >= 15 and age <= 24 then 1 else 0 end) as '15 - 24',
+                    SUM(case when age >= 25 and age <= 34 then 1 else 0 end) as '25 - 34',
+                    SUM(case when age >= 35 and age <= 44 then 1 else 0 end) as '35 - 44',
+                    SUM(case when age >= 45 and age <= 54 then 1 else 0 end) as '45 - 54',
+                    SUM(case when age >= 55 then 1 else 0 end) as '55 +',
+                    SUM(case when age >= 0 then 1 else 0 end) as 'total'
+                FROM(
+                    SELECT activity_id, activity_name, {$tablePrefix}activities.user_id, user_email, {$tablePrefix}user_details.gender, birthdate ,TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) AS age
+                    FROM orbitmall_uuid_allmall.{$tablePrefix}activities
+                    LEFT JOIN {$tablePrefix}user_details
+                    ON {$tablePrefix}activities.user_id = {$tablePrefix}user_details.user_id
+                    WHERE 1 = 1
+                    AND `group` = 'mobile-ci' AND activity_type = 'view'
+                    AND (activity_name = 'view_promotion' OR activity_name = 'view_news' OR activity_name = 'view_coupon')
+                    AND (birthdate != '0000-00-00' AND birthdate != '' AND birthdate is not null)
+                    AND {$tablePrefix}activities.gender is not null
+                    AND location_id = ?
+                ";
+
+            $demograhicFemale = DB::select($q . "
+                        AND {$tablePrefix}user_details.gender = 'f'
+                        AND {$tablePrefix}activities.created_at between ? and ?
+                        group by {$tablePrefix}activities.user_id
+                    ) as A
+            ", array($current_mall, $start_date, $end_date));
+
+            $demograhicMale = DB::select($q . "
+                        AND {$tablePrefix}user_details.gender = 'm'
+                        AND {$tablePrefix}activities.created_at between ? and ?
+                        group by {$tablePrefix}activities.user_id
+                    ) as A
+            ", array($current_mall, $start_date, $end_date));
+
+            $female = array();
+            $percent = 0;
+
+            for ($i=0; $i < 6; $i++) {
+                if ($i == 0) {
+                    $ageRange = '0 - 14';
+                    if($demograhicFemale[0]->total !== 0){
+                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                    }
+                    $female[$i]['age_range'] = $ageRange;
+                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
+                    $female[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 1) {
+                    $ageRange = '15 - 24';
+                    if($demograhicFemale[0]->total !== 0){
+                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                    }
+                    $female[$i]['age_range'] = $ageRange;
+                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
+                    $female[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 2) {
+                    $ageRange = '25 - 34';
+                    if($demograhicFemale[0]->total !== 0){
+                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                    }
+                    $female[$i]['age_range'] = $ageRange;
+                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
+                    $female[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 3) {
+                    $ageRange = '35 - 44';
+                    if($demograhicFemale[0]->total !== 0){
+                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                    }
+                    $female[$i]['age_range'] = $ageRange;
+                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
+                    $female[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 4) {
+                    $ageRange = '45 - 54';
+                    if($demograhicFemale[0]->total !== 0){
+                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                    }
+                    $female[$i]['age_range'] = $ageRange;
+                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
+                    $female[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 5) {
+                    $ageRange = '55 +';
+                    if($demograhicFemale[0]->total !== 0){
+                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                    }
+                    $female[$i]['age_range'] = $ageRange;
+                    $female[$i]['total'] = $demograhicFemale[0]->$ageRange;
+                    $female[$i]['percent'] = round($percent, 2) . ' %';
+                }
+            }
+
+            for ($i=0; $i < 6; $i++) {
+                if ($i == 0) {
+                    $ageRange = '0 - 14';
+                    if($demograhicMale[0]->total !== 0){
+                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                    }
+                    $male[$i]['age_range'] = $ageRange;
+                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
+                    $male[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 1) {
+                    $ageRange = '15 - 24';
+                    if($demograhicMale[0]->total !== 0){
+                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                    }
+                    $male[$i]['age_range'] = $ageRange;
+                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
+                    $male[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 2) {
+                    $ageRange = '25 - 34';
+                    if($demograhicMale[0]->total !== 0){
+                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                    }
+                    $male[$i]['age_range'] = $ageRange;
+                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
+                    $male[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 3) {
+                    $ageRange = '35 - 44';
+                    if($demograhicMale[0]->total !== 0){
+                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                    }
+                    $male[$i]['age_range'] = $ageRange;
+                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
+                    $male[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 4) {
+                    $ageRange = '45 - 54';
+                    if($demograhicMale[0]->total !== 0){
+                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                    }
+                    $male[$i]['age_range'] = $ageRange;
+                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
+                    $male[$i]['percent'] = round($percent, 2) . ' %';
+                } elseif ($i == 5) {
+                    $ageRange = '55 +';
+                    if($demograhicMale[0]->total !== 0){
+                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                    }
+                    $male[$i]['age_range'] = $ageRange;
+                    $male[$i]['total'] = $demograhicMale[0]->$ageRange;
+                    $male[$i]['percent'] = round($percent, 2) . ' %';
+                }
+            }
+            // get column name from config
+            $responses['female'] = $female;
+            $responses['male'] = $male;
+
+            $this->response->data = $responses;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getcrmsummaryreport.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getcrmsummaryreport.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getcrmsummaryreport.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+
 
     protected function registerCustomValidation()
     {
