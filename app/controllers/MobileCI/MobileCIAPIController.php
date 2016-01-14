@@ -3440,22 +3440,22 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
 
             $retailer = $this->getRetailerInfo();
-            $issued_coupon_id = trim(OrbitInput::get('id'));
+            $promotion_id = trim(OrbitInput::get('id'));
             $languages = $this->getListLanguages($retailer);
 
             $coupons = Coupon::with(array(
                 'couponRule',
                 'issuedCoupons' => function($q) use ($issued_coupon_id, $user, $retailer) {
-                    $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                     $q->where('issued_coupons.user_id', $user->user_id);
                     $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                     $q->where('issued_coupons.status', 'active');
+                    $q->orderBy('issued_coupons.expired_date', 'DESC');
                 })
             )
             ->where('merchant_id', $retailer->merchant_id)
             ->where('promotions.status', 'active')
+            ->where('promotions.promotion_id', $promotion_id)
             ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user, $retailer) {
-                $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                 $q->where('issued_coupons.user_id', $user->user_id);
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                 $q->where('issued_coupons.status', 'active');
