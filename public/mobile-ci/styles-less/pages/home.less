@@ -252,6 +252,44 @@ i.disableds{
   }
 }
 
+.coupon-new-badge{
+  right: 6px;
+  top: 1px;
+  width: auto;
+  height: auto;
+  position: absolute;
+  font-size: 1em;
+  z-index: 1;
+  color: #fff;
+  text-align: center;
+  .new-number{
+    right:6px; 
+    top:1px;
+    width:auto; 
+    height:auto;
+    position:absolute;
+    font-size:1em;
+    z-index:1;
+    color: #fff;
+    text-align:center;
+    background: #ff0000;
+    border-radius: 32px;
+    padding: 0px 7px;
+    margin-top: 10px;
+  }
+  .new-number-label{
+    right:6px; 
+    top:15px;
+    width:32px; 
+    height:32px;
+    position:absolute;
+    font-size:.75em;
+    z-index:1;
+    color: #fff;
+    text-align:center;
+  }
+}
+
 .campaign-cards-container{
     height: 100%;
     width: 100%;
@@ -302,7 +340,14 @@ i.disableds{
         z-index: 1;
         right: 12px;
         top: 24px;
+        &.search-close-btn{
+          width: 90%;
+          margin-left: 5%;
+        }
         #campaign-cards-close-btn{
+          text-shadow: 0px 1px 2px #444;
+        }
+        #search-close-btn{
           text-shadow: 0px 1px 2px #444;
         }
     }
@@ -318,14 +363,90 @@ i.disableds{
     padding-top: 20px;
     padding-bottom: 20px;
 }
-.campaign-cards-back-drop{
+.search-container{
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top:0;
+    left:0;
+    overflow-y: scroll;
+    display: none;
+    z-index:1002;
+    .search-wrapper{
+      padding-top: 20px;
+    }
+    .campaign-cards-close-btn{
+        &.search-close-btn{
+          width: 90%;
+          margin-left: 5%;
+        }
+        #campaign-cards-close-btn{
+          text-shadow: 0px 1px 2px #444;
+        }
+        #search-close-btn{
+          text-shadow: 0px 1px 2px #444;
+        }
+    }
+}
+.back-drop{
     display: none;
     position: fixed;
     background: rgba(0,0,0,.5);
-    z-index: 1000;
+    z-index: 999;
     top: 0;
     height: 100%;
     width: 100%;
+    &.campaign-cards-back-drop{
+        z-index: 1000;
+    }
+    &.search-back-drop{
+        z-index: 1001;
+        background: rgba(0,0,0,.8);
+    }
+}
+.search-box{
+  border-bottom: 2px solid #f2f2f2;
+  padding: 0px 12px;
+  color:#fff;
+  width: 90%;
+  margin-left: 5%;
+  .search-type{
+    border:none;
+    background: transparent;
+    outline:none;
+    padding:4px 2px;
+    color:#fff;
+  }
+}
+.search-results{
+  color: #fff;
+  width: 90%;
+  margin-left: 5%;
+  ul{
+    margin:0;
+    padding:0;
+    .search-result-group{
+      display:-webkit-flex;
+      display:flex;
+      margin-bottom: 6px;
+      list-style: none;
+      a{
+        color:#fff;
+      }
+      h5{
+        margin-top:0px;
+      }
+      img{
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 24px;
+      }
+      .col-xs-10{
+        padding-left:10px;
+      }
+    }
+  }
 }
 .campaign-cards-info{
     background: #fff;

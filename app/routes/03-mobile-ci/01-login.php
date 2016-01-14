@@ -608,7 +608,15 @@ Route::group(
         {
             return MobileCI\MobileCIAPIController::create()->getSearchCampaignCardsPopUp();
         });
-        
+
+        /**
+         * Campaign popup activities
+         */
+        Route::post('/app/v1/campaign/activities', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->postCampaignPopUpActivities();
+        });
+
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
         Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }

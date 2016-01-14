@@ -106,7 +106,160 @@
         </div>
     </div>
 </div>
-<div class="row campaign-cards-back-drop"></div>
+<div class="row back-drop campaign-cards-back-drop"></div>
+
+<div class="search-container">
+    <div class="row search-wrapper">
+        <div class="col-xs-12 text-right campaign-cards-close-btn search-close-btn">
+            <button class="close" id="search-close-btn">&times;</button>
+        </div>
+        <div class="col-xs-12 text-left search-box">
+            <span class="col-xs-1"><i class="fa fa-search"></i></span>
+            <input id="search-type" class="col-xs-11 search-type" type="text" placeholder="Search here">
+        </div>
+        <div class="col-xs-12 text-left search-results" style="display:none;">
+            <h4>TENANTS</h4>
+            <ul>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+            <h4>PROMOTIONS</h4>
+            <ul>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+                <li class="search-result-group">
+                    <a href="#">
+                        <div class="col-xs-2">
+                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
+                        </div>
+                        <div class="col-xs-10">
+                            <h5><strong>Cool Tenant In Action</strong></h5>
+                            <p>This is some kind of a description</p>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="row back-drop search-back-drop"></div>
 
 {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
@@ -129,7 +282,7 @@
                                     <div class="campaign-cards-info">\
                                         <h4><strong>'+ data.data.records[i].campaign_name +'</strong></h4>\
                                         <p>'+ data.data.records[i].campaign_description +'</p>\
-                                        <a class="campaign-cards-link" href="'+ data.data.records[i].campaign_url +'"><i>{{ Lang::get('mobileci.campaign_cards.go_to_page') }}</i></a>\
+                                        <a class="campaign-cards-link" data-id="'+ data.data.records[i].campaign_id +'" data-type="'+ data.data.records[i].campaign_type +'" href="'+ data.data.records[i].campaign_url +'"><i>{{ Lang::get('mobileci.campaign_cards.go_to_page') }}</i></a>\
                                     </div>\
                                 </li>';
                             $('#campaign-cards').append(list);
@@ -167,9 +320,19 @@
             $('.campaign-cards-container').toggle('slide', {direction: 'up'}, 'fast');
         });
 
-
         $('body').on('click', '.campaign-cards-link', function(e){
             e.preventDefault();
+            var campaign_id = $(this).data('id');
+            var campaign_type = $(this).data('type');
+            $.ajax({
+                url: apiPath + 'campaign/activities',
+                method: 'POST',
+                data: {
+                    campaign_id: campaign_id,
+                    campaign_type: campaign_type,
+                    activity_type: 'click'
+                }
+            });
             $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             window.location = $(this).attr('href');
         });
@@ -205,10 +368,43 @@
             $('#qrform').submit();
         });
         $('#searchBtn').click(function(){
-            $('#SearchProducts').modal();
+            $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
+            $('.search-back-drop').fadeIn('fast');
+            $('.content-container, .header-container, footer').addClass('blurred');
+            //$('#SearchProducts').modal();
             setTimeout(function(){
-                $('#keyword').focus();
-            }, 500);
+                $('#search-type').focus();
+            }, 10);
+        });
+        $('#search-close-btn').click(function(){
+            $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
+            $('.search-back-drop').fadeOut('fast');
+            $('.content-container, .header-container, footer').removeClass('blurred');
+            $('#search-type').val('');
+            // ------------- cuma dummy
+            $('.search-results').hide();
+            // ---------------- -------
+        });
+        $('#search-type').keydown(function (e){
+            if(e.keyCode == 13){
+                $('#search-type').blur();
+                var keyword = $('#search-type').val();
+                var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
+                $('.search-wrapper').append(loader);
+                // ------------- cuma dummy
+                setTimeout(function(){
+                    $('#search-loader').remove();
+                    $('.search-results').fadeIn('slow');
+                }, 2000);
+                // ------------- -----------
+
+                // $.ajax({
+                //     url: apiPath + 'search?keyword=' + keyword,
+                //     method: 'GET'
+                // }).done(function(data) {
+
+                // });
+            }
         });
         $('#searchProductBtn').click(function(){
             $('#SearchProducts').modal('toggle');
