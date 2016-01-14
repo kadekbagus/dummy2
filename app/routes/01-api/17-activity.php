@@ -106,3 +106,11 @@ Route::get('/api/v1/activity/crm-summary-report', function()
 {
     return ActivityAPIController::create()->getCRMSummaryReport();
 });
+
+/**
+ * Get campaign demographic
+ */
+Route::get('/api/v1/activity/campaign-demographic', function()
+{
+    return ActivityAPIController::create()->getCampaignDemographic();
+});
