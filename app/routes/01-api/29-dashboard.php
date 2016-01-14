@@ -58,5 +58,14 @@ Route::get('/api/v1/dashboard/detail-top-customer-view', "DashboardAPIController
 // Get Dashboard expiting campaigns
 Route::get('/api/v1/dashboard/expiring-campaign', "DashboardAPIController@getExpiringCampaign");
 
+// Get Dashboard estimate total cost
+Route::get('/api/v1/dashboard/estimated-total-cost', "DashboardAPIController@getEstimateTotalCost");
+
 // Get Dashboard campaign status
 Route::get('/api/v1/dashboard/campaign-statuses', "DashboardAPIController@getCampaignStatus");
+
+// Get Dashboard total page view
+Route::get('/api/v1/dashboard/total-page-view', "DashboardAPIController@getTotalPageView");
+
+// Get Dashboard campaign total spending
+Route::get('/api/v1/dashboard/campaign-total-spending', "DashboardAPIController@getCampaignTotalSpending");
