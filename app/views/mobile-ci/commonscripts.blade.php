@@ -117,8 +117,9 @@
     $(document).ready(function(){
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
+                var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
                 $.ajax({
-                    url: apiPath + 'campaign/list',
+                    url: apiPath + 'campaign/list?lang='+cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if(data.data.total_records) {
@@ -128,7 +129,7 @@
                                     <div class="campaign-cards-info">\
                                         <h4><strong>'+ data.data.records[i].campaign_name +'</strong></h4>\
                                         <p>'+ data.data.records[i].campaign_description +'</p>\
-                                        <a class="campaign-cards-link" href="'+ data.data.records[i].campaign_url +'"><i>'+ data.data.records[i].campaign_link +'</i></a>\
+                                        <a class="campaign-cards-link" href="'+ data.data.records[i].campaign_url +'"><i>{{ Lang::get('mobileci.campaign_cards.go_to_page') }}</i></a>\
                                     </div>\
                                 </li>';
                             $('#campaign-cards').append(list);
