@@ -4797,7 +4797,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $promo = DB::table('news')
-                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "promo" as campaign_type')
+                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "promotion" as campaign_type')
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -4856,13 +4856,13 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            $promo->orderBy(DB::raw('RAND()'))->limit(5);
+            $promo->orderBy(DB::raw('RAND()'));
 
-            $news->orderBy(DB::raw('RAND()'))->limit(5);
+            $news->orderBy(DB::raw('RAND()'));
 
-            $coupon->orderBy(DB::raw('RAND()'))->limit(5);
+            $coupon->orderBy(DB::raw('RAND()'));
 
-            $results = $promo->unionAll($news)->unionAll($coupon)->orderBy(DB::raw('RAND()'))->get();
+            $results = $promo->unionAll($news)->unionAll($coupon)->get();
 
             //$campaign_card_total = Config::get('campaign_card_popup_number', 5); <----------- should create config for this number
             $campaign_card_total = 5;
@@ -4875,10 +4875,13 @@ class MobileCIAPIController extends ControllerAPI
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
                 if ($near_end_result->campaign_type === 'promotion') {
                     $near_end_result->campaign_url = URL::to('customer/mallpromotion?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
                 } elseif ($near_end_result->campaign_type === 'news') {
                     $near_end_result->campaign_url = URL::to('customer/mallnewsdetail?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->campaign_type === 'coupon') {
                     $near_end_result->campaign_url = URL::to('customer/mallcouponcampaign?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                 }
 
                 if (!empty($alternateLanguage)) {
@@ -4907,7 +4910,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->media_orig()
                                 ->first();
 
-                            if (isset($media->path)) {
+                            if (is_object($media)) {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
                                 // back to default image if in the content multilanguage not have image
@@ -4923,14 +4926,8 @@ class MobileCIAPIController extends ControllerAPI
                                         ->media_orig()
                                         ->first();
 
-                                    if (isset($mediaDefaultLanguage->path)) {
+                                    if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
-                                    } else {
-                                        if ($near_end_result->campaign_type === 'promotion') {
-                                            $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
-                                        } elseif ($near_end_result->campaign_type === 'news') {
-                                            $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
-                                        }
                                     }
                                 }
                             }
@@ -4947,7 +4944,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->media_orig()
                                 ->first();
 
-                            if (isset($media->path)) {
+                            if (is_object($media)) {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
                                 // back to default image if in the content multilanguage not have image
@@ -4963,10 +4960,8 @@ class MobileCIAPIController extends ControllerAPI
                                         ->media_orig()
                                         ->first();
 
-                                    if (isset($mediaDefaultLanguage->path)) {
+                                    if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
-                                    } else {
-                                        $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                                     }
                                 }
                             }
