@@ -3317,12 +3317,13 @@ class MobileCIAPIController extends ControllerAPI
 
             $coupons = DB::select(
                 DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                    'SELECT *, p.image AS promo_image, count(p.promotion_id) as quantity FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                 WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
                     AND p.merchant_id = :merchantid
                     AND ic.user_id = :userid
+                    GROUP BY p.promotion_id
                     ORDER BY RAND()' // randomize
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
@@ -4672,7 +4673,17 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = null;
+            $lang = OrbitInput::get('lang', 'en'); //get user current cookie lang
+            $language = \Language::where('name', '=', $lang)->first();
+            if (is_object($language)) {
+                $alternateLanguage = \MerchantLanguage::excludeDeleted()
+                    ->where('merchant_id', '=', $retailer->merchant_id)
+                    ->where('language_id', '=', $language->language_id)
+                    ->first();
+            }
+
+            //$alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
@@ -4870,7 +4881,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if (count($end_results) === 0) {
                 $data->records = null;
-                $this->response->message = 'T_T .No campaign for you. T_T';
+                $this->response->message = 'No available campaign right now.';
             }
 
             $this->response->data = $data;
