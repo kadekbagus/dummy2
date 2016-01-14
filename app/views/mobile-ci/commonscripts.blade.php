@@ -117,8 +117,9 @@
     $(document).ready(function(){
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
+                var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
                 $.ajax({
-                    url: apiPath + 'campaign/list',
+                    url: apiPath + 'campaign/list?lang='+cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if(data.data.total_records) {
