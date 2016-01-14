@@ -4908,7 +4908,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->media_orig()
                                 ->first();
 
-                            if (empty($media->path) || $media->path == 'null') {
+                            if (is_object($media)) {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
                                 // back to default image if in the content multilanguage not have image
@@ -4924,7 +4924,7 @@ class MobileCIAPIController extends ControllerAPI
                                         ->media_orig()
                                         ->first();
 
-                                    if (empty($mediaDefaultLanguage->path) || $mediaDefaultLanguage->path == 'null') {
+                                    if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     }
                                 }
@@ -4942,7 +4942,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->media_orig()
                                 ->first();
 
-                            if (empty($media->path) || $media->path == 'null') {
+                            if (is_object($media)) {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
                                 // back to default image if in the content multilanguage not have image
@@ -4958,7 +4958,7 @@ class MobileCIAPIController extends ControllerAPI
                                         ->media_orig()
                                         ->first();
 
-                                    if (empty($mediaDefaultLanguage->path) || $mediaDefaultLanguage->path == 'null') {
+                                    if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     }
                                 }
