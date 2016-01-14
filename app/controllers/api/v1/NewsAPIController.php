@@ -1401,6 +1401,8 @@ class NewsAPIController extends ControllerAPI
                         $news->with('genders');
                     } elseif ($relation === 'ages') {
                         $news->with('ages');
+                    } elseif ($relation === 'keywords') {
+                        $news->with('keywords');
                     }
                 }
             });

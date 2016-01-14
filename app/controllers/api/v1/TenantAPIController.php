@@ -356,6 +356,8 @@ class TenantAPIController extends ControllerAPI
             $end_date_activity = OrbitInput::post('end_date_activity');
             $id_language_default = OrbitInput::post('id_language_default');
             $box_url = OrbitInput::post('box_url');
+            $keywords = OrbitInput::post('keywords');
+            $keywords = (array) $keywords;
 
             // default value for status is inactive
             $status = OrbitInput::post('status');
@@ -539,6 +541,41 @@ class TenantAPIController extends ControllerAPI
             OrbitInput::post('tenant_id', function($tenant_id) use ($newtenant) {
                 $this->validateAndSaveLinkToTenant($newtenant, $tenant_id);
             });
+
+            // save Keyword
+            $tenantKeywords = array();
+            foreach ($keywords as $keyword) {
+                $keyword_id = null;
+
+                $existKeyword = Keyword::excludeDeleted()
+                    ->where('keyword', '=', $keyword)
+                    ->where('merchant_id', '=', $parent_id)
+                    ->first();
+
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = $parent_id;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
+
+                    $keyword_id = $newKeyword->keyword_id;
+                    $tenantKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $tenantKeywords[] = $existKeyword;
+                }
+
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newtenant->merchant_id;
+                $newKeywordObject->object_type = 'tenant';
+                $newKeywordObject->save();
+
+            }
+            $newtenant->keywords = $tenantKeywords;
 
             Event::fire('orbit.tenant.postnewtenant.after.save', array($this, $newtenant));
 
@@ -1039,6 +1076,49 @@ class TenantAPIController extends ControllerAPI
 
                 // reload categories relation
                 $updatedtenant->load('categories');
+            });
+
+            // Delete old data
+            $deleted_keyword_object = KeywordObject::where('object_id', '=', $retailer_id)
+                                                    ->where('object_type', '=', 'tenant');
+            $deleted_keyword_object->delete();
+
+            OrbitInput::post('keywords', function($keywords) use ($updatedtenant, $mall_id, $user, $retailer_id) {
+                // Insert new data
+                $tenantKeywords = array();
+                foreach ($keywords as $keyword) {
+                    $keyword_id = null;
+
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', $mall_id)
+                        ->first();
+
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = $mall_id;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
+
+                        $keyword_id = $newKeyword->keyword_id;
+                        $tenantKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $tenantKeywords[] = $existKeyword;
+                    }
+
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $retailer_id;
+                    $newKeywordObject->object_type = 'tenant';
+                    $newKeywordObject->save();
+
+                }
+                $updatedtenant->keywords = $tenantKeywords;
             });
 
             Event::fire('orbit.tenant.postupdatetenant.after.save', array($this, $updatedtenant));
@@ -1644,6 +1724,8 @@ class TenantAPIController extends ControllerAPI
                     // relation with translation
                     if ($relation === 'translations') {
                         $tenants->with('translations');
+                    } elseif ($relation === 'keywords') {
+                        $tenants->with('keywords');
                     }
                 }
             });

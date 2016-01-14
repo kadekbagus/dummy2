@@ -116,6 +116,12 @@ class Tenant extends Eloquent
         return $this->belongsToMany('Employee', 'employee_retailer', 'merchant_id', 'retailer_id');
     }
 
+    public function keywords()
+    {
+        return $this->hasMany('KeywordObject', 'object_id', 'merchant_id')
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+    }
+
     /**
      * Eagler load the count query. It is not very optimized but it works for now
      *
