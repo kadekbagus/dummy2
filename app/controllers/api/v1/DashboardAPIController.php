@@ -4809,8 +4809,8 @@ class DashboardAPIController extends ControllerAPI
         $inactiveNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->inactive()->count();
 
         // Coupons
-        $activeCouponCount = Promotion::ofMerchantId($mallId)->where('is_coupon', 'Y')->ofRunningDate($date)->active()->count();
-        $inactiveCouponCount = Promotion::ofMerchantId($mallId)->where('is_coupon', 'Y')->ofRunningDate($date)->inactive()->count();
+        $activeCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->active()->count();
+        $inactiveCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->inactive()->count();
 
         $this->response->data = array(
             'promotions_active'    => $activePromotionCount,

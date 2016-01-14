@@ -61,6 +61,13 @@
             }
         }
 
+        {{-- force reload page to disable page cache on ios safari --}}
+        $(window).bind("pageshow", function(event) {
+            if (event.originalEvent.persisted) {
+                window.location.reload() 
+            }
+        });
+
         $(document).ready(function(){
             function getNotifList() {
                 $.ajax({
