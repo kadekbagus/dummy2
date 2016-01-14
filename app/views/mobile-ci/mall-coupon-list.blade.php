@@ -14,7 +14,7 @@
                         <div class="col-xs-12 col-sm-12" id="item-{{$coupon->promotion_id}}">
                             <section class="list-item-single-tenant">
                                 <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupon->promotion_id) }}">
-                                    <div class="widget-new-badge">
+                                    <div class="coupon-new-badge">
                                         <div class="new-number">{{$coupon->quantity}}</div>
                                     </div>
                                     <div class="list-item-info">
