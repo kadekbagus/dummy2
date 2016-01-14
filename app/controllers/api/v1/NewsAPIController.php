@@ -1299,7 +1299,8 @@ class NewsAPIController extends ControllerAPI
             $object_type = OrbitInput::get('object_type');
 
             // Builder object
-            $news = News::select('news.*', 'campaign_price.campaign_price_id', 'campaign_price.base_price')
+            $prefix = DB::getTablePrefix();
+            $news = News::select('news.*', 'campaign_price.campaign_price_id', DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
                                      ->where('campaign_price.campaign_type', '=', $object_type);
