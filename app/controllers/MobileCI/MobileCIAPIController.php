@@ -4971,6 +4971,10 @@ class MobileCIAPIController extends ControllerAPI
                         }
                     }
                 }
+                $_POST['campaign_type'] = $near_end_result->campaign_type;
+                $_POST['campaign_id'] = $near_end_result->campaign_id;
+                $_POST['activity_type'] = 'view';
+                $response = MobileCIAPIController::create('raw')->postCampaignPopUpActivities();
             }
 
             $data = new stdclass();
