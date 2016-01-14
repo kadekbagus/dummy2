@@ -1295,7 +1295,7 @@ class MobileCIAPIController extends ControllerAPI
     /**
      * POST - Campaign popup activity
      *
-     * @param string    `campaign_type`    (optional) - Campaign type: news, promo, coupon
+     * @param string    `campaign_type`    (optional) - Campaign type: news, promotion, coupon
      * @param char      `campaign_id`      (optional) - Campaign ID
      * @param string    `activity_type`    (optional) - Activity type: view, click
      *
@@ -1355,12 +1355,12 @@ class MobileCIAPIController extends ControllerAPI
                                             ->first();
             }
 
-            $activityNotes = sprintf('Campaign ' . ucfirst($activity_type) . '. Campaign Id : %s', $campaign_id);
+            $activityNotes = sprintf('Campaign ' . ucfirst($activity_type) . '. Campaign Id : %s, Campaign Type : %s', $campaign_id, $campaign_type);
             $activity->setUser($user)
-                ->setActivityName('campaign_' . $activity_type)
-                ->setActivityNameLong('Campaign ' . ucfirst($activity_type) . ucwords(str_replace('_', ' ', $campaign_type)))
-                ->setObject($campaign)
-                ->setModuleName('Campaign')
+                ->setActivityName($activity_type . '_' . $campaign_type . '_popup')
+                ->setActivityNameLong(ucfirst($activity_type) . ' ' . ucwords(str_replace('_', ' ', $campaign_type)) . ' pop up')
+                ->setObject($campaign, true)
+                ->setModuleName(ucfirst($campaign_type))
                 ->setLocation($retailer)
                 ->setNotes($activityNotes)
                 ->responseOK()
