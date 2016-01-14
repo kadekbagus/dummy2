@@ -1358,7 +1358,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityNotes = sprintf('Campaign ' . ucfirst($activity_type) . '. Campaign Id : %s, Campaign Type : %s', $campaign_id, $campaign_type);
             $activity->setUser($user)
                 ->setActivityName($activity_type . '_' . $campaign_type . '_popup')
-                ->setActivityNameLong(ucfirst($activity_type) . ' ' . ucwords(str_replace('_', ' ', $campaign_type)) . ' pop up')
+                ->setActivityNameLong(ucfirst($activity_type) . ' ' . ucwords(str_replace('_', ' ', $campaign_type)) . ' Pop Up')
                 ->setObject($campaign, true)
                 ->setModuleName(ucfirst($campaign_type))
                 ->setLocation($retailer)
