@@ -4854,13 +4854,13 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            $promo->orderBy(DB::raw('RAND()'))->limit(5);
+            $promo->orderBy(DB::raw('RAND()'));
 
-            $news->orderBy(DB::raw('RAND()'))->limit(5);
+            $news->orderBy(DB::raw('RAND()'));
 
-            $coupon->orderBy(DB::raw('RAND()'))->limit(5);
+            $coupon->orderBy(DB::raw('RAND()'));
 
-            $results = $promo->unionAll($news)->unionAll($coupon)->orderBy(DB::raw('RAND()'))->get();
+            $results = $promo->unionAll($news)->unionAll($coupon)->get();
 
             //$campaign_card_total = Config::get('campaign_card_popup_number', 5); <----------- should create config for this number
             $campaign_card_total = 5;
