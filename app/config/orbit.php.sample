@@ -2667,7 +2667,13 @@ return array(
         'Read Lucky Draw Number Issuance Notification' => 'Read Lucky Draw Number Issuance Notification',
         'Read Winner Announcement Notification'        => 'Read Winner Announcement Notification',
         'Read Coupon Issuance Notification'            => 'Read Coupon Issuance Notification',
-        'Read Activation Notification'                 => 'Read Activation Notification'
+        'Read Activation Notification'                 => 'Read Activation Notification',
+        'View Coupon Pop Up'                           => 'View Coupon Pop Up',
+        'Click Coupon Pop Up'                          => 'Click Coupon Pop Up',
+        'View Promotion Pop Up'                        => 'View Promotion Pop Up',
+        'Click Promotion Pop Up'                       => 'Click Promotion Pop Up',
+        'View News Pop Up'                             => 'View News Pop Up',
+        'Click News Pop Up'                            => 'Click News Pop Up',
     ),
 
     'menus' => array(
