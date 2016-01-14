@@ -4623,7 +4623,7 @@ class DashboardAPIController extends ControllerAPI
      *
      * List Of Parameters
      * ------------------
-     * @param integer `merchant_id`   (optional) - mall id
+     * @param integer `current_mall`   (optional) - mall id
      * @param date    `begin_date`    (optional) - filter date begin
      * @param date    `end_date`      (optional) - filter date end
      * @return Illuminate\Support\Facades\Response
@@ -4692,6 +4692,8 @@ class DashboardAPIController extends ControllerAPI
             $news = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
+                        ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
                             $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
@@ -4704,6 +4706,8 @@ class DashboardAPIController extends ControllerAPI
             $promotions = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
                                 ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                 ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
+                                ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                ->where('merchants.status', '=', 'active')
                                 ->where('news.mall_id', '=', $merchant_id)
                                 ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
                                     $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
@@ -4716,6 +4720,8 @@ class DashboardAPIController extends ControllerAPI
             $coupons = DB::table('promotions')->selectraw(DB::raw("COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS total"))
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
+                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                        ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
                             $q->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
@@ -4731,7 +4737,7 @@ class DashboardAPIController extends ControllerAPI
               $value = is_numeric($binding) ? $binding : "'".$binding."'";
               $sql = preg_replace('/\?/', $value, $sql, 1);
             }
-
+           
             $grandtotal['estimated_total_cost'] = DB::table(DB::raw('(' . $sql . ') as a'))->sum('total');
             
             $this->response->data = $grandtotal;
@@ -4803,8 +4809,8 @@ class DashboardAPIController extends ControllerAPI
         $inactiveNewsCount = News::ofMallId($mallId)->isNews()->ofRunningDate($date)->inactive()->count();
 
         // Coupons
-        $activeCouponCount = Promotion::ofMerchantId($mallId)->where('is_coupon', 'Y')->ofRunningDate($date)->active()->count();
-        $inactiveCouponCount = Promotion::ofMerchantId($mallId)->where('is_coupon', 'Y')->ofRunningDate($date)->inactive()->count();
+        $activeCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->active()->count();
+        $inactiveCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->inactive()->count();
 
         $this->response->data = array(
             'promotions_active'    => $activePromotionCount,
