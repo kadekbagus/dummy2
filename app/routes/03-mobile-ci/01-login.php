@@ -612,7 +612,7 @@ Route::group(
         /**
          * Campaign popup activities
          */
-        Route::get('/app/v1/campaign/activities', function()
+        Route::post('/app/v1/campaign/activities', function()
         {
             return MobileCI\MobileCIAPIController::create()->postCampaignPopUpActivities();
         });
