@@ -4873,10 +4873,13 @@ class MobileCIAPIController extends ControllerAPI
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
                 if ($near_end_result->campaign_type === 'promotion') {
                     $near_end_result->campaign_url = URL::to('customer/mallpromotion?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
                 } elseif ($near_end_result->campaign_type === 'news') {
                     $near_end_result->campaign_url = URL::to('customer/mallnewsdetail?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->campaign_type === 'coupon') {
                     $near_end_result->campaign_url = URL::to('customer/mallcouponcampaign?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                 }
 
                 if (!empty($alternateLanguage)) {
@@ -4923,12 +4926,6 @@ class MobileCIAPIController extends ControllerAPI
 
                                     if (empty($mediaDefaultLanguage->path) || $mediaDefaultLanguage->path == 'null') {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
-                                    } else {
-                                        if ($near_end_result->campaign_type === 'promotion') {
-                                            $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
-                                        } elseif ($near_end_result->campaign_type === 'news') {
-                                            $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
-                                        }
                                     }
                                 }
                             }
@@ -4963,8 +4960,6 @@ class MobileCIAPIController extends ControllerAPI
 
                                     if (empty($mediaDefaultLanguage->path) || $mediaDefaultLanguage->path == 'null') {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
-                                    } else {
-                                        $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
                                     }
                                 }
                             }
