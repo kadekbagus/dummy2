@@ -4881,7 +4881,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if (count($end_results) === 0) {
                 $data->records = null;
-                $this->response->message = 'T_T .No campaign for you. T_T';
+                $this->response->message = 'No available campaign right now.';
             }
 
             $this->response->data = $data;
