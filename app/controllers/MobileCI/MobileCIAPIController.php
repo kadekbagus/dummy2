@@ -1293,6 +1293,105 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Campaign popup activity
+     *
+     * @param string    `campaign_type`    (optional) - Campaign type: news, promo, coupon
+     * @param char      `campaign_id`      (optional) - Campaign ID
+     * @param string    `activity_type`    (optional) - Activity type: view, click
+     *
+     * @return void
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     */
+    public function postCampaignPopUpActivities()
+    {
+        $activity = null;
+        $user = null;
+
+        $campaign_type = null;
+        $campaign_id = null;
+        $activity_type = null;
+
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+
+            $campaign_type = OrbitInput::post('campaign_type');
+            $campaign_id   = OrbitInput::post('campaign_id');
+            $activity_type = OrbitInput::post('activity_type');
+
+            $validator = Validator::make(
+                array(
+                    'campaign_type' => $campaign_type,
+                    'campaign_id'   => $campaign_id,
+                    'activity_type' => $activity_type,
+                ),
+                array(
+                    'campaign_type' => 'required|in:news,promotion,coupon',
+                    'campaign_id'   => 'required',
+                    'activity_type' => 'required|in:view,click',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $activity = Activity::mobileci()
+                            ->setActivityType($activity_type);
+
+            $campaign = null;
+            if ($campaign_type === 'news' || $campaign_type === 'promotion') {
+                $campaign = News::active()->where('news_id', $campaign_id)
+                                          ->where('object_type', $campaign_type)
+                                          ->first();
+            }
+            if ($campaign_type === 'coupon') {
+                $campaign = Coupon::active()->where('promotion_id', $campaign_id)
+                                            ->where('is_coupon', 'Y')
+                                            ->first();
+            }
+
+            $activityNotes = sprintf('Campaign ' . ucfirst($activity_type) . '. Campaign Id : %s', $campaign_id);
+            $activity->setUser($user)
+                ->setActivityName('campaign_' . $activity_type)
+                ->setActivityNameLong('Campaign ' . ucfirst($activity_type) . ucwords(str_replace('_', ' ', $campaign_type)))
+                ->setObject($campaign)
+                ->setModuleName('Campaign')
+                ->setLocation($retailer)
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = $e->getLine();
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getFile();
+
+            $this->rollback();
+        }
+
+        return $this->render();
+    }
+
+    /**
      * Custom validations block
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
@@ -4772,7 +4871,7 @@ class MobileCIAPIController extends ControllerAPI
 
             foreach($end_results as $near_end_result) {
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
-                if ($near_end_result->campaign_type === 'promo') {
+                if ($near_end_result->campaign_type === 'promotion') {
                     $near_end_result->campaign_url = URL::to('customer/mallpromotion?id=' . $near_end_result->campaign_id);
                 } elseif ($near_end_result->campaign_type === 'news') {
                     $near_end_result->campaign_url = URL::to('customer/mallnewsdetail?id=' . $near_end_result->campaign_id);
@@ -4781,7 +4880,7 @@ class MobileCIAPIController extends ControllerAPI
                 }
 
                 if (!empty($alternateLanguage)) {
-                    if ($near_end_result->campaign_type === 'promo' || $near_end_result->campaign_type === 'news') {
+                    if ($near_end_result->campaign_type === 'promotion' || $near_end_result->campaign_type === 'news') {
                         $campaignTranslation = \NewsTranslation::excludeDeleted()
                             ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                             ->where('news_id', $near_end_result->campaign_id)->first();
@@ -4792,7 +4891,7 @@ class MobileCIAPIController extends ControllerAPI
                     }
 
                     if (!empty($campaignTranslation)) {
-                        if ($near_end_result->campaign_type === 'promo' || $near_end_result->campaign_type === 'news') {
+                        if ($near_end_result->campaign_type === 'promotion' || $near_end_result->campaign_type === 'news') {
 
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($campaignTranslation->news_name) && $campaignTranslation->news_name !== '') {
@@ -4825,7 +4924,7 @@ class MobileCIAPIController extends ControllerAPI
                                     if (isset($mediaDefaultLanguage->path)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     } else {
-                                        if ($near_end_result->campaign_type === 'promo') {
+                                        if ($near_end_result->campaign_type === 'promotion') {
                                             $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
                                         } elseif ($near_end_result->campaign_type === 'news') {
                                             $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
