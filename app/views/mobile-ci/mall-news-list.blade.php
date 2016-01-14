@@ -35,10 +35,9 @@
                                             $two_row = array_slice($desc, 0, 1);
                                         ?>
                                         @foreach ($two_row as $key => $value)
-                                            @if ($key === 0)
-                                                {{{ $value }}} <br>
-                                            @else
-                                                {{{ $value }}} ...
+
+                                            @if ($key === 0) 
+                                                {{{ mb_substr($value, 0, 45, 'UTF-8') }}} {{ strlen($value) > 45 ? '...' : '' }}<br>
                                             @endif
                                         @endforeach
                                     @else
@@ -51,9 +50,7 @@
                                         ?>
                                         @foreach ($two_row as $key => $value)
                                             @if ($key === 0)
-                                                {{{ $value }}} <br>
-                                            @else
-                                                {{{ $value }}} ...
+                                                {{{ mb_substr($value, 0, 45, 'UTF-8') }}} {{ strlen($value) > 45 ? '...' : '' }}<br>
                                             @endif
                                         @endforeach
                                     @else
