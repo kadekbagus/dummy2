@@ -4673,7 +4673,17 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
             $retailer = $this->getRetailerInfo();
 
-            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+            $alternateLanguage = null;
+            $lang = OrbitInput::get('lang', 'en'); //get user current cookie lang
+            $language = \Language::where('name', '=', $lang)->first();
+            if (is_object($language)) {
+                $alternateLanguage = \MerchantLanguage::excludeDeleted()
+                    ->where('merchant_id', '=', $retailer->merchant_id)
+                    ->where('language_id', '=', $language->language_id)
+                    ->first();
+            }
+
+            //$alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $userAge = 0;
             if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
@@ -4871,7 +4881,7 @@ class MobileCIAPIController extends ControllerAPI
 
             if (count($end_results) === 0) {
                 $data->records = null;
-                $this->response->message = 'T_T .No campaign for you. T_T';
+                $this->response->message = 'No available campaign right now.';
             }
 
             $this->response->data = $data;
