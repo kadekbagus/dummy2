@@ -63,3 +63,6 @@ Route::get('/app/v1/dashboard/total-page-view', "IntermediateAuthController@Dash
 
 // Get Dashboard campaign total spending
 Route::get('/app/v1/dashboard/campaign-total-spending', "IntermediateAuthController@Dashboard_getCampaignTotalSpending");
+
+// Get Dashboard unique users
+Route::get('/app/v1/dashboard/unique-users', "IntermediateAuthController@Dashboard_getUniqueUsers");
