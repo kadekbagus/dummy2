@@ -4795,7 +4795,7 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $promo = DB::table('news')
-                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "promo" as campaign_type')
+                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "promotion" as campaign_type')
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
