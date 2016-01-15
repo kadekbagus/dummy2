@@ -617,6 +617,14 @@ Route::group(
             return MobileCI\MobileCIAPIController::create()->postCampaignPopUpActivities();
         });
 
+        /**
+         * The power search
+         */
+        Route::post('/app/v1/keyword/search', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getPowerSearch();
+        });
+
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
         Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
