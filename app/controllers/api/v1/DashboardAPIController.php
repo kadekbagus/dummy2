@@ -4696,8 +4696,14 @@ class DashboardAPIController extends ControllerAPI
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                            ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
+                            $q->where(function ($r) use ($start_date, $end_date, $tablePrefix) {
+                                    $r->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
+                                      ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
+                                })
+                              ->orWhere(function ($s) use ($start_date, $end_date, $tablePrefix) {
+                                    $s->whereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$start_date])
+                                      ->orWhereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$end_date]);
+                                });
                         })
                         ->where('campaign_price.campaign_type', '=', 'news')
                         ->where('news.object_type', '=', 'news')
@@ -4710,8 +4716,14 @@ class DashboardAPIController extends ControllerAPI
                                 ->where('merchants.status', '=', 'active')
                                 ->where('news.mall_id', '=', $merchant_id)
                                 ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                                    $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                                    ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
+                                    $q->where(function ($r) use ($start_date, $end_date, $tablePrefix) {
+                                            $r->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
+                                              ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
+                                        })
+                                      ->orWhere(function ($s) use ($start_date, $end_date, $tablePrefix) {
+                                            $s->whereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$start_date])
+                                              ->orWhereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$end_date]);
+                                        });
                                 })
                                 ->where('campaign_price.campaign_type', '=', 'promotion')
                                 ->where('news.object_type', '=', 'promotion')
@@ -4724,8 +4736,14 @@ class DashboardAPIController extends ControllerAPI
                         ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
-                            ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
+                            $q->where(function ($r) use ($start_date, $end_date, $tablePrefix) {
+                                    $r->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
+                                      ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
+                                })
+                              ->orWhere(function ($s) use ($start_date, $end_date, $tablePrefix) {
+                                    $s->whereRaw(" ? between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date", [$start_date])
+                                      ->orWhereRaw(" ? between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date", [$end_date]);
+                                });
                         })
                         ->where('campaign_price.campaign_type', '=', 'coupon')
                         ->groupBy('promotions.promotion_id');
@@ -4737,7 +4755,7 @@ class DashboardAPIController extends ControllerAPI
               $value = is_numeric($binding) ? $binding : "'".$binding."'";
               $sql = preg_replace('/\?/', $value, $sql, 1);
             }
-           
+            
             $grandtotal['estimated_total_cost'] = DB::table(DB::raw('(' . $sql . ') as a'))->sum('total');
             
             $this->response->data = $grandtotal;
@@ -4812,14 +4830,14 @@ class DashboardAPIController extends ControllerAPI
         $activeCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->active()->count();
         $inactiveCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->inactive()->count();
 
-        $this->response->data = array(
+        $this->response->data = [
             'promotions_active'    => $activePromotionCount,
             'promotions_inactive'  => $inactivePromotionCount,
             'news_active'          => $activeNewsCount,
             'news_inactive'        => $inactiveNewsCount,
             'coupons_active'       => $activeCouponCount,
             'coupons_inactive'     => $inactiveCouponCount,
-        );
+        ];
 
         return $this->render(200);
     }

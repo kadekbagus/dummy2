@@ -1349,18 +1349,20 @@ class MobileCIAPIController extends ControllerAPI
                 $campaign = News::active()->where('news_id', $campaign_id)
                                           ->where('object_type', $campaign_type)
                                           ->first();
+                $activity->setNews($campaign);
             }
             if ($campaign_type === 'coupon') {
                 $campaign = Coupon::active()->where('promotion_id', $campaign_id)
                                             ->where('is_coupon', 'Y')
                                             ->first();
+                $activity->setCoupon($campaign);
             }
 
             $activityNotes = sprintf('Campaign ' . ucfirst($activity_type) . '. Campaign Id : %s, Campaign Type : %s', $campaign_id, $campaign_type);
             $activity->setUser($user)
                 ->setActivityName($activity_type . '_' . $campaign_type . '_popup')
                 ->setActivityNameLong(ucfirst($activity_type) . ' ' . ucwords(str_replace('_', ' ', $campaign_type)) . ' Pop Up')
-                ->setObject($campaign, true)
+                ->setObject($campaign)
                 ->setModuleName(ucfirst($campaign_type))
                 ->setLocation($retailer)
                 ->setNotes($activityNotes)
@@ -6446,6 +6448,11 @@ class MobileCIAPIController extends ControllerAPI
      */
     public static function isValidMX($email)
     {
+        // Fake the response of MX checking
+        if (Config::get('orbit.security.email.fake_mx') === TRUE) {
+            return TRUE;
+        }
+
         $hosts = MXEmailChecker::create($email)->check()->getMXRecords();
 
         if (empty($hosts)) {
