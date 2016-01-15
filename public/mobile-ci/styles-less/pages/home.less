@@ -432,21 +432,42 @@ i.disableds{
       list-style: none;
       a{
         color:#fff;
+        display: inline-block;
+        width: 100%;
       }
       h5{
         margin-top:0px;
+        height: 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      p{
+        height:20px;
+        text-overflow: ellipsis;
+        overflow: hidden;
       }
       img{
         width: 48px;
         height: 48px;
         object-fit: cover;
         border-radius: 24px;
+        background: #fff;
       }
       .col-xs-10{
         padding-left:10px;
       }
+      &.hide{
+        display:none;
+      }
     }
   }
+}
+#show_all_result,#show_by_categories{
+    display: inline-block;
+    width: 100%;
+    cursor: pointer;
+    padding: 10px 0px;
+    color: #fff;
 }
 .campaign-cards-info{
     background: #fff;

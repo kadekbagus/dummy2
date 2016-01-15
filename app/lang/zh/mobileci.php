@@ -297,6 +297,10 @@ return array(
     'search' => array(
         'no_item'        => '无店铺匹配条件',
         'too_much_items' => '搜索结果的范围太广，请缩小它',
+        'no_result'      => 'There is no result matching the criteria.',
+        'error'          => 'There is some error while making the request.',
+        'show_all_result'=> 'Show All Result',
+        'show_by_categories'=> 'Show By Categories',
     ),
 
     'thank_you' => array(
