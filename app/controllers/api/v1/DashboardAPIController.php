@@ -4830,14 +4830,14 @@ class DashboardAPIController extends ControllerAPI
         $activeCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->active()->count();
         $inactiveCouponCount = Coupon::ofMerchantId($mallId)->ofRunningDate($date)->inactive()->count();
 
-        $this->response->data = array(
+        $this->response->data = [
             'promotions_active'    => $activePromotionCount,
             'promotions_inactive'  => $inactivePromotionCount,
             'news_active'          => $activeNewsCount,
             'news_inactive'        => $inactiveNewsCount,
             'coupons_active'       => $activeCouponCount,
             'coupons_inactive'     => $inactiveCouponCount,
-        );
+        ];
 
         return $this->render(200);
     }
