@@ -266,8 +266,33 @@
 {{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
+{{ HTML::script('mobile-ci/scripts/polyfill.object-fit.min.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
+        navigator.getBrowser= (function(){
+            var ua = navigator.userAgent, tem,
+                M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+            if(/trident/i.test(M[1])){
+                tem=  /\brv[ :]+(\d+)/g.exec(ua) || [];
+                return 'IE '+(tem[1] || '');
+            }
+            if(M[1]=== 'Chrome'){
+                tem= ua.match(/\b(OPR|Edge)\/(\d+)/);
+                if(tem!= null) return tem.slice(1).join(' ').replace('OPR', 'Opera');
+            }
+            M= M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+            if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
+            return M;
+        })();
+        var browser = navigator.getBrowser[0];
+        if(browser.indexOf('IE')) {
+            objectFit.polyfill({
+                selector: '.img-fit, .img-fit-tenant',
+                fittype: 'cover',
+                disableCrossDomain: 'true'
+            });
+            $('.img-fit, .img-fit-tenant').closest('.col-xs-12, .col-xs-6').css('height', '160px').css('overflow', 'hidden');
+        }
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
                 var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
@@ -307,6 +332,9 @@
                             onAfterSlide: function() {
                             }
                         });
+                        if(browser.indexOf('IE')) {
+                            $('#campaign-cards .img-responsive').css('height', 'auto');
+                        }
                     }
                 });
             }
@@ -388,22 +416,29 @@
         $('#search-type').keydown(function (e){
             if(e.keyCode == 13){
                 $('#search-type').blur();
+                $('.search-results').fadeOut('fast');
                 var keyword = $('#search-type').val();
                 var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
                 $('.search-wrapper').append(loader);
                 // ------------- cuma dummy
-                setTimeout(function(){
-                    $('#search-loader').remove();
-                    $('.search-results').fadeIn('slow');
-                }, 2000);
+                // setTimeout(function(){
+                //     $('#search-loader').remove();
+                //     $('.search-results').fadeIn('slow');
+                // }, 2000);
                 // ------------- -----------
 
-                // $.ajax({
-                //     url: apiPath + 'search?keyword=' + keyword,
-                //     method: 'GET'
-                // }).done(function(data) {
+                $.ajax({
+                    url: apiPath + 'search?keyword=' + keyword,
+                    method: 'GET'
+                }).done(function(data) {
 
-                // });
+                }).fail(function(data){
+                    $('.search-results').html('');
+                    $('.search-results').fadeIn('slow');
+                    $('.search-results').append('<i>There is some error while making the request.</i>')
+                }).always(function(data) {
+                    $('#search-loader').remove();
+                });
             }
         });
         $('#searchProductBtn').click(function(){
