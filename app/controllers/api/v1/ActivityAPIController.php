@@ -16,6 +16,9 @@ class ActivityAPIController extends ControllerAPI
 {
     private $returnQuery = false;
 
+    protected $newsViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+    protected $newsModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
+
     /**
      * GET - List of Activities history
      *
@@ -3026,7 +3029,7 @@ class ActivityAPIController extends ControllerAPI
             $days = abs(floor($dateDiff/(60*60*24)));
 
             if ( $days > 7 ) {
-                $errorMessage = 'Date cannot be more than 7 days';
+                $errorMessage = 'The date range can not be more than 7 days';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -3052,15 +3055,15 @@ class ActivityAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $activities = DB::select("
-					select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
-					from {$tablePrefix}activities
-					-- filter by date
-					where (`group` = 'mobile-ci'
-					    or (`group` = 'portal' and activity_type in ('activation','create'))
-					    or (`group` = 'cs-portal' and activity_type in ('registration')))
-					    and response_status = 'OK' and location_id = ?
-					    and created_at between ? and ?
-					group by 1, 2;
+                    select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') activity_date, activity_name_long, count(activity_id) as `count`
+                    from {$tablePrefix}activities
+                    -- filter by date
+                    where (`group` = 'mobile-ci'
+                        or (`group` = 'portal' and activity_type in ('activation','create'))
+                        or (`group` = 'cs-portal' and activity_type in ('registration')))
+                        and response_status = 'OK' and location_id = ?
+                        and created_at between ? and ?
+                    group by 1, 2;
                 ", array($timezoneOffset, $current_mall, $start_date, $end_date));
 
             $responses = [];

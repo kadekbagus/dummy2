@@ -87,11 +87,11 @@ return array(
     'orbit' => array(
         // This will moved soon to the 'exists' key
         'email' => array(
-            'exists' => 'The email address has already been taken.',
+            'exists' => 'The email address has already been taken',
         ),
         'exists' => array(
             'username'              => 'The username has already been taken.',
-            'email'                 => 'Email address has already been taken.',
+            'email'                 => 'Email address has already been taken',
             'omid'                  => 'OMID has already been taken by another Merchant.',
             'orid'                  => 'ORID has already been taken by another Retailer.',
             'category_name'         => 'The category name has already been used.',
@@ -122,7 +122,7 @@ return array(
             'product_attribute_value_have_transaction'     => 'The product attribute value has one or more transactions linked to it, so it cannot be edited or deleted.',
             'product_attribute_have_product'               => 'The product attribute has one or more products linked to it, so it cannot be edited or deleted.',
             'product_attribute_value_have_product_variant' => 'The product attribute value has one or more product variants linked to it, so it cannot be edited or deleted.',
-            'employeeid'            => 'The employee ID is not available.',
+            'employeeid'            => 'The employee ID is not available',
             'widget_type'           => 'Another widget with the same widget type already exists',
             'merchant_have_retailer' => 'The merchant has one or more retailers linked to it, so it cannot be deleted.',
             'merchant_retailers_is_box_current_retailer' => 'The merchant status cannot be set to inactive, because one of its retailers is set to box current retailer.',
@@ -279,6 +279,7 @@ return array(
             'link_object_id'       => 'The Link Object ID you specified is not found.',
             'bank_object'          => 'The Bank Object ID you specified is not found.',
             'mall'                 => 'The Mall ID you specified is not found.',
+            'campaignreportgeneral_sortby' => 'The sort by argument you specified is not valid, the valid values are: updated_date, created_at, campaign_name, campaign_type, location, campaign_dates, pages_views, views, clicks, daily, estimated_total, spending, status',
             'couponreportgeneral_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, is_auto_issue_on_signup, retailer_name, total_redeemed, total_issued, coupon_status, status',
             'dashboardissuedvsredeemed_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_name, total_issued, total_redeemed',
             'couponredeemedreportgeneral_sortby' => 'The sort by argument you specified is not valid, the valid values are: issued_coupon_id, promotion_id, transaction_id, issued_coupon_code, user_id, expired_date, issued_date, redeemed_date, issuer_retailer_id, redeem_retailer_id, redeem_verification_code, status, created_at, updated_at',

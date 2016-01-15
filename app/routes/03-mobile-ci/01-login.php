@@ -562,6 +562,14 @@ Route::group(
         });
 
         /**
+         * Flag the alert as read / unread
+         */
+        Route::post('/app/v1/inbox/read-unread', function()
+        {
+            return InboxAPIController::create()->postReadUnreadAlert();
+        });
+
+        /**
          * Delete the alert
          */
         Route::post('/app/v1/inbox/delete', function()
@@ -591,6 +599,22 @@ Route::group(
         Route::get('/customer/my-account', function()
         {
             return MobileCI\MobileCIAPIController::create()->getMyAccountView();
+        });
+
+        /**
+         * Search campaign popup
+         */
+        Route::get('/app/v1/campaign/list', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchCampaignCardsPopUp();
+        });
+
+        /**
+         * Campaign popup activities
+         */
+        Route::post('/app/v1/campaign/activities', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->postCampaignPopUpActivities();
         });
 
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);

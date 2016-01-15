@@ -302,6 +302,7 @@ class EmployeeAPIController extends ControllerAPI
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @author Firmansyah <firmansyah@dominopos.com>
+     * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -480,15 +481,18 @@ class EmployeeAPIController extends ControllerAPI
             $newUser->setRelation('employee', $newEmployee);
 
             // User verification numbers
-            $newUserVerificationNumber = new UserVerificationNumber();
-            OrbitInput::post('cs_verification_numbers', function($_csVerificationNumbers) use ($newUserVerificationNumber, $newUser, $myRetailerIds) {
-                $newUserVerificationNumber->user_id = $newUser->user_id;
-                $newUserVerificationNumber->verification_number = $_csVerificationNumbers;
-                $newUserVerificationNumber->merchant_id = $myRetailerIds;
-            });
+            // check if the role mall admin or mall customer service should have verification number
+            if ( in_array(strtolower($employeeRole), ['mall admin', 'mall customer service']) ) {
+                $newUserVerificationNumber = new UserVerificationNumber();
+                OrbitInput::post('cs_verification_numbers', function($_csVerificationNumbers) use ($newUserVerificationNumber, $newUser, $myRetailerIds) {
+                    $newUserVerificationNumber->user_id = $newUser->user_id;
+                    $newUserVerificationNumber->verification_number = $_csVerificationNumbers;
+                    $newUserVerificationNumber->merchant_id = $myRetailerIds;
+                });
 
-            $newUserVerificationNumber->save();
-            $newUser->setRelation('userVerificationNumber', $newUserVerificationNumber);
+                $newUserVerificationNumber->save();
+                $newUser->setRelation('userVerificationNumber', $newUserVerificationNumber);
+            }
 
             // @Todo: Remove this hardcode
             $retailerIds = array_merge($retailerIds, (array)$myRetailerIds);
@@ -682,7 +686,7 @@ class EmployeeAPIController extends ControllerAPI
                 'orbit.empty.employee.role'         => Lang::get('validation.orbit.empty.employee.role', array(
                     'role' => $employeeRole
                 )),
-                'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
+                'orbit.exists.employeeid_but_me'    => 'The employee ID is not available'
             ];
 
             $validator = Validator::make(
@@ -970,7 +974,7 @@ class EmployeeAPIController extends ControllerAPI
                 'orbit.empty.employee.role'         => Lang::get('validation.orbit.empty.employee.role', array(
                     'role' => $employeeRole
                 )),
-                'orbit.exists.employeeid_but_me'    => 'The employee ID is not available.'
+                'orbit.exists.employeeid_but_me'    => 'The employee ID is not available'
             ];
 
             $validator = Validator::make(
@@ -1994,6 +1998,7 @@ class EmployeeAPIController extends ControllerAPI
      * GET - Search Mall Employees
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -2213,7 +2218,7 @@ class EmployeeAPIController extends ControllerAPI
                 OrbitInput::get('role_names', function ($data) use ($users) {
                     $data = (array)$data;
                     foreach ($data as $employeeRoleName) {
-                        if (! in_array(strtolower($employeeRoleName), ['mall admin', 'mall customer service'])) {
+                        if (! in_array(strtolower($employeeRoleName), ['mall admin', 'mall customer service', 'campaign owner', 'campaign employee'])) {
                             $errorMessage = 'Employee role_name argument is not valid.';
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -2417,7 +2422,7 @@ class EmployeeAPIController extends ControllerAPI
                         ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken');
             }
 
             App::instance('orbit.validation.mallemployee', $user);
@@ -2434,7 +2439,7 @@ class EmployeeAPIController extends ControllerAPI
                             ->first();
 
             if (! empty($user)) {
-                OrbitShopAPI::throwInvalidArgument('The email address has already been taken.');
+                OrbitShopAPI::throwInvalidArgument('The email address has already been taken');
             }
 
             App::instance('orbit.validation.mallemployee', $user);

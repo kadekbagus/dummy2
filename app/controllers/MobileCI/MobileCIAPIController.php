@@ -1293,6 +1293,107 @@ class MobileCIAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Campaign popup activity
+     *
+     * @param string    `campaign_type`    (optional) - Campaign type: news, promotion, coupon
+     * @param char      `campaign_id`      (optional) - Campaign ID
+     * @param string    `activity_type`    (optional) - Activity type: view, click
+     *
+     * @return void
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     */
+    public function postCampaignPopUpActivities()
+    {
+        $activity = null;
+        $user = null;
+
+        $campaign_type = null;
+        $campaign_id = null;
+        $activity_type = null;
+
+        try {
+            $user = $this->getLoggedInUser();
+
+            $retailer = $this->getRetailerInfo();
+
+            $campaign_type = OrbitInput::post('campaign_type');
+            $campaign_id   = OrbitInput::post('campaign_id');
+            $activity_type = OrbitInput::post('activity_type');
+
+            $validator = Validator::make(
+                array(
+                    'campaign_type' => $campaign_type,
+                    'campaign_id'   => $campaign_id,
+                    'activity_type' => $activity_type,
+                ),
+                array(
+                    'campaign_type' => 'required|in:news,promotion,coupon',
+                    'campaign_id'   => 'required',
+                    'activity_type' => 'required|in:view,click',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $activity = Activity::mobileci()
+                            ->setActivityType($activity_type);
+
+            $campaign = null;
+            if ($campaign_type === 'news' || $campaign_type === 'promotion') {
+                $campaign = News::active()->where('news_id', $campaign_id)
+                                          ->where('object_type', $campaign_type)
+                                          ->first();
+                $activity->setNews($campaign);
+            }
+            if ($campaign_type === 'coupon') {
+                $campaign = Coupon::active()->where('promotion_id', $campaign_id)
+                                            ->where('is_coupon', 'Y')
+                                            ->first();
+                $activity->setCoupon($campaign);
+            }
+
+            $activityNotes = sprintf('Campaign ' . ucfirst($activity_type) . '. Campaign Id : %s, Campaign Type : %s', $campaign_id, $campaign_type);
+            $activity->setUser($user)
+                ->setActivityName($activity_type . '_' . $campaign_type . '_popup')
+                ->setActivityNameLong(ucfirst($activity_type) . ' ' . ucwords(str_replace('_', ' ', $campaign_type)) . ' Pop Up')
+                ->setObject($campaign)
+                ->setModuleName(ucfirst($campaign_type))
+                ->setLocation($retailer)
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollback();
+        } catch (Exception $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = $e->getLine();
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getFile();
+
+            $this->rollback();
+        }
+
+        return $this->render();
+    }
+
+    /**
      * Custom validations block
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
@@ -2877,7 +2978,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $luckydraw = LuckyDraw::with('translations', 'prizes')->excludeDeleted()->where('mall_id', $retailer->merchant_id)->where('lucky_draw_id', $lucky_draw_id)->first();
+            $luckydraw = LuckyDraw::with('translations', 'prizes', 'announcements')->excludeDeleted()->where('mall_id', $retailer->merchant_id)->where('lucky_draw_id', $lucky_draw_id)->first();
 
             $languages = $this->getListLanguages($retailer);
 
@@ -3317,12 +3418,13 @@ class MobileCIAPIController extends ControllerAPI
 
             $coupons = DB::select(
                 DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                    'SELECT *, p.image AS promo_image, count(p.promotion_id) as quantity FROM ' . DB::getTablePrefix() . 'promotions p
                 inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
                 inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
                 WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
                     AND p.merchant_id = :merchantid
                     AND ic.user_id = :userid
+                    GROUP BY p.promotion_id
                     ORDER BY RAND()' // randomize
                 ),
                 array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
@@ -3439,22 +3541,22 @@ class MobileCIAPIController extends ControllerAPI
             $user = $this->getLoggedInUser();
 
             $retailer = $this->getRetailerInfo();
-            $issued_coupon_id = trim(OrbitInput::get('id'));
+            $promotion_id = trim(OrbitInput::get('id'));
             $languages = $this->getListLanguages($retailer);
 
             $coupons = Coupon::with(array(
                 'couponRule',
                 'issuedCoupons' => function($q) use ($issued_coupon_id, $user, $retailer) {
-                    $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                     $q->where('issued_coupons.user_id', $user->user_id);
                     $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                     $q->where('issued_coupons.status', 'active');
+                    $q->orderBy('issued_coupons.expired_date', 'DESC');
                 })
             )
             ->where('merchant_id', $retailer->merchant_id)
             ->where('promotions.status', 'active')
+            ->where('promotions.promotion_id', $promotion_id)
             ->whereHas('issuedCoupons', function($q) use($issued_coupon_id, $user, $retailer) {
-                $q->where('issued_coupons.issued_coupon_id', $issued_coupon_id);
                 $q->where('issued_coupons.user_id', $user->user_id);
                 $q->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name));
                 $q->where('issued_coupons.status', 'active');
@@ -4650,6 +4752,291 @@ class MobileCIAPIController extends ControllerAPI
         } catch (Exception $e) {
             return $this->redirectIfNotLoggedIn($e);
         }
+    }
+
+    /**
+     * GET - Get campaign pop up 
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getSearchCampaignCardsPopUp() {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            $httpCode = 200;
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $alternateLanguage = null;
+            $lang = OrbitInput::get('lang', 'en'); //get user current cookie lang
+            $language = \Language::where('name', '=', $lang)->first();
+            if (is_object($language)) {
+                $alternateLanguage = \MerchantLanguage::excludeDeleted()
+                    ->where('merchant_id', '=', $retailer->merchant_id)
+                    ->where('language_id', '=', $language->language_id)
+                    ->first();
+            }
+
+            //$alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge = $this->calculateAge($user->userDetail->birthdate);
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender = $user->userDetail->gender;
+            }
+
+            $promo = DB::table('news')
+                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "promotion" as campaign_type')
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->where('object_type', '=', 'promotion')
+                ->where('news.status', 'active')
+                ->where('news.is_popup', 'Y')
+                ->where('mall_id', $retailer->merchant_id)
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
+                ->groupBy('news.news_id');
+
+            $news = DB::table('news')
+                ->selectRaw('news_id as campaign_id, news_name as campaign_name, description as campaign_description, image as campaign_image, "news" as campaign_type')
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->where('object_type', '=', 'news')
+                ->where('news.status', 'active')
+                ->where('news.is_popup', 'Y')
+                ->where('mall_id', $retailer->merchant_id)
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
+                ->groupBy('news.news_id');
+
+            $coupon = DB::table('promotions')
+                ->selectRaw('promotion_id as campaign_id, promotion_name as campaign_name, description as campaign_description, image as campaign_image, "coupon" as campaign_type')
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->where('is_coupon', '=', 'Y')
+                ->where('promotions.is_popup', 'Y')
+                ->where('promotions.status', 'active')
+                ->where('promotions.merchant_id', $retailer->merchant_id)
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
+                ->groupBy('promotions.promotion_id');
+
+            if ($userGender !== null) {
+                $promo = $promo->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                $coupon = $coupon->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $promo = $promo->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    $news = $news->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    $coupon = $coupon->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $promo = $promo->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                        $news = $news->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                        $coupon = $coupon->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $promo = $promo->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        $coupon = $coupon->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
+
+            $promo->orderBy(DB::raw('RAND()'));
+
+            $news->orderBy(DB::raw('RAND()'));
+
+            $coupon->orderBy(DB::raw('RAND()'));
+
+            $results = $promo->unionAll($news)->unionAll($coupon)->get();
+
+            //$campaign_card_total = Config::get('campaign_card_popup_number', 5); <----------- should create config for this number
+            $campaign_card_total = 5;
+            $max_campaign = count($results) > $campaign_card_total ? $campaign_card_total : count($results);
+
+            shuffle($results);
+            $end_results = array_slice($results, 0, $max_campaign);
+
+            foreach($end_results as $near_end_result) {
+                $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
+                if ($near_end_result->campaign_type === 'promotion') {
+                    $near_end_result->campaign_url = URL::to('customer/mallpromotion?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_promotion.png');
+                } elseif ($near_end_result->campaign_type === 'news') {
+                    $near_end_result->campaign_url = URL::to('customer/mallnewsdetail?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_news.png');
+                } elseif ($near_end_result->campaign_type === 'coupon') {
+                    $near_end_result->campaign_url = URL::to('customer/mallcouponcampaign?id=' . $near_end_result->campaign_id);
+                    $near_end_result->campaign_image = URL::asset('mobile-ci/images/default_coupon.png');
+                }
+
+                if (!empty($alternateLanguage)) {
+                    if ($near_end_result->campaign_type === 'promotion' || $near_end_result->campaign_type === 'news') {
+                        $campaignTranslation = \NewsTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('news_id', $near_end_result->campaign_id)->first();
+                    } elseif ($near_end_result->campaign_type === 'coupon'){
+                        $campaignTranslation = \CouponTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('promotion_id', $near_end_result->campaign_id)->first();
+                    }
+
+                    if (!empty($campaignTranslation)) {
+                        if ($near_end_result->campaign_type === 'promotion' || $near_end_result->campaign_type === 'news') {
+
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($campaignTranslation->news_name) && $campaignTranslation->news_name !== '') {
+                                $near_end_result->campaign_name = $campaignTranslation->news_name;
+                            }
+                            if (isset($campaignTranslation->description) && $campaignTranslation->description !== '') {
+                                $near_end_result->campaign_description = $campaignTranslation->description;
+                            }
+
+                            $media = $campaignTranslation->find($campaignTranslation->news_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (is_object($media)) {
+                                $near_end_result->campaign_image = URL::asset($media->path);
+                            } else {
+                                // back to default image if in the content multilanguage not have image
+                                // check the system language
+                                $defaultLanguage = $this->getDefaultLanguage($retailer);
+                                if ($defaultLanguage !== NULL) {
+                                    $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('news_id', $near_end_result->campaign_id)->first();
+
+                                    // get default image
+                                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                        ->media_orig()
+                                        ->first();
+
+                                    if (is_object($mediaDefaultLanguage)) {
+                                        $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
+                                    }
+                                }
+                            }
+                        } elseif ($near_end_result->campaign_type === 'coupon') {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($campaignTranslation->promotion_name) && $campaignTranslation->promotion_name !== '') {
+                                $near_end_result->campaign_name = $campaignTranslation->promotion_name;
+                            }
+                            if (isset($campaignTranslation->description) && $campaignTranslation->description !== '') {
+                                $near_end_result->campaign_description = $campaignTranslation->description;
+                            }
+
+                            $media = $campaignTranslation->find($campaignTranslation->coupon_translation_id)
+                                ->media_orig()
+                                ->first();
+
+                            if (is_object($media)) {
+                                $near_end_result->campaign_image = URL::asset($media->path);
+                            } else {
+                                // back to default image if in the content multilanguage not have image
+                                // check the system language
+                                $defaultLanguage = $this->getDefaultLanguage($retailer);
+                                if ($defaultLanguage !== NULL) {
+                                    $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('promotion_id', $near_end_result->campaign_id)->first();
+
+                                    // get default image
+                                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                        ->media_orig()
+                                        ->first();
+
+                                    if (is_object($mediaDefaultLanguage)) {
+                                        $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                $_POST['campaign_type'] = $near_end_result->campaign_type;
+                $_POST['campaign_id'] = $near_end_result->campaign_id;
+                $_POST['activity_type'] = 'view';
+                $response = MobileCIAPIController::create('raw')->postCampaignPopUpActivities();
+            }
+
+            $data = new stdclass();
+            $data->total_records = count($end_results);
+            $data->returned_records = count($end_results);
+            $data->records = $end_results;
+
+            if (count($end_results) === 0) {
+                $data->records = null;
+                $this->response->message = 'No available campaign right now.';
+            }
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.inbox.getsearchinbox.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.inbox.getsearchinbox.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.inbox.getsearchinbox.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.inbox.getsearchinbox.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.inbox.getsearchinbox.before.render', array($this, &$output));
+
+        return $output;
     }
 
     /**

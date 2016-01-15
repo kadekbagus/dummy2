@@ -79,6 +79,12 @@ class Coupon extends Eloquent
                     ->join('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
     }
 
+    public function keywords()
+    {
+        return $this->hasMany('KeywordObject', 'object_id', 'promotion_id')
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+    }
+
     /**
      * Coupon strings can be translated to many languages.
      */
@@ -249,5 +255,21 @@ class Coupon extends Eloquent
             return 'mobile-ci/images/default_coupon.png';
         }
         return ($value);
+    }
+
+    public function scopeOfMerchantId($query, $merchantId)
+    {
+        return $query->where('merchant_id', $merchantId);
+    }
+
+    /**
+     * Runnning Date dynamic scope
+     * 
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Make a trait for such method
+     */
+    public function scopeOfRunningDate($query, $date)
+    {
+        return $query->where('begin_date', '<=', $date)->where('end_date', '>=', $date);
     }
 }

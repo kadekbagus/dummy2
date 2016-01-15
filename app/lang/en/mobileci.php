@@ -291,7 +291,7 @@ return array(
         'exp_coupon'        => 'You do not have this coupon.',
         'back_label'        => 'Back',
         'coupon_code_label' => 'Coupon code',
-        'validity_label'    => 'Valid until',
+        'validity_label'    => 'Validity',
     ),
 
     'search' => array(
@@ -492,5 +492,9 @@ return array(
     'connect' => array(
         'header'  => 'Get new digital shopping experience with',
         'message' => 'Please connect to the Mall Wifi',
+    ),
+
+    'campaign_cards' => array(
+        'go_to_page' => 'Go to page',
     ),
 );

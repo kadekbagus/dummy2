@@ -59,6 +59,8 @@ return array(
         'membership' => true,
 
         'widget_new_threshold' => 1, // in day(s)
+
+        'event_delay' => 2.5, //in second(s)
     ),
 
     // General contact data
@@ -2647,13 +2649,11 @@ return array(
         'Network Check Out'                            => 'Network Check Out',
         'Sign Out'                                     => 'Sign Out',
         'View (Home Page)'                             => 'View (Home Page)',
-        'Event View (Pop Up)'                          => 'Event View (Pop Up)',
-        'Event Click'                                  => 'Event Click',
         'View Coupon List'                             => 'View Coupon List',
         'View Coupon Detail'                           => 'View Coupon Detail',
+        'View Coupon Campaign Detail'                  => 'View Coupon Campaign Detail',
         'Coupon Redemption Successful'                 => 'Coupon Redemption (Successful)',
         'Coupon Issuance'                              => 'Coupon Issuance',
-        'View Events Tenant List'                      => 'View Events Tenant List',
         'View News List'                               => 'View News List',
         'View News Detail'                             => 'View News Detail',
         'View News Tenant List'                        => 'View News Tenant List',
@@ -2673,7 +2673,13 @@ return array(
         'Read Lucky Draw Number Issuance Notification' => 'Read Lucky Draw Number Issuance Notification',
         'Read Winner Announcement Notification'        => 'Read Winner Announcement Notification',
         'Read Coupon Issuance Notification'            => 'Read Coupon Issuance Notification',
-        'Read Activation Notification'                 => 'Read Activation Notification'
+        'Read Activation Notification'                 => 'Read Activation Notification',
+        'View Coupon Pop Up'                           => 'View Coupon Pop Up',
+        'Click Coupon Pop Up'                          => 'Click Coupon Pop Up',
+        'View Promotion Pop Up'                        => 'View Promotion Pop Up',
+        'Click Promotion Pop Up'                       => 'Click Promotion Pop Up',
+        'View News Pop Up'                             => 'View News Pop Up',
+        'Click News Pop Up'                            => 'Click News Pop Up',
     ),
 
     'menus' => array(
@@ -2691,12 +2697,14 @@ return array(
         ),
         'pmp' => array(
             'pmp_dashboard',
+            'pmp_campaign_dashboard',
+            'pmp_campaign_detail',
+            'pmp_campaigns',
             'pmp_news',
             'pmp_coupons',
             'pmp_promotions',
             'pmp_report_news',
             'pmp_report_promotions',
-            'pmp_report_coupons',
             'pmp_employee'
         )
     ),
@@ -2706,4 +2714,14 @@ return array(
         'F' => 'Female',
         'U' => 'Unknown',
     ),
+
+    'age_ranges' => array(
+        '55 +',
+        '45 - 54',
+        '35 - 44',
+        '25 - 34',
+        '15 - 24',
+        '0 - 14',
+    ),
+
 );
