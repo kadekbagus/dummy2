@@ -229,10 +229,10 @@ class DashboardAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.dashboard.gettopcustomerview.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_product')) {
-                Event::fire('orbit.dashboard.gettopcustomerview.authz.notallowed', array($this, $user));
-                $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
@@ -570,10 +570,10 @@ class DashboardAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.dashboard.getgeneralcustomerview.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_product')) {
-                Event::fire('orbit.dashboard.getgeneralcustomerview.authz.notallowed', array($this, $user));
-                $viewCouponLang = Lang::get('validation.orbit.actionlist.view_product');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewCouponLang));
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
@@ -4833,7 +4833,7 @@ class DashboardAPIController extends ControllerAPI
      *
      * List Of Parameters
      * ------------------
-     * @param integer `current_mall`  (optional) - mall id
+     * @param string  `current_mall`  (optional) - mall id
      * @param date    `start_date`    (optional) - filter date start
      * @param date    `end_date`      (optional) - filter date end
      * @return Illuminate\Support\Facades\Response
@@ -4964,6 +4964,143 @@ class DashboardAPIController extends ControllerAPI
 
         $output = $this->render($httpCode);
         Event::fire('orbit.dashboard.gettotalpageview.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+
+    /**
+     * GET - Unique users
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param string  `current_mall`  (optional) - mall id
+     * @param date    `start_date`    (optional) - filter date start
+     * @param date    `end_date`      (optional) - filter date end
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getUniqueUsers()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getuniqueusers.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getuniqueusers.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getuniqueusers.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            if (! in_array( strtolower($role->role_name), $this->newsViewRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getuniqueusers.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ),
+                array(
+                    'current_mall' => 'required|orbit.empty.mall',
+                    'start_date' => 'required',
+                    'end_date' => 'required',
+                )
+            );
+
+            Event::fire('orbit.dashboard.getuniqueusers.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getuniqueusers.after.validation', array($this, $validator));
+
+            $tablePrefix = DB::getTablePrefix();
+
+
+            $query = DB::select("select date_format(created_at, '%Y-%m-%d') as days, count(distinct user_id) as unique_visit_perday
+                        from {$tablePrefix}user_signin
+                        where location_id = ?
+                            and created_at between ? and ? 
+                        group by 1
+                        order by 1
+                        ", array($current_mall, $start_date, $end_date));
+
+            $total_unique_visit = 0;
+
+            if ( !empty($query) ) {
+                foreach ($query as $key => $value) {
+                    $total_unique_visit += $query[$key]->unique_visit_perday;
+                }
+            }
+
+            $data = new stdclass();
+            $data->unique_users = $total_unique_visit;
+
+            $this->response->data = $data;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getuniqueusers.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getuniqueusers.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getuniqueusers.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getuniqueusers.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getuniqueusers.before.render', array($this, &$output));
 
         return $output;
     }
