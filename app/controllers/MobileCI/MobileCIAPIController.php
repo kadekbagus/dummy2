@@ -1348,18 +1348,20 @@ class MobileCIAPIController extends ControllerAPI
                 $campaign = News::active()->where('news_id', $campaign_id)
                                           ->where('object_type', $campaign_type)
                                           ->first();
+                $activity->setNews($campaign);
             }
             if ($campaign_type === 'coupon') {
                 $campaign = Coupon::active()->where('promotion_id', $campaign_id)
                                             ->where('is_coupon', 'Y')
                                             ->first();
+                $activity->setCoupon($campaign);
             }
 
             $activityNotes = sprintf('Campaign ' . ucfirst($activity_type) . '. Campaign Id : %s, Campaign Type : %s', $campaign_id, $campaign_type);
             $activity->setUser($user)
                 ->setActivityName($activity_type . '_' . $campaign_type . '_popup')
                 ->setActivityNameLong(ucfirst($activity_type) . ' ' . ucwords(str_replace('_', ' ', $campaign_type)) . ' Pop Up')
-                ->setObject($campaign, true)
+                ->setObject($campaign)
                 ->setModuleName(ucfirst($campaign_type))
                 ->setLocation($retailer)
                 ->setNotes($activityNotes)
@@ -4908,7 +4910,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->media_orig()
                                 ->first();
 
-                            if (empty($media->path) || $media->path == 'null') {
+                            if (is_object($media)) {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
                                 // back to default image if in the content multilanguage not have image
@@ -4924,7 +4926,7 @@ class MobileCIAPIController extends ControllerAPI
                                         ->media_orig()
                                         ->first();
 
-                                    if (empty($mediaDefaultLanguage->path) || $mediaDefaultLanguage->path == 'null') {
+                                    if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     }
                                 }
@@ -4942,7 +4944,7 @@ class MobileCIAPIController extends ControllerAPI
                                 ->media_orig()
                                 ->first();
 
-                            if (empty($media->path) || $media->path == 'null') {
+                            if (is_object($media)) {
                                 $near_end_result->campaign_image = URL::asset($media->path);
                             } else {
                                 // back to default image if in the content multilanguage not have image
@@ -4958,7 +4960,7 @@ class MobileCIAPIController extends ControllerAPI
                                         ->media_orig()
                                         ->first();
 
-                                    if (empty($mediaDefaultLanguage->path) || $mediaDefaultLanguage->path == 'null') {
+                                    if (is_object($mediaDefaultLanguage)) {
                                         $near_end_result->campaign_image = URL::asset($mediaDefaultLanguage->path);
                                     }
                                 }
