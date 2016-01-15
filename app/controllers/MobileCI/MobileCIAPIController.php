@@ -220,8 +220,8 @@ class MobileCIAPIController extends ControllerAPI
         $activityPage = Activity::mobileci()
                             ->setActivityType('view');
         try {
-            //$user = $this->getLoggedInUser();
-            $user = User::where('user_id', 'K_9BIKEl3EFIj34h')->first();
+            $user = $this->getLoggedInUser();
+
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
