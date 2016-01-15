@@ -118,42 +118,7 @@
             <input id="search-type" class="col-xs-11 search-type" type="text" placeholder="Search here">
         </div>
         <div class="col-xs-12 text-left search-results" style="display:none;">
-            <h4>TENANTS</h4>
-            <ul>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-            </ul>
+            
             <h4>PROMOTIONS</h4>
             <ul>
                 <li class="search-result-group">
@@ -428,13 +393,99 @@
                 // ------------- -----------
 
                 $.ajax({
-                    url: apiPath + 'search?keyword=' + keyword,
+                    url: apiPath + 'keyword/search?keyword=' + keyword,
                     method: 'GET'
                 }).done(function(data) {
+                    var tenants='',promotions='',news='',coupons='',lucky_draws='';
 
+                    if (data.data.grouped_records.tenants.length > 0) {
+                        tenants = '<h4>{{Lang::get('mobileci.page_title.tenant_directory')}}</h4><ul>'
+                        for(var i = 0; i < data.data.grouped_records.tenants.length; i++) {
+                            tenants += '<li class="search-result-group">\
+                                    <a href="'+ data.data.grouped_records.tenants[i].object_url +'">\
+                                        <div class="col-xs-2">\
+                                            <img src="'+ data.data.grouped_records.tenants[i].object_image +'">\
+                                        </div>\
+                                        <div class="col-xs-10">\
+                                            <h5><strong>'+ data.data.grouped_records.tenants[i].object_name +'</strong></h5>\
+                                            <p>'+ data.data.grouped_records.tenants[i].object_description +'</p>\
+                                        </div>\
+                                    </a>\
+                                </li>';
+                        }
+                        tenants += '</ul>';
+                    }
+                    if (data.data.grouped_records.news.length > 0) {
+                        news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
+                        for(var i = 0; i < data.data.grouped_records.news.length; i++) {
+                            news += '<li class="search-result-group">\
+                                    <a href="'+ data.data.grouped_records.news[i].object_url +'">\
+                                        <div class="col-xs-2">\
+                                            <img src="'+ data.data.grouped_records.news[i].object_image +'">\
+                                        </div>\
+                                        <div class="col-xs-10">\
+                                            <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
+                                            <p>'+ data.data.grouped_records.news[i].object_description +'</p>\
+                                        </div>\
+                                    </a>\
+                                </li>';
+                        }
+                        news += '</ul>';
+                    }
+                    if (data.data.grouped_records.promotions.length > 0) {
+                        promotions = '<h4>{{Lang::get('mobileci.page_title.promotions')}}</h4><ul>'
+                        for(var i = 0; i < data.data.grouped_records.promotions.length; i++) {
+                            promotions += '<li class="search-result-group">\
+                                    <a href="'+ data.data.grouped_records.promotions[i].object_url +'">\
+                                        <div class="col-xs-2">\
+                                            <img src="'+ data.data.grouped_records.promotions[i].object_image +'">\
+                                        </div>\
+                                        <div class="col-xs-10">\
+                                            <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
+                                            <p>'+ data.data.grouped_records.promotions[i].object_description +'</p>\
+                                        </div>\
+                                    </a>\
+                                </li>';
+                        }
+                        promotions += '</ul>';
+                    }
+                    if (data.data.grouped_records.coupons.length > 0) {
+                        coupons = '<h4>{{Lang::get('mobileci.page_title.coupons')}}</h4><ul>'
+                        for(var i = 0; i < data.data.grouped_records.coupons.length; i++) {
+                            coupons += '<li class="search-result-group">\
+                                    <a href="'+ data.data.grouped_records.coupons[i].object_url +'">\
+                                        <div class="col-xs-2">\
+                                            <img src="'+ data.data.grouped_records.coupons[i].object_image +'">\
+                                        </div>\
+                                        <div class="col-xs-10">\
+                                            <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
+                                            <p>'+ data.data.grouped_records.coupons[i].object_description +'</p>\
+                                        </div>\
+                                    </a>\
+                                </li>';
+                        }
+                        coupons += '</ul>';
+                    }
+                    if (data.data.grouped_records.lucky_draws.length > 0) {
+                        lucky_draws = '<h4>{{Lang::get('mobileci.page_title.lucky_draws')}}</h4><ul>'
+                        for(var i = 0; i < data.data.grouped_records.lucky_draws.length; i++) {
+                            lucky_draws += '<li class="search-result-group">\
+                                    <a href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
+                                        <div class="col-xs-2">\
+                                            <img src="'+ data.data.grouped_records.lucky_draws[i].object_image +'">\
+                                        </div>\
+                                        <div class="col-xs-10">\
+                                            <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
+                                            <p>'+ data.data.grouped_records.lucky_draws[i].object_description +'</p>\
+                                        </div>\
+                                    </a>\
+                                </li>';
+                        }
+                        lucky_draws += '</ul>';
+                    }
+                    $('.search-results').html(tenants + news + promotions + coupons + lucky_draws);
                 }).fail(function(data){
                     $('.search-results').html('');
-                    $('.search-results').fadeIn('slow');
                     $('.search-results').append('<i>There is some error while making the request.</i>')
                 }).always(function(data) {
                     $('#search-loader').remove();

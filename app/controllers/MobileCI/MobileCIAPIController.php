@@ -5264,6 +5264,13 @@ class MobileCIAPIController extends ControllerAPI
                 $search_results[] = $lucky_draw_result;
             }
 
+            $grouped_search_result = new stdclass();
+            $grouped_search_result->tenants = [];
+            $grouped_search_result->news = [];
+            $grouped_search_result->promotions = [];
+            $grouped_search_result->coupons = [];
+            $grouped_search_result->lucky_draws = [];
+
             foreach($search_results as $near_end_result) {
                 if ($near_end_result->object_type === 'promotion') {
                     $near_end_result->object_url = URL::to('customer/mallpromotion?id=' . $near_end_result->object_id);
@@ -5413,12 +5420,25 @@ class MobileCIAPIController extends ControllerAPI
                         }
                     }
                 }
+
+                if ($near_end_result->object_type === 'promotion') {
+                    $grouped_search_result->promotions[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'news') {
+                    $grouped_search_result->news[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'coupon') {
+                    $grouped_search_result->coupons[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'tenant') {
+                    $grouped_search_result->tenants[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'lucky_draw') {
+                    $grouped_search_result->lucky_draws[] = $near_end_result;
+                }
             }
 
             $data = new stdclass();
             $data->total_records = count($search_results);
             $data->returned_records = count($search_results);
             $data->records = $search_results;
+            $data->grouped_records = $grouped_search_result;
 
             if (count($search_results) === 0) {
                 $data->records = null;
