@@ -388,6 +388,192 @@ class CampaignReportAPIController extends ControllerAPI
     }
 
 
+
+    /**
+     * GET - Campaign demographic
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param string  `merchant_id`   (required) - mall id
+     * @param date    `start_date`    (required) - start date, default is 1 month
+     * @param date    `end_date`      (required) - end date
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCampaignDemographic()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getcampaigndemographic.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getcampaigndemographic.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getcampaigndemographic.before.auth', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getcampaigndemographic.after.auth', array($this, $user));
+
+            $tablePrefix = DB::getTablePrefix();
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ),
+                array(
+                    'current_mall' => 'required',
+                    'start_date' => 'required | date_format:Y-m-d H:i:s',
+                    'end_date' => 'required | date_format:Y-m-d H:i:s',
+                )
+            );
+
+            Event::fire('orbit.dashboard.getcampaigndemographic.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ( $validator->fails() ) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getcampaigndemographic.after.validation', array($this, $validator));
+
+            // start date cannot be bigger than end date
+            if ( $start_date > $end_date ) {
+                $errorMessage = 'Start date cannot be greater than end date';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $query = "SELECT
+                    SUM(case when age >= 0 and age <= 14 then 1 else 0 end) as '0 - 14',
+                    SUM(case when age >= 15 and age <= 24 then 1 else 0 end) as '15 - 24',
+                    SUM(case when age >= 25 and age <= 34 then 1 else 0 end) as '25 - 34',
+                    SUM(case when age >= 35 and age <= 44 then 1 else 0 end) as '35 - 44',
+                    SUM(case when age >= 45 and age <= 54 then 1 else 0 end) as '45 - 54',
+                    SUM(case when age >= 55 then 1 else 0 end) as '55 +',
+                    SUM(case when age >= 0 then 1 else 0 end) as 'total'
+                FROM(
+                    SELECT activity_id, activity_name, user_email, {$tablePrefix}user_details.gender, birthdate ,TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) AS age
+                    FROM {$tablePrefix}activities
+                    LEFT JOIN {$tablePrefix}user_details
+                    ON {$tablePrefix}activities.user_id = {$tablePrefix}user_details.user_id
+                    WHERE 1 = 1
+                    AND `group` = 'mobile-ci' AND activity_type = 'view'
+                    AND (activity_name = 'view_promotion' OR activity_name = 'view_news' OR activity_name = 'view_coupon')
+                    AND (birthdate != '0000-00-00' AND birthdate != '' AND birthdate is not null)
+                    AND {$tablePrefix}activities.gender is not null
+                    AND location_id = ?
+                ";
+
+            $demograhicFemale = DB::select($query . "
+                        AND {$tablePrefix}user_details.gender = 'f'
+                        AND {$tablePrefix}activities.created_at between ? and ?
+                        group by {$tablePrefix}activities.user_id
+                    ) as A
+            ", array($current_mall, $start_date, $end_date));
+
+            $demograhicMale = DB::select($query . "
+                        AND {$tablePrefix}user_details.gender = 'm'
+                        AND {$tablePrefix}activities.created_at between ? and ?
+                        group by {$tablePrefix}activities.user_id
+                    ) as A
+            ", array($current_mall, $start_date, $end_date));
+
+            $female = array();
+            $percent = 0;
+
+            foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
+                if($demograhicFemale[0]->total !== 0){
+                    $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                }
+                $female[$key]['age_range'] = $ageRange;
+                $female[$key]['total'] = $demograhicFemale[0]->$ageRange;
+                $female[$key]['percent'] = round($percent, 2) . ' %';
+            }
+
+            foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
+                if($demograhicMale[0]->total !== 0){
+                    $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                }
+                $male[$key]['age_range'] = $ageRange;
+                $male[$key]['total'] = $demograhicMale[0]->$ageRange;
+                $male[$key]['percent'] = round($percent, 2) . ' %';
+            }
+
+            // get column name from config
+            $responses['female'] = $female;
+            $responses['male'] = $male;
+
+            $this->response->data = $responses;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getcampaigndemographic.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getcampaigndemographic.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getcampaigndemographic.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getcampaigndemographic.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getcampaigndemographic.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+
+
     public function setReturnBuilder($bool)
     {
         $this->returnBuilder = $bool;
