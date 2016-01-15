@@ -620,7 +620,7 @@ Route::group(
         /**
          * The power search
          */
-        Route::post('/app/v1/keyword/search', function()
+        Route::get('/app/v1/keyword/search', function()
         {
             return MobileCI\MobileCIAPIController::create()->getPowerSearch();
         });
