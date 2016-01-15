@@ -619,6 +619,11 @@ return array(
             // via STDIN
             'reboot'    => 'sudo /home/orbit/scripts/helpers/shutdown.sh'
         ),
+
+        // Email validity
+        'email' => array(
+            'fake_mx' => FALSE
+        )
     ),
 
     'upload'    => array(
