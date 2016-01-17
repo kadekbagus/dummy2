@@ -101,7 +101,7 @@ class UserLoginNotifier
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
             }
 
-            Log::info('Post data: ' . serialize($postData));
+            Log::info('Orbit Integration -- Check Member -- Post Data: ' . serialize($postData));
 
             $this->poster->addHeader('Accept', 'application/json');
 
@@ -216,7 +216,7 @@ class UserLoginNotifier
                                                 ->first();
             // Create new membership number if not exists
             if (! is_object($membershipNumber)) {
-                Log::info( sprintf('Membership number not found for user %s not found, creating new one.', $user->user_id) );
+                Log::info( sprintf('Orbit Integration -- Check Member -- WARNING: Membership number not found for user %s not found, creating new one.', $user->user_id) );
                 $membershipNumber = new MembershipNumber();
                 $membershipNumber->user_id = $user->user_id;
                 $membershipNumber->issuer_merchant_id = $retailer->merchant_id;
@@ -242,7 +242,7 @@ class UserLoginNotifier
                 DB::connection()->getPdo()->commit();
             }
 
-            Log::info($message);
+            Log::info('Orbit Integration -- Check Member -- Result: OK -- Message: ' . $message);
             return [
                 'status' => 'ok',
                 'message' => $message
@@ -268,7 +268,7 @@ class UserLoginNotifier
         }
 
         $job->delete();
-        Log::error(sprintf('CheckMember Integration Error PostData: %s', serialize($postData)));
+        Log::error(sprintf('Orbit Integration -- Check Member -- ERROR -- Post Data: %s', serialize($postData)));
 
         return [
             'status' => 'fail',
