@@ -117,7 +117,7 @@ class UserLoginNotifier
 
             // Lets try to decode the body
             $httpBody = $this->poster->getResponse();
-            Log::info('External response: ' . $httpBody);
+            Log::info('Orbit Integration -- Check Member -- External response: ' . $httpBody);
 
             $response = json_decode($httpBody);
 
@@ -254,8 +254,6 @@ class UserLoginNotifier
             if (DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->rollBack();
             }
-
-            Log::error($message);
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
@@ -263,12 +261,10 @@ class UserLoginNotifier
             if (DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->rollBack();
             }
-
-            Log::error($message);
         }
 
         $job->delete();
-        Log::error(sprintf('Orbit Integration -- Check Member -- ERROR -- Post Data: %s', serialize($postData)));
+        Log::error(sprintf('Orbit Integration -- Check Member -- Result: ERROR -- Message: %s', $message));
 
         return [
             'status' => 'fail',
