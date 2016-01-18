@@ -172,6 +172,7 @@
                 }
             });
         }
+        var slider = null;
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
                 var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
@@ -196,7 +197,7 @@
                         $('.content-container, .header-container, footer').addClass('blurred');
                         $('.campaign-cards-back-drop').fadeIn('slow');
                         $('.campaign-cards-container').toggle('slide', {direction: 'down'}, 'slow');
-                        $('#campaign-cards').lightSlider({
+                        slider = $('#campaign-cards').lightSlider({
                             gallery:false,
                             item:1,
                             slideMargin: 20,
@@ -241,6 +242,7 @@
         }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
 
         $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
+            slider.pause();
             $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             $('body').removeClass('freeze-scroll');
             $('.content-container, .header-container, footer').removeClass('blurred');
