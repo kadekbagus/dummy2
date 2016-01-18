@@ -29,7 +29,7 @@ class CampaignReportAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `sortby`                (optional) - Column order by. Valid value: updated_date, created_at, campaign_name, campaign_type, mall_name, begin_date, end_date, pages_views, views, clicks, daily, estimated_total, spending, status
+     * @param string   `sortby`                (optional) - Column order by. Valid value: updated_date, created_at, campaign_name, campaign_type, tenant, mall_name, begin_date, end_date, page_views, views, clicks, daily, estimated_total, spending, status
      * @param string   `sortmode`              (optional) - ASC or DESC
      * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant only
      * @param integer  `take`                  (optional) - Limit
@@ -88,7 +88,7 @@ class CampaignReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:updated_date,created_at,campaign_name,campaign_type,mall_name,begin_date, end_date,pages_views,views,clicks,daily,estimated_total,spending,status',
+                    'sort_by' => 'in:updated_at,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,daily,estimated_total,spending,daily,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -129,7 +129,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             //get total cost news
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
-                COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -172,7 +172,7 @@ class CampaignReportAPIController extends ControllerAPI
                         ;
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
-                COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -215,7 +215,7 @@ class CampaignReportAPIController extends ControllerAPI
                         ;
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
-                COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -339,7 +339,7 @@ class CampaignReportAPIController extends ControllerAPI
             $campaign->skip($skip);
 
             // Default sort by
-            $sortBy = 'begin_date';
+            $sortBy = 'updated_at';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -348,8 +348,10 @@ class CampaignReportAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
+                    'updated_at'      => 'updated_at',
                     'campaign_name'   => 'campaign_name',
                     'campaign_type'   => 'campaign_type',
+                    'tenant'          => 'tenant',
                     'mall_name'       => 'mall_name',
                     'begin_date'      => 'begin_date',
                     'end_date'        => 'end_date',
@@ -358,7 +360,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'popup_clicks'    => 'popup_clicks',
                     'daily'           => 'daily',
                     'estimated_total' => 'estimated_total',
-                    'spending'       => 'spending',
+                    'spending'        => 'spending',
                     'daily'           => 'daily',
                     'status'          => 'status'
                 );
@@ -367,8 +369,8 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             // sort by status first
-            if ($sortBy !== 'begin_date') {
-                $campaign->orderBy('begin_date', 'asc');
+            if ($sortBy !== 'updated_at') {
+                $campaign->orderBy('updated_at', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
