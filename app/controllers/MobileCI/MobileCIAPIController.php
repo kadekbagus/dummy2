@@ -5203,6 +5203,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->leftJoin('lucky_draw_translations', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
                 ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
+                ->whereRaw("? between start_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('lucky_draws.lucky_draw_name', 'like', "%$keyword%")
                         ->orWhere('lucky_draws.description', 'like', "%$keyword%")
