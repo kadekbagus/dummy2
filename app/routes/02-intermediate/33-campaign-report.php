@@ -5,9 +5,14 @@
 
 
 /**
- * Campaign Report Listing
+ * Campaign Report Summary Listing
  */
-Route::get('/app/v1/campaign-report/list', 'IntermediateAuthController@CampaignReport_getCampaignReport');
+Route::get('/app/v1/campaign-report-summary/list', 'IntermediateAuthController@CampaignReport_getCampaignReportSummary');
+
+/**
+ * Campaign Report Detail Listing
+ */
+Route::get('/app/v1/campaign-report-detail/list', 'IntermediateAuthController@CampaignReport_getCampaignReportDetail');
 
 /**
  * Campaign Report Dashboard Demographic
