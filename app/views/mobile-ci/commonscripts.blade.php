@@ -501,6 +501,7 @@
                 resetImage();
                 fl = $.featherlight.current();
                 $("body").addClass("freeze-scroll");
+                $('.content-container, .header-container, footer').addClass('blurred');
                 $(".featherlight-image").panzoom({
                     minScale: 1,
                     maxScale: 5,
@@ -524,6 +525,7 @@
                     if(! changed) {
                         fl.close();
                         $("body").removeClass("freeze-scroll");
+                        $('.content-container, .header-container, footer').removeClass('blurred');
                     }
                 });
             }, 50);
@@ -543,11 +545,13 @@
 
         $(document).on('click', '.featherlight-close', function(){
             $("body").removeClass("freeze-scroll");
+            $('.content-container, .header-container, footer').removeClass('blurred');
         });
 
         $(document).on('click', '.featherlight-content, .featherlight-image', function(){
             fl.close();
             $("body").removeClass("freeze-scroll");
+            $('.content-container, .header-container, footer').removeClass('blurred');
         });
 
         $('#slide-trigger, .slide-menu-backdrop').click(function(){
