@@ -664,6 +664,379 @@ class CampaignReportAPIController extends ControllerAPI
         return $this->render(200);
     }
 
+    /**
+     * GET - Campaign overview
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List Of Parameters
+     * ------------------
+     * @param string  `current_mall`   (required) - mall id
+     * @param string  `campaign_id`   (required) - promotion id or coupon id or news id
+     * @param date    `start_date`    (required) - start date, default is 1 month
+     * @param date    `end_date`      (required) - end date
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCampaignOverview()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.dashboard.getcampaignoverview.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.dashboard.getcampaignoverview.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.dashboard.getcampaignoverview.before.auth', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.dashboard.getcampaignoverview.after.auth', array($this, $user));
+
+            $tablePrefix = DB::getTablePrefix();
+
+            $this->registerCustomValidation();
+
+            $current_mall = OrbitInput::get('current_mall');
+            $campaign_id = OrbitInput::get('campaign_id');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+
+            $validator = Validator::make(
+                array(
+                    'current_mall' => $current_mall,
+                    'campaign_id' => $campaign_id,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ),
+                array(
+                    'current_mall' => 'required',
+                    'campaign_id' => 'required',
+                    'start_date' => 'required | date_format:Y-m-d H:i:s',
+                    'end_date' => 'required | date_format:Y-m-d H:i:s',
+                )
+            );
+
+            Event::fire('orbit.dashboard.getcampaignoverview.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ( $validator->fails() ) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.dashboard.getcampaignoverview.after.validation', array($this, $validator));
+
+            // start date cannot be bigger than end date
+            if ( $start_date > $end_date ) {
+                $errorMessage = 'Start date cannot be greater than end date';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $timezone = $this->getTimezone($current_mall);
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
+            // convert to timezone
+            $begin = new DateTime($start_date, new DateTimeZone('UTC'));
+            $endtime = new DateTime($end_date, new DateTimeZone('UTC'));
+            $begin->setTimezone(new DateTimeZone($timezone));
+            $endtime->setTimezone(new DateTimeZone($timezone));
+
+            // get periode per 1 day
+            $interval = DateInterval::createFromDateString('1 day');
+            $_dateRange = new DatePeriod($begin, $interval, $endtime);
+
+            $dateRange = [];
+
+            foreach ( $_dateRange as $date ) {
+                $dateRange[] = $date->format("Y-m-d");
+            }
+
+            $campaign_view = DB::select("
+                                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
+                                        count(activity_id) as value
+                                from
+                                    {$tablePrefix}activities ac
+                                where
+                                    ac.object_id = ?
+                                        and ((ac.activity_name = 'view_coupon'
+                                        and ac.activity_name_long = 'View Coupon Detail'
+                                        and ac.activity_type = 'view'
+                                        and ac.module_name = 'Coupon'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer')
+                                        or (ac.activity_name = 'view_news'
+                                        and ac.activity_name_long = 'View News Detail'
+                                        and ac.activity_type = 'view'
+                                        and ac.module_name = 'News'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer')
+                                        or (ac.activity_name = 'view_promotion'
+                                        and ac.activity_name_long = 'View Promotion Detail'
+                                        and ac.activity_type = 'view'
+                                        and ac.module_name = 'Promotion'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer'))
+                                        and ac.location_id = ?
+                                        and ac.created_at between ? and ?
+                                group by 1
+                                order by 1
+            ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
+
+
+            $pop_up_view = DB::select("
+                                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
+                                        count(activity_id) as value
+                                from
+                                    {$tablePrefix}activities ac
+                                where
+                                    ac.object_id = ?
+                                        and ((ac.activity_name = 'view_coupon_popup'
+                                        and ac.activity_name_long = 'View Coupon Pop Up'
+                                        and ac.activity_type = 'view'
+                                        and ac.module_name = 'Coupon'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer')
+                                        or (ac.activity_name = 'view_news_popup'
+                                        and ac.activity_name_long = 'View News Pop Up'
+                                        and ac.activity_type = 'view'
+                                        and ac.module_name = 'News'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer')
+                                        or (ac.activity_name = 'view_promotion_popup'
+                                        and ac.activity_name_long = 'View Promotion Pop Up'
+                                        and ac.activity_type = 'view'
+                                        and ac.module_name = 'Promotion'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer'))
+                                        and ac.location_id = ?
+                                        and ac.created_at between ? and ?
+                                group by 1
+                                order by 1
+            ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
+
+            $pop_up_click = DB::select("
+                                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
+                                        count(activity_id) as value
+                                from
+                                    {$tablePrefix}activities ac
+                                where
+                                    ac.object_id = ?
+                                        and ((ac.activity_name = 'click_coupon_popup'
+                                        and ac.activity_name_long = 'Click Coupon Pop Up'
+                                        and ac.activity_type = 'click'
+                                        and ac.module_name = 'Coupon'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer')
+                                        or (ac.activity_name = 'click_news_popup'
+                                        and ac.activity_name_long = 'Click News Pop Up'
+                                        and ac.activity_type = 'click'
+                                        and ac.module_name = 'News'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer')
+                                        or (ac.activity_name = 'click_promotion_popup'
+                                        and ac.activity_name_long = 'Click Promotion Pop Up'
+                                        and ac.activity_type = 'click'
+                                        and ac.module_name = 'Promotion'
+                                        and ac.group = 'mobile-ci'
+                                        and ac.role = 'Consumer'))
+                                        and ac.location_id = ?
+                                        and ac.created_at between ? and ?
+                                group by 1
+                                order by 1
+            ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
+
+            $unique_user = DB::select("select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date, count(distinct user_id) as value
+                        from {$tablePrefix}user_signin
+                        where location_id = ?
+                            and created_at between ? and ? 
+                        group by 1
+                        order by 1
+            ", array($timezoneOffset, $current_mall, $start_date, $end_date));
+
+
+            function cmp($a, $b)
+            {
+                return strcmp($a->date, $b->date);
+            }
+
+
+            // if there is date that have no data
+            $dateRange_campaign_view = $dateRange;
+            $dateRange_pop_up_view = $dateRange;
+            $dateRange_pop_up_click = $dateRange;
+            $dateRange_unique_user = $dateRange;
+
+            foreach ($campaign_view as $a => $b) {
+                $length = count($dateRange);
+                for ($i = 0; $i < $length; $i++) {
+                    if ($campaign_view[$a]->date === $dateRange[$i]) {
+                        unset($dateRange_campaign_view[$i]);
+                    }
+                }
+            }
+
+            foreach ($pop_up_view as $a => $b) {
+                $length = count($dateRange);
+                for ($i = 0; $i < $length; $i++) {
+                    if ($pop_up_view[$a]->date === $dateRange[$i]) {
+                        unset($dateRange_pop_up_view[$i]);
+                    }
+                }
+            }
+
+            foreach ($pop_up_click as $a => $b) {
+                $length = count($dateRange);
+                for ($i = 0; $i < $length; $i++) {
+                    if ($pop_up_click[$a]->date === $dateRange[$i]) {
+                        unset($dateRange_pop_up_click[$i]);
+                    }
+                }
+            }
+
+            foreach ($unique_user as $a => $b) {
+                $length = count($dateRange);
+                for ($i = 0; $i < $length; $i++) {
+                    if ($unique_user[$a]->date === $dateRange[$i]) {
+                        unset($dateRange_unique_user[$i]);
+                    }
+                }
+            }
+
+            foreach ($dateRange_campaign_view as $key => $value) {
+                $vw = new stdclass();
+                $vw->date = $dateRange_campaign_view[$key];
+                $vw->value = 0;
+                $campaign_view[] = $vw;
+            }
+
+            foreach ($dateRange_pop_up_view as $key => $value) {
+                $vw = new stdclass();
+                $vw->date = $dateRange_pop_up_view[$key];
+                $vw->value = 0;
+                $pop_up_view[] = $vw;
+            }
+
+            foreach ($dateRange_pop_up_click as $key => $value) {
+                $vw = new stdclass();
+                $vw->date = $dateRange_pop_up_click[$key];
+                $vw->value = 0;
+                $pop_up_click[] = $vw;
+            }
+
+            foreach ($dateRange_unique_user as $key => $value) {
+                $vw = new stdclass();
+                $vw->date = $dateRange_unique_user[$key];
+                $vw->value = 0;
+                $unique_user[] = $vw;
+            }
+           
+            usort($campaign_view, "cmp");
+            usort($pop_up_view, "cmp");
+            usort($pop_up_click, "cmp");
+            usort($unique_user, "cmp");
+
+            $total_campaign_view = 0;
+            $total_pop_up_view = 0;
+            $total_pop_up_click = 0;
+            $total_unique_user = 0;
+
+            if ( !empty($campaign_view) ) {
+                foreach ($campaign_view as $key => $value) {
+                    $total_campaign_view += $campaign_view[$key]->value;
+                }
+            }
+
+            if ( !empty($pop_up_view) ) {
+                foreach ($pop_up_view as $key => $value) {
+                    $total_pop_up_view += $pop_up_view[$key]->value;
+                }
+            }
+
+            if ( !empty($pop_up_click) ) {
+                foreach ($pop_up_click as $key => $value) {
+                    $total_pop_up_click += $pop_up_click[$key]->value;
+                }
+            }
+
+            if ( !empty($unique_user) ) {
+                foreach ($unique_user as $key => $value) {
+                    $total_unique_user += $unique_user[$key]->value;
+                }
+            }
+
+            $total = new stdclass();
+            $total->total_campaign_view = $total_campaign_view;
+            $total->total_pop_up_view = $total_pop_up_view;
+            $total->total_pop_up_click = $total_pop_up_click;
+            $total->total_unique_user = $total_unique_user;
+            
+            $data = new stdclass();
+            $data->campaign_view = $campaign_view;
+            $data->pop_up_view = $pop_up_view;
+            $data->pop_up_click = $pop_up_click;
+            $data->unique_user = $unique_user;
+            $data->total = $total;
+
+            $this->response->data = $data;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.dashboard.getcampaignoverview.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.dashboard.getcampaignoverview.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.dashboard.getcampaignoverview.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $httpCode = 500;
+            Event::fire('orbit.dashboard.getcampaignoverview.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.dashboard.getcampaignoverview.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+
     public function setReturnBuilder($bool)
     {
         $this->returnBuilder = $bool;
@@ -688,5 +1061,21 @@ class CampaignReportAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    protected function getTimezone($current_mall)
+    {
+        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+            ->where('merchants.merchant_id','=', $current_mall)
+            ->first();
+
+        return $timezone->timezone_name;
+    }
+
+    protected function getTimezoneOffset($timezone)
+    {
+        $dt = new DateTime('now', new DateTimeZone($timezone));
+
+        return $dt->format('P');
     }
 }
