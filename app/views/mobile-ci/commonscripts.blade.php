@@ -110,14 +110,18 @@
 
 <div class="search-container">
     <div class="row search-wrapper">
-        <div class="col-xs-12 text-right campaign-cards-close-btn search-close-btn">
-            <button class="close" id="search-close-btn">&times;</button>
+        <div class="search-top">
+            <div class="col-xs-12 text-right campaign-cards-close-btn search-close-btn">
+                <button class="close" id="search-close-btn">&times;</button>
+            </div>
+            <div class="col-xs-12 text-left search-box">
+                <span class="col-xs-1"><i class="fa fa-search"></i></span>
+                <input id="search-type" class="col-xs-11 search-type" type="text" placeholder="{{Lang::get('mobileci.search.search_placeholder')}}">
+            </div>
         </div>
-        <div class="col-xs-12 text-left search-box">
-            <span class="col-xs-1"><i class="fa fa-search"></i></span>
-            <input id="search-type" class="col-xs-11 search-type" type="text" placeholder="Search here">
+        <div class="search-bottom">
+            <div class="col-xs-12 text-left search-results" style="display:none;"></div>
         </div>
-        <div class="col-xs-12 text-left search-results" style="display:none;"></div>
     </div>
 </div>
 <div class="row back-drop search-back-drop"></div>
@@ -145,15 +149,15 @@
             if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
             return M;
         })();
-        var browser = navigator.getBrowser[0];
-        if(browser.indexOf('IE')) {
-            objectFit.polyfill({
-                selector: '.img-fit, .img-fit-tenant',
-                fittype: 'cover',
-                disableCrossDomain: 'true'
-            });
-            $('.img-fit, .img-fit-tenant').closest('.col-xs-12, .col-xs-6').css('height', '160px').css('overflow', 'hidden');
-        }
+        // var browser = navigator.getBrowser[0];
+        // if(browser.indexOf('IE')) {
+        //     objectFit.polyfill({
+        //         selector: '.img-fit, .img-fit-tenant',
+        //         fittype: 'cover',
+        //         disableCrossDomain: 'true'
+        //     });
+        //     $('.img-fit, .img-fit-tenant').closest('.col-xs-12, .col-xs-6').css('height', '160px').css('overflow', 'hidden');
+        // }
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
                 var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
@@ -190,12 +194,18 @@
                             onSliderLoad: function() {
                                 $('#campaign-cards').removeClass('cS-hidden');
                             },
+                            onBeforeSlide: function (el) {
+                                console.log('b4');
+                                $('.campaign-cards-close-btn').fadeOut('fast');
+                            },
                             onAfterSlide: function() {
+                                console.log($('body .search-close-btn'));
+                                $('.campaign-cards-close-btn').fadeIn('fast');
                             }
                         });
-                        if(browser.indexOf('IE')) {
-                            $('#campaign-cards .img-responsive').css('height', 'auto');
-                        }
+                        // if(browser.indexOf('IE')) {
+                        //     $('#campaign-cards .img-responsive').css('height', 'auto');
+                        // }
                     }
                 });
             }
@@ -258,6 +268,7 @@
         });
         $('#searchBtn').click(function(){
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
+            $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeIn('fast');
             $('.content-container, .header-container, footer').addClass('blurred');
             //$('#SearchProducts').modal();
@@ -267,6 +278,7 @@
         });
         $('#search-close-btn').click(function(){
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
+            $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeOut('fast');
             $('.content-container, .header-container, footer').removeClass('blurred');
             $('#search-type').val('');
@@ -303,7 +315,7 @@
                                 var hide = i > 2 ? 'limited hide' : '';
                                 tenants += '<li class="search-result-group '+ hide +'">\
                                         <a href="'+ data.data.grouped_records.tenants[i].object_url +'">\
-                                            <div class="col-xs-2">\
+                                            <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.tenants[i].object_image +'">\
                                             </div>\
                                             <div class="col-xs-10">\
@@ -322,7 +334,7 @@
                                 var hide = i > 2 ? 'limited hide' : '';
                                 news += '<li class="search-result-group '+ hide +'">\
                                         <a href="'+ data.data.grouped_records.news[i].object_url +'">\
-                                            <div class="col-xs-2">\
+                                            <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.news[i].object_image +'">\
                                             </div>\
                                             <div class="col-xs-10">\
@@ -341,7 +353,7 @@
                                 var hide = i > 2 ? 'limited hide' : '';
                                 promotions += '<li class="search-result-group '+ hide +'">\
                                         <a href="'+ data.data.grouped_records.promotions[i].object_url +'">\
-                                            <div class="col-xs-2">\
+                                            <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.promotions[i].object_image +'">\
                                             </div>\
                                             <div class="col-xs-10">\
@@ -360,7 +372,7 @@
                                 var hide = i > 2 ? 'limited hide' : '';
                                 coupons += '<li class="search-result-group '+ hide +'">\
                                         <a href="'+ data.data.grouped_records.coupons[i].object_url +'">\
-                                            <div class="col-xs-2">\
+                                            <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.coupons[i].object_image +'">\
                                             </div>\
                                             <div class="col-xs-10">\
@@ -379,7 +391,7 @@
                                 var hide = i > 2 ? 'limited hide' : '';
                                 lucky_draws += '<li class="search-result-group '+ hide +'">\
                                         <a href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
-                                            <div class="col-xs-2">\
+                                            <div class="col-xs-2 text-center">\
                                                 <img src="'+ data.data.grouped_records.lucky_draws[i].object_image +'">\
                                             </div>\
                                             <div class="col-xs-10">\
@@ -489,6 +501,7 @@
                 resetImage();
                 fl = $.featherlight.current();
                 $("body").addClass("freeze-scroll");
+                $('.content-container, .header-container, footer').addClass('blurred');
                 $(".featherlight-image").panzoom({
                     minScale: 1,
                     maxScale: 5,
@@ -512,6 +525,7 @@
                     if(! changed) {
                         fl.close();
                         $("body").removeClass("freeze-scroll");
+                        $('.content-container, .header-container, footer').removeClass('blurred');
                     }
                 });
             }, 50);
@@ -531,11 +545,13 @@
 
         $(document).on('click', '.featherlight-close', function(){
             $("body").removeClass("freeze-scroll");
+            $('.content-container, .header-container, footer').removeClass('blurred');
         });
 
         $(document).on('click', '.featherlight-content, .featherlight-image', function(){
             fl.close();
             $("body").removeClass("freeze-scroll");
+            $('.content-container, .header-container, footer').removeClass('blurred');
         });
 
         $('#slide-trigger, .slide-menu-backdrop').click(function(){

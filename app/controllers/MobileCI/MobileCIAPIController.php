@@ -2400,7 +2400,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Coupon Promotor Tenant List')
+                    ->setActivityNameLong('View Coupon Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -2414,7 +2414,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Coupon Tenant List')
+                    ->setActivityNameLong('View Coupon Redemption Places')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -5448,7 +5448,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityPageNotes = sprintf('Keyword Searched: %s', $keyword);
             $activityPage->setUser($user)
                     ->setActivityName('search_keyword')
-                    ->setActivityNameLong('Search By Keyword')
+                    ->setActivityNameLong('Search')
                     ->setObject(null)
                     ->setModuleName('Search')
                     ->setNotes($activityPageNotes)
