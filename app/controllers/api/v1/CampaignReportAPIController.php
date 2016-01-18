@@ -154,7 +154,7 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_news_popup'
-                ) as speending,
+                ) as spending,
                 {$tablePrefix}news.status"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -197,7 +197,7 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
-                ) as speending,
+                ) as spending,
                 {$tablePrefix}news.status"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -240,7 +240,7 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
-                ) as speending,
+                ) as spending,
                 {$tablePrefix}promotions.status"))
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
@@ -307,8 +307,8 @@ class CampaignReportAPIController extends ControllerAPI
             // Get total estimate
             $totalEstimated = $_campaign->sum('estimated_total');
 
-            // Get total speending
-            $totalSpeending = $_campaign->sum('speending');
+            // Get total spending
+            $totalSpending = $_campaign->sum('spending');
 
             $_campaign->select('campaign_id');
 
@@ -358,7 +358,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'popup_clicks'    => 'popup_clicks',
                     'daily'           => 'daily',
                     'estimated_total' => 'estimated_total',
-                    'speending'       => 'speending',
+                    'spending'       => 'spending',
                     'daily'           => 'daily',
                     'status'          => 'status'
                 );
@@ -388,7 +388,7 @@ class CampaignReportAPIController extends ControllerAPI
             $data->total_page_views = $totalPageViews;
             $data->total_pop_up_views = $totalPopupViews;
             $data->total_estimated_cost = $totalEstimated;
-            $data->total_speending = $totalSpeending;
+            $data->total_spending = $totalSpending;
             $data->returned_records = count($listOfCampaign);
             $data->records = $listOfCampaign;
 
