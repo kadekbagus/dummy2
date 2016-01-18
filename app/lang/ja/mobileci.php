@@ -297,6 +297,11 @@ return array(
     'search' => array(
         'no_item'           => '基準にマッチしているテナントがありません。',
         'too_much_items'    => '検索結果が広すぎる、それを絞り込むください.',
+        'no_result'         => '申し訳ありませんが、検索結果がないです',
+        'error'             => '要求の発行中にエラーがあります',
+        'show_all_result'   => '結果をすべて表示します',
+        'show_by_categories'=> 'カテゴリ別表示します',
+        'search_placeholder'=> 'ここで検索します',
     ),
 
     'thank_you' => array(

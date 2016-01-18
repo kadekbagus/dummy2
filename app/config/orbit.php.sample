@@ -623,6 +623,11 @@ return array(
             // via STDIN
             'reboot'    => 'sudo /home/orbit/scripts/helpers/shutdown.sh'
         ),
+
+        // Email validity
+        'email' => array(
+            'fake_mx' => FALSE
+        )
     ),
 
     'upload'    => array(
@@ -2675,6 +2680,7 @@ return array(
         'Click Promotion Pop Up'                       => 'Click Promotion Pop Up',
         'View News Pop Up'                             => 'View News Pop Up',
         'Click News Pop Up'                            => 'Click News Pop Up',
+        'Search By Keyword'                            => 'Search',
     ),
 
     'menus' => array(
