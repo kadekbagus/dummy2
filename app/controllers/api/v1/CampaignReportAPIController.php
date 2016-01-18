@@ -88,7 +88,7 @@ class CampaignReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:updated_at,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,daily,estimated_total,spending,daily,status',
+                    'sort_by' => 'in:updated_at,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -148,7 +148,7 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_news_popup'
-                ) as popup_click,
+                ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -191,7 +191,7 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
-                ) as popup_click,
+                ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -234,7 +234,7 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
-                ) as popup_click,
+                ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -358,20 +358,14 @@ class CampaignReportAPIController extends ControllerAPI
                     'page_views'      => 'page_views',
                     'popup_views'     => 'popup_views',
                     'popup_clicks'    => 'popup_clicks',
-                    'daily'           => 'daily',
+                    'base_price'      => 'base_price',
                     'estimated_total' => 'estimated_total',
                     'spending'        => 'spending',
-                    'daily'           => 'daily',
                     'status'          => 'status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
-
-            // sort by status first
-            if ($sortBy !== 'updated_at') {
-                $campaign->orderBy('updated_at', 'asc');
-            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
