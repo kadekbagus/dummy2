@@ -637,7 +637,23 @@ class CampaignReportAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Get the campaign spending
+     * 
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    public function getSpending()
+    {
+        $startDate = OrbitInput::get('start_date');
+        $endDate = OrbitInput::get('end_date');
+        $this->response->data = [
+            ['date' => '10/12/2015', 'cost' => '195,000'],
+            ['date' => '11/12/2015', 'cost' => '295,000'],
+            ['date' => '12/12/2015', 'cost' => '395,000'],
+        ];
 
+        return $this->render(200);
+    }
 
     public function setReturnBuilder($bool)
     {

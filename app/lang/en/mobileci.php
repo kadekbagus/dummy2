@@ -297,10 +297,11 @@ return array(
     'search' => array(
         'no_item'        => 'There is no tenant matching the criteria.',
         'too_much_items' => 'Search result is too broad, please narrow it down.',
-        'no_result'      => 'There is no result matching the criteria.',
-        'error'          => 'There is some error while making the request.',
-        'show_all_result'=> 'Show All Result',
+        'no_result'      => 'Sorry, search has no results.',
+        'error'          => 'There is an error while making the request.',
+        'show_all_result'=> 'Show All Results',
         'show_by_categories'=> 'Show By Categories',
+        'search_placeholder'=> 'Search here',
     ),
 
     'thank_you' => array(
