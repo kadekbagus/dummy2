@@ -380,19 +380,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign->orderBy($sortBy, $sortMode);
 
-            // also to sort tenant name
-            // if ($sortBy !== 'retailer_name') {
-            //     $campaign->orderBy('retailer_name', 'asc');
-            // }
-
-            // Return the instance of Query Builder
-            // if ($this->returnBuilder) {
-            //     return ['builder' => $campaign, 'count' => RecordCounter::create($campaign)->count()];
-            // }
-
-            // dd($campaign->get());
-
-
             $totalCampaign = $_campaign->count();
             $listOfCampaign = $campaign->get();
 
@@ -469,7 +456,8 @@ class CampaignReportAPIController extends ControllerAPI
      *
      * List Of Parameters
      * ------------------
-     * @param string  `merchant_id`   (required) - mall id
+     * @param string  `current_mall`  (required) - mall id
+     * @param string  `campaign_id`   (required) - campaign id (news_id, promotion_id, coupon_id)
      * @param date    `start_date`    (required) - start date, default is 1 month
      * @param date    `end_date`      (required) - end date
      * @return Illuminate\Support\Facades\Response
@@ -506,17 +494,20 @@ class CampaignReportAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $current_mall = OrbitInput::get('current_mall');
+            $campaign_id = OrbitInput::get('campaign_id');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
             $validator = Validator::make(
                 array(
                     'current_mall' => $current_mall,
+                    'campaign_id' => $campaign_id,
                     'start_date' => $start_date,
                     'end_date' => $end_date,
                 ),
                 array(
                     'current_mall' => 'required',
+                    'campaign_id' => 'required',
                     'start_date' => 'required | date_format:Y-m-d H:i:s',
                     'end_date' => 'required | date_format:Y-m-d H:i:s',
                 )
@@ -551,6 +542,7 @@ class CampaignReportAPIController extends ControllerAPI
                     LEFT JOIN {$tablePrefix}user_details
                     ON {$tablePrefix}activities.user_id = {$tablePrefix}user_details.user_id
                     WHERE 1 = 1
+                    AND {$tablePrefix}activities.object_id = ?
                     AND `group` = 'mobile-ci' AND activity_type = 'view'
                     AND (activity_name = 'view_promotion' OR activity_name = 'view_news' OR activity_name = 'view_coupon')
                     AND (birthdate != '0000-00-00' AND birthdate != '' AND birthdate is not null)
@@ -563,14 +555,14 @@ class CampaignReportAPIController extends ControllerAPI
                         AND {$tablePrefix}activities.created_at between ? and ?
                         group by {$tablePrefix}activities.user_id
                     ) as A
-            ", array($current_mall, $start_date, $end_date));
+            ", array($campaign_id, $current_mall, $start_date, $end_date));
 
             $demograhicMale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'm'
                         AND {$tablePrefix}activities.created_at between ? and ?
                         group by {$tablePrefix}activities.user_id
                     ) as A
-            ", array($current_mall, $start_date, $end_date));
+            ", array($campaign_id, $current_mall, $start_date, $end_date));
 
             $female = array();
             $percent = 0;
