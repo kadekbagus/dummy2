@@ -566,22 +566,31 @@ class CampaignReportAPIController extends ControllerAPI
 
             $female = array();
             $percent = 0;
+            $total = 0;
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
-                if($demograhicFemale[0]->total !== 0){
-                    $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                if( $demograhicFemale[0]->$ageRange !== null ) {
+                    if($demograhicFemale[0]->total !== 0){
+                        $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
+                        $total = $demograhicFemale[0]->$ageRange;
+                    }
                 }
+
                 $female[$key]['age_range'] = $ageRange;
-                $female[$key]['total'] = $demograhicFemale[0]->$ageRange;
+                $female[$key]['total'] = $total;
                 $female[$key]['percent'] = round($percent, 2) . ' %';
             }
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
-                if($demograhicMale[0]->total !== 0){
-                    $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                if( $demograhicMale[0]->$ageRange !== null ) {
+                    if($demograhicMale[0]->total !== 0){
+                        $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
+                        $total = $demograhicMale[0]->$ageRange;
+                    }
                 }
+
                 $male[$key]['age_range'] = $ageRange;
-                $male[$key]['total'] = $demograhicMale[0]->$ageRange;
+                $male[$key]['total'] = $total;
                 $male[$key]['percent'] = round($percent, 2) . ' %';
             }
 
@@ -639,7 +648,7 @@ class CampaignReportAPIController extends ControllerAPI
 
     /**
      * Get the campaign spending
-     * 
+     *
      * @author Qosdil A. <qosdil@dominopos.com>
      */
     public function getSpending()
