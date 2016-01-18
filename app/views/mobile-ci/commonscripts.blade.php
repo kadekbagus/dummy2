@@ -158,6 +158,21 @@
         //     });
         //     $('.img-fit, .img-fit-tenant').closest('.col-xs-12, .col-xs-6').css('height', '160px').css('overflow', 'hidden');
         // }
+        function isInArray(value, str) {
+            return str.indexOf(value) > -1;
+        }
+        function viewPopUpActivity(campaign_id, campaign_type) {
+            $.ajax({
+                url: apiPath + 'campaign/activities',
+                method: 'POST',
+                data: {
+                    campaign_id: campaign_id,
+                    campaign_type: campaign_type,
+                    activity_type: 'view'
+                }
+            });
+        }
+        var slider = null;
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
                 var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
@@ -167,7 +182,7 @@
                 }).done(function(data) {
                     if(data.data.total_records) {
                         for(var i = 0; i < data.data.records.length; i++) {
-                            var list = '<li data-thumb="'+ data.data.records[i].campaign_image +'">\
+                            var list = '<li data-thumb="'+ data.data.records[i].campaign_image +'" data-campaign-id="'+ data.data.records[i].campaign_id +'" data-campaign-type="'+ data.data.records[i].campaign_type +'">\
                                     <img class="img-responsive" src="'+ data.data.records[i].campaign_image +'"/>\
                                     <div class="campaign-cards-info">\
                                         <h4><strong>'+ data.data.records[i].campaign_name +'</strong></h4>\
@@ -182,7 +197,7 @@
                         $('.content-container, .header-container, footer').addClass('blurred');
                         $('.campaign-cards-back-drop').fadeIn('slow');
                         $('.campaign-cards-container').toggle('slide', {direction: 'down'}, 'slow');
-                        $('#campaign-cards').lightSlider({
+                        slider = $('#campaign-cards').lightSlider({
                             gallery:false,
                             item:1,
                             slideMargin: 20,
@@ -191,16 +206,31 @@
                             auto:autoSliderOption,
                             loop:autoSliderOption,
                             pager: autoSliderOption,
-                            onSliderLoad: function() {
+                            onSliderLoad: function(el) {
                                 $('#campaign-cards').removeClass('cS-hidden');
+                                var active_card_id = $(el).children('.active').data('campaign-id');
+                                var active_card_type = $(el).children('.active').data('campaign-type');
+                                var recorded_popup = localStorage.getItem('campaign_popup') ? localStorage.getItem('campaign_popup') : '';
+                                if(!recorded_popup) {
+                                    localStorage.setItem('campaign_popup', '');
+                                }
+                                if(!isInArray(active_card_id, recorded_popup)){
+                                    localStorage.setItem('campaign_popup', recorded_popup + ', ' + active_card_id);
+                                    viewPopUpActivity(active_card_id, active_card_type);
+                                }
                             },
                             onBeforeSlide: function (el) {
-                                console.log('b4');
                                 $('.campaign-cards-close-btn').fadeOut('fast');
                             },
-                            onAfterSlide: function() {
-                                console.log($('body .search-close-btn'));
+                            onAfterSlide: function(el) {
                                 $('.campaign-cards-close-btn').fadeIn('fast');
+                                var active_card_id = $(el).children('.active').data('campaign-id');
+                                var active_card_type = $(el).children('.active').data('campaign-type');
+                                var recorded_popup = localStorage.getItem('campaign_popup');
+                                if(!isInArray(active_card_id, recorded_popup)){
+                                    localStorage.setItem('campaign_popup', recorded_popup + ', ' + active_card_id);
+                                    viewPopUpActivity(active_card_id, active_card_type);
+                                }
                             }
                         });
                         // if(browser.indexOf('IE')) {
@@ -212,6 +242,7 @@
         }, ({{ Config::get('orbit.shop.event_delay', 2.5) }} * 1000));
 
         $('#campaign-cards-close-btn, .campaign-cards-back-drop').click(function(){
+            slider.pause();
             $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             $('body').removeClass('freeze-scroll');
             $('.content-container, .header-container, footer').removeClass('blurred');
