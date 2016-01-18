@@ -29,7 +29,7 @@ class CampaignReportAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `sortby`                (optional) - Column order by. Valid value: updated_date, created_at, campaign_name, campaign_type, location, campaign_dates, pages_views, views, clicks, daily, estimated_total, spending, status
+     * @param string   `sortby`                (optional) - Column order by. Valid value: updated_date, created_at, campaign_name, campaign_type, mall_name, begin_date, end_date, pages_views, views, clicks, daily, estimated_total, spending, status
      * @param string   `sortmode`              (optional) - ASC or DESC
      * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant only
      * @param integer  `take`                  (optional) - Limit
@@ -88,7 +88,7 @@ class CampaignReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:updated_date,created_at,campaign_name,campaign_type,location,campaign_dates,pages_views,views,clicks,daily,estimated_total,spending,status',
+                    'sort_by' => 'in:updated_date,created_at,campaign_name,campaign_type,mall_name,begin_date, end_date,pages_views,views,clicks,daily,estimated_total,spending,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -128,7 +128,34 @@ class CampaignReportAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             //get total cost news
-            $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type, COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}campaign_price.base_price ,COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total, {$tablePrefix}news.status"))
+            $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
+                COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'view_news'
+                ) as page_views,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'view_news_popup'
+                ) as popup_views,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'click_news_popup'
+                ) as popup_click,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'click_news_popup'
+                ) as speending,
+                {$tablePrefix}news.status"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -144,7 +171,34 @@ class CampaignReportAPIController extends ControllerAPI
                         ->groupBy('news.news_id')
                         ;
 
-            $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type, COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}campaign_price.base_price ,COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total, {$tablePrefix}news.status"))
+            $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
+                COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'view_promotion'
+                ) as page_views,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'view_news_promotion'
+                ) as popup_views,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
+                ) as popup_click,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
+                ) as speending,
+                {$tablePrefix}news.status"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -160,7 +214,34 @@ class CampaignReportAPIController extends ControllerAPI
                         ->groupBy('news.news_id')
                         ;
 
-            $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type, COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}campaign_price.base_price ,COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total, {$tablePrefix}promotions.status"))
+            $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
+                COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'view_coupon'
+                ) as page_views,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'view_news_coupon'
+                ) as popup_views,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
+                ) as popup_click,
+                (
+                    SELECT COUNT({$tablePrefix}activities.activity_id)
+                    FROM {$tablePrefix}activities
+                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
+                    AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
+                ) as speending,
+                {$tablePrefix}promotions.status"))
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
@@ -175,73 +256,61 @@ class CampaignReportAPIController extends ControllerAPI
                         ->groupBy('promotions.promotion_id')
                         ;
 
-            $dataCampaign = $news->unionAll($promotions)->unionAll($coupons);
+            $campaign = $news->unionAll($promotions)->unionAll($coupons);
 
-            $sql = $dataCampaign->toSql();
-            foreach($dataCampaign->getBindings() as $binding)
+            $sql = $campaign->toSql();
+            foreach($campaign->getBindings() as $binding)
             {
               $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
               $sql = preg_replace('/\?/', $value, $sql, 1);
             }
 
             // Make union result subquery
-            $dataCampaign = DB::table(DB::raw('(' . $sql . ') as a'));
+            $campaign = DB::table(DB::raw('(' . $sql . ') as a'));
 
 
             // Filter by campaign name
-            OrbitInput::get('campaign_name', function($campaign_name) use ($dataCampaign) {
-                $dataCampaign->where('campaign_name', 'like', "%$campaign_name%");
+            OrbitInput::get('campaign_name', function($campaign_name) use ($campaign) {
+                $campaign->where('campaign_name', 'like', "%$campaign_name%");
             });
 
             // Filter by campaign type
-            OrbitInput::get('campaign_type', function($campaign_type) use ($dataCampaign) {
-                $dataCampaign->where('campaign_type', $campaign_type);
+            OrbitInput::get('campaign_type', function($campaign_type) use ($campaign) {
+                $campaign->where('campaign_type', $campaign_type);
             });
 
             // Filter by tenant
-            // OrbitInput::get('tenant', function($tenant) use ($dataCampaign) {
-                // $dataCampaign->where('campaign_name', 'like', "%$campaign_name%");
+            // OrbitInput::get('tenant', function($tenant) use ($campaign) {
+            //     $campaign->where('campaign_name', 'like', "%$campaign_name%");
             // });
 
             // Filter by mall
-            OrbitInput::get('mall_name', function($mall_name) use ($dataCampaign) {
-                $dataCampaign->where('mall_name', $mall_name);
+            OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
+                $campaign->where('mall_name', $mall_name);
             });
 
             // Filter by campaign status
-            OrbitInput::get('status', function($status) use ($dataCampaign) {
+            OrbitInput::get('status', function($status) use ($campaign) {
                 $status = (array)$status;
-                $dataCampaign->whereIn('status', $status);
+                $campaign->whereIn('status', $status);
             });
 
-            dd($dataCampaign->get());
-
             // Clone the query builder which still does not include the take,
-            $_coupons = clone $coupons;
+            $_campaign = clone $campaign;
 
-            $_couponsCountReddem = clone $coupons;
-            $_couponsCountIssued = clone $coupons;
+            // Get total page views
+            $totalPageViews = $_campaign->sum('page_views');
 
-            $_coupons->select('promotions.promotion_id');
+            // Get total popup views
+            $totalPopupViews = $_campaign->sum('popup_views');
 
-            $_couponsCountReddem = $_couponsCountReddem->get();
-            $_couponsCountIssued = $_couponsCountIssued->groupBy('promotions.promotion_id')->get();
+            // Get total estimate
+            $totalEstimated = $_campaign->sum('estimated_total');
 
-            // Get total reddem
-            $totalRedeemed = 0 ;
-            if (isset($_couponsCountReddem) && count($_couponsCountReddem) > 0){
-                foreach ($_couponsCountReddem as $key => $valReddem) {
-                    $totalRedeemed = $totalRedeemed + $valReddem->total_redeemed;
-                }
-            }
+            // Get total speending
+            $totalSpeending = $_campaign->sum('speending');
 
-            // Get total issued coupon
-            $totalIssued = 0;
-            if (isset($_couponsCountIssued) && count($_couponsCountIssued) > 0){
-                foreach ($_couponsCountIssued as $key => $valIssued) {
-                    $totalIssued = $totalIssued + $valIssued->total_issued;
-                }
-            }
+            $_campaign->select('campaign_id');
 
             // Get the take args
             $take = $perPage;
@@ -255,11 +324,11 @@ class CampaignReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $coupons->take($take);
+            $campaign->take($take);
 
             // skip, and order by
             $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $coupons)
+            OrbitInput::get('skip', function($_skip) use (&$skip, $campaign)
             {
                 if ($_skip < 0) {
                     $_skip = 0;
@@ -267,10 +336,10 @@ class CampaignReportAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $coupons->skip($skip);
+            $campaign->skip($skip);
 
             // Default sort by
-            $sortBy = 'promotions.status';
+            $sortBy = 'begin_date';
 
             // Default sort mode
             $sortMode = 'asc';
@@ -279,28 +348,27 @@ class CampaignReportAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'campaign_name' => 'promotions.promotion_id',
-                    'campaign_type' => 'mall_id',
-                    'tenant'        => 'is_coupon',
-                    'mall_bname'    => 'promotions.promotion_name',
-                    'begin_date'    => 'promotions.begin_date',
-                    'end_date'      => 'promotions.end_date',
-                    'page_views'    => 'is_auto_issue_on_signup',
-
-                    'total_issued'              => 'total_issued',
-                    'redeem_retailer_id'        => 'redeem_retailer_id',
-                    'retailer_name'             => 'retailer_name',
-                    'total_redeemed'            => 'total_redeemed',
-                    'coupon_status'             => 'coupon_status',
-                    'status'                    => 'status'
+                    'campaign_name'   => 'campaign_name',
+                    'campaign_type'   => 'campaign_type',
+                    'mall_name'       => 'mall_name',
+                    'begin_date'      => 'begin_date',
+                    'end_date'        => 'end_date',
+                    'page_views'      => 'page_views',
+                    'popup_views'     => 'popup_views',
+                    'popup_clicks'    => 'popup_clicks',
+                    'daily'           => 'daily',
+                    'estimated_total' => 'estimated_total',
+                    'speending'       => 'speending',
+                    'daily'           => 'daily',
+                    'status'          => 'status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
             // sort by status first
-            if ($sortBy !== 'promotions.status') {
-                $coupons->orderBy('promotions.status', 'asc');
+            if ($sortBy !== 'begin_date') {
+                $campaign->orderBy('begin_date', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
@@ -310,29 +378,34 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             });
 
-            $coupons->orderBy($sortBy, $sortMode);
+            $campaign->orderBy($sortBy, $sortMode);
 
             // also to sort tenant name
-            if ($sortBy !== 'retailer_name') {
-                $coupons->orderBy('retailer_name', 'asc');
-            }
+            // if ($sortBy !== 'retailer_name') {
+            //     $campaign->orderBy('retailer_name', 'asc');
+            // }
 
             // Return the instance of Query Builder
-            if ($this->returnBuilder) {
-                return ['builder' => $coupons, 'count' => RecordCounter::create($_coupons)->count()];
-            }
+            // if ($this->returnBuilder) {
+            //     return ['builder' => $campaign, 'count' => RecordCounter::create($campaign)->count()];
+            // }
 
-            $totalCoupons = RecordCounter::create($_coupons)->count();
-            $listOfCoupons = $coupons->get();
+            // dd($campaign->get());
+
+
+            $totalCampaign = $_campaign->count();
+            $listOfCampaign = $campaign->get();
 
             $data = new stdclass();
-            $data->total_records = $totalCoupons;
-            $data->returned_records = count($listOfCoupons);
-            $data->records = $listOfCoupons;
-            $data->total_redeemed = $totalRedeemed;
-            $data->total_issued = $totalIssued;
+            $data->total_records = $totalCampaign;
+            $data->total_total_page_views = $totalPageViews;
+            $data->total_pop_up_views = $totalPopupViews;
+            $data->total_estimated_cost = $totalEstimated;
+            $data->total_speending = $totalSpeending;
+            $data->returned_records = count($listOfCampaign);
+            $data->records = $listOfCampaign;
 
-            if ($totalCoupons === 0) {
+            if ($totalCampaign === 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
             }
