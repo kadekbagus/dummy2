@@ -1589,9 +1589,9 @@ class MobileCIAPIController extends ControllerAPI
             $categories = $categories->get();
 
             // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
             if ($maxRecord <= 0) {
-                $maxRecord = 300;
+                $maxRecord = Config::get('orbit.pagination.max_record');
             }
 
             $floorList = Object::whereHas('mall', function ($q) use ($retailer) {
@@ -1757,7 +1757,7 @@ class MobileCIAPIController extends ControllerAPI
             $_tenants = clone $tenants;
 
             // Get the take args
-            $take = 1000;
+            $take = Config::get('orbit.pagination.per_page');
             OrbitInput::get(
                 'take',
                 function ($_take) use (&$take, $maxRecord) {
@@ -1842,18 +1842,11 @@ class MobileCIAPIController extends ControllerAPI
                 $tenant->category_string = $category_string;
             }
 
-            // should not be limited for new products - limit only when searching
-            $search_limit = Config::get('orbit.shop.search_limit');
-            if ($totalRec>$search_limit) {
-                $data = new stdclass();
-                $data->status = 0;
-            } else {
-                $data = new stdclass();
-                $data->status = 1;
-                $data->total_records = $totalRec;
-                $data->returned_records = count($listOfRec);
-                $data->records = $listOfRec;
-            }
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
 
             if (! empty(OrbitInput::get('promotion_id'))) {
                 $pagetitle = Lang::get('mobileci.page_title.promotions_tenants');
@@ -2171,6 +2164,323 @@ class MobileCIAPIController extends ControllerAPI
             return $this->redirectIfNotLoggedIn($e);
                 // return $e;
         }
+    }
+
+    /**
+     * GET - Tenant load more
+     *
+     * @param integer    `take`
+     * @param integer    `skip`
+     * @param string    `cid` - category ID
+     * @param string    `fid` - floor name
+     * @param string    `sort_mode` - asc, desc
+     * @param string    `sort_by`
+     * @param string    `keyword`
+     * @param string    `promotion_id`
+     * @param string    `news_id`
+     * @param string    `event_id`
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getSearchTenant()
+    {
+        $user = $this->getLoggedInUser();
+
+        $sort_by = OrbitInput::get('sort_by');
+        $keyword = trim(OrbitInput::get('keyword'));
+        $category_id = trim(OrbitInput::get('cid'));
+        $floor = trim(OrbitInput::get('floor'));
+
+        $pagetitle = Lang::get('mobileci.page_title.tenant_directory');
+
+        $validator = Validator::make(
+            array(
+                'sort_by' => $sort_by,
+            ),
+            array(
+                'sort_by' => 'in:name',
+            ),
+            array(
+                'in' => Lang::get('validation.orbit.empty.user_sortby'),
+            )
+        );
+        // Run the validation
+        if ($validator->fails()) {
+            $errorMessage = $validator->messages()->first();
+            $data = new stdclass();
+            $data->status = 0;
+            $data->total_records = 0;
+            $data->returned_records = 0;
+            $data->records = null;
+
+            return Response::json($data);
+        }
+
+        $retailer = $this->getRetailerInfo();
+
+        $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+        $tenants = Tenant::with('mediaLogo');
+        if (!empty($alternateLanguage)) {
+            $tenants = $tenants->with(['categories' => function ($q) use ($alternateLanguage) {
+                $prefix = DB::getTablePrefix();
+                $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
+                    $join->on('categories.category_id', '=', 'category_translations.category_id');
+                    $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                });
+                $q->select('categories.*');
+                $q->addSelect([
+                    DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
+                    DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
+                ]);
+            }]);
+        }
+        else {
+            $tenants = $tenants->with('categories');
+        }
+
+        $tenants = $tenants->active('merchants')
+            ->where('parent_id', $retailer->merchant_id);
+
+        $tenants->select('merchants.*');
+
+        $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
+
+        $notfound = FALSE;
+        // Filter product by name pattern
+        OrbitInput::get(
+            'keyword',
+            function ($name) use ($tenants, $alternateLanguage) {
+                $name_like = "%$name%";
+                $tenants->where(
+                    function ($q) use ($name_like, $alternateLanguage) {
+                        $q->where('merchants.name', 'like', $name_like)
+                            ->orWhere('merchants.description', 'like', $name_like)
+                            ->orWhere('merchants.floor', 'like', $name_like);
+                        $q->orWhereHas('categories', function($q2) use ($name_like) {
+                            $q2->where('category_name', 'like', $name_like);
+                        });
+                        if (!empty($alternateLanguage)) {
+                            $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                $q2->whereHas('translations', function($q3) use ($name_like) {
+                                    $q3->where('category_translations.category_name', 'like', $name_like);
+                                });
+                            });
+                            $q->orWhere('merchant_translations.name', 'like', $name_like)
+                                ->orWhere('merchant_translations.description', 'like', $name_like);
+                        }
+                    }
+                );
+            }
+        );
+
+        OrbitInput::get(
+            'cid',
+            function ($cid) use ($tenants, $retailer, &$notfound) {
+                if (! empty($cid)) {
+                    $category = \Category::active()
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->where('category_id', $cid)
+                        ->first();
+                    if (!is_object($category)) {
+                        $notfound = TRUE;
+                    }
+                    $tenants->where(
+                        function ($q) use ($cid) {
+                            $q->whereHas('categories', function ($q2) use ($cid) {
+                                $q2->where('category_merchant.category_id', $cid);
+                            });
+                        }
+                    );
+                }
+            }
+        );
+
+        OrbitInput::get(
+            'promotion_id',
+            function ($pid) use ($tenants, $retailer, &$notfound) {
+                if (! empty($pid)) {
+                    $news = \News::active()
+                        ->where('mall_id', $retailer->merchant_id)
+                        ->where('object_type', 'promotion')
+                        ->where('news_id', $pid)->first();
+                    if (!is_object($news)) {
+                        $notfound = TRUE;
+                    }
+                    $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
+                        $q->where('news_id', $pid);
+                    })->whereHas('news', function($q2) {
+                        $q2->where('object_type', 'promotion');
+                    })->get()->lists('merchant_id');
+                    // <-- should add exception if retailers not found
+                    $tenants->whereIn('merchants.merchant_id', $retailers);
+                }
+            }
+        );
+
+        OrbitInput::get(
+            'news_id',
+            function ($pid) use ($tenants, $retailer, &$notfound) {
+                if (! empty($pid)) {
+                    $news = \News::active()
+                        ->where('mall_id', $retailer->merchant_id)
+                        ->where('object_type', 'news')
+                        ->where('news_id', $pid)->first();
+                    if (!is_object($news)) {
+                        $notfound = TRUE;
+                    }
+                    $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
+                        $q->where('news_id', $pid);
+                    })->whereHas('news', function($q2) {
+                        $q2->where('object_type', 'news');
+                    })->get()->lists('merchant_id');
+                    $tenants->whereIn('merchants.merchant_id', $retailers);
+                }
+            }
+        );
+
+        OrbitInput::get(
+            'event_id',
+            function ($pid) use ($tenants, $retailer, &$notfound) {
+                if (! empty($pid)) {
+                    $event = \EventModel::active()
+                        ->where('merchant_id', $retailer->merchant_id)
+                        ->where('event_id', $pid)
+                        ->first();
+                    if (!is_object($event)) {
+                        $notfound = TRUE;
+                    }
+                    $retailers = \EventRetailer::whereHas('retailer', function($q) use($pid) {
+                        $q->where('event_id', $pid);
+                    })->get()->lists('retailer_id');
+                    $tenants->whereIn('merchants.merchant_id', $retailers);
+                }
+            }
+        );
+
+        OrbitInput::get(
+            'fid',
+            function ($fid) use ($tenants) {
+                if (! empty($fid)) {
+                    $tenants->where('merchants.floor', $fid);
+                }
+            }
+        );
+
+        $_tenants = clone $tenants;
+
+        $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
+        if ($maxRecord <= 0) {
+            $maxRecord = Config::get('orbit.pagination.max_record');
+        }
+
+        // Get the take args
+        // $take = Config::get('orbit.pagination.per_page');
+        $take = 4;
+        OrbitInput::get(
+            'take',
+            function ($_take) use (&$take, $maxRecord) {
+                if ($_take > $maxRecord) {
+                    $_take = $maxRecord;
+                }
+                $take = $_take;
+            }
+        );
+        $tenants->take($take);
+
+        $skip = 0;
+        OrbitInput::get(
+            'skip',
+            function ($_skip) use (&$skip, $tenants) {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            }
+        );
+        $tenants->skip($skip);
+
+        // Default sort by
+        $sortBy = 'merchants.name';
+        // Default sort mode
+        $sortMode = 'asc';
+
+        OrbitInput::get(
+            'sort_by',
+            function ($_sortBy) use (&$sortBy) {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'name'      => 'merchants.name',
+                );
+                if (array_key_exists($_sortBy, $sortByMapping)) {
+                    $sortBy = $sortByMapping[$_sortBy];
+                }
+            }
+        );
+
+        OrbitInput::get(
+            'sort_mode',
+            function ($_sortMode) use (&$sortMode) {
+                if (strtolower($_sortMode) !== 'desc') {
+                    $sortMode = 'asc';
+                } else {
+                    $sortMode = 'desc';
+                }
+            }
+        );
+
+        if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
+            $prefix = DB::getTablePrefix();
+            $tenants->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
+        }
+        else {
+            $tenants->orderBy($sortBy, $sortMode);
+        }
+
+        $cartitems = $this->getCartForToolbar();
+
+        $totalRec = $_tenants->count();
+        $listOfRec = $tenants->get();
+        foreach ($listOfRec as $tenant) {
+            if (empty($tenant->logo)) {
+                $tenant->logo = 'mobile-ci/images/default_product.png';
+            }
+            if (!empty($tenant->phone)) {
+                $phone = explode('|#|', $tenant->phone);
+                $tenant->phone = implode(' ', $phone);
+            }
+            $category_string = '';
+            foreach ($tenant->categories as $i => $category) {
+                if ($i == (count($tenant->categories) - 1)) {
+                    $category_string .= $category->category_name;
+                } else {
+                    $category_string .= $category->category_name . ', ';
+                }
+            }
+            $tenant->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
+            $tenant->url = URL::to('customer/tenant?id='.$tenant->merchant_id);
+            if (count($tenant->mediaLogo) > 0) {
+                foreach ($tenant->mediaLogo as $media) {
+                    if ($media->media_name_long == 'retailer_logo_orig') {
+                        $tenant->logo_orig = URL::asset($media->path);
+                    }
+                }
+            } else {
+                $tenant->logo_orig = URL::asset('mobile-ci/images/default_product.png');
+            }
+            $tenant->name = mb_strlen($tenant->name) > 64 ? mb_substr($tenant->name, 0, 64) . '...' : $tenant->name;
+        }
+
+        $data = new stdclass();
+        $data->status = 1;
+        $data->total_records = $totalRec;
+        $data->returned_records = count($listOfRec);
+        $data->records = $listOfRec;
+
+        return Response::json($data);
     }
 
     /**
