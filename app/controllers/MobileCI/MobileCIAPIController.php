@@ -5448,7 +5448,7 @@ class MobileCIAPIController extends ControllerAPI
             $activityPageNotes = sprintf('Keyword Searched: %s', $keyword);
             $activityPage->setUser($user)
                     ->setActivityName('search_keyword')
-                    ->setActivityNameLong('Search By Keyword')
+                    ->setActivityNameLong('Search')
                     ->setObject(null)
                     ->setModuleName('Search')
                     ->setNotes($activityPageNotes)
