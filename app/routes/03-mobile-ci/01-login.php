@@ -577,6 +577,14 @@ Route::group(
             return InboxAPIController::create()->getSearchInbox();
         });
 
+        /**
+         * Tenant load more
+         */
+        Route::get('/app/v1/tenant/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchTenant();
+        });
+
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
         Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
