@@ -385,7 +385,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             $data = new stdclass();
             $data->total_records = $totalCampaign;
-            $data->total_total_page_views = $totalPageViews;
+            $data->total_page_views = $totalPageViews;
             $data->total_pop_up_views = $totalPopupViews;
             $data->total_estimated_cost = $totalEstimated;
             $data->total_speending = $totalSpeending;
