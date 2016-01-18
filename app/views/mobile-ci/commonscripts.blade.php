@@ -117,146 +117,7 @@
             <span class="col-xs-1"><i class="fa fa-search"></i></span>
             <input id="search-type" class="col-xs-11 search-type" type="text" placeholder="Search here">
         </div>
-        <div class="col-xs-12 text-left search-results" style="display:none;">
-            <h4>TENANTS</h4>
-            <ul>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-            </ul>
-            <h4>PROMOTIONS</h4>
-            <ul>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/3.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/4.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-                <li class="search-result-group">
-                    <a href="#">
-                        <div class="col-xs-2">
-                            <img src="{{ asset('uploads/widgets/5.jpg') }}">
-                        </div>
-                        <div class="col-xs-10">
-                            <h5><strong>Cool Tenant In Action</strong></h5>
-                            <p>This is some kind of a description</p>
-                        </div>
-                    </a>
-                </li>
-            </ul>
-        </div>
+        <div class="col-xs-12 text-left search-results" style="display:none;"></div>
     </div>
 </div>
 <div class="row back-drop search-back-drop"></div>
@@ -266,8 +127,33 @@
 {{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
+{{ HTML::script('mobile-ci/scripts/polyfill.object-fit.min.js') }}
 <script type="text/javascript">
     $(document).ready(function(){
+        navigator.getBrowser= (function(){
+            var ua = navigator.userAgent, tem,
+                M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+            if(/trident/i.test(M[1])){
+                tem=  /\brv[ :]+(\d+)/g.exec(ua) || [];
+                return 'IE '+(tem[1] || '');
+            }
+            if(M[1]=== 'Chrome'){
+                tem= ua.match(/\b(OPR|Edge)\/(\d+)/);
+                if(tem!= null) return tem.slice(1).join(' ').replace('OPR', 'Opera');
+            }
+            M= M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+            if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
+            return M;
+        })();
+        var browser = navigator.getBrowser[0];
+        if(browser.indexOf('IE')) {
+            objectFit.polyfill({
+                selector: '.img-fit, .img-fit-tenant',
+                fittype: 'cover',
+                disableCrossDomain: 'true'
+            });
+            $('.img-fit, .img-fit-tenant').closest('.col-xs-12, .col-xs-6').css('height', '160px').css('overflow', 'hidden');
+        }
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
                 var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
@@ -307,6 +193,9 @@
                             onAfterSlide: function() {
                             }
                         });
+                        if(browser.indexOf('IE')) {
+                            $('#campaign-cards .img-responsive').css('height', 'auto');
+                        }
                     }
                 });
             }
@@ -385,26 +274,149 @@
             $('.search-results').hide();
             // ---------------- -------
         });
+        var search_results = {};
+        search_results.tenants = [];
+        search_results.news = [];
+        search_results.promotions = [];
+        search_results.coupons = [];
+        search_results.lucky_draws = [];
         $('#search-type').keydown(function (e){
             if(e.keyCode == 13){
                 $('#search-type').blur();
+                $('#search-type').attr('disabled', 'disabled');
+                $('.search-results').fadeOut('fast');
                 var keyword = $('#search-type').val();
                 var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
                 $('.search-wrapper').append(loader);
-                // ------------- cuma dummy
-                setTimeout(function(){
+
+                $.ajax({
+                    url: apiPath + 'keyword/search?keyword=' + keyword,
+                    method: 'GET'
+                }).done(function(data) {
+                    if (data.data.total_records > 0) {
+                        var show_result = '<div class="search-btn"><a id="show_all_result"><span class="col-xs-8"><strong>{{Lang::get('mobileci.search.show_all_result')}}</strong></span><span class="col-xs-4 text-right"><i class="fa fa-chevron-right"></i></span></a></div>';
+                        var tenants='',promotions='',news='',coupons='',lucky_draws='';
+                        if (data.data.grouped_records.tenants.length > 0) {
+                            search_results.tenants = data.data.grouped_records.tenants;
+                            tenants = '<h4>{{Lang::get('mobileci.page_title.tenant_directory')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.tenants.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                tenants += '<li class="search-result-group '+ hide +'">\
+                                        <a href="'+ data.data.grouped_records.tenants[i].object_url +'">\
+                                            <div class="col-xs-2">\
+                                                <img src="'+ data.data.grouped_records.tenants[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.tenants[i].object_name +'</strong></h5>\
+                                                <p>'+ data.data.grouped_records.tenants[i].object_description +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            tenants += '</ul>';
+                        }
+                        if (data.data.grouped_records.news.length > 0) {
+                            search_results.news = data.data.grouped_records.news;
+                            news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.news.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                news += '<li class="search-result-group '+ hide +'">\
+                                        <a href="'+ data.data.grouped_records.news[i].object_url +'">\
+                                            <div class="col-xs-2">\
+                                                <img src="'+ data.data.grouped_records.news[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
+                                                <p>'+ data.data.grouped_records.news[i].object_description +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            news += '</ul>';
+                        }
+                        if (data.data.grouped_records.promotions.length > 0) {
+                            search_results.promotions = data.data.grouped_records.promotions;
+                            promotions = '<h4>{{Lang::get('mobileci.page_title.promotions')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.promotions.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                promotions += '<li class="search-result-group '+ hide +'">\
+                                        <a href="'+ data.data.grouped_records.promotions[i].object_url +'">\
+                                            <div class="col-xs-2">\
+                                                <img src="'+ data.data.grouped_records.promotions[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
+                                                <p>'+ data.data.grouped_records.promotions[i].object_description +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            promotions += '</ul>';
+                        }
+                        if (data.data.grouped_records.coupons.length > 0) {
+                            search_results.coupons = data.data.grouped_records.coupons;
+                            coupons = '<h4>{{Lang::get('mobileci.page_title.coupons')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.coupons.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                coupons += '<li class="search-result-group '+ hide +'">\
+                                        <a href="'+ data.data.grouped_records.coupons[i].object_url +'">\
+                                            <div class="col-xs-2">\
+                                                <img src="'+ data.data.grouped_records.coupons[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
+                                                <p>'+ data.data.grouped_records.coupons[i].object_description +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            coupons += '</ul>';
+                        }
+                        if (data.data.grouped_records.lucky_draws.length > 0) {
+                            search_results.lucky_draws = data.data.grouped_records.lucky_draws;
+                            lucky_draws = '<h4>{{Lang::get('mobileci.page_title.lucky_draws')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.lucky_draws.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                lucky_draws += '<li class="search-result-group '+ hide +'">\
+                                        <a href="'+ data.data.grouped_records.lucky_draws[i].object_url +'">\
+                                            <div class="col-xs-2">\
+                                                <img src="'+ data.data.grouped_records.lucky_draws[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
+                                                <p>'+ data.data.grouped_records.lucky_draws[i].object_description +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            lucky_draws += '</ul>';
+                        }
+                        $('.search-results').html(show_result + tenants + news + promotions + coupons + lucky_draws);
+                    } else {
+                        $('.search-results').html('<h5><i>{{Lang::get('mobileci.search.no_result')}}</i></h5>');
+                    }
+                }).fail(function(data){
+                    $('.search-results').html('<h5><i>{{Lang::get('mobileci.search.error')}}</i></h5>');
+                }).always(function(data) {
+                    $('#search-type').removeAttr('disabled');
+                    $('.search-results').fadeIn('fast');
                     $('#search-loader').remove();
-                    $('.search-results').fadeIn('slow');
-                }, 2000);
-                // ------------- -----------
-
-                // $.ajax({
-                //     url: apiPath + 'search?keyword=' + keyword,
-                //     method: 'GET'
-                // }).done(function(data) {
-
-                // });
+                });
             }
+        });
+        $('body').on('click', '#show_all_result', function(){
+            $('.search-btn').html('<a id="show_by_categories"><span class="col-xs-8"><strong>{{Lang::get('mobileci.search.show_by_categories')}}</strong></span><span class="col-xs-4 text-right"><i class="fa fa-chevron-left"></i></span></a>');
+            $('.search-results').fadeOut('fast', function(){
+                $('.search-result-group.limited').removeClass('hide');
+            });
+            $('.search-results').fadeIn('slow');
+        });
+        $('body').on('click', '#show_by_categories', function(){
+            $('.search-btn').html('<a id="show_all_result"><span class="col-xs-8"><strong>{{Lang::get('mobileci.search.show_all_result')}}</strong></span><span class="col-xs-4 text-right"><i class="fa fa-chevron-right"></i></span></a>');
+            $('.search-results').fadeOut('fast', function(){
+                $('.search-result-group.limited').addClass('hide');
+            });
+            $('.search-results').fadeIn('slow');
         });
         $('#searchProductBtn').click(function(){
             $('#SearchProducts').modal('toggle');

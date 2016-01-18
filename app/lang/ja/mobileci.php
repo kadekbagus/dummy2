@@ -297,6 +297,10 @@ return array(
     'search' => array(
         'no_item'           => '基準にマッチしているテナントがありません。',
         'too_much_items'    => '検索結果が広すぎる、それを絞り込むください.',
+        'no_result'         => 'There is no result matching the criteria.',
+        'error'             => 'There is some error while making the request.',
+        'show_all_result'   => 'Show All Result',
+        'show_by_categories'=> 'Show By Categories',
     ),
 
     'thank_you' => array(

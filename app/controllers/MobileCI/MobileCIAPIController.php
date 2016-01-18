@@ -221,6 +221,7 @@ class MobileCIAPIController extends ControllerAPI
                             ->setActivityType('view');
         try {
             $user = $this->getLoggedInUser();
+
             $retailer = $this->getRetailerInfo();
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
@@ -5035,6 +5036,475 @@ class MobileCIAPIController extends ControllerAPI
 
         $output = $this->render($httpCode);
         Event::fire('orbit.inbox.getsearchinbox.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+    /**
+     * GET - Get search tenant, coupon, news, promotion, lucky draw
+     *
+     * @param string    `keyword`        (required) - The search keyword
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Irianto Pratama <irianto@dominopos.com>
+     */
+    public function getPowerSearch() {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('search');
+
+        try {
+            $httpCode = 200;
+
+            $keyword = OrbitInput::get('keyword');
+            if (empty($keyword)) {
+                throw new Exception ('Empty keyword.');
+            }
+
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $alternateLanguage = null;
+            $lang = OrbitInput::get('lang', 'en'); //get user current cookie lang
+            $language = \Language::where('name', '=', $lang)->first();
+            if (is_object($language)) {
+                $alternateLanguage = \MerchantLanguage::excludeDeleted()
+                    ->where('merchant_id', '=', $retailer->merchant_id)
+                    ->where('language_id', '=', $language->language_id)
+                    ->first();
+            }
+
+            //$alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge = $this->calculateAge($user->userDetail->birthdate);
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender = $user->userDetail->gender;
+            }
+
+            $prefix = DB::getTablePrefix();
+
+            $promo = DB::table('news')
+                ->selectRaw("{$prefix}news.news_id as object_id, {$prefix}news.news_name as object_name, {$prefix}news.description as object_description, {$prefix}news.image as object_image, 'promotion' as object_type")
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->leftJoin('news_translations', 'news.news_id', '=', 'news_translations.news_id')
+                ->leftJoin('keyword_object', function($join) {
+                    $join->on('news.news_id', '=', 'keyword_object.object_id');
+                    $join->where('keyword_object.object_type', '=', 'promotion');
+                })
+                ->leftJoin('keywords', function($join) use ($retailer) {
+                    $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                })
+                ->where('keywords.merchant_id', $retailer->merchant_id)
+                ->where('news.object_type', '=', 'promotion')
+                ->where('news.status', 'active')
+                ->where('mall_id', $retailer->merchant_id)
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
+                ->where(function($q) use ($keyword) {
+                    $q->where('news.news_name', 'like', "%$keyword%")
+                        ->orWhere('news.description', 'like', "%$keyword%")
+                        ->orwhere('news_translations.news_name', 'like', "%$keyword%")
+                        ->orWhere('news_translations.description', 'like', "%$keyword%")
+                        ->orWhere('keyword', '=', $keyword);
+                })
+                ->groupBy('news.news_id');
+
+            $news = DB::table('news')
+                ->selectRaw("{$prefix}news.news_id as object_id, {$prefix}news.news_name as object_name, {$prefix}news.description as object_description, {$prefix}news.image as object_image, 'news' as object_type")
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->leftJoin('news_translations', 'news.news_id', '=', 'news_translations.news_id')
+                ->leftJoin('keyword_object', function($join) {
+                    $join->on('news.news_id', '=', 'keyword_object.object_id');
+                    $join->where('keyword_object.object_type', '=', 'news');
+                })
+                ->leftJoin('keywords', function($join) use ($retailer) {
+                    $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                })
+                ->where('keywords.merchant_id', $retailer->merchant_id)
+                ->where('news.object_type', '=', 'news')
+                ->where('news.status', 'active')
+                ->where('mall_id', $retailer->merchant_id)
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
+                ->where(function($q) use ($keyword) {
+                    $q->where('news.news_name', 'like', "%$keyword%")
+                        ->orWhere('news.description', 'like', "%$keyword%")
+                        ->orwhere('news_translations.news_name', 'like', "%$keyword%")
+                        ->orWhere('news_translations.description', 'like', "%$keyword%")
+                        ->orWhere('keyword', '=', $keyword);
+                })
+                ->groupBy('news.news_id');
+
+            $coupon = DB::table('promotions')
+                ->selectRaw("{$prefix}promotions.promotion_id as object_id, {$prefix}promotions.promotion_name as object_name, {$prefix}promotions.description as object_description, {$prefix}promotions.image as object_image, 'coupon' as object_type")
+                ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
+                ->leftJoin('coupon_translations', 'promotions.promotion_id', '=', 'coupon_translations.promotion_id')
+                ->leftJoin('keyword_object', function($join) {
+                    $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
+                    $join->where('keyword_object.object_type', '=', 'coupon');
+                })
+                ->leftJoin('keywords', function($join) use ($retailer) {
+                    $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                })
+                ->where('keywords.merchant_id', $retailer->merchant_id)
+                ->where('is_coupon', '=', 'Y')
+                ->where('promotions.status', 'active')
+                ->where('promotions.merchant_id', $retailer->merchant_id)
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
+                ->where(function($q) use ($keyword) {
+                    $q->where('promotions.promotion_name', 'like', "%$keyword%")
+                        ->orWhere('promotions.description', 'like', "%$keyword%")
+                        ->orWhere('promotions.long_description', 'like', "%$keyword%")
+                        ->orwhere('coupon_translations.promotion_name', 'like', "%$keyword%")
+                        ->orWhere('coupon_translations.description', 'like', "%$keyword%")
+                        ->orWhere('coupon_translations.long_description', 'like', "%$keyword%")
+                        ->orWhere('keyword', '=', $keyword);
+                })
+                ->groupBy('promotions.promotion_id');
+
+            $tenant = DB::table('merchants')
+                ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}merchants.logo as object_image, 'tenant' as object_type")
+                ->leftJoin('merchant_translations', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                ->leftJoin('keyword_object', function($join) {
+                    $join->on('merchants.merchant_id', '=', 'keyword_object.object_id');
+                    $join->where('keyword_object.object_type', '=', 'tenant');
+                })
+                ->leftJoin('keywords', function($join) use ($retailer) {
+                    $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                    $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                })
+                ->where('merchants.object_type', '=', 'tenant')
+                ->where('merchants.status', 'active')
+                ->where('parent_id', $retailer->merchant_id)
+                ->where(function($q) use ($keyword) {
+                    $q->where('merchants.name', 'like', "%$keyword%")
+                        ->orWhere('merchants.description', 'like', "%$keyword%")
+                        ->orWhere('merchant_translations.name', 'like', "%$keyword%")
+                        ->orWhere('merchant_translations.description', 'like', "%$keyword%")
+                        ->orWhere('keyword', '=', $keyword);
+                })
+                ->groupBy('merchants.merchant_id');
+
+            $lucky_draw = DB::table('lucky_draws')
+                ->selectRaw("{$prefix}lucky_draws.lucky_draw_id as object_id, {$prefix}lucky_draws.lucky_draw_name as object_name, {$prefix}lucky_draws.description as object_description, {$prefix}lucky_draws.image as object_image, 'lucky_draw' as object_type")
+                ->leftJoin('lucky_draw_translations', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
+                ->where('lucky_draws.status', 'active')
+                ->where('mall_id', $retailer->merchant_id)
+                ->where(function($q) use ($keyword) {
+                    $q->where('lucky_draws.lucky_draw_name', 'like', "%$keyword%")
+                        ->orWhere('lucky_draws.description', 'like', "%$keyword%")
+                        ->orWhere('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
+                        ->orWhere('lucky_draw_translations.description', 'like', "%$keyword%");
+                })
+                ->groupBy('lucky_draws.lucky_draw_id');
+
+            if ($userGender !== null) {
+                $promo = $promo->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+                $coupon = $coupon->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $promo = $promo->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    $news = $news->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    $coupon = $coupon->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $promo = $promo->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                        $news = $news->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                        $coupon = $coupon->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $promo = $promo->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                        $coupon = $coupon->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
+
+            $limit = 10; // <---- Config;
+            $promo->orderBy(DB::raw('RAND()'))->limit($limit);
+            $news->orderBy(DB::raw('RAND()'))->limit($limit);
+            $coupon->orderBy(DB::raw('RAND()'))->limit($limit);
+            $tenant->orderBy(DB::raw('RAND()'))->limit($limit);
+            $lucky_draw->orderBy(DB::raw('RAND()'))->limit($limit);
+
+            $search_results = [];
+
+            foreach ($promo->get() as $promo_result) {
+                $search_results[] = $promo_result;
+            }
+            foreach ($news->get() as $news_result) {
+                $search_results[] = $news_result;
+            }
+            foreach ($coupon->get() as $coupon_result) {
+                $search_results[] = $coupon_result;
+            }
+            foreach ($tenant->get() as $tenant_result) {
+                $search_results[] = $tenant_result;
+            }
+            foreach ($lucky_draw->get() as $lucky_draw_result) {
+                $search_results[] = $lucky_draw_result;
+            }
+
+            $grouped_search_result = new stdclass();
+            $grouped_search_result->tenants = [];
+            $grouped_search_result->news = [];
+            $grouped_search_result->promotions = [];
+            $grouped_search_result->coupons = [];
+            $grouped_search_result->lucky_draws = [];
+
+            foreach($search_results as $near_end_result) {
+                if ($near_end_result->object_type === 'promotion') {
+                    $near_end_result->object_url = URL::to('customer/mallpromotion?id=' . $near_end_result->object_id);
+                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_promotion.png');
+                } elseif ($near_end_result->object_type === 'news') {
+                    $near_end_result->object_url = URL::to('customer/mallnewsdetail?id=' . $near_end_result->object_id);
+                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_news.png');
+                } elseif ($near_end_result->object_type === 'coupon') {
+                    $near_end_result->object_url = URL::to('customer/mallcouponcampaign?id=' . $near_end_result->object_id);
+                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
+                } elseif ($near_end_result->object_type === 'tenant') {
+                    $near_end_result->object_url = URL::to('customer/tenant?id=' . $near_end_result->object_id);
+                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
+                } elseif ($near_end_result->object_type === 'lucky_draw') {
+                    $near_end_result->object_url = URL::to('customer/luckydraw?id=' . $near_end_result->object_id);
+                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
+                }
+                
+                if (!empty($alternateLanguage)) {
+                    if ($near_end_result->object_type === 'promotion' || $near_end_result->object_type === 'news') {
+                        $objectTranslation = \NewsTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('news_id', $near_end_result->object_id)->first();
+                    } elseif ($near_end_result->object_type === 'coupon'){
+                        $objectTranslation = \CouponTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('promotion_id', $near_end_result->object_id)->first();
+                    } elseif ($near_end_result->object_type === 'tenant'){
+                        $objectTranslation = \MerchantTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('merchant_id', $near_end_result->object_id)->first();
+                    } elseif ($near_end_result->object_type === 'lucky_draw'){
+                        $objectTranslation = \LuckyDrawTranslation::excludeDeleted()
+                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                            ->where('lucky_draw_id', $near_end_result->object_id)->first();
+                    }
+                    
+                    if (!empty($objectTranslation)) {
+                        if ($near_end_result->object_type === 'promotion' || $near_end_result->object_type === 'news') {
+                            
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($objectTranslation->news_name) && $objectTranslation->news_name !== '') {
+                                $near_end_result->object_name = $objectTranslation->news_name;
+                            }
+                            if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
+                                $near_end_result->object_description = $objectTranslation->description;
+                            }
+                            
+                            $media = $objectTranslation->find($objectTranslation->news_translation_id)
+                                ->media_orig()
+                                ->first();
+                            
+                            if (is_object($media)) {
+                                $near_end_result->object_image = URL::asset($media->path);
+                            } else {
+                                // back to default image if in the content multilanguage not have image
+                                // check the system language
+                                $defaultLanguage = $this->getDefaultLanguage($retailer);
+                                if ($defaultLanguage !== NULL) {
+                                    $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('news_id', $near_end_result->object_id)->first();
+                                    
+                                    // get default image
+                                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                        ->media_orig()
+                                        ->first();
+                                    
+                                    if (is_object($mediaDefaultLanguage)) {
+                                        $near_end_result->object_image = URL::asset($mediaDefaultLanguage->path);
+                                    }
+                                }
+                            }
+                        } elseif ($near_end_result->object_type === 'coupon') {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($objectTranslation->promotion_name) && $objectTranslation->promotion_name !== '') {
+                                $near_end_result->object_name = $objectTranslation->promotion_name;
+                            }
+                            if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
+                                $near_end_result->object_description = $objectTranslation->description;
+                            }
+                            
+                            $media = $objectTranslation->find($objectTranslation->coupon_translation_id)
+                                ->media_orig()
+                                ->first();
+                            
+                            if (is_object($media)) {
+                                $near_end_result->object_image = URL::asset($media->path);
+                            } else {
+                                // back to default image if in the content multilanguage not have image
+                                // check the system language
+                                $defaultLanguage = $this->getDefaultLanguage($retailer);
+                                if ($defaultLanguage !== NULL) {
+                                    $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('promotion_id', $near_end_result->object_id)->first();
+                                    
+                                    // get default image
+                                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
+                                        ->media_orig()
+                                        ->first();
+                                    
+                                    if (is_object($mediaDefaultLanguage)) {
+                                        $near_end_result->object_image = URL::asset($mediaDefaultLanguage->path);
+                                    }
+                                }
+                            }
+                        } elseif ($near_end_result->object_type === 'tenant') {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
+                                $near_end_result->object_description = $objectTranslation->description;
+                            }
+                        } elseif ($near_end_result->object_type === 'lucky_draw') {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($objectTranslation->lucky_draw_name) && $objectTranslation->lucky_draw_name !== '') {
+                                $near_end_result->object_name = $objectTranslation->lucky_draw_name;
+                            }
+                            if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
+                                $near_end_result->object_description = $objectTranslation->description;
+                            }
+                            
+                            $media = $objectTranslation->find($objectTranslation->lucky_draw_translation_id)
+                                ->media_orig()
+                                ->first();
+                            
+                            if (is_object($media)) {
+                                $near_end_result->object_image = URL::asset($media->path);
+                            } else {
+                                // back to default image if in the content multilanguage not have image
+                                // check the system language
+                                $defaultLanguage = $this->getDefaultLanguage($retailer);
+                                if ($defaultLanguage !== NULL) {
+                                    $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
+                                        ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                        ->where('lucky_draw_id', $near_end_result->object_id)->first();
+                                    
+                                    // get default image
+                                    $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
+                                        ->media_orig()
+                                        ->first();
+                                    
+                                    if (is_object($mediaDefaultLanguage)) {
+                                        $near_end_result->object_image = URL::asset($mediaDefaultLanguage->path);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if ($near_end_result->object_type === 'promotion') {
+                    $grouped_search_result->promotions[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'news') {
+                    $grouped_search_result->news[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'coupon') {
+                    $grouped_search_result->coupons[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'tenant') {
+                    $grouped_search_result->tenants[] = $near_end_result;
+                } elseif ($near_end_result->object_type === 'lucky_draw') {
+                    $grouped_search_result->lucky_draws[] = $near_end_result;
+                }
+            }
+
+            $data = new stdclass();
+            $data->total_records = count($search_results);
+            $data->returned_records = count($search_results);
+            $data->records = $search_results;
+            $data->grouped_records = $grouped_search_result;
+
+            if (count($search_results) === 0) {
+                $data->records = null;
+                $this->response->message = 'No results found.';
+            }
+
+            $activityPageNotes = sprintf('Keyword Searched: %s', $keyword);
+            $activityPage->setUser($user)
+                    ->setActivityName('search_keyword')
+                    ->setActivityNameLong('Search By Keyword')
+                    ->setObject(null)
+                    ->setModuleName('Search')
+                    ->setNotes($activityPageNotes)
+                    ->responseOK()
+                    ->save();
+
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.inbox.getsearchinbox.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.inbox.getsearchinbox.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.inbox.getsearchinbox.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.inbox.getsearchinbox.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+        }
+
+        $output = $this->render($httpCode);
 
         return $output;
     }
