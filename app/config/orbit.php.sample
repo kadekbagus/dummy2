@@ -2680,7 +2680,7 @@ return array(
         'Click Promotion Pop Up'                       => 'Click Promotion Pop Up',
         'View News Pop Up'                             => 'View News Pop Up',
         'Click News Pop Up'                            => 'Click News Pop Up',
-        'Search By Keyword'                            => 'Search',
+        'Search'                                       => 'Search',
     ),
 
     'menus' => array(

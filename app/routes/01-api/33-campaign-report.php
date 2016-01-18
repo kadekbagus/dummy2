@@ -23,3 +23,11 @@ Route::get('/api/v1/campaign-report/campaign-demographic', function()
 Route::get('api/v1/campaign-report/spending', function() {
    return CampaignReportAPIController::create()->getSpending(); 
 });
+
+/**
+ * Get Campaign Overview
+ */
+Route::get('/api/v1/campaign-report/campaign-overview', function()
+{
+    return CampaignReportAPIController::create()->getCampaignOverview();
+});
