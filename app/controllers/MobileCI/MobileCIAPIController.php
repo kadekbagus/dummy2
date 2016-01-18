@@ -2400,7 +2400,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Coupon Promotor Tenant List')
+                    ->setActivityNameLong('View Coupon Tenant List')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -2414,7 +2414,7 @@ class MobileCIAPIController extends ControllerAPI
                 $activityPageNotes = sprintf('Page viewed: Coupon Tenants List Page, promotion ID: %s', OrbitInput::get('promotion_id'));
                 $activityPage->setUser($user)
                     ->setActivityName('view_retailer')
-                    ->setActivityNameLong('View Coupon Tenant List')
+                    ->setActivityNameLong('View Coupon Redemption Places')
                     ->setObject(null)
                     ->setModuleName('Tenant')
                     ->setNotes($activityPageNotes)
@@ -4969,10 +4969,6 @@ class MobileCIAPIController extends ControllerAPI
                         }
                     }
                 }
-                $_POST['campaign_type'] = $near_end_result->campaign_type;
-                $_POST['campaign_id'] = $near_end_result->campaign_id;
-                $_POST['activity_type'] = 'view';
-                $response = MobileCIAPIController::create('raw')->postCampaignPopUpActivities();
             }
 
             $data = new stdclass();
