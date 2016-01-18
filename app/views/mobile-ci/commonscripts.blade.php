@@ -268,6 +268,7 @@
         });
         $('#searchBtn').click(function(){
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
+            $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeIn('fast');
             $('.content-container, .header-container, footer').addClass('blurred');
             //$('#SearchProducts').modal();
@@ -277,6 +278,7 @@
         });
         $('#search-close-btn').click(function(){
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
+            $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeOut('fast');
             $('.content-container, .header-container, footer').removeClass('blurred');
             $('#search-type').val('');
