@@ -5176,7 +5176,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->groupBy('promotions.promotion_id');
 
             $tenant = DB::table('merchants')
-                ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}merchants.logo as object_image, 'tenant' as object_type")
+                ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}media.path as object_image, 'tenant' as object_type")
                 ->leftJoin('merchant_translations', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('merchants.merchant_id', '=', 'keyword_object.object_id');
@@ -5186,6 +5186,9 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
+                ->leftJoin('media', 'merchants.merchant_id', '=', 'media.object_id')
+                ->where('media.media_name_id', 'retailer_logo')
+                ->where('media.media_name_long', 'like', '%_orig')
                 ->where('merchants.object_type', '=', 'tenant')
                 ->where('merchants.status', 'active')
                 ->where('parent_id', $retailer->merchant_id)
@@ -5203,6 +5206,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->leftJoin('lucky_draw_translations', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
                 ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
+                ->whereRaw("? between start_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('lucky_draws.lucky_draw_name', 'like', "%$keyword%")
                         ->orWhere('lucky_draws.description', 'like', "%$keyword%")
@@ -5279,7 +5283,6 @@ class MobileCIAPIController extends ControllerAPI
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
                 } elseif ($near_end_result->object_type === 'tenant') {
                     $near_end_result->object_url = URL::to('customer/tenant?id=' . $near_end_result->object_id);
-                    $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                 } elseif ($near_end_result->object_type === 'lucky_draw') {
                     $near_end_result->object_url = URL::to('customer/luckydraw?id=' . $near_end_result->object_id);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_lucky_number.png');
@@ -5378,6 +5381,11 @@ class MobileCIAPIController extends ControllerAPI
                             //if field translation empty or null, value of field back to english (default)
                             if (isset($objectTranslation->description) && $objectTranslation->description !== '') {
                                 $near_end_result->object_description = $objectTranslation->description;
+                            }
+                            if (! is_null($near_end_result->object_image)) {
+                                $near_end_result->object_image = URL::asset($near_end_result->object_image);
+                            } else {
+                                $near_end_result->object_image = URL::asset('mobile-ci/images/default_tenants_directory.png');
                             }
                         } elseif ($near_end_result->object_type === 'lucky_draw') {
                             //if field translation empty or null, value of field back to english (default)

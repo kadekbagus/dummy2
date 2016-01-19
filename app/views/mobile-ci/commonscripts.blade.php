@@ -173,9 +173,9 @@
             });
         }
         var slider = null;
+        var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
-                var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
                 $.ajax({
                     url: apiPath + 'campaign/list?lang='+cookieLang,
                     method: 'GET'
@@ -207,6 +207,7 @@
                             loop:autoSliderOption,
                             pager: autoSliderOption,
                             onSliderLoad: function(el) {
+                                $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
                                 $('#campaign-cards').removeClass('cS-hidden');
                                 var active_card_id = $(el).children('.active').data('campaign-id');
                                 var active_card_type = $(el).children('.active').data('campaign-type');
@@ -333,7 +334,7 @@
                 $('.search-wrapper').append(loader);
 
                 $.ajax({
-                    url: apiPath + 'keyword/search?keyword=' + keyword,
+                    url: apiPath + 'keyword/search?keyword=' + keyword + '&lang=' + cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
@@ -358,25 +359,6 @@
                             }
                             tenants += '</ul>';
                         }
-                        if (data.data.grouped_records.news.length > 0) {
-                            search_results.news = data.data.grouped_records.news;
-                            news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
-                            for(var i = 0; i < data.data.grouped_records.news.length; i++) {
-                                var hide = i > 2 ? 'limited hide' : '';
-                                news += '<li class="search-result-group '+ hide +'">\
-                                        <a href="'+ data.data.grouped_records.news[i].object_url +'">\
-                                            <div class="col-xs-2 text-center">\
-                                                <img src="'+ data.data.grouped_records.news[i].object_image +'">\
-                                            </div>\
-                                            <div class="col-xs-10">\
-                                                <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.news[i].object_description +'</p>\
-                                            </div>\
-                                        </a>\
-                                    </li>';
-                            }
-                            news += '</ul>';
-                        }
                         if (data.data.grouped_records.promotions.length > 0) {
                             search_results.promotions = data.data.grouped_records.promotions;
                             promotions = '<h4>{{Lang::get('mobileci.page_title.promotions')}}</h4><ul>'
@@ -395,6 +377,25 @@
                                     </li>';
                             }
                             promotions += '</ul>';
+                        }
+                        if (data.data.grouped_records.news.length > 0) {
+                            search_results.news = data.data.grouped_records.news;
+                            news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.news.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                news += '<li class="search-result-group '+ hide +'">\
+                                        <a href="'+ data.data.grouped_records.news[i].object_url +'">\
+                                            <div class="col-xs-2 text-center">\
+                                                <img src="'+ data.data.grouped_records.news[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
+                                                <p>'+ data.data.grouped_records.news[i].object_description +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            news += '</ul>';
                         }
                         if (data.data.grouped_records.coupons.length > 0) {
                             search_results.coupons = data.data.grouped_records.coupons;
