@@ -5057,7 +5057,7 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            $keyword = OrbitInput::get('keyword');
+            $keyword = trim(urldecode(OrbitInput::get('keyword')));
             if (empty($keyword)) {
                 throw new Exception ('Empty keyword.');
             }
