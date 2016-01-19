@@ -7,9 +7,17 @@
 /**
  * Campaign Report Listing
  */
-Route::get('/api/v1/campaign-report/list', function()
+Route::get('/api/v1/campaign-report-summary/list', function()
 {
-    return CampaignReportAPIController::create()->getCampaignReport();
+    return CampaignReportAPIController::create()->getCampaignReportSummary();
+});
+
+/**
+ * Campaign Report Detail Listing
+ */
+Route::get('/api/v1/campaign-report-detail/list', function()
+{
+    return CampaignReportAPIController::create()->getCampaignReportDetail();
 });
 
 /**
@@ -21,5 +29,13 @@ Route::get('/api/v1/campaign-report/campaign-demographic', function()
 });
 
 Route::get('api/v1/campaign-report/spending', function() {
-   return CampaignReportAPIController::create()->getSpending(); 
+   return CampaignReportAPIController::create()->getSpending();
+});
+
+/**
+ * Get Campaign Overview
+ */
+Route::get('/api/v1/campaign-report/campaign-overview', function()
+{
+    return CampaignReportAPIController::create()->getCampaignOverview();
 });
