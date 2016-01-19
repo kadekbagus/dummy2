@@ -11,16 +11,16 @@
 
 @section('tenant_tab')
     {{-- todo: create flag for this tabs --}}
-    @if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->coupons) > 0)
+    @if(sizeof($tenant->newsPromotionsProfiling) > 0 || sizeof($tenant->newsProfiling) > 0 || sizeof($tenant->couponsProfiling) > 0)
     <div class="header-tenant-tab">
         <ul>
-            @if(sizeof($tenant->newsPromotionsProfiling))
+            @if(sizeof($tenant->newsPromotionsProfiling) > 0)
             <li><a id="slide-tab-promo">{{Lang::get('mobileci.page_title.promotions')}}</a></li>
             @endif
-            @if(sizeof($tenant->newsProfiling))
+            @if(sizeof($tenant->newsProfiling) > 0)
             <li><a id="slide-tab-news">{{Lang::get('mobileci.page_title.news')}}</a></li>
             @endif
-            @if(sizeof($tenant->couponsProfiling))
+            @if(sizeof($tenant->couponsProfiling) > 0)
             <li><a id="slide-tab-coupon">{{Lang::get('mobileci.page_title.coupon_plural')}}</a></li>
             @endif
         </ul>

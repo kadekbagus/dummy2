@@ -2529,6 +2529,8 @@ class MobileCIAPIController extends ControllerAPI
             if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
                 $userGender =  $user->userDetail->gender;
             }
+            
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
             $tenant = Tenant::with( // translated
                 array(
@@ -2536,7 +2538,7 @@ class MobileCIAPIController extends ControllerAPI
                     'mediaLogoOrig',
                     'mediaMapOrig',
                     'mediaImageOrig',
-                    'newsProfiling' => function($q) use ($userGender, $userAge) {
+                    'newsProfiling' => function($q) use ($userGender, $userAge, $mallTime) {
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
                         }
@@ -2551,10 +2553,10 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                        $q->whereRaw("NOW() between begin_date and end_date");
+                        $q->whereRaw("? between begin_date and end_date", [$mallTime]);
 
                     },
-                    'newsPromotionsProfiling' => function($q) use ($userGender, $userAge){
+                    'newsPromotionsProfiling' => function($q) use ($userGender, $userAge, $mallTime){
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
                         }
@@ -2569,9 +2571,9 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                        $q->whereRaw("NOW() between begin_date and end_date");
+                        $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     },
-                    'couponsProfiling' => function($q) use ($userGender, $userAge) {
+                    'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime) {
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
                         }
@@ -2586,7 +2588,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                        $q->whereRaw("NOW() between begin_date and end_date");
+                        $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     }
                 ))
                 ->active('merchants')
@@ -5186,9 +5188,11 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->leftJoin('media', 'merchants.merchant_id', '=', 'media.object_id')
-                ->where('media.media_name_id', 'retailer_logo')
-                ->where('media.media_name_long', 'like', '%_orig')
+                ->leftJoin('media', function($join) {
+                    $join->on('merchants.merchant_id', '=', 'media.object_id')
+                        ->where('media.media_name_id', '=', 'retailer_logo')
+                        ->where('media.media_name_long', 'like', '%_orig');
+                })
                 ->where('merchants.object_type', '=', 'tenant')
                 ->where('merchants.status', 'active')
                 ->where('parent_id', $retailer->merchant_id)
