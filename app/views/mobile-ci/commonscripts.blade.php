@@ -435,7 +435,8 @@
                             }
                             lucky_draws += '</ul>';
                         }
-                        $('.search-results').html(show_result + tenants + news + promotions + coupons + lucky_draws);
+                        var zonk = '<div style="width:100%;height:160px;background:transparent;">&nbsp;</div>'
+                        $('.search-results').html(show_result + tenants + news + promotions + coupons + lucky_draws + zonk);
                     } else {
                         $('.search-results').html('<h5><i>{{Lang::get('mobileci.search.no_result')}}</i></h5>');
                     }
