@@ -5146,7 +5146,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->groupBy('news.news_id');
 
             $coupon = DB::table('promotions')
-                ->selectRaw("{$prefix}promotions.promotion_id as object_id, {$prefix}promotions.promotion_name as object_name, {$prefix}promotions.description as object_description, {$prefix}promotions.image as object_image, 'coupon' as object_type")
+                ->selectRaw("{$prefix}issued_coupons.promotion_id as object_id, {$prefix}promotions.promotion_name as object_name, {$prefix}promotions.description as object_description, {$prefix}promotions.image as object_image, 'coupon' as object_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -5158,6 +5158,11 @@ class MobileCIAPIController extends ControllerAPI
                 ->leftJoin('keywords', function($join) use ($retailer) {
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
+                })
+                ->leftJoin('issued_coupons', function($join) use ($mallTime, $user){
+                    $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                    $join->where('issued_coupons.expired_date', '>=', $mallTime);
+                    $join->where('issued_coupons.user_id', '=', $user->user_id);
                 })
                 ->where('keywords.merchant_id', $retailer->merchant_id)
                 ->where('is_coupon', '=', 'Y')
@@ -5206,7 +5211,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->leftJoin('lucky_draw_translations', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
                 ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
-                ->whereRaw("? between start_date and end_date", [$mallTime])
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('lucky_draws.lucky_draw_name', 'like', "%$keyword%")
                         ->orWhere('lucky_draws.description', 'like', "%$keyword%")
@@ -5279,7 +5284,7 @@ class MobileCIAPIController extends ControllerAPI
                     $near_end_result->object_url = URL::to('customer/mallnewsdetail?id=' . $near_end_result->object_id);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->object_type === 'coupon') {
-                    $near_end_result->object_url = URL::to('customer/mallcouponcampaign?id=' . $near_end_result->object_id);
+                    $near_end_result->object_url = URL::to('customer/mallcoupon?id=' . $near_end_result->object_id);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
                 } elseif ($near_end_result->object_type === 'tenant') {
                     $near_end_result->object_url = URL::to('customer/tenant?id=' . $near_end_result->object_id);
