@@ -221,10 +221,10 @@
                                 }
                             },
                             onBeforeSlide: function (el) {
-                                $('.campaign-cards-close-btn').fadeOut('fast');
+                                $('#campaign-cards-close-btn').fadeOut('fast');
                             },
                             onAfterSlide: function(el) {
-                                $('.campaign-cards-close-btn').fadeIn('fast');
+                                $('#campaign-cards-close-btn').fadeIn('fast');
                                 var active_card_id = $(el).children('.active').data('campaign-id');
                                 var active_card_type = $(el).children('.active').data('campaign-type');
                                 var recorded_popup = localStorage.getItem('campaign_popup');
