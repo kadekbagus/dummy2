@@ -5103,7 +5103,6 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->where('keywords.merchant_id', $retailer->merchant_id)
                 ->where('news.object_type', '=', 'promotion')
                 ->where('news.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
@@ -5131,7 +5130,6 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->where('keywords.merchant_id', $retailer->merchant_id)
                 ->where('news.object_type', '=', 'news')
                 ->where('news.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
@@ -5159,12 +5157,10 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->leftJoin('issued_coupons', function($join) use ($mallTime, $user){
-                    $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                    $join->where('issued_coupons.expired_date', '>=', $mallTime);
-                    $join->where('issued_coupons.user_id', '=', $user->user_id);
-                })
-                ->where('keywords.merchant_id', $retailer->merchant_id)
+                ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->where('issued_coupons.expired_date', '>=', $mallTime)
+                ->where('issued_coupons.user_id', '=', $user->user_id)
+                ->where('issued_coupons.status', '=', 'active')
                 ->where('is_coupon', '=', 'Y')
                 ->where('promotions.status', 'active')
                 ->where('promotions.merchant_id', $retailer->merchant_id)
