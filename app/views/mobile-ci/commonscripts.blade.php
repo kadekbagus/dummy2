@@ -221,10 +221,10 @@
                                 }
                             },
                             onBeforeSlide: function (el) {
-                                $('.campaign-cards-close-btn').fadeOut('fast');
+                                $('#campaign-cards-close-btn').fadeOut('fast');
                             },
                             onAfterSlide: function(el) {
-                                $('.campaign-cards-close-btn').fadeIn('fast');
+                                $('#campaign-cards-close-btn').fadeIn('fast');
                                 var active_card_id = $(el).children('.active').data('campaign-id');
                                 var active_card_type = $(el).children('.active').data('campaign-type');
                                 var recorded_popup = localStorage.getItem('campaign_popup');
@@ -329,7 +329,7 @@
                 $('#search-type').blur();
                 $('#search-type').attr('disabled', 'disabled');
                 $('.search-results').fadeOut('fast');
-                var keyword = $('#search-type').val();
+                var keyword = encodeURIComponent($('#search-type').val());
                 var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
                 $('.search-wrapper').append(loader);
 
@@ -435,7 +435,8 @@
                             }
                             lucky_draws += '</ul>';
                         }
-                        $('.search-results').html(show_result + tenants + news + promotions + coupons + lucky_draws);
+                        var zonk = '<div style="width:100%;height:160px;background:transparent;">&nbsp;</div>'
+                        $('.search-results').html(show_result + tenants + promotions + news + coupons + lucky_draws + zonk);
                     } else {
                         $('.search-results').html('<h5><i>{{Lang::get('mobileci.search.no_result')}}</i></h5>');
                     }
