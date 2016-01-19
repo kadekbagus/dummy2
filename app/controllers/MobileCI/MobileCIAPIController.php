@@ -5186,9 +5186,11 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->leftJoin('media', 'merchants.merchant_id', '=', 'media.object_id')
-                ->where('media.media_name_id', 'retailer_logo')
-                ->where('media.media_name_long', 'like', '%_orig')
+                ->leftJoin('media', function($join) {
+                    $join->on('merchants.merchant_id', '=', 'media.object_id')
+                        ->where('media.media_name_id', '=', 'retailer_logo')
+                        ->where('media.media_name_long', 'like', '%_orig');
+                })
                 ->where('merchants.object_type', '=', 'tenant')
                 ->where('merchants.status', 'active')
                 ->where('parent_id', $retailer->merchant_id)
