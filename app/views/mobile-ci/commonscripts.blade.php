@@ -329,7 +329,7 @@
                 $('#search-type').blur();
                 $('#search-type').attr('disabled', 'disabled');
                 $('.search-results').fadeOut('fast');
-                var keyword = $('#search-type').val();
+                var keyword = encodeURIComponent($('#search-type').val());
                 var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
                 $('.search-wrapper').append(loader);
 
