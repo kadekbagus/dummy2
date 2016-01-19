@@ -5168,7 +5168,6 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('is_coupon', '=', 'Y')
                 ->where('promotions.status', 'active')
                 ->where('promotions.merchant_id', $retailer->merchant_id)
-                ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('promotions.promotion_name', 'like', "%$keyword%")
                         ->orWhere('promotions.description', 'like', "%$keyword%")
