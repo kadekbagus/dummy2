@@ -133,7 +133,17 @@
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 {{ HTML::script('mobile-ci/scripts/polyfill.object-fit.min.js') }}
 <script type="text/javascript">
+    var tabOpen = false; // this var is for tabs on tenant detail views
     $(document).ready(function(){
+        $.fn.addBlur = function(){
+            $(this).removeClass('unblurred');
+            $(this).addClass('blurred');
+        }
+        $.fn.removeBlur = function(){
+            $(this).removeClass('blurred');
+            $(this).addClass('unblurred');
+        }
+        var menuOpen = false;
         navigator.getBrowser= (function(){
             var ua = navigator.userAgent, tem,
                 M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
@@ -194,7 +204,7 @@
                         }
                         var autoSliderOption = data.data.records.length > 1 ? true : false;
                         $('body').addClass('freeze-scroll');
-                        $('.content-container, .header-container, footer').addClass('blurred');
+                        $('.content-container, .header-container, footer').addBlur();
                         $('.campaign-cards-back-drop').fadeIn('slow');
                         $('.campaign-cards-container').toggle('slide', {direction: 'down'}, 'slow');
                         slider = $('#campaign-cards').lightSlider({
@@ -221,10 +231,10 @@
                                 }
                             },
                             onBeforeSlide: function (el) {
-                                $('.campaign-cards-close-btn').fadeOut('fast');
+                                $('#campaign-cards-close-btn').fadeOut('fast');
                             },
                             onAfterSlide: function(el) {
-                                $('.campaign-cards-close-btn').fadeIn('fast');
+                                $('#campaign-cards-close-btn').fadeIn('fast');
                                 var active_card_id = $(el).children('.active').data('campaign-id');
                                 var active_card_type = $(el).children('.active').data('campaign-type');
                                 var recorded_popup = localStorage.getItem('campaign_popup');
@@ -246,7 +256,7 @@
             slider.pause();
             $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             $('body').removeClass('freeze-scroll');
-            $('.content-container, .header-container, footer').removeClass('blurred');
+            $('.content-container, .header-container, footer').removeBlur();
             $('.campaign-cards-back-drop').fadeOut('slow');
             $('.campaign-cards-container').toggle('slide', {direction: 'up'}, 'fast');
         });
@@ -302,7 +312,8 @@
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
             $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeIn('fast');
-            $('.content-container, .header-container, footer').addClass('blurred');
+            $('#search-type').val('');
+            $('.content-container, .header-container, footer').addBlur();
             //$('#SearchProducts').modal();
             setTimeout(function(){
                 $('#search-type').focus();
@@ -312,7 +323,10 @@
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
             $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeOut('fast');
-            $('.content-container, .header-container, footer').removeClass('blurred');
+            if(!menuOpen){
+                $('.content-container, footer').removeBlur();
+            }
+            $('.header-container').removeBlur();
             $('#search-type').val('');
             // ------------- cuma dummy
             $('.search-results').hide();
@@ -329,7 +343,7 @@
                 $('#search-type').blur();
                 $('#search-type').attr('disabled', 'disabled');
                 $('.search-results').fadeOut('fast');
-                var keyword = $('#search-type').val();
+                var keyword = encodeURIComponent($('#search-type').val());
                 var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
                 $('.search-wrapper').append(loader);
 
@@ -352,7 +366,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.tenants[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.tenants[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -371,7 +385,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.promotions[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -390,7 +404,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.news[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -409,7 +423,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.coupons[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -428,14 +442,15 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.lucky_draws[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
                             }
                             lucky_draws += '</ul>';
                         }
-                        $('.search-results').html(show_result + tenants + news + promotions + coupons + lucky_draws);
+                        var zonk = '<div style="width:100%;height:160px;background:transparent;">&nbsp;</div>'
+                        $('.search-results').html(show_result + tenants + promotions + news + coupons + lucky_draws + zonk);
                     } else {
                         $('.search-results').html('<h5><i>{{Lang::get('mobileci.search.no_result')}}</i></h5>');
                     }
@@ -533,7 +548,7 @@
                 resetImage();
                 fl = $.featherlight.current();
                 $("body").addClass("freeze-scroll");
-                $('.content-container, .header-container, footer').addClass('blurred');
+                $('.content-container, .header-container, footer').addBlur();
                 $(".featherlight-image").panzoom({
                     minScale: 1,
                     maxScale: 5,
@@ -557,7 +572,10 @@
                     if(! changed) {
                         fl.close();
                         $("body").removeClass("freeze-scroll");
-                        $('.content-container, .header-container, footer').removeClass('blurred');
+                        if(!menuOpen){
+                            $('.content-container, footer').removeBlur();
+                        }
+                        $('.header-container').removeBlur();
                     }
                 });
             }, 50);
@@ -577,21 +595,47 @@
 
         $(document).on('click', '.featherlight-close', function(){
             $("body").removeClass("freeze-scroll");
-            $('.content-container, .header-container, footer').removeClass('blurred');
+            if(!menuOpen){
+                $('.content-container, footer').removeBlur();
+            }
+            $('.header-container').removeBlur();
         });
 
         $(document).on('click', '.featherlight-content, .featherlight-image', function(){
             fl.close();
             $("body").removeClass("freeze-scroll");
-            $('.content-container, .header-container, footer').removeClass('blurred');
+            if(!menuOpen){
+                $('.content-container, footer').removeBlur();
+            }
+            $('.header-container').removeBlur();
         });
-
         $('#slide-trigger, .slide-menu-backdrop').click(function(){
+            if(menuOpen) {
+                menuOpen = false;
+            } else {
+                menuOpen = true;
+            }
+            // $('html, body').animate({scrollTop:0}, 'fast');
             $('.slide-menu-container').toggle('slide', {direction: 'right'}, 'slow');
             $('.slide-menu-backdrop').toggle('fade', 'slow');
-            $('html').toggleClass('freeze-scroll');
-            $('#orbit-tour-profile').toggleClass('active');
-            $('#slide-trigger').toggleClass('active');
+            if(menuOpen) {
+                $('.header-container').css('height', '100%');
+                $('.content-container, .header-location-banner, .header-tenant-tab, footer').addBlur();
+                $('body').addClass('freeze-scroll');
+                $('#orbit-tour-profile').addClass('active');
+                $('#slide-trigger').addClass('active');
+            } else {
+                if(!menuOpen){
+                    $('.content-container, footer').removeBlur();
+                }
+                $('.header-container').css('height', '92px');
+                $('.header-location-banner, .header-tenant-tab').removeBlur();
+                if(!tabOpen){
+                    $('body').removeClass('freeze-scroll');
+                }
+                $('#orbit-tour-profile').removeClass('active');
+                $('#slide-trigger').removeClass('active');
+            }
         });
     });
 </script>

@@ -2233,6 +2233,8 @@ class MobileCIAPIController extends ControllerAPI
                 $userGender =  $user->userDetail->gender;
             }
 
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+
             $news_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
                         ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
                         ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
@@ -2240,27 +2242,27 @@ class MobileCIAPIController extends ControllerAPI
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
-                        // filter by age and gender
-                        if ($userGender !== null) {
-                            $news_flag = $news_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                        }
-                        if ($userAge !== null) {
-                            if ($userAge === 0){
-                                $news_flag = $news_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            } else {
-                                if ($userAge >= 55) {
-                                    $news_flag = $news_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                                } else {
-                                    $news_flag = $news_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                                }
-                            }
-                        }
+            // filter by age and gender
+            if ($userGender !== null) {
+                $news_flag = $news_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $news_flag = $news_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $news_flag = $news_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $news_flag = $news_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
 
-                        $news_flag = $news_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
-                                    ->where('news.object_type', '=', 'news')
-                                    ->where('news.status', '=', 'active')
-                                    ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
-                                    ->groupBy('merchants.name')->get();
+            $news_flag = $news_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('news.object_type', '=', 'news')
+                        ->where('news.status', '=', 'active')
+                        ->whereRaw("? between {$prefix}news.begin_date and {$prefix}news.end_date", [$mallTime])
+                        ->groupBy('merchants.name')->get();
 
             $promotion_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
                         ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
@@ -2269,27 +2271,27 @@ class MobileCIAPIController extends ControllerAPI
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
-                        // filter by age and gender
-                        if ($userGender !== null) {
-                            $promotion_flag = $promotion_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                        }
-                        if ($userAge !== null) {
-                            if ($userAge === 0){
-                                $promotion_flag = $promotion_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            } else {
-                                if ($userAge >= 55) {
-                                    $promotion_flag = $promotion_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                                } else {
-                                    $promotion_flag = $promotion_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                                }
-                            }
-                        }
+            // filter by age and gender
+            if ($userGender !== null) {
+                $promotion_flag = $promotion_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $promotion_flag = $promotion_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $promotion_flag = $promotion_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $promotion_flag = $promotion_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
 
-                        $promotion_flag = $promotion_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
-                                    ->where('news.object_type', '=', 'promotion')
-                                    ->where('news.status', '=', 'active')
-                                    ->whereRaw("NOW() between {$prefix}news.begin_date and {$prefix}news.end_date")
-                                    ->groupBy('merchants.name')->get();
+            $promotion_flag = $promotion_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('news.object_type', '=', 'promotion')
+                        ->where('news.status', '=', 'active')
+                        ->whereRaw("? between {$prefix}news.begin_date and {$prefix}news.end_date", [$mallTime])
+                        ->groupBy('merchants.name')->get();
 
             $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
                         ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
@@ -2298,27 +2300,27 @@ class MobileCIAPIController extends ControllerAPI
                             ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                             ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
-                        // filter by age and gender
-                        if ($userGender !== null) {
-                            $coupon_flag = $coupon_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-                        }
-                        if ($userAge !== null) {
-                            if ($userAge === 0){
-                                $coupon_flag = $coupon_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                            } else {
-                                if ($userAge >= 55) {
-                                    $coupon_flag = $coupon_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                                } else {
-                                    $coupon_flag = $coupon_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                                }
-                            }
-                        }
+            // filter by age and gender
+            if ($userGender !== null) {
+                $coupon_flag = $coupon_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $coupon_flag = $coupon_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $coupon_flag = $coupon_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $coupon_flag = $coupon_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
 
-                        $coupon_flag = $coupon_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
-                                    ->where('promotions.is_coupon', '=', 'Y')
-                                    ->where('promotions.status', '=', 'active')
-                                    ->whereRaw("NOW() between {$prefix}promotions.begin_date and {$prefix}promotions.end_date")
-                                    ->groupBy('merchants.name')->get();
+            $coupon_flag = $coupon_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('promotions.is_coupon', '=', 'Y')
+                        ->where('promotions.status', '=', 'active')
+                        ->whereRaw("? between {$prefix}promotions.begin_date and {$prefix}promotions.end_date", [$mallTime])
+                        ->groupBy('merchants.name')->get();
 
             $totalRec = $_tenants->count();
             $listOfRec = $tenants->get(); //randomize
@@ -2529,6 +2531,8 @@ class MobileCIAPIController extends ControllerAPI
             if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
                 $userGender =  $user->userDetail->gender;
             }
+            
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
             $tenant = Tenant::with( // translated
                 array(
@@ -2536,7 +2540,7 @@ class MobileCIAPIController extends ControllerAPI
                     'mediaLogoOrig',
                     'mediaMapOrig',
                     'mediaImageOrig',
-                    'newsProfiling' => function($q) use ($userGender, $userAge) {
+                    'newsProfiling' => function($q) use ($userGender, $userAge, $mallTime) {
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
                         }
@@ -2551,10 +2555,10 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                        $q->whereRaw("NOW() between begin_date and end_date");
+                        $q->whereRaw("? between begin_date and end_date", [$mallTime]);
 
                     },
-                    'newsPromotionsProfiling' => function($q) use ($userGender, $userAge){
+                    'newsPromotionsProfiling' => function($q) use ($userGender, $userAge, $mallTime){
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
                         }
@@ -2569,9 +2573,9 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                        $q->whereRaw("NOW() between begin_date and end_date");
+                        $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     },
-                    'couponsProfiling' => function($q) use ($userGender, $userAge) {
+                    'couponsProfiling' => function($q) use ($userGender, $userAge, $mallTime) {
                         if ($userGender !== null) {
                             $q->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
                         }
@@ -2586,7 +2590,7 @@ class MobileCIAPIController extends ControllerAPI
                                 }
                             }
                         }
-                        $q->whereRaw("NOW() between begin_date and end_date");
+                        $q->whereRaw("? between begin_date and end_date", [$mallTime]);
                     }
                 ))
                 ->active('merchants')
@@ -5055,7 +5059,7 @@ class MobileCIAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            $keyword = OrbitInput::get('keyword');
+            $keyword = trim(urldecode(OrbitInput::get('keyword')));
             if (empty($keyword)) {
                 throw new Exception ('Empty keyword.');
             }
@@ -5103,7 +5107,6 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->where('keywords.merchant_id', $retailer->merchant_id)
                 ->where('news.object_type', '=', 'promotion')
                 ->where('news.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
@@ -5131,7 +5134,6 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->where('keywords.merchant_id', $retailer->merchant_id)
                 ->where('news.object_type', '=', 'news')
                 ->where('news.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
@@ -5146,7 +5148,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->groupBy('news.news_id');
 
             $coupon = DB::table('promotions')
-                ->selectRaw("{$prefix}promotions.promotion_id as object_id, {$prefix}promotions.promotion_name as object_name, {$prefix}promotions.description as object_description, {$prefix}promotions.image as object_image, 'coupon' as object_type")
+                ->selectRaw("{$prefix}issued_coupons.promotion_id as object_id, {$prefix}promotions.promotion_name as object_name, {$prefix}promotions.description as object_description, {$prefix}promotions.image as object_image, 'coupon' as object_type")
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
@@ -5159,11 +5161,13 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->where('keywords.merchant_id', $retailer->merchant_id)
+                ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->where('issued_coupons.expired_date', '>=', $mallTime)
+                ->where('issued_coupons.user_id', '=', $user->user_id)
+                ->where('issued_coupons.status', '=', 'active')
                 ->where('is_coupon', '=', 'Y')
                 ->where('promotions.status', 'active')
                 ->where('promotions.merchant_id', $retailer->merchant_id)
-                ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('promotions.promotion_name', 'like', "%$keyword%")
                         ->orWhere('promotions.description', 'like', "%$keyword%")
@@ -5186,9 +5190,11 @@ class MobileCIAPIController extends ControllerAPI
                     $join->on('keywords.keyword_id', '=', 'keyword_object.keyword_id');
                     $join->where('keywords.merchant_id', '=', $retailer->merchant_id);
                 })
-                ->leftJoin('media', 'merchants.merchant_id', '=', 'media.object_id')
-                ->where('media.media_name_id', 'retailer_logo')
-                ->where('media.media_name_long', 'like', '%_orig')
+                ->leftJoin('media', function($join) {
+                    $join->on('merchants.merchant_id', '=', 'media.object_id')
+                        ->where('media.media_name_id', '=', 'retailer_logo')
+                        ->where('media.media_name_long', 'like', '%_orig');
+                })
                 ->where('merchants.object_type', '=', 'tenant')
                 ->where('merchants.status', 'active')
                 ->where('parent_id', $retailer->merchant_id)
@@ -5206,7 +5212,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->leftJoin('lucky_draw_translations', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
                 ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
-                ->whereRaw("? between start_date and end_date", [$mallTime])
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
                     $q->where('lucky_draws.lucky_draw_name', 'like', "%$keyword%")
                         ->orWhere('lucky_draws.description', 'like', "%$keyword%")
@@ -5279,7 +5285,7 @@ class MobileCIAPIController extends ControllerAPI
                     $near_end_result->object_url = URL::to('customer/mallnewsdetail?id=' . $near_end_result->object_id);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_news.png');
                 } elseif ($near_end_result->object_type === 'coupon') {
-                    $near_end_result->object_url = URL::to('customer/mallcouponcampaign?id=' . $near_end_result->object_id);
+                    $near_end_result->object_url = URL::to('customer/mallcoupon?id=' . $near_end_result->object_id);
                     $near_end_result->object_image = URL::asset('mobile-ci/images/default_coupon.png');
                 } elseif ($near_end_result->object_type === 'tenant') {
                     $near_end_result->object_url = URL::to('customer/tenant?id=' . $near_end_result->object_id);
@@ -5424,6 +5430,8 @@ class MobileCIAPIController extends ControllerAPI
                         }
                     }
                 }
+
+                $near_end_result->object_description = nl2br($near_end_result->object_description);
 
                 if ($near_end_result->object_type === 'promotion') {
                     $grouped_search_result->promotions[] = $near_end_result;
@@ -6148,14 +6156,36 @@ class MobileCIAPIController extends ControllerAPI
                     $ruleEndDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->rule_end_date, $retailer->timezone->timezone_name);
                     $ruleEndDateUTC->setTimezone('UTC');
 
+                    $couponBeginDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->begin_date, $retailer->timezone->timezone_name);
+                    $couponBeginDateUTC->setTimezone('UTC');
+
+                    $couponEndDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->end_date, $retailer->timezone->timezone_name);
+                    $couponEndDateUTC->setTimezone('UTC');
+
                     if ($coupon->rule_type === 'auto_issue_on_signup') {
                         $issued = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
                                                 ->where('user_id', $user->user_id)
                                                 ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
                     } elseif ($coupon->rule_type === 'auto_issue_on_first_signin') {
-                        $issued = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                ->where('user_id', $user->user_id)
-                                                ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
+                        $acq = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
+                                                ->where('user_id', $user->user_id)->first();
+
+                        $signin = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                ->where('user_id', $user->user_id)->first();
+
+                        if ($couponBeginDateUTC === $ruleBeginDateUTC) {
+
+                            if (! empty($acq) && empty($signin)) {
+                                $issued = true;
+                            }
+                        } 
+                        elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
+
+                            if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
+                                $issued = true;
+                            }
+                        }
+                                             
                     } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
                         $issued = true;
                     }

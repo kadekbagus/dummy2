@@ -204,6 +204,8 @@ span.attribute-title {
     width:100%;
     font-size:1em;
     line-height:1.8em;
+    position:relative;
+    top:23px;
     ul{
         display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
         display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
@@ -213,6 +215,7 @@ span.attribute-title {
         flex-direction:row;
         margin:0;
         padding:0;
+        width:100%;
         li{
             border-left:1px solid #dedede;
             border-right:1px solid #dedede;
@@ -292,6 +295,13 @@ span.attribute-title {
 }
 
 .blurred{
-    filter:blur(5px);
     -webkit-filter:blur(5px);
+    filter:blur(5px);
+    -webkit-font-smoothing: antialiased;
+}
+
+.unblurred{
+    -webkit-filter:blur(0px);
+    filter:blur(0px);
+    -webkit-font-smoothing: antialiased;
 }
