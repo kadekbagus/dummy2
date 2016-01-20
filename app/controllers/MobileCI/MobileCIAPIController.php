@@ -6159,9 +6159,14 @@ class MobileCIAPIController extends ControllerAPI
                                                 ->where('user_id', $user->user_id)
                                                 ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
                     } elseif ($coupon->rule_type === 'auto_issue_on_first_signin') {
-                        $issued = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                ->where('user_id', $user->user_id)
-                                                ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
+                        $acq = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
+                                                ->where('user_id', $user->user_id)->first();
+
+                        $signin = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                ->where('user_id', $user->user_id)->first();
+                        if(! empty($acq) && empty($signin)) {
+                            $issued = true;
+                        }                                             
                     } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
                         $issued = true;
                     }
