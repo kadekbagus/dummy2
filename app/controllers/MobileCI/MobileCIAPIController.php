@@ -5431,6 +5431,8 @@ class MobileCIAPIController extends ControllerAPI
                     }
                 }
 
+                $near_end_result->object_description = nl2br($near_end_result->object_description);
+
                 if ($near_end_result->object_type === 'promotion') {
                     $grouped_search_result->promotions[] = $near_end_result;
                 } elseif ($near_end_result->object_type === 'news') {
