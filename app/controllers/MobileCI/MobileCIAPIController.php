@@ -6156,6 +6156,12 @@ class MobileCIAPIController extends ControllerAPI
                     $ruleEndDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->rule_end_date, $retailer->timezone->timezone_name);
                     $ruleEndDateUTC->setTimezone('UTC');
 
+                    $couponBeginDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->begin_date, $retailer->timezone->timezone_name);
+                    $couponBeginDateUTC->setTimezone('UTC');
+
+                    $couponEndDateUTC = Carbon::createFromFormat('Y-m-d H:i:s', $coupon->end_date, $retailer->timezone->timezone_name);
+                    $couponEndDateUTC->setTimezone('UTC');
+
                     if ($coupon->rule_type === 'auto_issue_on_signup') {
                         $issued = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
                                                 ->where('user_id', $user->user_id)
@@ -6166,9 +6172,20 @@ class MobileCIAPIController extends ControllerAPI
 
                         $signin = \UserSignin::where('location_id', $retailer->merchant_id)
                                                 ->where('user_id', $user->user_id)->first();
-                        if(! empty($acq) && empty($signin)) {
-                            $issued = true;
-                        }                                             
+
+                        if ($couponBeginDateUTC === $ruleBeginDateUTC) {
+
+                            if (! empty($acq) && empty($signin)) {
+                                $issued = true;
+                            }
+                        } 
+                        elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
+
+                            if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
+                                $issued = true;
+                            }
+                        }
+                                             
                     } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
                         $issued = true;
                     }
