@@ -222,6 +222,9 @@
 <!-- product -->
 <div class="row header-tenant-tab-present">
     <div class="col-xs-12">
+        @if(count($tenant->mediaLogoOrig) === 0 && count($tenant->mediaImageOrig) === 0)
+        <img class="img-responsive img-center" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+        @else
         <ul id="image-gallery" class="gallery list-unstyled cS-hidden">
             @if(!count($tenant->mediaLogoOrig) > 0)
             <li data-thumb="{{ asset('mobile-ci/images/default_tenants_directory.png') }}">
@@ -241,6 +244,7 @@
             </li>
             @endforeach
         </ul>
+        @endif
     </div>
 </div>
 <div class="row padded">
@@ -355,7 +359,9 @@
                 hideOpenTabs();
                 $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                 $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
-                $('html').toggleClass('freeze-scroll');
+                $('body').toggleClass('freeze-scroll');
+                tabOpen = false;
+                $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
             });
             $('#slide-tab-promo').click(function(){
                 if($('#slide-tab-news-container').is(':visible') || $('#slide-tab-coupon-container').is(':visible')) {
@@ -366,7 +372,7 @@
                 } else {
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
-                    $('html').toggleClass('freeze-scroll');
+                    $('body').toggleClass('freeze-scroll');
                 }
                 $('#slide-tab-promo-container').toggle('fade', 'slow');
                 $('#slide-tab-promo').closest('li').toggleClass('active');
@@ -378,10 +384,21 @@
                     $('#slide-tab-coupon-container').hide();
                     $('#slide-tab-promo').closest('li').removeClass('active');
                     $('#slide-tab-coupon').closest('li').removeClass('active');
+                    console.log(tabOpen);
                 } else {
+                    if(tabOpen){
+                        tabOpen = false;
+                    } else {
+                        tabOpen = true;
+                    }
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
-                    $('html').toggleClass('freeze-scroll');
+                    $('body').toggleClass('freeze-scroll');
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
+                    console.log(tabOpen);
+                }
+                if(!tabOpen){
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
                 }
                 $('#slide-tab-news-container').toggle('fade', 'slow');
                 $('#slide-tab-news').closest('li').toggleClass('active');
@@ -396,7 +413,7 @@
                 } else {
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
-                    $('html').toggleClass('freeze-scroll');
+                    $('body').toggleClass('freeze-scroll');
                 }
                 $('#slide-tab-coupon-container').toggle('fade', 'slow');
                 $('#slide-tab-coupon').closest('li').toggleClass('active');

@@ -295,6 +295,13 @@ span.attribute-title {
 }
 
 .blurred{
-    filter:blur(5px);
     -webkit-filter:blur(5px);
+    filter:blur(5px);
+    -webkit-font-smoothing: antialiased;
+}
+
+.unblurred{
+    -webkit-filter:blur(0px);
+    filter:blur(0px);
+    -webkit-font-smoothing: antialiased;
 }
