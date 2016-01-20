@@ -6186,7 +6186,9 @@ class MobileCIAPIController extends ControllerAPI
                         elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
 
                             if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
-                                $issued = true;
+                                if ($mallTime >= $ruleBeginDateUTC && $mallTime <= $ruleEndDateUTC) {
+                                    $issued = true;
+                                }
                             }
                         }
                                              
