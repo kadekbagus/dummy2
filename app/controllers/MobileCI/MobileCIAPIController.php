@@ -6186,10 +6186,16 @@ class MobileCIAPIController extends ControllerAPI
                         elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
 
                             if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
-                                $issued = true;
+                               $signin = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                    ->where('user_id', $user->user_id)
+                                                    ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
+
+                                if(! empty($signin)) {
+                                    $issued = true;
+                                }
                             }
                         }
-                                             
+
                     } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
                         $issued = true;
                     }
