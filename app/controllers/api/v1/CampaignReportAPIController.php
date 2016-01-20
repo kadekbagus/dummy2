@@ -68,8 +68,8 @@ class CampaignReportAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $current_mall = OrbitInput::get('current_mall');
-            // $start_date = OrbitInput::get('start_date');
-            // $end_date = OrbitInput::get('end_date');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
             $sort_by = OrbitInput::get('sortby');
 
             $this->registerCustomValidation();
@@ -81,7 +81,7 @@ class CampaignReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:updated_at,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
+                    'sort_by' => 'in:updated_at,campaign_name,campaign_type,total_tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -155,10 +155,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
-                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                        //     $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                        //     ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                        // })
                         ->where('campaign_price.campaign_type', '=', 'news')
                         ->where('news.object_type', '=', 'news')
                         ->groupBy('news.news_id')
@@ -198,10 +194,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
-                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                        //     $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                        //     ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                        // })
                         ->where('campaign_price.campaign_type', '=', 'promotion')
                         ->where('news.object_type', '=', 'promotion')
                         ->groupBy('news.news_id')
@@ -241,10 +233,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $current_mall)
-                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                        //     $q->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
-                        //     ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
-                        // })
                         ->where('campaign_price.campaign_type', '=', 'coupon')
                         ->groupBy('promotions.promotion_id')
                         ;
@@ -287,6 +275,25 @@ class CampaignReportAPIController extends ControllerAPI
                 $status = (array)$status;
                 $campaign->whereIn('status', $status);
             });
+
+            // Filter by range date
+            if($start_date != '' && $end_date != ''){
+                $campaign->where(function ($q) use ($start_date, $end_date) {
+                            $q->where(function ($r) use ($start_date, $end_date) {
+                                    $r->whereRaw("begin_date between ? and ?", [$start_date, $end_date])
+                                      ->orWhereRaw("end_date between ? and ?", [$start_date, $end_date]);
+                                })
+                              ->orWhere(function ($s) use ($start_date, $end_date) {
+                                    $s->whereRaw(" ? between begin_date and end_date", [$start_date])
+                                      ->orWhereRaw(" ? between begin_date and end_date", [$end_date]);
+                                });
+                        });
+            }
+
+            OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
+                $campaign->where('mall_name', 'like', "%$mall_name%");
+            });
+
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
@@ -564,13 +571,23 @@ class CampaignReportAPIController extends ControllerAPI
                 $interval = new DateInterval('P1D');
                 $daterange = new DatePeriod($begin, $interval ,$end);
 
-                foreach($daterange as $date){
-                    // Get activity
-                    echo $date->format("Y-m-d") . "<br>";
+                $data = array();
+                foreach($daterange as $key => $date){
+                    // Get activity per day
+                    // echo $key . ' - ' . $date->format('Y-m-d') . "<br>";
+                    $dateEachDay = $date->format('Y-m-d');
+
+                    $data[$dateEachDay] = Activity::selectRaw('activity_id')
+                        ->where('object_id', $campaign_id)
+                        ->where('group', 'mobile-ci')
+                        ->whereRaw(" (activity_type = 'view' OR activity_type = 'click') ")
+                        ->whereRaw(' DATE(created_at) = ?', [$dateEachDay])
+                        ->get()
+                        ;
                 }
             }
 
-
+            dd($data);
             die();
 
             //get total cost news
