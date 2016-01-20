@@ -109,7 +109,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">CRM Summary</h2>
+    <h2 style="margin-bottom:0.5em;">Campaign Summary</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -120,24 +120,50 @@
 
     <table style="width:100%">
         <thead>
-        <?php if(!$flag_noconfig) {?>
-        <th style="text-align:left;">Date </th>
-        <?php  foreach($columns as $i => $j) { ?>
-        <th style="text-align: left;"><?php echo $j['label'] ?></th>
-        <?php } } ?>
+            <th style="text-align:left;">No</th>
+            <th style="text-align:left;">Campaign Name</th>
+            <th style="text-align:left;">Campaign Type</th>
+            <th style="text-align:left;">Tenants</th>
+            <th style="text-align:left;">Mall</th>
+            <th style="text-align:left;">Campaign Dates</th>
+            <th style="text-align:left;">Page Views</th>
+
+            <th style="text-align:left;">Views</th>
+            <th style="text-align:left;">Clicks</th>
+            <th style="text-align:left;">Daily</th>
+
+            <th style="text-align:left;">Estimated Total</th>
+            <th style="text-align:left;">Spending</th>
+
+            <th style="text-align:left;">Status</th>
         </thead>
+
         <tbody>
-
-        <?php if(!$flag_7days) { foreach ($dates as $x => $y) { ?>
-            <tr class=" ">
-                <td width='4%'><?php echo $me->printDateTime($y['label'], 'd/m/Y'); ?></td>
-                <?php foreach($columns as $i => $j) { ?>
-                    <td><?php echo $me->printFormatNumber($data[$y['order']][$j['order']]); ?></td>
-
-                <?php } ?>
-            </tr>
-        <?php } } ?>
+            <?php
+            $no  = 1;
+            foreach ($data as $key => $value) {
+                ?>
+                    <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
+                        <td><?php echo $no; ?></td>
+                        <td><?php echo $value->campaign_name; ?></td>
+                        <td><?php echo $value->campaign_type; ?></td>
+                        <td><?php echo $value->total_tenant; ?></td>
+                        <td><?php echo $value->mall_name; ?></td>
+                        <td><?php echo $value->begin_date . ' - ' . $value->end_date; ?></td>
+                        <td><?php echo $value->page_views; ?></td>
+                        <td><?php echo $value->popup_views; ?></td>
+                        <td><?php echo $value->popup_clicks; ?></td>
+                        <td><?php echo $value->base_price; ?></td>
+                        <td><?php echo $value->estimated_total; ?></td>
+                        <td><?php echo $value->spending; ?></td>
+                        <td><?php echo $value->status; ?></td>
+                    </tr>
+                <?php
+                $no++;
+            }
+            ?>
         </tbody>
+
     </table>
 </div>
 
