@@ -2,6 +2,7 @@
 /**
  * An API controller for managing Campaign report.
  */
+use Carbon\Carbon;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -1088,16 +1089,37 @@ class CampaignReportAPIController extends ControllerAPI
      * Get the campaign spending
      *
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Validations
      */
     public function getSpending()
     {
-        $startDate = OrbitInput::get('start_date');
+        // Campaign ID
+        $id = OrbitInput::get('id');
+
+        // News, promotion or coupon
+        $type = OrbitInput::get('type');
+
+        // Date intervals
+        $beginDate = OrbitInput::get('begin_date');
         $endDate = OrbitInput::get('end_date');
-        $this->response->data = [
-            ['date' => '10/12/2015', 'cost' => '195,000'],
-            ['date' => '11/12/2015', 'cost' => '295,000'],
-            ['date' => '12/12/2015', 'cost' => '395,000'],
-        ];
+
+        // Init Carbon
+        $carbonDate = Carbon::createFromFormat('Y-m-d', $beginDate);
+
+        // Init outputs
+        $outputs = [];
+
+        // Loop
+        while ($carbonDate->toDateString() <= $endDate) {
+
+            // Add to output array
+            $outputs[] = ['date' => $carbonDate->toDateString(), 'cost' => '195,000'];
+
+            // Increment day by 1
+            $carbonDate->addDay();
+        }
+
+        $this->response->data = $outputs;
 
         return $this->render(200);
     }
