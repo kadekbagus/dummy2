@@ -1109,11 +1109,28 @@ class CampaignReportAPIController extends ControllerAPI
         // Init outputs
         $outputs = [];
 
+        // Init previous day cost
+        $previousDayCost = 0;
+
         // Loop
         while ($carbonDate->toDateString() <= $endDate) {
+            $date = $carbonDate->toDateString();
+
+            // Let's retrieve from DB
+            $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                ->where('updated_at', 'LIKE', $date.' %')
+                ->orderBy('updated_at', 'desc')
+                ->first();
+
+            $cost = $previousDayCost;
+
+            // Data found
+            if ($row) {
+                $cost = $previousDayCost = $row->campaign_cost;
+            }
 
             // Add to output array
-            $outputs[] = ['date' => $carbonDate->toDateString(), 'cost' => '195,000'];
+            $outputs[] = compact('date', 'cost');
 
             // Increment day by 1
             $carbonDate->addDay();
