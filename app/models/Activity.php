@@ -321,7 +321,7 @@ class Activity extends Eloquent
                         break;
                     
                     case 'LuckyDraw':
-                        $this->object_display_name = $object->lucky_draw_name_display;
+                        $this->object_display_name = $object->lucky_draw_name;
                         break;
 
                     case 'EventModel':
