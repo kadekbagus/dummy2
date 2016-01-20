@@ -385,7 +385,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
+                                                <p>'+ (data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -404,7 +404,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
+                                                <p>'+ (data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -423,7 +423,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
+                                                <p>'+ (data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -442,7 +442,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
-                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
+                                                <p>'+ (data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';

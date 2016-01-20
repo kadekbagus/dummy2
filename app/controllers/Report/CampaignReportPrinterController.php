@@ -13,43 +13,31 @@ use Response;
 use Mall;
 use Carbon\Carbon as Carbon;
 
-class CouponReportPrinterController extends DataPrinterController
+class CampaignReportPrinterController extends DataPrinterController
 {
-    public function getCampaignSummaryReportPrintView()
+    public function getPrintCampaignSummaryReport()
     {
         $this->preparePDO();
         $prefix = DB::getTablePrefix();
 
-        $couponName = OrbitInput::get('coupon_name', 'Coupon Name');
         $mode = OrbitInput::get('export', 'print');
         $current_mall = OrbitInput::get('current_mall');
-        $redeemed_by = OrbitInput::get('redeemed_by');
 
         $timezoneCurrentMall = $this->getTimezoneMall($current_mall);
 
         $user = $this->loggedUser;
-dd($user);
+
         // Instantiate the CampaignReportAPIController to get the query builder of Coupons
         $response = CampaignReportAPIController::create('raw')
                                             ->setReturnBuilder(TRUE)
                                             ->getCampaignReportSummary();
 
-        if (! is_array($response)) {
-            return Response::make($response->message);
-        }
-
-        $coupons = $response['builder'];
-        $totalCoupons = $response['count'];
+        $data = $response->data->records;
+        $totalCoupons = $response->data->total_records;
 
         $this->prepareUnbufferedQuery();
 
-        $sql = $coupons->toSql();
-        $binds = $coupons->getBindings();
-
-        $statement = $this->pdo->prepare($sql);
-        $statement->execute($binds);
-
-        $pageTitle = 'Redeemed Coupon Report for ' . $couponName;
+        $pageTitle = 'Redeemed Coupon Report for ';
 
         switch ($mode) {
             case 'csv':
@@ -58,35 +46,41 @@ dd($user);
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezoneCurrentMall));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Coupon Report for ' . $couponName, '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Summary Report', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Redeemed Coupons', $totalCoupons, '', '', '', '','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Tenants', 'Mall', 'Campaign Dates', 'Page Views', 'Views', 'Clicks', 'Daily', 'Estimated Total', 'Spending', 'Status');
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Tenant(s)', 'Redeemed/Issued', 'Coupon Code', 'Customer', 'Redeemed Date & Time', 'Verification Number');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                $count = 1;
-                while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    printf("\"%s\",\"%s\",\"=\"\"%s\"\"\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $count,
-                            $row->redeem_retailer_name,
-                            '1 / ' . $row->total_issued,
-                            $row->issued_coupon_code,
-                            $row->user_email,
-                            $this->printDateTime($row->redeemed_date, $timezoneCurrentMall, 'no'),
-                            $row->redeem_verification_code
+                $no  = 1;
+                foreach ($data as $key => $value) {
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                            $no,
+                            $value->campaign_name,
+                            $value->campaign_type,
+                            $value->total_tenant,
+                            $value->mall_name,
+                            $value->begin_date,
+                            $value->end_date,
+                            $value->page_views,
+                            $value->popup_views,
+                            $value->popup_clicks,
+                            $value->base_price,
+                            $value->estimated_total,
+                            $value->spending,
+                            $value->status
                     );
-                    $count++;
+                    $no++;
                 }
+
                 break;
 
             case 'print':
             default:
                 $me = $this;
                 $rowCounter = 0;
-                require app_path() . '/views/printer/list-coupon-report-view.php';
+                require app_path() . '/views/printer/list-campaign-summary-report-view.php';
         }
     }
 

@@ -29,11 +29,12 @@ class CampaignReportAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `sortby`                (optional) - Column order by. Valid value: updated_date, created_at, campaign_name, campaign_type, tenant, mall_name, begin_date, end_date, page_views, views, clicks, daily, estimated_total, spending, status
-     * @param string   `sortmode`              (optional) - ASC or DESC
-     * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant only
-     * @param integer  `take`                  (optional) - Limit
-     * @param integer  `skip`                  (optional) - Limit offset
+     * @param string   `current_mall`  (required) - mall id
+     * @param string   `campaign_id`   (required) - campaign id (news_id, promotion_id, coupon_id)
+     * @param string   `sortby`        (optional) - Column order by. Valid value: updated_date, created_at, campaign_name, campaign_type, tenant, mall_name, begin_date, end_date, page_views, views, clicks, daily, estimated_total, spending, status
+     * @param string   `sortmode`      (optional) - ASC or DESC
+     * @param integer  `take`          (optional) - Limit
+     * @param integer  `skip`          (optional) - Limit offset
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -67,8 +68,8 @@ class CampaignReportAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $current_mall = OrbitInput::get('current_mall');
-            $start_date = OrbitInput::get('start_date');
-            $end_date = OrbitInput::get('end_date');
+            // $start_date = OrbitInput::get('start_date');
+            // $end_date = OrbitInput::get('end_date');
             $sort_by = OrbitInput::get('sortby');
 
             $this->registerCustomValidation();
@@ -154,10 +155,10 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
-                        ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                            ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                        })
+                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
+                        //     $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
+                        //     ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
+                        // })
                         ->where('campaign_price.campaign_type', '=', 'news')
                         ->where('news.object_type', '=', 'news')
                         ->groupBy('news.news_id')
@@ -197,10 +198,10 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
-                        ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                            ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                        })
+                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
+                        //     $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
+                        //     ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
+                        // })
                         ->where('campaign_price.campaign_type', '=', 'promotion')
                         ->where('news.object_type', '=', 'promotion')
                         ->groupBy('news.news_id')
@@ -240,10 +241,10 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $current_mall)
-                        ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
-                            ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
-                        })
+                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
+                        //     $q->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
+                        //     ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
+                        // })
                         ->where('campaign_price.campaign_type', '=', 'coupon')
                         ->groupBy('promotions.promotion_id')
                         ;
@@ -268,7 +269,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Filter by campaign type
             OrbitInput::get('campaign_type', function($campaign_type) use ($campaign) {
-                $campaign->where('campaign_type', $campaign_type);
+                $campaign->where('campaign_type', 'like', "%$campaign_type%");
             });
 
             // Filter by tenant
@@ -278,7 +279,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Filter by mall
             OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
-                $campaign->where('mall_name', $mall_name);
+                $campaign->where('mall_name', 'like', "%$mall_name%");
             });
 
             // Filter by campaign status
@@ -442,10 +443,11 @@ class CampaignReportAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
+     * @param string   `campaign_id            (required) - Campaign id (news_id, promotion_id, coupon_id)
+     * @param string   `campaign_type          (required) - news, promotion, coupon
+     * @param string   `current_mall`          (required) - mall id
      * @param string   `sortby`                (optional) - Column order by. Valid value: updated_date, created_at, campaign_name, campaign_type, tenant, mall_name, begin_date, end_date, page_views, views, clicks, daily, estimated_total, spending, status
-     * @param string   `campaign_id            (optional) - Campaign id (news_id, promotion_id, coupon_id)
      * @param string   `sortmode`              (optional) - ASC or DESC
-     * @param string   `redeemed_by            (optional) - Filtering redeemed by cs or tenant only
      * @param integer  `take`                  (optional) - Limit
      * @param integer  `skip`                  (optional) - Limit offset
      *
@@ -480,6 +482,8 @@ class CampaignReportAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $campaign_id = OrbitInput::get('campaign_id');
+            $campaign_type = OrbitInput::get('campaign_type');
             $current_mall = OrbitInput::get('current_mall');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
@@ -489,10 +493,14 @@ class CampaignReportAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
+                    'campaign_id' => $campaign_id,
+                    'campaign_type' => $campaign_type,
                     'current_mall' => $current_mall,
                     'sort_by' => $sort_by,
                 ),
                 array(
+                    'campaign_id' => 'required',
+                    'campaign_type' => 'required',
                     'current_mall' => 'required|orbit.empty.mall',
                     'sort_by' => 'in:updated_at,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
                 ),
@@ -532,6 +540,38 @@ class CampaignReportAPIController extends ControllerAPI
             // Builder object
             $now = date('Y-m-d H:i:s');
             $tablePrefix = DB::getTablePrefix();
+
+            if ($campaign_type === 'news' or $campaign_type === 'promotion') {
+                // Get begin and end
+                $getBeginEndDate = News::excludeDeleted()->selectRaw('DATE(begin_date) as begin_date, DATE(end_date) as end_date')
+                    ->where('news_id', $campaign_id)
+                    ->where('object_type', $campaign_type)
+                    ->get();
+
+            } elseif ($campaign_type === 'coupon') {
+                // Get begin and end
+                $getBeginEndDate = Coupon::excludeDeleted()->selectRaw('DATE(begin_date) as begin_date, DATE(end_date) as end_date')
+                    ->where('promotion_id', $campaign_id)
+                    ->get();
+            }
+
+            // Get data from activity per day
+            if (count($getBeginEndDate) > 0) {
+                $begin = new DateTime($getBeginEndDate[0]->begin_date);
+                $end = new DateTime($getBeginEndDate[0]->end_date);
+                $end = $end->modify( '+1 day' );
+
+                $interval = new DateInterval('P1D');
+                $daterange = new DatePeriod($begin, $interval ,$end);
+
+                foreach($daterange as $date){
+                    // Get activity
+                    echo $date->format("Y-m-d") . "<br>";
+                }
+            }
+
+
+            die();
 
             //get total cost news
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
@@ -953,14 +993,12 @@ class CampaignReportAPIController extends ControllerAPI
             $demograhicFemale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'f'
                         AND {$tablePrefix}activities.created_at between ? and ?
-                        group by {$tablePrefix}activities.user_id
                     ) as A
             ", array($campaign_id, $current_mall, $start_date, $end_date));
 
             $demograhicMale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'm'
                         AND {$tablePrefix}activities.created_at between ? and ?
-                        group by {$tablePrefix}activities.user_id
                     ) as A
             ", array($campaign_id, $current_mall, $start_date, $end_date));
 
