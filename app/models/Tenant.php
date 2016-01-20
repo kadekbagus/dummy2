@@ -377,4 +377,9 @@ class Tenant extends Eloquent
     {
         return $this->mediaOrig()->where('media_name_id', 'retailer_background');
     }
+
+    public static function getStatus($idtenant)
+    {
+        return Tenant::where('merchant_id', '=', $idtenant)->pluck('status'); 
+    }
 }

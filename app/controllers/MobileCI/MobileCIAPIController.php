@@ -5098,7 +5098,10 @@ class MobileCIAPIController extends ControllerAPI
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('news_translations', 'news.news_id', '=', 'news_translations.news_id')
+                ->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                    $join->on('news.news_id', '=', 'news_translations.news_id');
+                    $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('news.news_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'promotion');
@@ -5112,9 +5115,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
-                    $q->where('news.news_name', 'like', "%$keyword%")
-                        ->orWhere('news.description', 'like', "%$keyword%")
-                        ->orwhere('news_translations.news_name', 'like', "%$keyword%")
+                    $q->where('news_translations.news_name', 'like', "%$keyword%")
                         ->orWhere('news_translations.description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
                 })
@@ -5125,7 +5126,10 @@ class MobileCIAPIController extends ControllerAPI
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('news_translations', 'news.news_id', '=', 'news_translations.news_id')
+                ->leftJoin('news_translations', function($join) use ($alternateLanguage){
+                    $join->on('news.news_id', '=', 'news_translations.news_id');
+                    $join->where('news_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('news.news_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'news');
@@ -5139,9 +5143,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between begin_date and end_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
-                    $q->where('news.news_name', 'like', "%$keyword%")
-                        ->orWhere('news.description', 'like', "%$keyword%")
-                        ->orwhere('news_translations.news_name', 'like', "%$keyword%")
+                    $q->where('news_translations.news_name', 'like', "%$keyword%")
                         ->orWhere('news_translations.description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
                 })
@@ -5152,7 +5154,10 @@ class MobileCIAPIController extends ControllerAPI
                 ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
                 ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id')
-                ->leftJoin('coupon_translations', 'promotions.promotion_id', '=', 'coupon_translations.promotion_id')
+                ->leftJoin('coupon_translations', function($join) use ($alternateLanguage){
+                    $join->on('promotions.promotion_id', '=', 'coupon_translations.promotion_id');
+                    $join->where('coupon_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('promotions.promotion_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'coupon');
@@ -5169,10 +5174,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('promotions.status', 'active')
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where(function($q) use ($keyword) {
-                    $q->where('promotions.promotion_name', 'like', "%$keyword%")
-                        ->orWhere('promotions.description', 'like', "%$keyword%")
-                        ->orWhere('promotions.long_description', 'like', "%$keyword%")
-                        ->orwhere('coupon_translations.promotion_name', 'like', "%$keyword%")
+                    $q->where('coupon_translations.promotion_name', 'like', "%$keyword%")
                         ->orWhere('coupon_translations.description', 'like', "%$keyword%")
                         ->orWhere('coupon_translations.long_description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
@@ -5181,7 +5183,10 @@ class MobileCIAPIController extends ControllerAPI
 
             $tenant = DB::table('merchants')
                 ->selectRaw("{$prefix}merchants.merchant_id as object_id, {$prefix}merchants.name as object_name, {$prefix}merchants.description as object_description, {$prefix}media.path as object_image, 'tenant' as object_type")
-                ->leftJoin('merchant_translations', 'merchants.merchant_id', '=', 'merchant_translations.merchant_id')
+                ->leftJoin('merchant_translations', function($join) use ($alternateLanguage){
+                    $join->on('merchants.merchant_id', '=', 'merchant_translations.merchant_id');
+                    $join->where('merchant_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                })
                 ->leftJoin('keyword_object', function($join) {
                     $join->on('merchants.merchant_id', '=', 'keyword_object.object_id');
                     $join->where('keyword_object.object_type', '=', 'tenant');
@@ -5199,9 +5204,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('merchants.status', 'active')
                 ->where('parent_id', $retailer->merchant_id)
                 ->where(function($q) use ($keyword) {
-                    $q->where('merchants.name', 'like', "%$keyword%")
-                        ->orWhere('merchants.description', 'like', "%$keyword%")
-                        ->orWhere('merchant_translations.name', 'like', "%$keyword%")
+                    $q->where('merchant_translations.name', 'like', "%$keyword%")
                         ->orWhere('merchant_translations.description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
                 })
@@ -5209,14 +5212,15 @@ class MobileCIAPIController extends ControllerAPI
 
             $lucky_draw = DB::table('lucky_draws')
                 ->selectRaw("{$prefix}lucky_draws.lucky_draw_id as object_id, {$prefix}lucky_draws.lucky_draw_name as object_name, {$prefix}lucky_draws.description as object_description, {$prefix}lucky_draws.image as object_image, 'lucky_draw' as object_type")
-                ->leftJoin('lucky_draw_translations', 'lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id')
+                ->leftJoin('lucky_draw_translations', function($join) use ($alternateLanguage){
+                    $join->on('lucky_draws.lucky_draw_id', '=', 'lucky_draw_translations.lucky_draw_id');
+                    $join->where('lucky_draw_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                })
                 ->where('lucky_draws.status', 'active')
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime])
                 ->where(function($q) use ($keyword) {
-                    $q->where('lucky_draws.lucky_draw_name', 'like', "%$keyword%")
-                        ->orWhere('lucky_draws.description', 'like', "%$keyword%")
-                        ->orWhere('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
+                    $q->where('lucky_draw_translations.lucky_draw_name', 'like', "%$keyword%")
                         ->orWhere('lucky_draw_translations.description', 'like', "%$keyword%");
                 })
                 ->groupBy('lucky_draws.lucky_draw_id');
@@ -6182,10 +6186,16 @@ class MobileCIAPIController extends ControllerAPI
                         elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
 
                             if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
-                                $issued = true;
+                               $signin = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                    ->where('user_id', $user->user_id)
+                                                    ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
+
+                                if(! empty($signin)) {
+                                    $issued = true;
+                                }
                             }
                         }
-                                             
+
                     } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
                         $issued = true;
                     }
