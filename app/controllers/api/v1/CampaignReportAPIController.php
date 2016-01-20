@@ -993,14 +993,12 @@ class CampaignReportAPIController extends ControllerAPI
             $demograhicFemale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'f'
                         AND {$tablePrefix}activities.created_at between ? and ?
-                        group by {$tablePrefix}activities.user_id
                     ) as A
             ", array($campaign_id, $current_mall, $start_date, $end_date));
 
             $demograhicMale = DB::select($query . "
                         AND {$tablePrefix}user_details.gender = 'm'
                         AND {$tablePrefix}activities.created_at between ? and ?
-                        group by {$tablePrefix}activities.user_id
                     ) as A
             ", array($campaign_id, $current_mall, $start_date, $end_date));
 
