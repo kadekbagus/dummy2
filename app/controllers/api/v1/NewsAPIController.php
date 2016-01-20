@@ -251,7 +251,28 @@ class NewsAPIController extends ControllerAPI
             $news_translation_default->save();
 
             Event::fire('orbit.news.after.translation.save', array($this, $news_translation_default));
+            $mall = App::make('orbit.empty.mall');
+            $now = Carbon::now($mall->timezone->timezone_name);
 
+            // get action id for campaign history
+            $actionstatus = 'activate';
+            if ($status === 'inactive') {
+                $actionstatus = 'deactivate';
+            }
+            $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+            $addtenantid = CampaignHistoryActions::getIdFromAction('add_tenant');
+
+            // campaign history status
+            $campaignhistory = new CampaignHistory();
+            $campaignhistory->campaign_type = $object_type;
+            $campaignhistory->campaign_id = $newnews->news_id;
+            $campaignhistory->campaign_history_action_id = $activeid;
+            $campaignhistory->number_active_tenants = 0;
+            $campaignhistory->campaign_cost = 0;
+            $campaignhistory->created_by = $this->api->user->user_id;
+            $campaignhistory->modified_by = $this->api->user->user_id;
+            $campaignhistory->save();
+            //dd($campaignhistory);
 
             // save NewsMerchant.
             $newsretailers = array();
@@ -350,6 +371,29 @@ class NewsAPIController extends ControllerAPI
 
             $this->response->data = $newnews;
             $this->response->data->translation_default = $news_translation_default;
+
+            //save histories
+            foreach ($retailer_ids as $retailer_id) {
+                // insert tenant/merchant to campaign history
+                $tenantstatus = Tenant::getStatus($retailer_id);
+                if ($tenantstatus === 'active') {
+                    $rowcost = CampaignHistory::getRowCost($newnews->news_id, $status, 'add', $now)->first();
+                    $addtenant = new CampaignHistory();
+                    $addtenant->campaign_type = $object_type;
+                    $addtenant->campaign_id = $newnews->news_id;
+                    $addtenant->campaign_external_value = $retailer_id;
+                    $addtenant->campaign_history_action_id = $addtenantid;
+                    $addtenant->number_active_tenants = $rowcost->tenants;
+                    $addtenant->created_by = $this->api->user->user_id;
+                    $addtenant->modified_by = $this->api->user->user_id;
+                    if ($status === 'inactive') {
+                        $addtenant->campaign_cost = 0;
+                    } else {
+                        $addtenant->campaign_cost = $rowcost->cost;
+                    }
+                    $addtenant->save();
+                }
+            }
 
             // Commit the changes
             $this->commit();
@@ -528,6 +572,8 @@ class NewsAPIController extends ControllerAPI
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
+            $retailernew = OrbitInput::post('retailer_ids');
+            $retailernew = (array) $retailernew;
 
             $data = array(
                 'news_id'             => $news_id,
@@ -578,6 +624,14 @@ class NewsAPIController extends ControllerAPI
             Event::fire('orbit.news.postupdatenews.after.validation', array($this, $validator));
 
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
+
+            $statusdb = $updatednews->status;
+            //check get merchant for db
+            $newsmerchantdb = NewsMerchant::select('merchant_id')->where('news_id', $news_id)->get()->toArray();
+            $merchantdb = array();
+            foreach($newsmerchantdb as $merchantdbid) {
+                $merchantdb[] = $merchantdbid['merchant_id'];
+            }
 
             $updatednews_default_language = NewsTranslation::excludeDeleted()->where('news_id', $news_id)->where('merchant_id', $mall_id)->where('merchant_language_id', $id_language_default)->first();
 
@@ -858,9 +912,68 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->keywords = $newsKeywords;
             });
 
+            //save campaign histories
+            $actionhistory = '';
+            $mall = App::make('orbit.empty.mall');
+            $now = Carbon::now($mall->timezone->timezone_name);
+            //check for update status
+            if ($statusdb != $status) {
+                // get action id for campaign history
+                $actionstatus = 'activate';
+                if ($status === 'inactive') {
+                    $actionstatus = 'deactivate';
+                }
+                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now)->first();
+                // campaign history status
+                $campaignhistory = new CampaignHistory();
+                $campaignhistory->campaign_type = $object_type;
+                $campaignhistory->campaign_id = $news_id;
+                $campaignhistory->campaign_history_action_id = $activeid;
+                $campaignhistory->number_active_tenants = $rowcost->tenants;
+                $campaignhistory->campaign_cost = $rowcost->cost;
+                $campaignhistory->created_by = $this->api->user->user_id;
+                $campaignhistory->modified_by = $this->api->user->user_id;
+                $campaignhistory->save();
+            }
+
+            //check for add/remove tenant
+            $removetenant = array_diff($merchantdb, $retailernew);
+            $addtenant = array_diff($retailernew, $merchantdb);
+
+            if (empty($removetenant)) {
+                $tenantid = (array) $addtenant;
+                $actionhistory = 'add';
+                $addtenantid = CampaignHistoryActions::getIdFromAction('add_tenant');
+            } else {
+                $tenantid = (array) $removetenant;
+                $actionhistory = 'delete';
+                $addtenantid = CampaignHistoryActions::getIdFromAction('delete_tenant');
+            }
+
+            //save histories
+            foreach ($tenantid as $retailer_id) {
+                // insert tenant/merchant to campaign history
+                $tenantstatus = Tenant::getStatus($retailer_id);
+                if ($tenantstatus === 'active') {
+                    $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now)->first();
+                    $tenanthistory = new CampaignHistory();
+                    $tenanthistory->campaign_type = $object_type;
+                    $tenanthistory->campaign_id = $news_id;
+                    $tenanthistory->campaign_external_value = $retailer_id;
+                    $tenanthistory->campaign_history_action_id = $addtenantid;
+                    $tenanthistory->number_active_tenants = $rowcost->tenants;
+                    $tenanthistory->campaign_cost = $rowcost->cost;
+                    $tenanthistory->created_by = $this->api->user->user_id;
+                    $tenanthistory->modified_by = $this->api->user->user_id;
+                    $tenanthistory->save();
+                }
+            }
+            
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             $this->response->data->translation_default = $updatednews_default_language;
+
 
             // Commit the changes
             $this->commit();
