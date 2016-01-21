@@ -109,7 +109,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Campaign Summary</h2>
+    <h2 style="margin-bottom:0.5em;">Campaign Summary Report</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -132,12 +132,12 @@
             <td><strong><?php echo number_format($totalPopUpViews, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Total spending</td>
+            <td>Estimated total cost</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Estimated total cost</td>
+            <td>Total spending</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
         </tr>
