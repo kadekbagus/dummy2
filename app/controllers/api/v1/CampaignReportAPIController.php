@@ -1157,7 +1157,7 @@ class CampaignReportAPIController extends ControllerAPI
         while ($carbonDate->toDateString() <= $endDate) {
             $date = $carbonDate->toDateString();
 
-            // Let's retrieve from DB
+            // Let's retrieve it from DB
             $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', 'LIKE', $date.' %')
                 ->orderBy('updated_at', 'desc')
