@@ -1,7 +1,6 @@
 @extends('mobile-ci.layout')
 
 @section('ext_style')
-{{ HTML::style('mobile-ci/stylesheet/jquery-ui.min.css') }}
 <style type="text/css">
 .img-responsive{
     margin:0 auto;
@@ -150,56 +149,6 @@
     </div>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> Info</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <p style="font-size:15px;">
-                            <b>{{ Lang::get('mobileci.modals.enjoy_free') }}</b>
-                            <br>
-                            @if ($active_user)
-                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">{{ Lang::get('mobileci.modals.unlimited') }}</span>
-                            @else
-                            <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">30 {{ Lang::get('mobileci.modals.minutes') }}</span>
-                            @endif
-                            <br>
-                            <b>{{ Lang::get('mobileci.modals.internet') }}</b>
-                            <br><br>
-                            <b>{{ Lang::get('mobileci.modals.check_out_our') }}</b>
-                            <br>
-                            <b><span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.promotion') }}</span> {{ Lang::get('mobileci.modals.and') }} <span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.coupon_single') }}</span></b>
-                        </p>
-                    </div>
-                </div>
-                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
-                    <div class="col-xs-12">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-xs-12 text-left">
-                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck" style="top:2px;position:relative;">
-                            <label for="verifyModalCheck">{{ Lang::get('mobileci.modals.do_not_display') }}</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="modal fade" id="tour-confirmation" data-keyboard="false" data-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -219,16 +168,7 @@
 @stop
 
 @section('ext_script_bot')
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-{{ HTML::script('mobile-ci/scripts/responsiveslides.min.js') }}
 <script type="text/javascript">
-    var cookie_dismiss_name = 'dismiss_verification_popup';
-    var cookie_dismiss_name_2 = 'dismiss_activation_popup';
-
-    @if ($active_user)
-    cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
-    @endif
-
     /**
      * Get Query String from the URL
      *
@@ -270,6 +210,7 @@
     }
 
     $(document).ready(function() {
+        /* ------- {{-- Orbit Tour Currently Disabled --}}
         var homescreenPopover = {};
         function homescreenPopup() {
             // get the os first
@@ -376,58 +317,10 @@
         homescreenPopup();
 
         var displayTutorial = false;
-        orbitIsViewing = true; {{-- declared in layout --}}
         // Override the content of displayTutorial
         if (get('show_tour') === 'yes') {
             displayTutorial = true;
         }
-
-        var loadModal = function () {
-            var onlyEvent = false;
-
-            if (get('from_login') !== 'yes') {
-                onlyEvent = true;
-            }
-            orbitIsViewing = false;
-            $('#verifyModal').on('hidden.bs.modal', function () {
-                if ($('#verifyModalCheck')[0].checked) {
-                    $.cookie(cookie_dismiss_name, 't', {expires: 3650});
-                }
-            });
-
-            var modals = [
-            {
-                selector: '#verifyModal',
-                display: get('internet_info') === 'yes' && !$.cookie(cookie_dismiss_name)
-            }
-            ];
-            var modalIndex;
-
-            for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-                {{-- for each displayable modal, after it is hidden try and display the next displayable modal --}}
-                if (modals[modalIndex].display) {
-                    $(modals[modalIndex].selector).on('hidden.bs.modal', (function(myIndex) {
-                        return function() {
-                            for (var i = myIndex + 1; i < modals.length; i++) {
-                                if (modals[i].display) {
-                                    $(modals[i].selector).modal();
-                                    return;
-                                }
-                            }
-                        }
-                    })(modalIndex));
-                }
-            }
-
-            {{-- display the first displayable modal --}}
-            for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-                if (modals[modalIndex].display) {
-                    $(modals[modalIndex].selector).modal();
-                    break;
-                }
-            }
-
-        };
 
         // Instance the tour
         var endTour = new Tour({
@@ -697,27 +590,8 @@
         } else {
             loadModal();
         }
-
-        $('#emptyCoupon').click(function(){
-          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_coupon') }}');
-          $('#noModal').modal();
-        });
-        $('#emptyNew').click(function(){
-          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_new_product') }}');
-          $('#noModal').modal();
-        });
-        $('#emptyPromo').click(function(){
-          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').text('{{ Lang::get('mobileci.modals.message_no_promotion') }}');
-          $('#noModal').modal();
-        });
-        $('#emptyLuck').click(function(){
-          $('#noModalLabel').text('{{ Lang::get('mobileci.modals.info_title') }}');
-          $('#noModalText').html('{{ Lang::get('mobileci.modals.message_no_lucky_draw') }}');
-          $('#noModal').modal();
-        });
+        ---------- {{-- End of Tour --}} */
+        
         $('a.widget-link').click(function(event){
           var link = $(this).attr('href');
           var widgetdata = $(this).data('widget');
@@ -733,68 +607,6 @@
             window.location.assign(link);
           });
           return false; //for good measure
-        });
-        $('#promoModal a').click(function (event){
-            var link = $(this).attr('href');
-            var eventdata = $(this).data('event');
-
-            event.preventDefault();
-            $.ajax({
-              data: {
-                eventdata: eventdata
-              },
-              method: 'POST',
-              url:apiPath+'customer/eventpopupactivity'
-            }).always(function(data){
-              window.location.assign(link);
-            });
-            return false; //for good measure
-        });
-        $('#slider1').responsiveSlides({
-            auto: true,
-            pager: false,
-            nav: true,
-            prevText: '<i class="fa fa-chevron-left"></i>',
-            nextText: '<i class="fa fa-chevron-right"></i>',
-            speed: 500
-        });
-        $('#slider2').responsiveSlides({
-            auto: true,
-            pager: false,
-            nav: true,
-            prevText: '<i class="fa fa-chevron-left"></i>',
-            nextText: '<i class="fa fa-chevron-right"></i>',
-            speed: 500
-        });
-        $('#slider3').responsiveSlides({
-            auto: true,
-            pager: false,
-            nav: true,
-            prevText: '<i class="fa fa-chevron-left"></i>',
-            nextText: '<i class="fa fa-chevron-right"></i>',
-            speed: 500
-        });
-        $('#slider4').responsiveSlides({
-            auto: true,
-            pager: false,
-            nav: true,
-            prevText: '<i class="fa fa-chevron-left"></i>',
-            nextText: '<i class="fa fa-chevron-right"></i>',
-            speed: 500
-        });
-
-        $.each($('.rslides li'), function(i, v){
-            $(this).css('height', $(this).width());
-        });
-    });
-    $(window).resize(function(){
-        $.each($('.rslides li'), function(i, v){
-            $(this).css('height', $(this).width());
-        });
-    });
-    $(window).ready(function(){
-        $.each($('.rslides li'), function(i, v){
-            $(this).css('height', $(this).width());
         });
     });
 </script>
