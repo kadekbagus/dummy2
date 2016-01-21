@@ -2377,8 +2377,7 @@ class MobileCIAPIController extends ControllerAPI
         }
 
         // Get the take args
-        // $take = Config::get('orbit.pagination.per_page');
-        $take = 4;
+        $take = Config::get('orbit.pagination.per_page');
         OrbitInput::get(
             'take',
             function ($_take) use (&$take, $maxRecord) {
@@ -2504,16 +2503,54 @@ class MobileCIAPIController extends ControllerAPI
             $languages = $this->getListLanguages($retailer);
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 300;
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $luckydraws = LuckyDraw::with('translations')
                 ->active()
                 ->where('mall_id', $retailer->merchant_id)
-                ->whereRaw("? between start_date and grace_period_date", [$mallTime])
-                ->orderBy('start_date', 'desc')
-                ->get();
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
 
-            if (!empty($alternateLanguage) && !empty($luckydraws)) {
-                foreach ($luckydraws as $key => $val) {
+            $_luckydraws = clone $luckydraws;
+
+            // Get the take args
+            // $take = Config::get('orbit.pagination.per_page');
+            $take = 4;
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $luckydraws->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $luckydraws) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $luckydraws->skip($skip);
+
+            $luckydraws->orderBy('start_date', 'desc');
+
+            $totalRec = $_luckydraws->count();
+            $listOfRec = $luckydraws->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
+                foreach ($listOfRec as $key => $val) {
 
                     $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -2556,15 +2593,15 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if ($luckydraws->isEmpty()) {
+            if ($listOfRec->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = sizeof($luckydraws);
-                $data->returned_records = sizeof($luckydraws);
-                $data->records = $luckydraws;
+                $data->total_records = $totalRec;
+                $data->returned_records = sizeof($listOfRec);
+                $data->records = $listOfRec;
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -2603,6 +2640,137 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Get lucky draw list in mall
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getSearchLuckyDraw() {
+        $user = null;
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $luckydraws = LuckyDraw::with('translations')
+                ->active()
+                ->where('mall_id', $retailer->merchant_id)
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
+
+            $_luckydraws = clone $luckydraws;
+
+            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
+            if ($maxRecord <= 0) {
+                $maxRecord = Config::get('orbit.pagination.max_record');
+            }
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $luckydraws->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $luckydraws) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $luckydraws->skip($skip);
+
+            $luckydraws->orderBy('start_date', 'desc');
+
+            $totalRec = $_luckydraws->count();
+            $listOfRec = $luckydraws->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
+                foreach ($listOfRec as $key => $val) {
+
+                    $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('lucky_draw_id', $val->lucky_draw_id)->first();
+
+                    if (!empty($luckyDrawTranslation)) {
+                        foreach (['lucky_draw_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($luckyDrawTranslation->{$field}) && $luckyDrawTranslation->{$field} !== '') {
+                                $val->{$field} = $luckyDrawTranslation->{$field};
+                            }
+                        }
+
+                        $media = $luckyDrawTranslation->find($luckyDrawTranslation->lucky_draw_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $val->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \LuckyDrawTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('lucky_draw_id', $val->lucky_draw_id)->first();
+
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->lucky_draw_translation_id)
+                                    ->media_orig()
+                                    ->first();
+
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $val->image = $mediaDefaultLanguage->path;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ($listOfRec as $item) {
+                $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_lucky_number.png') : URL::asset($item->image);
+                $item->url = URL::to('customer/luckydraw?id='.$item->lucky_draw_id);
+                $item->name = mb_strlen($item->lucky_draw_name) > 64 ? mb_substr($item->lucky_draw_name, 0, 64) . '...' : $item->lucky_draw_name;
+            }
+
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+
+            return Response::json($data);
+
+        } catch (Exception $e) {
+            $data = new stdclass();
+            $data->status = 0;
+            $data->message = $e->getMessage();
+            $data->total_records = 0;
+            $data->returned_records = 0;
+            $data->records = null;
+
+            return Response::json($data);
         }
     }
 
@@ -3034,28 +3202,7 @@ class MobileCIAPIController extends ControllerAPI
             $this->registerCustomValidation();
             $user = $this->getLoggedInUser();
 
-            $sort_by = OrbitInput::get('sort_by');
-            $keyword = trim(OrbitInput::get('keyword'));
-            $category_id = trim(OrbitInput::get('cid'));
-            $floor = trim(OrbitInput::get('floor'));
-
             $pagetitle = Lang::get('mobileci.page_title.coupons');
-
-            $validator = Validator::make(
-                array(
-                    'sort_by' => $sort_by,
-                ),
-                array(
-                    'sort_by' => 'in:name',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
-                )
-            );
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-            }
 
             $retailer = $this->getRetailerInfo();
 
@@ -3069,20 +3216,53 @@ class MobileCIAPIController extends ControllerAPI
                 $maxRecord = 300;
             }
 
-            $coupons = DB::select(
-                DB::raw(
-                    'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
-                inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
-                inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
-                WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
-                    AND p.merchant_id = :merchantid
-                    AND ic.user_id = :userid
-                    ORDER BY ic.issued_date DESC'
-                ),
-                array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
-            );
+            $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image')
+                ->join('promotion_rules', function ($join) {
+                    $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
+                    $join->where('promotions.status', '=', 'active');
+                })
+                ->join('issued_coupons', function ($join) {
+                    $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                    $join->where('issued_coupons.status', '=', 'active');
+                })
+                ->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                ->where('promotions.merchant_id', $retailer->merchant_id)
+                ->where('issued_coupons.user_id', $user->user_id);
 
-            if (! empty($alternateLanguage)) {
+            $_coupons = clone $coupons;
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $coupons->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $coupons) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $coupons->skip($skip);
+
+            $coupons->orderBy('issued_date', 'desc');
+
+            $totalRec = $_coupons->count();
+            $listOfRec = $coupons->get();
+
+            if (! empty($alternateLanguage) || ! empty($listOfRec)) {
                 foreach ($coupons as $coupon) {
                     $couponTranslation = \CouponTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -3125,15 +3305,15 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if (sizeof($coupons) < 1) {
+            if ($listOfRec->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = sizeof($coupons);
-                $data->returned_records = sizeof($coupons);
-                $data->records = $coupons;
+                $data->total_records = $totalRec;
+                $data->returned_records = sizeof($listOfRec);
+                $data->records = $listOfRec;
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -3170,6 +3350,148 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Get my coupon list in mall
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getSearchCoupon() {
+        $user = null;
+        $keyword = null;
+        $activityPage = Activity::mobileci()
+                        ->setActivityType('view');
+
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $coupons = Coupon::selectRaw('*, ' . DB::getTablePrefix() . 'promotions.image AS promo_image')
+                ->join('promotion_rules', function ($join) {
+                    $join->on('promotion_rules.promotion_id', '=', 'promotions.promotion_id');
+                    $join->where('promotions.status', '=', 'active');
+                })
+                ->join('issued_coupons', function ($join) {
+                    $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                    $join->where('issued_coupons.status', '=', 'active');
+                })
+                ->where('issued_coupons.expired_date', '>=', Carbon::now($retailer->timezone->timezone_name))
+                ->where('promotions.merchant_id', $retailer->merchant_id)
+                ->where('issued_coupons.user_id', $user->user_id);
+
+            $_coupons = clone $coupons;
+
+            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
+            if ($maxRecord <= 0) {
+                $maxRecord = Config::get('orbit.pagination.max_record');
+            }
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $coupons->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $coupons) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $coupons->skip($skip);
+
+            $coupons->orderBy('issued_date', 'desc');
+
+            $totalRec = $_coupons->count();
+            $listOfRec = $coupons->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
+                foreach ($listOfRec as $key => $val) {
+
+                    $couponTranslation = \CouponTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('promotion_id', $val->promotion_id)->first();
+
+                    if (!empty($couponTranslation)) {
+                        foreach (['promotion_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($couponTranslation->{$field}) && $couponTranslation->{$field} !== '') {
+                                $val->{$field} = $couponTranslation->{$field};
+                            }
+                        }
+
+                        $media = $couponTranslation->find($couponTranslation->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $val->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \CouponTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('promotion_id', $val->promotion_id)->first();
+
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                    ->media_orig()
+                                    ->first();
+
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $val->image = $mediaDefaultLanguage->path;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ($listOfRec as $item) {
+                $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
+                $item->url = URL::to('customer/mallcoupon?id='.$item->issued_coupon_id);
+                $item->name = mb_strlen($item->promotion_name) > 64 ? mb_substr($item->promotion_name, 0, 64) . '...' : $item->promotion_name;
+            }
+
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+
+            return Response::json($data);
+
+        } catch (Exception $e) {
+            $data = new stdclass();
+            $data->status = 0;
+            $data->message = $e->getMessage();
+            $data->total_records = 0;
+            $data->returned_records = 0;
+            $data->records = null;
+
+            return Response::json($data);
         }
     }
 
@@ -3406,32 +3728,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $sort_by = OrbitInput::get('sort_by');
-            $keyword = trim(OrbitInput::get('keyword'));
-            $category_id = trim(OrbitInput::get('cid'));
-            $floor = trim(OrbitInput::get('floor'));
-
             $pagetitle = Lang::get('mobileci.page_title.promotions');
-
-            $validator = Validator::make(
-                array(
-                    'sort_by' => $sort_by,
-                ),
-                array(
-                    'sort_by' => 'in:name',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
-                )
-            );
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-            }
-
-            $retailer = $this->getRetailerInfo();
-
-            // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
@@ -3443,12 +3740,43 @@ class MobileCIAPIController extends ControllerAPI
             $promotions = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime])
-                            ->orderBy('sticky_order', 'desc')
-                            ->orderBy('created_at', 'desc')
-                            ->get();
+                            ->whereRaw("? between begin_date and end_date", [$mallTime]);                         
+            
+            $_promotions = clone $promotions;
 
-            if (!empty($alternateLanguage) && !empty($promotions)) {
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $promotions->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $promotions) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $promotions->skip($skip);
+
+            $promotions->orderBy('sticky_order', 'desc')
+                    ->orderBy('created_at', 'desc');
+
+            $totalRec = $_promotions->count();
+            $listOfRec = $promotions->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
                 foreach ($promotions as $key => $val) {
 
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
@@ -3492,15 +3820,15 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if ($promotions->isEmpty()) {
+            if ($listOfRec->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = sizeof($promotions);
-                $data->returned_records = sizeof($promotions);
-                $data->records = $promotions;
+                $data->total_records = $totalRec;
+                $data->returned_records = sizeof($listOfRec);
+                $data->records = $listOfRec;
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -3538,6 +3866,137 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Get promotion list in mall
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getSearchPromotion() {
+        $user = null;
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $promotions = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'promotion')
+                            ->whereRaw("? between begin_date and end_date", [$mallTime]);
+
+            $_promotions = clone $promotions;
+
+            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
+            if ($maxRecord <= 0) {
+                $maxRecord = Config::get('orbit.pagination.max_record');
+            }
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $promotions->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $promotions) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $promotions->skip($skip);
+
+            $promotions->orderBy('sticky_order', 'desc')->orderBy('created_at', 'desc');
+
+            $totalRec = $_promotions->count();
+            $listOfRec = $promotions->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
+                foreach ($listOfRec as $key => $val) {
+
+                    $promotionTranslation = \NewsTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('news_id', $val->news_id)->first();
+
+                    if (!empty($promotionTranslation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($promotionTranslation->{$field}) && $promotionTranslation->{$field} !== '') {
+                                $val->{$field} = $promotionTranslation->{$field};
+                            }
+                        }
+
+                        $media = $promotionTranslation->find($promotionTranslation->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $val->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('news_id', $val->news_id)->first();
+
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                    ->media_orig()
+                                    ->first();
+
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $val->image = $mediaDefaultLanguage->path;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ($listOfRec as $item) {
+                $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_promotion.png') : URL::asset($item->image);
+                $item->url = URL::to('customer/mallpromotion?id='.$item->news_id);
+                $item->name = mb_strlen($item->news_name) > 64 ? mb_substr($item->news_name, 0, 64) . '...' : $item->news_name;
+            }
+
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+
+            return Response::json($data);
+
+        } catch (Exception $e) {
+            $data = new stdclass();
+            $data->status = 0;
+            $data->message = $e->getMessage();
+            $data->total_records = 0;
+            $data->returned_records = 0;
+            $data->records = null;
+
+            return Response::json($data);
         }
     }
 
@@ -3691,48 +4150,55 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
-            $sort_by = OrbitInput::get('sort_by');
-            $keyword = trim(OrbitInput::get('keyword'));
-            $category_id = trim(OrbitInput::get('cid'));
-            $floor = trim(OrbitInput::get('floor'));
-
             $pagetitle = Lang::get('mobileci.page_title.news');
-
-            $validator = Validator::make(
-                array(
-                    'sort_by' => $sort_by,
-                ),
-                array(
-                    'sort_by' => 'in:name',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
-                )
-            );
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-            }
-
-            // $categories = Category::active()->where('category_level', 1)->where('merchant_id', $retailer->merchant_id)->get();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
             if ($maxRecord <= 0) {
-                $maxRecord = 250;
+                $maxRecord = 300;
             }
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
             $news = \News::with('translations')->active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'news')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime])
-                            ->orderBy('sticky_order', 'desc')
-                            ->orderBy('created_at', 'desc')
-                            ->get();
+                            ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
-            if (!empty($alternateLanguage) && !empty($news)) {
+            $_news = clone $news;
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $news->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $news) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $news->skip($skip);
+
+            $news->orderBy('sticky_order', 'desc')
+                    ->orderBy('created_at', 'desc');
+
+            $totalRec = $_news->count();
+            $listOfRec = $news->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
                 foreach ($news as $key => $val) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
@@ -3776,15 +4242,15 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if ($news->isEmpty()) {
+            if ($listOfRec->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = sizeof($news);
-                $data->returned_records = sizeof($news);
-                $data->records = $news;
+                $data->total_records = $totalRec;
+                $data->returned_records = sizeof($listOfRec);
+                $data->records = $listOfRec;
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -3822,6 +4288,137 @@ class MobileCIAPIController extends ControllerAPI
                 ->save();
 
             return $this->redirectIfNotLoggedIn($e);
+        }
+    }
+
+    /**
+     * GET - Get news list in mall
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getSearchNews() {
+        $user = null;
+        try {
+            // Require authentication
+            $this->registerCustomValidation();
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $news = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'news')
+                            ->whereRaw("? between begin_date and end_date", [$mallTime]);
+
+            $_news = clone $news;
+
+            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
+            if ($maxRecord <= 0) {
+                $maxRecord = Config::get('orbit.pagination.max_record');
+            }
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $news->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $news) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $news->skip($skip);
+
+            $news->orderBy('sticky_order', 'desc')->orderBy('created_at', 'desc');
+
+            $totalRec = $_news->count();
+            $listOfRec = $news->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
+                foreach ($listOfRec as $key => $val) {
+
+                    $newsTranslation = \NewsTranslation::excludeDeleted()
+                        ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
+                        ->where('news_id', $val->news_id)->first();
+
+                    if (!empty($newsTranslation)) {
+                        foreach (['news_name', 'description'] as $field) {
+                            //if field translation empty or null, value of field back to english (default)
+                            if (isset($newsTranslation->{$field}) && $newsTranslation->{$field} !== '') {
+                                $val->{$field} = $newsTranslation->{$field};
+                            }
+                        }
+
+                        $media = $newsTranslation->find($newsTranslation->news_translation_id)
+                            ->media_orig()
+                            ->first();
+
+                        if (isset($media->path)) {
+                            $val->image = $media->path;
+                        } else {
+                            // back to default image if in the content multilanguage not have image
+                            // check the system language
+                            $defaultLanguage = $this->getDefaultLanguage($retailer);
+                            if ($defaultLanguage !== NULL) {
+                                $contentDefaultLanguage = \NewsTranslation::excludeDeleted()
+                                    ->where('merchant_language_id', '=', $defaultLanguage->merchant_language_id)
+                                    ->where('news_id', $val->news_id)->first();
+
+                                // get default image
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                    ->media_orig()
+                                    ->first();
+
+                                if (isset($mediaDefaultLanguage->path)) {
+                                    $val->image = $mediaDefaultLanguage->path;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ($listOfRec as $item) {
+                $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
+                $item->url = URL::to('customer/mallpromotion?id='.$item->news_id);
+                $item->name = mb_strlen($item->news_name) > 64 ? mb_substr($item->news_name, 0, 64) . '...' : $item->news_name;
+            }
+
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+
+            return Response::json($data);
+
+        } catch (Exception $e) {
+            $data = new stdclass();
+            $data->status = 0;
+            $data->message = $e->getMessage();
+            $data->total_records = 0;
+            $data->returned_records = 0;
+            $data->records = null;
+
+            return Response::json($data);
         }
     }
 
