@@ -135,14 +135,6 @@
 <script type="text/javascript">
     var tabOpen = false; // this var is for tabs on tenant detail views
     $(document).ready(function(){
-        $.fn.addBlur = function(){
-            $(this).removeClass('unblurred');
-            $(this).addClass('blurred');
-        }
-        $.fn.removeBlur = function(){
-            $(this).removeClass('blurred');
-            $(this).addClass('unblurred');
-        }
         var menuOpen = false;
         navigator.getBrowser= (function(){
             var ua = navigator.userAgent, tem,
@@ -159,6 +151,19 @@
             if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
             return M;
         })();
+        var browser = navigator.getBrowser[0];
+        $.fn.addBlur = function(){
+            if(browser.indexOf('Firefox') < 0) {
+                $(this).removeClass('unblurred');
+                $(this).addClass('blurred');
+            }
+        }
+        $.fn.removeBlur = function(){
+            if(browser.indexOf('Firefox') < 0) {
+                $(this).removeClass('blurred');
+                $(this).addClass('unblurred');
+            }
+        }
         // var browser = navigator.getBrowser[0];
         // if(browser.indexOf('IE')) {
         //     objectFit.polyfill({
