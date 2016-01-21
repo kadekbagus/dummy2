@@ -1111,13 +1111,13 @@ class CampaignReportAPIController extends ControllerAPI
     public function getSpending()
     {
         // Campaign ID
-        $id = OrbitInput::get('id');
+        $id = OrbitInput::get('campaign_id');
 
         // News, promotion or coupon
-        $type = OrbitInput::get('type');
+        $type = OrbitInput::get('campaign_type');
 
         // Date intervals
-        $beginDate = OrbitInput::get('begin_date');
+        $beginDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
 
         // Init Carbon
@@ -1126,6 +1126,30 @@ class CampaignReportAPIController extends ControllerAPI
         // Init outputs
         $outputs = [];
 
+        // Get the campaign from database
+        switch ($type) {
+            case 'news':
+                $campaign = News::isNews();
+                break;
+            case 'promotion':
+                $campaign = News::isPromotion();
+                break;
+            case 'coupon':
+                $campaign = new Coupon;
+                break;
+        }
+
+        $campaign = $campaign->find($id);
+
+        $campaignLogs = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            ->where('updated_at', '<', $beginDate.' 00:00:00')
+            ->orderBy('updated_at', 'desc')->first();
+
+        $initialCost = 0;
+        if ($campaignLogs) {
+            $initialCost = $campaignLogs->campaign_cost;
+        }
+
         // Init previous day cost
         $previousDayCost = 0;
 
@@ -1133,7 +1157,7 @@ class CampaignReportAPIController extends ControllerAPI
         while ($carbonDate->toDateString() <= $endDate) {
             $date = $carbonDate->toDateString();
 
-            // Let's retrieve from DB
+            // Let's retrieve it from DB
             $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', 'LIKE', $date.' %')
                 ->orderBy('updated_at', 'desc')
@@ -1143,7 +1167,11 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Data found
             if ($row) {
-                $cost = $previousDayCost = $row->campaign_cost;
+                $cost = $previousDayCost = $initialCost = $row->campaign_cost;
+            } elseif ($date.' 00:00:00' >= $campaign->begin_date && $date.' 23:59:59' <= $campaign->end_date) {
+                $cost = $initialCost;
+            } else {
+                $cost = 0;
             }
 
             // Add to output array
