@@ -136,12 +136,14 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_news_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'View News Pop Up'
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_news_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'Click News Pop Up'
                 ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -175,12 +177,14 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_promotion_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'View Promotion Pop Up'
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'Click Promotion Pop Up'
                 ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -214,12 +218,14 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_coupon_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'View Coupon Pop Up'
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'Click Coupon Pop Up'
                 ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
