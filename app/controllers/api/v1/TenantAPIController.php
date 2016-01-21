@@ -822,7 +822,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
+                    'status'            => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit . '|orbit.exists.tenant_on_inactive_have_linked',
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
@@ -2070,14 +2070,16 @@ class TenantAPIController extends ControllerAPI
             return TRUE;
         });
 
-        // tenant cannot be inactive if have linked to news, promotion, event and coupon.
+        // tenant cannot be inactive if have linked to news, promotion, and coupon.
         Validator::extend('orbit.exists.tenant_on_inactive_have_linked', function ($attribute, $value, $parameters) {
-            // check if only status is being set to inactive
-            if ($value === 'inactive') {
-                $tenant_id = $parameters[0];
+            $updatedtenant = App::make('orbit.empty.tenant');
+
+            // check if only current status is active and being set to inactive
+            if ($updatedtenant->status === 'active' && $value === 'inactive') {
+                $tenant_id = $updatedtenant->merchant_id;
 
                 // check tenant if exists in coupons.
-                $coupon = CouponRetailerRedeem::whereHas('coupon', function($q) {
+                $coupon = CouponRetailer::whereHas('coupon', function($q) {
                         $q->excludeDeleted();
                     })
                     ->where('retailer_id',$tenant_id)
@@ -2111,16 +2113,6 @@ class TenantAPIController extends ControllerAPI
                     return FALSE;
                 }
 
-                // check tenant if exists in events.
-                $event = EventRetailer::whereHas('event', function($q) {
-                        $q->excludeDeleted();
-                    })
-                    ->where('retailer_id',$tenant_id)
-                    ->first();
-
-                if (! empty($event)) {
-                    return FALSE;
-                }
             }
 
             return TRUE;
