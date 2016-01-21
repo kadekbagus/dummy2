@@ -131,7 +131,6 @@
 {{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
-{{ HTML::script('mobile-ci/scripts/polyfill.object-fit.min.js') }}
 <script type="text/javascript">
     var tabOpen = false; // this var is for tabs on tenant detail views
     $(document).ready(function(){
@@ -164,15 +163,6 @@
                 $(this).addClass('unblurred');
             }
         }
-        // var browser = navigator.getBrowser[0];
-        // if(browser.indexOf('IE')) {
-        //     objectFit.polyfill({
-        //         selector: '.img-fit, .img-fit-tenant',
-        //         fittype: 'cover',
-        //         disableCrossDomain: 'true'
-        //     });
-        //     $('.img-fit, .img-fit-tenant').closest('.col-xs-12, .col-xs-6').css('height', '160px').css('overflow', 'hidden');
-        // }
         function isInArray(value, str) {
             return str.indexOf(value) > -1;
         }
