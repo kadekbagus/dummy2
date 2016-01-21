@@ -4874,7 +4874,18 @@ class MobileCIAPIController extends ControllerAPI
             $max_campaign = count($results) > $campaign_card_total ? $campaign_card_total : count($results);
 
             shuffle($results);
-            $end_results = array_slice($results, 0, $max_campaign);
+
+            // slice shuffled results to 2 parts and shuffle again 
+            $resultsize = count($results);
+
+            $firsthalf = array_slice($results, 0, ($resultsize / 2));
+            $secondhalf = array_slice($results, ($resultsize / 2));
+            shuffle($firsthalf);
+            shuffle($secondhalf);
+            $secondresults = array_merge($firsthalf, $secondhalf);
+            shuffle($secondresults);
+
+            $end_results = array_slice($secondresults, 0, $max_campaign);
 
             foreach($end_results as $near_end_result) {
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
