@@ -2,6 +2,7 @@
 /**
  * An API controller for managing Campaign report.
  */
+use Carbon\Carbon;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -68,8 +69,8 @@ class CampaignReportAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $current_mall = OrbitInput::get('current_mall');
-            // $start_date = OrbitInput::get('start_date');
-            // $end_date = OrbitInput::get('end_date');
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
             $sort_by = OrbitInput::get('sortby');
 
             $this->registerCustomValidation();
@@ -81,7 +82,7 @@ class CampaignReportAPIController extends ControllerAPI
                 ),
                 array(
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:updated_at,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
+                    'sort_by' => 'in:updated_at,campaign_name,campaign_type,total_tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -155,10 +156,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
-                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                        //     $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                        //     ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                        // })
                         ->where('campaign_price.campaign_type', '=', 'news')
                         ->where('news.object_type', '=', 'news')
                         ->groupBy('news.news_id')
@@ -198,10 +195,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
-                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                        //     $q->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                        //     ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                        // })
                         ->where('campaign_price.campaign_type', '=', 'promotion')
                         ->where('news.object_type', '=', 'promotion')
                         ->groupBy('news.news_id')
@@ -241,10 +234,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->join('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $current_mall)
-                        // ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                        //     $q->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
-                        //     ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
-                        // })
                         ->where('campaign_price.campaign_type', '=', 'coupon')
                         ->groupBy('promotions.promotion_id')
                         ;
@@ -287,6 +276,25 @@ class CampaignReportAPIController extends ControllerAPI
                 $status = (array)$status;
                 $campaign->whereIn('status', $status);
             });
+
+            // Filter by range date
+            if($start_date != '' && $end_date != ''){
+                $campaign->where(function ($q) use ($start_date, $end_date) {
+                            $q->where(function ($r) use ($start_date, $end_date) {
+                                    $r->whereRaw("begin_date between ? and ?", [$start_date, $end_date])
+                                      ->orWhereRaw("end_date between ? and ?", [$start_date, $end_date]);
+                                })
+                              ->orWhere(function ($s) use ($start_date, $end_date) {
+                                    $s->whereRaw(" ? between begin_date and end_date", [$start_date])
+                                      ->orWhereRaw(" ? between begin_date and end_date", [$end_date]);
+                                });
+                        });
+            }
+
+            OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
+                $campaign->where('mall_name', 'like', "%$mall_name%");
+            });
+
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
@@ -344,7 +352,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'updated_at'      => 'updated_at',
                     'campaign_name'   => 'campaign_name',
                     'campaign_type'   => 'campaign_type',
-                    'tenant'          => 'tenant',
+                    'total_tenant'    => 'total_tenant',
                     'mall_name'       => 'mall_name',
                     'begin_date'      => 'begin_date',
                     'end_date'        => 'end_date',
@@ -564,13 +572,23 @@ class CampaignReportAPIController extends ControllerAPI
                 $interval = new DateInterval('P1D');
                 $daterange = new DatePeriod($begin, $interval ,$end);
 
-                foreach($daterange as $date){
-                    // Get activity
-                    echo $date->format("Y-m-d") . "<br>";
+                $data = array();
+                foreach($daterange as $key => $date){
+                    // Get activity per day
+                    // echo $key . ' - ' . $date->format('Y-m-d') . "<br>";
+                    $dateEachDay = $date->format('Y-m-d');
+
+                    $data[$dateEachDay] = Activity::selectRaw('activity_id')
+                        ->where('object_id', $campaign_id)
+                        ->where('group', 'mobile-ci')
+                        ->whereRaw(" (activity_type = 'view' OR activity_type = 'click') ")
+                        ->whereRaw(' DATE(created_at) = ?', [$dateEachDay])
+                        ->get()
+                        ;
                 }
             }
 
-
+            dd($data);
             die();
 
             //get total cost news
@@ -1088,16 +1106,54 @@ class CampaignReportAPIController extends ControllerAPI
      * Get the campaign spending
      *
      * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Validations
      */
     public function getSpending()
     {
-        $startDate = OrbitInput::get('start_date');
+        // Campaign ID
+        $id = OrbitInput::get('campaign_id');
+
+        // News, promotion or coupon
+        $type = OrbitInput::get('campaign_type');
+
+        // Date intervals
+        $beginDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
-        $this->response->data = [
-            ['date' => '10/12/2015', 'cost' => '195,000'],
-            ['date' => '11/12/2015', 'cost' => '295,000'],
-            ['date' => '12/12/2015', 'cost' => '395,000'],
-        ];
+
+        // Init Carbon
+        $carbonDate = Carbon::createFromFormat('Y-m-d', $beginDate);
+
+        // Init outputs
+        $outputs = [];
+
+        // Init previous day cost
+        $previousDayCost = 0;
+
+        // Loop
+        while ($carbonDate->toDateString() <= $endDate) {
+            $date = $carbonDate->toDateString();
+
+            // Let's retrieve from DB
+            $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                ->where('updated_at', 'LIKE', $date.' %')
+                ->orderBy('updated_at', 'desc')
+                ->first();
+
+            $cost = $previousDayCost;
+
+            // Data found
+            if ($row) {
+                $cost = $previousDayCost = $row->campaign_cost;
+            }
+
+            // Add to output array
+            $outputs[] = ['date' => $date, 'cost' => number_format($cost, 0, '.', ',')];
+
+            // Increment day by 1
+            $carbonDate->addDay();
+        }
+
+        $this->response->data = $outputs;
 
         return $this->render(200);
     }
