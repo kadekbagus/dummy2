@@ -1936,7 +1936,6 @@ class ActivityAPIController extends ControllerAPI
 
                 $responses = [];
                 foreach ($periods as $period) {
-
                     $start_date = $period['start_date'];
                     $end_date = $period['end_date'];
 
@@ -1944,25 +1943,18 @@ class ActivityAPIController extends ControllerAPI
                         ->select(
                             DB::raw('COUNT(*) as count')
                         )
-                        ->where('created_at', '>=', $start_date)
-                        ->where('created_at', '<=', $end_date);
+                        ->whereBetween('created_at', [$start_date, $end_date]);
 
-                    $returning_sign_ins = DB::table('activities')
+                    $returning_sign_ins = DB::table('user_signin')
                         ->select(
                             DB::raw('COUNT(distinct user_id) as count')
                         )
-                        ->where('module_name', '=', 'Application')
-                        ->where('group', '=', 'mobile-ci')
-                        ->where('activity_type', '=', 'login')
-                        ->where('activity_name', '=', 'login_ok')
-                        ->where('created_at', '>=', $start_date)
-                        ->where('created_at', '<=', $end_date)
+                        ->whereBetween('created_at', [$start_date, $end_date])
                         ->whereNotIn('user_id', function ($q) use ($locationIds, $start_date, $end_date) {
                             $q->select('user_id')
                                 ->from('user_acquisitions')
                                 ->whereIn('acquirer_id', $locationIds)
-                                ->where('created_at', '>=', $start_date)
-                                ->where('created_at', '<=', $end_date);
+                                ->whereBetween('created_at', [$start_date, $end_date]);
                         });
 
                     // Only shows activities which belongs to this merchant
@@ -1971,12 +1963,12 @@ class ActivityAPIController extends ControllerAPI
 
                         // Filter by user location id
                         $sign_ups->whereIn('acquirer_id', $locationIds);
-                        $returning_sign_ins->whereIn('activities.location_id', $locationIds);
+                        $returning_sign_ins->whereIn('user_signin.location_id', $locationIds);
                     } else {
                         // Filter by user location id
                         OrbitInput::get('location_ids', function($locationIds) use ($sign_ups, $returning_sign_ins) {
                             $sign_ups->whereIn('acquirer_id', $locationIds);
-                            $returning_sign_ins->whereIn('activities.location_id', $locationIds);
+                            $returning_sign_ins->whereIn('user_signin.location_id', $locationIds);
                         });
                     }
 
