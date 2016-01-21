@@ -1174,8 +1174,11 @@ class CampaignReportAPIController extends ControllerAPI
                 $cost = 0;
             }
 
+            // Format cost as integer
+            $cost = (int) $cost;
+
             // Add to output array
-            $outputs[] = ['date' => $date, 'cost' => number_format($cost, 0, '.', ',')];
+            $outputs[] = compact('date', 'cost');
 
             // Increment day by 1
             $carbonDate->addDay();
