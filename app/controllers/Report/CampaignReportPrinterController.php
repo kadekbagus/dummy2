@@ -54,7 +54,7 @@ class CampaignReportPrinterController extends DataPrinterController
 
         $this->prepareUnbufferedQuery();
 
-        $pageTitle = 'Redeemed Coupon Report for ';
+        $pageTitle = 'Campaign Summary Report';
 
         switch ($mode) {
             case 'csv':
