@@ -7,12 +7,13 @@
 @section('content')
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
+            <div class="catalogue-wrapper">
             @foreach($data->records as $luckydraw)
                 <div class="main-theme-mall catalogue catalogue-other" id="product-{{$luckydraw->lucky_draw_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">
                             <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
-                                <span class="link-spanner"></span>
+                                <span class="link-spanner-other"></span>
                                 @if(!empty($luckydraw->image))
                                 <img class="img-responsive" alt="" src="{{ asset($luckydraw->image) }}">
                                 @else
@@ -22,7 +23,7 @@
                         </div>
                         <div class="col-xs-9 catalogue-info">
                             <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
-                                <span class="link-spanner"></span>
+                                <span class="link-spanner-other"></span>
                                 <h4>{{ $luckydraw->lucky_draw_name }}</h4>
 
                                 {{-- Limit description per two line and 64 total character --}}
@@ -65,6 +66,14 @@
                     </div>
                 </div>
             @endforeach
+            </div>
+            @if($data->returned_records < $data->total_records)
+                <div class="row">
+                    <div class="col-xs-12 padded">
+                        <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                    </div>
+                </div>
+            @endif
         @else
             <div class="row padded">
                 <div class="col-xs-12">
@@ -276,6 +285,10 @@
             var h = $(this).height();
             var ph = $('.catalogue').height();
             $(this).css('margin-top', ((ph-h)/2) + 'px');
+        });
+
+        $('#load-more-x').click(function(){
+            loadMoreX('lucky-draw');
         });
     });
 

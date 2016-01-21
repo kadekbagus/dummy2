@@ -7,12 +7,13 @@
 @section('content')
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
+            <div class="catalogue-wrapper">
             @foreach($data->records as $coupon)
                 <div class="main-theme-mall catalogue catalogue-other" id="product-{{$coupon->promotion_id}}">
                     <div class="row catalogue-top">
                         <div class="col-xs-3 catalogue-img">
                             <a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">
-                                <span class="link-spanner"></span>
+                                <span class="link-spanner-other"></span>
                                 @if(!empty($coupon->promo_image))
                                 <img class="img-responsive" alt="" src="{{ asset($coupon->promo_image) }}">
                                 @else
@@ -22,7 +23,7 @@
                         </div>
                         <div class="col-xs-9 catalogue-info">
                             <a href="{{ url('customer/mallcoupon?id='.$coupon->issued_coupon_id) }}">
-                                <span class="link-spanner"></span>
+                                <span class="link-spanner-other"></span>
                                 <h4>{{ $coupon->promotion_name }}</h4>
                                 @if (mb_strlen($coupon->description) > 64)
                                 <p>{{{ mb_substr($coupon->description, 0, 64, 'UTF-8') }}} ... </p>
@@ -34,6 +35,14 @@
                     </div>
                 </div>
             @endforeach
+            </div>
+            @if($data->returned_records < $data->total_records)
+                <div class="row">
+                    <div class="col-xs-12 padded">
+                        <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                    </div>
+                </div>
+            @endif
         @else
             <div class="row padded">
                 <div class="col-xs-12">
@@ -200,6 +209,10 @@
             var h = $(this).height();
             var ph = $('.catalogue').height();
             $(this).css('margin-top', ((ph-h)/2) + 'px');
+        });
+
+        $('#load-more-x').click(function(){
+            loadMoreX('my-coupon');
         });
     }); 
     
