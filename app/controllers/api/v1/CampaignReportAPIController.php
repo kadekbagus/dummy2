@@ -174,7 +174,7 @@ class CampaignReportAPIController extends ControllerAPI
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_news_promotion'
+                    AND {$tablePrefix}activities.activity_name = 'view_promotion_popup'
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -213,7 +213,7 @@ class CampaignReportAPIController extends ControllerAPI
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_news_coupon'
+                    AND {$tablePrefix}activities.activity_name = 'view_coupon_popup'
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
