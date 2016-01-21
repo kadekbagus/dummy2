@@ -457,6 +457,9 @@
                         var zonk = '<div style="width:100%;height:160px;background:transparent;">&nbsp;</div>'
                         $('.search-results').html(show_result + tenants + promotions + news + coupons + lucky_draws + zonk);
                     } else {
+                        if(data.message == 'Your session has expired.' || data.message == 'Invalid session data.') {
+                            window.location.href = 'http://' + location.host;
+                        }
                         $('.search-results').html('<h5><i>{{Lang::get('mobileci.search.no_result')}}</i></h5>');
                     }
                 }).fail(function(data){

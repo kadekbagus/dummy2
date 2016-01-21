@@ -586,6 +586,50 @@ class CouponAPIController extends ControllerAPI
             $campaignprice->campaign_id = $newcoupon->promotion_id;
             $campaignprice->save();
 
+            // get action id for campaign history
+            $mall = App::make('orbit.empty.merchant');
+            $now = Carbon::now($mall->timezone->timezone_name);
+            $actionstatus = 'activate';
+            if ($status === 'inactive') {
+                $actionstatus = 'deactivate';
+            }
+            $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+            $addtenantid = CampaignHistoryActions::getIdFromAction('add_tenant');
+
+            // save campaign history status
+            $campaignhistory = new CampaignHistory();
+            $campaignhistory->campaign_type = 'coupon';
+            $campaignhistory->campaign_id = $newcoupon->promotion_id;
+            $campaignhistory->campaign_history_action_id = $activeid;
+            $campaignhistory->number_active_tenants = 0;
+            $campaignhistory->campaign_cost = 0;
+            $campaignhistory->created_by = $this->api->user->user_id;
+            $campaignhistory->modified_by = $this->api->user->user_id;
+            $campaignhistory->save();
+
+            // save campaign history tenant
+            foreach ($retailer_ids as $retailer_id) {
+                // insert tenant/merchant to campaign history
+                $tenantstatus = Tenant::getStatus($retailer_id);
+                if ($tenantstatus === 'active') {
+                    $rowcost = CampaignHistory::getRowCost($newcoupon->promotion_id, $status, 'add', $now, TRUE)->first();
+                    $addtenant = new CampaignHistory();
+                    $addtenant->campaign_type = 'coupon';
+                    $addtenant->campaign_id = $newcoupon->promotion_id;
+                    $addtenant->campaign_external_value = $retailer_id;
+                    $addtenant->campaign_history_action_id = $addtenantid;
+                    $addtenant->number_active_tenants = $rowcost->tenants;
+                    $addtenant->created_by = $this->api->user->user_id;
+                    $addtenant->modified_by = $this->api->user->user_id;
+                    if ($status === 'inactive') {
+                        $addtenant->campaign_cost = 0;
+                    } else {
+                        $addtenant->campaign_cost = $rowcost->cost;
+                    }
+                    $addtenant->save();
+                }
+            }
+
             OrbitInput::post('translations', function($translation_json_string) use ($newcoupon) {
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
             });
@@ -824,6 +868,9 @@ class CouponAPIController extends ControllerAPI
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
 
+            $retailernew = OrbitInput::post('link_to_tenant_ids');
+            $retailernew = (array) $retailernew;
+
             $data = array(
                 'promotion_id'            => $promotion_id,
                 'current_mall'            => $merchant_id,
@@ -897,6 +944,94 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postupdatecoupon.after.validation', array($this, $validator));
 
             $updatedcoupon = Coupon::with('couponRule', 'tenants', 'linkToTenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
+
+            $statusdb = $updatedcoupon->status;
+
+            // get merchant for db
+            $promoretailer = PromotionRetailer::select('retailer_id')->where('promotion_id', $promotion_id)->get()->toArray();
+            $retailerdb = array();
+            foreach($promoretailer as $promoretailerid) {
+                $retailerdb[] = $promoretailerid['retailer_id'];
+            }
+
+            //save campaign histories
+            $mall = App::make('orbit.empty.merchant');
+            $now = Carbon::now($mall->timezone->timezone_name);
+            //check for update status
+            if ($statusdb != $status) {
+                // get action id for campaign history
+                $actionstatus = 'activate';
+                if ($status === 'inactive') {
+                    $actionstatus = 'deactivate';
+                }
+                $action = '';
+                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
+                // campaign history status
+                if (! empty($rowcost)) {
+                    $campaignhistory = new CampaignHistory();
+                    $campaignhistory->campaign_type = 'coupon';
+                    $campaignhistory->campaign_id = $promotion_id;
+                    $campaignhistory->campaign_history_action_id = $activeid;
+                    $campaignhistory->number_active_tenants = $rowcost->tenants;
+                    $campaignhistory->campaign_cost = $rowcost->cost;
+                    $campaignhistory->created_by = $this->api->user->user_id;
+                    $campaignhistory->modified_by = $this->api->user->user_id;
+                    $campaignhistory->save();
+                }
+            }
+
+            //check for add/remove tenant
+            $removetenant = array_diff($retailerdb, $retailernew);
+            $addtenant = array_diff($retailernew, $retailerdb);
+            if (! empty($removetenant)) {
+                $actionhistory = 'delete';
+                $addtenantid = CampaignHistoryActions::getIdFromAction('delete_tenant');
+                //save histories
+                foreach ($removetenant as $retailer_id) {
+                    // insert tenant/merchant to campaign history
+                    $tenantstatus = Tenant::getStatus($retailer_id);
+                    if ($tenantstatus === 'active') {
+                        $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $actionhistory, $now, TRUE)->first();
+                        if (! empty($rowcost)) {
+                            $tenanthistory = new CampaignHistory();
+                            $tenanthistory->campaign_type = 'coupon';
+                            $tenanthistory->campaign_id = $promotion_id;
+                            $tenanthistory->campaign_external_value = $retailer_id;
+                            $tenanthistory->campaign_history_action_id = $addtenantid;
+                            $tenanthistory->number_active_tenants = $rowcost->tenants;
+                            $tenanthistory->campaign_cost = $rowcost->cost;
+                            $tenanthistory->created_by = $this->api->user->user_id;
+                            $tenanthistory->modified_by = $this->api->user->user_id;
+                            $tenanthistory->save();
+                        }
+                    }
+                }
+            }
+            if (! empty($addtenant)) {
+                $actionhistory = 'add';
+                $addtenantid = CampaignHistoryActions::getIdFromAction('add_tenant');
+                //save histories
+                foreach ($addtenant as $retailer_id) {
+                    // insert tenant/merchant to campaign history
+                    $tenantstatus = Tenant::getStatus($retailer_id);
+                    if ($tenantstatus === 'active') {
+                        $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $actionhistory, $now, TRUE)->first();
+                        if (! empty($rowcost)) {
+                            $tenanthistory = new CampaignHistory();
+                            $tenanthistory->campaign_type = 'coupon';
+                            $tenanthistory->campaign_id = $promotion_id;
+                            $tenanthistory->campaign_external_value = $retailer_id;
+                            $tenanthistory->campaign_history_action_id = $addtenantid;
+                            $tenanthistory->number_active_tenants = $rowcost->tenants;
+                            $tenanthistory->campaign_cost = $rowcost->cost;
+                            $tenanthistory->created_by = $this->api->user->user_id;
+                            $tenanthistory->modified_by = $this->api->user->user_id;
+                            $tenanthistory->save();
+                        }
+                    }
+                }
+            } 
 
             $updatedcoupon_default_language = CouponTranslation::excludeDeleted()->where('promotion_id', $promotion_id)->where('merchant_language_id', $id_language_default)->first();
 
@@ -1222,6 +1357,7 @@ class CouponAPIController extends ControllerAPI
 
                     Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
                 }
+
                 // sync new set of retailer ids
                 $updatedcoupon->tenants()->sync($retailer_ids);
 
