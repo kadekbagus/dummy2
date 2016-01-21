@@ -116,6 +116,73 @@
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
+        <tr>
+            <td>Number of campaigns</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total page views</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalPageViews, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total pop up views</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalPopUpViews, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total spending</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Estimated total cost</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
+        </tr>
+
+        <!-- Filtering -->
+        <?php if($startDate != '' && $endDate != ''){ ?>
+            <tr>
+                <td>Campaign date</td>
+                <td>:</td>
+                <td><strong><?php echo $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'); ?></strong></td>
+            </tr>
+        <?php } ?>
+
+        <?php if ($campaignName != '') { ?>
+            <tr>
+                <td>Filter by Campaign Name</td>
+                <td>:</td>
+                <td><strong><?php echo $campaignName; ?></strong></td>
+            </tr>
+        <?php } elseif($campaignType != '') { ?>
+            <tr>
+                <td>Filter by Campaign Type</td>
+                <td>:</td>
+                <td><strong><?php echo $campaignType; ?></strong></td>
+            </tr>
+        <?php } elseif($tenant != '') { ?>
+            <tr>
+                <td>Filter by Tenant</td>
+                <td>:</td>
+                <td><strong><?php echo $tenant; ?></strong></td>
+            </tr>
+        <?php } elseif($mallName != '') { ?>
+            <tr>
+                <td>Filter by  Location</td>
+                <td>:</td>
+                <td><strong><?php echo $mallName; ?></strong></td>
+            </tr>
+        <?php } elseif($status != '') { ?>
+            <tr>
+                <td>Filter by Status</td>
+                <td>:</td>
+                <td><strong><?php echo $status; ?></strong></td>
+            </tr>
+        <?php } ?>
+
     </table>
 
     <table style="width:100%">
@@ -128,11 +195,11 @@
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Page Views</th>
 
-            <th style="text-align:left;">Views</th>
-            <th style="text-align:left;">Clicks</th>
-            <th style="text-align:left;">Daily</th>
+            <th style="text-align:left;">Views Popup</th>
+            <th style="text-align:left;">Clicks Popup</th>
+            <th style="text-align:left;">Daily Cost</th>
 
-            <th style="text-align:left;">Estimated Total</th>
+            <th style="text-align:left;">Estimated Total Cost</th>
             <th style="text-align:left;">Spending</th>
 
             <th style="text-align:left;">Status</th>
@@ -149,7 +216,7 @@
                         <td><?php echo $value->campaign_type; ?></td>
                         <td><?php echo $value->total_tenant; ?></td>
                         <td><?php echo $value->mall_name; ?></td>
-                        <td><?php echo $value->begin_date . ' - ' . $value->end_date; ?></td>
+                        <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y H:i:s') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y H:i:s'); ?></td>
                         <td><?php echo $value->page_views; ?></td>
                         <td><?php echo $value->popup_views; ?></td>
                         <td><?php echo $value->popup_clicks; ?></td>
