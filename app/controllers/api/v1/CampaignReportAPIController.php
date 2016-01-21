@@ -1111,10 +1111,10 @@ class CampaignReportAPIController extends ControllerAPI
     public function getSpending()
     {
         // Campaign ID
-        $id = OrbitInput::get('id');
+        $id = OrbitInput::get('campaign_id');
 
         // News, promotion or coupon
-        $type = OrbitInput::get('type');
+        $type = OrbitInput::get('campaign_type');
 
         // Date intervals
         $beginDate = OrbitInput::get('start_date');
