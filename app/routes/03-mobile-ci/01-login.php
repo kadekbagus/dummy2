@@ -585,6 +585,38 @@ Route::group(
             return MobileCI\MobileCIAPIController::create()->getSearchTenant();
         });
 
+        /**
+         * Promotion load more
+         */
+        Route::get('/app/v1/promotion/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchPromotion();
+        });
+
+        /**
+         * News load more
+         */
+        Route::get('/app/v1/news/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchNews();
+        });
+
+        /**
+         * My coupon load more
+         */
+        Route::get('/app/v1/my-coupon/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchCoupon();
+        });
+
+        /**
+         * Lucky draw load more
+         */
+        Route::get('/app/v1/lucky-draw/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchLuckyDraw();
+        });
+
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
         Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
