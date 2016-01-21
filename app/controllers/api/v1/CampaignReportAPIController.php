@@ -386,6 +386,24 @@ class CampaignReportAPIController extends ControllerAPI
             $totalCampaign = $_campaign->count();
             $listOfCampaign = $campaign->get();
 
+            // get popup tenant
+            $campaignWithtenant = array();
+            foreach ($listOfCampaign as $key => $val) {
+                if ($val->campaign_type === 'coupon') {
+                    $linkToTenants = DB::table('promotion_retailer')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
+                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->where('promotion_retailer.promotion_id', $val->campaign_id)
+                            ->get();
+                } else {
+                    $linkToTenants = DB::table('news_merchant')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
+                            ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->where('news_merchant.news_id', $val->campaign_id)
+                            ->get();
+                }
+
+                $listOfCampaign[$key]->tenants = $linkToTenants;
+            }
+
             $data = new stdclass();
             $data->total_records = $totalCampaign;
             $data->total_page_views = $totalPageViews;
