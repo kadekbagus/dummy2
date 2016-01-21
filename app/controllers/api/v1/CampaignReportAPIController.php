@@ -1117,7 +1117,7 @@ class CampaignReportAPIController extends ControllerAPI
         $type = OrbitInput::get('type');
 
         // Date intervals
-        $beginDate = OrbitInput::get('begin_date');
+        $beginDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
 
         // Init Carbon
