@@ -25,7 +25,7 @@
                             <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
                                 <span class="link-spanner-other"></span>
                                 <h4>{{ $luckydraw->lucky_draw_name }}</h4>
-
+                                <p>
                                 {{-- Limit description per two line and 64 total character --}}
                                 <?php
                                     $desc = explode("\n", $luckydraw->description);
@@ -61,6 +61,7 @@
                                         {{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') }}}
                                     @endif
                                 @endif
+                                </p>
                             </a>
                         </div>
                     </div>
@@ -262,42 +263,11 @@
                 break;
             }
         }
-        var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}';
-        $('#dLabel').dropdown();
-        $('#dLabel2').dropdown();
-        $('#category>li').click(function(){
-            if(!$(this).data('category')) {
-                $(this).data('category', '');
-            }
-            path = updateQueryStringParameter(path, 'cid', $(this).data('category'));
-            console.log(path);
-            window.location.replace(path);
-        });
-        $('#floor>li').click(function(){
-            if(!$(this).data('floor')) {
-                $(this).data('floor', '');
-            }
-            path = updateQueryStringParameter(path, 'fid', $(this).data('floor'));
-            console.log(path);
-            window.location.replace(path);
-        });
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
-        });
 
         $('#load-more-x').click(function(){
             loadMoreX('lucky-draw');
         });
     });
 
-    $(window).resize(function(){
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
-        });
-    });
 </script>
 @stop

@@ -98,9 +98,9 @@
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
 <script type="text/javascript">
-    // var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
-    //     skip = {{Config::get('orbit.pagination.per_page', 25)}};
-    var take = 4, skip = 4;
+    var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+        skip = {{Config::get('orbit.pagination.per_page', 25)}};
+
     function loadMoreX(itemtype) {
         var catalogueWrapper = $('.catalogue-wrapper');
         var itemList = [];

@@ -62,7 +62,7 @@
             <div class="catalogue-wrapper">
             @foreach($data->records as $product)
                 <div class="main-theme-mall catalogue catalogue-tenant" id="product-{{$product->product_id}}">
-                    <div class="row catalogue-top">
+                    <div class="row catalogue-top catalogue-top-tenant">
                         <div class="col-xs-3 catalogue-img">
                             <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
                                 <span class="link-spanner"></span>
@@ -344,12 +344,6 @@
             window.location.replace(path);
         });
 
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
-        });
-
         var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
             skip = {{Config::get('orbit.pagination.per_page', 25)}};
 
@@ -378,7 +372,7 @@
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
                         var list = '<div class="main-theme-mall catalogue catalogue-tenant" id="product-'+data.records[i].merchant_id+'">\
-                                <div class="row catalogue-top">\
+                                <div class="row catalogue-top catalogue-top-tenant">\
                                     <div class="col-xs-3 catalogue-img">\
                                         <a href="'+data.records[i].url+'">\
                                             <span class="link-spanner"></span>\
@@ -410,13 +404,5 @@
             });
         });
     }); 
-    
-    $(window).resize(function(){
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
-        });
-    });
 </script>
 @stop

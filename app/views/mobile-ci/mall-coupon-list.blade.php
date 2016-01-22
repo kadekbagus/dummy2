@@ -205,23 +205,10 @@
                 }).modal();
             }
         }
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
-        });
 
         $('#load-more-x').click(function(){
             loadMoreX('my-coupon');
         });
     }); 
-    
-    $(window).resize(function(){
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
-        });
-    });
 </script>
 @stop
