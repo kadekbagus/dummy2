@@ -160,9 +160,9 @@ class CampaignReportAPIController extends ControllerAPI
                     AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as spending,
                 {$tablePrefix}news.status"))
-                        ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                        ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
@@ -205,9 +205,9 @@ class CampaignReportAPIController extends ControllerAPI
                     AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as spending,
                 {$tablePrefix}news.status"))
-                        ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                        ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
@@ -254,9 +254,9 @@ class CampaignReportAPIController extends ControllerAPI
                     AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as spending,
                 {$tablePrefix}promotions.status"))
-                        ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                        ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                         ->join('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $current_mall)
@@ -1343,13 +1343,13 @@ class CampaignReportAPIController extends ControllerAPI
                                         and ac.module_name = 'Coupon'
                                         and ac.group = 'mobile-ci'
                                         and (ac.role = 'Consumer' or ac.role = 'Guest'))
-                                        
+
                                         or (ac.activity_name = 'view_news'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'News'
                                         and ac.group = 'mobile-ci'
                                         and (ac.role = 'Consumer' or ac.role = 'Guest'))
-                                        
+
                                         or (ac.activity_name = 'view_promotion'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'Promotion'
