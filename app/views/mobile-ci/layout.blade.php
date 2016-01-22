@@ -17,6 +17,56 @@
             }
         </style>
         @endif
+        @if (! empty(Config::get('orbit.cdn.fonts.font_awesome.4_2_0')))
+        <style type="text/css">
+            @font-face {
+              font-family: 'FontAwesome';
+              src: url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.eot?v=4.2.0');
+              src: url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.eot?#iefix&v=4.2.0') format('embedded-opentype'),
+              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.woff?v=4.2.0') format('woff'),
+              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.ttf?v=4.2.0') format('truetype'),
+              url('{{Config::get('orbit.cdn.fonts.font_awesome.4_2_0')}}.svg?v=4.2.0#fontawesomeregular') format('svg');
+              font-weight: normal;
+              font-style: normal;
+            }
+        </style>
+        @else
+        <style type="text/css">
+            @font-face {
+              font-family: 'FontAwesome';
+              src: url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.eot?v=4.2.0')}}');
+              src: url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.eot?#iefix&v=4.2.0')}}') format('embedded-opentype'),
+              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.woff?v=4.2.0')}}') format('woff'),
+              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.ttf?v=4.2.0')}}') format('truetype'),
+              url('{{asset('mobile-ci/fonts/font-awesome/fontawesome-webfont.svg?v=4.2.0#fontawesomeregular')}}') format('svg');
+              font-weight: normal;
+              font-style: normal;
+            }
+        </style>
+        @endif
+        @if(! empty(Config::get('orbit.cdn.fonts.glyphicon')))
+        <style type="text/css">
+            @font-face {
+              font-family: 'Glyphicons Halflings';
+              src: url('{{Config::get('orbit.cdn.fonts.glyphicon')}}.eot');
+              src: url('{{Config::get('orbit.cdn.fonts.glyphicon')}}.eot?#iefix') format('embedded-opentype'),
+                   url('{{Config::get('orbit.cdn.fonts.glyphicon')}}.woff') format('woff'),
+                   url('{{Config::get('orbit.cdn.fonts.glyphicon')}}.ttf') format('truetype'),
+                   url('{{Config::get('orbit.cdn.fonts.glyphicon')}}.svg#glyphicons_halflingsregular') format('svg');
+            }
+        </style>
+        @else
+        <style type="text/css">
+            @font-face {
+              font-family: 'Glyphicons Halflings';
+              src: url('{{asset('mobile-ci/fonts/glyphicons-halflings-regular.eot')}}');
+              src: url('{{asset('mobile-ci/fonts/glyphicons-halflings-regular.eot?#iefix')}}') format('embedded-opentype'),
+                   url('{{asset('mobile-ci/fonts/glyphicons-halflings-regular.woff')}}') format('woff'),
+                   url('{{asset('mobile-ci/fonts/glyphicons-halflings-regular.ttf')}}') format('truetype'),
+                   url('{{asset('mobile-ci/fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular')}}') format('svg');
+            }
+        </style>
+        @endif
         @yield('ext_style')
     </head>
     <body>
