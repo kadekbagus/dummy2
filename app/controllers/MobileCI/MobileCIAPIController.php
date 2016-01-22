@@ -2518,8 +2518,7 @@ class MobileCIAPIController extends ControllerAPI
             $_luckydraws = clone $luckydraws;
 
             // Get the take args
-            // $take = Config::get('orbit.pagination.per_page');
-            $take = 4;
+            $take = Config::get('orbit.pagination.per_page');
             OrbitInput::get(
                 'take',
                 function ($_take) use (&$take, $maxRecord) {
