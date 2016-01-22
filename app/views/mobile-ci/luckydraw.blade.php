@@ -171,17 +171,34 @@
 @stop
 
 @section('ext_script_bot')
-    {{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/jquery.plugin.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/jquery.countdown.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/html2canvas.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/autoNumeric.js') }}
-    {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
+    {{ HTML::script(Config::get('orbit.cdn.jquery_plugin.2_0_2', 'mobile-ci/scripts/jquery.plugin.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if (typeof $.JQPlugin === 'undefined') {
+            document.write('<script src="{{asset('mobile-ci/scripts/jquery.plugin.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
+
+    {{ HTML::script(Config::get('orbit.cdn.countdown.2_0_2', 'mobile-ci/scripts/jquery.countdown.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if (typeof $().countdown === 'undefined') {
+            document.write('<script src="{{asset('mobile-ci/scripts/jquery.countdown.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
+
+    {{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if (typeof $().featherlight === 'undefined') {
+            document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
-            $('.lucky-number-container').each(function(index){
-                // $(this).text(parseFloat($(this).text()).toFixed(0)).autoNumeric('init', {aSep: '-', aDec: '.', mDec: 0, vMin: -9999999999.99});
-            });
             $('#ldtitle').click(function(){
                 $('#lddetail').modal();
             })

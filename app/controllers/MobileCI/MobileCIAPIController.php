@@ -6210,6 +6210,14 @@ class MobileCIAPIController extends ControllerAPI
                                 $never_sign_in = \UserSignin::where('location_id', $retailer->merchant_id)
                                                         ->where('user_id', $user->user_id)->first();
 
+                                $signin_in_rule_period = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                        ->where('user_id', $user->user_id)
+                                                        ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
+
+                                if(! empty($signin_in_rule_period)) {
+                                    $issued = true;
+                                }
+
                                 if (!empty($acq) && empty($never_sign_in)) {
                                     $issued = true;
                                 }
@@ -6227,12 +6235,12 @@ class MobileCIAPIController extends ControllerAPI
                                     $acq = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
                                                         ->where('user_id', $user->user_id)->first();
 
+                                    $never_sign_in = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                        ->where('user_id', $user->user_id)->first();
+
                                     $signin_in_rule_period = \UserSignin::where('location_id', $retailer->merchant_id)
                                                         ->where('user_id', $user->user_id)
                                                         ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
-
-                                    $never_sign_in = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                        ->where('user_id', $user->user_id)->first();
 
                                     if(! empty($signin_in_rule_period)) {
                                         $issued = true;
