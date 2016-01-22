@@ -3,6 +3,34 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // cdn path
+    'cdn' => array(
+        'jquery' => array(
+            '2_1_1' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'
+        ),
+        'bootstrap' => array(
+            '3_3_1' => 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.1/js/bootstrap.min.js'
+        ),
+        'jqueryui' => array(
+            '1_11_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js'
+        ),
+        'lightslider' => array(
+            '1_1_2' => 'https://cdnjs.cloudflare.com/ajax/libs/lightslider/1.1.2/js/lightslider.min.js'
+        ),
+        'panzoom' => array(
+            '2_0_5' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery.panzoom/2.0.5/jquery.panzoom.min.js'
+        ),
+        'featherlight' => array(
+            '1_0_3' => 'https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.0.3/featherlight.min.js'
+        ),
+        'countdown' => array(
+            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.countdown.min.js'
+        ),
+        // this is for countdown above
+        'jquery_plugin' => array(
+            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.plugin.min.js'
+        ),
+    ),
 
     'assets' => array(
         // Asset root (without trailing slash)
