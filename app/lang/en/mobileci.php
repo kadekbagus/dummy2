@@ -14,7 +14,7 @@ return array(
         'my_account'        => 'MY ACCOUNT',
         'transfercart'      => 'TRANSFER CART',
         'customer_id'       => 'CUSTOMER ID',
-        'logout'            => 'LOG OUT',
+        'logout'            => 'SIGN OUT',
         'language'          => 'LANGUAGE',
         'payment'           => 'PAYMENT',
         'searching'         => 'SEARCH',
@@ -169,7 +169,7 @@ return array(
         'connecting_to_google' => 'Connecting to Google...',
         'connecting_with' => 'Connect with',
         'sign_in' => 'Sign In',
-        'sign_up' => 'Sign up',
+        'sign_up' => 'Sign Up',
         'doesnt_have_account' => 'Does not have account',
     ),
 
