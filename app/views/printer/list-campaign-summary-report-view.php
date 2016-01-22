@@ -132,15 +132,16 @@
             <td><strong><?php echo number_format($totalPopUpViews, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Estimated total cost</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
-        </tr>
-        <tr>
             <td>Total spending</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
         </tr>
+        <tr>
+            <td>Estimated total cost</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
+        </tr>
+
 
         <!-- Filtering -->
         <?php if($startDate != '' && $endDate != ''){ ?>
