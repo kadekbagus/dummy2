@@ -215,7 +215,7 @@
                             <td><?php echo htmlentities($value->campaign_type); ?></td>
                             <td><?php echo $value->total_tenant; ?></td>
                             <td><?php echo htmlentities($value->mall_name); ?></td>
-                            <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y H:i:s') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y H:i:s'); ?></td>
+                            <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y H:i:s') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y'); ?></td>
                             <td><?php echo $value->page_views; ?></td>
                             <td><?php echo $value->popup_views; ?></td>
                             <td><?php echo $value->popup_clicks; ?></td>
