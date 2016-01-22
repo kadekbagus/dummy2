@@ -136,12 +136,14 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_news_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'View News Pop Up'
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_news_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'Click News Pop Up'
                 ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -174,13 +176,15 @@ class CampaignReportAPIController extends ControllerAPI
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_news_promotion'
+                    AND {$tablePrefix}activities.activity_name = 'view_promotion_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'View Promotion Pop Up'
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'Click Promotion Pop Up'
                 ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -213,13 +217,15 @@ class CampaignReportAPIController extends ControllerAPI
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_news_coupon'
+                    AND {$tablePrefix}activities.activity_name = 'view_coupon_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'View Coupon Pop Up'
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
+                    AND {$tablePrefix}activities.activity_name_long = 'Click Coupon Pop Up'
                 ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -379,6 +385,24 @@ class CampaignReportAPIController extends ControllerAPI
 
             $totalCampaign = $_campaign->count();
             $listOfCampaign = $campaign->get();
+
+            // get popup tenant
+            $campaignWithtenant = array();
+            foreach ($listOfCampaign as $key => $val) {
+                if ($val->campaign_type === 'coupon') {
+                    $linkToTenants = DB::table('promotion_retailer')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
+                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->where('promotion_retailer.promotion_id', $val->campaign_id)
+                            ->get();
+                } else {
+                    $linkToTenants = DB::table('news_merchant')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
+                            ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                            ->where('news_merchant.news_id', $val->campaign_id)
+                            ->get();
+                }
+
+                $listOfCampaign[$key]->tenants = $linkToTenants;
+            }
 
             $data = new stdclass();
             $data->total_records = $totalCampaign;
@@ -1111,20 +1135,44 @@ class CampaignReportAPIController extends ControllerAPI
     public function getSpending()
     {
         // Campaign ID
-        $id = OrbitInput::get('id');
+        $id = OrbitInput::get('campaign_id');
 
         // News, promotion or coupon
-        $type = OrbitInput::get('type');
+        $type = OrbitInput::get('campaign_type');
 
         // Date intervals
-        $beginDate = OrbitInput::get('begin_date');
-        $endDate = OrbitInput::get('end_date');
+        $beginDate = substr(OrbitInput::get('start_date'), 0, 10);
+        $endDate = substr(OrbitInput::get('end_date'), 0, 10);
 
         // Init Carbon
         $carbonDate = Carbon::createFromFormat('Y-m-d', $beginDate);
 
         // Init outputs
         $outputs = [];
+
+        // Get the campaign from database
+        switch ($type) {
+            case 'news':
+                $campaign = News::isNews();
+                break;
+            case 'promotion':
+                $campaign = News::isPromotion();
+                break;
+            case 'coupon':
+                $campaign = new Coupon;
+                break;
+        }
+
+        $campaign = $campaign->find($id);
+
+        $campaignLogs = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            ->where('updated_at', '<', $beginDate.' 00:00:00')
+            ->orderBy('updated_at', 'desc')->first();
+
+        $initialCost = 0;
+        if ($campaignLogs) {
+            $initialCost = $campaignLogs->campaign_cost;
+        }
 
         // Init previous day cost
         $previousDayCost = 0;
@@ -1133,7 +1181,7 @@ class CampaignReportAPIController extends ControllerAPI
         while ($carbonDate->toDateString() <= $endDate) {
             $date = $carbonDate->toDateString();
 
-            // Let's retrieve from DB
+            // Let's retrieve it from DB
             $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', 'LIKE', $date.' %')
                 ->orderBy('updated_at', 'desc')
@@ -1143,11 +1191,18 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Data found
             if ($row) {
-                $cost = $previousDayCost = $row->campaign_cost;
+                $cost = $previousDayCost = $initialCost = $row->campaign_cost;
+            } elseif ($date.' 00:00:00' >= $campaign->begin_date && $date.' 23:59:59' <= $campaign->end_date) {
+                $cost = $initialCost;
+            } else {
+                $cost = 0;
             }
 
+            // Format cost as integer
+            $cost = (int) $cost;
+
             // Add to output array
-            $outputs[] = ['date' => $date, 'cost' => number_format($cost, 0, '.', ',')];
+            $outputs[] = compact('date', 'cost');
 
             // Increment day by 1
             $carbonDate->addDay();
