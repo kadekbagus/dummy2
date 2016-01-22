@@ -4914,17 +4914,14 @@ class DashboardAPIController extends ControllerAPI
 
             $result = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as total_page_view"))
                         ->whereRaw("(({$tablePrefix}activities.activity_name = 'view_promotion' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View Promotion Detail' AND
                                      {$tablePrefix}activities.module_name = 'Promotion' AND
                                      {$tablePrefix}activities.activity_type = 'view') OR
                                      
                                      ({$tablePrefix}activities.activity_name = 'view_news' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View News Detail' AND
                                      {$tablePrefix}activities.module_name = 'News' AND
                                      {$tablePrefix}activities.activity_type = 'view') OR
                                      
                                      ({$tablePrefix}activities.activity_name = 'view_coupon' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View Coupon Detail' AND
                                      {$tablePrefix}activities.module_name = 'Coupon' AND
                                      {$tablePrefix}activities.activity_type = 'view'))
                                 ")
