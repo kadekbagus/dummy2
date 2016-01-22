@@ -194,13 +194,19 @@ a:hover{
 }
 .catalogue-img {
     background: #fefefe;
+    padding-left: 4px;
+    padding-right: 4px;
     a {
         display: block;
     }
     img {
-        max-height: 80px;
+        //max-height: 80px;
         margin-top: 4px;
         //margin: 0 auto;
+        width: 100%;
+        height: 76px;
+        object-fit: cover;
+
     }
     /*&:before {
         content: ' ';
@@ -545,6 +551,14 @@ h3.currency.currency-promo{
     position:absolute; 
     width:100%;
     height:130px; //same as .catalogue height
+    top:0;
+    left: 0;
+    z-index: 1;
+}
+.link-spanner-other{
+    position:absolute; 
+    width:100%;
+    height:86px; //same as .catalogue-other height
     top:0;
     left: 0;
     z-index: 1;
