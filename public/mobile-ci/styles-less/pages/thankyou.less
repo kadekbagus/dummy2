@@ -196,10 +196,18 @@ canvas{
   }
 }
 .catalogue-top{
+  &.catalogue-top-tenant{
+    img{
+      margin-top:27px;
+    }
+  }
   p{
-    white-space: pre-wrap;
+    white-space: nowrap;
     height: 20px;
     overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
   }
 }
 .side-margin-center{
