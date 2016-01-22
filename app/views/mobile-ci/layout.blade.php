@@ -4,6 +4,7 @@
         @include('mobile-ci.head')
         {{ HTML::style('mobile-ci/stylesheet/jquery-ui.min.css') }}
         {{ HTML::style('mobile-ci/stylesheet/lightslider.min.css') }}
+        <link href='https://fonts.googleapis.com/css?family=Ubuntu:400,700' rel='stylesheet' type='text/css'>
         @yield('ext_style')
     </head>
     <body>
