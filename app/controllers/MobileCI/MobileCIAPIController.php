@@ -3262,7 +3262,7 @@ class MobileCIAPIController extends ControllerAPI
             $listOfRec = $coupons->get();
 
             if (! empty($alternateLanguage) || ! empty($listOfRec)) {
-                foreach ($coupons as $coupon) {
+                foreach ($listOfRec as $coupon) {
                     $couponTranslation = \CouponTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
                         ->where('promotion_id', $coupon->promotion_id)->first();
@@ -3776,7 +3776,7 @@ class MobileCIAPIController extends ControllerAPI
             $listOfRec = $promotions->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
-                foreach ($promotions as $key => $val) {
+                foreach ($listOfRec as $key => $val) {
 
                     $promotionTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -4198,7 +4198,7 @@ class MobileCIAPIController extends ControllerAPI
             $listOfRec = $news->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
-                foreach ($news as $key => $val) {
+                foreach ($listOfRec as $key => $val) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
