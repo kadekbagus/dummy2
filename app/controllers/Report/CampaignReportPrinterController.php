@@ -96,6 +96,10 @@ class CampaignReportPrinterController extends DataPrinterController
                 $no  = 1;
                 if ($totalRecord > 0) {
                     foreach ($data as $key => $value) {
+                        $base_price_fix = str_replace('.00', '', $value->base_price);
+                        $estimated_total_fix = str_replace('.00', '', $value->estimated_total);
+                        $spending_fix = str_replace('.00', '', $value->spending);
+
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                                 $no,
                                 $value->campaign_name,
@@ -107,9 +111,9 @@ class CampaignReportPrinterController extends DataPrinterController
                                 $value->page_views,
                                 $value->popup_views,
                                 $value->popup_clicks,
-                                number_format($value->base_price,0,',','.'),
-                                number_format($value->estimated_total,0,',','.'),
-                                number_format($value->spending,0,',','.'),
+                                $base_price_fix,
+                                $estimated_total_fix,
+                                $spending_fix,
                                 $value->status
                         );
                         $no++;
