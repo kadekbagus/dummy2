@@ -1319,19 +1319,16 @@ class CampaignReportAPIController extends ControllerAPI
                                 where
                                     ac.object_id = ?
                                         and ((ac.activity_name = 'view_coupon'
-                                        and ac.activity_name_long = 'View Coupon Detail'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'Coupon'
                                         and ac.group = 'mobile-ci'
                                         and ac.role = 'Consumer')
                                         or (ac.activity_name = 'view_news'
-                                        and ac.activity_name_long = 'View News Detail'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'News'
                                         and ac.group = 'mobile-ci'
                                         and ac.role = 'Consumer')
                                         or (ac.activity_name = 'view_promotion'
-                                        and ac.activity_name_long = 'View Promotion Detail'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'Promotion'
                                         and ac.group = 'mobile-ci'
