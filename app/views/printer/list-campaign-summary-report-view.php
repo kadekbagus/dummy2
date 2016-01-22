@@ -132,15 +132,16 @@
             <td><strong><?php echo number_format($totalPopUpViews, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
-            <td>Estimated total cost</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
-        </tr>
-        <tr>
             <td>Total spending</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
         </tr>
+        <tr>
+            <td>Estimated total cost</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
+        </tr>
+
 
         <!-- Filtering -->
         <?php if($startDate != '' && $endDate != ''){ ?>
@@ -194,14 +195,11 @@
             <th style="text-align:left;">Mall</th>
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Page Views</th>
-
             <th style="text-align:left;">Views Popup</th>
             <th style="text-align:left;">Clicks Popup</th>
-            <th style="text-align:left;">Daily Cost</th>
-
-            <th style="text-align:left;">Estimated Total Cost</th>
-            <th style="text-align:left;">Spending</th>
-
+            <th style="text-align:left;">Daily Cost (IDR)</th>
+            <th style="text-align:left;">Estimated Total Cost (IDR)</th>
+            <th style="text-align:left;">Spending (IDR)</th>
             <th style="text-align:left;">Status</th>
         </thead>
 
@@ -221,9 +219,9 @@
                             <td><?php echo $value->page_views; ?></td>
                             <td><?php echo $value->popup_views; ?></td>
                             <td><?php echo $value->popup_clicks; ?></td>
-                            <td><?php echo $value->base_price; ?></td>
-                            <td><?php echo $value->estimated_total; ?></td>
-                            <td><?php echo $value->spending; ?></td>
+                            <td><?php echo number_format($value->base_price,0,',','.'); ?></td>
+                            <td><?php echo number_format($value->estimated_total,0,',','.'); ?></td>
+                            <td><?php echo number_format($value->spending,0,',','.'); ?></td>
                             <td><?php echo $value->status; ?></td>
                         </tr>
                     <?php
