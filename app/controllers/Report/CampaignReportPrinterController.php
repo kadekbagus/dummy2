@@ -69,8 +69,8 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', number_format($totalRecord, 0, '.', '.'), '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', number_format($totalPageViews, 0, '.', '.'), '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', number_format($totalPopUpViews, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost', number_format($totalEstimatedCost, 0, '.', '.'), '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', number_format($totalSpending, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost', number_format($totalEstimatedCost, 0, '.', '.'), '', '', '','');
 
                 // Filtering
                 if($startDate != '' && $endDate != ''){
@@ -90,7 +90,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Tenants', 'Mall', 'Campaign Dates', 'Page Views', 'Views Popup', 'Clicks Popup', 'Daily Cost', 'Estimated Total Cost', 'Spending', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Tenants', 'Mall', 'Campaign Dates', 'Page Views', 'Pop Up Views', 'Pop Up Clicks', 'Daily Cost (IDR)', 'Estimated Total Cost (IDR)', 'Spending (IDR)', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $no  = 1;
@@ -107,9 +107,9 @@ class CampaignReportPrinterController extends DataPrinterController
                                 $value->page_views,
                                 $value->popup_views,
                                 $value->popup_clicks,
-                                $value->base_price,
-                                $value->estimated_total,
-                                $value->spending,
+                                number_format($value->base_price,0,',','.'),
+                                number_format($value->estimated_total,0,',','.'),
+                                number_format($value->spending,0,',','.'),
                                 $value->status
                         );
                         $no++;
