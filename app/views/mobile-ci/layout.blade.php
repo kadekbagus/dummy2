@@ -2,8 +2,8 @@
 <html>
     <head>
         @include('mobile-ci.head')
+        {{ HTML::style('mobile-ci/stylesheet/jquery-ui.min.css') }}
         {{ HTML::style('mobile-ci/stylesheet/lightslider.min.css') }}
-        {{ HTML::style('mobile-ci/stylesheet/polyfill.object-fit.css') }}
         @yield('ext_style')
     </head>
     <body>

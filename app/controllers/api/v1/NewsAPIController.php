@@ -926,15 +926,17 @@ class NewsAPIController extends ControllerAPI
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
                 // campaign history status
-                $campaignhistory = new CampaignHistory();
-                $campaignhistory->campaign_type = $object_type;
-                $campaignhistory->campaign_id = $news_id;
-                $campaignhistory->campaign_history_action_id = $activeid;
-                $campaignhistory->number_active_tenants = $rowcost->tenants;
-                $campaignhistory->campaign_cost = $rowcost->cost;
-                $campaignhistory->created_by = $this->api->user->user_id;
-                $campaignhistory->modified_by = $this->api->user->user_id;
-                $campaignhistory->save();
+                if (! empty($rowcost)) {
+                    $campaignhistory = new CampaignHistory();
+                    $campaignhistory->campaign_type = $object_type;
+                    $campaignhistory->campaign_id = $news_id;
+                    $campaignhistory->campaign_history_action_id = $activeid;
+                    $campaignhistory->number_active_tenants = $rowcost->tenants;
+                    $campaignhistory->campaign_cost = $rowcost->cost;
+                    $campaignhistory->created_by = $this->api->user->user_id;
+                    $campaignhistory->modified_by = $this->api->user->user_id;
+                    $campaignhistory->save();
+                }
             }
 
             //check for add/remove tenant
