@@ -195,8 +195,8 @@
             <th style="text-align:left;">Mall</th>
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Page Views</th>
-            <th style="text-align:left;">Views Popup</th>
-            <th style="text-align:left;">Clicks Popup</th>
+            <th style="text-align:left;">Pop Up Views</th>
+            <th style="text-align:left;">Pop Up Clicks</th>
             <th style="text-align:left;">Daily Cost (IDR)</th>
             <th style="text-align:left;">Estimated Total Cost (IDR)</th>
             <th style="text-align:left;">Spending (IDR)</th>
