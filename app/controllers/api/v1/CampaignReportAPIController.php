@@ -130,6 +130,8 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_news'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as page_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -137,6 +139,8 @@ class CampaignReportAPIController extends ControllerAPI
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_news_popup'
                     AND {$tablePrefix}activities.activity_name_long = 'View News Pop Up'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -144,12 +148,16 @@ class CampaignReportAPIController extends ControllerAPI
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_news_popup'
                     AND {$tablePrefix}activities.activity_name_long = 'Click News Pop Up'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_news_popup'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as spending,
                 {$tablePrefix}news.status"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -171,6 +179,8 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_promotion'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as page_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -191,6 +201,8 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as spending,
                 {$tablePrefix}news.status"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -212,6 +224,8 @@ class CampaignReportAPIController extends ControllerAPI
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_coupon'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as page_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -219,6 +233,8 @@ class CampaignReportAPIController extends ControllerAPI
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'view_coupon_popup'
                     AND {$tablePrefix}activities.activity_name_long = 'View Coupon Pop Up'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as popup_views,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -226,12 +242,16 @@ class CampaignReportAPIController extends ControllerAPI
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
                     AND {$tablePrefix}activities.activity_name_long = 'Click Coupon Pop Up'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as popup_clicks,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
                     WHERE `campaign_id` = {$tablePrefix}activities.object_id
                     AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
+                    AND {$tablePrefix}activities.group = 'mobile-ci'
+                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as spending,
                 {$tablePrefix}promotions.status"))
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
@@ -1322,17 +1342,19 @@ class CampaignReportAPIController extends ControllerAPI
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'Coupon'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer')
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
+                                        
                                         or (ac.activity_name = 'view_news'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'News'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer')
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
+                                        
                                         or (ac.activity_name = 'view_promotion'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'Promotion'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer'))
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest')))
                                         and ac.location_id = ?
                                         and ac.created_at between ? and ?
                                 group by 1
@@ -1352,19 +1374,19 @@ class CampaignReportAPIController extends ControllerAPI
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'Coupon'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer')
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
                                         or (ac.activity_name = 'view_news_popup'
                                         and ac.activity_name_long = 'View News Pop Up'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'News'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer')
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
                                         or (ac.activity_name = 'view_promotion_popup'
                                         and ac.activity_name_long = 'View Promotion Pop Up'
                                         and ac.activity_type = 'view'
                                         and ac.module_name = 'Promotion'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer'))
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest')))
                                         and ac.location_id = ?
                                         and ac.created_at between ? and ?
                                 group by 1
@@ -1383,19 +1405,19 @@ class CampaignReportAPIController extends ControllerAPI
                                         and ac.activity_type = 'click'
                                         and ac.module_name = 'Coupon'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer')
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
                                         or (ac.activity_name = 'click_news_popup'
                                         and ac.activity_name_long = 'Click News Pop Up'
                                         and ac.activity_type = 'click'
                                         and ac.module_name = 'News'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer')
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
                                         or (ac.activity_name = 'click_promotion_popup'
                                         and ac.activity_name_long = 'Click Promotion Pop Up'
                                         and ac.activity_type = 'click'
                                         and ac.module_name = 'Promotion'
                                         and ac.group = 'mobile-ci'
-                                        and ac.role = 'Consumer'))
+                                        and (ac.role = 'Consumer' or ac.role = 'Guest')))
                                         and ac.location_id = ?
                                         and ac.created_at between ? and ?
                                 group by 1
