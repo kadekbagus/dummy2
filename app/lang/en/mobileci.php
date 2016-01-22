@@ -14,7 +14,7 @@ return array(
         'my_account'        => 'MY ACCOUNT',
         'transfercart'      => 'TRANSFER CART',
         'customer_id'       => 'CUSTOMER ID',
-        'logout'            => 'LOG OUT',
+        'logout'            => 'SIGN OUT',
         'language'          => 'LANGUAGE',
         'payment'           => 'PAYMENT',
         'searching'         => 'SEARCH',
