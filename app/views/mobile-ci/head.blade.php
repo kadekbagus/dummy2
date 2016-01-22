@@ -20,7 +20,7 @@
 @endif
 
 {{ HTML::style('mobile-ci/stylesheet/bootstrap-tour.min.css') }}
-{{ HTML::style('mobile-ci/stylesheet/' . Orbit\Helper\Asset\Stylesheet::create()->getMallCss()) }}
+{{ HTML::style('mobile-ci/stylesheet/' . Orbit\Helper\Asset\Stylesheet::create()->getMallCss() . '?ts=201601221420') }}
 {{ HTML::style('mobile-ci/stylesheet/responsiveslides.css') }}
 {{ HTML::style('mobile-ci/vendor/toastr/toastr.min.css') }}
 {{ HTML::script('mobile-ci/scripts/jquery-2.1.1.min.js') }}
