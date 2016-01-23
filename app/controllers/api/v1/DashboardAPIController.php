@@ -5249,11 +5249,11 @@ class DashboardAPIController extends ControllerAPI
                                         {$tablePrefix}campaign_histories a
                                             LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        a.created_at < concat(DATE_FORMAT(orbs_campaign_histories.created_at, '%Y-%m-%d'), ' ', '23:59:59')
+                                        a.created_at < concat(DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), ' ', '23:59:59')
                                             and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by {$tablePrefix}campaign_histories.campaign_history_id desc
-                                    limit 1), orbs_campaign_history_actions.action_name) as action_status
+                                    limit 1), {$tablePrefix}campaign_history_actions.action_name) as action_status
                             from
                                 (select *
                                 from
@@ -5275,7 +5275,7 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
-                            group by DATE_FORMAT(orbs_campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
+                            group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
             
             $couponQuery = DB::select( DB::raw("select 
                                 {$tablePrefix}campaign_histories.campaign_history_id,
@@ -5292,11 +5292,11 @@ class DashboardAPIController extends ControllerAPI
                                         {$tablePrefix}campaign_histories a
                                             LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        a.created_at < concat(DATE_FORMAT(orbs_campaign_histories.created_at, '%Y-%m-%d'), ' ', '23:59:59')
+                                        a.created_at < concat(DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), ' ', '23:59:59')
                                             and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by {$tablePrefix}campaign_histories.campaign_history_id desc
-                                    limit 1), orbs_campaign_history_actions.action_name) as action_status
+                                    limit 1), {$tablePrefix}campaign_history_actions.action_name) as action_status
                             from
                                 (select *
                                 from
@@ -5318,7 +5318,7 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
-                            group by DATE_FORMAT(orbs_campaign_histories.created_at, '%Y-%m-%d') , {$tablePrefix}campaign_histories.campaign_id"));
+                            group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') , {$tablePrefix}campaign_histories.campaign_id"));
             
             $data = array();
 
