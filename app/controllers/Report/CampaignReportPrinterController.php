@@ -152,25 +152,24 @@ class CampaignReportPrinterController extends DataPrinterController
 
         // get total data
         $totalRecord = $response->data->total_records;
+        $activeCampaignDays = $response->data->active_campaign_days;
         $totalPageViews = $response->data->total_page_views;
-        $totalPopUpViews = $response->data->total_pop_up_views;
-        $totalEstimatedCost = $response->data->total_estimated_cost;
+        $totalPopupViews = $response->data->total_popup_views;
+        $totalPopupClicks = $response->data->total_popup_clicks;
         $totalSpending = $response->data->total_spending;
+
 
         // Filter mode
         $filter = '';
-        $campaignName = OrbitInput::get('campaign_name');
-        $campaignType = OrbitInput::get('campaign_type');
         $tenant = OrbitInput::get('tenant');
         $mallName = OrbitInput::get('mall_name');
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
-        $status = OrbitInput::get('status');
 
 
         $this->prepareUnbufferedQuery();
 
-        $pageTitle = 'Campaign Summary Report';
+        $pageTitle = 'Campaign Detail Report';
 
         switch ($mode) {
             case 'csv':
@@ -179,30 +178,24 @@ class CampaignReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Summary Report', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Detail Report', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active campaign days', number_format($totalRecord, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active campaign days', number_format($activeCampaignDays, 0, '.', '.'), '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', number_format($totalPageViews, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', number_format($totalPopUpViews, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up clicks', number_format($totalSpending, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', number_format($totalEstimatedCost, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', number_format($totalPopupViews, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up clicks', number_format($totalPopupClicks, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', number_format($totalSpending, 0, '.', '.'), '', '', '','');
 
                 // Filtering
-                if($startDate != '' && $endDate != ''){
+                if ($startDate != '' && $endDate != ''){
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
                 }
 
-                if ($campaignName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name : ', htmlentities($campaignName), '', '', '','');
-                } elseif($campaignType != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type :', htmlentities($campaignType), '', '', '','');
-                } elseif($tenant != '') {
+                if ($tenant != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
                 } elseif($mallName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Location : ', htmlentities($mallName), '', '', '','');
-                } elseif($status != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status :', $status, '', '', '','');
                 }
 
 
@@ -213,25 +206,20 @@ class CampaignReportPrinterController extends DataPrinterController
                 $no  = 1;
                 if ($totalRecord > 0) {
                     foreach ($data as $key => $value) {
-                        $base_price_fix = str_replace('.00', '', $value->base_price);
-                        $estimated_total_fix = str_replace('.00', '', $value->estimated_total);
-                        $spending_fix = str_replace('.00', '', $value->spending);
+                        $spending_fix = str_replace('.00', '', $value['spending']);
 
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                                 $no,
-                                $value->campaign_name,
-                                $value->campaign_type,
-                                $value->total_tenant,
-                                $value->mall_name,
-                                $this->printDateTime($value->begin_date, $timezone, 'd M Y'),
-                                $this->printDateTime($value->end_date, $timezone, 'd M Y'),
-                                $value->page_views,
-                                $value->popup_views,
-                                $value->popup_clicks,
-                                $base_price_fix,
-                                $estimated_total_fix,
-                                $spending_fix,
-                                $value->status
+                                $value['campaign_date'],
+                                htmlentities($value['mall_name']),
+                                $value['unique_users'],
+                                $value['campaign_pages_views'],
+                                $value['campaign_pages_view_rate'],
+                                $value['popup_views'],
+                                $value['popup_view_rate'] . '%',
+                                $value['popup_clicks'],
+                                $value['popup_click_rate'] . '%',
+                                $spending_fix
                         );
                         $no++;
                     }

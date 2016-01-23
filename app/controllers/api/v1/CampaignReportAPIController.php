@@ -608,142 +608,139 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Get data from activity per day
-            if (count($getBeginEndDate) > 0) {
-                $beginDate = date("Y-m-d", strtotime($getBeginEndDate[0]->begin_date));
-                $endDate = date("Y-m-d", strtotime($getBeginEndDate[0]->end_date));
+            $beginDate = date("Y-m-d", strtotime($getBeginEndDate[0]->begin_date));
+            $endDate = date("Y-m-d", strtotime($getBeginEndDate[0]->end_date));
 
-                if ($campaign_type === 'news' or $campaign_type === 'promotion') {
+            if ($campaign_type === 'news' or $campaign_type === 'promotion') {
 
-                    $campaignHistory = DB::select(DB::raw("
-                            select
-                                {$tablePrefix}campaign_histories.campaign_history_id,
-                                {$tablePrefix}news.begin_date,
-                                {$tablePrefix}news.end_date,
-                                {$tablePrefix}campaign_histories.campaign_type,
-                                {$tablePrefix}campaign_histories.campaign_id as campaign_id,
-                                case
-                                    when (d.selected_date >= {$tablePrefix}news.begin_date OR d.selected_date <= {$tablePrefix}news.end_date) then {$tablePrefix}campaign_histories.number_active_tenants
-                                    else 0
-                                end as total_tenant,
-                                {$tablePrefix}campaign_price.base_price,
-                                {$tablePrefix}campaign_histories.created_at,
-                                d.selected_date,
-                                (select
-                                        {$tablePrefix}campaign_history_actions.action_name
-                                    from
-                                        {$tablePrefix}campaign_histories a
-                                            left join
-                                        {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
-                                    where
-                                        a.created_at < concat(d.selected_date, ' ', '23:59:59')
-                                            and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_histories.campaign_history_id desc
-                                    limit 1) as action_status
+                $campaignHistory = DB::select(DB::raw("
+                        select
+                            {$tablePrefix}campaign_histories.campaign_history_id,
+                            {$tablePrefix}news.begin_date,
+                            {$tablePrefix}news.end_date,
+                            {$tablePrefix}campaign_histories.campaign_type,
+                            {$tablePrefix}campaign_histories.campaign_id as campaign_id,
+                            case
+                                when (d.selected_date >= {$tablePrefix}news.begin_date OR d.selected_date <= {$tablePrefix}news.end_date) then {$tablePrefix}campaign_histories.number_active_tenants
+                                else 0
+                            end as total_tenant,
+                            {$tablePrefix}campaign_price.base_price,
+                            {$tablePrefix}campaign_histories.created_at,
+                            d.selected_date,
+                            (
+                                select {$tablePrefix}campaign_history_actions.action_name
+                                from {$tablePrefix}campaign_histories a
+                                left join {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                where a.created_at < concat(d.selected_date, ' ', '23:59:59')
+                                and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
+                                and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                order by {$tablePrefix}campaign_histories.campaign_history_id desc
+                                limit 1) as action_status
+                        from
+                            (select
+                                *
                             from
                                 (select
-                                    *
-                                from
-                                    (select
-                                    adddate('1970-01-01', t4.i * 10000 + t3.i * 1000 + t2.i * 100 + t1.i * 10 + t0.i) selected_date
-                                from
-                                    (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t0, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t1, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t2, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t3, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t4) v
-                                where
-                                    selected_date between '" . $beginDate . "' and '" . $endDate . "') d
-                                    left join
-                                (select
-                                    *
-                                from
-                                    {$tablePrefix}campaign_histories
-                                where
-                                    campaign_id in (select
-                                            news_id
-                                        from
-                                            {$tablePrefix}news
-                                        where
-                                            (({$tablePrefix}news.begin_date between '" . $beginDate . "' and '" . $endDate . "')
-                                                or ({$tablePrefix}news.end_date between '" . $beginDate . "' and '" . $endDate . "'))
-                                                or (('2016-01-21' between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)
-                                                or ('2016-01-31' between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)))
-                                            and campaign_id = '" . $campaign_id. "'
-                                            and campaign_type = '" . $campaign_type . "'
-                                order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
-                                        '%Y-%m-%d') = DATE_FORMAT(d.selected_date, '%Y-%m-%d')
-                                    left join {$tablePrefix}news ON {$tablePrefix}news.news_id = {$tablePrefix}campaign_histories.campaign_id
-                                    left join {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    left join {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
-                            group by d.selected_date , {$tablePrefix}campaign_histories.campaign_id
-                        "));
-                } elseif ($campaign_type === 'coupon') {
-
-                    $campaignHistory = DB::select(DB::raw("
-                            select
-                                {$tablePrefix}campaign_histories.campaign_history_id,
-                                {$tablePrefix}promotions.begin_date,
-                                {$tablePrefix}promotions.end_date,
-                                {$tablePrefix}campaign_histories.campaign_type,
-                                {$tablePrefix}campaign_histories.campaign_id as campaign_id,
-                                case
-                                    when (d.selected_date >= {$tablePrefix}promotions.begin_date OR d.selected_date <= {$tablePrefix}promotions.end_date) then {$tablePrefix}campaign_histories.number_active_tenants
-                                    else 0
-                                end as total_tenant,
-                                {$tablePrefix}campaign_price.base_price,
-                                {$tablePrefix}campaign_histories.created_at,
-                                d.selected_date,
-                                (select
-                                        {$tablePrefix}campaign_history_actions.action_name
+                                adddate('1970-01-01', t4.i * 10000 + t3.i * 1000 + t2.i * 100 + t1.i * 10 + t0.i) selected_date
+                            from
+                                (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t0, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t1, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t2, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t3, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t4) v
+                            where
+                                selected_date between '" . $beginDate . "' and '" . $endDate . "') d
+                                left join
+                            (select
+                                *
+                            from
+                                {$tablePrefix}campaign_histories
+                            where
+                                campaign_id in (select
+                                        news_id
                                     from
-                                        {$tablePrefix}campaign_histories a
-                                            left join
-                                        {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                        {$tablePrefix}news
                                     where
-                                        a.created_at < concat(d.selected_date, ' ', '23:59:59')
-                                            and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_histories.campaign_history_id desc
-                                    limit 1) as action_status
+                                        (({$tablePrefix}news.begin_date between '" . $beginDate . "' and '" . $endDate . "')
+                                            or ({$tablePrefix}news.end_date between '" . $beginDate . "' and '" . $endDate . "'))
+                                            or (('2016-01-21' between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)
+                                            or ('2016-01-31' between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)))
+                                        and campaign_id = '" . $campaign_id. "'
+                                        and campaign_type = '" . $campaign_type . "'
+                            order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
+                                    '%Y-%m-%d') = DATE_FORMAT(d.selected_date, '%Y-%m-%d')
+                                left join {$tablePrefix}news ON {$tablePrefix}news.news_id = {$tablePrefix}campaign_histories.campaign_id
+                                left join {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                left join {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
+                        group by d.selected_date , {$tablePrefix}campaign_histories.campaign_id
+                    "));
+
+            } elseif ($campaign_type === 'coupon') {
+
+                $campaignHistory = DB::select(DB::raw("
+                        select
+                            {$tablePrefix}campaign_histories.campaign_history_id,
+                            {$tablePrefix}promotions.begin_date,
+                            {$tablePrefix}promotions.end_date,
+                            {$tablePrefix}campaign_histories.campaign_type,
+                            {$tablePrefix}campaign_histories.campaign_id as campaign_id,
+                            case
+                                when (d.selected_date >= {$tablePrefix}promotions.begin_date OR d.selected_date <= {$tablePrefix}promotions.end_date) then {$tablePrefix}campaign_histories.number_active_tenants
+                                else 0
+                            end as total_tenant,
+                            {$tablePrefix}campaign_price.base_price,
+                            {$tablePrefix}campaign_histories.created_at,
+                            d.selected_date,
+                            (
+                                select {$tablePrefix}campaign_history_actions.action_name
+                                from {$tablePrefix}campaign_histories a
+                                left join {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                where a.created_at < concat(d.selected_date, ' ', '23:59:59')
+                                and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
+                                and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                order by {$tablePrefix}campaign_histories.campaign_history_id desc
+                                limit 1) as action_status
+                        from
+                            (select
+                                *
                             from
                                 (select
-                                    *
-                                from
-                                    (select
-                                    adddate('1970-01-01', t4.i * 10000 + t3.i * 1000 + t2.i * 100 + t1.i * 10 + t0.i) selected_date
-                                from
-                                    (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t0, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t1, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t2, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t3, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t4) v
-                                where
-                                    selected_date between '" . $beginDate . "' and '" . $endDate . "') d
-                                    left join
-                                (select
-                                    *
-                                from
-                                    {$tablePrefix}campaign_histories
-                                where
-                                    campaign_id in (select
-                                            promotion_id
-                                        from
-                                            {$tablePrefix}promotions
-                                        where
-                                            (({$tablePrefix}promotions.begin_date between '" . $beginDate . "' and '" . $endDate . "')
-                                                or ({$tablePrefix}promotions.end_date between '" . $beginDate . "' and '" . $endDate . "'))
-                                                or (('2016-01-21' between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)
-                                                or ('2016-01-31' between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)))
-                                            and campaign_id = '" . $campaign_id. "'
-                                            and campaign_type = '" . $campaign_type . "'
-                                order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
-                                        '%Y-%m-%d') = DATE_FORMAT(d.selected_date, '%Y-%m-%d')
-                                    left join {$tablePrefix}promotions ON {$tablePrefix}promotions.promotion_id = {$tablePrefix}campaign_histories.campaign_id
-                                    left join {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    left join {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
-                            group by d.selected_date , {$tablePrefix}campaign_histories.campaign_id
-                        "));
-                }
+                                adddate('1970-01-01', t4.i * 10000 + t3.i * 1000 + t2.i * 100 + t1.i * 10 + t0.i) selected_date
+                            from
+                                (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t0, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t1, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t2, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t3, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t4) v
+                            where
+                                selected_date between '" . $beginDate . "' and '" . $endDate . "') d
+                                left join
+                            (select
+                                *
+                            from
+                                {$tablePrefix}campaign_histories
+                            where
+                                campaign_id in (select
+                                        promotion_id
+                                    from
+                                        {$tablePrefix}promotions
+                                    where
+                                        (({$tablePrefix}promotions.begin_date between '" . $beginDate . "' and '" . $endDate . "')
+                                            or ({$tablePrefix}promotions.end_date between '" . $beginDate . "' and '" . $endDate . "'))
+                                            or (('2016-01-21' between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)
+                                            or ('2016-01-31' between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)))
+                                        and campaign_id = '" . $campaign_id. "'
+                                        and campaign_type = '" . $campaign_type . "'
+                            order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
+                                    '%Y-%m-%d') = DATE_FORMAT(d.selected_date, '%Y-%m-%d')
+                                left join {$tablePrefix}promotions ON {$tablePrefix}promotions.promotion_id = {$tablePrefix}campaign_histories.campaign_id
+                                left join {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                left join {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
+                        group by d.selected_date , {$tablePrefix}campaign_histories.campaign_id
+                    "));
 
-                // Get active date only
-                $campaignDetailActive = array();
-                $modeActive = false;
-                $previous_value = 0;
+            }
+
+            // Get active date only
+            $campaignDetailActive = array();
+            $modeActive = false;
+            $previous_value = 0;
+
+            if (count($campaignHistory) > 0 && ($campaignHistory[0]->action_status != null) ) {
                 foreach ($campaignHistory as $key => $val) {
-                    if( $val->action_status === 'activate'){
+                    if ($val->action_status === 'activate'){
                         $campaignDetailActive[$key]['campaign_type'] = $val->campaign_type;
                         $campaignDetailActive[$key]['campaign_id'] = $val->campaign_id;
                         $campaignDetailActive[$key]['total_tenant'] = $val->total_tenant;

@@ -109,17 +109,18 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Campaign Summary Report</h2>
+    <h2 style="margin-bottom:0.5em;">Campaign Detail Report</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
             <td style="width:10px;"></td>
             <td><strong></strong></td>
         </tr>
+
         <tr>
-            <td>Number of campaigns</td>
+            <td>Active campaign days</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRecord, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($activeCampaignDays, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
             <td>Total page views</td>
@@ -129,22 +130,22 @@
         <tr>
             <td>Total pop up views</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalPopUpViews, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalPopupViews, 0, '.', '.'); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total pop up clicks</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalPopupClicks, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
             <td>Total spending</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
         </tr>
-        <tr>
-            <td>Estimated total cost</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
-        </tr>
 
 
         <!-- Filtering -->
-        <?php if($startDate != '' && $endDate != ''){ ?>
+        <?php if ($startDate != '' && $endDate != ''){ ?>
             <tr>
                 <td>Campaign date</td>
                 <td>:</td>
@@ -152,19 +153,7 @@
             </tr>
         <?php } ?>
 
-        <?php if ($campaignName != '') { ?>
-            <tr>
-                <td>Filter by Campaign Name</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($campaignName); ?></strong></td>
-            </tr>
-        <?php } elseif($campaignType != '') { ?>
-            <tr>
-                <td>Filter by Campaign Type</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($campaignType); ?></strong></td>
-            </tr>
-        <?php } elseif($tenant != '') { ?>
+        <?php if ($tenant != '') { ?>
             <tr>
                 <td>Filter by Tenant</td>
                 <td>:</td>
@@ -176,31 +165,24 @@
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
-        <?php } elseif($status != '') { ?>
-            <tr>
-                <td>Filter by Status</td>
-                <td>:</td>
-                <td><strong><?php echo htmlentities($status); ?></strong></td>
-            </tr>
         <?php } ?>
 
     </table>
 
     <table style="width:100%">
+
         <thead>
             <th style="text-align:left;">No</th>
-            <th style="text-align:left;">Campaign Name</th>
-            <th style="text-align:left;">Campaign Type</th>
-            <th style="text-align:left;">Tenants</th>
-            <th style="text-align:left;">Mall</th>
-            <th style="text-align:left;">Campaign Dates</th>
-            <th style="text-align:left;">Page Views</th>
-            <th style="text-align:left;">Pop Up Views</th>
-            <th style="text-align:left;">Pop Up Clicks</th>
-            <th style="text-align:left;">Daily Cost (IDR)</th>
-            <th style="text-align:left;">Estimated Total Cost (IDR)</th>
-            <th style="text-align:left;">Spending (IDR)</th>
-            <th style="text-align:left;">Status</th>
+            <th style="text-align:left;">Date</th>
+            <th style="text-align:left;">Location</th>
+            <th style="text-align:left;">Unique users</th>
+            <th style="text-align:left;">Campaign page views</th>
+            <th style="text-align:left;">Campaign page view rate</th>
+            <th style="text-align:left;">Pop up views</th>
+            <th style="text-align:left;">Pop up view rate</th>
+            <th style="text-align:left;">Pop up clicks</th>
+            <th style="text-align:left;">Pop up click rate</th>
+            <th style="text-align:left;">Spending</th>
         </thead>
 
         <tbody>
@@ -211,33 +193,21 @@
                     ?>
                         <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                             <td><?php echo $no; ?></td>
-                            <td><?php echo htmlentities($value->campaign_name); ?></td>
-                            <td><?php echo htmlentities($value->campaign_type); ?></td>
-                            <td><?php echo $value->total_tenant; ?></td>
-                            <td><?php echo htmlentities($value->mall_name); ?></td>
-                            <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y'); ?></td>
-                            <td><?php echo $value->page_views; ?></td>
-                            <td><?php echo $value->popup_views; ?></td>
-                            <td><?php echo $value->popup_clicks; ?></td>
+                            <td><?php echo $value['campaign_date']; ?></td>
+                            <td><?php echo htmlentities($value['mall_name']); ?></td>
+                            <td><?php echo $value['unique_users']; ?></td>
+                            <td><?php echo $value['campaign_pages_views']; ?></td>
+                            <td><?php echo $value['campaign_pages_view_rate']; ?></td>
+                            <td><?php echo $value['popup_views']; ?></td>
+                            <td><?php echo $value['popup_view_rate'] . '%'; ?></td>
+                            <td><?php echo $value['popup_clicks']; ?></td>
+                            <td><?php echo $value['popup_click_rate'] . '%'; ?></td>
                             <td>
                                 <?php
-                                    $base_price_fix = str_replace('.00', '', $value->base_price);
-                                    echo number_format($base_price_fix,0,',','.');
-                                ?>
-                            </td>
-                            <td>
-                                <?php
-                                    $estimated_total_fix = str_replace('.00', '', $value->estimated_total);
-                                    echo number_format($estimated_total_fix,0,',','.');
-                                ?>
-                            </td>
-                            <td>
-                                <?php
-                                    $spending_fix = str_replace('.00', '', $value->spending);
+                                    $spending_fix = str_replace('.00', '', $value['spending']);
                                     echo number_format($spending_fix,0,',','.');
                                 ?>
                             </td>
-                            <td><?php echo $value->status; ?></td>
                         </tr>
                     <?php
                     $no++;
