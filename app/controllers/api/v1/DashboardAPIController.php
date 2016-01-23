@@ -4915,14 +4915,17 @@ class DashboardAPIController extends ControllerAPI
 
             $result = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as total_page_view"))
                         ->whereRaw("(({$tablePrefix}activities.activity_name = 'view_promotion' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View Promotion Detail' AND
                                      {$tablePrefix}activities.module_name = 'Promotion' AND
                                      {$tablePrefix}activities.activity_type = 'view') OR
                                      
                                      ({$tablePrefix}activities.activity_name = 'view_news' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View News Detail' AND
                                      {$tablePrefix}activities.module_name = 'News' AND
                                      {$tablePrefix}activities.activity_type = 'view') OR
                                      
                                      ({$tablePrefix}activities.activity_name = 'view_coupon' AND
+                                     {$tablePrefix}activities.activity_name_long = 'View Coupon Detail' AND
                                      {$tablePrefix}activities.module_name = 'Coupon' AND
                                      {$tablePrefix}activities.activity_type = 'view'))
                                 ")
@@ -5237,31 +5240,21 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}news.end_date,
                                 {$tablePrefix}campaign_histories.campaign_type,
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
-                                CASE WHEN (d.selected_date >= {$tablePrefix}news.begin_date or d.selected_date <= {$tablePrefix}news.end_date) THEN {$tablePrefix}campaign_histories.number_active_tenants ELSE 0 END as tenants,
+                                {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
                                 {$tablePrefix}campaign_histories.created_at,
-                                d.selected_date,
-                                (select 
+                                ifnull((select 
                                         {$tablePrefix}campaign_history_actions.action_name
                                     from
                                         {$tablePrefix}campaign_histories a
                                             LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        a.created_at < concat(d.selected_date, ' ', '23:59:59')
+                                        a.created_at < concat(DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), ' ', '23:59:59')
                                             and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by {$tablePrefix}campaign_histories.campaign_history_id desc
-                                    limit 1) as action_status
+                                    limit 1), {$tablePrefix}campaign_history_actions.action_name) as action_status
                             from
-                                (select *
-                                from
-                                    (select 
-                                    adddate('1970-01-01', t4.i * 10000 + t3.i * 1000 + t2.i * 100 + t1.i * 10 + t0.i) selected_date
-                                from
-                                    (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t0, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t1, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t2, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t3, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t4) v
-                                where
-                                    selected_date between DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d')) d
-                                    left join
                                 (select *
                                 from
                                     {$tablePrefix}campaign_histories
@@ -5275,14 +5268,14 @@ class DashboardAPIController extends ControllerAPI
                                                 or ({$tablePrefix}news.end_date between DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d')))
                                                 or ((DATE_FORMAT('".$start_date."', '%Y-%m-%d') between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)
                                                 or (DATE_FORMAT('".$end_date."', '%Y-%m-%d') between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)))
-                                order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') = DATE_FORMAT(d.selected_date, '%Y-%m-%d')
+                                order by campaign_history_id desc) {$tablePrefix}campaign_histories 
                                     left join
                                 {$tablePrefix}news ON {$tablePrefix}news.news_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join
                                 {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
-                            group by d.selected_date , {$tablePrefix}campaign_histories.campaign_id") );
+                            group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
             
             $couponQuery = DB::select( DB::raw("select 
                                 {$tablePrefix}campaign_histories.campaign_history_id,
@@ -5290,31 +5283,21 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}promotions.end_date,
                                 {$tablePrefix}campaign_histories.campaign_type,
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
-                                CASE WHEN (d.selected_date >= {$tablePrefix}promotions.begin_date or d.selected_date <= {$tablePrefix}promotions.end_date) THEN {$tablePrefix}campaign_histories.number_active_tenants ELSE 0 END as tenants,
+                                {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
                                 {$tablePrefix}campaign_histories.created_at,
-                                d.selected_date,
-                                (select 
+                                ifnull((select 
                                         {$tablePrefix}campaign_history_actions.action_name
                                     from
                                         {$tablePrefix}campaign_histories a
                                             LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        a.created_at < concat(d.selected_date, ' ', '23:59:59')
+                                        a.created_at < concat(DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), ' ', '23:59:59')
                                             and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by {$tablePrefix}campaign_histories.campaign_history_id desc
-                                    limit 1) as action_status
+                                    limit 1), {$tablePrefix}campaign_history_actions.action_name) as action_status
                             from
-                                (select *
-                                from
-                                    (select 
-                                    adddate('1970-01-01', t4.i * 10000 + t3.i * 1000 + t2.i * 100 + t1.i * 10 + t0.i) selected_date
-                                from
-                                    (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t0, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t1, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t2, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t3, (select 0 i union select 1 union select 2 union select 3 union select 4 union select 5 union select 6 union select 7 union select 8 union select 9) t4) v
-                                where
-                                    selected_date between DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d')) d
-                                    left join
                                 (select *
                                 from
                                     {$tablePrefix}campaign_histories
@@ -5328,20 +5311,25 @@ class DashboardAPIController extends ControllerAPI
                                                 or ({$tablePrefix}promotions.end_date between DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d')))
                                                 or ((DATE_FORMAT('".$start_date."', '%Y-%m-%d') between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)
                                                 or (DATE_FORMAT('".$end_date."', '%Y-%m-%d') between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)))
-                                order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') = DATE_FORMAT(d.selected_date, '%Y-%m-%d')
+                                order by campaign_history_id desc) {$tablePrefix}campaign_histories
                                     left join
                                 {$tablePrefix}promotions ON {$tablePrefix}promotions.promotion_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join
                                 {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
-                            group by d.selected_date , {$tablePrefix}campaign_histories.campaign_id"));
+                            group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') , {$tablePrefix}campaign_histories.campaign_id"));
             
             $data = array();
 
             $totalnews = 0;
             $totalpromotion = 0;
             
+            $start_date = new Carbon($start_date);
+            $end_date = new Carbon($end_date);
+
+            $diff = $start_date->diffInDays($end_date);
+
             foreach ($news as $newsid) {
                 $newsidloop = $newsid->news_id;
                 $object_type = $newsid->object_type;
@@ -5353,31 +5341,42 @@ class DashboardAPIController extends ControllerAPI
                 $campaigntenant = $newsid->tenantnow;
                 $statustemp = $newsid->status;
                 $tenanttemp = $newsid->tenantnow;
-                foreach($newsQuery as $nq) {
-                    if ($nq->campaign_id === $newsidloop) { 
-                            $campaignstatus = $nq->action_status;
-                            $campaigntenant = $nq->tenants;
-                            $statustemp = $nq->action_status;
-                            $tenanttemp = $nq->tenants;
-                    }
-                    if($nq->selected_date >= $begin && $nq->selected_date <= $end) {
+                $start = new Carbon($start_date);
+                for ($x = 0; $x<=$diff; $x++) {
+                    $dateloop = $start->toDateString();
+
+                    foreach($newsQuery as $nq) {
+                        $find = FALSE;
                         if ($nq->campaign_id === $newsidloop) { 
                             $campaignstatus = $nq->action_status;
                             $campaigntenant = $nq->tenants;
                             $statustemp = $nq->action_status;
                             $tenanttemp = $nq->tenants;
-                        } else {
-                            $campaignstatus = $statustemp;
-                            $campaigntenant = $tenanttemp;
                         }
-
-                        if($campaignstatus == 'activate' || $campaignstatus == 'active' ){
-                            $spending = (int) $campaigntenant * $bp;
-                            $totalspending += $spending;
+                        if($dateloop >= $begin && $dateloop <= $end) {
+                            if ($nq->campaign_id === $newsidloop) { 
+                                $find = TRUE;
+                                $campaignstatus = $nq->action_status;
+                                $campaigntenant = $nq->tenants;
+                                $statustemp = $nq->action_status;
+                                $tenanttemp = $nq->tenants;
+                            }
                         }
                     }
-                }
 
+                    if (! $find) { 
+                        $campaignstatus = $statustemp;
+                        $campaigntenant = $tenanttemp;
+                    } 
+                    if($dateloop >= $begin && $dateloop <= $end) {
+                        if($campaignstatus == 'activate' || $campaignstatus == 'active'){
+                            $spending = (int) $campaigntenant * $bp;
+                            $totalspending += $spending;
+                        }                    
+                    }
+                    $start->addDay();
+                }
+                
                 if ($object_type === 'news'){
                     $totalnews += $totalspending;
                 } else {
@@ -5398,34 +5397,44 @@ class DashboardAPIController extends ControllerAPI
                 $campaigntenant = $couponid->tenantnow;
                 $statustemp = $couponid->status;
                 $tenanttemp = $couponid->tenantnow;
-                foreach($couponQuery as $cq) {
-                    if ($cq->campaign_id === $couponidloop) { 
-                            $campaignstatus = $cq->action_status;
-                            $campaigntenant = $cq->tenants;
-                            $statustemp = $cq->action_status;
-                            $tenanttemp = $cq->tenants;
-                    }
-                    if($cq->selected_date >= $begin && $cq->selected_date <= $end) {
+                $start = new Carbon($start_date);
+                for ($x = 0; $x<=$diff; $x++) {
+                    $dateloop = $start->toDateString();
+
+                    foreach($couponQuery as $cq) {
+                        $find = FALSE;
                         if ($cq->campaign_id === $couponidloop) { 
                             $campaignstatus = $cq->action_status;
                             $campaigntenant = $cq->tenants;
                             $statustemp = $cq->action_status;
                             $tenanttemp = $cq->tenants;
-                        } else {
-                            $campaignstatus = $statustemp;
-                            $campaigntenant = $tenanttemp;
                         }
+                        if ($dateloop >= $begin && $dateloop <= $end) {
+                            if ($cq->campaign_id === $couponidloop) { 
+                                $find = TRUE;
+                                $campaignstatus = $cq->action_status;
+                                $campaigntenant = $cq->tenants;
+                                $statustemp = $cq->action_status;
+                                $tenanttemp = $cq->tenants;
+                            } 
+                        }
+                    }
 
+                    if (! $find) {
+                        $campaignstatus = $statustemp;
+                        $campaigntenant = $tenanttemp;
+                    }
+                    if($dateloop >= $begin && $dateloop <= $end) {
                         if($campaignstatus === 'activate' || $campaignstatus === 'active' ){
                             $spending = (int) $campaigntenant * $bp;
                             $totalspending += $spending;
                         }
                     }
+                    $start->addDay();
                 }
-
                 $totalcoupon += $totalspending;
             }
-
+            
             $total = $totalnews + $totalpromotion + $totalcoupon;
             if (empty($without)) {
                 $data['records'] = array (
