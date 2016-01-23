@@ -32,7 +32,11 @@ return array(
         ),
         //font
         'fonts' => array(
-            'ubuntu' => 'https://fonts.googleapis.com/css?family=Ubuntu:400'
+            'ubuntu' => 'https://fonts.googleapis.com/css?family=Ubuntu:400',
+            'font_awesome' => array(
+                '4_2_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/fonts/fontawesome-webfont' // this url without font extension
+            ),
+            'glyphicon' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/fonts/glyphicons-halflings-regular' // this url without font extension
         ),
     ),
 
