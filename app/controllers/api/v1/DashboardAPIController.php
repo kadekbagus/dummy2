@@ -5165,6 +5165,7 @@ class DashboardAPIController extends ControllerAPI
             $merchant_id = OrbitInput::get('current_mall');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
+            $without = OrbitInput::get('without');
 
             $validator = Validator::make(
                 array(
@@ -5426,12 +5427,13 @@ class DashboardAPIController extends ControllerAPI
             }
 
             $total = $totalnews + $totalpromotion + $totalcoupon;
-            
-            $data = array (
+            if (empty($without)) {
+                $data['records'] = array (
                     array('campaign_type'=>'news', 'campaign_spending'=>$totalnews, 'percentage'=>number_format(($totalnews/$total*100),2)),
                     array('campaign_type'=>'promotions', 'campaign_spending'=>$totalpromotion, 'percentage'=>number_format(($totalpromotion/$total*100),2)),
                     array('campaign_type'=>'coupons', 'campaign_spending'=>$totalcoupon, 'percentage'=>number_format(($totalcoupon/$total*100),2))
                 );
+            }
             $data['total'] = $total;
             $this->response->data = $data;
 
