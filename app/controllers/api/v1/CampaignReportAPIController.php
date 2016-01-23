@@ -548,13 +548,13 @@ class CampaignReportAPIController extends ControllerAPI
                     'campaign_id' => $campaign_id,
                     'campaign_type' => $campaign_type,
                     'current_mall' => $current_mall,
-                    'sort_by' => $sort_by,
+                    // 'sort_by' => $sort_by,
                 ),
                 array(
                     'campaign_id' => 'required',
                     'campaign_type' => 'required',
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:updated_at,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
+                    // 'sort_by' => 'in:updated_at,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -624,7 +624,7 @@ class CampaignReportAPIController extends ControllerAPI
                                 case
                                     when (d.selected_date >= {$tablePrefix}news.begin_date OR d.selected_date <= {$tablePrefix}news.end_date) then {$tablePrefix}campaign_histories.number_active_tenants
                                     else 0
-                                end as tenants,
+                                end as total_tenant,
                                 {$tablePrefix}campaign_price.base_price,
                                 {$tablePrefix}campaign_histories.created_at,
                                 d.selected_date,
@@ -686,7 +686,7 @@ class CampaignReportAPIController extends ControllerAPI
                                 case
                                     when (d.selected_date >= {$tablePrefix}promotions.begin_date OR d.selected_date <= {$tablePrefix}promotions.end_date) then {$tablePrefix}campaign_histories.number_active_tenants
                                     else 0
-                                end as tenants,
+                                end as total_tenant,
                                 {$tablePrefix}campaign_price.base_price,
                                 {$tablePrefix}campaign_histories.created_at,
                                 d.selected_date,
@@ -746,19 +746,19 @@ class CampaignReportAPIController extends ControllerAPI
                     if( $val->action_status === 'activate'){
                         $campaignDetailActive[$key]['campaign_type'] = $val->campaign_type;
                         $campaignDetailActive[$key]['campaign_id'] = $val->campaign_id;
-                        $campaignDetailActive[$key]['tenants'] = $val->tenants;
+                        $campaignDetailActive[$key]['total_tenant'] = $val->total_tenant;
                         $campaignDetailActive[$key]['base_price'] = $val->base_price;
                         $campaignDetailActive[$key]['campaign_date'] = $val->selected_date;
                         $campaignDetailActive[$key]['action_status'] = $val->action_status;
-                        $campaignDetailActive[$key]['spending'] = $val->tenants * $val->base_price;
+                        $campaignDetailActive[$key]['spending'] = $val->total_tenant * $val->base_price;
                     } elseif ($val->action_status === null) {
                         $campaignDetailActive[$key]['campaign_type'] = $campaignDetailActive[$key - 1]['campaign_type'];
                         $campaignDetailActive[$key]['campaign_id'] = $campaignDetailActive[$key - 1]['campaign_id'];
-                        $campaignDetailActive[$key]['tenants'] = $campaignDetailActive[$key - 1]['tenants'];
+                        $campaignDetailActive[$key]['total_tenant'] = $campaignDetailActive[$key - 1]['total_tenant'];
                         $campaignDetailActive[$key]['base_price'] = $campaignDetailActive[$key - 1]['base_price'];
                         $campaignDetailActive[$key]['campaign_date'] = $val->selected_date;
                         $campaignDetailActive[$key]['action_status'] = $campaignDetailActive[$key - 1]['action_status'];
-                        $campaignDetailActive[$key]['spending'] = $campaignDetailActive[$key - 1]['tenants'] * $campaignDetailActive[$key - 1]['base_price'];
+                        $campaignDetailActive[$key]['spending'] = $campaignDetailActive[$key - 1]['total_tenant'] * $campaignDetailActive[$key - 1]['base_price'];
                     }
                 }
             }
@@ -887,14 +887,6 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaignDetailActive[$key]['popup_clicks'] = $details[0]->popup_clicks;
                 $campaignDetailActive[$key]['popup_click_rate'] = $popup_click_rate;
             }
-
-            // dd($campaignDetailActive);
-
-            // @Todo: Use ACL authentication instead
-
-
-            // ==================================================
-
 
             // Filter by tenant
             // OrbitInput::get('tenant', function($tenant) use ($campaign) {
