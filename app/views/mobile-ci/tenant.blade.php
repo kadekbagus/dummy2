@@ -309,8 +309,14 @@
 @stop
 
 @section('ext_script_bot')
-    {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
-    {{ HTML::script('mobile-ci/scripts/autoNumeric.js') }}
+    {{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if (typeof $().featherlight === 'undefined') {
+            document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
             $('#image-gallery').lightSlider({
@@ -384,7 +390,6 @@
                     $('#slide-tab-coupon-container').hide();
                     $('#slide-tab-promo').closest('li').removeClass('active');
                     $('#slide-tab-coupon').closest('li').removeClass('active');
-                    console.log(tabOpen);
                 } else {
                     if(tabOpen){
                         tabOpen = false;
@@ -395,7 +400,6 @@
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                     $('body').toggleClass('freeze-scroll');
                     $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
-                    console.log(tabOpen);
                 }
                 if(!tabOpen){
                     $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();

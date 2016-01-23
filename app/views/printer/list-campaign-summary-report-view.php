@@ -109,7 +109,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Campaign Summary</h2>
+    <h2 style="margin-bottom:0.5em;">Campaign Summary Report</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -119,7 +119,7 @@
         <tr>
             <td>Number of campaigns</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalCoupons, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRecord, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
             <td>Total page views</td>
@@ -134,13 +134,14 @@
         <tr>
             <td>Total spending</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
             <td>Estimated total cost</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
         </tr>
+
 
         <!-- Filtering -->
         <?php if($startDate != '' && $endDate != ''){ ?>
@@ -155,31 +156,31 @@
             <tr>
                 <td>Filter by Campaign Name</td>
                 <td>:</td>
-                <td><strong><?php echo $campaignName; ?></strong></td>
+                <td><strong><?php echo htmlentities($campaignName); ?></strong></td>
             </tr>
         <?php } elseif($campaignType != '') { ?>
             <tr>
                 <td>Filter by Campaign Type</td>
                 <td>:</td>
-                <td><strong><?php echo $campaignType; ?></strong></td>
+                <td><strong><?php echo htmlentities($campaignType); ?></strong></td>
             </tr>
         <?php } elseif($tenant != '') { ?>
             <tr>
                 <td>Filter by Tenant</td>
                 <td>:</td>
-                <td><strong><?php echo $tenant; ?></strong></td>
+                <td><strong><?php echo htmlentities($tenant); ?></strong></td>
             </tr>
         <?php } elseif($mallName != '') { ?>
             <tr>
                 <td>Filter by  Location</td>
                 <td>:</td>
-                <td><strong><?php echo $mallName; ?></strong></td>
+                <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
         <?php } elseif($status != '') { ?>
             <tr>
                 <td>Filter by Status</td>
                 <td>:</td>
-                <td><strong><?php echo $status; ?></strong></td>
+                <td><strong><?php echo htmlentities($status); ?></strong></td>
             </tr>
         <?php } ?>
 
@@ -194,39 +195,53 @@
             <th style="text-align:left;">Mall</th>
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Page Views</th>
-
-            <th style="text-align:left;">Views Popup</th>
-            <th style="text-align:left;">Clicks Popup</th>
-            <th style="text-align:left;">Daily Cost</th>
-
-            <th style="text-align:left;">Estimated Total Cost</th>
-            <th style="text-align:left;">Spending</th>
-
+            <th style="text-align:left;">Pop Up Views</th>
+            <th style="text-align:left;">Pop Up Clicks</th>
+            <th style="text-align:left;">Daily Cost (IDR)</th>
+            <th style="text-align:left;">Estimated Total Cost (IDR)</th>
+            <th style="text-align:left;">Spending (IDR)</th>
             <th style="text-align:left;">Status</th>
         </thead>
 
         <tbody>
             <?php
             $no  = 1;
-            foreach ($data as $key => $value) {
-                ?>
-                    <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                        <td><?php echo $no; ?></td>
-                        <td><?php echo $value->campaign_name; ?></td>
-                        <td><?php echo $value->campaign_type; ?></td>
-                        <td><?php echo $value->total_tenant; ?></td>
-                        <td><?php echo $value->mall_name; ?></td>
-                        <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y H:i:s') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y H:i:s'); ?></td>
-                        <td><?php echo $value->page_views; ?></td>
-                        <td><?php echo $value->popup_views; ?></td>
-                        <td><?php echo $value->popup_clicks; ?></td>
-                        <td><?php echo $value->base_price; ?></td>
-                        <td><?php echo $value->estimated_total; ?></td>
-                        <td><?php echo $value->spending; ?></td>
-                        <td><?php echo $value->status; ?></td>
-                    </tr>
-                <?php
-                $no++;
+            if ($totalRecord > 0) {
+                foreach ($data as $key => $value) {
+                    ?>
+                        <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
+                            <td><?php echo $no; ?></td>
+                            <td><?php echo htmlentities($value->campaign_name); ?></td>
+                            <td><?php echo htmlentities($value->campaign_type); ?></td>
+                            <td><?php echo $value->total_tenant; ?></td>
+                            <td><?php echo htmlentities($value->mall_name); ?></td>
+                            <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y'); ?></td>
+                            <td><?php echo $value->page_views; ?></td>
+                            <td><?php echo $value->popup_views; ?></td>
+                            <td><?php echo $value->popup_clicks; ?></td>
+                            <td>
+                                <?php
+                                    $base_price_fix = str_replace('.00', '', $value->base_price);
+                                    echo number_format($base_price_fix,0,',','.');
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    $estimated_total_fix = str_replace('.00', '', $value->estimated_total);
+                                    echo number_format($estimated_total_fix,0,',','.');
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    $spending_fix = str_replace('.00', '', $value->spending);
+                                    echo number_format($spending_fix,0,',','.');
+                                ?>
+                            </td>
+                            <td><?php echo $value->status; ?></td>
+                        </tr>
+                    <?php
+                    $no++;
+                }
             }
             ?>
         </tbody>

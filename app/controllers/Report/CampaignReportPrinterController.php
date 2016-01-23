@@ -35,7 +35,7 @@ class CampaignReportPrinterController extends DataPrinterController
         $data = $response->data->records;
 
         // get total data
-        $totalCoupons = $response->data->total_records;
+        $totalRecord = $response->data->total_records;
         $totalPageViews = $response->data->total_page_views;
         $totalPopUpViews = $response->data->total_pop_up_views;
         $totalEstimatedCost = $response->data->total_estimated_cost;
@@ -54,7 +54,7 @@ class CampaignReportPrinterController extends DataPrinterController
 
         $this->prepareUnbufferedQuery();
 
-        $pageTitle = 'Redeemed Coupon Report for ';
+        $pageTitle = 'Campaign Summary Report';
 
         switch ($mode) {
             case 'csv':
@@ -66,11 +66,11 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Summary Report', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', number_format($totalCoupons, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', number_format($totalRecord, 0, '.', '.'), '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', number_format($totalPageViews, 0, '.', '.'), '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', number_format($totalPopUpViews, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', number_format($totalEstimatedCost, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost', number_format($totalSpending, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', number_format($totalSpending, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost', number_format($totalEstimatedCost, 0, '.', '.'), '', '', '','');
 
                 // Filtering
                 if($startDate != '' && $endDate != ''){
@@ -78,40 +78,46 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 if ($campaignName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name : ', $campaignName, '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name : ', htmlentities($campaignName), '', '', '','');
                 } elseif($campaignType != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type :', $campaignType, '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type :', htmlentities($campaignType), '', '', '','');
                 } elseif($tenant != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', $tenant, '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
                 } elseif($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Location : ', $mallName, '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Location : ', htmlentities($mallName), '', '', '','');
                 } elseif($status != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status :', $status, '', '', '','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Tenants', 'Mall', 'Campaign Dates', 'Page Views', 'Views Popup', 'Clicks Popup', 'Daily Cost', 'Estimated Total Cost', 'Spending', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Tenants', 'Mall', 'Campaign Dates', 'Page Views', 'Pop Up Views', 'Pop Up Clicks', 'Daily Cost (IDR)', 'Estimated Total Cost (IDR)', 'Spending (IDR)', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $no  = 1;
-                foreach ($data as $key => $value) {
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                            $no,
-                            $value->campaign_name,
-                            $value->campaign_type,
-                            $value->total_tenant,
-                            $value->mall_name,
-                            $this->printDateTime($value->begin_date, $timezone, 'd M Y H:i:s'),
-                            $this->printDateTime($value->end_date, $timezone, 'd M Y H:i:s'),
-                            $value->page_views,
-                            $value->popup_views,
-                            $value->popup_clicks,
-                            $value->base_price,
-                            $value->estimated_total,
-                            $value->spending,
-                            $value->status
-                    );
-                    $no++;
+                if ($totalRecord > 0) {
+                    foreach ($data as $key => $value) {
+                        $base_price_fix = str_replace('.00', '', $value->base_price);
+                        $estimated_total_fix = str_replace('.00', '', $value->estimated_total);
+                        $spending_fix = str_replace('.00', '', $value->spending);
+
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                                $no,
+                                $value->campaign_name,
+                                $value->campaign_type,
+                                $value->total_tenant,
+                                $value->mall_name,
+                                $this->printDateTime($value->begin_date, $timezone, 'd M Y'),
+                                $this->printDateTime($value->end_date, $timezone, 'd M Y'),
+                                $value->page_views,
+                                $value->popup_views,
+                                $value->popup_clicks,
+                                $base_price_fix,
+                                $estimated_total_fix,
+                                $spending_fix,
+                                $value->status
+                        );
+                        $no++;
+                    }
                 }
 
                 break;

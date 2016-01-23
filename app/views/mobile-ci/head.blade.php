@@ -19,12 +19,23 @@
 <link rel="icon" type="image/ico" href="{{ asset('mobile-ci/images/orbit-icon-default.png') }}"/>
 @endif
 
-{{ HTML::style('mobile-ci/stylesheet/bootstrap-tour.min.css') }}
+{{-- HTML::style('mobile-ci/stylesheet/bootstrap-tour.min.css') --}}
 {{ HTML::style('mobile-ci/stylesheet/' . Orbit\Helper\Asset\Stylesheet::create()->getMallCss()) }}
-{{ HTML::style('mobile-ci/stylesheet/responsiveslides.css') }}
 {{ HTML::style('mobile-ci/vendor/toastr/toastr.min.css') }}
-{{ HTML::script('mobile-ci/scripts/jquery-2.1.1.min.js') }}
-{{ HTML::script('mobile-ci/scripts/bootstrap.min.js') }}
-{{ HTML::script('mobile-ci/scripts/bootstrap-tour.js') }}
+{{ HTML::script(Config::get('orbit.cdn.jquery.2_1_1', 'mobile-ci/scripts/jquery-2.1.1.min.js')) }}
+{{-- Script fallback --}}
+<script>window.jQuery || document.write('<script src="{{asset('mobile-ci/scripts/jquery-2.1.1.min.js')}}">\x3C/script>')</script>
+{{-- End of Script fallback --}}
+
+{{ HTML::script(Config::get('orbit.cdn.bootstrap.3_3_1', 'mobile-ci/scripts/bootstrap.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().emulateTransitionEnd === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/bootstrap.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
+{{-- HTML::script('mobile-ci/scripts/bootstrap-tour.min.js') --}}
 {{ HTML::script('mobile-ci/scripts/config.js') }}
 {{ HTML::script('mobile-ci/vendor/toastr/toastr.min.js') }}

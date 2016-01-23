@@ -126,23 +126,38 @@
 </div>
 <div class="row back-drop search-back-drop"></div>
 
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.jqueryui.1_11_2', 'mobile-ci/scripts/jquery-ui.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof jQuery.ui === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/jquery-ui.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
-{{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.lightslider.1_1_2', 'mobile-ci/scripts/lightslider.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().lightSlider === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/lightslider.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
+{{ HTML::script(Config::get('orbit.cdn.panzoom.2_0_5', 'mobile-ci/scripts/jquery.panzoom.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().panzoom === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/jquery.panzoom.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
-{{ HTML::script('mobile-ci/scripts/polyfill.object-fit.min.js') }}
 <script type="text/javascript">
     var tabOpen = false; // this var is for tabs on tenant detail views
     $(document).ready(function(){
-        $.fn.addBlur = function(){
-            $(this).removeClass('unblurred');
-            $(this).addClass('blurred');
-        }
-        $.fn.removeBlur = function(){
-            $(this).removeClass('blurred');
-            $(this).addClass('unblurred');
-        }
         var menuOpen = false;
         navigator.getBrowser= (function(){
             var ua = navigator.userAgent, tem,
@@ -159,15 +174,19 @@
             if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
             return M;
         })();
-        // var browser = navigator.getBrowser[0];
-        // if(browser.indexOf('IE')) {
-        //     objectFit.polyfill({
-        //         selector: '.img-fit, .img-fit-tenant',
-        //         fittype: 'cover',
-        //         disableCrossDomain: 'true'
-        //     });
-        //     $('.img-fit, .img-fit-tenant').closest('.col-xs-12, .col-xs-6').css('height', '160px').css('overflow', 'hidden');
-        // }
+        var browser = navigator.getBrowser[0];
+        $.fn.addBlur = function(){
+            if(browser.indexOf('Firefox') < 0) {
+                $(this).removeClass('unblurred');
+                $(this).addClass('blurred');
+            }
+        }
+        $.fn.removeBlur = function(){
+            if(browser.indexOf('Firefox') < 0) {
+                $(this).removeClass('blurred');
+                $(this).addClass('unblurred');
+            }
+        }
         function isInArray(value, str) {
             return str.indexOf(value) > -1;
         }

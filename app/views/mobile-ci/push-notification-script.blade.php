@@ -1,7 +1,6 @@
 
 <!-- Push Notification Popup -->
 <div id="orbit-push-notification-wrapper"></div>
-{{ HTML::script('mobile-ci/scripts/jquery.ba-replacetext.min.js') }}
 <script>
 
     $(document).ready(function() {

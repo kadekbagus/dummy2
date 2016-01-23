@@ -4874,7 +4874,18 @@ class MobileCIAPIController extends ControllerAPI
             $max_campaign = count($results) > $campaign_card_total ? $campaign_card_total : count($results);
 
             shuffle($results);
-            $end_results = array_slice($results, 0, $max_campaign);
+
+            // slice shuffled results to 2 parts and shuffle again 
+            $resultsize = count($results);
+
+            $firsthalf = array_slice($results, 0, ($resultsize / 2));
+            $secondhalf = array_slice($results, ($resultsize / 2));
+            shuffle($firsthalf);
+            shuffle($secondhalf);
+            $secondresults = array_merge($firsthalf, $secondhalf);
+            shuffle($secondresults);
+
+            $end_results = array_slice($secondresults, 0, $max_campaign);
 
             foreach($end_results as $near_end_result) {
                 $near_end_result->campaign_link = Lang::get('mobileci.campaign_cards.go_to_page');
@@ -6192,33 +6203,57 @@ class MobileCIAPIController extends ControllerAPI
 
                         if ($couponBeginDateUTC == $ruleBeginDateUTC) {
 
-                            $acq = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
-                                                    ->where('user_id', $user->user_id)->first();
+                            if ($mallTime >= $ruleBeginDateUTC && $mallTime <= $ruleEndDateUTC) {
+                                $acq = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
+                                                        ->where('user_id', $user->user_id)->first();
 
-                            $signin = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                    ->where('user_id', $user->user_id)->first();
+                                $never_sign_in = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                        ->where('user_id', $user->user_id)->first();
 
-                            if (!empty($acq) && empty($signin)) {
-                                $issued = true;
-                            }
+                                $signin_in_rule_period = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                        ->where('user_id', $user->user_id)
+                                                        ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
 
-                            if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
-                                $issued = true;
-                            }
-                        } 
-                        elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
+                                if(! empty($signin_in_rule_period)) {
+                                    $issued = true;
+                                }
 
-                            if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
-                               $signin = \UserSignin::where('location_id', $retailer->merchant_id)
-                                                    ->where('user_id', $user->user_id)
-                                                    ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
+                                if (!empty($acq) && empty($never_sign_in)) {
+                                    $issued = true;
+                                }
 
-                                if(! empty($signin)) {
+                                if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
                                     $issued = true;
                                 }
                             }
+
+                        } 
+                        elseif ($ruleBeginDateUTC < $couponBeginDateUTC) {
+
+                            if ($mallTime >= $ruleBeginDateUTC && $mallTime <= $ruleEndDateUTC) {
+                                if ($mallTime >= $couponBeginDateUTC && $mallTime <= $couponEndDateUTC) {
+                                    $acq = \UserAcquisition::where('acquirer_id', $retailer->merchant_id)
+                                                        ->where('user_id', $user->user_id)->first();
+
+                                    $never_sign_in = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                        ->where('user_id', $user->user_id)->first();
+
+                                    $signin_in_rule_period = \UserSignin::where('location_id', $retailer->merchant_id)
+                                                        ->where('user_id', $user->user_id)
+                                                        ->whereRaw("created_at between ? and ?", [$ruleBeginDateUTC, $ruleEndDateUTC])->first();
+
+                                    if(! empty($signin_in_rule_period)) {
+                                        $issued = true;
+                                    }
+
+                                    if (!empty($acq) && empty($never_sign_in)) {
+                                        $issued = true;
+                                    }
+                                }
+                            }
+
                         }
- 
+
                     } elseif ($coupon->rule_type === 'auto_issue_on_every_signin') {
                         $issued = true;
                     }
