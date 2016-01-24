@@ -866,27 +866,27 @@ class CampaignReportAPIController extends ControllerAPI
 
                 $campaign_pages_view_rate = 0;
                 if ($unique_users != 0){
-                    $campaign_pages_view_rate = ($details[0]->campaign_pages_views / $unique_users);
+                    $campaign_pages_view_rate = ($unique_users / $details[0]->campaign_pages_views) * 100;
                 }
 
                 $popup_view_rate = 0;
                 if ($unique_users != 0){
-                    $popup_view_rate = ($details[0]->popup_views / $unique_users);
+                    $popup_view_rate = ($unique_users / $details[0]->popup_views) * 100;
                 }
 
                 $popup_click_rate = 0;
                 if ($details[0]->popup_clicks != 0) {
-                    $popup_click_rate = ($details[0]->popup_clicks / $details[0]->popup_views);
+                    $popup_click_rate = ($details[0]->popup_clicks / $details[0]->popup_views) * 100;
                 }
 
                 $campaignDetailActive[$key]['mall_name'] = $details[0]->mall_name;
                 $campaignDetailActive[$key]['unique_users'] = $unique_users;
                 $campaignDetailActive[$key]['campaign_pages_views'] = $details[0]->campaign_pages_views;
-                $campaignDetailActive[$key]['campaign_pages_view_rate'] = $campaign_pages_view_rate;
+                $campaignDetailActive[$key]['campaign_pages_view_rate'] =  round($campaign_pages_view_rate, 2);
                 $campaignDetailActive[$key]['popup_views'] = $details[0]->popup_views;
-                $campaignDetailActive[$key]['popup_view_rate'] = $popup_view_rate;
+                $campaignDetailActive[$key]['popup_view_rate'] =  round($popup_view_rate, 2);
                 $campaignDetailActive[$key]['popup_clicks'] = $details[0]->popup_clicks;
-                $campaignDetailActive[$key]['popup_click_rate'] = $popup_click_rate;
+                $campaignDetailActive[$key]['popup_click_rate'] =  round($popup_click_rate, 2);
             }
 
             // usort($campaignDetailActive, "cmp");
@@ -917,11 +917,23 @@ class CampaignReportAPIController extends ControllerAPI
             // Get total spending
             // $totalSpending = $_campaign->sum('spending');
 
-            $activeCampaignDays = 0;
+
+
+            // Get total
+            $activeCampaignDays = count($campaignDetailActive);
             $totalPageViews = 0;
             $totalPopupViews = 0;
             $totalPopupClicks = 0;
             $totalSpending = 0;
+
+            if (count($campaignDetailActive) > 0) {
+                foreach ($campaignDetailActive as $key => $value) {
+                    $totalPageViews += $value['campaign_pages_views'];
+                    $totalPopupViews += $value['popup_views'];
+                    $totalPopupClicks += $value['popup_clicks'];
+                    $totalSpending += $value['spending'];
+                }
+            }
 
             // $_campaign->select('campaign_id');
 
@@ -983,13 +995,13 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             });
 
-            uasort($campaignDetailActive, function($a, $b) use(&$sortBy) {
-                if ($sortBy == 'desc') {
-                    return $a[$sortBy] - $b[$sortBy];
-                } elseif ($sortBy == 'asc') {
-                    return $b[$sortBy] - $a[$sortBy];
-                }
-            });
+            // uasort($campaignDetailActive, function($a, $b) use(&$sortBy) {
+            //     if ($sortBy == 'desc') {
+            //         return $a[$sortBy] - $b[$sortBy];
+            //     } elseif ($sortBy == 'asc') {
+            //         return $b[$sortBy] - $a[$sortBy];
+            //     }
+            // });
 
 
             // $campaign->orderBy($sortBy, $sortMode);
