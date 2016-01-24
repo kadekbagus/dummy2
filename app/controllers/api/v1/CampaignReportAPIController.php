@@ -721,7 +721,7 @@ class CampaignReportAPIController extends ControllerAPI
                                     campaign_id in (select
                                             promotion_id
                                         from
-                                            {$tablePrefix}promotion
+                                            {$tablePrefix}promotions
                                         where
                                             (({$tablePrefix}promotions.begin_date between '" . $beginDate . "' and '" . $endDate . "')
                                                 or ({$tablePrefix}promotions.end_date between '" . $beginDate . "' and '" . $endDate . "'))
@@ -731,7 +731,7 @@ class CampaignReportAPIController extends ControllerAPI
                                             and campaign_type = '" . $campaign_type . "'
                                 order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
                                         '%Y-%m-%d') = DATE_FORMAT(d.selected_date, '%Y-%m-%d')
-                                    left join {$tablePrefix}promotion ON {$tablePrefix}promotions.promotion_id = {$tablePrefix}campaign_histories.campaign_id
+                                    left join {$tablePrefix}promotions ON {$tablePrefix}promotions.promotion_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
                             group by d.selected_date , {$tablePrefix}campaign_histories.campaign_id

@@ -146,7 +146,7 @@ class CampaignReportPrinterController extends DataPrinterController
         // Instantiate the CampaignReportAPIController to get the query builder of Coupons
         $response = CampaignReportAPIController::create('raw')
                                             ->setReturnBuilder(TRUE)
-                                            ->getCampaignReportSummary();
+                                            ->getCampaignReportDetail();
 
         $data = $response->data->records;
 
