@@ -733,11 +733,9 @@ class CampaignReportAPIController extends ControllerAPI
 
             }
 
+
             // Get active date only
             $campaignDetailActive = array();
-            $modeActive = false;
-            $previous_value = 0;
-
             if (count($campaignHistory) > 0 && ($campaignHistory[0]->action_status != null) ) {
                 foreach ($campaignHistory as $key => $val) {
                     if ($val->action_status === 'activate'){
@@ -762,21 +760,24 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get detail campaign ( Mall, Unique User, Detail Campaign Page, Pop Up)
             foreach ($campaignDetailActive as $key => $valDetailActive) {
-                if ($val->campaign_type === 'coupon') {
+                if ($campaign_type === 'coupon') {
                     $details = DB::table('promotions')->selectraw(DB::raw("
                         merchants2.name as mall_name,
                         (
-                            SELECT {$tablePrefix}activities.activity_id
-                            FROM {$tablePrefix}activities
-                            WHERE ({$tablePrefix}activities.activity_name_long like '%sign up%' OR {$tablePrefix}activities.activity_name_long = 'Sign In')
-                            AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
-                            AND {$tablePrefix}activities.group = 'mobile-ci'
-                            group by {$tablePrefix}activities.user_id
+                            SELECT COUNT(activity_id) as unique_user
+                            FROM (
+                                SELECT orbs_activities.activity_id
+                                FROM orbs_activities
+                                WHERE (orbs_activities.activity_name_long like '%sign up%' OR orbs_activities.activity_name_long = 'Sign In')
+                                AND DATE(orbs_activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                                AND orbs_activities.`group` = 'mobile-ci'
+                                group by orbs_activities.user_id
+                            ) as act1
                         ) as unique_users,
                         (
                             SELECT COUNT({$tablePrefix}activities.activity_id)
                             FROM {$tablePrefix}activities
-                            WHERE {$tablePrefix}activities.object_id = '" . $valDetailActive['campaign_id'] . "'
+                            WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
                             AND {$tablePrefix}activities.activity_name = 'view_news'
                             AND {$tablePrefix}activities.group = 'mobile-ci'
@@ -785,7 +786,7 @@ class CampaignReportAPIController extends ControllerAPI
                         (
                             SELECT COUNT({$tablePrefix}activities.activity_id)
                             FROM {$tablePrefix}activities
-                            WHERE {$tablePrefix}activities.object_id = '" . $valDetailActive['campaign_id'] . "'
+                            WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
                             AND {$tablePrefix}activities.activity_name = 'view_news_popup'
                             AND {$tablePrefix}activities.activity_name_long = 'View News Pop Up'
@@ -795,7 +796,7 @@ class CampaignReportAPIController extends ControllerAPI
                         (
                             SELECT COUNT({$tablePrefix}activities.activity_id)
                             FROM {$tablePrefix}activities
-                            WHERE {$tablePrefix}activities.object_id = '" . $valDetailActive['campaign_id'] . "'
+                            WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
                             AND {$tablePrefix}activities.activity_name = 'click_news_popup'
                             AND {$tablePrefix}activities.activity_name_long = 'Click News Pop Up'
@@ -805,23 +806,26 @@ class CampaignReportAPIController extends ControllerAPI
                         "))
                         ->join('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('promotions.merchant_id', '=', $current_mall)
-                        ->where('promotions.promotion_id', '=', $valDetailActive['campaign_id'])
+                        ->where('promotions.promotion_id', '=', $campaign_id)
                         ->get();
-                } else {
+                } elseif ($campaign_type === 'news' || $campaign_type === 'promotion') {
                     $details = DB::table('news')->selectraw(DB::raw("
                         merchants2.name as mall_name,
                         (
-                            SELECT {$tablePrefix}activities.activity_id
-                            FROM {$tablePrefix}activities
-                            WHERE ({$tablePrefix}activities.activity_name_long like '%sign up%' OR {$tablePrefix}activities.activity_name_long = 'Sign In')
-                            AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
-                            AND {$tablePrefix}activities.group = 'mobile-ci'
-                            group by {$tablePrefix}activities.user_id
+                            SELECT COUNT(activity_id) as unique_user
+                            FROM (
+                                SELECT orbs_activities.activity_id
+                                FROM orbs_activities
+                                WHERE (orbs_activities.activity_name_long like '%sign up%' OR orbs_activities.activity_name_long = 'Sign In')
+                                AND DATE(orbs_activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                                AND orbs_activities.`group` = 'mobile-ci'
+                                group by orbs_activities.user_id
+                            ) as act1
                         ) as unique_users,
                         (
                             SELECT COUNT({$tablePrefix}activities.activity_id)
                             FROM {$tablePrefix}activities
-                            WHERE {$tablePrefix}activities.object_id = '" . $valDetailActive['campaign_id'] . "'
+                            WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
                             AND {$tablePrefix}activities.activity_name = 'view_news'
                             AND {$tablePrefix}activities.group = 'mobile-ci'
@@ -830,7 +834,7 @@ class CampaignReportAPIController extends ControllerAPI
                         (
                             SELECT COUNT({$tablePrefix}activities.activity_id)
                             FROM {$tablePrefix}activities
-                            WHERE {$tablePrefix}activities.object_id = '" . $valDetailActive['campaign_id'] . "'
+                            WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
                             AND {$tablePrefix}activities.activity_name = 'view_news_popup'
                             AND {$tablePrefix}activities.activity_name_long = 'View News Pop Up'
@@ -840,7 +844,7 @@ class CampaignReportAPIController extends ControllerAPI
                         (
                             SELECT COUNT({$tablePrefix}activities.activity_id)
                             FROM {$tablePrefix}activities
-                            WHERE {$tablePrefix}activities.object_id = '" . $valDetailActive['campaign_id'] . "'
+                            WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
                             AND {$tablePrefix}activities.activity_name = 'click_news_popup'
                             AND {$tablePrefix}activities.activity_name_long = 'Click News Pop Up'
@@ -850,14 +854,14 @@ class CampaignReportAPIController extends ControllerAPI
                         "))
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         ->where('news.mall_id', '=', $current_mall)
-                        ->where('news.object_type', '=', $valDetailActive['campaign_type'])
-                        ->where('news.news_id', '=', $valDetailActive['campaign_id'])
+                        ->where('news.object_type', '=', $campaign_type)
+                        ->where('news.news_id', '=', $campaign_id)
                         ->get();
                 }
 
                 $unique_users = 0;
                 if (count($details[0]->unique_users) != 0) {
-                    $unique_users = count($details[0]->unique_users);
+                    $unique_users = $details[0]->unique_users;
                 }
 
                 $campaign_pages_view_rate = 0;
@@ -884,6 +888,8 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaignDetailActive[$key]['popup_clicks'] = $details[0]->popup_clicks;
                 $campaignDetailActive[$key]['popup_click_rate'] = $popup_click_rate;
             }
+
+            // usort($campaignDetailActive, "cmp");
 
             // Filter by tenant
             // OrbitInput::get('tenant', function($tenant) use ($campaign) {
@@ -945,41 +951,46 @@ class CampaignReportAPIController extends ControllerAPI
             // });
             // $campaign->skip($skip);
 
-            // // Default sort by
-            // $sortBy = 'updated_at';
+            // Default sort by
+            $sortBy = 'campaign_date';
 
-            // // Default sort mode
-            // $sortMode = 'asc';
+            // Default sort mode
+            $sortMode = 'asc';
 
-            // OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
-            // {
-            //     // Map the sortby request to the real column name
-            //     $sortByMapping = array(
-            //         'updated_at'      => 'updated_at',
-            //         'campaign_name'   => 'campaign_name',
-            //         'campaign_type'   => 'campaign_type',
-            //         'tenant'          => 'tenant',
-            //         'mall_name'       => 'mall_name',
-            //         'begin_date'      => 'begin_date',
-            //         'end_date'        => 'end_date',
-            //         'page_views'      => 'page_views',
-            //         'popup_views'     => 'popup_views',
-            //         'popup_clicks'    => 'popup_clicks',
-            //         'base_price'      => 'base_price',
-            //         'estimated_total' => 'estimated_total',
-            //         'spending'        => 'spending',
-            //         'status'          => 'status'
-            //     );
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'campaign_date'            => 'campaign_date',
+                    'total_tenant'             => 'total_tenant',
+                    'mall_name'                => 'mall_name',
+                    'unique_users'             => 'unique_users',
+                    'campaign_pages_views'     => 'campaign_pages_views',
+                    'campaign_pages_view_rate' => 'campaign_pages_view_rate',
+                    'popup_views'              => 'popup_views',
+                    'popup_view_rate'          => 'popup_view_rate',
+                    'popup_clicks'             => 'popup_clicks',
+                    'popup_click_rate'         => 'popup_click_rate',
+                );
 
-            //     $sortBy = $sortByMapping[$_sortBy];
-            // });
+                $sortBy = $sortByMapping[$_sortBy];
+            });
 
-            // OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
-            // {
-            //     if (strtolower($_sortMode) !== 'asc') {
-            //         $sortMode = 'desc';
-            //     }
-            // });
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+
+            uasort($campaignDetailActive, function($a, $b) use(&$sortBy) {
+                if ($sortBy == 'desc') {
+                    return $a[$sortBy] - $b[$sortBy];
+                } elseif ($sortBy == 'asc') {
+                    return $b[$sortBy] - $a[$sortBy];
+                }
+            });
+
 
             // $campaign->orderBy($sortBy, $sortMode);
 
