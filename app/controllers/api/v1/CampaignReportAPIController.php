@@ -766,12 +766,12 @@ class CampaignReportAPIController extends ControllerAPI
                         (
                             SELECT COUNT(activity_id) as unique_user
                             FROM (
-                                SELECT orbs_activities.activity_id
-                                FROM orbs_activities
-                                WHERE (orbs_activities.activity_name_long like '%sign up%' OR orbs_activities.activity_name_long = 'Sign In')
-                                AND DATE(orbs_activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
-                                AND orbs_activities.`group` = 'mobile-ci'
-                                group by orbs_activities.user_id
+                                SELECT {$tablePrefix}activities.activity_id
+                                FROM {$tablePrefix}activities
+                                WHERE ({$tablePrefix}activities.activity_name_long like '%sign up%' OR {$tablePrefix}activities.activity_name_long = 'Sign In')
+                                AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                                AND {$tablePrefix}activities.`group` = 'mobile-ci'
+                                group by {$tablePrefix}activities.user_id
                             ) as act1
                         ) as unique_users,
                         (
@@ -814,12 +814,12 @@ class CampaignReportAPIController extends ControllerAPI
                         (
                             SELECT COUNT(activity_id) as unique_user
                             FROM (
-                                SELECT orbs_activities.activity_id
-                                FROM orbs_activities
-                                WHERE (orbs_activities.activity_name_long like '%sign up%' OR orbs_activities.activity_name_long = 'Sign In')
-                                AND DATE(orbs_activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
-                                AND orbs_activities.`group` = 'mobile-ci'
-                                group by orbs_activities.user_id
+                                SELECT {$tablePrefix}activities.activity_id
+                                FROM {$tablePrefix}activities
+                                WHERE ({$tablePrefix}activities.activity_name_long like '%sign up%' OR {$tablePrefix}activities.activity_name_long = 'Sign In')
+                                AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                                AND {$tablePrefix}activities.`group` = 'mobile-ci'
+                                group by {$tablePrefix}activities.user_id
                             ) as act1
                         ) as unique_users,
                         (
@@ -865,12 +865,12 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
                 $campaign_pages_view_rate = 0;
-                if ($unique_users != 0){
+                if ($details[0]->campaign_pages_views != 0){
                     $campaign_pages_view_rate = ($unique_users / $details[0]->campaign_pages_views) * 100;
                 }
 
                 $popup_view_rate = 0;
-                if ($unique_users != 0){
+                if ($details[0]->popup_views != 0){
                     $popup_view_rate = ($unique_users / $details[0]->popup_views) * 100;
                 }
 
