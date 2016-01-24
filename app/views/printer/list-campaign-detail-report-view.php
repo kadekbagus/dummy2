@@ -197,11 +197,11 @@
                             <td><?php echo htmlentities($value['mall_name']); ?></td>
                             <td><?php echo $value['unique_users']; ?></td>
                             <td><?php echo $value['campaign_pages_views']; ?></td>
-                            <td><?php echo $value['campaign_pages_view_rate']; ?></td>
+                            <td><?php echo $value['campaign_pages_view_rate'] . ' %'; ?></td>
                             <td><?php echo $value['popup_views']; ?></td>
-                            <td><?php echo $value['popup_view_rate'] . '%'; ?></td>
+                            <td><?php echo $value['popup_view_rate'] . ' %'; ?></td>
                             <td><?php echo $value['popup_clicks']; ?></td>
-                            <td><?php echo $value['popup_click_rate'] . '%'; ?></td>
+                            <td><?php echo $value['popup_click_rate'] . ' %'; ?></td>
                             <td>
                                 <?php
                                     $spending_fix = str_replace('.00', '', $value['spending']);

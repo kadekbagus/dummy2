@@ -214,11 +214,11 @@ class CampaignReportPrinterController extends DataPrinterController
                                 htmlentities($value['mall_name']),
                                 $value['unique_users'],
                                 $value['campaign_pages_views'],
-                                $value['campaign_pages_view_rate'],
+                                $value['campaign_pages_view_rate'] . ' %',
                                 $value['popup_views'],
-                                $value['popup_view_rate'] . '%',
+                                $value['popup_view_rate'] . ' %',
                                 $value['popup_clicks'],
-                                $value['popup_click_rate'] . '%',
+                                $value['popup_click_rate'] . ' %',
                                 $spending_fix
                         );
                         $no++;
