@@ -5330,6 +5330,8 @@ class DashboardAPIController extends ControllerAPI
 
             $diff = $start_date->diffInDays($end_date);
 
+            $find = FALSE;
+
             foreach ($news as $newsid) {
                 $newsidloop = $newsid->news_id;
                 $object_type = $newsid->object_type;
