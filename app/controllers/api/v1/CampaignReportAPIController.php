@@ -1259,6 +1259,9 @@ class CampaignReportAPIController extends ControllerAPI
      */
     public function getSpending()
     {
+        // Mall ID
+        $mallId = OrbitInput::get('current_mall');
+
         // Campaign ID
         $id = OrbitInput::get('campaign_id');
 
@@ -1290,35 +1293,40 @@ class CampaignReportAPIController extends ControllerAPI
 
         $campaign = $campaign->find($id);
 
-        $campaignLogs = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-            ->where('updated_at', '<', $beginDate.' 00:00:00')
-            ->orderBy('campaign_history_id', 'desc')->first();
+        // Get the base cost
+        $baseCost = CampaignBasePrices::whereMerchantId($mallId)->whereCampaignType($type)->first()->price;
 
-        $initialCost = 0;
-        if ($campaignLogs) {
-            $initialCost = $campaignLogs->campaign_cost;
-        }
-
-        // Init previous day cost
+        // Set the default initial cost
         $previousDayCost = 0;
+
+        // In case the creation date is earlier than the first active date
+        $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            ->where('updated_at', '<', $beginDate.' 00:00:00')
+            ->orderBy('number_active_tenants', 'desc')->first();
+
+        if ($campaignLog) {
+            $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+        }
 
         // Loop
         while ($carbonDate->toDateString() <= $endDate) {
             $date = $carbonDate->toDateString();
 
             // Let's retrieve it from DB
-            $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', 'LIKE', $date.' %')
-                ->orderBy('campaign_history_id', 'desc')
+                ->orderBy('number_active_tenants', 'desc')
                 ->first();
 
-            $cost = $previousDayCost;
-
             // Data found
-            if ($row) {
-                $cost = $previousDayCost = $initialCost = $row->campaign_cost;
+            if ($campaignLog) {
+                $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+
+            // Data not found, but the date is in the interval
             } elseif ($date.' 00:00:00' >= $campaign->begin_date && $date.' 23:59:59' <= $campaign->end_date) {
-                $cost = $initialCost;
+                $cost = $previousDayCost;
+
+            // Data not found
             } else {
                 $cost = 0;
             }
