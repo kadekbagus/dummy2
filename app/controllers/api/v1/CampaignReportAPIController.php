@@ -1336,7 +1336,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         $campaignLogs = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
             ->where('updated_at', '<', $beginDate.' 00:00:00')
-            ->orderBy('updated_at', 'desc')->first();
+            ->orderBy('campaign_history_id', 'desc')->first();
 
         $initialCost = 0;
         if ($campaignLogs) {
@@ -1353,7 +1353,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Let's retrieve it from DB
             $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', 'LIKE', $date.' %')
-                ->orderBy('updated_at', 'desc')
+                ->orderBy('campaign_history_id', 'desc')
                 ->first();
 
             $cost = $previousDayCost;
