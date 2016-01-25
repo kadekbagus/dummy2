@@ -317,7 +317,7 @@ class DashboardAPIController extends ControllerAPI
                                     $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Event')));
                             })
                             ->whereBetween('campaign_popup_views.created_at', [$start_date, $end_date])
-                            ->where('location_id', $merchant_id)
+                            ->where('events.merchant_id', $merchant_id)
                             ->groupBy('events.event_id')
                             ->orderBy(DB::raw('1'), 'desc')
                             ->take($take);
@@ -347,40 +347,24 @@ class DashboardAPIController extends ControllerAPI
 
                 // show luckydraws
                 case 'lucky_draws':
-                        $query = LuckyDraw::select(
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
-                                select
-                                    count(ac.activity_id) as total
-                                from
-                                    {$tablePrefix}lucky_draws luck
-                                        inner join
-                                    {$tablePrefix}activities ac ON luck.lucky_draw_id = ac.object_id
-                                where ac.module_name = 'LuckyDraw'
-                                and ac.activity_name = 'view_lucky_draw'
-                                and ac.activity_type = 'view'
-                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
-                                and ac.group = 'mobile-ci'
-                                and ac.location_id = '{$merchant_id}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
-                            ) * 100 as percentage"),
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
-                            "lucky_draws.lucky_draw_name as name",
-                            "lucky_draws.lucky_draw_id as object_id"
-                        )
-                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
-                            $join->on('lucky_draws.lucky_draw_id', '=', 'activities.object_id');
-                            $join->where('activities.activity_name', '=', 'view_lucky_draw');
-                            $join->where('activities.module_name', '=', 'LuckyDraw');
-                            $join->where('activities.activity_type', '=', 'view');
-                            $join->where('activities.group', '=', 'mobile-ci');
-                            $join->where('activities.location_id', '=', $merchant_id);
-                            $join->where("activities.created_at", '>=', $start_date);
-                            $join->where("activities.created_at", '<=', $end_date);
-                        })
-                        ->groupBy('lucky_draws.lucky_draw_id')
-                        ->orderBy('score', 'DESC')
-                        ->take($take);
+                    $query = LuckyDraw::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                                {$tablePrefix}lucky_draws.lucky_draw_name as name, {$tablePrefix}lucky_draws.lucky_draw_id as object_id,
+                                count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
+                                from {$tablePrefix}lucky_draws ld
+                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ld.lucky_draw_id
+                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
+                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                            )
+                            ->leftJoin('campaign_page_views', 'campaign_page_views.campaign_id', '=', 'lucky_draws.lucky_draw_id')
+                            ->leftJoin('campaign_group_names', function($q) use ($quote) {
+                                    $q->on('campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id');
+                                    $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Lucky Draw')));
+                            })
+                            ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
+                            ->where('lucky_draws.mall_id', $merchant_id)
+                            ->groupBy('lucky_draws.lucky_draw_id')
+                            ->orderBy(DB::raw('1'), 'desc')
+                            ->take($take);
                         $flag_type = true;
                         break;
 
