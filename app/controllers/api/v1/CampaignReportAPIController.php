@@ -1271,11 +1271,11 @@ class CampaignReportAPIController extends ControllerAPI
         $type = OrbitInput::get('campaign_type');
 
         // Date intervals
-        $beginDate = substr(OrbitInput::get('start_date'), 0, 10);
-        $endDate = substr(OrbitInput::get('end_date'), 0, 10);
+        $beginDateTime = OrbitInput::get('start_date');
+        $endDateTime = OrbitInput::get('end_date');
 
         // Init Carbon
-        $carbonDate = Carbon::createFromFormat('Y-m-d', $beginDate);
+        $carbonDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $beginDateTime);
 
         // Init outputs
         $outputs = [];
@@ -1303,7 +1303,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         // In case the creation date is earlier than the first active date
         $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-            ->where('updated_at', '<', $beginDate.' 00:00:00')
+            ->where('updated_at', '<', $beginDateTime)
             ->orderBy('number_active_tenants', 'desc')->first();
 
         if ($campaignLog) {
@@ -1311,8 +1311,9 @@ class CampaignReportAPIController extends ControllerAPI
         }
 
         // Loop
-        while ($carbonDate->toDateString() <= $endDate) {
-            $date = $carbonDate->toDateString();
+        while ($carbonDateTime->toDateTimeString() <= $endDateTime) {
+            $dateTime = $carbonDateTime->toDateTimeString();
+            $date = $carbonDateTime->toDateString();
 
             // Let's retrieve it from DB
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
@@ -1325,7 +1326,7 @@ class CampaignReportAPIController extends ControllerAPI
                 $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
 
             // Data not found, but the date is in the interval
-            } elseif ($date.' 00:00:00' >= $campaign->begin_date && $date.' 23:59:59' <= $campaign->end_date) {
+            } elseif ($dateTime >= $campaign->begin_date && $dateTime <= $campaign->end_date) {
                 $cost = $previousDayCost;
 
             // Data not found
@@ -1333,14 +1334,19 @@ class CampaignReportAPIController extends ControllerAPI
                 $cost = 0;
             }
 
+            $date = $carbonDateTime->setTimezone('Asia/Jakarta')->toDateString();
+
             // Format cost as integer
             $cost = (int) $cost;
 
             // Add to output array
             $outputs[] = compact('date', 'cost');
 
+            // Set back to UTC
+            $carbonDateTime->setTimezone('UTC');
+
             // Increment day by 1
-            $carbonDate->addDay();
+            $carbonDateTime->addDay();
         }
 
         $this->response->data = $outputs;
