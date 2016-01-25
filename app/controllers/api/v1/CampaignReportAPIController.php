@@ -407,7 +407,6 @@ class CampaignReportAPIController extends ControllerAPI
             $listOfCampaign = $campaign->get();
 
             // get popup tenant
-            $campaignWithtenant = array();
             foreach ($listOfCampaign as $key => $val) {
                 if ($val->campaign_type === 'coupon') {
                     $linkToTenants = DB::table('promotion_retailer')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
@@ -610,6 +609,12 @@ class CampaignReportAPIController extends ControllerAPI
             // Get data from activity per day
             $beginDate = date("Y-m-d", strtotime($getBeginEndDate[0]->begin_date));
             $endDate = date("Y-m-d", strtotime($getBeginEndDate[0]->end_date));
+            $today = date("Y-m-d");
+
+            // Only show campaign data from start date from today
+            if ($today <= $endDate) {
+                $endDate = $today;
+            }
 
             if ($campaign_type === 'news' or $campaign_type === 'promotion') {
 
@@ -896,23 +901,6 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaignDetailActive[$key]['popup_click_rate'] =  round($popup_click_rate, 2);
             }
 
-            // usort($campaignDetailActive, "cmp");
-
-            // Filter by tenant
-            // OrbitInput::get('tenant', function($tenant) use ($campaign) {
-            //     $campaign->where('campaign_name', 'like', "%$campaign_name%");
-            // });
-
-            // Filter by mall
-            // OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
-            //     $campaign->where('mall_name', $mall_name);
-            // });
-
-
-            // Clone the query builder which still does not include the take,
-            // $_campaign = clone $campaign;
-
-
             // Get total
             $activeCampaignDays = count($campaignDetailActive);
             $totalPageViews = 0;
@@ -961,7 +949,7 @@ class CampaignReportAPIController extends ControllerAPI
             $sortBy = 'campaign_date';
 
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
@@ -977,6 +965,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'popup_view_rate'          => 'popup_view_rate',
                     'popup_clicks'             => 'popup_clicks',
                     'popup_click_rate'         => 'popup_click_rate',
+                    'spending'                 => 'spending',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -989,12 +978,8 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             });
 
-            // sort by array
-            // if ($sortMode === 'desc') {
-            //     $campaignDetailActive = $this->array_sort_on_by($campaignDetailActive, $sortBy, $order=SORT_DESC);
-            // } elseif ($sortMode === 'asc') {
-            //     $campaignDetailActive = $this->array_sort_on_by($campaignDetailActive, $sortBy, $order=SORT_ASC);
-            // }
+            // reverse array by date desc
+            $campaignDetailActive = array_reverse($campaignDetailActive);
 
             $totalCampaign = count($campaignDetailActive);
             $listOfCampaign = $campaignDetailActive;
@@ -1064,41 +1049,12 @@ class CampaignReportAPIController extends ControllerAPI
         return $output;
     }
 
-    public function array_sort_on_by($array, $on, $order=SORT_ASC)
+    public function orderBy($data, $field)
     {
-        $new_array = array();
-        $sortable_array = array();
-
-        if (count($array) > 0) {
-            foreach ($array as $k => $v) {
-                if (is_array($v)) {
-                    foreach ($v as $k2 => $v2) {
-                        if ($k2 == $on) {
-                            $sortable_array[$k] = $v2;
-                        }
-                    }
-                } else {
-                    $sortable_array[$k] = $v;
-                }
-            }
-
-            switch ($order) {
-                case SORT_ASC:
-                    sort($sortable_array);
-                break;
-                case SORT_DESC:
-                    rsort($sortable_array);
-                break;
-            }
-
-            foreach ($sortable_array as $k => $v) {
-                $new_array[$k] = $array[$k];
-            }
-        }
-
-        return $new_array;
+        $code = "return strnatcmp(\$a['$field'], \$b['$field']);";
+        usort($data, create_function('$a,$b', $code));
+        return $data;
     }
-
 
     /**
      * GET - Campaign demographic
