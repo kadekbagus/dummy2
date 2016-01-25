@@ -662,10 +662,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     from
                                         {$tablePrefix}news
                                     where
-                                        (({$tablePrefix}news.begin_date between '" . $beginDate . "' and '" . $endDate . "')
-                                            or ({$tablePrefix}news.end_date between '" . $beginDate . "' and '" . $endDate . "'))
-                                            or (('2016-01-21' between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)
-                                            or ('2016-01-31' between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)))
+                                            (DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$beginDate."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$endDate."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$beginDate."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$endDate."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$beginDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$beginDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$endDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$endDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$beginDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$endDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')))
                                         and campaign_id = '" . $campaign_id. "'
                                         and campaign_type = '" . $campaign_type . "'
                             order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
@@ -722,10 +723,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     from
                                         {$tablePrefix}promotions
                                     where
-                                        (({$tablePrefix}promotions.begin_date between '" . $beginDate . "' and '" . $endDate . "')
-                                            or ({$tablePrefix}promotions.end_date between '" . $beginDate . "' and '" . $endDate . "'))
-                                            or (('2016-01-21' between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)
-                                            or ('2016-01-31' between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)))
+                                            (DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$beginDate."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$endDate."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$beginDate."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$endDate."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$beginDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$beginDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$endDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$endDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$beginDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$endDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')))
                                         and campaign_id = '" . $campaign_id. "'
                                         and campaign_type = '" . $campaign_type . "'
                             order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
