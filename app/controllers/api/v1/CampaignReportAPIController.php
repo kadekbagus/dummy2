@@ -407,7 +407,6 @@ class CampaignReportAPIController extends ControllerAPI
             $listOfCampaign = $campaign->get();
 
             // get popup tenant
-            $campaignWithtenant = array();
             foreach ($listOfCampaign as $key => $val) {
                 if ($val->campaign_type === 'coupon') {
                     $linkToTenants = DB::table('promotion_retailer')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
@@ -610,6 +609,12 @@ class CampaignReportAPIController extends ControllerAPI
             // Get data from activity per day
             $beginDate = date("Y-m-d", strtotime($getBeginEndDate[0]->begin_date));
             $endDate = date("Y-m-d", strtotime($getBeginEndDate[0]->end_date));
+            $today = date("Y-m-d");
+
+            // Only show campaign data from start date from today
+            if ($today <= $endDate) {
+                $endDate = $today;
+            }
 
             if ($campaign_type === 'news' or $campaign_type === 'promotion') {
 
@@ -657,10 +662,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     from
                                         {$tablePrefix}news
                                     where
-                                        (({$tablePrefix}news.begin_date between '" . $beginDate . "' and '" . $endDate . "')
-                                            or ({$tablePrefix}news.end_date between '" . $beginDate . "' and '" . $endDate . "'))
-                                            or (('2016-01-21' between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)
-                                            or ('2016-01-31' between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)))
+                                            (DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$beginDate."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$endDate."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$beginDate."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$endDate."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$beginDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$beginDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$endDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$endDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$beginDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$endDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')))
                                         and campaign_id = '" . $campaign_id. "'
                                         and campaign_type = '" . $campaign_type . "'
                             order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
@@ -717,10 +723,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     from
                                         {$tablePrefix}promotions
                                     where
-                                        (({$tablePrefix}promotions.begin_date between '" . $beginDate . "' and '" . $endDate . "')
-                                            or ({$tablePrefix}promotions.end_date between '" . $beginDate . "' and '" . $endDate . "'))
-                                            or (('2016-01-21' between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)
-                                            or ('2016-01-31' between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)))
+                                            (DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$beginDate."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$endDate."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$beginDate."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$endDate."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$beginDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$beginDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$endDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$endDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$beginDate."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$endDate."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')))
                                         and campaign_id = '" . $campaign_id. "'
                                         and campaign_type = '" . $campaign_type . "'
                             order by campaign_history_id desc) {$tablePrefix}campaign_histories ON DATE_FORMAT({$tablePrefix}campaign_histories.created_at,
@@ -896,23 +903,6 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaignDetailActive[$key]['popup_click_rate'] =  round($popup_click_rate, 2);
             }
 
-            // usort($campaignDetailActive, "cmp");
-
-            // Filter by tenant
-            // OrbitInput::get('tenant', function($tenant) use ($campaign) {
-            //     $campaign->where('campaign_name', 'like', "%$campaign_name%");
-            // });
-
-            // Filter by mall
-            // OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
-            //     $campaign->where('mall_name', $mall_name);
-            // });
-
-
-            // Clone the query builder which still does not include the take,
-            // $_campaign = clone $campaign;
-
-
             // Get total
             $activeCampaignDays = count($campaignDetailActive);
             $totalPageViews = 0;
@@ -961,7 +951,7 @@ class CampaignReportAPIController extends ControllerAPI
             $sortBy = 'campaign_date';
 
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
@@ -977,6 +967,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'popup_view_rate'          => 'popup_view_rate',
                     'popup_clicks'             => 'popup_clicks',
                     'popup_click_rate'         => 'popup_click_rate',
+                    'spending'                 => 'spending',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -989,12 +980,8 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             });
 
-            // sort by array
-            // if ($sortMode === 'desc') {
-            //     $campaignDetailActive = $this->array_sort_on_by($campaignDetailActive, $sortBy, $order=SORT_DESC);
-            // } elseif ($sortMode === 'asc') {
-            //     $campaignDetailActive = $this->array_sort_on_by($campaignDetailActive, $sortBy, $order=SORT_ASC);
-            // }
+            // reverse array by date desc
+            $campaignDetailActive = array_reverse($campaignDetailActive);
 
             $totalCampaign = count($campaignDetailActive);
             $listOfCampaign = $campaignDetailActive;
@@ -1064,41 +1051,12 @@ class CampaignReportAPIController extends ControllerAPI
         return $output;
     }
 
-    public function array_sort_on_by($array, $on, $order=SORT_ASC)
+    public function orderBy($data, $field)
     {
-        $new_array = array();
-        $sortable_array = array();
-
-        if (count($array) > 0) {
-            foreach ($array as $k => $v) {
-                if (is_array($v)) {
-                    foreach ($v as $k2 => $v2) {
-                        if ($k2 == $on) {
-                            $sortable_array[$k] = $v2;
-                        }
-                    }
-                } else {
-                    $sortable_array[$k] = $v;
-                }
-            }
-
-            switch ($order) {
-                case SORT_ASC:
-                    sort($sortable_array);
-                break;
-                case SORT_DESC:
-                    rsort($sortable_array);
-                break;
-            }
-
-            foreach ($sortable_array as $k => $v) {
-                $new_array[$k] = $array[$k];
-            }
-        }
-
-        return $new_array;
+        $code = "return strnatcmp(\$a['$field'], \$b['$field']);";
+        usort($data, create_function('$a,$b', $code));
+        return $data;
     }
-
 
     /**
      * GET - Campaign demographic
@@ -1303,6 +1261,9 @@ class CampaignReportAPIController extends ControllerAPI
      */
     public function getSpending()
     {
+        // Mall ID
+        $mallId = OrbitInput::get('current_mall');
+
         // Campaign ID
         $id = OrbitInput::get('campaign_id');
 
@@ -1334,16 +1295,19 @@ class CampaignReportAPIController extends ControllerAPI
 
         $campaign = $campaign->find($id);
 
+        // Get the base cost
+        $baseCost = CampaignBasePrices::whereMerchantId($mallId)->whereCampaignType($type)->first()->price;
+
         // Set the default initial cost
         $previousDayCost = 0;
 
         // In case the creation date is earlier than the first active date
-        $campaignLogs = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+        $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
             ->where('updated_at', '<', $beginDate.' 00:00:00')
-            ->orderBy('campaign_history_id', 'desc')->first();
+            ->orderBy('number_active_tenants', 'desc')->first();
 
-        if ($campaignLogs) {
-            $previousDayCost = $campaignLogs->campaign_cost;
+        if ($campaignLog) {
+            $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
         }
 
         // Loop
@@ -1351,14 +1315,14 @@ class CampaignReportAPIController extends ControllerAPI
             $date = $carbonDate->toDateString();
 
             // Let's retrieve it from DB
-            $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', 'LIKE', $date.' %')
-                ->orderBy('campaign_history_id', 'desc')
+                ->orderBy('number_active_tenants', 'desc')
                 ->first();
 
             // Data found
-            if ($row) {
-                $cost = $previousDayCost = $row->campaign_cost;
+            if ($campaignLog) {
+                $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
 
             // Data not found, but the date is in the interval
             } elseif ($date.' 00:00:00' >= $campaign->begin_date && $date.' 23:59:59' <= $campaign->end_date) {
