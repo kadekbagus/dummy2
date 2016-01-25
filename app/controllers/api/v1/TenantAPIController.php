@@ -384,6 +384,15 @@ class TenantAPIController extends ControllerAPI
             // set user mall id
             $parent_id = OrbitInput::post('parent_id', OrbitInput::post('merchant_id'));
 
+            // get user mall_ids
+            $listOfMallIds = $user->getUserMallIds($parent_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $parent_id = $listOfMallIds[0];
+            }
+
             $url = OrbitInput::post('url');
             $box_url = OrbitInput::post('box_url');
             $masterbox_number = OrbitInput::post('masterbox_number');
@@ -414,7 +423,7 @@ class TenantAPIController extends ControllerAPI
                     'box_url'              => 'orbit.formaterror.url.web',
                     'external_object_id'   => 'required',
                     'status'               => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $parent_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
-                    'parent_id'            => 'required|orbit.empty.mall',
+                    'parent_id'            => 'orbit.empty.mall',
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
                     'id_language_default' => 'required|orbit.empty.language_default',
@@ -743,12 +752,31 @@ class TenantAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = OrbitInput::post('current_mall');;
+            // validate user mall id for current_mall
+            $mall_id = OrbitInput::post('current_mall');
+            $listOfMallIds = $user->getUserMallIds($mall_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $mall_id = $listOfMallIds[0];
+            }
+
             $retailer_id = OrbitInput::post('retailer_id');
             $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
+
+            // validate user mall id for parent_id
             $parent_id = OrbitInput::post('parent_id');
+            $listOfMallIds = $user->getUserMallIds($parent_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $parent_id = $listOfMallIds[0];
+            }
+
             $url = OrbitInput::post('url');
             $masterbox_number = OrbitInput::post('masterbox_number');
             $category_ids = OrbitInput::post('category_ids');
@@ -777,7 +805,7 @@ class TenantAPIController extends ControllerAPI
                     'phone'   => $phone,
                 ),
                 array(
-                    'current_mall'      => 'required|orbit.empty.mall',
+                    'current_mall'      => 'orbit.empty.mall',
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
@@ -940,10 +968,6 @@ class TenantAPIController extends ControllerAPI
 
             OrbitInput::post('sector_of_activity', function($sector_of_activity) use ($updatedtenant) {
                 $updatedtenant->sector_of_activity = $sector_of_activity;
-            });
-
-            OrbitInput::post('parent_id', function($parent_id) use ($updatedtenant) {
-                $updatedtenant->parent_id = $parent_id;
             });
 
             OrbitInput::post('url', function($url) use ($updatedtenant) {
