@@ -5432,11 +5432,20 @@ class DashboardAPIController extends ControllerAPI
             
             $total = $totalnews + $totalpromotion + $totalcoupon;
             if (empty($without)) {
-                $data['records'] = array (
-                    array('campaign_type'=>'news', 'campaign_spending'=>$totalnews, 'percentage'=>number_format(($totalnews/$total*100),2)),
-                    array('campaign_type'=>'promotions', 'campaign_spending'=>$totalpromotion, 'percentage'=>number_format(($totalpromotion/$total*100),2)),
-                    array('campaign_type'=>'coupons', 'campaign_spending'=>$totalcoupon, 'percentage'=>number_format(($totalcoupon/$total*100),2))
-                );
+                if($total != 0) {
+                    $data['records'] = array (
+                        array('campaign_type'=>'news', 'campaign_spending'=>$totalnews, 'percentage'=>number_format(($totalnews/$total*100),2)),
+                        array('campaign_type'=>'promotions', 'campaign_spending'=>$totalpromotion, 'percentage'=>number_format(($totalpromotion/$total*100),2)),
+                        array('campaign_type'=>'coupons', 'campaign_spending'=>$totalcoupon, 'percentage'=>number_format(($totalcoupon/$total*100),2))
+                    );
+                } else {
+                    $data['records'] = array (
+                        array('campaign_type'=>'news', 'campaign_spending'=>$totalnews, 'percentage'=>0),
+                        array('campaign_type'=>'promotions', 'campaign_spending'=>$totalpromotion, 'percentage'=>0),
+                        array('campaign_type'=>'coupons', 'campaign_spending'=>$totalcoupon, 'percentage'=>0)
+                    );
+                }
+                
             }
             $data['total'] = $total;
             $this->response->data = $data;
