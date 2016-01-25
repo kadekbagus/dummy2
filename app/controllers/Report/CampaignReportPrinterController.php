@@ -131,7 +131,109 @@ class CampaignReportPrinterController extends DataPrinterController
     }
 
 
+    public function getPrintCampaignDetailReport()
+    {
+        $this->preparePDO();
+        $prefix = DB::getTablePrefix();
 
+        $mode = OrbitInput::get('export', 'print');
+        $current_mall = OrbitInput::get('current_mall');
+
+        $timezone = $this->getTimezoneMall($current_mall);
+
+        $user = $this->loggedUser;
+
+        // Instantiate the CampaignReportAPIController to get the query builder of Coupons
+        $response = CampaignReportAPIController::create('raw')
+                                            ->setReturnBuilder(TRUE)
+                                            ->getCampaignReportDetail();
+
+        $data = $response->data->records;
+
+        // get total data
+        $totalRecord = $response->data->total_records;
+        $activeCampaignDays = $response->data->active_campaign_days;
+        $totalPageViews = $response->data->total_page_views;
+        $totalPopupViews = $response->data->total_popup_views;
+        $totalPopupClicks = $response->data->total_popup_clicks;
+        $totalSpending = $response->data->total_spending;
+
+
+        // Filter mode
+        $filter = '';
+        $tenant = OrbitInput::get('tenant');
+        $mallName = OrbitInput::get('mall_name');
+        $startDate = OrbitInput::get('start_date');
+        $endDate = OrbitInput::get('end_date');
+
+
+        $this->prepareUnbufferedQuery();
+
+        $pageTitle = 'Campaign Detail Report';
+
+        switch ($mode) {
+            case 'csv':
+                @header('Content-Description: File Transfer');
+                @header('Content-Type: text/csv');
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
+
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Detail Report', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active campaign days', number_format($activeCampaignDays, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', number_format($totalPageViews, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', number_format($totalPopupViews, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up clicks', number_format($totalPopupClicks, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', number_format($totalSpending, 0, '.', '.'), '', '', '','');
+
+                // Filtering
+                if ($startDate != '' && $endDate != ''){
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
+                }
+
+                if ($tenant != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
+                } elseif($mallName != '') {
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Location : ', htmlentities($mallName), '', '', '','');
+                }
+
+
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location', 'Unique users', 'Campaign page views', 'Campaign page view rate', 'Pop up views', 'Pop up view rate', 'Pop up clicks', 'Pop up click rate', 'Spending (IDR)');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
+
+                $no  = 1;
+                if ($totalRecord > 0) {
+                    foreach ($data as $key => $value) {
+                        $spending_fix = str_replace('.00', '', $value['spending']);
+
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                                $no,
+                                $value['campaign_date'],
+                                htmlentities($value['mall_name']),
+                                $value['unique_users'],
+                                $value['campaign_pages_views'],
+                                $value['campaign_pages_view_rate'] . ' %',
+                                $value['popup_views'],
+                                $value['popup_view_rate'] . ' %',
+                                $value['popup_clicks'],
+                                $value['popup_click_rate'] . ' %',
+                                $spending_fix
+                        );
+                        $no++;
+                    }
+                }
+
+                break;
+
+            case 'print':
+            default:
+                $me = $this;
+                $rowCounter = 0;
+                require app_path() . '/views/printer/list-campaign-detail-report-view.php';
+        }
+    }
 
     /**
      * Print date and time friendly name.
