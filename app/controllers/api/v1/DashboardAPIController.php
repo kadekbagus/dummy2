@@ -109,9 +109,9 @@ class DashboardAPIController extends ControllerAPI
                                     SELECT COUNT({$tablePrefix}merchant_page_views.activity_id) FROM {$tablePrefix}merchant_page_views
                                 WHERE 1=1
                                 AND merchant_type = 'tenant'
-                                AND location_id = '" . $merchant_id . "'
-                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
-                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
+                                AND location_id = " . DB::connection()->getPdo()->quote($merchant_id) . "
+                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= " . DB::connection()->getPdo()->quote($start_date) . "
+                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= " . DB::connection()->getPdo()->quote($end_date) . "
                             )*100 AS percentage
                     ")
                 )
