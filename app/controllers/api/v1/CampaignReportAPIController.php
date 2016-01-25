@@ -865,13 +865,13 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
                 $campaign_pages_view_rate = 0;
-                if ($details[0]->campaign_pages_views != 0){
-                    $campaign_pages_view_rate = ($unique_users / $details[0]->campaign_pages_views) * 100;
+                if ($unique_users != 0){
+                    $campaign_pages_view_rate = ($details[0]->campaign_pages_views / $unique_users) * 100;
                 }
 
                 $popup_view_rate = 0;
-                if ($details[0]->popup_views != 0){
-                    $popup_view_rate = ($unique_users / $details[0]->popup_views) * 100;
+                if ($unique_users != 0){
+                    $popup_view_rate = ($details[0]->popup_views / $unique_users) * 100;
                 }
 
                 $popup_click_rate = 0;
@@ -904,19 +904,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Clone the query builder which still does not include the take,
             // $_campaign = clone $campaign;
-
-            // Get total page views
-            // $totalPageViews = $_campaign->sum('page_views');
-
-            // Get total popup views
-            // $totalPopupViews = $_campaign->sum('popup_views');
-
-            // Get total estimate
-            // $totalEstimated = $_campaign->sum('estimated_total');
-
-            // Get total spending
-            // $totalSpending = $_campaign->sum('spending');
-
 
 
             // Get total
@@ -995,16 +982,12 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             });
 
-            // uasort($campaignDetailActive, function($a, $b) use(&$sortBy) {
-            //     if ($sortBy == 'desc') {
-            //         return $a[$sortBy] - $b[$sortBy];
-            //     } elseif ($sortBy == 'asc') {
-            //         return $b[$sortBy] - $a[$sortBy];
-            //     }
-            // });
-
-
-            // $campaign->orderBy($sortBy, $sortMode);
+            // sort by array
+            // if ($sortMode === 'desc') {
+            //     $campaignDetailActive = $this->array_sort_on_by($campaignDetailActive, $sortBy, $order=SORT_DESC);
+            // } elseif ($sortMode === 'asc') {
+            //     $campaignDetailActive = $this->array_sort_on_by($campaignDetailActive, $sortBy, $order=SORT_ASC);
+            // }
 
             $totalCampaign = count($campaignDetailActive);
             $listOfCampaign = $campaignDetailActive;
@@ -1073,6 +1056,42 @@ class CampaignReportAPIController extends ControllerAPI
 
         return $output;
     }
+
+    public function array_sort_on_by($array, $on, $order=SORT_ASC)
+    {
+        $new_array = array();
+        $sortable_array = array();
+
+        if (count($array) > 0) {
+            foreach ($array as $k => $v) {
+                if (is_array($v)) {
+                    foreach ($v as $k2 => $v2) {
+                        if ($k2 == $on) {
+                            $sortable_array[$k] = $v2;
+                        }
+                    }
+                } else {
+                    $sortable_array[$k] = $v;
+                }
+            }
+
+            switch ($order) {
+                case SORT_ASC:
+                    sort($sortable_array);
+                break;
+                case SORT_DESC:
+                    rsort($sortable_array);
+                break;
+            }
+
+            foreach ($sortable_array as $k => $v) {
+                $new_array[$k] = $array[$k];
+            }
+        }
+
+        return $new_array;
+    }
+
 
     /**
      * GET - Campaign demographic
