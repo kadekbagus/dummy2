@@ -1277,6 +1277,14 @@ class TenantAPIController extends ControllerAPI
                 $limit = TRUE;
             }
 
+            // get user mall_ids
+            $parent_id = OrbitInput::get('parent_id');
+            $listOfMallIds = $user->getUserMallIds($parent_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,
@@ -1330,10 +1338,19 @@ class TenantAPIController extends ControllerAPI
                                  ->excludeDeleted('merchants');
             }
 
+            // Filter tenant by parent_id / mall id
+            $tenants->whereIn('merchants.parent_id', $listOfMallIds);
+
             // Filter tenant by Ids
             OrbitInput::get('tenant_id', function($tenantIds) use ($tenants)
             {
                 $tenants->whereIn('merchants.merchant_id', $tenantIds);
+            });
+
+            // or using merchant_id
+            OrbitInput::get('merchant_id', function($data) use ($tenants)
+            {
+                $tenants->whereIn('merchants.merchant_id', $data);
             });
 
             // Filter tenant by Ids
@@ -1542,12 +1559,6 @@ class TenantAPIController extends ControllerAPI
             // Filter retailer by box_url like
             OrbitInput::get('box_url_like', function ($data) use ($tenants) {
                 $tenants->where('merchants.box_url', 'like', "%$data%");
-            });
-
-            // Filter tenant by parent_id
-            OrbitInput::get('parent_id', function($parentIds) use ($tenants)
-            {
-                $tenants->whereIn('merchants.parent_id', (array)$parentIds);
             });
 
             // Filter tenant by floor
