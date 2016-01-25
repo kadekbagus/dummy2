@@ -98,36 +98,28 @@ class DashboardAPIController extends ControllerAPI
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
 
-            $activities = DB::table('activities')
-                ->join('merchants', "activities.object_id", '=', "merchants.merchant_id")
+            $activities = DB::table('merchant_page_views')
+                ->join('merchants', "merchant_page_views.merchant_id", '=', "merchants.merchant_id")
                 ->select(
-                    DB::raw("{$tablePrefix}activities.object_id AS tenant_id"),
-                    DB::raw("COUNT({$tablePrefix}activities.activity_id) AS score"),
+                    DB::raw("{$tablePrefix}merchant_page_views.merchant_id AS tenant_id"),
+                    DB::raw("COUNT({$tablePrefix}merchant_page_views.activity_id) AS score"),
                     DB::raw("{$tablePrefix}merchants.name AS tenant_name"),
                     DB::raw("
-                                COUNT({$tablePrefix}activities.activity_id) / (
-                                        SELECT COUNT({$tablePrefix}activities.activity_id) FROM {$tablePrefix}activities
-                                    WHERE 1=1
-                                    AND activity_name = 'view_retailer'
-                                    AND activity_type = 'view'
-                                    AND object_name = 'Tenant'
-                                    AND `group` = 'mobile-ci'
-                                    AND (role = 'Consumer' OR role = 'Guest')
-                                    AND location_id = '" . $merchant_id . "'
-                                    AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
-                                    AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
-                                )*100 AS percentage
-                        ")
+                            COUNT({$tablePrefix}merchant_page_views.activity_id) / (
+                                    SELECT COUNT({$tablePrefix}merchant_page_views.activity_id) FROM {$tablePrefix}merchant_page_views
+                                WHERE 1=1
+                                AND merchant_type = 'tenant'
+                                AND location_id = '" . $merchant_id . "'
+                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
+                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
+                            )*100 AS percentage
+                    ")
                 )
-                ->where("activities.activity_name", '=', 'view_retailer')
-                ->where("activities.activity_type", '=', 'view')
-                ->where("activities.object_name", '=', 'Tenant')
-                ->where("activities.group", '=', 'mobile-ci')
-                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                ->where("activities.location_id", '=', $merchant_id)
-                ->where("activities.created_at", '>=', $start_date)
-                ->where("activities.created_at", '<=', $end_date)
-                ->groupBy("activities.object_id")
+                ->where("merchant_page_views.merchant_type", '=', 'tenant')
+                ->where("merchant_page_views.location_id", '=', $merchant_id)
+                ->where("merchant_page_views.created_at", '>=', $start_date)
+                ->where("merchant_page_views.created_at", '<=', $end_date)
+                ->groupBy("merchant_page_views.merchant_id")
                 ->orderBy('score','desc')
                 ->take(10);
 
