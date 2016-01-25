@@ -1303,6 +1303,9 @@ class CampaignReportAPIController extends ControllerAPI
      */
     public function getSpending()
     {
+        // Mall ID
+        $mallId = OrbitInput::get('current_mall');
+
         // Campaign ID
         $id = OrbitInput::get('campaign_id');
 
@@ -1334,16 +1337,19 @@ class CampaignReportAPIController extends ControllerAPI
 
         $campaign = $campaign->find($id);
 
+        // Get the base cost
+        $baseCost = CampaignBasePrices::whereMerchantId($mallId)->whereCampaignType($type)->first()->price;
+
         // Set the default initial cost
         $previousDayCost = 0;
 
         // In case the creation date is earlier than the first active date
         $campaignLogs = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
             ->where('updated_at', '<', $beginDate.' 00:00:00')
-            ->orderBy('campaign_history_id', 'desc')->first();
+            ->orderBy('number_active_tenants', 'desc')->first();
 
         if ($campaignLogs) {
-            $previousDayCost = $campaignLogs->campaign_cost;
+            $previousDayCost = $baseCost * $campaignLogs->number_active_tenants;
         }
 
         // Loop
@@ -1353,12 +1359,12 @@ class CampaignReportAPIController extends ControllerAPI
             // Let's retrieve it from DB
             $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', 'LIKE', $date.' %')
-                ->orderBy('campaign_history_id', 'desc')
+                ->orderBy('number_active_tenants', 'desc')
                 ->first();
 
             // Data found
             if ($row) {
-                $cost = $previousDayCost = $row->campaign_cost;
+                $cost = $previousDayCost = $baseCost * $row->number_active_tenants;
 
             // Data not found, but the date is in the interval
             } elseif ($date.' 00:00:00' >= $campaign->begin_date && $date.' 23:59:59' <= $campaign->end_date) {
