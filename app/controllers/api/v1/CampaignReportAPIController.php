@@ -1327,17 +1327,17 @@ class CampaignReportAPIController extends ControllerAPI
 
         $campaign = $campaign->find($id);
 
+        // Set the default initial cost
+        $previousDayCost = 0;
+
+        // In case the creation date is earlier than the first active date
         $campaignLogs = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
             ->where('updated_at', '<', $beginDate.' 00:00:00')
             ->orderBy('campaign_history_id', 'desc')->first();
 
-        $initialCost = 0;
         if ($campaignLogs) {
-            $initialCost = $campaignLogs->campaign_cost;
+            $previousDayCost = $campaignLogs->campaign_cost;
         }
-
-        // Init previous day cost
-        $previousDayCost = 0;
 
         // Loop
         while ($carbonDate->toDateString() <= $endDate) {
@@ -1349,13 +1349,15 @@ class CampaignReportAPIController extends ControllerAPI
                 ->orderBy('campaign_history_id', 'desc')
                 ->first();
 
-            $cost = $previousDayCost;
-
             // Data found
             if ($row) {
-                $cost = $previousDayCost = $initialCost = $row->campaign_cost;
+                $cost = $previousDayCost = $row->campaign_cost;
+
+            // Data not found, but the date is in the interval
             } elseif ($date.' 00:00:00' >= $campaign->begin_date && $date.' 23:59:59' <= $campaign->end_date) {
-                $cost = $initialCost;
+                $cost = $previousDayCost;
+
+            // Data not found
             } else {
                 $cost = 0;
             }
