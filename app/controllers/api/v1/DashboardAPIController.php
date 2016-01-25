@@ -5125,7 +5125,7 @@ class DashboardAPIController extends ControllerAPI
     }
 
     /**
-     * GET - Estimated Total Cost
+     * GET - Campaign Spending
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
@@ -5197,7 +5197,7 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            // get id active in date range (news and promotion)
+            // get id active in date range (news and promotion
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id, {$tablePrefix}news.status, {$tablePrefix}campaign_price.base_price, {$tablePrefix}news.object_type, DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') as begin_date, DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') as end_date, {$tablePrefix}campaign_price.base_price, COUNT({$tablePrefix}news_merchant.news_merchant_id) as tenantnow"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -5205,14 +5205,11 @@ class DashboardAPIController extends ControllerAPI
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->where(function ($r) use ($start_date, $end_date, $tablePrefix) {
-                                    $r->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                                      ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                                })
-                              ->orWhere(function ($s) use ($start_date, $end_date, $tablePrefix) {
-                                    $s->whereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$start_date])
-                                      ->orWhereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$end_date]);
-                                });
+                            $q->WhereRaw("DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')");
                         })
                         ->groupBy('news.news_id')
                         ->get();
@@ -5221,24 +5218,19 @@ class DashboardAPIController extends ControllerAPI
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                        ->where('merchants.status', '=', 'active')
+                        ->where('promotions.merchant_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->where(function ($r) use ($start_date, $end_date, $tablePrefix) {
-                                    $r->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
-                                      ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
-                                })
-                              ->orWhere(function ($s) use ($start_date, $end_date, $tablePrefix) {
-                                    $s->whereRaw(" ? between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date", [$start_date])
-                                      ->orWhereRaw(" ? between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date", [$end_date]);
-                                });
+                            $q->WhereRaw("DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')");
                         })
                         ->groupBy('promotions.promotion_id')
                         ->get();
 
             $newsQuery = DB::select( DB::raw("select 
-                                {$tablePrefix}campaign_histories.campaign_history_id,
-                                {$tablePrefix}news.begin_date,
-                                {$tablePrefix}news.end_date,
-                                {$tablePrefix}campaign_histories.campaign_type,
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
@@ -5252,7 +5244,7 @@ class DashboardAPIController extends ControllerAPI
                                         a.created_at < concat(DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), ' ', '23:59:59')
                                             and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_histories.campaign_history_id desc
+                                    order by a.campaign_history_id desc
                                     limit 1), {$tablePrefix}campaign_history_actions.action_name) as action_status
                             from
                                 (select *
@@ -5264,10 +5256,11 @@ class DashboardAPIController extends ControllerAPI
                                         from
                                             {$tablePrefix}news
                                         where
-                                            (({$tablePrefix}news.begin_date between DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
-                                                or ({$tablePrefix}news.end_date between DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d')))
-                                                or ((DATE_FORMAT('".$start_date."', '%Y-%m-%d') between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)
-                                                or (DATE_FORMAT('".$end_date."', '%Y-%m-%d') between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date)))
+                                            (DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')))
                                 order by campaign_history_id desc) {$tablePrefix}campaign_histories 
                                     left join
                                 {$tablePrefix}news ON {$tablePrefix}news.news_id = {$tablePrefix}campaign_histories.campaign_id
@@ -5278,10 +5271,6 @@ class DashboardAPIController extends ControllerAPI
                             group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
             
             $couponQuery = DB::select( DB::raw("select 
-                                {$tablePrefix}campaign_histories.campaign_history_id,
-                                {$tablePrefix}promotions.begin_date,
-                                {$tablePrefix}promotions.end_date,
-                                {$tablePrefix}campaign_histories.campaign_type,
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
@@ -5295,7 +5284,7 @@ class DashboardAPIController extends ControllerAPI
                                         a.created_at < concat(DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), ' ', '23:59:59')
                                             and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_histories.campaign_history_id desc
+                                    order by a.campaign_history_id desc
                                     limit 1), {$tablePrefix}campaign_history_actions.action_name) as action_status
                             from
                                 (select *
@@ -5307,10 +5296,11 @@ class DashboardAPIController extends ControllerAPI
                                         from
                                             {$tablePrefix}promotions
                                         where
-                                            (({$tablePrefix}promotions.begin_date between DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
-                                                or ({$tablePrefix}promotions.end_date between DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d')))
-                                                or ((DATE_FORMAT('".$start_date."', '%Y-%m-%d') between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)
-                                                or (DATE_FORMAT('".$end_date."', '%Y-%m-%d') between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date)))
+                                            (DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))
+                                                or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')))
                                 order by campaign_history_id desc) {$tablePrefix}campaign_histories
                                     left join
                                 {$tablePrefix}promotions ON {$tablePrefix}promotions.promotion_id = {$tablePrefix}campaign_histories.campaign_id
@@ -5319,14 +5309,16 @@ class DashboardAPIController extends ControllerAPI
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
                             group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') , {$tablePrefix}campaign_histories.campaign_id"));
+
+            
             
             $data = array();
 
             $totalnews = 0;
             $totalpromotion = 0;
             
-            $start_date = new Carbon($start_date);
-            $end_date = new Carbon($end_date);
+            $start_date = new Carbon(substr($start_date,0,10));
+            $end_date = new Carbon(substr($end_date,0,10));
 
             $diff = $start_date->diffInDays($end_date);
 
@@ -5346,7 +5338,6 @@ class DashboardAPIController extends ControllerAPI
                 $start = new Carbon($start_date);
                 for ($x = 0; $x<=$diff; $x++) {
                     $dateloop = $start->toDateString();
-
                     foreach($newsQuery as $nq) {
                         $find = FALSE;
                         if ($nq->campaign_id === $newsidloop) { 
@@ -5356,7 +5347,9 @@ class DashboardAPIController extends ControllerAPI
                             $tenanttemp = $nq->tenants;
                         }
                         if($dateloop >= $begin && $dateloop <= $end) {
+                            
                             if ($nq->campaign_id === $newsidloop) { 
+                                //echo $dateloop . "<br>";
                                 $find = TRUE;
                                 $campaignstatus = $nq->action_status;
                                 $campaigntenant = $nq->tenants;
@@ -5372,13 +5365,13 @@ class DashboardAPIController extends ControllerAPI
                     } 
                     if($dateloop >= $begin && $dateloop <= $end) {
                         if($campaignstatus == 'activate' || $campaignstatus == 'active'){
+
                             $spending = (int) $campaigntenant * $bp;
                             $totalspending += $spending;
                         }                    
                     }
                     $start->addDay();
                 }
-                
                 if ($object_type === 'news'){
                     $totalnews += $totalspending;
                 } else {
