@@ -1344,12 +1344,12 @@ class CampaignReportAPIController extends ControllerAPI
         $previousDayCost = 0;
 
         // In case the creation date is earlier than the first active date
-        $campaignLogs = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+        $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
             ->where('updated_at', '<', $beginDate.' 00:00:00')
             ->orderBy('number_active_tenants', 'desc')->first();
 
-        if ($campaignLogs) {
-            $previousDayCost = $baseCost * $campaignLogs->number_active_tenants;
+        if ($campaignLog) {
+            $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
         }
 
         // Loop
@@ -1357,14 +1357,14 @@ class CampaignReportAPIController extends ControllerAPI
             $date = $carbonDate->toDateString();
 
             // Let's retrieve it from DB
-            $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', 'LIKE', $date.' %')
                 ->orderBy('number_active_tenants', 'desc')
                 ->first();
 
             // Data found
-            if ($row) {
-                $cost = $previousDayCost = $baseCost * $row->number_active_tenants;
+            if ($campaignLog) {
+                $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
 
             // Data not found, but the date is in the interval
             } elseif ($date.' 00:00:00' >= $campaign->begin_date && $date.' 23:59:59' <= $campaign->end_date) {
