@@ -67,7 +67,15 @@ class TenantAPIController extends ControllerAPI
 
             $retailer_id = OrbitInput::post('retailer_id');
 
-            $mall_id = OrbitInput::post('current_mall');;
+            // get user mall id
+            $mall_id = OrbitInput::post('current_mall');
+            $listOfMallIds = $user->getUserMallIds($mall_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $mall_id = $listOfMallIds[0];
+            }
 
             /* for next version
             $password = OrbitInput::post('password');
@@ -82,7 +90,7 @@ class TenantAPIController extends ControllerAPI
                     */
                 ),
                 array(
-                    'merchant_id' => 'required|orbit.empty.mall',
+                    'merchant_id' => 'orbit.empty.mall',
                     'retailer_id' => 'required|orbit.empty.tenant',//|orbit.exists.deleted_tenant_is_box_current_retailer',
                     /* for next version
                     'password'    => [
