@@ -98,36 +98,28 @@ class DashboardAPIController extends ControllerAPI
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
 
-            $activities = DB::table('activities')
-                ->join('merchants', "activities.object_id", '=', "merchants.merchant_id")
+            $activities = DB::table('merchant_page_views')
+                ->join('merchants', "merchant_page_views.merchant_id", '=', "merchants.merchant_id")
                 ->select(
-                    DB::raw("{$tablePrefix}activities.object_id AS tenant_id"),
-                    DB::raw("COUNT({$tablePrefix}activities.activity_id) AS score"),
+                    DB::raw("{$tablePrefix}merchant_page_views.merchant_id AS tenant_id"),
+                    DB::raw("COUNT({$tablePrefix}merchant_page_views.activity_id) AS score"),
                     DB::raw("{$tablePrefix}merchants.name AS tenant_name"),
                     DB::raw("
-                                COUNT({$tablePrefix}activities.activity_id) / (
-                                        SELECT COUNT({$tablePrefix}activities.activity_id) FROM {$tablePrefix}activities
-                                    WHERE 1=1
-                                    AND activity_name = 'view_retailer'
-                                    AND activity_type = 'view'
-                                    AND object_name = 'Tenant'
-                                    AND `group` = 'mobile-ci'
-                                    AND (role = 'Consumer' OR role = 'Guest')
-                                    AND location_id = '" . $merchant_id . "'
-                                    AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
-                                    AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
-                                )*100 AS percentage
-                        ")
+                            COUNT({$tablePrefix}merchant_page_views.activity_id) / (
+                                    SELECT COUNT({$tablePrefix}merchant_page_views.activity_id) FROM {$tablePrefix}merchant_page_views
+                                WHERE 1=1
+                                AND merchant_type = 'tenant'
+                                AND location_id = " . DB::connection()->getPdo()->quote($merchant_id) . "
+                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= " . DB::connection()->getPdo()->quote($start_date) . "
+                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= " . DB::connection()->getPdo()->quote($end_date) . "
+                            )*100 AS percentage
+                    ")
                 )
-                ->where("activities.activity_name", '=', 'view_retailer')
-                ->where("activities.activity_type", '=', 'view')
-                ->where("activities.object_name", '=', 'Tenant')
-                ->where("activities.group", '=', 'mobile-ci')
-                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                ->where("activities.location_id", '=', $merchant_id)
-                ->where("activities.created_at", '>=', $start_date)
-                ->where("activities.created_at", '<=', $end_date)
-                ->groupBy("activities.object_id")
+                ->where("merchant_page_views.merchant_type", '=', 'tenant')
+                ->where("merchant_page_views.location_id", '=', $merchant_id)
+                ->where("merchant_page_views.created_at", '>=', $start_date)
+                ->where("merchant_page_views.created_at", '<=', $end_date)
+                ->groupBy("merchant_page_views.merchant_id")
                 ->orderBy('score','desc')
                 ->take(10);
 
@@ -715,21 +707,20 @@ class DashboardAPIController extends ControllerAPI
 
                 // show news
                 case 'news':
+                        $campaign_group_name = 'News';
                         foreach ($periods as $period) {
 
                             $start_date = $period['start_date'];
                             $end_date = $period['end_date'];
 
-                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'view_news')
-                                ->where('activities.module_name', '=', 'News')
-                                ->where('activities.activity_type', '=', 'view')
-                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                                ->where('activities.group', '=', 'mobile-ci')
-                                ->where('activities.location_id', '=', $merchant_id)
-                                ->where('activities.object_id', '=', $object_id)
-                                ->where("activities.created_at", '>=', $start_date)
-                                ->where("activities.created_at", '<=', $end_date)
+                            $query = DB::table('campaign_page_views')
+                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
+                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
+                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->where('campaign_page_views.campaign_id', '=', $object_id)
+                                ->where("campaign_page_views.created_at", '>=', $start_date)
+                                ->where("campaign_page_views.created_at", '<=', $end_date)
                                 ->first();
 
                             $result = (int)$query->score;
@@ -744,21 +735,20 @@ class DashboardAPIController extends ControllerAPI
 
                 // show events
                 case 'events':
+                        $campaign_group_name = 'Event';
                         foreach ($periods as $period) {
 
                             $start_date = $period['start_date'];
                             $end_date = $period['end_date'];
 
-                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'event_view')
-                                ->where('activities.module_name', '=', 'Event')
-                                ->where('activities.activity_type', '=', 'view')
-                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                                ->where('activities.group', '=', 'mobile-ci')
-                                ->where('activities.location_id', '=', $merchant_id)
-                                ->where('activities.object_id', '=', $object_id)
-                                ->where("activities.created_at", '>=', $start_date)
-                                ->where("activities.created_at", '<=', $end_date)
+                            $query = DB::table('campaign_popup_views')
+                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_popup_views.activity_id) as score"))
+                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_popup_views.campaign_group_name_id')
+                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
+                                ->where('campaign_popup_views.location_id', '=', $merchant_id)
+                                ->where('campaign_popup_views.campaign_id', '=', $object_id)
+                                ->where("campaign_popup_views.created_at", '>=', $start_date)
+                                ->where("campaign_popup_views.created_at", '<=', $end_date)
                                 ->first();
 
                             $result = (int)$query->score;
@@ -773,21 +763,20 @@ class DashboardAPIController extends ControllerAPI
 
                 // show promotions
                 case 'promotions':
+                        $campaign_group_name = 'Promotion';
                         foreach ($periods as $period) {
 
                             $start_date = $period['start_date'];
                             $end_date = $period['end_date'];
 
-                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'view_promotion')
-                                ->where('activities.module_name', '=', 'Promotion')
-                                ->where('activities.activity_type', '=', 'view')
-                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                                ->where('activities.group', '=', 'mobile-ci')
-                                ->where('activities.location_id', '=', $merchant_id)
-                                ->where('activities.object_id', '=', $object_id)
-                                ->where("activities.created_at", '>=', $start_date)
-                                ->where("activities.created_at", '<=', $end_date)
+                            $query = DB::table('campaign_page_views')
+                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
+                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
+                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->where('campaign_page_views.campaign_id', '=', $object_id)
+                                ->where("campaign_page_views.created_at", '>=', $start_date)
+                                ->where("campaign_page_views.created_at", '<=', $end_date)
                                 ->first();
 
                             $result = (int)$query->score;
@@ -802,21 +791,20 @@ class DashboardAPIController extends ControllerAPI
 
                 // show lucky draws
                 case 'lucky_draws':
+                        $campaign_group_name = 'Lucky Draw';
                         foreach ($periods as $period) {
 
                             $start_date = $period['start_date'];
                             $end_date = $period['end_date'];
 
-                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'view_lucky_draw')
-                                ->where('activities.module_name', '=', 'LuckyDraw')
-                                ->where('activities.activity_type', '=', 'view')
-                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                                ->where('activities.group', '=', 'mobile-ci')
-                                ->where('activities.location_id', '=', $merchant_id)
-                                ->where('activities.object_id', '=', $object_id)
-                                ->where("activities.created_at", '>=', $start_date)
-                                ->where("activities.created_at", '<=', $end_date)
+                            $query = DB::table('campaign_page_views')
+                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
+                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
+                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
+                                ->where('campaign_page_views.location_id', '=', $merchant_id)
+                                ->where('campaign_page_views.campaign_id', '=', $object_id)
+                                ->where("campaign_page_views.created_at", '>=', $start_date)
+                                ->where("campaign_page_views.created_at", '<=', $end_date)
                                 ->first();
 
                             $result = (int)$query->score;
