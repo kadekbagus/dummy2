@@ -25,6 +25,11 @@ class LuckyDrawAPIController extends ControllerAPI
     const MIN_NUMBER = 1;
 
     /**
+     * Default language name used if none are sent
+     */
+    const DEFAULT_LANG = 'en';
+
+    /**
      * POST - Create New Lucky Draw
      *
      * List of API Parameters
@@ -96,7 +101,9 @@ class LuckyDrawAPIController extends ControllerAPI
             $external_lucky_draw_id = OrbitInput::post('external_lucky_draw_id');
             $grace_period_date = OrbitInput::post('grace_period_date');
             $grace_period_in_days = OrbitInput::post('grace_period_in_days');
-            $id_language_default = OrbitInput::post('id_language_default');
+
+            $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
+            $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
 
             // set default value for status
             $status = OrbitInput::post('status');
@@ -3681,7 +3688,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
 
             $lucky_draw = App::make('orbit.empty.lucky_draw');
-            
+
             if (Carbon::now($mall->timezone->timezone_name) < $lucky_draw->draw_date) {
                 $errorMessage = "Cannot blast the winner. This lucky draw's draw date is not reached yet.";
                 OrbitShopAPI::throwInvalidArgument($errorMessage);

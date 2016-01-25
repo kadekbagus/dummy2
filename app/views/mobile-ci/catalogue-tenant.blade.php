@@ -59,9 +59,10 @@
                     </div>
                 </div>
             </div>
+            <div class="catalogue-wrapper">
             @foreach($data->records as $product)
                 <div class="main-theme-mall catalogue catalogue-tenant" id="product-{{$product->product_id}}">
-                    <div class="row catalogue-top">
+                    <div class="row catalogue-top catalogue-top-tenant">
                         <div class="col-xs-3 catalogue-img">
                             <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}">
                                 <span class="link-spanner"></span>
@@ -93,6 +94,14 @@
                     </div>
                 </div>
             @endforeach
+            </div>
+            @if($data->returned_records < $data->total_records)
+                <div class="row">
+                    <div class="col-xs-12 padded">
+                        <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                    </div>
+                </div>
+            @endif
         @else
             <div id="search-tool">
                 <div class="row">
@@ -335,19 +344,65 @@
             window.location.replace(path);
         });
 
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
+        var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+            skip = {{Config::get('orbit.pagination.per_page', 25)}};
+
+        var keyword = '{{{Input::get('keyword', '')}}}';
+        var cid = '{{{Input::get('cid', '')}}}';
+        var fid = '{{{Input::get('fid', '')}}}';
+        var promotion_id = '{{{Input::get('promotion_id', '')}}}';
+
+        $('#load-more-tenants').click(function(){
+            var btn = $(this);
+            btn.attr('disabled', 'disabled');
+            btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+            $.ajax({
+                url: apiPath + 'tenant/load-more',
+                method: 'GET',
+                data: {
+                    take: take,
+                    skip: skip,
+                    keyword: keyword,
+                    cid: cid,
+                    fid: fid,
+                    promotion_id: promotion_id
+                }
+            }).done(function(data) {
+                skip = skip + skip;
+                if(data.records.length > 0) {
+                    for(var i = 0; i < data.records.length; i++) {
+                        var list = '<div class="main-theme-mall catalogue catalogue-tenant" id="product-'+data.records[i].merchant_id+'">\
+                                <div class="row catalogue-top catalogue-top-tenant">\
+                                    <div class="col-xs-3 catalogue-img">\
+                                        <a href="'+data.records[i].url+'">\
+                                            <span class="link-spanner"></span>\
+                                            <img class="img-responsive side-margin-center" alt="" src="'+data.records[i].logo_orig+'"/>\
+                                        </a>\
+                                    </div>\
+                                    <div class="col-xs-9 catalogue-info">\
+                                        <a href="'+data.records[i].url+'">\
+                                            <span class="link-spanner"></span>\
+                                            <h4>'+data.records[i].name+'</h4>\
+                                            <h3><i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> '+ (data.records[i].floor ? ' ' + data.records[i].floor : '' ) + (data.records[i].unit ? ' - ' + data.records[i].unit : '' ) + '</h3>\
+                                            <h5 class="tenant-category">\
+                                                <i class="fa fa-tags" style="padding-left: 2px;padding-right: 4px;"></i>\
+                                                <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
+                                            </h5>\
+                                        </a>\
+                                    </div>\
+                                </div>\
+                            </div>';
+                        $('.catalogue-wrapper').append(list);
+                    }
+                }
+                if (skip >= data.total_records) {
+                    btn.remove();
+                }
+            }).always(function(data){
+                btn.removeAttr('disabled', 'disabled');
+                btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+            });
         });
     }); 
-    
-    $(window).resize(function(){
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
-        });
-    });
 </script>
 @stop
