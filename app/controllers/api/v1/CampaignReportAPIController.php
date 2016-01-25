@@ -733,7 +733,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             }
 
-
             // Get active date only
             $campaignDetailActive = array();
             if (count($campaignHistory) > 0 && ($campaignHistory[0]->action_status != null) ) {
@@ -771,6 +770,7 @@ class CampaignReportAPIController extends ControllerAPI
                                 WHERE ({$tablePrefix}activities.activity_name_long like '%sign up%' OR {$tablePrefix}activities.activity_name_long = 'Sign In')
                                 AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
                                 AND {$tablePrefix}activities.`group` = 'mobile-ci'
+                                AND {$tablePrefix}activities.`location_id` = '" . $current_mall . "'
                                 group by {$tablePrefix}activities.user_id
                             ) as act1
                         ) as unique_users,
@@ -779,6 +779,7 @@ class CampaignReportAPIController extends ControllerAPI
                             FROM {$tablePrefix}activities
                             WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                            AND {$tablePrefix}activities.`location_id` = '" . $current_mall . "'
                             AND {$tablePrefix}activities.activity_name = 'view_news'
                             AND {$tablePrefix}activities.group = 'mobile-ci'
                             AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
@@ -788,6 +789,7 @@ class CampaignReportAPIController extends ControllerAPI
                             FROM {$tablePrefix}activities
                             WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                            AND {$tablePrefix}activities.`location_id` = '" . $current_mall . "'
                             AND {$tablePrefix}activities.activity_name = 'view_news_popup'
                             AND {$tablePrefix}activities.activity_name_long = 'View News Pop Up'
                             AND {$tablePrefix}activities.group = 'mobile-ci'
@@ -798,6 +800,7 @@ class CampaignReportAPIController extends ControllerAPI
                             FROM {$tablePrefix}activities
                             WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                            AND {$tablePrefix}activities.`location_id` = '" . $current_mall . "'
                             AND {$tablePrefix}activities.activity_name = 'click_news_popup'
                             AND {$tablePrefix}activities.activity_name_long = 'Click News Pop Up'
                             AND {$tablePrefix}activities.group = 'mobile-ci'
@@ -818,6 +821,7 @@ class CampaignReportAPIController extends ControllerAPI
                                 FROM {$tablePrefix}activities
                                 WHERE ({$tablePrefix}activities.activity_name_long like '%sign up%' OR {$tablePrefix}activities.activity_name_long = 'Sign In')
                                 AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                                AND {$tablePrefix}activities.`location_id` = '" . $current_mall . "'
                                 AND {$tablePrefix}activities.`group` = 'mobile-ci'
                                 group by {$tablePrefix}activities.user_id
                             ) as act1
@@ -827,6 +831,7 @@ class CampaignReportAPIController extends ControllerAPI
                             FROM {$tablePrefix}activities
                             WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                            AND {$tablePrefix}activities.`location_id` = '" . $current_mall . "'
                             AND {$tablePrefix}activities.activity_name = 'view_news'
                             AND {$tablePrefix}activities.group = 'mobile-ci'
                             AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
@@ -836,6 +841,7 @@ class CampaignReportAPIController extends ControllerAPI
                             FROM {$tablePrefix}activities
                             WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                            AND {$tablePrefix}activities.`location_id` = '" . $current_mall . "'
                             AND {$tablePrefix}activities.activity_name = 'view_news_popup'
                             AND {$tablePrefix}activities.activity_name_long = 'View News Pop Up'
                             AND {$tablePrefix}activities.group = 'mobile-ci'
@@ -846,6 +852,7 @@ class CampaignReportAPIController extends ControllerAPI
                             FROM {$tablePrefix}activities
                             WHERE {$tablePrefix}activities.object_id = '" . $campaign_id . "'
                             AND DATE({$tablePrefix}activities.created_at) = '" . $valDetailActive['campaign_date'] . "'
+                            AND {$tablePrefix}activities.`location_id` = '" . $current_mall . "'
                             AND {$tablePrefix}activities.activity_name = 'click_news_popup'
                             AND {$tablePrefix}activities.activity_name_long = 'Click News Pop Up'
                             AND {$tablePrefix}activities.group = 'mobile-ci'
