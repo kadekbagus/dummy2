@@ -1480,7 +1480,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Null when not found
             $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->whereCampaignHistoryActionId($activationActionId)
-                ->orderBy('updated_at', 'desc')->first();
+                ->orderBy('campaign_history_id', 'desc')->first();
 
             if ($activationRow) {
                 $activationRowId = $activationRow->campaign_history_id;
@@ -1489,7 +1489,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Null when not found
             $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->whereCampaignHistoryActionId($deactivationActionId)
-                ->orderBy('updated_at', 'desc')->first();
+                ->orderBy('campaign_history_id', 'desc')->first();
 
             if ($deactivationRow) {
                 $deactivationRowId = $deactivationRow->campaign_history_id;
