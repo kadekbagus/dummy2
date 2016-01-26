@@ -1505,10 +1505,14 @@ class CampaignReportAPIController extends ControllerAPI
             $nextDayDateTime = $nextDay->toDateString().' '.$endTime;
             $date = $carbonDateTime->toDateString();
 
-            // Let's retrieve it from DB
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', '>=', $dateTime)
-                ->where('updated_at', '<=', $nextDayDateTime)
+                ->where('updated_at', '<=', $nextDayDateTime);
+
+            $activationRow = $deactivationRow = $campaignLog;
+
+            // Let's retrieve it from DB
+            $campaignLog = $campaignLog
                 ->orderBy('campaign_history_id', 'desc')
                 ->first();
 
@@ -1519,9 +1523,7 @@ class CampaignReportAPIController extends ControllerAPI
                 $deactivationRowId = null;
                 
                 // Null when not found
-                $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                    ->where('updated_at', '>=', $dateTime)
-                    ->where('updated_at', '<=', $nextDayDateTime)
+                $activationRow = $activationRow
                     ->whereCampaignHistoryActionId($activationActionId)
                     ->orderBy('campaign_history_id', 'desc')->first();
 
@@ -1530,9 +1532,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
                 // Null when not found
-                $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                    ->where('updated_at', '>=', $dateTime)
-                    ->where('updated_at', '<=', $nextDayDateTime)
+                $deactivationRow = $deactivationRow
                     ->whereCampaignHistoryActionId($deactivationActionId)
                     ->orderBy('campaign_history_id', 'desc')->first();
 
