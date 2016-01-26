@@ -1482,10 +1482,12 @@ class CampaignReportAPIController extends ControllerAPI
             $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
         }
 
+        $nextDay = Carbon::createFromFormat('Y-m-d', $carbonDateTime->toDateString())->addDay();
+
         // Loop
         while ($carbonDateTime->toDateTimeString() <= $endDateTime) {
             $dateTime = $carbonDateTime->toDateTimeString();
-            $nextDayDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTime)->addDay()->toDateString().' '.$endTime;
+            $nextDayDateTime = $nextDay->toDateString().' '.$endTime;
             $date = $carbonDateTime->toDateString();
 
             // Let's retrieve it from DB
@@ -1521,6 +1523,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Increment day by 1
             $carbonDateTime->addDay();
+            $nextDay->addDay();
         }
 
         $this->response->data = $outputs;
