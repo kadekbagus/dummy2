@@ -412,8 +412,8 @@ class CampaignReportAPIController extends ControllerAPI
                 $diff = $start_date->diffInDays($end_date);
                 $campaignidloop = $val->campaign_id;
                 $object_type = $val->campaign_type;
-                $begin = $val->begin_date;
-                $end = $now;
+                $begin =substr($val->begin_date,0,10);
+                $end =substr($now,0,10);
                 $bp = $val->base_price;
                 $totalSpendingCampaign =  0;
                 $campaignstatus = $val->status;
@@ -427,7 +427,7 @@ class CampaignReportAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
-                                {$tablePrefix}campaign_histories.created_at,
+                                DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') as created_at,
                                 ifnull((select
                                         {$tablePrefix}campaign_history_actions.action_name
                                     from
@@ -466,22 +466,24 @@ class CampaignReportAPIController extends ControllerAPI
                     for ($x = 0; $x<=$diff; $x++) {
                         $dateloop = $start->toDateString();
                         foreach($couponQuery as $cq) {
-                            $find = FALSE;
-                            if ($cq->campaign_id === $campaignidloop) {
-                                $campaignstatus = $cq->action_status;
-                                $campaigntenant = $cq->tenants;
-                                $statustemp = $cq->action_status;
-                                $tenanttemp = $cq->tenants;
-                            }
-                            if ($dateloop >= $begin && $dateloop <= $end) {
+                             if($nq->created_at <= $dateloop) {
+                                $find = FALSE;
                                 if ($cq->campaign_id === $campaignidloop) {
-                                    $find = TRUE;
                                     $campaignstatus = $cq->action_status;
                                     $campaigntenant = $cq->tenants;
                                     $statustemp = $cq->action_status;
                                     $tenanttemp = $cq->tenants;
                                 }
-                            }
+                                if ($dateloop >= $begin && $dateloop <= $end) {
+                                    if ($cq->campaign_id === $campaignidloop && $nq->created_at === $dateloop) {
+                                        $find = TRUE;
+                                        $campaignstatus = $cq->action_status;
+                                        $campaigntenant = $cq->tenants;
+                                        $statustemp = $cq->action_status;
+                                        $tenanttemp = $cq->tenants;
+                                    }
+                                }
+                             }
                         }
                         if (! $find) {
                             $campaignstatus = $statustemp;
@@ -500,7 +502,7 @@ class CampaignReportAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
-                                {$tablePrefix}campaign_histories.created_at,
+                                DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') as created_at,
                                 ifnull((select
                                         {$tablePrefix}campaign_history_actions.action_name
                                     from
@@ -536,24 +538,26 @@ class CampaignReportAPIController extends ControllerAPI
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
                             group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
+
                     for ($x = 0; $x<=$diff; $x++) {
                         $dateloop = $start->toDateString();
                         foreach($newsQuery as $nq) {
-                            $find = FALSE;
-                            if ($nq->campaign_id === $campaignidloop) {
-                                $campaignstatus = $nq->action_status;
-                                $campaigntenant = $nq->tenants;
-                                $statustemp = $nq->action_status;
-                                $tenanttemp = $nq->tenants;
-                            }
-                            if($dateloop >= $begin && $dateloop <= $end) {
-
+                            if($nq->created_at <= $dateloop) {
+                                $find = FALSE;
                                 if ($nq->campaign_id === $campaignidloop) {
-                                    $find = TRUE;
                                     $campaignstatus = $nq->action_status;
                                     $campaigntenant = $nq->tenants;
                                     $statustemp = $nq->action_status;
                                     $tenanttemp = $nq->tenants;
+                                }
+                                if($dateloop >= $begin && $dateloop <= $end) {
+                                    if ($nq->campaign_id === $campaignidloop && $nq->created_at === $dateloop) {
+                                        $find = TRUE;
+                                        $campaignstatus = $nq->action_status;
+                                        $campaigntenant = $nq->tenants;
+                                        $statustemp = $nq->action_status;
+                                        $tenanttemp = $nq->tenants;
+                                    }
                                 }
                             }
                         }
@@ -562,7 +566,6 @@ class CampaignReportAPIController extends ControllerAPI
                             $campaignstatus = $statustemp;
                             $campaigntenant = $tenanttemp;
                         }
-
                         if($dateloop >= $begin && $dateloop <= $end) {
                             if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                                 $spending = (int) $campaigntenant * $bp;
