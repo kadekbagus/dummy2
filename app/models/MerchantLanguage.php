@@ -33,6 +33,29 @@ class MerchantLanguage extends Eloquent
     }
 
     /**
+     * Get merchant language id for particular language name and merchant id.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @param string $merchantId
+     * @param string $languageName - Two char code of the language name e.g: 'en', 'id', 'es'
+     * @return string
+     */
+    public static function getLanguageIdByMerchant($merchantId, $languageName)
+    {
+        $result = NULL;
+        $lang = Language::where('name', $languageName)->first();
+        $merchantLanguage = static::where('merchant_id', $merchantId)
+                                    ->where('language_id', $lang->language_id)
+                                    ->first();
+
+        if (is_object($merchantLanguage)) {
+            $result = $merchantLanguage->merchant_language_id;
+        }
+
+        return $result;
+    }
+
+    /**
      * Add Filter merchant language based on user who request it.
      *
      * Filters merchant.user_id = requesting_user.user_id
