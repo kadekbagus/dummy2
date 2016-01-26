@@ -1514,7 +1514,35 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Data found
             if ($campaignLog) {
-                $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+
+                $activationRowId = null;
+                $deactivationRowId = null;
+                
+                // Null when not found
+                $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                    ->where('updated_at', '>=', $dateTime)
+                    ->where('updated_at', '<=', $nextDayDateTime)
+                    ->whereCampaignHistoryActionId($activationActionId)
+                    ->orderBy('campaign_history_id', 'desc')->first();
+
+                if ($activationRow) {
+                    $activationRowId = $activationRow->campaign_history_id;
+                }
+
+                // Null when not found
+                $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                    ->where('updated_at', '>=', $dateTime)
+                    ->where('updated_at', '<=', $nextDayDateTime)
+                    ->whereCampaignHistoryActionId($deactivationActionId)
+                    ->orderBy('campaign_history_id', 'desc')->first();
+
+                if ($deactivationRow) {
+                    $deactivationRowId = $deactivationRow->campaign_history_id;
+                }
+
+                if ($activationRowId >= $deactivationRowId) {
+                    $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+                }
 
             // Data not found, but the date is in the interval
             } elseif ($dateTime >= $campaign->begin_date && $dateTime <= $campaign->end_date) {
