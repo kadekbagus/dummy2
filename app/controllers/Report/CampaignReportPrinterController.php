@@ -66,11 +66,11 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Summary Report', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', number_format($totalRecord, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', number_format($totalPageViews, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', number_format($totalPopUpViews, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', number_format($totalSpending, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost', number_format($totalEstimatedCost, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', $totalRecord, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopUpViews, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', $totalSpending, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost', $totalEstimatedCost, '', '', '','');
 
                 // Filtering
                 if($startDate != '' && $endDate != ''){
@@ -181,11 +181,11 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Detail Report', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active campaign days', number_format($activeCampaignDays, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', number_format($totalPageViews, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', number_format($totalPopupViews, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up clicks', number_format($totalPopupClicks, 0, '.', '.'), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', number_format($totalSpending, 0, '.', '.'), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active campaign days', $activeCampaignDays, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopupViews, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up clicks', $totalPopupClicks, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', $totalSpending, '', '', '','');
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
