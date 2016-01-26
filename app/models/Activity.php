@@ -319,7 +319,7 @@ class Activity extends Eloquent
                     case 'Merchant':
                         $this->object_display_name = $object->name;
                         break;
-                    
+
                     case 'LuckyDraw':
                         $this->object_display_name = $object->lucky_draw_name_display;
                         break;
@@ -733,7 +733,14 @@ class Activity extends Eloquent
                 $this->module_name = $this->event_name;
             }
         }
-        return parent::save($options);
+
+        $result = parent::save($options);
+
+        // Save to additional activities table
+        $this->saveToCampaignPageViews();
+        $this->saveToMerchantPageView();
+
+        return $result;
     }
 
     /**
@@ -876,6 +883,86 @@ class Activity extends Eloquent
         return $session->getSessionId();
     }
 
+    /**
+     * Save to campaign_page_views table
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveToCampaignPageViews()
+    {
+        // Save also the activity to particular `campaign_xyz` table
+        switch ($this->activity_name) {
+            case 'view_promotion':
+            case 'view_coupon':
+            case 'view_lucky_draw':
+            case 'view_event':
+            case 'view_news':
+                $campaign = new CampaignPageView();
+                $campaign->campaign_id = $this->object_id;
+                $campaign->user_id = $this->user_id;
+                $campaign->location_id = $this->location_id;
+                $campaign->activity_id = $this->activity_id;
+                $campaign->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
+                $campaign->save();
+                break;
+        }
+    }
 
+    /**
+     * Save to merchant_page_views table
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveToMerchantPageView()
+    {
+        // Save also the activity to particular `campaign_xyz` table
+        if ($this->activity_name === 'view_retailer' && $this->activity_name_long === 'View Tenant Detail') {
+            $pageview = new MerchantPageView();
+            $pageview->merchant_id = $this->object_id;
+            $pageview->merchant_type = strtolower($this->object_name);
+            $pageview->user_id = $this->user_id;
+            $pageview->location_id = $this->location_id;
+            $pageview->activity_id = $this->activity_id;
+            $pageview->save();
+        }
+    }
 
+    /**
+     * Used to get the campaign group name id.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return string
+     */
+    private function campaignGroupNameIdFromActivityName()
+    {
+        $groupName = 'Unknown';
+
+        switch ($this->activity_name) {
+            case 'view_promotion':
+                $groupName = 'Promotion';
+                break;
+
+            case 'view_coupon':
+                $groupName = 'Coupon';
+                break;
+
+            case 'view_lucky_draw':
+                $groupName = 'Lucky Draw';
+                break;
+
+            case 'view_event':
+                $groupName = 'Event';
+                break;
+
+            case 'view_news':
+                $groupName = 'News';
+                break;
+        }
+
+        $object = CampaignGroupName::get()->keyBy('campaign_group_name')->get($groupName);
+
+        return is_object($object) ? $object->campaign_group_name_id : '0';
+    }
 }
