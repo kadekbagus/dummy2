@@ -1477,7 +1477,7 @@ class CampaignReportAPIController extends ControllerAPI
         // In case the creation date is earlier than the first active date
         $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
             ->where('updated_at', '<', $beginDateTime)
-            ->orderBy('number_active_tenants', 'desc')->first();
+            ->orderBy('campaign_history_id', 'desc')->first();
 
         if ($campaignLog) {
             $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
@@ -1495,7 +1495,7 @@ class CampaignReportAPIController extends ControllerAPI
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', '>=', $dateTime)
                 ->where('updated_at', '<=', $nextDayDateTime)
-                ->orderBy('number_active_tenants', 'desc')
+                ->orderBy('campaign_history_id', 'desc')
                 ->first();
 
             // Data found
