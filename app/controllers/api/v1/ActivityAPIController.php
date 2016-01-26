@@ -1204,17 +1204,12 @@ class ActivityAPIController extends ControllerAPI
             // registrations from start to end grouped by date part and activity name long.
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
-            $activities = DB::table('activities')
+            $activities = DB::table('user_signin')
                 ->select(
-                    DB::raw("DATE({$tablePrefix}activities.created_at) as date"),
-                    DB::raw("COUNT(DISTINCT {$tablePrefix}activities.user_id) as count")
+                    DB::raw("DATE({$tablePrefix}user_signin.created_at) as date"),
+                    DB::raw("COUNT(DISTINCT {$tablePrefix}user_signin.user_id) as count")
                 )
-                ->where('activities.module_name', '=', 'Application')
-                ->where('activities.group', '=', 'mobile-ci')
-                ->where('activities.activity_type', '=', 'login')
-                ->where('activities.activity_name', '=', 'login_ok')
-                ->where('activities.created_at', '>=', $start_date)
-                ->where('activities.created_at', '<=', $end_date)
+                ->whereBetween('user_signin.created_at', [$start_date, $end_date])
                 ->groupBy(DB::raw('1'))
                 ->orderByRaw('1');
 
@@ -1223,11 +1218,11 @@ class ActivityAPIController extends ControllerAPI
                 $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
-                $activities->whereIn('activities.location_id', $locationIds);
+                $activities->whereIn('user_signin.location_id', $locationIds);
             } else {
                 // Filter by user location id
                 OrbitInput::get('location_ids', function($locationIds) use ($activities) {
-                    $activities->whereIn('activities.location_id', $locationIds);
+                    $activities->whereIn('user_signin.location_id', $locationIds);
                 });
             }
 
