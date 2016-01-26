@@ -6,8 +6,8 @@
  */
 class CampaignPageView extends Eloquent
 {
-    protected $primaryKey = 'campaing_popup_views';
-    protected $table = 'campaign_popup_view_id';
+    protected $primaryKey = 'campaign_page_view_id';
+    protected $table = 'campaign_page_views';
 
     /**
      * Belongs to table campaign_popup_views
