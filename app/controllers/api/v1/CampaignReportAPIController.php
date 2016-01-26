@@ -470,7 +470,7 @@ class CampaignReportAPIController extends ControllerAPI
                     for ($x = 0; $x<=$diff; $x++) {
                         $dateloop = $start->toDateString();
                         foreach($couponQuery as $cq) {
-                             if($nq->created_at <= $dateloop) {
+                             if($cq->created_at <= $dateloop) {
                                 $find = FALSE;
                                 if ($cq->campaign_id === $campaignidloop) {
                                     $campaignstatus = $cq->action_status;
