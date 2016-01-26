@@ -1465,8 +1465,35 @@ class CampaignReportAPIController extends ControllerAPI
             ->where('updated_at', '<', $beginDateTime)
             ->orderBy('campaign_history_id', 'desc')->first();
 
+        $activationActionId = CampaignHistoryActions::whereActionName('activate')->first()->campaign_history_action_id;
+        $deactivationActionId = CampaignHistoryActions::whereActionName('deactivate')->first()->campaign_history_action_id;
+
         if ($campaignLog) {
-            $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+
+            $activationRowId = null;
+            $deactivationRowId = null;
+            
+            // Null when not found
+            $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                ->whereCampaignHistoryActionId($activationActionId)
+                ->orderBy('updated_at', 'desc')->first();
+
+            if ($activationRow) {
+                $activationRowId = $activationRow->campaign_history_id;
+            }
+
+            // Null when not found
+            $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                ->whereCampaignHistoryActionId($deactivationActionId)
+                ->orderBy('updated_at', 'desc')->first();
+
+            if ($deactivationRow) {
+                $deactivationRowId = $deactivationRow->campaign_history_id;
+            }
+
+            if ($activationRowId >= $deactivationRowId) {
+                $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+            }
         }
 
         $nextDay = Carbon::createFromFormat('Y-m-d', $carbonDateTime->toDateString())->addDay();
