@@ -1417,6 +1417,7 @@ class CampaignReportAPIController extends ControllerAPI
     {
         // Mall ID
         $mallId = OrbitInput::get('current_mall');
+        $timezone = Mall::find($mallId)->timezone()->first()->timezone_name;
 
         // Campaign ID
         $id = OrbitInput::get('campaign_id');
@@ -1430,6 +1431,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         // Init Carbon
         $carbonDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $beginDateTime);
+        $endTime = substr($endDateTime, 11, 8);
 
         // Init outputs
         $outputs = [];
@@ -1464,14 +1466,18 @@ class CampaignReportAPIController extends ControllerAPI
             $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
         }
 
+        $nextDay = Carbon::createFromFormat('Y-m-d', $carbonDateTime->toDateString())->addDay();
+
         // Loop
         while ($carbonDateTime->toDateTimeString() <= $endDateTime) {
             $dateTime = $carbonDateTime->toDateTimeString();
+            $nextDayDateTime = $nextDay->toDateString().' '.$endTime;
             $date = $carbonDateTime->toDateString();
 
             // Let's retrieve it from DB
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                ->where('updated_at', 'LIKE', $date.' %')
+                ->where('updated_at', '>=', $dateTime)
+                ->where('updated_at', '<=', $nextDayDateTime)
                 ->orderBy('number_active_tenants', 'desc')
                 ->first();
 
@@ -1488,7 +1494,7 @@ class CampaignReportAPIController extends ControllerAPI
                 $cost = 0;
             }
 
-            $date = $carbonDateTime->setTimezone('Asia/Jakarta')->toDateString();
+            $date = $carbonDateTime->setTimezone($timezone)->toDateString();
 
             // Format cost as integer
             $cost = (int) $cost;
@@ -1501,6 +1507,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Increment day by 1
             $carbonDateTime->addDay();
+            $nextDay->addDay();
         }
 
         $this->response->data = $outputs;
