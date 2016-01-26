@@ -126,10 +126,34 @@
 </div>
 <div class="row back-drop search-back-drop"></div>
 
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.jqueryui.1_11_2', 'mobile-ci/scripts/jquery-ui.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof jQuery.ui === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/jquery-ui.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
-{{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.lightslider.1_1_2', 'mobile-ci/scripts/lightslider.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().lightSlider === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/lightslider.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
+{{ HTML::script(Config::get('orbit.cdn.panzoom.2_0_5', 'mobile-ci/scripts/jquery.panzoom.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().panzoom === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/jquery.panzoom.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
     var tabOpen = false; // this var is for tabs on tenant detail views
