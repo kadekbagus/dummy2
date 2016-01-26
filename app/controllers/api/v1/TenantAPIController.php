@@ -797,7 +797,10 @@ class TenantAPIController extends ControllerAPI
             $masterbox_number = OrbitInput::post('masterbox_number');
             $category_ids = OrbitInput::post('category_ids');
             $box_url = OrbitInput::post('box_url');
-            $id_language_default = OrbitInput::post('id_language_default');
+
+            $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
+            $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
+
             $floor = OrbitInput::post('floor');
             $unit = OrbitInput::post('unit');
             $phone = OrbitInput::post('phone');
