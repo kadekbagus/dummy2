@@ -5,6 +5,7 @@
  * @author Rio Astamal <me@rioastamal.net>
  */
 use OrbitRelation\BelongsTo as BelongsToObject;
+use Carbon\Carbon as Carbon;
 
 class Activity extends Eloquent
 {
@@ -733,6 +734,11 @@ class Activity extends Eloquent
                 $this->module_name = $this->event_name;
             }
         }
+
+        if ($this->activity_type !== 'logout' && $this->group === 'mobile-ci'){
+            $this->saveToConnectedNow();
+        }
+
         return parent::save($options);
     }
 
@@ -876,6 +882,58 @@ class Activity extends Eloquent
         return $session->getSessionId();
     }
 
+    /**
+     * Check, Create and Update Connected Now.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @throws Exception
+     */
+    protected function saveToConnectedNow()
+    {
+        $mall = Mall::with('timezone')
+            ->excludeDeleted()
+            ->where('merchant_id', '=', $this->location_id)
+            ->first();
 
+        $mallTime = Carbon::now($mall->timezone->timezone_name);
+        $mallDate = date('Y-m-d', strtotime($mallTime));
+        $mallHour = date('H', strtotime($mallTime));
+        $mallMinute = date('i', strtotime($mallTime));
+
+        $activity = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
+                $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
+                $join->where('list_connected_user.user_id', '=', $this->user_id);
+            })
+            ->where('merchant_id', '=', $mall->merchant_id)
+            ->where('date', '=', $mallDate)
+            ->where('hour', '=', $mallHour)
+            ->where('minute', '=', $mallMinute)
+            ->first();
+
+        if(empty($activity)) {
+            $newConnected = new ConnectedNow();
+            $newConnected->merchant_id = $mall->merchant_id;
+            $newConnected->customer_connected = 1;
+            $newConnected->date = $mallDate;
+            $newConnected->hour = $mallHour;
+            $newConnected->minute = $mallMinute;
+            $newConnected->save();
+
+            $newListConnectedUser = new ListConnectedUser();
+            $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
+            $newListConnectedUser->user_id = $this->user_id;
+            $newListConnectedUser->save();
+        } else {
+            if (is_null($activity->user_id)) {
+                $newListConnectedUser = new ListConnectedUser();
+                $newListConnectedUser->connected_now_id = $activity->connected_now_id;
+                $newListConnectedUser->user_id = $this->user_id;
+                $newListConnectedUser->save();
+
+                $activity->customer_connected += 1;
+                $activity->save();
+            }
+        }
+    }
 
 }

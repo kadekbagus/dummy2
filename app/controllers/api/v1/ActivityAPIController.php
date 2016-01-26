@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class ActivityAPIController extends ControllerAPI
 {
@@ -1320,14 +1321,17 @@ class ActivityAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $active_minutes = OrbitInput::get('active_minutes');
+            $current_mall = OrbitInput::get('current_mall');
 
             $validator = Validator::make(
                 array(
                     'merchant_ids'  => OrbitInput::get('merchant_ids'),
+                    'merchant_ids'  => $current_mall,
                     'active_minutes'    => $active_minutes,
                 ),
                 array(
                     'merchant_ids'  => 'orbit.check.merchants',
+                    'merchant_ids'  => 'orbit.empty.merchant',
                     'active_minutes' => 'required|integer'
                 )
             );
@@ -1370,23 +1374,24 @@ class ActivityAPIController extends ControllerAPI
                     $locationIds = $paramLocationIds;
                 });
             }
+            $mall = Mall::with('timezone')
+                ->whereIn('merchant_id', $locationIds)
+                ->first();
 
-            // "connected now" = last login/logout activity within the period was login
-            $tablePrefix = DB::getTablePrefix();
-            $activities = DB::select("
-                select COUNT(DISTINCT user_id) num
-                from
-                    {$tablePrefix}activities a
-                where
-                    a.user_id != '0' and
-                    a.group = 'mobile-ci' and
-                    a.created_at >= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MINUTE)
-                    {$filterLocationIds}
-            ", array_merge([-1 * (int)$active_minutes], $locationIds));
+            $mallTime = Carbon::now($mall->timezone->timezone_name);
+            $mallDate = date('Y-m-d', strtotime($mallTime));
+            $mallHour = date('H', strtotime($mallTime));
+            $mallMinute = date('i', strtotime($mallTime));
+
+            $connected_now = ConnectedNow::where('merchant_id', '=', $locationIds)
+                ->where('date', '=', $mallDate)
+                ->where('hour', '=', $mallHour)
+                ->where('minute', '=', $mallMinute)
+                ->first();
 
             $users_count = 0;
-            foreach ($activities as $activity) {
-                $users_count = (int)$activity->num;
+            if (! empty($connected_now)) {
+                $users_count = $connected_now->customer_connected;
             }
 
             $this->response->data = [
