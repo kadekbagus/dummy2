@@ -1510,34 +1510,31 @@ class DashboardAPIController extends ControllerAPI
             }
 
             $tablePrefix = DB::getTablePrefix();
+            $merchantId = OrbitInput::get('merchant_id', '0');
 
-            $widgets = Activity::considerCustomer()->select(
-                    "widgets.widget_type",
-                    DB::raw("count(distinct {$tablePrefix}activities.activity_id) as click_count")
-                )
-                ->join('widgets', 'widgets.widget_id', '=', 'activities.object_id' )
-                ->groupBy('widgets.widget_type');
+            $defaultBeginDate = date('Y-m-d 00:00:00');
+            $defaultEndDate = date('Y-m-d 23:59:59');
+            $beginDate = OrbitInput::get('begin_date', $defaultBeginDate);
+            $endDate = OrbitInput::get('end_date', $defaultEndDate);
 
-            $isReport = $this->builderOnly;
-            OrbitInput::get('is_report', function ($_isReport) use (&$isReport, $widgets, $tablePrefix) {
-                $isReport = !!$_isReport;
-            });
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
-            OrbitInput::get('merchant_id', function ($merchantId) use ($widgets) {
-                $widgets->whereIn('activities.location_id', $this->getArray($merchantId));
-            });
-
-            OrbitInput::get('begin_date', function ($beginDate) use ($widgets) {
-                $widgets->where('activities.created_at', '>=', $beginDate);
-            });
-
-            OrbitInput::get('end_date', function ($endDate) use ($widgets) {
-                $widgets->where('activities.created_at', '<=', $endDate);
-            });
+            $widgets = WidgetGroupName::select('widget_group_names.widget_group_name as widget_type', DB::raw("count({$tablePrefix}widget_clicks.widget_id) as click_count"))
+                        ->leftJoin('widget_clicks', function($join) use ($beginDate, $endDate, $merchantId, $quote, $tablePrefix) {
+                            // We put the condition on join so the "left" table can appear as is and not filtered
+                            $join->on('widget_clicks.widget_group_name_id', '=', 'widget_group_names.widget_group_name_id');
+                            $join->on('widget_clicks.location_id', '=', DB::raw($quote( end($merchantId) )));
+                            $join->on("widget_clicks.created_at", 'between', DB::raw("{$quote($beginDate)} and {$quote($endDate)}"));
+                        })
+                        ->groupBy('widget_group_names.widget_group_name_id');
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_widgets = clone $widgets;
+            $_widgets->select('widget_group_names.widget_group_name_id');
 
             $widgets->orderBy('click_count', 'desc');
 
@@ -1563,71 +1560,13 @@ class DashboardAPIController extends ControllerAPI
                 $skip = $_skip;
             });
 
-            $summary  = NULL;
-            $lastPage = false;
-            if ($isReport)
-            {
-                $_widgets->addSelect(
-                    DB::raw("date({$tablePrefix}activities.created_at) as created_at_date")
-                );
-                $_widgets->groupBy('created_at_date');
-
-                $widgetReportQuery = $_widgets->getQuery();
-
-                $defaultSelect = [
-                    DB::raw("ifnull(sum(case widget_type when 'tenant' then click_count end), 0) as 'tenant'"),
-                    DB::raw("ifnull(sum(case widget_type when 'coupon' then click_count end), 0) as 'coupon'"),
-                    DB::raw("ifnull(sum(case widget_type when 'news' then click_count end), 0) as 'news'"),
-                    DB::raw("ifnull(sum(case widget_type when 'promotion' then click_count end), 0) as 'promotion'"),
-                    DB::raw("ifnull(sum(click_count), 0) as 'total'")
-                ];
-
-                $toSelect     = array_merge($defaultSelect, ["created_at_date"]);
-                $widgetReport = DB::table(DB::raw("({$_widgets->toSql()}) as report"))
-                    ->mergeBindings($widgetReportQuery)
-                    ->select($toSelect)
-                    ->groupBy('created_at_date');
-
-                $_widgetReport = clone $widgetReport;
-
-                $widgetReport->orderBy('created_at_date', 'desc');
-                $summaryReport = DB::table(DB::raw("({$_widgets->toSql()}) as report"))
-                    ->mergeBindings($widgetReportQuery)
-                    ->select($defaultSelect);
-
-                if ($this->builderOnly)
-                {
-                    return $this->builderObject($widgetReport, $summaryReport);
-                }
-
-                $widgetReport->take($take)->skip($skip);
-
-
-                $totalReport = DB::table(DB::raw("({$_widgetReport->toSql()}) as total_report"))
-                    ->mergeBindings($_widgetReport);
-
-                $widgetTotal = $totalReport->count();
-                $widgetList  = $widgetReport->get();
-
-                // Consider Last Page
-                if (($widgetTotal - $take) <= $skip)
-                {
-                    $summary  = $summaryReport->first();
-                    $lastPage = true;
-                }
-
-            } else {
-                $widgets->take($take);
-                $widgetTotal = RecordCounter::create($_widgets)->count();
-                $widgetList  = $widgets->get();
-            }
-
+            $widgets->take($take);
+            $widgetTotal = RecordCounter::create($_widgets)->count();
+            $widgetList  = $widgets->get();
 
             $data = new stdclass();
             $data->total_records = $widgetTotal;
             $data->returned_records = count($widgetList);
-            $data->last_page = $lastPage;
-            $data->summary   = $summary;
             $data->records   = $widgetList;
 
             if ($widgetTotal === 0) {
