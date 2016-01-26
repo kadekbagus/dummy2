@@ -739,6 +739,7 @@ class Activity extends Eloquent
         // Save to additional activities table
         $this->saveToCampaignPageViews();
         $this->saveToMerchantPageView();
+        $this->saveToWidgetClick();
 
         return $result;
     }
@@ -917,16 +918,66 @@ class Activity extends Eloquent
      */
     protected function saveToMerchantPageView()
     {
-        // Save also the activity to particular `campaign_xyz` table
-        if ($this->activity_name === 'view_retailer' && $this->activity_name_long === 'View Tenant Detail') {
-            $pageview = new MerchantPageView();
-            $pageview->merchant_id = $this->object_id;
-            $pageview->merchant_type = strtolower($this->object_name);
-            $pageview->user_id = $this->user_id;
-            $pageview->location_id = $this->location_id;
-            $pageview->activity_id = $this->activity_id;
-            $pageview->save();
+        $proceed = $this->activity_name === 'view_retailer' && $this->activity_name_long == 'View Tenant Detail';
+        if (! $proceed) {
+            return;
         }
+
+        // Save also the activity to particular `campaign_xyz` table
+        $pageview = new MerchantPageView();
+        $pageview->merchant_id = $this->object_id;
+        $pageview->merchant_type = strtolower($this->object_name);
+        $pageview->user_id = $this->user_id;
+        $pageview->location_id = $this->location_id;
+        $pageview->activity_id = $this->activity_id;
+        $pageview->save();
+    }
+
+    /**
+     * Save to `widget_clicks` table
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveToWidgetClick()
+    {
+        if ($this->activity_name !== 'widget_click') {
+            return;
+        }
+
+        $click = new WidgetClick();
+        $click->widget_id = $this->object_id;
+        $click->user_id = $this->user_id;
+        $click->location_id = $this->location_id;
+        $click->activity_id = $this->activity_id;
+
+        $groupName = 'Unknown';
+        switch ($this->activity_name_long) {
+            case 'Widget Click Promotion':
+                $groupName = 'Promotion';
+                break;
+
+            case 'Widget Click News':
+                $groupName = 'News';
+                break;
+
+            case 'Widget Click Tenant':
+                $groupName = 'Tenant';
+                break;
+
+            case 'Widget Click Coupon':
+                $groupName = 'Coupon';
+                break;
+
+            case 'Widget Click Lucky Draw':
+                $groupName = 'Lucky Draw';
+                break;
+        }
+
+        $object = WidgetGroupName::get()->keyBy('widget_group_name')->get($groupName);
+        $click->widget_group_name_id = is_object($object) ? $object->widget_group_name_id : '0';
+
+        $return = $click->save();
     }
 
     /**
