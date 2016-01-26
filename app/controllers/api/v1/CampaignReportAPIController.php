@@ -1427,6 +1427,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         // Init Carbon
         $carbonDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $beginDateTime);
+        $endTime = substr($endDateTime, 11, 8);
 
         // Init outputs
         $outputs = [];
@@ -1464,11 +1465,13 @@ class CampaignReportAPIController extends ControllerAPI
         // Loop
         while ($carbonDateTime->toDateTimeString() <= $endDateTime) {
             $dateTime = $carbonDateTime->toDateTimeString();
+            $nextDayDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTime)->addDay()->toDateString().' '.$endTime;
             $date = $carbonDateTime->toDateString();
 
             // Let's retrieve it from DB
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                ->where('updated_at', 'LIKE', $date.' %')
+                ->where('updated_at', '>=', $dateTime)
+                ->where('updated_at', '<=', $nextDayDateTime)
                 ->orderBy('number_active_tenants', 'desc')
                 ->first();
 
