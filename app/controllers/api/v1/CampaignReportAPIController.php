@@ -124,6 +124,7 @@ class CampaignReportAPIController extends ControllerAPI
             //get total cost news
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -151,14 +152,6 @@ class CampaignReportAPIController extends ControllerAPI
                     AND {$tablePrefix}activities.group = 'mobile-ci'
                     AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as popup_clicks,
-                (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'click_news_popup'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
-                ) as spending,
                 {$tablePrefix}news.status"))
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -173,6 +166,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -196,14 +190,6 @@ class CampaignReportAPIController extends ControllerAPI
                     AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
                     AND {$tablePrefix}activities.activity_name_long = 'Click Promotion Pop Up'
                 ) as popup_clicks,
-                (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
-                ) as spending,
                 {$tablePrefix}news.status"))
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -218,6 +204,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
+                COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
@@ -245,14 +232,6 @@ class CampaignReportAPIController extends ControllerAPI
                     AND {$tablePrefix}activities.group = 'mobile-ci'
                     AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
                 ) as popup_clicks,
-                (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
-                ) as spending,
                 {$tablePrefix}promotions.status"))
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
@@ -335,7 +314,7 @@ class CampaignReportAPIController extends ControllerAPI
             $totalEstimated = $_campaign->sum('estimated_total');
 
             // Get total spending
-            $totalSpending = $_campaign->sum('spending');
+            // $totalSpending = $_campaign->sum('spending');
 
             $_campaign->select('campaign_id');
 
@@ -386,6 +365,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'popup_views'     => 'popup_views',
                     'popup_clicks'    => 'popup_clicks',
                     'base_price'      => 'base_price',
+                    'daily'           => 'daily',
                     'estimated_total' => 'estimated_total',
                     'spending'        => 'spending',
                     'status'          => 'status'
@@ -432,10 +412,10 @@ class CampaignReportAPIController extends ControllerAPI
                 $diff = $start_date->diffInDays($end_date);
                 $campaignidloop = $val->campaign_id;
                 $object_type = $val->campaign_type;
-                $begin = $val->begin_date;
-                $end = $now;
+                $begin =substr($val->begin_date,0,10);
+                $end =substr($now,0,10);
                 $bp = $val->base_price;
-                $totalspending =  0;
+                $totalSpendingCampaign =  0;
                 $campaignstatus = $val->status;
                 $campaigntenant = $val->total_tenant;
                 $statustemp = $val->status;
@@ -447,7 +427,7 @@ class CampaignReportAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
-                                {$tablePrefix}campaign_histories.created_at,
+                                DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') as created_at,
                                 ifnull((select
                                         {$tablePrefix}campaign_history_actions.action_name
                                     from
@@ -486,22 +466,24 @@ class CampaignReportAPIController extends ControllerAPI
                     for ($x = 0; $x<=$diff; $x++) {
                         $dateloop = $start->toDateString();
                         foreach($couponQuery as $cq) {
-                            $find = FALSE;
-                            if ($cq->campaign_id === $campaignidloop) {
-                                $campaignstatus = $cq->action_status;
-                                $campaigntenant = $cq->tenants;
-                                $statustemp = $cq->action_status;
-                                $tenanttemp = $cq->tenants;
-                            }
-                            if ($dateloop >= $begin && $dateloop <= $end) {
+                             if($nq->created_at <= $dateloop) {
+                                $find = FALSE;
                                 if ($cq->campaign_id === $campaignidloop) {
-                                    $find = TRUE;
                                     $campaignstatus = $cq->action_status;
                                     $campaigntenant = $cq->tenants;
                                     $statustemp = $cq->action_status;
                                     $tenanttemp = $cq->tenants;
                                 }
-                            }
+                                if ($dateloop >= $begin && $dateloop <= $end) {
+                                    if ($cq->campaign_id === $campaignidloop && $cq->created_at === $dateloop) {
+                                        $find = TRUE;
+                                        $campaignstatus = $cq->action_status;
+                                        $campaigntenant = $cq->tenants;
+                                        $statustemp = $cq->action_status;
+                                        $tenanttemp = $cq->tenants;
+                                    }
+                                }
+                             }
                         }
                         if (! $find) {
                             $campaignstatus = $statustemp;
@@ -510,7 +492,7 @@ class CampaignReportAPIController extends ControllerAPI
                         if($dateloop >= $begin && $dateloop <= $end) {
                             if($campaignstatus === 'activate' || $campaignstatus === 'active' ){
                                 $spending = (int) $campaigntenant * $bp;
-                                $totalspending += $spending;
+                                $totalSpendingCampaign += $spending;
                             }
                         }
                         $start->addDay();
@@ -520,7 +502,7 @@ class CampaignReportAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
-                                {$tablePrefix}campaign_histories.created_at,
+                                DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') as created_at,
                                 ifnull((select
                                         {$tablePrefix}campaign_history_actions.action_name
                                     from
@@ -556,24 +538,26 @@ class CampaignReportAPIController extends ControllerAPI
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
                             group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
+
                     for ($x = 0; $x<=$diff; $x++) {
                         $dateloop = $start->toDateString();
                         foreach($newsQuery as $nq) {
-                            $find = FALSE;
-                            if ($nq->campaign_id === $campaignidloop) {
-                                $campaignstatus = $nq->action_status;
-                                $campaigntenant = $nq->tenants;
-                                $statustemp = $nq->action_status;
-                                $tenanttemp = $nq->tenants;
-                            }
-                            if($dateloop >= $begin && $dateloop <= $end) {
-
+                            if($nq->created_at <= $dateloop) {
+                                $find = FALSE;
                                 if ($nq->campaign_id === $campaignidloop) {
-                                    $find = TRUE;
                                     $campaignstatus = $nq->action_status;
                                     $campaigntenant = $nq->tenants;
                                     $statustemp = $nq->action_status;
                                     $tenanttemp = $nq->tenants;
+                                }
+                                if($dateloop >= $begin && $dateloop <= $end) {
+                                    if ($nq->campaign_id === $campaignidloop && $nq->created_at === $dateloop) {
+                                        $find = TRUE;
+                                        $campaignstatus = $nq->action_status;
+                                        $campaigntenant = $nq->tenants;
+                                        $statustemp = $nq->action_status;+
+                                        $tenanttemp = $nq->tenants;
+                                    }
                                 }
                             }
                         }
@@ -582,18 +566,20 @@ class CampaignReportAPIController extends ControllerAPI
                             $campaignstatus = $statustemp;
                             $campaigntenant = $tenanttemp;
                         }
-
                         if($dateloop >= $begin && $dateloop <= $end) {
                             if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                                 $spending = (int) $campaigntenant * $bp;
-                                $totalspending += $spending;
+                                $totalSpendingCampaign += $spending;
                             }
                         }
                         $start->addDay();
                     }
                 }
-                $listOfCampaign[$key]->spending = $totalspending;
+                $listOfCampaign[$key]->spending = $totalSpendingCampaign;
             }
+
+            $totalSpending = 0;
+
             $data = new stdclass();
             $data->total_records = $totalCampaign;
             $data->total_page_views = $totalPageViews;
