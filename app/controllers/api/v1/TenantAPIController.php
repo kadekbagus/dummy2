@@ -14,6 +14,11 @@ use Helper\EloquentRecordCounter as RecordCounter;
 class TenantAPIController extends ControllerAPI
 {
     /**
+     * Default language name used if none are sent
+     */
+    const DEFAULT_LANG = 'en';
+
+    /**
      * POST - Delete Tenant
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -358,7 +363,22 @@ class TenantAPIController extends ControllerAPI
             $fax = OrbitInput::post('fax');
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
-            $id_language_default = OrbitInput::post('id_language_default');
+
+            // set user mall id
+            $parent_id = OrbitInput::post('parent_id', OrbitInput::post('merchant_id'));
+
+            // get user mall_ids
+            $listOfMallIds = $user->getUserMallIds($parent_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $parent_id = $listOfMallIds[0];
+            }
+
+            $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($parent_id, static::DEFAULT_LANG);
+            $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
+
             $box_url = OrbitInput::post('box_url');
 
             // default value for status is inactive
@@ -388,18 +408,6 @@ class TenantAPIController extends ControllerAPI
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
             $sector_of_activity = OrbitInput::post('sector_of_activity');
-
-            // set user mall id
-            $parent_id = OrbitInput::post('parent_id', OrbitInput::post('merchant_id'));
-
-            // get user mall_ids
-            $listOfMallIds = $user->getUserMallIds($parent_id);
-            if (empty($listOfMallIds)) { // invalid mall id
-                $errorMessage = 'Invalid mall id.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            } else {
-                $parent_id = $listOfMallIds[0];
-            }
 
             $url = OrbitInput::post('url');
             $box_url = OrbitInput::post('box_url');
