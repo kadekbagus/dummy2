@@ -475,7 +475,7 @@ class CampaignReportAPIController extends ControllerAPI
                                     $tenanttemp = $cq->tenants;
                                 }
                                 if ($dateloop >= $begin && $dateloop <= $end) {
-                                    if ($cq->campaign_id === $campaignidloop && $nq->created_at === $dateloop) {
+                                    if ($cq->campaign_id === $campaignidloop && $cq->created_at === $dateloop) {
                                         $find = TRUE;
                                         $campaignstatus = $cq->action_status;
                                         $campaigntenant = $cq->tenants;
@@ -555,7 +555,7 @@ class CampaignReportAPIController extends ControllerAPI
                                         $find = TRUE;
                                         $campaignstatus = $nq->action_status;
                                         $campaigntenant = $nq->tenants;
-                                        $statustemp = $nq->action_status;
+                                        $statustemp = $nq->action_status;+
                                         $tenanttemp = $nq->tenants;
                                     }
                                 }
