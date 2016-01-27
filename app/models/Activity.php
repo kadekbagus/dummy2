@@ -5,6 +5,8 @@
  * @author Rio Astamal <me@rioastamal.net>
  */
 use OrbitRelation\BelongsTo as BelongsToObject;
+use DominoPOS\OrbitSession\SessionConfig;
+use DominoPOS\OrbitSession\Session;
 
 class Activity extends Eloquent
 {
@@ -19,6 +21,8 @@ class Activity extends Eloquent
     const ACTIVITY_REPONSE_OK = 'OK';
     const ACTIVITY_RESPONSE_FAILED = 'Failed';
 
+    const ACTIVTY_GROUP_MOBILE = 'mobile-ci';
+
     protected $hidden = ['http_method', 'request_uri', 'post_data', 'metadata_user', 'metadata_staff', 'metadata_object', 'metadata_location'];
 
     /**
@@ -26,6 +30,13 @@ class Activity extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+
+    /**
+     * Store the session object.
+     *
+     * @var Session
+     */
+    protected static $session = NULL;
 
     /**
      * Add new masked fields, so it will not saved plaintext
@@ -734,12 +745,22 @@ class Activity extends Eloquent
             }
         }
 
+        // Try to get the session id if this is coming from mobile activity
+        if ($this->group === static::ACTIVTY_GROUP_MOBILE) {
+            // does the session_id already filled?
+            if (! $this->session_id) {
+                // try to get the current session id
+                $this->session_id = static::getSessionId();
+            }
+        }
+
         $result = parent::save($options);
 
         // Save to additional activities table
         $this->saveToCampaignPageViews();
         $this->saveToMerchantPageView();
         $this->saveToWidgetClick();
+        $this->saveToConnectionTime();
 
         return $result;
     }
@@ -854,21 +875,13 @@ class Activity extends Eloquent
      * Detect Session Id
      *
      * @author Firmansyah <firmansyah@dominopos.com>
-     * @param string $group
      * @return string
      */
-    protected static function getSessionId($group)
+    protected static function getSessionId()
     {
         $session = static::$session;
         if ($session === null) {
-
             $config = new SessionConfig(Config::get('orbit.session'));
-
-            if ($group == 'mobile-ci') {
-                $config->setConfig('session_origin.header.name', 'X-Orbit-Mobile-Session');
-                $config->setConfig('session_origin.query_string.name', 'orbit_mobile_session');
-                $config->setConfig('session_origin.cookie.name', 'orbit_mobile_session');
-            }
 
             $session = new Session($config);
             // There is possibility that the session are already expired
@@ -880,7 +893,6 @@ class Activity extends Eloquent
             }
         }
 
-        static::$session = null;
         return $session->getSessionId();
     }
 
@@ -931,6 +943,40 @@ class Activity extends Eloquent
         $pageview->location_id = $this->location_id;
         $pageview->activity_id = $this->activity_id;
         $pageview->save();
+    }
+
+    /**
+     * Save to `connection_times` table. Only succesful operation (no failed response) recorded.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveToConnectionTime()
+    {
+        $proceed = ($this->activity_name === 'login_ok' || $this->activity_name === 'logout_ok') && $this->session_id;
+        if (! $proceed) {
+            return;
+        }
+
+        // Save also the activity to particular `campaign_xyz` table
+        $connection = ConnectionTime::where('session_id', $this->session_id)->first();
+        if (! is_object($connection)) {
+            $connection = new ConnectionTime();
+        }
+
+        $connection->session_id = $this->session_id;
+        $connection->user_id = $this->user_id;
+        $connection->location_id = $this->location_id;
+
+        $now = date('Y-m-d H:i:s');
+        if ($this->activity_name === 'login_ok') {
+            $connection->login_at = $now;
+        }
+        if ($this->activity_name === 'logout_ok') {
+            $connection->logout_at = $now;
+        }
+
+        $connection->save();
     }
 
     /**

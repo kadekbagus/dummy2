@@ -2608,57 +2608,28 @@ class ActivityAPIController extends ControllerAPI
             // registrations from start to end grouped by date part and activity name long.
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
             $activities = DB::select( DB::raw("
-                    SELECT DATE(created_at) as date, ROUND(avg(TIMESTAMPDIFF(MINUTE, mindate, maxdate))) as total_minutes FROM (
-                        SELECT
-                            activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
-                            MIN(created_at) mindate, MAX(created_at) maxdate
-                        FROM {$tablePrefix}activities WHERE 1=1
-                            AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                            AND location_id = '" . $current_mall . "'
-                            AND (role = 'Consumer' OR role = 'Guest')
-                            AND session_id IS NOT NULL
-                            AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
-                            AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
-                        GROUP BY session_id
-                    ) as A
-                    group by date
-                    order by created_at asc
+                    select tmp.*, IFNULL(ct.connect_time, 0) total_minutes from (
+                      select date_add({$quote($start_date)}, interval n.sequence_number - 1 DAY) `date` from (
+                        select sequence_number from {$tablePrefix}sequence
+                      ) n where date_add({$quote($start_date)}, interval n.sequence_number - 1 day) <= {$quote($end_date)}
+                    ) tmp
+                    left join (
+                        select DATE_FORMAT(login_at, '%Y-%m-%d') `dt`,
+                        ROUND(AVG(IFNULL(timestampdiff(minute, login_at, logout_at), 15))) connect_time
+                        from {$tablePrefix}connection_times GROUP BY 1
+                    ) ct on `tmp`.`date` = `ct`.`dt`
                 ") );
-
-            // Check interval
-            $begin = new DateTime($start_date);
-            $endtime = new DateTime($end_date);
-            // Plus one day endtime
-            $end = $endtime->add(new DateInterval('P1D'));
-
-            // get periode per 1 day
-            $interval = DateInterval::createFromDateString('1 day');
-            $period = new DatePeriod($begin, $interval, $end);
-
-            $activitiesObj = null;
-
-            // Check exist data and handling null data
-            foreach ( $period as $keyPeriode => $valPeriode ){
-                foreach ($activities as $keyAct => $valAct) {
-                    if (  $valPeriode->format( "Y-m-d" ) ==  $valAct->date) {
-                        $activitiesObj[$keyPeriode] = new stdClass();
-                        $activitiesObj[$keyPeriode]->date = $valPeriode->format( "Y-m-d" );
-                        $activitiesObj[$keyPeriode]->total_minutes = $valAct->total_minutes;
-                        break;
-                    } else {
-                        $activitiesObj[$keyPeriode] = new stdClass();
-                        $activitiesObj[$keyPeriode]->date = $valPeriode->format( "Y-m-d" );
-                        $activitiesObj[$keyPeriode]->total_minutes = 0;
-                    }
-                }
-            }
 
             $this->response->data = [
                     'start_date' => $start_date,
                     'end_date' => $end_date,
-                    'connected_time' => $activitiesObj,
+                    'connected_time' => $activities,
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getcustomeraverageconnectedtime.access.forbidden', array($this, $e));
