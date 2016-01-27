@@ -438,7 +438,7 @@ class TenantAPIController extends ControllerAPI
                     'name'                 => 'required',
                     'box_url'              => 'orbit.formaterror.url.web',
                     'external_object_id'   => 'required',
-                    'status'               => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $parent_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
+                    'status'               => 'orbit.empty.tenant_status',
                     'parent_id'            => 'orbit.empty.mall',
                     /* 'country'              => 'numeric', */
                     'url'                  => 'orbit.formaterror.url.web',
@@ -828,7 +828,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit,
+                    'status'            => 'orbit.empty.tenant_status',
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
