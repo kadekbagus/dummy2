@@ -1463,7 +1463,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         // In case the creation date is earlier than the first active date
         $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-            ->where('updated_at', '<', $beginDateTime)
+            ->where('updated_at', '<', $campaign->begin_date)
             ->orderBy('campaign_history_id', 'desc')->first();
 
         $activationActionId = CampaignHistoryActions::whereActionName('activate')->first()->campaign_history_action_id;
