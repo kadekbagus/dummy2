@@ -1541,7 +1541,7 @@ class CampaignReportAPIController extends ControllerAPI
                     $deactivationRowId = $deactivationRow->campaign_history_id;
                 }
 
-                if ($activationRowId >= $deactivationRowId) {
+                if ($activationRowId !== null && $deactivationRowId !== null && $activationRowId >= $deactivationRowId) {
                     $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
                 }
 
