@@ -5280,7 +5280,7 @@ class DashboardAPIController extends ControllerAPI
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
                             group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
-      
+
             $couponQuery = DB::select( DB::raw("select 
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
@@ -5356,22 +5356,13 @@ class DashboardAPIController extends ControllerAPI
                 $statustemp = $newsid->status;
                 $tenanttemp = $newsid->tenantnow;
                 $start = new Carbon($start_date);
-
                 for ($x = 0; $x<=$diff; $x++) {
                     $dateloop = $start->toDateString();
                     
                     foreach($newsQuery as $nq) {
                         if($nq->created_at <= $dateloop) {
-
                             $find = FALSE;
-                            if ($nq->campaign_id === $newsidloop) { 
-                                $campaignstatus = $nq->action_status;
-                                $campaigntenant = $nq->tenants;
-                                $statustemp = $nq->previous_status;
-                                $tenanttemp = $nq->tenants;
-                            }
-                            if($dateloop >= $begin && $dateloop <= $end) {
-                                
+                            if($nq->created_at >= $begin && $nq->created_at <= $end) {
                                 if ($nq->campaign_id === $newsidloop && $nq->created_at === $dateloop) { 
                                     $find = TRUE;
                                     $campaignstatus = $nq->action_status;
@@ -5380,15 +5371,20 @@ class DashboardAPIController extends ControllerAPI
                                     $tenanttemp = $nq->tenants;
                                 }
                                 
+                            } elseif ($nq->campaign_id === $newsidloop) {
+                                $campaignstatus = $nq->action_status;
+                                $campaigntenant = $nq->tenants;
+                                $statustemp = $nq->previous_status;
+                                $tenanttemp = $nq->tenants;
                             }
                         }
-
                     }
+
                     if (! $find) { 
                         $campaignstatus = $statustemp;
                         $campaigntenant = $tenanttemp;
                     } 
-
+                    
                     if($dateloop >= $begin && $dateloop <= $end) {
                         if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                             $spending = (int) $campaigntenant * $bp;
@@ -5404,7 +5400,6 @@ class DashboardAPIController extends ControllerAPI
                 }
                 $a[$newsidloop] = $totalspending;
             }
-
             $totalcoupon = 0;
             
             foreach ($coupon as $couponid) {
@@ -5423,22 +5418,22 @@ class DashboardAPIController extends ControllerAPI
                     $dateloop = $start->toDateString();
 
                     foreach($couponQuery as $cq) {
-                        if($nq->created_at <= $dateloop) {
+                        if($cq->created_at <= $dateloop) {
                             $find = FALSE;
-                            if ($cq->campaign_id === $couponidloop) { 
-                                $campaignstatus = $cq->action_status;
-                                $campaigntenant = $cq->tenants;
-                                $statustemp = $cq->previous_status;
-                                $tenanttemp = $cq->tenants;
-                            }
-                            if ($dateloop >= $begin && $dateloop <= $end) {
-                                if ($cq->campaign_id === $couponidloop && $nq->created_at === $dateloop) { 
+                            
+                            if ($cq->created_at >= $begin && $cq->created_at <= $end) {
+                                if ($cq->campaign_id === $couponidloop && $cq->created_at === $dateloop) { 
                                     $find = TRUE;
                                     $campaignstatus = $cq->action_status;
                                     $campaigntenant = $cq->tenants;
                                     $statustemp = $cq->previous_status;
                                     $tenanttemp = $cq->tenants;
                                 } 
+                            } elseif ($cq->campaign_id === $couponidloop) { 
+                                $campaignstatus = $cq->action_status;
+                                $campaigntenant = $cq->tenants;
+                                $statustemp = $cq->previous_status;
+                                $tenanttemp = $cq->tenants;
                             }
                         }
                     }
