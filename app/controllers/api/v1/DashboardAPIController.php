@@ -708,72 +708,30 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $multiple_period = false;
+        
+            // requesting single period
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+            $merchant_id = OrbitInput::get('merchant_id');
+            $type = OrbitInput::get('type');
+            $object_id = OrbitInput::get('object_id');
 
-            if (OrbitInput::get('periods', null) !== null) {
-                $multiple_period = true;
-                $validator = null;
-                $periods_json = OrbitInput::get('periods', '{}');
-                $periods = @json_decode($periods_json, JSON_OBJECT_AS_ARRAY);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument('invalid json for periods');
-                }
-                foreach ($periods as $dates) {
-
-                    $rules = 'required|date_format:Y-m-d H:i:s';
-                    $merchant_id = OrbitInput::get('merchant_id');
-                    $type = OrbitInput::get('type');
-                    $object_id = OrbitInput::get('object_id');
-
-                    $validator = Validator::make(
-                        array(
-                            'merchant_id' => $merchant_id,
-                            'type'        => $type,
-                            'object_id'   => $object_id,
-                            'start_date'  => $dates['start_date'],
-                            'end_date'    => $dates['end_date'],
-                        ),
-                        array(
-                            'merchant_id' => 'required',
-                            'type'        => 'required',
-                            'object_id'   => 'required',
-                            'start_date'  => $rules,
-                            'end_date'    => $rules,
-                        )
-                    );
-                }
-
-            } else {
-                // requesting single period
-                $start_date = OrbitInput::get('start_date');
-                $end_date = OrbitInput::get('end_date');
-                $merchant_id = OrbitInput::get('merchant_id');
-                $type = OrbitInput::get('type');
-                $object_id = OrbitInput::get('object_id');
-
-                $validator = Validator::make(
-                    array(
-                        'merchant_id'   => $merchant_id,
-                        'type'          => $type,
-                        'object_id'     => $object_id,
-                        'start_date'    => $start_date,
-                        'end_date'      => $end_date,
-                    ),
-                    array(
-                        'merchant_id'  => 'required',
-                        'type'         => 'required',
-                        'object_id'    => 'required',
-                        'start_date'   => 'required|date_format:Y-m-d H:i:s',
-                        'end_date'     => 'required|date_format:Y-m-d H:i:s'
-                    )
-                );
-                $periods = [
-                    [
-                        'start_date' => $start_date,
-                        'end_date' => $end_date,
-                    ]
-                ];
-            }
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $merchant_id,
+                    'type'          => $type,
+                    'object_id'     => $object_id,
+                    'start_date'    => $start_date,
+                    'end_date'      => $end_date,
+                ),
+                array(
+                    'merchant_id'  => 'required',
+                    'type'         => 'required|in:news,promotions,lucky_draws,events',
+                    'object_id'    => 'required',
+                    'start_date'   => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'     => 'required|date_format:Y-m-d H:i:s'
+                )
+            );
 
             Event::fire('orbit.dashboard.getdetailtopcustomerview.before.validation', array($this, $validator));
 
@@ -786,134 +744,99 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            //dd($periods);
-            $responses = [];
-            switch ($type) {
-
-                // show news
-                case 'news':
+            if ($type === 'news' || $type === 'promotions' || $type === 'lucky_draws') {
+                switch ($type) {
+                    case 'news':
                         $campaign_group_name = 'News';
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = DB::table('campaign_page_views')
-                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
-                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
-                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
-                                ->where('campaign_page_views.location_id', '=', $merchant_id)
-                                ->where('campaign_page_views.campaign_id', '=', $object_id)
-                                ->where("campaign_page_views.created_at", '>=', $start_date)
-                                ->where("campaign_page_views.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
                         break;
-
-                // show events
-                case 'events':
-                        $campaign_group_name = 'Event';
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = DB::table('campaign_popup_views')
-                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_popup_views.activity_id) as score"))
-                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_popup_views.campaign_group_name_id')
-                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
-                                ->where('campaign_popup_views.location_id', '=', $merchant_id)
-                                ->where('campaign_popup_views.campaign_id', '=', $object_id)
-                                ->where("campaign_popup_views.created_at", '>=', $start_date)
-                                ->where("campaign_popup_views.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
-                        break;
-
-                // show promotions
-                case 'promotions':
+                    case 'promotions':
                         $campaign_group_name = 'Promotion';
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = DB::table('campaign_page_views')
-                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
-                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
-                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
-                                ->where('campaign_page_views.location_id', '=', $merchant_id)
-                                ->where('campaign_page_views.campaign_id', '=', $object_id)
-                                ->where("campaign_page_views.created_at", '>=', $start_date)
-                                ->where("campaign_page_views.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
                         break;
-                        
-                // show lucky draws
-                case 'lucky_draws':
+                    case 'lucky_draws':
                         $campaign_group_name = 'Lucky Draw';
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = DB::table('campaign_page_views')
-                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
-                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
-                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
-                                ->where('campaign_page_views.location_id', '=', $merchant_id)
-                                ->where('campaign_page_views.campaign_id', '=', $object_id)
-                                ->where("campaign_page_views.created_at", '>=', $start_date)
-                                ->where("campaign_page_views.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
                         break;
+                }
+                $tableName = 'campaign_page_views';
+            } elseif ($type === 'events') {
+                $campaign_group_name = 'Event';
+                $tableName = 'campaign_popup_views';
+            }
 
-                // by default do nothing
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
+
+            $date_diff = Carbon::parse($start_date)->diff(Carbon::parse($end_date)->addMinute())->days;
+            $start_date_minus_one_hour = Carbon::parse($start_date)->subHour();
+
+            switch ($date_diff) {
+                case 1:
+                    $interval = 3;
+                    break;
+                case 2:
+                    $interval = 6;
+                    break;
+                case 3:
+                    $interval = 6;
+                    break;
+                case 4:
+                    $interval = 8;
+                    break;
+                case 5:
+                    $interval = 12;
+                    break;
+                case 6:
+                    $interval = 12;
+                    break;
+                case 7:
+                    $interval = 12;
+                    break;
                 default:
-                    $this->response->message = Lang::get('statuses.orbit.nodata.object');
-                    $responses = null;
+                    $interval = 24;
+                    break;
             }
 
+            // Thomas sequence query
+            $results = DB::select(DB::raw("
+                    SELECT 
+                        p1.start_date,
+                        p1.end_date,
+                        SUM(IFNULL(p2.count_per_hour, 0)) AS score
+                    FROM
+                        (SELECT
+                            IF(MOD(@running_id, {$interval}) <> 0, @grp_id := @grp_id, @grp_id := @grp_id + 1) AS grp_id,
+                            (@running_id := @running_id + 1) AS running_id,
+                            DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS start_date,
+                            DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number+{$interval} HOUR), '%Y-%m-%d %H:00:00') as end_date
+                        FROM
+                            (SELECT @running_id := 0, @grp_id := 0) AS init_q,
+                            {$tablePrefix}sequence ts
+                        WHERE
+                            ts.sequence_number <= ({$date_diff} * 24)
+                        ) AS p1
+                    LEFT JOIN
+                        (
+                            SELECT 
+                                ocpv.campaign_id,
+                                DATE_FORMAT(ocpv.created_at, '%Y-%m-%d %H:00:00') AS view_date,
+                                COUNT(DATE_FORMAT(ocpv.created_at, '%Y-%m-%d %H:00:00')) AS count_per_hour
+                            FROM {$tablePrefix}{$tableName} ocpv
+                            LEFT JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                            WHERE 
+                                ocpv.created_at >= {$quote($start_date)}
+                                AND ocpv.location_id = {$quote($merchant_id)}
+                                AND ocpv.campaign_id = {$quote($object_id)}
+                                AND ocgn.campaign_group_name = '{$campaign_group_name}'
+                            GROUP BY view_date
+                            ORDER BY view_date
+                        ) AS p2
+                    ON p1.start_date = p2.view_date
+                    GROUP BY p1.grp_id
+                    ORDER BY p1.start_date;
+                "));
 
-            if ($multiple_period) {
-                $this->response->data = $responses;
-            } else {
-                $this->response->data = $responses[0];
-            }
+            $this->response->data = $results;
 
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.dashboard.getdetailtopcustomerview.access.forbidden', array($this, $e));
@@ -960,12 +883,6 @@ class DashboardAPIController extends ControllerAPI
 
         return $output;
     }
-
-
-
-
-
-
 
     /**
      * GET - TOP Product
