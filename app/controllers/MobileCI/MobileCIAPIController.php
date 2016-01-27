@@ -4771,6 +4771,11 @@ class MobileCIAPIController extends ControllerAPI
      */
     public static function isValidMX($email)
     {
+        // Fake the response of MX checking
+        if (Config::get('orbit.security.email.fake_mx') === TRUE) {
+            return TRUE;
+        }
+
         $hosts = MXEmailChecker::create($email)->check()->getMXRecords();
 
         if (empty($hosts)) {

@@ -1038,31 +1038,22 @@ class ActivityAPIController extends ControllerAPI
             // registrations from start to end grouped by date part and activity name long.
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
-            $activities = DB::table('activities')
-                ->leftJoin('user_details', 'activities.user_id', '=', 'user_details.user_id')
-                ->select(
-                    'user_details.gender',
-                    DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'activities.user_id) as count')
-                )
-                ->where('activities.module_name', '=', 'Application')
-                ->where('activities.group', '=', 'mobile-ci')
-                ->where('activities.activity_type', '=', 'login')
-                ->where('activities.activity_name', '=', 'login_ok')
-                ->where('activities.created_at', '>=', $start_date)
-                ->where('activities.created_at', '<=', $end_date)
-                ->groupBy(DB::raw('1'))
-                ->orderByRaw('1');
+            $activities = DB::table('user_signin')
+                            ->select('user_details.gender', DB::raw("count(distinct {$tablePrefix}user_signin.user_id) as count"))
+                            ->leftJoin('user_details', 'user_details.user_id', '=', 'user_signin.user_id')
+                            ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                            ->groupBy( DB::raw('1') );
 
             // Only shows activities which belongs to this merchant
             if ($user->isSuperAdmin() !== TRUE) {
                 $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
-                $activities->whereIn('activities.location_id', $locationIds);
+                $activities->whereIn('user_signin.location_id', $locationIds);
             } else {
                 // Filter by user location id
                 OrbitInput::get('location_ids', function($locationIds) use ($activities) {
-                    $activities->whereIn('activities.location_id', $locationIds);
+                    $activities->whereIn('user_signin.location_id', $locationIds);
                 });
             }
 
@@ -1515,8 +1506,7 @@ class ActivityAPIController extends ControllerAPI
             $this_month = date('n');
 
             $tablePrefix = DB::getTablePrefix();
-            $activities = DB::table('activities')
-                ->leftJoin('user_details', 'activities.user_id', '=', 'user_details.user_id')
+            $activities = DB::table('user_signin')
                 ->select(
                     DB::raw(
                         $this_year . '
@@ -1531,33 +1521,22 @@ class ActivityAPIController extends ControllerAPI
                       ELSE 0
                     END as age
                     '),
-                    DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'activities.user_id) as count')
+                    DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'user_signin.user_id) as count')
                 )
-                ->where('activities.module_name', '=', 'Application')
-                ->where(function($q) {
-                    $q->where('activities.group', 'mobile-ci')
-                      ->where('activities.activity_type', '=', 'login')
-                      ->where('activities.activity_name', '=', 'login_ok')
-                      ->orWhere(function($q) {
-                            $q->where('activities.activity_name', 'registration_ok')
-                              ->where('activities.group', 'cs-portal');
-                      });
-                })
-                ->where('activities.created_at', '>=', $start_date)
-                ->where('activities.created_at', '<=', $end_date)
-                ->groupBy(DB::raw('1'))
-                ->orderByRaw('1');
+                ->leftJoin('user_details', 'user_details.user_id', '=', 'user_signin.user_id')
+                ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                ->groupBy( DB::raw('1') );
 
             // Only shows activities which belongs to this merchant
             if ($user->isSuperAdmin() !== TRUE) {
                 $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
-                $activities->whereIn('activities.location_id', $locationIds);
+                $activities->whereIn('user_signin.location_id', $locationIds);
             } else {
                 // Filter by user location id
                 OrbitInput::get('location_ids', function($locationIds) use ($activities) {
-                    $activities->whereIn('activities.location_id', $locationIds);
+                    $activities->whereIn('user_signin.location_id', $locationIds);
                 });
             }
 
