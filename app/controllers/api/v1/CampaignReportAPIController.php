@@ -1437,9 +1437,6 @@ class CampaignReportAPIController extends ControllerAPI
         $carbonLoop = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime);
         $requestEndTime = substr($requestEndDateTime, 11, 8);
 
-        // Init outputs
-        $outputs = [];
-
         // Get the campaign from database
         switch ($type) {
             case 'news':
