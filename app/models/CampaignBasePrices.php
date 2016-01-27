@@ -23,4 +23,9 @@ class CampaignBasePrices extends Eloquent
         return $this->belongsTo('Merchant', 'merchant_id', 'merchant_id');
     }
 
+    public function scopeOfMallAndType($query, $mallId, $type)
+    {
+        return $query->whereMerchantId($mallId)->whereCampaignType($type);
+    }
+
 }

@@ -1453,7 +1453,7 @@ class CampaignReportAPIController extends ControllerAPI
         $campaign = $campaign->find($id);
 
         // Get the base cost
-        $baseCost = CampaignBasePrices::whereMerchantId($mallId)->whereCampaignType($type)->first()->price;
+        $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
 
         // Set the default initial cost
         $previousDayCost = 0;
