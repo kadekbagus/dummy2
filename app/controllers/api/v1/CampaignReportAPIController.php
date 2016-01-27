@@ -1504,7 +1504,6 @@ class CampaignReportAPIController extends ControllerAPI
             $dateTime = $carbonDateTime->toDateTimeString();
             $dateTime2 = $carbonDateTime->toDateString().' '.$endTime;
             $nextDayDateTime = $nextDay->toDateString().' '.$endTime;
-            $date = $carbonDateTime->toDateString();
 
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', '>=', $dateTime)
