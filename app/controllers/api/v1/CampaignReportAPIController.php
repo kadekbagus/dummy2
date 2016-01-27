@@ -1502,6 +1502,7 @@ class CampaignReportAPIController extends ControllerAPI
         // Loop
         while ($carbonDateTime->toDateTimeString() <= $endDateTime) {
             $dateTime = $carbonDateTime->toDateTimeString();
+            $dateTime2 = $carbonDateTime->toDateString().' '.$endTime;
             $nextDayDateTime = $nextDay->toDateString().' '.$endTime;
             $date = $carbonDateTime->toDateString();
 
@@ -1545,7 +1546,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
             // Data not found, but the date is in the interval
-            } elseif ($dateTime >= $campaign->begin_date && $dateTime <= $campaign->end_date) {
+            } elseif ($dateTime >= $campaign->begin_date && $dateTime2 <= $campaign->end_date) {
                 $cost = $previousDayCost;
 
             // Data not found
