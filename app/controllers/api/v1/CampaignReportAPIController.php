@@ -126,6 +126,7 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
+                0 as spending,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -157,7 +158,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
-                        ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('campaign_price.campaign_type', '=', 'news')
                         ->where('news.object_type', '=', 'news')
@@ -168,6 +168,7 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
+                0 as spending,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -190,12 +191,12 @@ class CampaignReportAPIController extends ControllerAPI
                     AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
                     AND {$tablePrefix}activities.activity_name_long = 'Click Promotion Pop Up'
                 ) as popup_clicks,
+
                 {$tablePrefix}news.status"))
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->join('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
-                        ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $current_mall)
                         ->where('campaign_price.campaign_type', '=', 'promotion')
                         ->where('news.object_type', '=', 'promotion')
@@ -206,6 +207,7 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
+                0 as spending,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -237,7 +239,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                         ->join('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
-                        ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $current_mall)
                         ->where('campaign_price.campaign_type', '=', 'coupon')
                         ->groupBy('promotions.promotion_id')
@@ -466,7 +467,7 @@ class CampaignReportAPIController extends ControllerAPI
                     for ($x = 0; $x<=$diff; $x++) {
                         $dateloop = $start->toDateString();
                         foreach($couponQuery as $cq) {
-                             if($nq->created_at <= $dateloop) {
+                             if($cq->created_at <= $dateloop) {
                                 $find = FALSE;
                                 if ($cq->campaign_id === $campaignidloop) {
                                     $campaignstatus = $cq->action_status;
@@ -1462,11 +1463,38 @@ class CampaignReportAPIController extends ControllerAPI
 
         // In case the creation date is earlier than the first active date
         $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-            ->where('updated_at', '<', $beginDateTime)
-            ->orderBy('number_active_tenants', 'desc')->first();
+            ->where('updated_at', '<', $campaign->begin_date)
+            ->orderBy('campaign_history_id', 'desc')->first();
+
+        $activationActionId = CampaignHistoryActions::whereActionName('activate')->first()->campaign_history_action_id;
+        $deactivationActionId = CampaignHistoryActions::whereActionName('deactivate')->first()->campaign_history_action_id;
 
         if ($campaignLog) {
-            $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+
+            $activationRowId = null;
+            $deactivationRowId = null;
+            
+            // Null when not found
+            $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                ->whereCampaignHistoryActionId($activationActionId)
+                ->orderBy('campaign_history_id', 'desc')->first();
+
+            if ($activationRow) {
+                $activationRowId = $activationRow->campaign_history_id;
+            }
+
+            // Null when not found
+            $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                ->whereCampaignHistoryActionId($deactivationActionId)
+                ->orderBy('campaign_history_id', 'desc')->first();
+
+            if ($deactivationRow) {
+                $deactivationRowId = $deactivationRow->campaign_history_id;
+            }
+
+            if ($activationRowId >= $deactivationRowId) {
+                $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+            }
         }
 
         $nextDay = Carbon::createFromFormat('Y-m-d', $carbonDateTime->toDateString())->addDay();
@@ -1474,22 +1502,51 @@ class CampaignReportAPIController extends ControllerAPI
         // Loop
         while ($carbonDateTime->toDateTimeString() <= $endDateTime) {
             $dateTime = $carbonDateTime->toDateTimeString();
+            $dateTime2 = $carbonDateTime->toDateString().' '.$endTime;
             $nextDayDateTime = $nextDay->toDateString().' '.$endTime;
             $date = $carbonDateTime->toDateString();
 
-            // Let's retrieve it from DB
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', '>=', $dateTime)
-                ->where('updated_at', '<=', $nextDayDateTime)
-                ->orderBy('number_active_tenants', 'desc')
+                ->where('updated_at', '<=', $nextDayDateTime);
+
+            $activationRow = $deactivationRow = $campaignLog;
+
+            // Let's retrieve it from DB
+            $campaignLog = $campaignLog
+                ->orderBy('campaign_history_id', 'desc')
                 ->first();
 
             // Data found
             if ($campaignLog) {
-                $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+
+                $activationRowId = null;
+                $deactivationRowId = null;
+                
+                // Null when not found
+                $activationRow = $activationRow
+                    ->whereCampaignHistoryActionId($activationActionId)
+                    ->orderBy('campaign_history_id', 'desc')->first();
+
+                if ($activationRow) {
+                    $activationRowId = $activationRow->campaign_history_id;
+                }
+
+                // Null when not found
+                $deactivationRow = $deactivationRow
+                    ->whereCampaignHistoryActionId($deactivationActionId)
+                    ->orderBy('campaign_history_id', 'desc')->first();
+
+                if ($deactivationRow) {
+                    $deactivationRowId = $deactivationRow->campaign_history_id;
+                }
+
+                if ($activationRowId !== null && $deactivationRowId !== null && $activationRowId >= $deactivationRowId) {
+                    $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+                }
 
             // Data not found, but the date is in the interval
-            } elseif ($dateTime >= $campaign->begin_date && $dateTime <= $campaign->end_date) {
+            } elseif ($dateTime >= $campaign->begin_date && $dateTime2 <= $campaign->end_date) {
                 $cost = $previousDayCost;
 
             // Data not found
