@@ -1430,12 +1430,12 @@ class CampaignReportAPIController extends ControllerAPI
         $type = OrbitInput::get('campaign_type');
 
         // Date intervals
-        $beginDateTime = OrbitInput::get('start_date');
-        $endDateTime = OrbitInput::get('end_date');
+        $requestBeginDateTime = OrbitInput::get('start_date');
+        $requestEndDateTime = OrbitInput::get('end_date');
 
         // Init Carbon
-        $carbonLoop = Carbon::createFromFormat('Y-m-d H:i:s', $beginDateTime);
-        $endTime = substr($endDateTime, 11, 8);
+        $carbonLoop = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime);
+        $requestEndTime = substr($requestEndDateTime, 11, 8);
 
         // Init outputs
         $outputs = [];
@@ -1500,10 +1500,10 @@ class CampaignReportAPIController extends ControllerAPI
         $carbonLoopNextDay = Carbon::createFromFormat('Y-m-d', $carbonLoop->toDateString())->addDay();
 
         // Loop
-        while ($carbonLoop->toDateTimeString() <= $endDateTime) {
+        while ($carbonLoop->toDateTimeString() <= $requestEndDateTime) {
             $loopBeginDateTime = $carbonLoop->toDateTimeString();
-            $loopEndDateTime = $carbonLoop->toDateString().' '.$endTime;
-            $nextDayDateTime = $carbonLoopNextDay->toDateString().' '.$endTime;
+            $loopEndDateTime = $carbonLoop->toDateString().' '.$requestEndTime;
+            $nextDayDateTime = $carbonLoopNextDay->toDateString().' '.$requestEndTime;
 
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', '>=', $loopBeginDateTime)
