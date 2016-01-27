@@ -1421,7 +1421,7 @@ class CampaignReportAPIController extends ControllerAPI
     {
         // Mall ID
         $mallId = OrbitInput::get('current_mall');
-        $timezone = Mall::find($mallId)->timezone()->first()->timezone_name;
+        $timezone = Mall::find($mallId)->timezone->timezone_name;
 
         // Campaign ID
         $id = OrbitInput::get('campaign_id');
