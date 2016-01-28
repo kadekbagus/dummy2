@@ -752,6 +752,10 @@ class Activity extends Eloquent
                 // try to get the current session id
                 $this->session_id = static::getSessionId();
             }
+
+            if ($this->activity_type !== 'logout'){
+                $this->saveToConnectedNow();
+            }
         }
 
         $result = parent::save($options);
@@ -881,6 +885,7 @@ class Activity extends Eloquent
     {
         $session = static::$session;
         if ($session === null) {
+
             $config = new SessionConfig(Config::get('orbit.session'));
 
             $session = new Session($config);
@@ -919,6 +924,55 @@ class Activity extends Eloquent
                 $campaign->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
                 $campaign->save();
                 break;
+        }
+    }
+
+    /**
+     * Check, Create and Update Connected Now.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @throws Exception
+     */
+    protected function saveToConnectedNow()
+    {
+        $timeDateNow = date('Y-m-d H:i:s')
+        $date = date('Y-m-d', strtotime($timeDateNow));
+        $hour = date('H', strtotime($timeDateNow));
+        $minute = date('i', strtotime($timeDateNow));
+
+        $activity = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
+                $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
+                $join->where('list_connected_user.user_id', '=', $this->user_id);
+            })
+            ->where('merchant_id', '=', $mall->merchant_id)
+            ->where('date', '=', $date)
+            ->where('hour', '=', $hour)
+            ->where('minute', '=', $minute)
+            ->first();
+
+        if(empty($activity)) {
+            $newConnected = new ConnectedNow();
+            $newConnected->merchant_id = $mall->merchant_id;
+            $newConnected->customer_connected = 1;
+            $newConnected->date = $date;
+            $newConnected->hour = $hour;
+            $newConnected->minute = $minute;
+            $newConnected->save();
+
+            $newListConnectedUser = new ListConnectedUser();
+            $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
+            $newListConnectedUser->user_id = $this->user_id;
+            $newListConnectedUser->save();
+        } else {
+            if (is_null($activity->user_id)) {
+                $newListConnectedUser = new ListConnectedUser();
+                $newListConnectedUser->connected_now_id = $activity->connected_now_id;
+                $newListConnectedUser->user_id = $this->user_id;
+                $newListConnectedUser->save();
+
+                $activity->customer_connected += 1;
+                $activity->save();
+            }
         }
     }
 
