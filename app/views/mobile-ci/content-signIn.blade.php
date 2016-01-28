@@ -20,6 +20,7 @@
                     <button id="logged-in-signin-button" type="button" class="btn btn-block btn-primary">Sign in</button>
                 </div>
             </div>
+            <br/>
             <div class="row">
                 <div class="col-xs-12 text-center">
                     <em>Not {{$display_name}}?</em>
