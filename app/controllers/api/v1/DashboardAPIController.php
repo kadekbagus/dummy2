@@ -5350,7 +5350,7 @@ class DashboardAPIController extends ControllerAPI
                 $start = new Carbon($start_date);
                 for ($x = 0; $x<=$diff; $x++) {
                     $dateloop = $start->toDateString();
-                    
+                    $spending = 0;
                     foreach($newsQuery as $nq) {
                         if($nq->created_at <= $dateloop) {
                             $find = FALSE;
@@ -5417,7 +5417,7 @@ class DashboardAPIController extends ControllerAPI
                 $start = new Carbon($start_date);
                 for ($x = 0; $x<=$diff; $x++) {
                     $dateloop = $start->toDateString();
-
+                    $spending = 0;
                     foreach($couponQuery as $cq) {
                         
                         if($cq->created_at <= $dateloop) {
