@@ -5235,7 +5235,7 @@ class DashboardAPIController extends ControllerAPI
                                         {$tablePrefix}campaign_histories a
                                             LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        DATE_FORMAT(a.created_at, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d')
+                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc 
@@ -5246,7 +5246,7 @@ class DashboardAPIController extends ControllerAPI
                                         {$tablePrefix}campaign_histories a
                                             LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        DATE_FORMAT(a.created_at, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d')
+                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
@@ -5261,11 +5261,12 @@ class DashboardAPIController extends ControllerAPI
                                         from
                                             {$tablePrefix}news
                                         where
-                                            (DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
+                                            {$tablePrefix}news.mall_id = '".$merchant_id."' and
+                                            ((DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
                                                 or (DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
                                                 or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))
                                                 or (DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))
-                                                or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')))
+                                                or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d'))))
                                 order by number_active_tenants desc) {$tablePrefix}campaign_histories 
                                     left join
                                 {$tablePrefix}news ON {$tablePrefix}news.news_id = {$tablePrefix}campaign_histories.campaign_id
@@ -5286,7 +5287,7 @@ class DashboardAPIController extends ControllerAPI
                                         {$tablePrefix}campaign_histories a
                                             LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        DATE_FORMAT(a.created_at, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d')
+                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc 
@@ -5297,7 +5298,7 @@ class DashboardAPIController extends ControllerAPI
                                         {$tablePrefix}campaign_histories a
                                             LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        DATE_FORMAT(a.created_at, '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d')
+                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
@@ -5312,11 +5313,12 @@ class DashboardAPIController extends ControllerAPI
                                         from
                                             {$tablePrefix}promotions
                                         where
-                                            (DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
+                                            {$tablePrefix}promotions.merchant_id = '".$merchant_id."' and
+                                            ((DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
                                                 or (DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d'))
                                                 or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))
                                                 or (DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))
-                                                or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')))
+                                                or (DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d'))))
                                 order by number_active_tenants desc) {$tablePrefix}campaign_histories
                                     left join
                                 {$tablePrefix}promotions ON {$tablePrefix}promotions.promotion_id = {$tablePrefix}campaign_histories.campaign_id
