@@ -1515,8 +1515,8 @@ class CampaignReportAPIController extends ControllerAPI
             // Data found
             if ($campaignLog) {
 
-                $activationRowId = null;
-                $deactivationRowId = null;
+                $activationRowId = '';
+                $deactivationRowId = '';
                 
                 // Null when not found
                 $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
@@ -1526,6 +1526,10 @@ class CampaignReportAPIController extends ControllerAPI
                     ->orderBy('campaign_history_id', 'desc')->first();
 
                 if ($activationRow) {
+
+                    // If there is an activation today, any deactivation won't be affected
+                    $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+
                     $activationRowId = $activationRow->campaign_history_id;
                 }
 
@@ -1540,8 +1544,9 @@ class CampaignReportAPIController extends ControllerAPI
                     $deactivationRowId = $deactivationRow->campaign_history_id;
                 }
 
-                if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
-                    $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+                // If there is a deactivation at last row, it will be affected tomorrow
+                if ($deactivationRowId > $activationRowId) {
+                    $previousDayCost = 0;
                 }
 
             // Data not found, but the date is in the interval
