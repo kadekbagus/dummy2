@@ -1489,7 +1489,7 @@ class CampaignReportAPIController extends ControllerAPI
                 $deactivationRowId = $deactivationRow->campaign_history_id;
             }
 
-            if ($activationRowId >= $deactivationRowId) {
+            if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
                 $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
             }
         }
@@ -1537,7 +1537,7 @@ class CampaignReportAPIController extends ControllerAPI
                     $deactivationRowId = $deactivationRow->campaign_history_id;
                 }
 
-                if ($activationRowId !== null && $deactivationRowId !== null && $activationRowId >= $deactivationRowId) {
+                if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
                     $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
                 }
 
