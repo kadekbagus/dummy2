@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use \Carbon\Carbon as Carbon;
 
 class DashboardAPIController extends ControllerAPI
 {
@@ -98,36 +99,28 @@ class DashboardAPIController extends ControllerAPI
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
 
-            $activities = DB::table('activities')
-                ->join('merchants', "activities.object_id", '=', "merchants.merchant_id")
+            $activities = DB::table('merchant_page_views')
+                ->join('merchants', "merchant_page_views.merchant_id", '=', "merchants.merchant_id")
                 ->select(
-                    DB::raw("{$tablePrefix}activities.object_id AS tenant_id"),
-                    DB::raw("COUNT({$tablePrefix}activities.activity_id) AS score"),
+                    DB::raw("{$tablePrefix}merchant_page_views.merchant_id AS tenant_id"),
+                    DB::raw("COUNT({$tablePrefix}merchant_page_views.activity_id) AS score"),
                     DB::raw("{$tablePrefix}merchants.name AS tenant_name"),
                     DB::raw("
-                                COUNT({$tablePrefix}activities.activity_id) / (
-                                        SELECT COUNT({$tablePrefix}activities.activity_id) FROM {$tablePrefix}activities
-                                    WHERE 1=1
-                                    AND activity_name = 'view_retailer'
-                                    AND activity_type = 'view'
-                                    AND object_name = 'Tenant'
-                                    AND `group` = 'mobile-ci'
-                                    AND (role = 'Consumer' OR role = 'Guest')
-                                    AND location_id = '" . $merchant_id . "'
-                                    AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= '" . $start_date . "'
-                                    AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= '" . $end_date . "'
-                                )*100 AS percentage
-                        ")
+                            COUNT({$tablePrefix}merchant_page_views.activity_id) / (
+                                    SELECT COUNT({$tablePrefix}merchant_page_views.activity_id) FROM {$tablePrefix}merchant_page_views
+                                WHERE 1=1
+                                AND merchant_type = 'tenant'
+                                AND location_id = " . DB::connection()->getPdo()->quote($merchant_id) . "
+                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') >= " . DB::connection()->getPdo()->quote($start_date) . "
+                                AND DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') <= " . DB::connection()->getPdo()->quote($end_date) . "
+                            )*100 AS percentage
+                    ")
                 )
-                ->where("activities.activity_name", '=', 'view_retailer')
-                ->where("activities.activity_type", '=', 'view')
-                ->where("activities.object_name", '=', 'Tenant')
-                ->where("activities.group", '=', 'mobile-ci')
-                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                ->where("activities.location_id", '=', $merchant_id)
-                ->where("activities.created_at", '>=', $start_date)
-                ->where("activities.created_at", '<=', $end_date)
-                ->groupBy("activities.object_id")
+                ->where("merchant_page_views.merchant_type", '=', 'tenant')
+                ->where("merchant_page_views.location_id", '=', $merchant_id)
+                ->where("merchant_page_views.created_at", '>=', $start_date)
+                ->where("merchant_page_views.created_at", '<=', $end_date)
+                ->groupBy("merchant_page_views.merchant_id")
                 ->orderBy('score','desc')
                 ->take(10);
 
@@ -268,169 +261,103 @@ class DashboardAPIController extends ControllerAPI
             }
             Event::fire('orbit.dashboard.gettopcustomerview.after.validation', array($this, $validator));
 
-            if(empty($take)) {
+            if (empty($take)) {
                 $take = 5;
             }
 
             $tablePrefix = DB::getTablePrefix();
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
             switch ($type) {
 
                 // show news
                 case 'news':
-                        $query = News::select(
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
-                                select
-                                    count(ac.activity_id) as total
-                                from
-                                    {$tablePrefix}news ne
-                                        inner join
-                                    {$tablePrefix}activities ac ON ne.news_id = ac.news_id
-                                where ac.module_name = 'News'
-                                and ac.activity_name = 'view_news'
-                                and ac.activity_type = 'view'
-                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
-                                and ac.group = 'mobile-ci'
-                                and ac.location_id = '{$merchant_id}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
-                            ) * 100 as percentage"),
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
-                            "news.news_name as name",
-                            "news.news_id as object_id"
-                        )
-                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
-                            $join->on('news.news_id', '=', 'activities.news_id');
-                            $join->where('news.object_type', '=', 'news');
-                            $join->where('activities.activity_name', '=', 'view_news');
-                            $join->where('activities.module_name', '=', 'News');
-                            $join->where('activities.activity_type', '=', 'view');
-                            $join->where('activities.group', '=', 'mobile-ci');
-                            $join->where('activities.location_id', '=', $merchant_id);
-                            $join->where("activities.created_at", '>=', $start_date);
-                            $join->where("activities.created_at", '<=', $end_date);
-                        })
-                        ->groupBy('news.news_id')
-                        ->orderBy('score', 'DESC')
-                        ->take($take);
+                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score, {$tablePrefix}news.news_name as name, {$tablePrefix}news.news_id as object_id,
+                          count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
+                                from {$tablePrefix}news ne
+                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ne.news_id and ne.object_type = 'News'
+                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
+                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                            )
+                            ->leftJoin('campaign_page_views', function($q) {
+                                    $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
+                                    $q->on('news.object_type', '=', DB::raw("'News'"));
+                            })
+                            ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
+                            ->where('location_id', $merchant_id)
+                            ->groupBy('news.news_id')
+                            ->orderBy(DB::raw('1'), 'desc')
+                            ->take($take);
                         $flag_type = true;
                         break;
 
                 // show events
                 case 'events':
-                        $query = EventModel::select(
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
-                                select
-                                    count(ac.activity_id) as total
-                                from
-                                    {$tablePrefix}events ev
-                                        inner join
-                                    {$tablePrefix}activities ac ON ev.event_id = ac.event_id
-                                where ac.module_name = 'Event'
-                                and ac.activity_name = 'event_view'
-                                and ac.activity_type = 'view'
-                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
-                                and ac.group = 'mobile-ci'
-                                and ac.location_id = '{$merchant_id}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
-                            ) * 100 as percentage"),
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
-                            "events.event_name as name",
-                            "events.event_id as object_id"
-                        )
-                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
-                            $join->on('events.event_id', '=', 'activities.event_id');
-                            $join->where('activities.activity_name', '=', 'event_view');
-                            $join->where('activities.module_name', '=', 'Event');
-                            $join->where('activities.activity_type', '=', 'view');
-                            $join->where('activities.group', '=', 'mobile-ci');
-                            $join->where('activities.location_id', '=', $merchant_id);
-                            $join->where("activities.created_at", '>=', $start_date);
-                            $join->where("activities.created_at", '<=', $end_date);
-                        })
-                        ->groupBy('events.event_id')
-                        ->orderBy('score', 'DESC')
-                        ->take($take);
+                    $query = EventModel::select(DB::raw("COUNT({$tablePrefix}campaign_popup_views.campaign_popup_view_id) as score,
+                                        {$tablePrefix}events.event_name as name, {$tablePrefix}events.event_id as object_id,
+                                        COUNT({$tablePrefix}campaign_popup_views.campaign_popup_view_id) / (select count(cpv.campaign_popup_view_id)
+                                        from {$tablePrefix}events ev
+                                        left join {$tablePrefix}campaign_popup_views cpv on cpv.campaign_id = ev.event_id
+                                        left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id = cpv.campaign_group_name_id and cgn.campaign_group_name = 'Event'
+                                        where ev.merchant_id = {$quote($merchant_id)} and cpv.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage"
+                            ))
+                            ->leftJoin('campaign_popup_views', 'campaign_popup_views.campaign_id', '=', 'events.event_id')
+                            ->leftJoin('campaign_group_names', function($q) use ($quote) {
+                                    $q->on('campaign_group_names.campaign_group_name_id', '=', 'campaign_popup_views.campaign_group_name_id');
+                                    $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Event')));
+                            })
+                            ->whereBetween('campaign_popup_views.created_at', [$start_date, $end_date])
+                            ->where('events.merchant_id', $merchant_id)
+                            ->groupBy('events.event_id')
+                            ->orderBy(DB::raw('1'), 'desc')
+                            ->take($take);
                         $flag_type = true;
                         break;
 
                 // show promotions
                 case 'promotions':
-                        $query = News::select(
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
-                                select
-                                    count(ac.activity_id) as total
-                                from
-                                    {$tablePrefix}news ne
-                                        inner join
-                                    {$tablePrefix}activities ac ON ne.news_id = ac.news_id
-                                where ac.module_name = 'Promotion'
-                                and ac.activity_name = 'view_promotion'
-                                and ac.activity_type = 'view'
-                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
-                                and ac.group = 'mobile-ci'
-                                and ac.location_id = '{$merchant_id}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
-                            ) * 100 as percentage"),
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
-                            "news.news_name as name",
-                            "news.news_id as object_id"
-                        )
-                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
-                            $join->on('news.news_id', '=', 'activities.news_id');
-                            $join->where('news.object_type', '=', 'promotion');
-                            $join->where('activities.activity_name', '=', 'view_promotion');
-                            $join->where('activities.module_name', '=', 'Promotion');
-                            $join->where('activities.activity_type', '=', 'view');
-                            $join->where('activities.group', '=', 'mobile-ci');
-                            $join->where('activities.location_id', '=', $merchant_id);
-                            $join->where("activities.created_at", '>=', $start_date);
-                            $join->where("activities.created_at", '<=', $end_date);
-                        })
-                        ->groupBy('news.news_id')
-                        ->orderBy('score', 'DESC')
-                        ->take($take);
-                        $flag_type = true;
-                        break;
+                    $query = News::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score, {$tablePrefix}news.news_name as name, {$tablePrefix}news.news_id as object_id,
+                          count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
+                                from {$tablePrefix}news ne
+                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ne.news_id and ne.object_type = 'Promotion'
+                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
+                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                            )
+                            ->leftJoin('campaign_page_views', function($q) {
+                                    $q->on('campaign_page_views.campaign_id', '=', 'news.news_id');
+                                    $q->on('news.object_type', '=', DB::raw("'Promotion'"));
+                            })
+                            ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
+                            ->where('location_id', $merchant_id)
+                            ->groupBy('news.news_id')
+                            ->orderBy(DB::raw('1'), 'desc')
+                            ->take($take);
+                    $flag_type = true;
+                    break;
 
                 // show luckydraws
                 case 'lucky_draws':
-                        $query = LuckyDraw::select(
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id)/ (
-                                select
-                                    count(ac.activity_id) as total
-                                from
-                                    {$tablePrefix}lucky_draws luck
-                                        inner join
-                                    {$tablePrefix}activities ac ON luck.lucky_draw_id = ac.object_id
-                                where ac.module_name = 'LuckyDraw'
-                                and ac.activity_name = 'view_lucky_draw'
-                                and ac.activity_type = 'view'
-                                and (ac.role = 'Consumer' OR ac.role = 'Guest')
-                                and ac.group = 'mobile-ci'
-                                and ac.location_id = '{$merchant_id}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') >= '{$start_date}'
-                                and DATE_FORMAT(ac.created_at, '%Y-%m-%d %H:%i:%s') <= '{$end_date}'
-                            ) * 100 as percentage"),
-                            DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"),
-                            "lucky_draws.lucky_draw_name as name",
-                            "lucky_draws.lucky_draw_id as object_id"
-                        )
-                        ->join("activities", function ($join) use ($merchant_id, $start_date, $end_date) {
-                            $join->on('lucky_draws.lucky_draw_id', '=', 'activities.object_id');
-                            $join->where('activities.activity_name', '=', 'view_lucky_draw');
-                            $join->where('activities.module_name', '=', 'LuckyDraw');
-                            $join->where('activities.activity_type', '=', 'view');
-                            $join->where('activities.group', '=', 'mobile-ci');
-                            $join->where('activities.location_id', '=', $merchant_id);
-                            $join->where("activities.created_at", '>=', $start_date);
-                            $join->where("activities.created_at", '<=', $end_date);
-                        })
-                        ->groupBy('lucky_draws.lucky_draw_id')
-                        ->orderBy('score', 'DESC')
-                        ->take($take);
+                    $query = LuckyDraw::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                                {$tablePrefix}lucky_draws.lucky_draw_name as name, {$tablePrefix}lucky_draws.lucky_draw_id as object_id,
+                                count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
+                                from {$tablePrefix}lucky_draws ld
+                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = ld.lucky_draw_id
+                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
+                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                            )
+                            ->leftJoin('campaign_page_views', 'campaign_page_views.campaign_id', '=', 'lucky_draws.lucky_draw_id')
+                            ->leftJoin('campaign_group_names', function($q) use ($quote) {
+                                    $q->on('campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id');
+                                    $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Lucky Draw')));
+                            })
+                            ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
+                            ->where('lucky_draws.mall_id', $merchant_id)
+                            ->groupBy('lucky_draws.lucky_draw_id')
+                            ->orderBy(DB::raw('1'), 'desc')
+                            ->take($take);
                         $flag_type = true;
                         break;
 
@@ -557,71 +484,53 @@ class DashboardAPIController extends ControllerAPI
 
 
             $tablePrefix = DB::getTablePrefix();
+            $merchantId = OrbitInput::get('merchant_id', 0);
 
-            $news = Activity::select(DB::raw("count(distinct activity_id) as total"))
-                            ->where('activities.activity_name', '=', 'view_news')
-                            ->where('activities.module_name', '=', 'News')
-                            ->where('activities.activity_type', '=', 'view')
-                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                            ->where('activities.group', '=', 'mobile-ci');
+            $defaultBeginDate = date('Y-m-d 00:00:00', strtotime('-14 days'));
+            $beginDate = OrbitInput::get('start_date', $defaultBeginDate);
 
-            $events = Activity::select(DB::raw("count(distinct activity_id) as total"))
-                            ->where('activities.activity_name', '=', 'event_view')
-                            ->where('activities.module_name', '=', 'Event')
-                            ->where('activities.activity_type', '=', 'view')
-                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                            ->where('activities.group', '=', 'mobile-ci');
+            $defaultEndDate = date('Y-m-d 23:59:59', strtotime('tomorrow'));
+            $endDate = OrbitInput::get('end_date', $defaultEndDate);
 
-            $promotions = Activity::select(DB::raw("count(distinct activity_id) as total"))
-                            ->where('activities.activity_name', '=', 'view_promotion')
-                            ->where('activities.module_name', '=', 'Promotion')
-                            ->where('activities.activity_type', '=', 'view')
-                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                            ->where('activities.group', '=', 'mobile-ci');
+            // This is for event popup views, because event has no page view
+            $event = CampaignGroupName::getPopupViewByLocation($merchantId, $beginDate, $endDate)
+                                        ->get()
+                                        ->keyBy('campaign_group_name')
+                                        ->get('Event');
 
-            $luckydraws = Activity::select(DB::raw("count(distinct activity_id) as total"))
-                            ->where('activities.activity_name', '=', 'view_lucky_draw')
-                            ->where('activities.module_name', '=', 'LuckyDraw')
-                            ->where('activities.activity_type', '=', 'view')
-                            ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                            ->where('activities.group', '=', 'mobile-ci');
+            // This is for another campaign
+            $campaigns = CampaignGroupName::getPageViewByLocation($merchantId, $beginDate, $endDate)->get();
 
-            OrbitInput::get('merchant_id', function ($merchant_id) use ($news, $promotions, $events, $luckydraws) {
-                $news->where('activities.location_id', '=', $merchant_id);
-                $promotions->where('activities.location_id', '=', $merchant_id);
-                $events->where('activities.location_id', '=', $merchant_id);
-                $luckydraws->where('activities.location_id', '=', $merchant_id);
-            });
+            $keys = [
+                'Coupon' => 'coupons',
+                'Event' => 'events',
+                'Lucky Draw' => 'lucky_draws',
+                'News' => 'news',
+                'Promotion' => 'promotions'
+            ];
 
-            OrbitInput::get('start_date', function ($beginDate) use ($news, $promotions, $events, $luckydraws) {
-                $news->where('activities.created_at', '>=', $beginDate);
-                $promotions->where('activities.created_at', '>=', $beginDate);
-                $events->where('activities.created_at', '>=', $beginDate);
-                $luckydraws->where('activities.created_at', '>=', $beginDate);
-            });
+            $objectKeys = [];
+            foreach ($campaigns as $campaign) {
+                if ($campaign->campaign_group_name === 'Event') {
+                    continue;
+                }
 
-            OrbitInput::get('end_date', function ($endDate) use ($news, $promotions, $events, $luckydraws) {
-                $news->where('activities.created_at', '<=', $endDate);
-                $promotions->where('activities.created_at', '<=', $endDate);
-                $events->where('activities.created_at', '<=', $endDate);
-                $luckydraws->where('activities.created_at', '<=', $endDate);
-            });
+                $tmp = new stdClass();
+                $tmp->label = $campaign->campaign_group_name;
+                $tmp->total = $campaign->count;
 
-            $news = $news->first();
-            $events = $events->first();
-            $promotions = $promotions->first();
-            $luckydraws = $luckydraws->first();
-
-            $news->label = 'News';
-            $events->label = 'Events';
-            $promotions->label = 'Promotions';
-            $luckydraws->label = 'Lucky Draws';
+                $theKey = $keys[$tmp->label];
+                $objectKeys[$theKey] = $tmp;
+            }
+            $objectKeys['events'] = new stdClass();
+            $objectKeys['events']->label = 'Event';
+            $objectKeys['events']->total = $event->count;
 
             $data = new stdclass();
-            $data->news = $news;
-            $data->events = $events;
-            $data->promotions = $promotions;
-            $data->lucky_draws = $luckydraws;
+            $data->news = $objectKeys['news'];
+            $data->events = $objectKeys['events'];
+            $data->promotions = $objectKeys['promotions'];
+            $data->lucky_draws = $objectKeys['lucky_draws'];
 
             $this->response->data = $data;
 
@@ -662,7 +571,7 @@ class DashboardAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
         }
 
         $output = $this->render($httpCode);
@@ -716,72 +625,30 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $multiple_period = false;
 
-            if (OrbitInput::get('periods', null) !== null) {
-                $multiple_period = true;
-                $validator = null;
-                $periods_json = OrbitInput::get('periods', '{}');
-                $periods = @json_decode($periods_json, JSON_OBJECT_AS_ARRAY);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument('invalid json for periods');
-                }
-                foreach ($periods as $dates) {
+            // requesting single period
+            $start_date = OrbitInput::get('start_date');
+            $end_date = OrbitInput::get('end_date');
+            $merchant_id = OrbitInput::get('merchant_id');
+            $type = OrbitInput::get('type');
+            $object_id = OrbitInput::get('object_id');
 
-                    $rules = 'required|date_format:Y-m-d H:i:s';
-                    $merchant_id = OrbitInput::get('merchant_id');
-                    $type = OrbitInput::get('type');
-                    $object_id = OrbitInput::get('object_id');
-
-                    $validator = Validator::make(
-                        array(
-                            'merchant_id' => $merchant_id,
-                            'type'        => $type,
-                            'object_id'   => $object_id,
-                            'start_date'  => $dates['start_date'],
-                            'end_date'    => $dates['end_date'],
-                        ),
-                        array(
-                            'merchant_id' => 'required',
-                            'type'        => 'required',
-                            'object_id'   => 'required',
-                            'start_date'  => $rules,
-                            'end_date'    => $rules,
-                        )
-                    );
-                }
-
-            } else {
-                // requesting single period
-                $start_date = OrbitInput::get('start_date');
-                $end_date = OrbitInput::get('end_date');
-                $merchant_id = OrbitInput::get('merchant_id');
-                $type = OrbitInput::get('type');
-                $object_id = OrbitInput::get('object_id');
-
-                $validator = Validator::make(
-                    array(
-                        'merchant_id'   => $merchant_id,
-                        'type'          => $type,
-                        'object_id'     => $object_id,
-                        'start_date'    => $start_date,
-                        'end_date'      => $end_date,
-                    ),
-                    array(
-                        'merchant_id'  => 'required',
-                        'type'         => 'required',
-                        'object_id'    => 'required',
-                        'start_date'   => 'required|date_format:Y-m-d H:i:s',
-                        'end_date'     => 'required|date_format:Y-m-d H:i:s'
-                    )
-                );
-                $periods = [
-                    [
-                        'start_date' => $start_date,
-                        'end_date' => $end_date,
-                    ]
-                ];
-            }
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $merchant_id,
+                    'type'          => $type,
+                    'object_id'     => $object_id,
+                    'start_date'    => $start_date,
+                    'end_date'      => $end_date,
+                ),
+                array(
+                    'merchant_id'  => 'required',
+                    'type'         => 'required|in:news,promotions,lucky_draws,events',
+                    'object_id'    => 'required',
+                    'start_date'   => 'required|date_format:Y-m-d H:i:s',
+                    'end_date'     => 'required|date_format:Y-m-d H:i:s'
+                )
+            );
 
             Event::fire('orbit.dashboard.getdetailtopcustomerview.before.validation', array($this, $validator));
 
@@ -794,138 +661,99 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            //dd($periods);
-            $responses = [];
-            switch ($type) {
-
-                // show news
-                case 'news':
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'view_news')
-                                ->where('activities.module_name', '=', 'News')
-                                ->where('activities.activity_type', '=', 'view')
-                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                                ->where('activities.group', '=', 'mobile-ci')
-                                ->where('activities.location_id', '=', $merchant_id)
-                                ->where('activities.object_id', '=', $object_id)
-                                ->where("activities.created_at", '>=', $start_date)
-                                ->where("activities.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
+            if ($type === 'news' || $type === 'promotions' || $type === 'lucky_draws') {
+                switch ($type) {
+                    case 'news':
+                        $campaign_group_name = 'News';
                         break;
-
-                // show events
-                case 'events':
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'event_view')
-                                ->where('activities.module_name', '=', 'Event')
-                                ->where('activities.activity_type', '=', 'view')
-                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                                ->where('activities.group', '=', 'mobile-ci')
-                                ->where('activities.location_id', '=', $merchant_id)
-                                ->where('activities.object_id', '=', $object_id)
-                                ->where("activities.created_at", '>=', $start_date)
-                                ->where("activities.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
+                    case 'promotions':
+                        $campaign_group_name = 'Promotion';
                         break;
-
-                // show promotions
-                case 'promotions':
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'view_promotion')
-                                ->where('activities.module_name', '=', 'Promotion')
-                                ->where('activities.activity_type', '=', 'view')
-                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                                ->where('activities.group', '=', 'mobile-ci')
-                                ->where('activities.location_id', '=', $merchant_id)
-                                ->where('activities.object_id', '=', $object_id)
-                                ->where("activities.created_at", '>=', $start_date)
-                                ->where("activities.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
+                    case 'lucky_draws':
+                        $campaign_group_name = 'Lucky Draw';
                         break;
-                        
-                // show lucky draws
-                case 'lucky_draws':
-                        foreach ($periods as $period) {
+                }
+                $tableName = 'campaign_page_views';
+            } elseif ($type === 'events') {
+                $campaign_group_name = 'Event';
+                $tableName = 'campaign_popup_views';
+            }
 
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
-                            $query = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as score"))
-                                ->where('activities.activity_name', '=', 'view_lucky_draw')
-                                ->where('activities.module_name', '=', 'LuckyDraw')
-                                ->where('activities.activity_type', '=', 'view')
-                                ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                                ->where('activities.group', '=', 'mobile-ci')
-                                ->where('activities.location_id', '=', $merchant_id)
-                                ->where('activities.object_id', '=', $object_id)
-                                ->where("activities.created_at", '>=', $start_date)
-                                ->where("activities.created_at", '<=', $end_date)
-                                ->first();
+            $date_diff = Carbon::parse($start_date)->diff(Carbon::parse($end_date)->addMinute())->days;
+            $start_date_minus_one_hour = Carbon::parse($start_date)->subHour();
 
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
-                        break;
-
-                // by default do nothing
+            switch ($date_diff) {
+                case 1:
+                    $interval = 3;
+                    break;
+                case 2:
+                    $interval = 6;
+                    break;
+                case 3:
+                    $interval = 6;
+                    break;
+                case 4:
+                    $interval = 8;
+                    break;
+                case 5:
+                    $interval = 12;
+                    break;
+                case 6:
+                    $interval = 12;
+                    break;
+                case 7:
+                    $interval = 12;
+                    break;
                 default:
-                    $this->response->message = Lang::get('statuses.orbit.nodata.object');
-                    $responses = null;
+                    $interval = 24;
+                    break;
             }
 
+            // Thomas sequence query
+            $results = DB::select(DB::raw("
+                    SELECT
+                        p1.start_date,
+                        p1.end_date,
+                        SUM(IFNULL(p2.count_per_hour, 0)) AS score
+                    FROM
+                        (SELECT
+                            IF(MOD(@running_id, {$interval}) <> 0, @grp_id := @grp_id, @grp_id := @grp_id + 1) AS grp_id,
+                            (@running_id := @running_id + 1) AS running_id,
+                            DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS start_date,
+                            DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number+{$interval}-1 HOUR), '%Y-%m-%d %H:59:59') as end_date
+                        FROM
+                            (SELECT @running_id := 0, @grp_id := 0) AS init_q,
+                            {$tablePrefix}sequence ts
+                        WHERE
+                            ts.sequence_number <= ({$date_diff} * 24)
+                        ) AS p1
+                    LEFT JOIN
+                        (
+                            SELECT
+                                ocpv.campaign_id,
+                                DATE_FORMAT(ocpv.created_at, '%Y-%m-%d %H:00:00') AS view_date,
+                                COUNT(DATE_FORMAT(ocpv.created_at, '%Y-%m-%d %H:00:00')) AS count_per_hour
+                            FROM {$tablePrefix}{$tableName} ocpv
+                            LEFT JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
+                            WHERE
+                                ocpv.created_at >= {$quote($start_date)}
+                                AND ocpv.location_id = {$quote($merchant_id)}
+                                AND ocpv.campaign_id = {$quote($object_id)}
+                                AND ocgn.campaign_group_name = '{$campaign_group_name}'
+                            GROUP BY view_date
+                            ORDER BY view_date
+                        ) AS p2
+                    ON p1.start_date = p2.view_date
+                    GROUP BY p1.grp_id
+                    ORDER BY p1.start_date;
+                "));
 
-            if ($multiple_period) {
-                $this->response->data = $responses;
-            } else {
-                $this->response->data = $responses[0];
-            }
+            $this->response->data = $results;
 
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.dashboard.getdetailtopcustomerview.access.forbidden', array($this, $e));
@@ -1607,34 +1435,31 @@ class DashboardAPIController extends ControllerAPI
             }
 
             $tablePrefix = DB::getTablePrefix();
+            $merchantId = OrbitInput::get('merchant_id', '0');
 
-            $widgets = Activity::considerCustomer()->select(
-                    "widgets.widget_type",
-                    DB::raw("count(distinct {$tablePrefix}activities.activity_id) as click_count")
-                )
-                ->join('widgets', 'widgets.widget_id', '=', 'activities.object_id' )
-                ->groupBy('widgets.widget_type');
+            $defaultBeginDate = date('Y-m-d 00:00:00');
+            $defaultEndDate = date('Y-m-d 23:59:59');
+            $beginDate = OrbitInput::get('begin_date', $defaultBeginDate);
+            $endDate = OrbitInput::get('end_date', $defaultEndDate);
 
-            $isReport = $this->builderOnly;
-            OrbitInput::get('is_report', function ($_isReport) use (&$isReport, $widgets, $tablePrefix) {
-                $isReport = !!$_isReport;
-            });
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
-            OrbitInput::get('merchant_id', function ($merchantId) use ($widgets) {
-                $widgets->whereIn('activities.location_id', $this->getArray($merchantId));
-            });
-
-            OrbitInput::get('begin_date', function ($beginDate) use ($widgets) {
-                $widgets->where('activities.created_at', '>=', $beginDate);
-            });
-
-            OrbitInput::get('end_date', function ($endDate) use ($widgets) {
-                $widgets->where('activities.created_at', '<=', $endDate);
-            });
+            $widgets = WidgetGroupName::select('widget_group_names.widget_group_name as widget_type', DB::raw("count({$tablePrefix}widget_clicks.widget_id) as click_count"))
+                        ->leftJoin('widget_clicks', function($join) use ($beginDate, $endDate, $merchantId, $quote, $tablePrefix) {
+                            // We put the condition on join so the "left" table can appear as is and not filtered
+                            $join->on('widget_clicks.widget_group_name_id', '=', 'widget_group_names.widget_group_name_id');
+                            $join->on('widget_clicks.location_id', '=', DB::raw($quote( end($merchantId) )));
+                            $join->on("widget_clicks.created_at", 'between', DB::raw("{$quote($beginDate)} and {$quote($endDate)}"));
+                        })
+                        ->groupBy('widget_group_names.widget_group_name_id');
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_widgets = clone $widgets;
+            $_widgets->select('widget_group_names.widget_group_name_id');
 
             $widgets->orderBy('click_count', 'desc');
 
@@ -1660,71 +1485,13 @@ class DashboardAPIController extends ControllerAPI
                 $skip = $_skip;
             });
 
-            $summary  = NULL;
-            $lastPage = false;
-            if ($isReport)
-            {
-                $_widgets->addSelect(
-                    DB::raw("date({$tablePrefix}activities.created_at) as created_at_date")
-                );
-                $_widgets->groupBy('created_at_date');
-
-                $widgetReportQuery = $_widgets->getQuery();
-
-                $defaultSelect = [
-                    DB::raw("ifnull(sum(case widget_type when 'tenant' then click_count end), 0) as 'tenant'"),
-                    DB::raw("ifnull(sum(case widget_type when 'coupon' then click_count end), 0) as 'coupon'"),
-                    DB::raw("ifnull(sum(case widget_type when 'news' then click_count end), 0) as 'news'"),
-                    DB::raw("ifnull(sum(case widget_type when 'promotion' then click_count end), 0) as 'promotion'"),
-                    DB::raw("ifnull(sum(click_count), 0) as 'total'")
-                ];
-
-                $toSelect     = array_merge($defaultSelect, ["created_at_date"]);
-                $widgetReport = DB::table(DB::raw("({$_widgets->toSql()}) as report"))
-                    ->mergeBindings($widgetReportQuery)
-                    ->select($toSelect)
-                    ->groupBy('created_at_date');
-
-                $_widgetReport = clone $widgetReport;
-
-                $widgetReport->orderBy('created_at_date', 'desc');
-                $summaryReport = DB::table(DB::raw("({$_widgets->toSql()}) as report"))
-                    ->mergeBindings($widgetReportQuery)
-                    ->select($defaultSelect);
-
-                if ($this->builderOnly)
-                {
-                    return $this->builderObject($widgetReport, $summaryReport);
-                }
-
-                $widgetReport->take($take)->skip($skip);
-
-
-                $totalReport = DB::table(DB::raw("({$_widgetReport->toSql()}) as total_report"))
-                    ->mergeBindings($_widgetReport);
-
-                $widgetTotal = $totalReport->count();
-                $widgetList  = $widgetReport->get();
-
-                // Consider Last Page
-                if (($widgetTotal - $take) <= $skip)
-                {
-                    $summary  = $summaryReport->first();
-                    $lastPage = true;
-                }
-
-            } else {
-                $widgets->take($take);
-                $widgetTotal = RecordCounter::create($_widgets)->count();
-                $widgetList  = $widgets->get();
-            }
-
+            $widgets->take($take);
+            $widgetTotal = RecordCounter::create($_widgets)->count();
+            $widgetList  = $widgets->get();
 
             $data = new stdclass();
             $data->total_records = $widgetTotal;
             $data->returned_records = count($widgetList);
-            $data->last_page = $lastPage;
-            $data->summary   = $summary;
             $data->records   = $widgetList;
 
             if ($widgetTotal === 0) {
