@@ -606,6 +606,7 @@ class DashboardAPIController extends ControllerAPI
                             ->where('activities.activity_name', '=', 'view_news')
                             ->where('activities.module_name', '=', 'News')
                             ->where('activities.activity_type', '=', 'view')
+                            ->where('activities.activity_name_long', '=', 'View News Detail')
                             ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
@@ -613,6 +614,7 @@ class DashboardAPIController extends ControllerAPI
                             ->where('activities.activity_name', '=', 'view_promotion')
                             ->where('activities.module_name', '=', 'Promotion')
                             ->where('activities.activity_type', '=', 'view')
+                            ->where('activities.activity_name_long', '=', 'View Promotion Detail')
                             ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
                             ->where('activities.group', '=', 'mobile-ci');
 
