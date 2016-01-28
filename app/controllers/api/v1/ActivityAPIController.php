@@ -1334,19 +1334,20 @@ class ActivityAPIController extends ControllerAPI
                 $locationIds = $this->getLocationIdsForUser($user);
             }
 
-            $mallDate = date('Y-m-d');
-            $mallHour = date('H');
-            $mallMinute = date('i');
+            $end_time = Carbon::now();
+            $start_time = DB::select("select DATE_ADD('$end_time', INTERVAL -60 MINUTE) as start_time");
 
-            $connected_now = ConnectedNow::whereIn('merchant_id', $locationIds)
-                ->where('date', '=', $mallDate)
-                ->where('hour', '=', $mallHour)
-                ->where('minute', '=', $mallMinute)
-                ->first();
+            $connected_now = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
+                                $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
+                            })
+                            ->whereIn('merchant_id', ['EXs5F-LMP-------'])
+                            ->whereBetween('connected_now.created_at', [$start_time[0]->start_time, $end_time])
+                            ->groupBy('list_connected_user.user_id')
+                            ->get();
 
             $users_count = 0;
             if (! empty($connected_now)) {
-                $users_count = $connected_now->customer_connected;
+                $users_count = $connected_now->count();
             }
 
             $this->response->data = [
