@@ -3025,11 +3025,20 @@ class UserAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            // validate user mall id for current_mall
+            $mallId = OrbitInput::post('current_mall');
+            $listOfMallIds = $user->getUserMallIds($mallId);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $mallId = $listOfMallIds[0];
+            }
+
             Event::fire('orbit.user.postdeletemembership.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
-            $mallId = OrbitInput::post('current_mall');;
             $user_id = OrbitInput::post('user_id');
             $password = OrbitInput::post('password');
 
