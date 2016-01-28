@@ -5,7 +5,6 @@
  * @author Rio Astamal <me@rioastamal.net>
  */
 use OrbitRelation\BelongsTo as BelongsToObject;
-use Carbon\Carbon as Carbon;
 
 class Activity extends Eloquent
 {
@@ -890,33 +889,28 @@ class Activity extends Eloquent
      */
     protected function saveToConnectedNow()
     {
-        $mall = Mall::with('timezone')
-            ->excludeDeleted()
-            ->where('merchant_id', '=', $this->location_id)
-            ->first();
-
-        $mallTime = Carbon::now($mall->timezone->timezone_name);
-        $mallDate = date('Y-m-d', strtotime($mallTime));
-        $mallHour = date('H', strtotime($mallTime));
-        $mallMinute = date('i', strtotime($mallTime));
+        $timeDateNow = date('Y-m-d H:i:s')
+        $date = date('Y-m-d', strtotime($timeDateNow));
+        $hour = date('H', strtotime($timeDateNow));
+        $minute = date('i', strtotime($timeDateNow));
 
         $activity = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
                 $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
                 $join->where('list_connected_user.user_id', '=', $this->user_id);
             })
             ->where('merchant_id', '=', $mall->merchant_id)
-            ->where('date', '=', $mallDate)
-            ->where('hour', '=', $mallHour)
-            ->where('minute', '=', $mallMinute)
+            ->where('date', '=', $date)
+            ->where('hour', '=', $hour)
+            ->where('minute', '=', $minute)
             ->first();
 
         if(empty($activity)) {
             $newConnected = new ConnectedNow();
             $newConnected->merchant_id = $mall->merchant_id;
             $newConnected->customer_connected = 1;
-            $newConnected->date = $mallDate;
-            $newConnected->hour = $mallHour;
-            $newConnected->minute = $mallMinute;
+            $newConnected->date = $date;
+            $newConnected->hour = $hour;
+            $newConnected->minute = $minute;
             $newConnected->save();
 
             $newListConnectedUser = new ListConnectedUser();
