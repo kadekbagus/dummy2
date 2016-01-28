@@ -1414,6 +1414,9 @@ class CampaignReportAPIController extends ControllerAPI
     /**
      * Get the campaign spending
      *
+     * Request datetimes: UTC
+     * Campaign begin and end datetimes: Mall's timezone
+     *
      * @author Qosdil A. <qosdil@dominopos.com>
      * @todo Validations
      */
@@ -1421,7 +1424,7 @@ class CampaignReportAPIController extends ControllerAPI
     {
         // Mall ID
         $mallId = OrbitInput::get('current_mall');
-        $timezone = Mall::find($mallId)->timezone()->first()->timezone_name;
+        $timezone = Mall::find($mallId)->timezone->timezone_name;
 
         // Campaign ID
         $id = OrbitInput::get('campaign_id');
@@ -1430,15 +1433,12 @@ class CampaignReportAPIController extends ControllerAPI
         $type = OrbitInput::get('campaign_type');
 
         // Date intervals
-        $beginDateTime = OrbitInput::get('start_date');
-        $endDateTime = OrbitInput::get('end_date');
+        $requestBeginDateTime = OrbitInput::get('start_date');
+        $requestEndDateTime = OrbitInput::get('end_date');
 
         // Init Carbon
-        $carbonDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $beginDateTime);
-        $endTime = substr($endDateTime, 11, 8);
-
-        // Init outputs
-        $outputs = [];
+        $carbonLoop = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime);
+        $carbonLoopNextDay = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime)->addDay();
 
         // Get the campaign from database
         switch ($type) {
@@ -1455,15 +1455,18 @@ class CampaignReportAPIController extends ControllerAPI
 
         $campaign = $campaign->find($id);
 
+        $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
+        $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
+
         // Get the base cost
-        $baseCost = CampaignBasePrices::whereMerchantId($mallId)->whereCampaignType($type)->first()->price;
+        $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
 
         // Set the default initial cost
         $previousDayCost = 0;
 
         // In case the creation date is earlier than the first active date
         $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-            ->where('updated_at', '<', $campaign->begin_date)
+            ->where('updated_at', '<', $campaignBeginDateTime)
             ->orderBy('campaign_history_id', 'desc')->first();
 
         $activationActionId = CampaignHistoryActions::whereActionName('activate')->first()->campaign_history_action_id;
@@ -1492,23 +1495,19 @@ class CampaignReportAPIController extends ControllerAPI
                 $deactivationRowId = $deactivationRow->campaign_history_id;
             }
 
-            if ($activationRowId >= $deactivationRowId) {
+            if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
                 $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
             }
         }
 
-        $nextDay = Carbon::createFromFormat('Y-m-d', $carbonDateTime->toDateString())->addDay();
-
         // Loop
-        while ($carbonDateTime->toDateTimeString() <= $endDateTime) {
-            $dateTime = $carbonDateTime->toDateTimeString();
-            $dateTime2 = $carbonDateTime->toDateString().' '.$endTime;
-            $nextDayDateTime = $nextDay->toDateString().' '.$endTime;
-            $date = $carbonDateTime->toDateString();
+        while ($carbonLoop->toDateTimeString() <= $requestEndDateTime) {
+            $loopBeginDateTime = $carbonLoop->toDateTimeString();
+            $loopEndDateTime = $carbonLoopNextDay->toDateTimeString();
 
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                ->where('updated_at', '>=', $dateTime)
-                ->where('updated_at', '<=', $nextDayDateTime);
+                ->where('updated_at', '>=', $loopBeginDateTime)
+                ->where('updated_at', '<', $loopEndDateTime);
 
             $activationRow = $deactivationRow = $campaignLog;
 
@@ -1541,12 +1540,12 @@ class CampaignReportAPIController extends ControllerAPI
                     $deactivationRowId = $deactivationRow->campaign_history_id;
                 }
 
-                if ($activationRowId !== null && $deactivationRowId !== null && $activationRowId >= $deactivationRowId) {
+                if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
                     $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
                 }
 
             // Data not found, but the date is in the interval
-            } elseif ($dateTime >= $campaign->begin_date && $dateTime2 <= $campaign->end_date) {
+            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime < $campaignEndDateTime) {
                 $cost = $previousDayCost;
 
             // Data not found
@@ -1554,20 +1553,18 @@ class CampaignReportAPIController extends ControllerAPI
                 $cost = 0;
             }
 
-            $date = $carbonDateTime->setTimezone($timezone)->toDateString();
-
-            // Format cost as integer
-            $cost = (int) $cost;
-
             // Add to output array
-            $outputs[] = compact('date', 'cost');
+            $outputs[] = [
+                'date' => $carbonLoop->setTimezone($timezone)->toDateString(),
+                'cost' => (int) $cost, // Format cost as integer
+            ];
 
-            // Set back to UTC
-            $carbonDateTime->setTimezone('UTC');
+            // Set it back to UTC
+            $carbonLoop->setTimezone('UTC');
 
             // Increment day by 1
-            $carbonDateTime->addDay();
-            $nextDay->addDay();
+            $carbonLoop->addDay();
+            $carbonLoopNextDay->addDay();
         }
 
         $this->response->data = $outputs;
