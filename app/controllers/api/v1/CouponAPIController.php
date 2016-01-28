@@ -1813,16 +1813,6 @@ class CouponAPIController extends ControllerAPI
             $totalCoupons = RecordCounter::create($_coupons)->count();
             $listOfCoupons = $coupons->get();
 
-            foreach ($listOfCoupons as $coupon) {
-                if ($coupon->is_all_retailer === 'Y') {
-                    $tenants = Tenant::where('parent_id', '=', $mall->merchant_id)
-                        ->where('status', '=', 'active')
-                        ->get();
-
-                    $coupon->setRelation('tenants', $tenants);
-                }
-            }
-
             $data = new stdclass();
             $data->total_records = $totalCoupons;
             $data->returned_records = count($listOfCoupons);
