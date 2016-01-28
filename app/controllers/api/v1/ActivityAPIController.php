@@ -195,7 +195,7 @@ class ActivityAPIController extends ControllerAPI
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
                                             ->joinRetailer()
                                             ->joinNews()
-                                            ->joinPromotionNews();
+                                            ->joinPromotionNews()
                                             ->groupBy('activities.activity_id');
 
             // Filter by ids
@@ -1328,44 +1328,17 @@ class ActivityAPIController extends ControllerAPI
             Event::fire('orbit.activity.getactivity.after.validation', array($this, $validator));
 
             // Only shows activities which belongs to this merchant
-            $locationIds = [];
+            $locationIds = is_array($current_mall) ? $current_mall : (array)$current_mall;
             if ($user->isSuperAdmin() !== TRUE) {
                 // Filter by user location id
                 $locationIds = $this->getLocationIdsForUser($user);
-                if (count($locationIds) === 0) {
-                    // not authorized for any locations?
-                    $filterLocationIds = 'AND 1 = 0';
-                } else {
-                    $filterLocationIds = 'AND a.location_id IN (';
-                    $filterLocationIds .= join(',', array_fill(0, count($filterLocationIds), '?'));
-                    $filterLocationIds .= ')';
-                }
-            } else {
-                // by default allow all
-                $filterLocationIds = 'AND 1 = 1';
-                // except if filtered explicitly
-                OrbitInput::get('location_ids', function($paramLocationIds) use (&$filterLocationIds, &$locationIds) {
-                    $paramLocationIds = (array)$paramLocationIds;
-                    if (count($paramLocationIds) === 0) {
-                        $filterLocationIds = 'AND 1 = 0';
-                    } else {
-                        $filterLocationIds = 'AND a.location_id IN (';
-                        $filterLocationIds .= join(',', array_fill(0, count($paramLocationIds), '?'));
-                        $filterLocationIds .= ')';
-                    }
-                    $locationIds = $paramLocationIds;
-                });
             }
-            $mall = Mall::with('timezone')
-                ->whereIn('merchant_id', $locationIds)
-                ->first();
 
-            $mallTime = Carbon::now($mall->timezone->timezone_name);
-            $mallDate = date('Y-m-d', strtotime($mallTime));
-            $mallHour = date('H', strtotime($mallTime));
-            $mallMinute = date('i', strtotime($mallTime));
+            $mallDate = date('Y-m-d');
+            $mallHour = date('H');
+            $mallMinute = date('i');
 
-            $connected_now = ConnectedNow::where('merchant_id', '=', $locationIds)
+            $connected_now = ConnectedNow::whereIn('merchant_id', $locationIds)
                 ->where('date', '=', $mallDate)
                 ->where('hour', '=', $mallHour)
                 ->where('minute', '=', $mallMinute)

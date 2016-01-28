@@ -935,24 +935,23 @@ class Activity extends Eloquent
      */
     protected function saveToConnectedNow()
     {
-        $timeDateNow = date('Y-m-d H:i:s')
-        $date = date('Y-m-d', strtotime($timeDateNow));
-        $hour = date('H', strtotime($timeDateNow));
-        $minute = date('i', strtotime($timeDateNow));
+        $date = date('Y-m-d');
+        $hour = date('H');
+        $minute = date('i');
 
         $activity = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
                 $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
                 $join->where('list_connected_user.user_id', '=', $this->user_id);
             })
-            ->where('merchant_id', '=', $mall->merchant_id)
+            ->where('merchant_id', '=', $this->location_id)
             ->where('date', '=', $date)
             ->where('hour', '=', $hour)
             ->where('minute', '=', $minute)
             ->first();
 
-        if(empty($activity)) {
+        if (empty($activity)) {
             $newConnected = new ConnectedNow();
-            $newConnected->merchant_id = $mall->merchant_id;
+            $newConnected->merchant_id = $this->location_id;
             $newConnected->customer_connected = 1;
             $newConnected->date = $date;
             $newConnected->hour = $hour;
