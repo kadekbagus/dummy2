@@ -1414,6 +1414,9 @@ class CampaignReportAPIController extends ControllerAPI
     /**
      * Get the campaign spending
      *
+     * Request datetimes: UTC
+     * Campaign begin and end datetimes: Mall's timezone
+     *
      * @author Qosdil A. <qosdil@dominopos.com>
      * @todo Validations
      */
@@ -1452,6 +1455,9 @@ class CampaignReportAPIController extends ControllerAPI
 
         $campaign = $campaign->find($id);
 
+        $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
+        $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
+
         // Get the base cost
         $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
 
@@ -1460,7 +1466,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         // In case the creation date is earlier than the first active date
         $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-            ->where('updated_at', '<', $campaign->begin_date)
+            ->where('updated_at', '<', $campaignBeginDateTime)
             ->orderBy('campaign_history_id', 'desc')->first();
 
         $activationActionId = CampaignHistoryActions::whereActionName('activate')->first()->campaign_history_action_id;
@@ -1539,7 +1545,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
             // Data not found, but the date is in the interval
-            } elseif ($loopBeginDateTime >= $campaign->begin_date && $loopEndDateTime < $campaign->end_date) {
+            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime < $campaignEndDateTime) {
                 $cost = $previousDayCost;
 
             // Data not found
