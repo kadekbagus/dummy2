@@ -47,13 +47,11 @@ class NewPasswordMail
         $tokenUrl = sprintf($baseUrl, $token->token_value);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
-        $retailer = $user->userdetail->retailer;
         $data = array(
             'token'             => $token->token_value,
             'email'             => $user->user_email,
             'first_name'             => $user->user_firstname,
             'token_url'         => $tokenUrl,
-            'shop_name'         => $retailer->name,
             'cs_phone'          => $contactInfo['phone'],
             'cs_email'          => $contactInfo['email'],
             'cs_office_hour'    => $contactInfo['office_hour']
