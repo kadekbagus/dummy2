@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use \Carbon\Carbon as Carbon;
 
 class DashboardAPIController extends ControllerAPI
 {
@@ -664,55 +665,9 @@ class DashboardAPIController extends ControllerAPI
                 switch ($type) {
                     case 'news':
                         $campaign_group_name = 'News';
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = DB::table('campaign_page_views')
-                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
-                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
-                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
-                                ->where('campaign_page_views.location_id', '=', $merchant_id)
-                                ->where('campaign_page_views.campaign_id', '=', $object_id)
-                                ->where("campaign_page_views.created_at", '>=', $start_date)
-                                ->where("campaign_page_views.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
                         break;
                     case 'promotions':
                         $campaign_group_name = 'Promotion';
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = DB::table('campaign_page_views')
-                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
-                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
-                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
-                                ->where('campaign_page_views.location_id', '=', $merchant_id)
-                                ->where('campaign_page_views.campaign_id', '=', $object_id)
-                                ->where("campaign_page_views.created_at", '>=', $start_date)
-                                ->where("campaign_page_views.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
                         break;
                     case 'lucky_draws':
                         $campaign_group_name = 'Lucky Draw';
@@ -770,7 +725,7 @@ class DashboardAPIController extends ControllerAPI
                             IF(MOD(@running_id, {$interval}) <> 0, @grp_id := @grp_id, @grp_id := @grp_id + 1) AS grp_id,
                             (@running_id := @running_id + 1) AS running_id,
                             DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS start_date,
-                            DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number+{$interval} HOUR), '%Y-%m-%d %H:00:00') as end_date
+                            DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number+{$interval}-1 HOUR), '%Y-%m-%d %H:59:59') as end_date
                         FROM
                             (SELECT @running_id := 0, @grp_id := 0) AS init_q,
                             {$tablePrefix}sequence ts
