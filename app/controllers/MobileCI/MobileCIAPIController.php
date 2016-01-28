@@ -516,6 +516,7 @@ class MobileCIAPIController extends ControllerAPI
         $cookie_fname = isset($_COOKIE['orbit_firstname']) ? $_COOKIE['orbit_firstname'] : (isset($mac_model) ? $mac_model->user->user_firstname : '');
         $cookie_email = isset($_COOKIE['orbit_email']) ? $_COOKIE['orbit_email'] : (isset($mac_model) ? $mac_model->user->user_email : '');
         $cookie_lang = isset($_COOKIE['orbit_preferred_language']) ? $_COOKIE['orbit_preferred_language'] : '';
+        $cookie_login_from = isset($_COOKIE['login_from']) ? $_COOKIE['login_from'] : '';
         $display_name = '';
         $error = \Input::get('error') !== '' ? \Input::get('error') : 'No Error';
         $isInProgress = \Input::get('isInProgress') !== '' ? \Input::get('isInProgress') : false;
@@ -527,7 +528,6 @@ class MobileCIAPIController extends ControllerAPI
         if (! empty($cookie_fname)) {
             $display_name = $cookie_fname;
         }
-        $display_name = OrbitInput::get('fname', $display_name);
 
         $languages = [];
 
@@ -606,6 +606,7 @@ class MobileCIAPIController extends ControllerAPI
                 'bg' => $bg,
                 'landing_url' => $this->addParamsToUrl($landing_url, $internet_info),
                 'display_name' => $display_name,
+                'login_from' => $cookie_login_from,
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
                 'mac' => $mac,
@@ -623,6 +624,7 @@ class MobileCIAPIController extends ControllerAPI
                 'bg' => $bg,
                 'landing_url' => $this->addParamsToUrl($landing_url, $internet_info),
                 'display_name' => $display_name,
+                'login_from' => $cookie_login_from,
                 'languages' => $languages,
                 'start_button_login' => $start_button_label,
                 'mac' => $mac,
@@ -740,6 +742,10 @@ class MobileCIAPIController extends ControllerAPI
                     $query['from_captive'] = 'yes';
                 }
 
+                setcookie('orbit_email', $userEmail, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('login_from', 'Google', time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
                 // todo can we not do this directly
                 return Redirect::route('mobile-ci.signin', $query);
 
@@ -823,6 +829,10 @@ class MobileCIAPIController extends ControllerAPI
         if (\Input::get('from_captive') === 'yes') {
             $query['from_captive'] = 'yes';
         }
+
+        setcookie('orbit_email', $userEmail, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('login_from', 'Facebook', time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
         // todo can we not do this directly
         return Redirect::route('mobile-ci.signin', $query);
