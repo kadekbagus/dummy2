@@ -725,7 +725,7 @@ class DashboardAPIController extends ControllerAPI
                             IF(MOD(@running_id, {$interval}) <> 0, @grp_id := @grp_id, @grp_id := @grp_id + 1) AS grp_id,
                             (@running_id := @running_id + 1) AS running_id,
                             DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS start_date,
-                            DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number+{$interval} HOUR), '%Y-%m-%d %H:00:00') as end_date
+                            DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number+{$interval}-1 HOUR), '%Y-%m-%d %H:59:59') as end_date
                         FROM
                             (SELECT @running_id := 0, @grp_id := 0) AS init_q,
                             {$tablePrefix}sequence ts
