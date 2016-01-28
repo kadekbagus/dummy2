@@ -1435,7 +1435,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         // Init Carbon
         $carbonLoop = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime);
-        $requestEndTime = substr($requestEndDateTime, 11, 8);
+        $carbonLoopNextDay = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime)->addDay();
 
         // Get the campaign from database
         switch ($type) {
@@ -1494,17 +1494,14 @@ class CampaignReportAPIController extends ControllerAPI
             }
         }
 
-        $carbonLoopNextDay = Carbon::createFromFormat('Y-m-d', $carbonLoop->toDateString())->addDay();
-
         // Loop
         while ($carbonLoop->toDateTimeString() <= $requestEndDateTime) {
             $loopBeginDateTime = $carbonLoop->toDateTimeString();
-            $loopEndDateTime = $carbonLoop->toDateString().' '.$requestEndTime;
-            $nextDayDateTime = $carbonLoopNextDay->toDateString().' '.$requestEndTime;
+            $loopEndDateTime = $carbonLoopNextDay->toDateTimeString();
 
             $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->where('updated_at', '>=', $loopBeginDateTime)
-                ->where('updated_at', '<=', $nextDayDateTime);
+                ->where('updated_at', '<', $loopEndDateTime);
 
             $activationRow = $deactivationRow = $campaignLog;
 
@@ -1542,7 +1539,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
             // Data not found, but the date is in the interval
-            } elseif ($loopBeginDateTime >= $campaign->begin_date && $loopEndDateTime <= $campaign->end_date) {
+            } elseif ($loopBeginDateTime >= $campaign->begin_date && $loopEndDateTime < $campaign->end_date) {
                 $cost = $previousDayCost;
 
             // Data not found
