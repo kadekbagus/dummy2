@@ -194,7 +194,7 @@ class ActivityAPIController extends ControllerAPI
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
                                             ->joinRetailer()
                                             ->joinNews()
-                                            ->joinPromotionNews()
+                                            ->joinPromotionNews();
                                             ->groupBy('activities.activity_id');
 
             // Filter by ids
@@ -304,19 +304,6 @@ class ActivityAPIController extends ControllerAPI
             // Filter by matching object_name pattern
             OrbitInput::get('object_name_like', function($name) use ($activities) {
                 $activities->where('activities.object_name', 'like', "%{$name}%");
-            });
-
-            OrbitInput::get('product_names', function($names) use ($activities) {
-                $activities->whereIn('activities.product_name', $names);
-            });
-
-            // Filter by matching product_name pattern
-            OrbitInput::get('product_name_like', function($name) use ($activities) {
-                $activities->where('activities.product_name', 'like', "%$name%");
-            });
-
-            OrbitInput::get('promotion_names', function($names) use ($activities) {
-                $activities->whereIn('activities.promotion_name', $names);
             });
 
             // Filter by matching promotion_name pattern
