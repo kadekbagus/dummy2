@@ -7,7 +7,7 @@
 <div class="content-signin">
     <div class="slogan-container" id="slogan-container">
         <div class="logged-in-user hide">
-            Welcome, {{$display_name or $user_email}}
+            Welcome, {{$display_name}}
         </div>
         <div class="slogan">
             Feel The New Shopping Experience
@@ -17,12 +17,13 @@
         <div class="logged-in-container hide">
             <div class="row">
                 <div class="col-xs-12">
-                    <button type="button" class="btn btn-block btn-primary">Sign in</button>
+                    <button id="logged-in-signin-button" type="button" class="btn btn-block btn-primary">Sign in</button>
                 </div>
             </div>
+            <br/>
             <div class="row">
                 <div class="col-xs-12 text-center">
-                    <em>Not {{$display_name or $user_email}}?</em>
+                    <em>Not {{$display_name}}?</em>
                     <a id='not-me'>Click here</a>
                 </div>
             </div>
@@ -44,7 +45,7 @@
                                    value="{{{ $orbitToFacebookOriginValue }}}"/>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary icon-button facebook text-center">
+                            <button id="fbLoginButton" type="submit" class="btn btn-primary icon-button facebook text-center">
                                     <i class="fa fa-facebook fa-4x"></i>
                             </button>
                         </div>
@@ -59,7 +60,7 @@
                             <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-danger icon-button google text-center">
+                            <button id="googleLoginButton" type="submit" class="btn btn-danger icon-button google text-center">
                                 <i class="fa fa-google fa-4x"></i>
                             </button>
                         </div>
@@ -184,6 +185,11 @@
         $('#slogan-container, #social-media-wraper').addClass('hide');
     });
 
+    $('#formModal').on('shown.bs.modal', function () {
+        $('#signinForm #email').focus();
+        $('#signupForm #firstName').focus();
+    });
+
     $('#formModal').on('hide.bs.modal', function () {
         $('#slogan-container, #social-media-wraper').removeClass('hide');
     });
@@ -284,7 +290,6 @@
                 orbitSignUpForm.disableEnableAllButton();
 
                 orbitSignUpForm.switchForm('signup');
-                $('#signupForm #firstName').focus();
             },
             // Proceed the login for identified user
             userIdentified
@@ -411,9 +416,11 @@
         if (theForm === 'signin') {
             $('#signin-form-wrapper').removeClass('hide');
             $('#signup-form-wrapper').addClass('hide');
+            $('#signinForm #email').focus();
         } else {
             $('#signin-form-wrapper').addClass('hide');
             $('#signup-form-wrapper').removeClass('hide');
+            $('#signupForm #firstName').focus();
         }
     };
 
@@ -551,6 +558,22 @@
                 $('#btn-signin-form').removeAttr('disabled');
             } else {
                 $('#btn-signin-form').attr('disabled', 'disabled');
+            }
+        });
+
+        $('#logged-in-signin-button').click(function() {
+            var loginFrom = '{{$login_from}}';
+
+            switch (loginFrom) {
+                case 'Form':
+                    orbitSignUpForm.doLogin();
+                    break;
+                case 'Facebook':
+                    $('#fbLoginButton').click();
+                    break;
+                case 'Google':
+                    $('#googleLoginButton').click();
+                    break;
             }
         });
 
