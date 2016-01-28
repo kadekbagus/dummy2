@@ -101,6 +101,9 @@ class UserLoginNotifier
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
             }
 
+            // Update the user object based on the return value of external system
+            $insideTransactionFromNotifier = FALSE;
+
             Log::info('Orbit Integration -- Check Member -- Post Data: ' . serialize($postData));
 
             $this->poster->addHeader('Accept', 'application/json');
@@ -108,16 +111,16 @@ class UserLoginNotifier
             $this->poster->setUserAgent(Config::get('orbit-notifier.user-agent'));
             $this->poster->post($url, $postData);
 
+            // Lets try to decode the body
+            $httpBody = $this->poster->getResponse();
+            Log::info('Orbit Integration -- Check Member -- External response: ' . $httpBody);
+
             // We are only interesting in 200 OK status
             $httpCode = $this->poster->getTransferInfo('http_code');
             if ((int)$httpCode !== 200) {
                 $errorMessage = sprintf('Unexpected http response code %s, expected 200.', $httpCode);
                 throw new Exception($errorMessage);
             }
-
-            // Lets try to decode the body
-            $httpBody = $this->poster->getResponse();
-            Log::info('Orbit Integration -- Check Member -- External response: ' . $httpBody);
 
             $response = json_decode($httpBody);
 
@@ -181,9 +184,6 @@ class UserLoginNotifier
                 $errorMessage = $validator->messages()->first();
                 throw new Exception($errorMessage);
             }
-
-            // Update the user object based on the return value of external system
-            $insideTransactionFromNotifier = FALSE;
 
             if (! DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->beginTransaction();
@@ -251,14 +251,14 @@ class UserLoginNotifier
             $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
+            if (DB::connection()->getPdo()->inTransaction() && $insideTransactionFromNotifier === TRUE) {
                 DB::connection()->getPdo()->rollBack();
             }
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Notify user-login User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
+            if (DB::connection()->getPdo()->inTransaction() && $insideTransactionFromNotifier === TRUE) {
                 DB::connection()->getPdo()->rollBack();
             }
         }
