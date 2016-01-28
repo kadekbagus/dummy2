@@ -625,7 +625,7 @@ class DashboardAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-        
+
             // requesting single period
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
@@ -716,7 +716,7 @@ class DashboardAPIController extends ControllerAPI
 
             // Thomas sequence query
             $results = DB::select(DB::raw("
-                    SELECT 
+                    SELECT
                         p1.start_date,
                         p1.end_date,
                         SUM(IFNULL(p2.count_per_hour, 0)) AS score
@@ -734,13 +734,13 @@ class DashboardAPIController extends ControllerAPI
                         ) AS p1
                     LEFT JOIN
                         (
-                            SELECT 
+                            SELECT
                                 ocpv.campaign_id,
                                 DATE_FORMAT(ocpv.created_at, '%Y-%m-%d %H:00:00') AS view_date,
                                 COUNT(DATE_FORMAT(ocpv.created_at, '%Y-%m-%d %H:00:00')) AS count_per_hour
                             FROM {$tablePrefix}{$tableName} ocpv
                             LEFT JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                            WHERE 
+                            WHERE
                                 ocpv.created_at >= {$quote($start_date)}
                                 AND ocpv.location_id = {$quote($merchant_id)}
                                 AND ocpv.campaign_id = {$quote($object_id)}
@@ -1492,8 +1492,6 @@ class DashboardAPIController extends ControllerAPI
             $data = new stdclass();
             $data->total_records = $widgetTotal;
             $data->returned_records = count($widgetList);
-            $data->last_page = $lastPage;
-            $data->summary   = $summary;
             $data->records   = $widgetList;
 
             if ($widgetTotal === 0) {
