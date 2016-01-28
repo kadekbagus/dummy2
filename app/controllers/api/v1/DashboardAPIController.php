@@ -664,55 +664,9 @@ class DashboardAPIController extends ControllerAPI
                 switch ($type) {
                     case 'news':
                         $campaign_group_name = 'News';
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = DB::table('campaign_page_views')
-                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
-                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
-                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
-                                ->where('campaign_page_views.location_id', '=', $merchant_id)
-                                ->where('campaign_page_views.campaign_id', '=', $object_id)
-                                ->where("campaign_page_views.created_at", '>=', $start_date)
-                                ->where("campaign_page_views.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
                         break;
                     case 'promotions':
                         $campaign_group_name = 'Promotion';
-                        foreach ($periods as $period) {
-
-                            $start_date = $period['start_date'];
-                            $end_date = $period['end_date'];
-
-                            $query = DB::table('campaign_page_views')
-                                ->select(DB::raw("count(distinct {$tablePrefix}campaign_page_views.activity_id) as score"))
-                                ->leftJoin('campaign_group_names', 'campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
-                                ->where('campaign_group_names.campaign_group_name', '=', $campaign_group_name)
-                                ->where('campaign_page_views.location_id', '=', $merchant_id)
-                                ->where('campaign_page_views.campaign_id', '=', $object_id)
-                                ->where("campaign_page_views.created_at", '>=', $start_date)
-                                ->where("campaign_page_views.created_at", '<=', $end_date)
-                                ->first();
-
-                            $result = (int)$query->score;
-
-                            $responses[] = [
-                                'start_date' => $start_date,
-                                'end_date' => $end_date,
-                                'score' => $result
-                            ];
-                        }
                         break;
                     case 'lucky_draws':
                         $campaign_group_name = 'Lucky Draw';
