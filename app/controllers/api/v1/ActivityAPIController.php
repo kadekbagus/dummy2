@@ -1340,7 +1340,7 @@ class ActivityAPIController extends ControllerAPI
             $connected_now = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
                                 $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
                             })
-                            ->whereIn('merchant_id', ['EXs5F-LMP-------'])
+                            ->whereIn('merchant_id', $locationIds)
                             ->whereBetween('connected_now.created_at', [$start_time[0]->start_time, $end_time])
                             ->groupBy('list_connected_user.user_id')
                             ->get();
