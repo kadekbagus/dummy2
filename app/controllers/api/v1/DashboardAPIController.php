@@ -4697,14 +4697,11 @@ class DashboardAPIController extends ControllerAPI
                         ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->where(function ($r) use ($start_date, $end_date, $tablePrefix) {
-                                    $r->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                                      ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                                })
-                              ->orWhere(function ($s) use ($start_date, $end_date, $tablePrefix) {
-                                    $s->whereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$start_date])
-                                      ->orWhereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$end_date]);
-                                });
+                            $q->WhereRaw("DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')");
                         })
                         ->where('campaign_price.campaign_type', '=', 'news')
                         ->where('news.object_type', '=', 'news')
@@ -4717,14 +4714,11 @@ class DashboardAPIController extends ControllerAPI
                                 ->where('merchants.status', '=', 'active')
                                 ->where('news.mall_id', '=', $merchant_id)
                                 ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                                    $q->where(function ($r) use ($start_date, $end_date, $tablePrefix) {
-                                            $r->whereRaw("{$tablePrefix}news.begin_date between ? and ?", [$start_date, $end_date])
-                                              ->orWhereRaw("{$tablePrefix}news.end_date between ? and ?", [$start_date, $end_date]);
-                                        })
-                                      ->orWhere(function ($s) use ($start_date, $end_date, $tablePrefix) {
-                                            $s->whereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$start_date])
-                                              ->orWhereRaw(" ? between {$tablePrefix}news.begin_date and {$tablePrefix}news.end_date", [$end_date]);
-                                        });
+                                    $q->WhereRaw("DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                                      ->orWhereRaw("DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                                      ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
+                                      ->orWhereRaw("DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')")
+                                      ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d')");
                                 })
                                 ->where('campaign_price.campaign_type', '=', 'promotion')
                                 ->where('news.object_type', '=', 'promotion')
@@ -4737,14 +4731,11 @@ class DashboardAPIController extends ControllerAPI
                         ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
-                            $q->where(function ($r) use ($start_date, $end_date, $tablePrefix) {
-                                    $r->whereRaw("{$tablePrefix}promotions.begin_date between ? and ?", [$start_date, $end_date])
-                                      ->orWhereRaw("{$tablePrefix}promotions.end_date between ? and ?", [$start_date, $end_date]);
-                                })
-                              ->orWhere(function ($s) use ($start_date, $end_date, $tablePrefix) {
-                                    $s->whereRaw(" ? between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date", [$start_date])
-                                      ->orWhereRaw(" ? between {$tablePrefix}promotions.begin_date and {$tablePrefix}promotions.end_date", [$end_date]);
-                                });
+                            $q->WhereRaw("DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')")
+                              ->orWhereRaw("DATE_FORMAT('".$start_date."', '%Y-%m-%d') <= DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') and DATE_FORMAT('".$end_date."', '%Y-%m-%d') >= DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d')");
                         })
                         ->where('campaign_price.campaign_type', '=', 'coupon')
                         ->groupBy('promotions.promotion_id');
@@ -5196,7 +5187,9 @@ class DashboardAPIController extends ControllerAPI
             // activity name long should include source.
 
             $tablePrefix = DB::getTablePrefix();
-
+            $mall = App::make('orbit.empty.merchant');
+            $timezone = $this->getTimezone($merchant_id);
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
             // get id active in date range (news and promotion
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id, {$tablePrefix}news.status, {$tablePrefix}campaign_price.base_price, {$tablePrefix}news.object_type, DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') as begin_date, DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') as end_date, {$tablePrefix}campaign_price.base_price, COUNT({$tablePrefix}news_merchant.news_merchant_id) as tenantnow"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -5213,6 +5206,7 @@ class DashboardAPIController extends ControllerAPI
                         })
                         ->groupBy('news.news_id')
                         ->get();
+
 
             $coupon = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id, {$tablePrefix}promotions.status, {$tablePrefix}campaign_price.base_price, DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') as begin_date, DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') as end_date, {$tablePrefix}campaign_price.base_price, COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) as tenantnow"))
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
@@ -5234,7 +5228,7 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
-                                 DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') as created_at,
+                                date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') as created_at,
                                 (select 
                                         {$tablePrefix}campaign_history_actions.action_name
                                     from
@@ -5285,7 +5279,7 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
-                                 DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') as created_at,
+                                date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') as created_at,
                                 (select 
                                         {$tablePrefix}campaign_history_actions.action_name
                                     from
@@ -5362,20 +5356,29 @@ class DashboardAPIController extends ControllerAPI
                     foreach($newsQuery as $nq) {
                         if($nq->created_at <= $dateloop) {
                             $find = FALSE;
-                            if($nq->created_at >= $begin && $nq->created_at <= $end) {
-                                if ($nq->campaign_id === $newsidloop && $nq->created_at === $dateloop) { 
-                                    $find = TRUE;
+                            if ($nq->campaign_id === $newsidloop) {
+                                if($nq->created_at >= $begin && $nq->created_at <= $end) {
+                                    if ($nq->created_at === $dateloop) { 
+                                        $find = TRUE;
+                                        $campaignstatus = $nq->action_status;
+                                        $campaigntenant = $nq->tenants;
+                                        $statustemp = $nq->previous_status;
+                                        $tenanttemp = $nq->tenants;
+                                    } else {
+                                        $find = FALSE;
+                                        $campaignstatus = $nq->action_status;
+                                        $campaigntenant = $nq->tenants;
+                                        $statustemp = $nq->previous_status;
+                                        $tenanttemp = $nq->tenants;
+                                    }
+                                } else {
+                                    $find = FALSE;
                                     $campaignstatus = $nq->action_status;
                                     $campaigntenant = $nq->tenants;
                                     $statustemp = $nq->previous_status;
                                     $tenanttemp = $nq->tenants;
                                 }
-                                
-                            } elseif ($nq->campaign_id === $newsidloop) {
-                                $campaignstatus = $nq->action_status;
-                                $campaigntenant = $nq->tenants;
-                                $statustemp = $nq->previous_status;
-                                $tenanttemp = $nq->tenants;
+
                             }
                         }
                     }
@@ -5389,6 +5392,7 @@ class DashboardAPIController extends ControllerAPI
                         if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                             $spending = (int) $campaigntenant * $bp;
                             $totalspending += $spending;
+
                         }                    
                     }
                     $start->addDay();
@@ -5420,20 +5424,28 @@ class DashboardAPIController extends ControllerAPI
                     foreach($couponQuery as $cq) {
                         if($cq->created_at <= $dateloop) {
                             $find = FALSE;
-                            
-                            if ($cq->created_at >= $begin && $cq->created_at <= $end) {
-                                if ($cq->campaign_id === $couponidloop && $cq->created_at === $dateloop) { 
-                                    $find = TRUE;
+                            if ($cq->campaign_id === $newsidloop) {
+                                if($cq->created_at >= $begin && $cq->created_at <= $end) {
+                                    if ($cq->created_at === $dateloop) { 
+                                        $find = TRUE;
+                                        $campaignstatus = $cq->action_status;
+                                        $campaigntenant = $cq->tenants;
+                                        $statustemp = $cq->previous_status;
+                                        $tenanttemp = $cq->tenants;
+                                    } else {
+                                        $find = FALSE;
+                                        $campaignstatus = $cq->action_status;
+                                        $campaigntenant = $cq->tenants;
+                                        $statustemp = $cq->previous_status;
+                                        $tenanttemp = $cq->tenants;
+                                    }
+                                } else {
+                                    $find = FALSE;
                                     $campaignstatus = $cq->action_status;
                                     $campaigntenant = $cq->tenants;
                                     $statustemp = $cq->previous_status;
                                     $tenanttemp = $cq->tenants;
-                                } 
-                            } elseif ($cq->campaign_id === $couponidloop) { 
-                                $campaignstatus = $cq->action_status;
-                                $campaigntenant = $cq->tenants;
-                                $statustemp = $cq->previous_status;
-                                $tenanttemp = $cq->tenants;
+                                }
                             }
                         }
                     }
@@ -5517,5 +5529,21 @@ class DashboardAPIController extends ControllerAPI
         Event::fire('orbit.dashboard.getgeneralcustomerview.before.render', array($this, &$output));
 
         return $output;
+    }
+
+    protected function getTimezone($current_mall)
+    {
+        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+            ->where('merchants.merchant_id','=', $current_mall)
+            ->first();
+
+        return $timezone->timezone_name;
+    }
+
+    protected function getTimezoneOffset($timezone)
+    {
+        $dt = new DateTime('now', new DateTimeZone($timezone));
+
+        return $dt->format('P');
     }
 }

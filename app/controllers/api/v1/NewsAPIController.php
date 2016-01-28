@@ -935,7 +935,7 @@ class NewsAPIController extends ControllerAPI
                     $campaignhistory->campaign_cost = $rowcost->cost;
                     $campaignhistory->created_by = $this->api->user->user_id;
                     $campaignhistory->modified_by = $this->api->user->user_id;
-                    $campaignhistory->created_at = $deactivate;
+                    $campaignhistory->created_at = $utcenddatedb;
                     $campaignhistory->save();
                 }
 
