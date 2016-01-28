@@ -5194,8 +5194,6 @@ class DashboardAPIController extends ControllerAPI
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id, {$tablePrefix}news.status, {$tablePrefix}campaign_price.base_price, {$tablePrefix}news.object_type, DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') as begin_date, DATE_FORMAT({$tablePrefix}news.end_date, '%Y-%m-%d') as end_date, {$tablePrefix}campaign_price.base_price, COUNT({$tablePrefix}news_merchant.news_merchant_id) as tenantnow"))
                         ->join('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                        ->where('merchants.status', '=', 'active')
                         ->where('news.mall_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
                             $q->WhereRaw("DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}news.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
@@ -5211,8 +5209,6 @@ class DashboardAPIController extends ControllerAPI
             $coupon = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id, {$tablePrefix}promotions.status, {$tablePrefix}campaign_price.base_price, DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') as begin_date, DATE_FORMAT({$tablePrefix}promotions.end_date, '%Y-%m-%d') as end_date, {$tablePrefix}campaign_price.base_price, COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) as tenantnow"))
                         ->join('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->join('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
-                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                        ->where('merchants.status', '=', 'active')
                         ->where('promotions.merchant_id', '=', $merchant_id)
                         ->where(function ($q) use ($start_date, $end_date, $tablePrefix) {
                             $q->WhereRaw("DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') >= DATE_FORMAT('".$start_date."', '%Y-%m-%d') and DATE_FORMAT({$tablePrefix}promotions.begin_date, '%Y-%m-%d') <= DATE_FORMAT('".$end_date."', '%Y-%m-%d')")
@@ -5419,14 +5415,15 @@ class DashboardAPIController extends ControllerAPI
                 $statustemp = $couponid->status;
                 $tenanttemp = $couponid->tenantnow;
                 $start = new Carbon($start_date);
-
                 for ($x = 0; $x<=$diff; $x++) {
                     $dateloop = $start->toDateString();
 
                     foreach($couponQuery as $cq) {
+                        
                         if($cq->created_at <= $dateloop) {
+
                             $find = FALSE;
-                            if ($cq->campaign_id === $newsidloop) {
+                            if ($cq->campaign_id === $couponidloop) {
                                 if($cq->created_at >= $begin && $cq->created_at <= $end) {
                                     if ($cq->created_at === $dateloop) { 
                                         $find = TRUE;
@@ -5465,8 +5462,8 @@ class DashboardAPIController extends ControllerAPI
                     $start->addDay();
                 }
                 $totalcoupon += $totalspending;
+
             }
-            
             $total = $totalnews + $totalpromotion + $totalcoupon;
             if (empty($without)) {
                 if($total != 0) {
