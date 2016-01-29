@@ -5345,10 +5345,10 @@ class DashboardAPIController extends ControllerAPI
                 $end = $newsid->end_date;
                 $bp = $newsid->base_price;
                 $totalspending =  0;
-                $campaignstatus = $newsid->status;
-                $campaigntenant = $newsid->tenantnow;
-                $statustemp = $newsid->status;
-                $tenanttemp = $newsid->tenantnow;
+                $campaignstatus = "";
+                $campaigntenant = 0;
+                $statustemp = "";
+                $tenanttemp = 0;
                 $start = new Carbon($start_date);
                 for ($x = 0; $x<=$diff; $x++) {
                     $dateloop = $start->toDateString();
@@ -5412,10 +5412,10 @@ class DashboardAPIController extends ControllerAPI
                 $end = $couponid->end_date;
                 $bp = $couponid->base_price;
                 $totalspending =  0;
-                $campaignstatus = $couponid->status;
-                $campaigntenant = $couponid->tenantnow;
-                $statustemp = $couponid->status;
-                $tenanttemp = $couponid->tenantnow;
+                $campaignstatus = "";
+                $campaigntenant = 0;
+                $statustemp = "";
+                $tenanttemp = 0;
                 $start = new Carbon($start_date);
                 for ($x = 0; $x<=$diff; $x++) {
                     $dateloop = $start->toDateString();
