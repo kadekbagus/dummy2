@@ -2761,6 +2761,11 @@ class ActivityAPIController extends ControllerAPI
             $date_diff = Carbon::parse($start_date)->diff(Carbon::parse($end_date)->addMinute())->days;
             $start_date_minus_one_hour = Carbon::parse($start_date)->subHour();
 
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
+
             $activities = DB::select(DB::raw("
                 SELECT      
                     DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time, 
@@ -2789,7 +2794,7 @@ class ActivityAPIController extends ControllerAPI
                                     SELECT 
                                         DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
                                     FROM
-                                        orb_sequence ts
+                                        {$tablePrefix}sequence ts
                                     WHERE
                                         ts.sequence_number <= ({$date_diff} * 24)       
                                 ) AS s2
@@ -2799,10 +2804,11 @@ class ActivityAPIController extends ControllerAPI
                                         DATE_FORMAT(oct.logout_at, '%Y-%m-%d %H:00:00') AS logout_datehour,
                                         COUNT(DATE_FORMAT(oct.logout_at, '%Y-%m-%d %H:00:00')) AS logout_count
                                     FROM 
-                                        orb_connection_times oct
+                                        {$tablePrefix}connection_times oct
                                     WHERE
-                                        oct.logout_at IS NOT NULL
-                                        AND oct.login_at BETWEEN '{$start_date}' AND '{$end_date}'
+                                        oct.logout_at IS NOT NULL AND
+                                        oct.location_id = {$quote($location_id)} AND
+                                        oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
                                     GROUP BY logout_datehour
                                     ORDER BY logout_datehour
                                 ) AS p2
@@ -2818,7 +2824,7 @@ class ActivityAPIController extends ControllerAPI
                                     SELECT 
                                         DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
                                     FROM
-                                        orb_sequence ts
+                                        {$tablePrefix}sequence ts
                                     WHERE
                                         ts.sequence_number <= ({$date_diff} * 24)    
                                 ) AS s1
@@ -2828,10 +2834,11 @@ class ActivityAPIController extends ControllerAPI
                                         DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00') AS login_datehour,
                                         COUNT(DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00')) AS login_count
                                     FROM
-                                        orb_connection_times oct
+                                        {$tablePrefix}connection_times oct
                                     WHERE
-                                        oct.logout_at IS NOT NULL 
-                                        AND oct.login_at BETWEEN '{$start_date}' AND '{$end_date}'
+                                        oct.logout_at IS NOT NULL AND
+                                        oct.location_id = {$quote($location_id)} AND
+                                        oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
                                     GROUP BY login_datehour
                                     ORDER BY login_datehour
                                 ) AS p1
