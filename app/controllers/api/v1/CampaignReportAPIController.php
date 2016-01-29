@@ -896,24 +896,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             }
 
-            // dd($campaignHistory);
-
-  // [0]=>
-  // object(stdClass)#1570 (6) {
-  //   ["campaign_id"]=>
-  //   string(16) "KeAYOUxo8JtOadzE"
-  //   ["total_tenant"]=>
-  //   int(3)
-  //   ["base_price"]=>
-  //   string(7) "5000.00"
-  //   ["created_at"]=>
-  //   string(10) "2016-01-23"
-  //   ["action_status"]=>
-  //   string(8) "activate"
-  //   ["previous_status"]=>
-  //   string(8) "activate"
-  // }
-
             $start_date = new Carbon(substr($beginDate,0,10));
             $end_date = new Carbon(substr($now,0,10));
             $diff = $start_date->diffInDays($end_date);
@@ -924,23 +906,29 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get active date only
             $campaignDetailActive = array();
-            // if (count($campaignHistory) > 0 && ($campaignHistory[0]->action_status != null) ) {
-                // foreach ($campaignHistory as $key => $val) {
 
-            for ($x = 0; $x<=$diff; $x++) {
-                $dateloop = $start->toDateString();
-                $spending = 0;
-                foreach($campaignHistory as $nq) {
-                    if($nq->created_at <= $dateloop) {
-                        $find = FALSE;
-                        if ($nq->campaign_id === $campaign_id) {
-                            if($nq->created_at >= $begin && $nq->created_at <= $end) {
-                                if ($nq->created_at === $dateloop) {
-                                    $find = TRUE;
-                                    $campaignstatus = $nq->action_status;
-                                    $campaigntenant = $nq->total_tenant;
-                                    $statustemp = $nq->previous_status;
-                                    $tenanttemp = $nq->total_tenant;
+            if (count($campaignHistory) > 0) {
+                for ($x = 0; $x<=$diff; $x++) {
+                    $dateloop = $start->toDateString();
+                    $spending = 0;
+                    foreach($campaignHistory as $nq) {
+                        if($nq->created_at <= $dateloop) {
+                            $find = FALSE;
+                            if ($nq->campaign_id === $campaign_id) {
+                                if($nq->created_at >= $begin && $nq->created_at <= $end) {
+                                    if ($nq->created_at === $dateloop) {
+                                        $find = TRUE;
+                                        $campaignstatus = $nq->action_status;
+                                        $campaigntenant = $nq->total_tenant;
+                                        $statustemp = $nq->previous_status;
+                                        $tenanttemp = $nq->total_tenant;
+                                    } else {
+                                        $find = FALSE;
+                                        $campaignstatus = $nq->action_status;
+                                        $campaigntenant = $nq->total_tenant;
+                                        $statustemp = $nq->previous_status;
+                                        $tenanttemp = $nq->total_tenant;
+                                    }
                                 } else {
                                     $find = FALSE;
                                     $campaignstatus = $nq->action_status;
@@ -948,39 +936,31 @@ class CampaignReportAPIController extends ControllerAPI
                                     $statustemp = $nq->previous_status;
                                     $tenanttemp = $nq->total_tenant;
                                 }
-                            } else {
-                                $find = FALSE;
-                                $campaignstatus = $nq->action_status;
-                                $campaigntenant = $nq->total_tenant;
-                                $statustemp = $nq->previous_status;
-                                $tenanttemp = $nq->total_tenant;
-                            }
 
+                            }
                         }
                     }
-                }
-                if (!$find) {
-                    $campaignstatus = $statustemp;
-                    $campaigntenant = $tenanttemp;
-                }
-                if($dateloop >= $begin && $dateloop <= $end) {
-                    if($campaignstatus == 'activate' || $campaignstatus == 'active'){
-                        $spending = (int) $campaigntenant * $nq->base_price;
-                        // $totalSpendingCampaign += $spending;
-                        $campaignDetailActive[$x]['campaign_type'] = $campaign_type;
-                        $campaignDetailActive[$x]['campaign_id'] = $campaign_id;
-                        $campaignDetailActive[$x]['total_tenant'] = $campaigntenant;
-                        $campaignDetailActive[$x]['base_price'] = $nq->base_price;
-                        $campaignDetailActive[$x]['campaign_date'] = $dateloop;
-                        $campaignDetailActive[$x]['action_status'] = $campaignstatus;
-                        $campaignDetailActive[$x]['spending'] = $spending;
+                    if (!$find) {
+                        $campaignstatus = $statustemp;
+                        $campaigntenant = $tenanttemp;
                     }
+                    if($dateloop >= $begin && $dateloop <= $end) {
+                        if($campaignstatus == 'activate' || $campaignstatus == 'active'){
+                            $spending = (int) $campaigntenant * $nq->base_price;
+                            // $totalSpendingCampaign += $spending;
+                            $campaignDetailActive[$x]['campaign_type'] = $campaign_type;
+                            $campaignDetailActive[$x]['campaign_id'] = $campaign_id;
+                            $campaignDetailActive[$x]['total_tenant'] = $campaigntenant;
+                            $campaignDetailActive[$x]['base_price'] = $nq->base_price;
+                            $campaignDetailActive[$x]['campaign_date'] = $dateloop;
+                            $campaignDetailActive[$x]['action_status'] = $campaignstatus;
+                            $campaignDetailActive[$x]['spending'] = $spending;
+                        }
+                    }
+                    $start->addDay();
                 }
-                $start->addDay();
             }
 
-                // }
-            // }
 
             // Get detail campaign ( Mall, Unique User, Detail Campaign Page, Pop Up)
             foreach ($campaignDetailActive as $key => $valDetailActive) {
