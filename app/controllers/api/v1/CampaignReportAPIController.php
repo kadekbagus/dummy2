@@ -1497,6 +1497,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
         $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
+        $campaignEndDateTime2 = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->addMinute()->toDateTimeString();
 
         // Get the base cost
         $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
@@ -1595,7 +1596,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
             // Data not found, but the date is in the interval
-            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime < $campaignEndDateTime) {
+            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime <= $campaignEndDateTime2) {
                 $cost = $previousDayCost;
 
             // Data not found
