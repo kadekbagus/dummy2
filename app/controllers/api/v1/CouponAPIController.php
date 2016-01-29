@@ -982,6 +982,9 @@ class CouponAPIController extends ControllerAPI
                 }
 
                 $actionstatus = 'activate';
+                if ($status === 'inactive') {
+                    $actionstatus = 'deactivate';
+                }
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, FALSE)->first();
                 // campaign history status
