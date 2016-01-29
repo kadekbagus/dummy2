@@ -918,6 +918,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+            $login_from_cookie = isset($_COOKIE['login_from']) ? $_COOKIE['login_from'] : 'Form';
 
 
             if ($user->role->role_name === 'Consumer') {
@@ -926,7 +927,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
                 setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
                 setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('login_from', $login_from_cookie, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             }
 
             if (Config::get('orbit.shop.guest_mode')) {
