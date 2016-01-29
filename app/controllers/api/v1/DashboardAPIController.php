@@ -5379,15 +5379,14 @@ class DashboardAPIController extends ControllerAPI
                                     $tenanttemp = $nq->tenants;
                                 }
 
+                                if (! $find) { 
+                                    $campaignstatus = $statustemp;
+                                    $campaigntenant = $tenanttemp;
+                                }
                             }
                         }
                     }
 
-                    if (! $find) { 
-                        $campaignstatus = $statustemp;
-                        $campaigntenant = $tenanttemp;
-                    } 
-                    
                     if($dateloop >= $begin && $dateloop <= $end) {
                         if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                             $spending = (int) $campaigntenant * $bp;
@@ -5404,6 +5403,7 @@ class DashboardAPIController extends ControllerAPI
                 }
                 
             }
+
             $totalcoupon = 0;
             
             foreach ($coupon as $couponid) {
@@ -5447,14 +5447,15 @@ class DashboardAPIController extends ControllerAPI
                                     $statustemp = $cq->previous_status;
                                     $tenanttemp = $cq->tenants;
                                 }
+
+                                if (! $find) {
+                                    $campaignstatus = $statustemp;
+                                    $campaigntenant = $tenanttemp;
+                                }
                             }
                         }
                     }
 
-                    if (! $find) {
-                        $campaignstatus = $statustemp;
-                        $campaigntenant = $tenanttemp;
-                    }
                     if($dateloop >= $begin && $dateloop <= $end) {
                         if($campaignstatus === 'activate' || $campaignstatus === 'active' ){
                             $spending = (int) $campaigntenant * $bp;
