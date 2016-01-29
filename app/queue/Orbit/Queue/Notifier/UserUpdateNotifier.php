@@ -115,6 +115,9 @@ class UserUpdateNotifier
                 'updated_at' => $user->updated_at,
             ];
 
+            // Update the user object based on the return value of external system
+            $insideTransactionFromNotifier = FALSE;
+
             if ($notifyData['auth_type'] === 'basic') {
                 $this->poster->setAuthType();
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
@@ -122,10 +125,14 @@ class UserUpdateNotifier
 
             $this->poster->addHeader('Accept', 'application/json');
 
-            Log::info('Post data: ' . serialize($postData));
+            Log::info('Orbit Integration -- Update Member -- Post data: ' . serialize($postData));
 
             $this->poster->setUserAgent(Config::get('orbit-notifier.user-agent'));
             $this->poster->post($url, $postData);
+
+            // Lets try to decode the body
+            $httpBody = $this->poster->getResponse();
+            Log::info('Orbit Integration -- Update Member -- External response: ' . $httpBody);
 
             // We are only interesting in 200 OK status
             $httpCode = $this->poster->getTransferInfo('http_code');
@@ -133,10 +140,6 @@ class UserUpdateNotifier
                 $errorMessage = sprintf('Unexpected http response code %s, expected 200.', $httpCode);
                 throw new Exception($errorMessage);
             }
-
-            // Lets try to decode the body
-            $httpBody = $this->poster->getResponse();
-            Log::info('External response: ' . $httpBody);
 
             $response = json_decode($httpBody);
 
@@ -195,9 +198,6 @@ class UserUpdateNotifier
                 throw new Exception($errorMessage);
             }
 
-            // Update the user object based on the return value of external system
-            $insideTransactionFromNotifier = FALSE;
-
             if (! DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->beginTransaction();
                 $insideTransactionFromNotifier = TRUE;
@@ -235,7 +235,7 @@ class UserUpdateNotifier
                                                     ->first();
                 // Create new membership number if not exists
                 if (! is_object($membershipNumber)) {
-                    Log::info( sprintf('Membership number not found for user %s not found, creating new one.', $user->user_id) );
+                    Log::info( sprintf('Orbit Integration -- Update Member -- Membership number not found for user %s not found, creating new one.', $user->user_id) );
                     $membershipNumber = new MembershipNumber();
                     $membershipNumber->user_id = $user->user_id;
                     $membershipNumber->issuer_merchant_id = $retailer->merchant_id;
@@ -255,7 +255,7 @@ class UserUpdateNotifier
                 DB::connection()->getPdo()->commit();
             }
 
-            Log::info($message);
+            Log::info('Orbit Integration -- Update Member -- Result: OK -- Message: ' . $message);
             return [
                 'status' => 'ok',
                 'message' => $message
@@ -264,7 +264,7 @@ class UserUpdateNotifier
             $message = sprintf('[Job ID: `%s`] Notify user-update User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
+            if (DB::connection()->getPdo()->inTransaction() && $insideTransactionFromNotifier === TRUE) {
                 DB::connection()->getPdo()->rollBack();
             }
 
@@ -273,7 +273,7 @@ class UserUpdateNotifier
             $message = sprintf('[Job ID: `%s`] Notify user-update User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
+            if (DB::connection()->getPdo()->inTransaction() && $insideTransactionFromNotifier === TRUE) {
                 DB::connection()->getPdo()->rollBack();
             }
 
