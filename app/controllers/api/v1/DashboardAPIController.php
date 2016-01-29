@@ -5236,7 +5236,7 @@ class DashboardAPIController extends ControllerAPI
                                         date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc 
+                                    order by DATE_FORMAT(a.created_at, '%Y-%m-%d') desc, {$tablePrefix}campaign_history_actions.action_name  
                                     limit 1) as action_status,
                                 (select 
                                         {$tablePrefix}campaign_history_actions.action_name
@@ -5288,7 +5288,7 @@ class DashboardAPIController extends ControllerAPI
                                         date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc 
+                                    order by DATE_FORMAT(a.created_at, '%Y-%m-%d') desc, {$tablePrefix}campaign_history_actions.action_name 
                                     limit 1) as action_status,
                                 (select 
                                         {$tablePrefix}campaign_history_actions.action_name
@@ -5325,7 +5325,7 @@ class DashboardAPIController extends ControllerAPI
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
                             group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') , {$tablePrefix}campaign_histories.campaign_id"));
-
+    
             $data = array();
 
             $totalnews = 0;
