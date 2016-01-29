@@ -174,6 +174,13 @@ class UserAPIController extends ControllerAPI
             Event::fire('orbit.user.postnewuser.after.save', array($this, $newuser));
             $this->response->data = $newuser;
 
+            $acq = new UserAcquisition();
+            $acq->user_id = $newuser->user_id;
+            $acq->acquirer_id = $mallId;
+            // @todo remove this hardcoded value of signup_via
+            $acq->signup_via = 'form';
+            $acq->save();
+
             // Commit the changes
             $this->commit();
 
