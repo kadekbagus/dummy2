@@ -5402,7 +5402,7 @@ class DashboardAPIController extends ControllerAPI
                 } else {
                     $totalpromotion += $totalspending;
                 }
-                $a[$newsidloop] = $totalspending;
+                
             }
             $totalcoupon = 0;
             
