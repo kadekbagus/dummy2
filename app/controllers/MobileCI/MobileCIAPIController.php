@@ -344,92 +344,211 @@ class MobileCIAPIController extends ControllerAPI
             $widget_singles->coupon = NULL;
             $widget_singles->luckydraw = NULL;
 
+            $new_offset = Config::get('orbit.shop.widget_new_threshold', 1); //in days
+            $now = Carbon::now($retailer->timezone->timezone_name);
+            $new_date = Carbon::now($retailer->timezone->timezone_name)->subDays($new_offset);
+
             foreach ($widgets as $widget) {
                 if ($widget->widget_type == 'tenant') {
-                    $widget_singles->tenant = $widget;
-                    // cek if any language active
-                    if (!empty($alternateLanguage) && !empty($widget_singles->tenant)) {
-                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                            ->where('widget_id', $widget_singles->tenant->widget_id)->first();
-                        if (!empty($widget_singles_tenant)) {
-                            foreach (['widget_slogan'] as $field) {
-                                //if field translation empty or null, value of field back to english (default)
-                                if (isset($widget_singles_tenant->{$field}) && $widget_singles_tenant->{$field} !== '') {
-                                    $widget_singles->tenant->{$field} = $widget_singles_tenant->{$field};
-                                }
-                            }
+                    // get all tenant count
+                    $tenantsCount = Tenant::active()
+                        ->where('parent_id', $retailer->merchant_id)
+                        ->count();
 
+                    // get all new tenant after new_date
+                    $newTenantsCount = Tenant::active()
+                        ->where('parent_id', $retailer->merchant_id)
+                        ->whereRaw("created_at between ? and ?", [$new_date, $now])
+                        ->count();
+
+                    $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_tenants_directory.png';
+                            } else {
+                                $widget->image = $media->path;
+                            }
                         }
                     }
+
+                    $widget->item_count = $tenantsCount;
+                    $widget->new_item_count = $newTenantsCount > 9 ? '9+' : $newTenantsCount;
+                    $widget->display_title = Lang::get('mobileci.widgets.tenant');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.tenants_single');
+                    }
+                    $widget->url = 'tenants';
                 }
                 if ($widget->widget_type == 'promotion') {
-                    $widget_singles->promotion = $widget;
-                    // cek if any language active
-                    if (!empty($alternateLanguage) && !empty($widget_singles->promotion)) {
-                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                            ->where('widget_id', $widget_singles->promotion->widget_id)->first();
-                        if (!empty($widget_singles_tenant)) {
-                            foreach (['widget_slogan'] as $field) {
-                                //if field translation empty or null, value of field back to english (default)
-                                if (isset($widget_singles_tenant->{$field}) && $widget_singles_tenant->{$field} !== '') {
-                                    $widget_singles->promotion->{$field} = $widget_singles_tenant->{$field};
-                                }
+                    // get all news count filter by age range and gender
+                    $promotionsCount = \News::active()
+                                ->where('mall_id', $retailer->merchant_id)
+                                ->where('object_type', 'promotion')
+                                ->whereRaw("? between begin_date and end_date", [$now])
+                                ->count();
+
+                    // get all new news after new_date filter by age range and gender
+                    $newPromotionsCount = \News::active()
+                                ->where('mall_id', $retailer->merchant_id)
+                                ->where('object_type', 'promotion')
+                                ->whereRaw("? between begin_date and end_date", [$now])
+                                ->whereRaw("begin_date between ? and ?", [$new_date, $now])
+                                ->count();
+
+                    $widget->image = 'mobile-ci/images/default_promotion.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_promotion.png';
+                            } else {
+                                $widget->image = $media->path;
                             }
                         }
                     }
+
+                    $widget->item_count = $promotionsCount;
+                    $widget->new_item_count = $newPromotionsCount > 9 ? '9+' : $newPromotionsCount;
+                    $widget->display_title = Lang::get('mobileci.widgets.promotion');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.promotions_single');
+                    }
+                    $widget->url = 'mallpromotions';
                 }
                 if ($widget->widget_type == 'news') {
-                    $widget_singles->news = $widget;
-                    // cek if any language active
-                    if (!empty($alternateLanguage) && !empty($widget_singles->news)) {
-                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                            ->where('widget_id', $widget_singles->news->widget_id)->first();
-                        if (!empty($widget_singles_tenant)) {
-                            foreach (['widget_slogan'] as $field) {
-                                //if field translation empty or null, value of field back to english (default)
-                                if (isset($widget_singles_tenant->{$field}) && $widget_singles_tenant->{$field} !== '') {
-                                    $widget_singles->news->{$field} = $widget_singles_tenant->{$field};
-                                }
+                    // get all news count filter by age range and gender
+                    $newsCount = \News::active()
+                                ->where('mall_id', $retailer->merchant_id)
+                                ->where('object_type', 'news')
+                                ->whereRaw("? between begin_date and end_date", [$now])
+                                ->count();
+
+                    // get all new news after new_date filter by age range and gender
+                    $newNewsCount = \News::active()
+                                ->where('mall_id', $retailer->merchant_id)
+                                ->where('object_type', 'news')
+                                ->whereRaw("? between begin_date and end_date", [$now])
+                                ->whereRaw("begin_date between ? and ?", [$new_date, $now])
+                                ->count();
+
+                    $widget->image = 'mobile-ci/images/default_news.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_news.png';
+                            } else {
+                                $widget->image = $media->path;
                             }
                         }
                     }
+
+                    $widget->item_count = $newsCount;
+                    $widget->new_item_count = $newNewsCount > 9 ? '9+' : $newNewsCount;
+                    $widget->display_title = Lang::get('mobileci.widgets.news');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.newss_single');
+                    }
+                    $widget->url = 'mallnews';
                 }
                 if ($widget->widget_type == 'coupon') {
-                    $widget_singles->coupon = $widget;
-                    // cek if any language active
-                    if (!empty($alternateLanguage) && !empty($widget_singles->coupon)) {
-                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                            ->where('widget_id', $widget_singles->coupon->widget_id)->first();
-                        if (!empty($widget_singles_tenant)) {
-                            foreach (['widget_slogan'] as $field) {
-                                //if field translation empty or null, value of field back to english (default)
-                                if (isset($widget_singles_tenant->{$field}) && $widget_singles_tenant->{$field} !== '') {
-                                    $widget_singles->coupon->{$field} = $widget_singles_tenant->{$field};
-                                }
+                    $coupons = DB::select(
+                        DB::raw(
+                            'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
+                        inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                        WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
+                            AND p.merchant_id = :merchantid
+                            AND ic.user_id = :userid
+                            ORDER BY RAND()' // randomize
+                        ),
+                        array('merchantid' => $retailer->merchant_id, 'userid' => $user->user_id)
+                    );
+                    $couponsCount = count($coupons);
+
+                    $newCoupons = DB::select(
+                        DB::raw(
+                            'SELECT *, p.image AS promo_image FROM ' . DB::getTablePrefix() . 'promotions p
+                        inner join ' . DB::getTablePrefix() . 'promotion_rules pr on p.promotion_id = pr.promotion_id AND p.is_coupon = "Y" AND p.status = "active"
+                        inner join ' . DB::getTablePrefix() . 'issued_coupons ic on p.promotion_id = ic.promotion_id AND ic.status = "active"
+                        WHERE ic.expired_date >= "' . Carbon::now($retailer->timezone->timezone_name). '"
+                            AND p.merchant_id = :merchantid
+                            AND ic.user_id = :userid
+                            AND ic.issued_date between :new_date and :now
+                            ORDER BY RAND()' // randomize
+                        ),
+                        array(
+                            'merchantid' => $retailer->merchant_id,
+                            'userid' => $user->user_id,
+                            'new_date' => $new_date,
+                            'now' => $now
+                        )
+                    );
+                    $newCouponsCount = count($newCoupons);
+
+                    $widget->image = 'mobile-ci/images/default_coupon.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_coupon.png';
+                            } else {
+                                $widget->image = $media->path;
                             }
                         }
                     }
+
+                    $widget->item_count = $couponsCount;
+                    $widget->new_item_count = $newCouponsCount > 9 ? '9+' : $newCouponsCount;
+                    $widget->display_title = Lang::get('mobileci.widgets.coupon');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.coupons_single');
+                    }
+                    $widget->url = 'mallcoupons';
                 }
                 if ($widget->widget_type == 'lucky_draw') {
-                    $widget_singles->luckydraw = $widget;
-                    // cek if any language active
-                    if (!empty($alternateLanguage) && !empty($widget_singles->luckydraw)) {
-                        $widget_singles_tenant = \WidgetTranslation::excludeDeleted()
-                            ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
-                            ->where('widget_id', $widget_singles->luckydraw->widget_id)->first();
-                        if (!empty($widget_singles_tenant)) {
-                            foreach (['widget_slogan'] as $field) {
-                                //if field translation empty or null, value of field back to english (default)
-                                if (isset($widget_singles_tenant->{$field}) && $widget_singles_tenant->{$field} !== '') {
-                                    $widget_singles->luckydraw->{$field} = $widget_singles_tenant->{$field};
-                                }
+                    $luckydrawsCount = LuckyDraw::active()
+                        ->where('mall_id', $retailer->merchant_id)
+                        ->whereRaw("? between start_date and grace_period_date", [$now])
+                        ->count();
+
+                    $newLuckydrawsCount = LuckyDraw::active()
+                        ->where('mall_id', $retailer->merchant_id)
+                        ->whereRaw("? between start_date and grace_period_date", [$now])
+                        ->whereRaw("start_date between ? and ?", [$new_date, $now])
+                        ->count();
+
+                    $widget->image = 'mobile-ci/images/default_lucky_number.png';
+
+                    foreach ($widget->media as $media) {
+                        if ($media->media_name_long === 'home_widget_orig') {
+                            if (empty($media->path)) {
+                                $widget->image = 'mobile-ci/images/default_lucky_number.png';
+                            } else {
+                                $widget->image = $media->path;
                             }
                         }
                     }
+
+                    $widget->item_count = $luckydrawsCount;
+                    $widget->new_item_count = $newLuckydrawsCount > 9 ? '9+' : $newLuckydrawsCount;
+                    $widget->display_title = Lang::get('mobileci.widgets.lucky_draw');
+                    if ($widget->item_count > 1) {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws');
+                    } else {
+                        $widget->display_sub_title = Lang::get('mobileci.widgets.lucky_draws_single');
+                    }
+                    $widget->url = 'luckydraws';
                 }
             }
 
