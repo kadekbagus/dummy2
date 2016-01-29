@@ -1570,6 +1570,11 @@ class CampaignReportAPIController extends ControllerAPI
                     // If there is an activation today, any deactivation won't be affected
                     $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
 
+                    // Cancel
+                    if ($campaignLog->updated_at->toDateTimeString() < $campaignBeginDateTime) {
+                        $cost = 0;
+                    }
+
                     $activationRowId = $activationRow->campaign_history_id;
                 }
 
