@@ -122,8 +122,9 @@ class UserAPIController extends ControllerAPI
             // we need this for the registration activity.
             $captive_location = null;
             if ($is_new_consumer_from_captive) {
-                $captive_location = Retailer::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
-                if (!isset($captive_location)) {
+                $captive_location = Mall::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
+
+                if (! isset($captive_location)) {
                     OrbitShopAPI::throwInvalidArgument('cannot find captive portal location');
                 }
             }
@@ -188,6 +189,7 @@ class UserAPIController extends ControllerAPI
             Event::fire('orbit.user.postnewuser.after.commit', array($this, $newuser));
 
             if ($is_new_consumer_from_captive) {
+                Log::info(sprintf('-- API/USER/NEW -- Saving registration from captive for user %s', $newuser->user_email));
                 $registration_activity = Activity::mobileci()
                     ->setActivityType('registration')
                     ->setLocation($captive_location)
@@ -265,7 +267,7 @@ class UserAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
 
             // Rollback the changes
             $this->rollBack();
@@ -3311,6 +3313,22 @@ class UserAPIController extends ControllerAPI
 
             // get current mall id and its mall group
             $currentRetailerId = $parameters[0];
+
+            if (empty($currentRetailerId)) {
+                $domainName = $_SERVER['HTTP_HOST'];
+                Log::info( sprintf('-- API/USER/NEW -- Missing current_mall trying to guess from %s', $domainName) );
+
+                // try to guess from domain name
+                $mallFromDomain = Setting::getMallByDomain($domainName);
+                Log::info( sprintf('-- API/USER/NEW -- Mall ID/Name get from guessing: %s/%s', $mallFromDomain->merchant_id, $mallFromDomain->name));
+
+                if (! $mallFromDomain) {
+                    $errorMessage = 'Mall is not found.';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $currentRetailerId = $mallFromDomain->merchant_id;
+            }
+
             $retailer = Mall::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
                                 ->first();
