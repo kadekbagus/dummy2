@@ -249,7 +249,14 @@
                     toastr.error(response.message);
                     return;
                 }
-
+                var shiftHostName = window.location.hostname.split('.');
+                    shiftHostName.shift();
+                var baseDomain = shiftHostName.join('.');
+                $.cookie('login_from', 'Form', {
+                    path: '/',
+                    expires: 3650,
+                    domain: baseDomain
+                });
                 // Cloud redirection?
                 if (response.data.redirect_to) {
                     document.location = response.data.redirect_to;
