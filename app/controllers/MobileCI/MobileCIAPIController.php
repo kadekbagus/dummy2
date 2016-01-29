@@ -5,6 +5,7 @@
  */
 use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
+use Orbit\Helper\Net\Domain;
 use Orbit\CloudMAC;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -861,9 +862,11 @@ class MobileCIAPIController extends ControllerAPI
                     $query['from_captive'] = 'yes';
                 }
 
-                setcookie('orbit_email', $userEmail, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-                setcookie('login_from', 'Google', time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+                setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('login_from', 'Google', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
                 // todo can we not do this directly
                 return Redirect::route('mobile-ci.signin', $query);
@@ -949,9 +952,11 @@ class MobileCIAPIController extends ControllerAPI
             $query['from_captive'] = 'yes';
         }
 
-        setcookie('orbit_email', $userEmail, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-        setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
-        setcookie('login_from', 'Facebook', time() + $expireTime, '/', $this->get_domain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+
+        setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('orbit_firstname', $firstName, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+        setcookie('login_from', 'Facebook', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
         // todo can we not do this directly
         return Redirect::route('mobile-ci.signin', $query);
@@ -3868,8 +3873,8 @@ class MobileCIAPIController extends ControllerAPI
             $promotions = \News::active()
                             ->where('mall_id', $retailer->merchant_id)
                             ->where('object_type', 'promotion')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime]);                         
-            
+                            ->whereRaw("? between begin_date and end_date", [$mallTime]);
+
             $_promotions = clone $promotions;
 
             // Get the take args
