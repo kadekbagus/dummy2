@@ -80,6 +80,22 @@ class UserAPIController extends ControllerAPI
 
             if ($is_new_consumer_from_captive) {
                 $mallId = Config::get('orbit.shop.id');
+
+                if (empty($mallId)) {
+                    $domainName = $_SERVER['HTTP_HOST'];
+                    Log::info( sprintf('-- API/USER/NEW -- Missing current_mall trying to guess from %s', $domainName) );
+
+                    // try to guess from domain name
+                    $mallFromDomain = Setting::getMallByDomain($domainName);
+                    Log::info( sprintf('-- API/USER/NEW -- Mall ID/Name get from guessing: %s/%s', $mallFromDomain->merchant_id, $mallFromDomain->name));
+
+                    if (! $mallFromDomain) {
+                        $errorMessage = 'Mall is not found.';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    $mallId = $mallFromDomain->merchant_id;
+                }
+
                 $validator = Validator::make(
                     array(
                         'email'     => $email,
@@ -3320,22 +3336,6 @@ class UserAPIController extends ControllerAPI
 
             // get current mall id and its mall group
             $currentRetailerId = $parameters[0];
-
-            if (empty($currentRetailerId)) {
-                $domainName = $_SERVER['HTTP_HOST'];
-                Log::info( sprintf('-- API/USER/NEW -- Missing current_mall trying to guess from %s', $domainName) );
-
-                // try to guess from domain name
-                $mallFromDomain = Setting::getMallByDomain($domainName);
-                Log::info( sprintf('-- API/USER/NEW -- Mall ID/Name get from guessing: %s/%s', $mallFromDomain->merchant_id, $mallFromDomain->name));
-
-                if (! $mallFromDomain) {
-                    $errorMessage = 'Mall is not found.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-                $currentRetailerId = $mallFromDomain->merchant_id;
-            }
-
             $retailer = Mall::select('parent_id')
                                 ->where('merchant_id', $currentRetailerId)
                                 ->first();
