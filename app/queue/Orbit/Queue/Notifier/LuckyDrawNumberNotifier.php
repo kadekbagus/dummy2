@@ -136,7 +136,7 @@ class LuckyDrawNumberNotifier
             Log::info('External HTTP Response: ' . $httpBody);
 
             if ((int)$httpCode !== 200) {
-                $errorMessage = sprintf('Unexpected http response code %s, expected 200.', $httpCode);
+                $errorMessage = sprintf('External response: Unexpected http response code %s, expected 200.', $httpCode);
                 throw new Exception($errorMessage);
             }
 
@@ -144,7 +144,7 @@ class LuckyDrawNumberNotifier
 
             // Non-Zero code means an error
             if ((string)$response->code !== '0') {
-                $errorMessage = sprintf('Unexpected response code %s, expected 0 (zero).', $response->code);
+                $errorMessage = sprintf('External response: Unexpected response code %s, expected 0 (zero).', $response->code);
                 throw new Exception($errorMessage);
             }
 
