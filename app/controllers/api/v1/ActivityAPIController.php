@@ -2724,73 +2724,102 @@ class ActivityAPIController extends ControllerAPI
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
 
-            $activities = DB::select( DB::raw("
-                    SELECT
-                        SUM(case when starthr <= '00' and endhr >= '00' then 1 else 0 end) as '0',
-                        SUM(case when starthr <= '01' and endhr >= '01' then 1 else 0 end) as '1',
-                        SUM(case when starthr <= '02' and endhr >= '02' then 1 else 0 end) as '2',
-                        SUM(case when starthr <= '03' and endhr >= '03' then 1 else 0 end) as '3',
-                        SUM(case when starthr <= '04' and endhr >= '04' then 1 else 0 end) as '4',
-                        SUM(case when starthr <= '05' and endhr >= '05' then 1 else 0 end) as '5',
-                        SUM(case when starthr <= '06' and endhr >= '06' then 1 else 0 end) as '6',
-                        SUM(case when starthr <= '07' and endhr >= '07' then 1 else 0 end) as '7',
-                        SUM(case when starthr <= '08' and endhr >= '08' then 1 else 0 end) as '8',
-                        SUM(case when starthr <= '09' and endhr >= '09' then 1 else 0 end) as '9',
-                        SUM(case when starthr <= '10' and endhr >= '10' then 1 else 0 end) as '10',
-                        SUM(case when starthr <= '11' and endhr >= '11' then 1 else 0 end) as '11',
-                        SUM(case when starthr <= '12' and endhr >= '12' then 1 else 0 end) as '12',
-                        SUM(case when starthr <= '13' and endhr >= '13' then 1 else 0 end) as '13',
-                        SUM(case when starthr <= '14' and endhr >= '14' then 1 else 0 end) as '14',
-                        SUM(case when starthr <= '15' and endhr >= '15' then 1 else 0 end) as '15',
-                        SUM(case when starthr <= '16' and endhr >= '16' then 1 else 0 end) as '16',
-                        SUM(case when starthr <= '17' and endhr >= '17' then 1 else 0 end) as '17',
-                        SUM(case when starthr <= '18' and endhr >= '18' then 1 else 0 end) as '18',
-                        SUM(case when starthr <= '19' and endhr >= '19' then 1 else 0 end) as '19',
-                        SUM(case when starthr <= '20' and endhr >= '20' then 1 else 0 end) as '20',
-                        SUM(case when starthr <= '21' and endhr >= '21' then 1 else 0 end) as '21',
-                        SUM(case when starthr <= '22' and endhr >= '22' then 1 else 0 end) as '22',
-                        SUM(case when starthr <= '23' and endhr >= '23' then 1 else 0 end) as '23'
-                    FROM (
-                        SELECT
-                            activity_name, activity_name_long, activity_type, user_email, role, location_id, session_id,
-                            DATE_FORMAT(MIN(created_at), '%H') starthr, DATE_FORMAT(MAX(created_at), '%H') endhr
-                        FROM {$tablePrefix}activities WHERE 1=1
-                            AND created_at BETWEEN '" . $start_date . "' AND '" . $end_date . "'
-                            AND location_id = '" . $current_mall . "'
-                            AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                            AND (role = 'Consumer' OR role = 'Guest')
-                            AND session_id IS NOT NULL
-                        GROUP BY session_id
-                    )  as A
-                ") );
+            $date_diff = Carbon::parse($start_date)->diff(Carbon::parse($end_date)->addMinute())->days;
+            $start_date_minus_one_hour = Carbon::parse($start_date)->subHour();
 
-            // Re-Format for response result
-            $dataArray = array();
-            $score = 0;
-            for ($i=0; $i <= 23 ; $i++) {
-                $starttime = $i;
-                $endtime = $i + 1;
-                if ($starttime < 10) {
-                    $starttime = '0'.$i;
-                }
-                if ($endtime < 10) {
-                    $endtime = '0'.$endtime;
-                }
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
-                // handling null score
-                if ($activities[0]->$i !== null) {
-                    $score = $activities[0]->$i;
-                }
-
-                $dataArray[$i]['start_time'] = $starttime.':00';
-                $dataArray[$i]['end_time'] = $endtime.':00';
-                $dataArray[$i]['score'] = $score;
-            }
+            $activities = DB::select(DB::raw("
+                SELECT      
+                    DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time, 
+                    DATE_FORMAT(DATE_ADD(ppp1.comp_date, INTERVAL 1 HOUR),'%H:00') AS end_time, 
+                    SUM(ppp1.connected_hourly) AS score
+                FROM
+                    (
+                    SELECT 
+                        pp1.comp_date,
+                        pp2.login_count, 
+                        pp1.delayed_logout_count, 
+                        @conn_hour, 
+                        (@conn_hour := (@conn_hour + pp2.login_count) - pp1.delayed_logout_count) AS connected_hourly,
+                        pp1.logout_count 
+                    FROM
+                        (SELECT @conn_hour := 0) AS init_var_main,
+                        (
+                            SELECT 
+                                s2.comp_date,
+                                IFNULL(p2.logout_count, 0) AS logout_count,
+                                @delayed_lo_count AS delayed_logout_count,
+                                (@delayed_lo_count := IFNULL(p2.logout_count, 0)) 
+                            FROM
+                                (SELECT @delayed_lo_count := 0) AS init_var_sp2,
+                                (
+                                    SELECT 
+                                        DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
+                                    FROM
+                                        {$tablePrefix}sequence ts
+                                    WHERE
+                                        ts.sequence_number <= ({$date_diff} * 24)       
+                                ) AS s2
+                            LEFT JOIN
+                                (
+                                    SELECT 
+                                        DATE_FORMAT(oct.logout_at, '%Y-%m-%d %H:00:00') AS logout_datehour,
+                                        COUNT(DATE_FORMAT(oct.logout_at, '%Y-%m-%d %H:00:00')) AS logout_count
+                                    FROM 
+                                        {$tablePrefix}connection_times oct
+                                    WHERE
+                                        oct.logout_at IS NOT NULL AND
+                                        oct.location_id = {$quote($location_id)} AND
+                                        oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
+                                    GROUP BY logout_datehour
+                                    ORDER BY logout_datehour
+                                ) AS p2
+                            ON s2.comp_date = p2.logout_datehour
+                        ) AS pp1
+                    LEFT JOIN
+                        (
+                            SELECT 
+                                s1.comp_date,
+                                IFNULL(p1.login_count, 0) AS login_count
+                            FROM
+                                (
+                                    SELECT 
+                                        DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
+                                    FROM
+                                        {$tablePrefix}sequence ts
+                                    WHERE
+                                        ts.sequence_number <= ({$date_diff} * 24)    
+                                ) AS s1
+                            LEFT JOIN
+                                (
+                                    SELECT 
+                                        DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00') AS login_datehour,
+                                        COUNT(DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00')) AS login_count
+                                    FROM
+                                        {$tablePrefix}connection_times oct
+                                    WHERE
+                                        oct.logout_at IS NOT NULL AND
+                                        oct.location_id = {$quote($location_id)} AND
+                                        oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
+                                    GROUP BY login_datehour
+                                    ORDER BY login_datehour
+                                ) AS p1
+                            on s1.comp_date = p1.login_datehour
+                        ) AS pp2
+                    ON pp1.comp_date = pp2.comp_date
+                    ) AS ppp1
+                GROUP BY start_time
+                ORDER BY start_time;
+                    "));
 
             $this->response->data = [
                     'start_date' => $start_date,
                     'end_date' => $end_date,
-                    'hourly_record' => $dataArray,
+                    'hourly_record' => $activities,
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getcustomerconnectedhourly.access.forbidden', array($this, $e));
