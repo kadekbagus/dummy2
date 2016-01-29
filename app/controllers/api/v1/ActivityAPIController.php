@@ -2807,7 +2807,7 @@ class ActivityAPIController extends ControllerAPI
                                         {$tablePrefix}connection_times oct
                                     WHERE
                                         oct.logout_at IS NOT NULL AND
-                                        oct.location_id = {$quote($location_id)} AND
+                                        oct.location_id = {$quote($current_mall)} AND
                                         oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
                                     GROUP BY logout_datehour
                                     ORDER BY logout_datehour
@@ -2837,7 +2837,7 @@ class ActivityAPIController extends ControllerAPI
                                         {$tablePrefix}connection_times oct
                                     WHERE
                                         oct.logout_at IS NOT NULL AND
-                                        oct.location_id = {$quote($location_id)} AND
+                                        oct.location_id = {$quote($current_mall)} AND
                                         oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
                                     GROUP BY login_datehour
                                     ORDER BY login_datehour
