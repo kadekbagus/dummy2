@@ -1022,6 +1022,29 @@ class CouponAPIController extends ControllerAPI
                     $campaignhistory->modified_by = $this->api->user->user_id;
                     $campaignhistory->save();
                 }
+            } else {
+                $utcNow = Carbon::now();
+                $checkFirst = CampaignHistory::where('campaign_id', '=', $promotion_id)->where('created_at', 'like', $utcNow->toDateString().'%')->count();
+                if ($checkFirst === 0){
+                    $actionstatus = 'activate';
+                    if ($statusdb === 'inactive') {
+                        $actionstatus = 'deactivate';
+                    }
+                    $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                    $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
+                    // campaign history status
+                    if (! empty($rowcost)) {
+                        $campaignhistory = new CampaignHistory();
+                        $campaignhistory->campaign_type = 'coupon';
+                        $campaignhistory->campaign_id = $promotion_id;
+                        $campaignhistory->campaign_history_action_id = $activeid;
+                        $campaignhistory->number_active_tenants = $rowcost->tenants;
+                        $campaignhistory->campaign_cost = $rowcost->cost;
+                        $campaignhistory->created_by = $this->api->user->user_id;
+                        $campaignhistory->modified_by = $this->api->user->user_id;
+                        $campaignhistory->save();
+                    }
+                }
             }
 
             //check for add/remove tenant
