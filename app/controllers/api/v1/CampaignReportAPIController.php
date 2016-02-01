@@ -1474,6 +1474,8 @@ class CampaignReportAPIController extends ControllerAPI
 
         // Date intervals
         $requestBeginDateTime = OrbitInput::get('start_date');
+        $requestBeginTime = substr($requestBeginDateTime, 11, 8);
+
         $requestEndDateTime = OrbitInput::get('end_date');
 
         // Init Carbon
@@ -1496,6 +1498,10 @@ class CampaignReportAPIController extends ControllerAPI
         $campaign = $campaign->find($id);
 
         $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
+        
+        // This assumes request begin time is always 00:00 of mall timezone
+        $campaignBeginDateTimeMidnight = substr($campaignBeginDateTime, 0, 10).' '.$requestBeginTime;
+
         $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
         $campaignEndDateTime2 = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->addMinute()->toDateTimeString();
 
@@ -1572,7 +1578,7 @@ class CampaignReportAPIController extends ControllerAPI
                     $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
 
                     // Cancel
-                    if ($campaignLog->updated_at->toDateTimeString() < $campaignBeginDateTime) {
+                    if ($campaignLog->updated_at->toDateTimeString() < $campaignBeginDateTimeMidnight) {
                         $cost = 0;
                     }
 
