@@ -380,11 +380,6 @@ class MobileCIAPIController extends ControllerAPI
                     if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
                         $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
                     }
-                )
-                ->orderBy('widget_order', 'ASC')
-                ->groupBy('widget_type')
-                ->take(5)
-                ->get();
 
                     $userGender = 'U'; // default is Unknown
                     if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
@@ -4660,6 +4655,16 @@ class MobileCIAPIController extends ControllerAPI
             $maxRecord = (int) Config::get('orbit.pagination.max_record');
             if ($maxRecord <= 0) {
                 $maxRecord = 300;
+            }
+
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
             }
 
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
