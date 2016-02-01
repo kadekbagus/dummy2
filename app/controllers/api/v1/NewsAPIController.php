@@ -935,11 +935,14 @@ class NewsAPIController extends ControllerAPI
                     $campaignhistory->campaign_cost = $rowcost->cost;
                     $campaignhistory->created_by = $this->api->user->user_id;
                     $campaignhistory->modified_by = $this->api->user->user_id;
-                    $campaignhistory->created_at = $deactivate;
+                    $campaignhistory->created_at = $utcenddatedb;
                     $campaignhistory->save();
                 }
 
                 $actionstatus = 'activate';
+                if ($status === 'inactive') {
+                    $actionstatus = 'deactivate';
+                }
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
                 // campaign history status
