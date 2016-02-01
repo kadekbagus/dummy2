@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Carbon\Carbon as Carbon;
 
 class ActivityAPIController extends ControllerAPI
 {
@@ -307,19 +308,6 @@ class ActivityAPIController extends ControllerAPI
             // Filter by matching object_name pattern
             OrbitInput::get('object_name_like', function($name) use ($activities) {
                 $activities->where('activities.object_name', 'like', "%{$name}%");
-            });
-
-            OrbitInput::get('product_names', function($names) use ($activities) {
-                $activities->whereIn('activities.product_name', $names);
-            });
-
-            // Filter by matching product_name pattern
-            OrbitInput::get('product_name_like', function($name) use ($activities) {
-                $activities->where('activities.product_name', 'like', "%$name%");
-            });
-
-            OrbitInput::get('promotion_names', function($names) use ($activities) {
-                $activities->whereIn('activities.promotion_name', $names);
             });
 
             // Filter by matching promotion_name pattern
@@ -1041,31 +1029,22 @@ class ActivityAPIController extends ControllerAPI
             // registrations from start to end grouped by date part and activity name long.
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
-            $activities = DB::table('activities')
-                ->leftJoin('user_details', 'activities.user_id', '=', 'user_details.user_id')
-                ->select(
-                    'user_details.gender',
-                    DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'activities.user_id) as count')
-                )
-                ->where('activities.module_name', '=', 'Application')
-                ->where('activities.group', '=', 'mobile-ci')
-                ->where('activities.activity_type', '=', 'login')
-                ->where('activities.activity_name', '=', 'login_ok')
-                ->where('activities.created_at', '>=', $start_date)
-                ->where('activities.created_at', '<=', $end_date)
-                ->groupBy(DB::raw('1'))
-                ->orderByRaw('1');
+            $activities = DB::table('user_signin')
+                            ->select('user_details.gender', DB::raw("count(distinct {$tablePrefix}user_signin.user_id) as count"))
+                            ->leftJoin('user_details', 'user_details.user_id', '=', 'user_signin.user_id')
+                            ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                            ->groupBy( DB::raw('1') );
 
             // Only shows activities which belongs to this merchant
             if ($user->isSuperAdmin() !== TRUE) {
                 $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
-                $activities->whereIn('activities.location_id', $locationIds);
+                $activities->whereIn('user_signin.location_id', $locationIds);
             } else {
                 // Filter by user location id
                 OrbitInput::get('location_ids', function($locationIds) use ($activities) {
-                    $activities->whereIn('activities.location_id', $locationIds);
+                    $activities->whereIn('user_signin.location_id', $locationIds);
                 });
             }
 
@@ -1216,17 +1195,12 @@ class ActivityAPIController extends ControllerAPI
             // registrations from start to end grouped by date part and activity name long.
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
-            $activities = DB::table('activities')
+            $activities = DB::table('user_signin')
                 ->select(
-                    DB::raw("DATE({$tablePrefix}activities.created_at) as date"),
-                    DB::raw("COUNT(DISTINCT {$tablePrefix}activities.user_id) as count")
+                    DB::raw("DATE({$tablePrefix}user_signin.created_at) as date"),
+                    DB::raw("COUNT(DISTINCT {$tablePrefix}user_signin.user_id) as count")
                 )
-                ->where('activities.module_name', '=', 'Application')
-                ->where('activities.group', '=', 'mobile-ci')
-                ->where('activities.activity_type', '=', 'login')
-                ->where('activities.activity_name', '=', 'login_ok')
-                ->where('activities.created_at', '>=', $start_date)
-                ->where('activities.created_at', '<=', $end_date)
+                ->whereBetween('user_signin.created_at', [$start_date, $end_date])
                 ->groupBy(DB::raw('1'))
                 ->orderByRaw('1');
 
@@ -1235,11 +1209,11 @@ class ActivityAPIController extends ControllerAPI
                 $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
-                $activities->whereIn('activities.location_id', $locationIds);
+                $activities->whereIn('user_signin.location_id', $locationIds);
             } else {
                 // Filter by user location id
                 OrbitInput::get('location_ids', function($locationIds) use ($activities) {
-                    $activities->whereIn('activities.location_id', $locationIds);
+                    $activities->whereIn('user_signin.location_id', $locationIds);
                 });
             }
 
@@ -1332,14 +1306,17 @@ class ActivityAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $active_minutes = OrbitInput::get('active_minutes');
+            $current_mall = OrbitInput::get('current_mall');
 
             $validator = Validator::make(
                 array(
                     'merchant_ids'  => OrbitInput::get('merchant_ids'),
+                    'merchant_ids'  => $current_mall,
                     'active_minutes'    => $active_minutes,
                 ),
                 array(
                     'merchant_ids'  => 'orbit.check.merchants',
+                    'merchant_ids'  => 'orbit.empty.merchant',
                     'active_minutes' => 'required|integer'
                 )
             );
@@ -1354,51 +1331,26 @@ class ActivityAPIController extends ControllerAPI
             Event::fire('orbit.activity.getactivity.after.validation', array($this, $validator));
 
             // Only shows activities which belongs to this merchant
-            $locationIds = [];
+            $locationIds = is_array($current_mall) ? $current_mall : (array)$current_mall;
             if ($user->isSuperAdmin() !== TRUE) {
                 // Filter by user location id
                 $locationIds = $this->getLocationIdsForUser($user);
-                if (count($locationIds) === 0) {
-                    // not authorized for any locations?
-                    $filterLocationIds = 'AND 1 = 0';
-                } else {
-                    $filterLocationIds = 'AND a.location_id IN (';
-                    $filterLocationIds .= join(',', array_fill(0, count($filterLocationIds), '?'));
-                    $filterLocationIds .= ')';
-                }
-            } else {
-                // by default allow all
-                $filterLocationIds = 'AND 1 = 1';
-                // except if filtered explicitly
-                OrbitInput::get('location_ids', function($paramLocationIds) use (&$filterLocationIds, &$locationIds) {
-                    $paramLocationIds = (array)$paramLocationIds;
-                    if (count($paramLocationIds) === 0) {
-                        $filterLocationIds = 'AND 1 = 0';
-                    } else {
-                        $filterLocationIds = 'AND a.location_id IN (';
-                        $filterLocationIds .= join(',', array_fill(0, count($paramLocationIds), '?'));
-                        $filterLocationIds .= ')';
-                    }
-                    $locationIds = $paramLocationIds;
-                });
             }
 
-            // "connected now" = last login/logout activity within the period was login
-            $tablePrefix = DB::getTablePrefix();
-            $activities = DB::select("
-                select COUNT(DISTINCT user_id) num
-                from
-                    {$tablePrefix}activities a
-                where
-                    a.user_id != '0' and
-                    a.group = 'mobile-ci' and
-                    a.created_at >= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MINUTE)
-                    {$filterLocationIds}
-            ", array_merge([-1 * (int)$active_minutes], $locationIds));
+            $end_time = Carbon::now();
+            $start_time = DB::select("select DATE_ADD('$end_time', INTERVAL -60 MINUTE) as start_time");
+
+            $connected_now = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
+                                $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
+                            })
+                            ->whereIn('merchant_id', $locationIds)
+                            ->whereBetween('connected_now.created_at', [$start_time[0]->start_time, $end_time])
+                            ->groupBy('list_connected_user.user_id')
+                            ->get();
 
             $users_count = 0;
-            foreach ($activities as $activity) {
-                $users_count = (int)$activity->num;
+            if (! empty($connected_now)) {
+                $users_count = $connected_now->count();
             }
 
             $this->response->data = [
@@ -1518,8 +1470,7 @@ class ActivityAPIController extends ControllerAPI
             $this_month = date('n');
 
             $tablePrefix = DB::getTablePrefix();
-            $activities = DB::table('activities')
-                ->leftJoin('user_details', 'activities.user_id', '=', 'user_details.user_id')
+            $activities = DB::table('user_signin')
                 ->select(
                     DB::raw(
                         $this_year . '
@@ -1534,33 +1485,22 @@ class ActivityAPIController extends ControllerAPI
                       ELSE 0
                     END as age
                     '),
-                    DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'activities.user_id) as count')
+                    DB::raw('COUNT(DISTINCT ' . $tablePrefix . 'user_signin.user_id) as count')
                 )
-                ->where('activities.module_name', '=', 'Application')
-                ->where(function($q) {
-                    $q->where('activities.group', 'mobile-ci')
-                      ->where('activities.activity_type', '=', 'login')
-                      ->where('activities.activity_name', '=', 'login_ok')
-                      ->orWhere(function($q) {
-                            $q->where('activities.activity_name', 'registration_ok')
-                              ->where('activities.group', 'cs-portal');
-                      });
-                })
-                ->where('activities.created_at', '>=', $start_date)
-                ->where('activities.created_at', '<=', $end_date)
-                ->groupBy(DB::raw('1'))
-                ->orderByRaw('1');
+                ->leftJoin('user_details', 'user_details.user_id', '=', 'user_signin.user_id')
+                ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                ->groupBy( DB::raw('1') );
 
             // Only shows activities which belongs to this merchant
             if ($user->isSuperAdmin() !== TRUE) {
                 $locationIds = $this->getLocationIdsForUser($user);
 
                 // Filter by user location id
-                $activities->whereIn('activities.location_id', $locationIds);
+                $activities->whereIn('user_signin.location_id', $locationIds);
             } else {
                 // Filter by user location id
                 OrbitInput::get('location_ids', function($locationIds) use ($activities) {
-                    $activities->whereIn('activities.location_id', $locationIds);
+                    $activities->whereIn('user_signin.location_id', $locationIds);
                 });
             }
 
@@ -1968,26 +1908,17 @@ class ActivityAPIController extends ControllerAPI
                         ->select(
                             DB::raw('COUNT(*) as count')
                         )
-                        ->where('created_at', '>=', $start_date)
-                        ->where('created_at', '<=', $end_date);
+                        ->whereBetween('created_at', [$start_date, $end_date]);
 
-                    $returning_sign_ins = DB::table('activities')
-                        ->select(
-                            DB::raw('COUNT(distinct user_id) as count')
-                        )
-                        ->where('module_name', '=', 'Application')
-                        ->where('group', '=', 'mobile-ci')
-                        ->where('activity_type', '=', 'login')
-                        ->where('activity_name', '=', 'login_ok')
-                        ->where('created_at', '>=', $start_date)
-                        ->where('created_at', '<=', $end_date)
-                        ->whereNotIn('user_id', function ($q) use ($locationIds, $start_date, $end_date) {
-                            $q->select('user_id')
-                                ->from('user_acquisitions')
-                                ->whereIn('acquirer_id', $locationIds)
-                                ->where('created_at', '>=', $start_date)
-                                ->where('created_at', '<=', $end_date);
-                        });
+                    $returning_sign_ins = DB::table('user_signin')->select(DB::raw('count(distinct user_id) as count'))
+                                            ->whereIn('user_signin.location_id', $locationIds)
+                                            ->whereBetween('user_signin.created_at', [$start_date, $end_date])
+                                            ->whereNotIn('user_signin.user_id', function($q) use ($locationIds, $start_date, $end_date) {
+                                                $q->select('user_acquisitions.user_id')
+                                                    ->from('user_acquisitions')
+                                                    ->whereBetween('user_acquisitions.created_at', [$start_date, $end_date])
+                                                    ->whereIn('user_acquisitions.acquirer_id', $locationIds);
+                                            });
 
                     // Only shows activities which belongs to this merchant
                     if ($user->isSuperAdmin() !== TRUE) {
@@ -1995,12 +1926,12 @@ class ActivityAPIController extends ControllerAPI
 
                         // Filter by user location id
                         $sign_ups->whereIn('acquirer_id', $locationIds);
-                        $returning_sign_ins->whereIn('activities.location_id', $locationIds);
+                        $returning_sign_ins->whereIn('user_signin.location_id', $locationIds);
                     } else {
                         // Filter by user location id
                         OrbitInput::get('location_ids', function($locationIds) use ($sign_ups, $returning_sign_ins) {
                             $sign_ups->whereIn('acquirer_id', $locationIds);
-                            $returning_sign_ins->whereIn('activities.location_id', $locationIds);
+                            $returning_sign_ins->whereIn('user_signin.location_id', $locationIds);
                         });
                     }
 
@@ -2646,57 +2577,28 @@ class ActivityAPIController extends ControllerAPI
             // registrations from start to end grouped by date part and activity name long.
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
             $activities = DB::select( DB::raw("
-                    SELECT DATE(created_at) as date, ROUND(avg(TIMESTAMPDIFF(MINUTE, mindate, maxdate))) as total_minutes FROM (
-                        SELECT
-                            activity_name, activity_name_long, activity_type, user_email, role, location_id, created_at, updated_at, session_id,
-                            MIN(created_at) mindate, MAX(created_at) maxdate
-                        FROM {$tablePrefix}activities WHERE 1=1
-                            AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                            AND location_id = '" . $current_mall . "'
-                            AND (role = 'Consumer' OR role = 'Guest')
-                            AND session_id IS NOT NULL
-                            AND DATE_FORMAT(created_at, '%Y-%m-%d') >= '" . $start_date . "'
-                            AND DATE_FORMAT(created_at, '%Y-%m-%d') <= '" . $end_date . "'
-                        GROUP BY session_id
-                    ) as A
-                    group by date
-                    order by created_at asc
+                    select tmp.*, IFNULL(ct.connect_time, 0) total_minutes from (
+                      select date_add({$quote($start_date)}, interval n.sequence_number - 1 DAY) `date` from (
+                        select sequence_number from {$tablePrefix}sequence
+                      ) n where date_add({$quote($start_date)}, interval n.sequence_number - 1 day) <= {$quote($end_date)}
+                    ) tmp
+                    left join (
+                        select DATE_FORMAT(login_at, '%Y-%m-%d') `dt`,
+                        ROUND(AVG(IFNULL(timestampdiff(minute, login_at, logout_at), 15))) connect_time
+                        from {$tablePrefix}connection_times GROUP BY 1
+                    ) ct on `tmp`.`date` = `ct`.`dt`
                 ") );
-
-            // Check interval
-            $begin = new DateTime($start_date);
-            $endtime = new DateTime($end_date);
-            // Plus one day endtime
-            $end = $endtime->add(new DateInterval('P1D'));
-
-            // get periode per 1 day
-            $interval = DateInterval::createFromDateString('1 day');
-            $period = new DatePeriod($begin, $interval, $end);
-
-            $activitiesObj = null;
-
-            // Check exist data and handling null data
-            foreach ( $period as $keyPeriode => $valPeriode ){
-                foreach ($activities as $keyAct => $valAct) {
-                    if (  $valPeriode->format( "Y-m-d" ) ==  $valAct->date) {
-                        $activitiesObj[$keyPeriode] = new stdClass();
-                        $activitiesObj[$keyPeriode]->date = $valPeriode->format( "Y-m-d" );
-                        $activitiesObj[$keyPeriode]->total_minutes = $valAct->total_minutes;
-                        break;
-                    } else {
-                        $activitiesObj[$keyPeriode] = new stdClass();
-                        $activitiesObj[$keyPeriode]->date = $valPeriode->format( "Y-m-d" );
-                        $activitiesObj[$keyPeriode]->total_minutes = 0;
-                    }
-                }
-            }
 
             $this->response->data = [
                     'start_date' => $start_date,
                     'end_date' => $end_date,
-                    'connected_time' => $activitiesObj,
+                    'connected_time' => $activities,
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getcustomeraverageconnectedtime.access.forbidden', array($this, $e));
@@ -2825,73 +2727,102 @@ class ActivityAPIController extends ControllerAPI
             // activity name long should include source.
             $tablePrefix = DB::getTablePrefix();
 
-            $activities = DB::select( DB::raw("
-                    SELECT
-                        SUM(case when starthr <= '00' and endhr >= '00' then 1 else 0 end) as '0',
-                        SUM(case when starthr <= '01' and endhr >= '01' then 1 else 0 end) as '1',
-                        SUM(case when starthr <= '02' and endhr >= '02' then 1 else 0 end) as '2',
-                        SUM(case when starthr <= '03' and endhr >= '03' then 1 else 0 end) as '3',
-                        SUM(case when starthr <= '04' and endhr >= '04' then 1 else 0 end) as '4',
-                        SUM(case when starthr <= '05' and endhr >= '05' then 1 else 0 end) as '5',
-                        SUM(case when starthr <= '06' and endhr >= '06' then 1 else 0 end) as '6',
-                        SUM(case when starthr <= '07' and endhr >= '07' then 1 else 0 end) as '7',
-                        SUM(case when starthr <= '08' and endhr >= '08' then 1 else 0 end) as '8',
-                        SUM(case when starthr <= '09' and endhr >= '09' then 1 else 0 end) as '9',
-                        SUM(case when starthr <= '10' and endhr >= '10' then 1 else 0 end) as '10',
-                        SUM(case when starthr <= '11' and endhr >= '11' then 1 else 0 end) as '11',
-                        SUM(case when starthr <= '12' and endhr >= '12' then 1 else 0 end) as '12',
-                        SUM(case when starthr <= '13' and endhr >= '13' then 1 else 0 end) as '13',
-                        SUM(case when starthr <= '14' and endhr >= '14' then 1 else 0 end) as '14',
-                        SUM(case when starthr <= '15' and endhr >= '15' then 1 else 0 end) as '15',
-                        SUM(case when starthr <= '16' and endhr >= '16' then 1 else 0 end) as '16',
-                        SUM(case when starthr <= '17' and endhr >= '17' then 1 else 0 end) as '17',
-                        SUM(case when starthr <= '18' and endhr >= '18' then 1 else 0 end) as '18',
-                        SUM(case when starthr <= '19' and endhr >= '19' then 1 else 0 end) as '19',
-                        SUM(case when starthr <= '20' and endhr >= '20' then 1 else 0 end) as '20',
-                        SUM(case when starthr <= '21' and endhr >= '21' then 1 else 0 end) as '21',
-                        SUM(case when starthr <= '22' and endhr >= '22' then 1 else 0 end) as '22',
-                        SUM(case when starthr <= '23' and endhr >= '23' then 1 else 0 end) as '23'
-                    FROM (
-                        SELECT
-                            activity_name, activity_name_long, activity_type, user_email, role, location_id, session_id,
-                            DATE_FORMAT(MIN(created_at), '%H') starthr, DATE_FORMAT(MAX(created_at), '%H') endhr
-                        FROM {$tablePrefix}activities WHERE 1=1
-                            AND created_at BETWEEN '" . $start_date . "' AND '" . $end_date . "'
-                            AND location_id = '" . $current_mall . "'
-                            AND (activity_name = 'login_ok' OR activity_name = 'logout_ok')
-                            AND (role = 'Consumer' OR role = 'Guest')
-                            AND session_id IS NOT NULL
-                        GROUP BY session_id
-                    )  as A
-                ") );
+            $date_diff = Carbon::parse($start_date)->diff(Carbon::parse($end_date)->addMinute())->days;
+            $start_date_minus_one_hour = Carbon::parse($start_date)->subHour();
 
-            // Re-Format for response result
-            $dataArray = array();
-            $score = 0;
-            for ($i=0; $i <= 23 ; $i++) {
-                $starttime = $i;
-                $endtime = $i + 1;
-                if ($starttime < 10) {
-                    $starttime = '0'.$i;
-                }
-                if ($endtime < 10) {
-                    $endtime = '0'.$endtime;
-                }
+            $quote = function($arg)
+            {
+                return DB::connection()->getPdo()->quote($arg);
+            };
 
-                // handling null score
-                if ($activities[0]->$i !== null) {
-                    $score = $activities[0]->$i;
-                }
-
-                $dataArray[$i]['start_time'] = $starttime.':00';
-                $dataArray[$i]['end_time'] = $endtime.':00';
-                $dataArray[$i]['score'] = $score;
-            }
+            $activities = DB::select(DB::raw("
+                SELECT      
+                    DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time, 
+                    DATE_FORMAT(DATE_ADD(ppp1.comp_date, INTERVAL 1 HOUR),'%H:00') AS end_time, 
+                    SUM(ppp1.connected_hourly) AS score
+                FROM
+                    (
+                    SELECT 
+                        pp1.comp_date,
+                        pp2.login_count, 
+                        pp1.delayed_logout_count, 
+                        @conn_hour, 
+                        (@conn_hour := (@conn_hour + pp2.login_count) - pp1.delayed_logout_count) AS connected_hourly,
+                        pp1.logout_count 
+                    FROM
+                        (SELECT @conn_hour := 0) AS init_var_main,
+                        (
+                            SELECT 
+                                s2.comp_date,
+                                IFNULL(p2.logout_count, 0) AS logout_count,
+                                @delayed_lo_count AS delayed_logout_count,
+                                (@delayed_lo_count := IFNULL(p2.logout_count, 0)) 
+                            FROM
+                                (SELECT @delayed_lo_count := 0) AS init_var_sp2,
+                                (
+                                    SELECT 
+                                        DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
+                                    FROM
+                                        {$tablePrefix}sequence ts
+                                    WHERE
+                                        ts.sequence_number <= ({$date_diff} * 24)       
+                                ) AS s2
+                            LEFT JOIN
+                                (
+                                    SELECT 
+                                        DATE_FORMAT(oct.logout_at, '%Y-%m-%d %H:00:00') AS logout_datehour,
+                                        COUNT(DATE_FORMAT(oct.logout_at, '%Y-%m-%d %H:00:00')) AS logout_count
+                                    FROM 
+                                        {$tablePrefix}connection_times oct
+                                    WHERE
+                                        oct.logout_at IS NOT NULL AND
+                                        oct.location_id = {$quote($current_mall)} AND
+                                        oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
+                                    GROUP BY logout_datehour
+                                    ORDER BY logout_datehour
+                                ) AS p2
+                            ON s2.comp_date = p2.logout_datehour
+                        ) AS pp1
+                    LEFT JOIN
+                        (
+                            SELECT 
+                                s1.comp_date,
+                                IFNULL(p1.login_count, 0) AS login_count
+                            FROM
+                                (
+                                    SELECT 
+                                        DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
+                                    FROM
+                                        {$tablePrefix}sequence ts
+                                    WHERE
+                                        ts.sequence_number <= ({$date_diff} * 24)    
+                                ) AS s1
+                            LEFT JOIN
+                                (
+                                    SELECT 
+                                        DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00') AS login_datehour,
+                                        COUNT(DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00')) AS login_count
+                                    FROM
+                                        {$tablePrefix}connection_times oct
+                                    WHERE
+                                        oct.logout_at IS NOT NULL AND
+                                        oct.location_id = {$quote($current_mall)} AND
+                                        oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
+                                    GROUP BY login_datehour
+                                    ORDER BY login_datehour
+                                ) AS p1
+                            on s1.comp_date = p1.login_datehour
+                        ) AS pp2
+                    ON pp1.comp_date = pp2.comp_date
+                    ) AS ppp1
+                GROUP BY start_time
+                ORDER BY start_time;
+                    "));
 
             $this->response->data = [
                     'start_date' => $start_date,
                     'end_date' => $end_date,
-                    'hourly_record' => $dataArray,
+                    'hourly_record' => $activities,
             ];
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.activity.getcustomerconnectedhourly.access.forbidden', array($this, $e));

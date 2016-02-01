@@ -8,12 +8,17 @@ $baseDir = dirname($vendorDir);
 return array(
     'Activity' => $baseDir . '/app/models/Activity.php',
     'ActivityAPIController' => $baseDir . '/app/controllers/api/v1/ActivityAPIController.php',
+<<<<<<< HEAD
     'AgeRange' => $baseDir . '/app/models/AgeRange.php',
     'AgeRangeAPIController' => $baseDir . '/app/controllers/api/v1/AgeRangeAPIController.php',
+=======
+>>>>>>> gitlab-office/release-1.3.2
     'AlterActivitiesAddOsLoginTime' => $baseDir . '/app/database/migrations/2015_11_23_032746_alter_activities_add_os_login_time.php',
     'AlterSessionsAddApplicationId' => $baseDir . '/app/database/migrations/2015_10_30_112636_alter_sessions_add_application_id.php',
     'AlterSessionsAddIndexExpireAt' => $baseDir . '/app/database/migrations/2015_10_27_094038_alter_sessions_add_index_expire_at.php',
     'AlterTableActivitiesAddObjectDisplayNameColumn' => $baseDir . '/app/database/migrations/2015_12_11_062518_alter_table_activities_add_object_display_name_column.php',
+    'AlterTableCampaignHistoriesAddField' => $baseDir . '/app/database/migrations/2016_01_18_081524_alter_table_campaign_histories_add_field.php',
+    'AlterTableCampaignHistoriesRemoveAndAddField' => $baseDir . '/app/database/migrations/2016_01_18_020344_alter_table_campaign_histories_remove_and_add_field.php',
     'AlterTableInboxesAddColumnMerchantId' => $baseDir . '/app/database/migrations/2015_10_30_062500_alter_table_inboxes_add_column_merchant_id.php',
     'AlterTableIssuedCouponsAddColumnIssuerUserId' => $baseDir . '/app/database/migrations/2015_12_04_080436_alter_table_issued_coupons_add_column_issuer_user_id.php',
     'AlterTableIssuedCouponsChangeRedeemRetailerIdToUuid' => $baseDir . '/app/database/migrations/2015_10_29_114000_alter_table_issued_coupons_change_redeem_retailer_id_to_uuid.php',
@@ -24,6 +29,10 @@ return array(
     'AlterTableLuckyDrawsAddColumnsFreeNumbersAndGeneratedTo' => $baseDir . '/app/database/migrations/2015_11_23_083312_alter_table_lucky_draws_add_columns_free_numbers_and_generated_to.php',
     'AlterTableMerchantsAddColumnTimezoneId' => $baseDir . '/app/database/migrations/2015_10_18_043247_alter_table_merchants_add_column_timezone_id.php',
     'AlterTableNewsAddFieldIsAllGenderIsAllAgeIsPopup' => $baseDir . '/app/database/migrations/2015_12_29_042349_alter_table_news_add_field_is_all_gender_is_all_age_is_popup.php',
+<<<<<<< HEAD
+    'AlterTableObjectsAddColumnObjectOrder' => $baseDir . '/app/database/migrations/2015_10_20_100000_alter_table_objects_add_column_object_order.php',
+=======
+>>>>>>> gitlab-office/release-1.3.2
     'AlterTableOrbsPromotionsAddColumnIsAllEmployee' => $baseDir . '/app/database/migrations/2015_12_04_080452_alter_table_orbs_promotions_add_column_is_all_employee.php',
     'AlterTablePromotionAddColumnIsReedemedAtCs' => $baseDir . '/app/database/migrations/2015_11_24_055009_alter_table_promotion_add_column_is_reedemed_at_cs.php',
     'AlterTablePromotionRulesAddFieldRuleBeginDateRuleEndDate' => $baseDir . '/app/database/migrations/2015_12_29_042352_alter_table_promotion_rules_add_field_rule_begin_date_rule_end_date.php',
@@ -62,6 +71,7 @@ return array(
     'Barryvdh\\Debugbar\\Twig\\Node\\StopwatchNode' => $vendorDir . '/barryvdh/laravel-debugbar/src/Twig/Node/StopwatchNode.php',
     'Barryvdh\\Debugbar\\Twig\\TokenParser\\StopwatchTokenParser' => $vendorDir . '/barryvdh/laravel-debugbar/src/Twig/TokenParser/StopwatchTokenParser.php',
     'BaseController' => $baseDir . '/app/controllers/BaseController.php',
+<<<<<<< HEAD
     'BasePrice' => $baseDir . '/app/commands/BasePrice.php',
     'Boris\\Boris' => $vendorDir . '/d11wtq/boris/lib/Boris/Boris.php',
     'Boris\\CLIOptionsHandler' => $vendorDir . '/d11wtq/boris/lib/Boris/CLIOptionsHandler.php',
@@ -76,17 +86,22 @@ return array(
     'CampaignAge' => $baseDir . '/app/models/CampaignAge.php',
     'CampaignBasePrices' => $baseDir . '/app/models/CampaignBasePrices.php',
     'CampaignBilling' => $baseDir . '/app/models/CampaignBilling.php',
-    'CampaignClicks' => $baseDir . '/app/models/CampaignClick.php',
     'CampaignDatabaseSeeder' => $baseDir . '/app/database/seeds/CampaignDatabaseSeeder.php',
     'CampaignGender' => $baseDir . '/app/models/CampaignGender.php',
-    'CampaignGroupName' => $baseDir . '/app/models/CampaignGroupName.php',
+    'CampaignHistories' => $baseDir . '/app/models/CampaignHistories.php',
     'CampaignHistory' => $baseDir . '/app/models/CampaignHistory.php',
     'CampaignHistoryActions' => $baseDir . '/app/models/CampaignHistoryActions.php',
+    'CampaignPermissionRoleTableSeeder' => $baseDir . '/app/database/seeds/CampaignPermissionRoleTableSeeder.php',
+    'CampaignPrice' => $baseDir . '/app/models/CampaignPrice.php',
+    'CampaignReportAPIController' => $baseDir . '/app/controllers/api/v1/CampaignReportAPIController.php',
+=======
+    'CampaignClicks' => $baseDir . '/app/models/CampaignClick.php',
+    'CampaignDatabaseSeeder' => $baseDir . '/app/database/seeds/CampaignDatabaseSeeder.php',
+    'CampaignGroupName' => $baseDir . '/app/models/CampaignGroupName.php',
     'CampaignPageView' => $baseDir . '/app/models/CampaignPageView.php',
     'CampaignPermissionRoleTableSeeder' => $baseDir . '/app/database/seeds/CampaignPermissionRoleTableSeeder.php',
     'CampaignPopupView' => $baseDir . '/app/models/CampaignPopupView.php',
-    'CampaignPrice' => $baseDir . '/app/models/CampaignPrice.php',
-    'CampaignReportAPIController' => $baseDir . '/app/controllers/api/v1/CampaignReportAPIController.php',
+>>>>>>> gitlab-office/release-1.3.2
     'CampaignRoleTableSeeder' => $baseDir . '/app/database/seeds/CampaignRoleTableSeeder.php',
     'CaptiveIntegrationAPIController' => $baseDir . '/app/controllers/api/v1/CaptiveIntegrationAPIController.php',
     'Carbon\\Carbon' => $vendorDir . '/nesbot/carbon/src/Carbon/Carbon.php',
@@ -125,7 +140,10 @@ return array(
     'CreateTableAgeRanges' => $baseDir . '/app/database/migrations/2015_12_29_042343_create_table_age_ranges.php',
     'CreateTableCampaignAge' => $baseDir . '/app/database/migrations/2015_12_29_042344_create_table_campaign_age.php',
     'CreateTableCampaignBasePrices' => $baseDir . '/app/database/migrations/2015_12_29_042348_create_table_campaign_base_prices.php',
+    'CreateTableCampaignBillings' => $baseDir . '/app/database/migrations/2016_01_13_024005_create_table_campaign_billings.php',
     'CreateTableCampaignGender' => $baseDir . '/app/database/migrations/2015_12_29_042345_create_table_campaign_gender.php',
+    'CreateTableCampaignHistories' => $baseDir . '/app/database/migrations/2016_01_13_024441_create_table_campaign_histories.php',
+    'CreateTableCampaignHistoryActions' => $baseDir . '/app/database/migrations/2016_01_18_022514_create_table_campaign_history_actions.php',
     'CreateTableCampaignPrice' => $baseDir . '/app/database/migrations/2015_12_29_042347_create_table_campaign_price.php',
     'CreateTableKeywordObject' => $baseDir . '/app/database/migrations/2016_01_12_034757_create_table_keyword_object.php',
     'CreateTableKeywords' => $baseDir . '/app/database/migrations/2016_01_12_034756_create_table_keywords.php',
@@ -135,6 +153,8 @@ return array(
     'CreateTableLuckyDrawTranslations' => $baseDir . '/app/database/migrations/2015_11_24_065646_create_table_lucky_draw_translations.php',
     'CreateTableMembershipNumbers' => $baseDir . '/app/database/migrations/2015_10_19_094143_create_table_membership_numbers.php',
     'CreateTableMemberships' => $baseDir . '/app/database/migrations/2015_10_19_091502_create_table_memberships.php',
+<<<<<<< HEAD
+    'CreateTableSequence' => $baseDir . '/app/database/migrations/2016_01_25_094200_create_table_sequence.php',
     'CreateTableTimezones' => $baseDir . '/app/database/migrations/2015_10_18_085530_create_table_timezones.php',
     'CreateTableUserSignin' => $baseDir . '/app/database/migrations/2015_12_21_044542_create_table_user_signin.php',
     'Crypt_AES' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/AES.php',
@@ -148,11 +168,17 @@ return array(
     'Crypt_Rijndael' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Rijndael.php',
     'Crypt_TripleDES' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/TripleDES.php',
     'Crypt_Twofish' => $vendorDir . '/phpseclib/phpseclib/phpseclib/Crypt/Twofish.php',
+=======
+    'CreateTableTimezones' => $baseDir . '/app/database/migrations/2015_10_18_085530_create_table_timezones.php',
+    'CreateTableUserSignin' => $baseDir . '/app/database/migrations/2015_12_21_044542_create_table_user_signin.php',
+>>>>>>> gitlab-office/release-1.3.2
     'CurlWrapper' => $vendorDir . '/svyatov/curlwrapper/CurlWrapper.php',
     'CurlWrapperCurlException' => $vendorDir . '/svyatov/curlwrapper/CurlWrapper.php',
     'CurlWrapperException' => $vendorDir . '/svyatov/curlwrapper/CurlWrapper.php',
     'CustomPermission' => $baseDir . '/app/models/CustomPermission.php',
     'DashboardAPIController' => $baseDir . '/app/controllers/api/v1/DashboardAPIController.php',
+<<<<<<< HEAD
+    'DatabaseSeeder' => $baseDir . '/app/database/seeds/DatabaseSeeder.php',
     'DebugBar\\Bridge\\CacheCacheCollector' => $vendorDir . '/maximebf/debugbar/src/DebugBar/Bridge/CacheCacheCollector.php',
     'DebugBar\\Bridge\\DoctrineCollector' => $vendorDir . '/maximebf/debugbar/src/DebugBar/Bridge/DoctrineCollector.php',
     'DebugBar\\Bridge\\MonologCollector' => $vendorDir . '/maximebf/debugbar/src/DebugBar/Bridge/MonologCollector.php',
@@ -197,6 +223,8 @@ return array(
     'DebugBar\\Storage\\PdoStorage' => $vendorDir . '/maximebf/debugbar/src/DebugBar/Storage/PdoStorage.php',
     'DebugBar\\Storage\\RedisStorage' => $vendorDir . '/maximebf/debugbar/src/DebugBar/Storage/RedisStorage.php',
     'DebugBar\\Storage\\StorageInterface' => $vendorDir . '/maximebf/debugbar/src/DebugBar/Storage/StorageInterface.php',
+=======
+>>>>>>> gitlab-office/release-1.3.2
     'DeleteInactiveCISessions' => $baseDir . '/app/commands/DeleteInactiveCISessions.php',
     'DeleteUser' => $baseDir . '/app/commands/DeleteUser.php',
     'DominoPOS\\OrbitACL\\ACL' => $vendorDir . '/dominopos/orbit-acl/DominoPOS/OrbitACL/ACL.php',
@@ -222,6 +250,7 @@ return array(
     'EventModel' => $baseDir . '/app/models/EventModel.php',
     'EventRetailer' => $baseDir . '/app/models/EventRetailer.php',
     'EventTranslation' => $baseDir . '/app/models/EventTranslation.php',
+<<<<<<< HEAD
     'Facebook\\Authentication\\AccessToken' => $vendorDir . '/facebook/src/Facebook/Authentication/AccessToken.php',
     'Facebook\\Authentication\\AccessTokenMetadata' => $vendorDir . '/facebook/src/Facebook/Authentication/AccessTokenMetadata.php',
     'Facebook\\Authentication\\OAuth2Client' => $vendorDir . '/facebook/src/Facebook/Authentication/OAuth2Client.php',
@@ -293,6 +322,8 @@ return array(
     'File_ASN1' => $vendorDir . '/phpseclib/phpseclib/phpseclib/File/ASN1.php',
     'File_ASN1_Element' => $vendorDir . '/phpseclib/phpseclib/phpseclib/File/ASN1.php',
     'File_X509' => $vendorDir . '/phpseclib/phpseclib/phpseclib/File/X509.php',
+=======
+>>>>>>> gitlab-office/release-1.3.2
     'GenericMallSeeder' => $baseDir . '/app/database/seeds/GenericMallSeeder.php',
     'Helper\\EloquentRecordCounter' => $baseDir . '/app/models/Helper/EloquentRecordCounter.php',
     'HomeController' => $baseDir . '/app/controllers/HomeController.php',
@@ -685,16 +716,30 @@ return array(
     'Language' => $baseDir . '/app/models/Language.php',
     'LanguageAPIController' => $baseDir . '/app/controllers/api/v1/LanguageAPIController.php',
     'LanguageTableSeeder' => $baseDir . '/app/database/seeds/LanguageTableSeeder.php',
+<<<<<<< HEAD
     'Laraeval\\Laraeval\\Laraeval' => $vendorDir . '/laraeval/laraeval/src/Laraeval/Laraeval/Laraeval.php',
     'Laraeval\\Laraeval\\LaraevalServiceProvider' => $vendorDir . '/laraeval/laraeval/src/Laraeval/Laraeval/LaraevalServiceProvider.php',
+    'LippoPuriBankSeeder' => $baseDir . '/app/database/seeds/LippoPuriBankSeeder.php',
     'LippoPuriCategorySeeder' => $baseDir . '/app/database/seeds/LippoPuriCategorySeeder.php',
+    'LippoPuriDatabaseSeeder' => $baseDir . '/app/database/seeds/LippoPuriDatabaseSeeder.php',
+    'LippoPuriFloorSeeder' => $baseDir . '/app/database/seeds/LippoPuriFloorSeeder.php',
+=======
+    'LippoPuriCategorySeeder' => $baseDir . '/app/database/seeds/LippoPuriCategorySeeder.php',
+>>>>>>> gitlab-office/release-1.3.2
     'LippoPuriIconSeeder' => $baseDir . '/app/database/seeds/LippoPuriIconSeeder.php',
     'LippoPuriLanguageSeeder' => $baseDir . '/app/database/seeds/LippoPuriLanguageSeeder.php',
     'LippoPuriMallSeeder' => $baseDir . '/app/database/seeds/LippoPuriMallSeeder.php',
     'LippoPuriSettingSeeder' => $baseDir . '/app/database/seeds/LippoPuriSettingSeeder.php',
     'LippoPuriTenantCSSeeder' => $baseDir . '/app/database/seeds/LippoPuriTenantCSSeeder.php',
     'LippoPuriTenantCSSeeder2' => $baseDir . '/app/database/seeds/LippoPuriTenantCSSeeder2.php',
+<<<<<<< HEAD
+    'LippoPuriTenantSeeder' => $baseDir . '/app/database/seeds/LippoPuriTenantSeeder.php',
+    'LippoPuriTenantSeeder2' => $baseDir . '/app/database/seeds/LippoPuriTenantSeeder2.php',
+    'LippoPuriTenantSeeder3' => $baseDir . '/app/database/seeds/LippoPuriTenantSeeder3.php',
+    'LippoPuriTenantSeeder4' => $baseDir . '/app/database/seeds/LippoPuriTenantSeeder4.php',
+=======
     'ListConnectedUser' => $baseDir . '/app/models/ListConnectedUser.php',
+>>>>>>> gitlab-office/release-1.3.2
     'LoginAPIController' => $baseDir . '/app/controllers/api/v1/LoginAPIController.php',
     'LuckyDraw' => $baseDir . '/app/models/LuckyDraw.php',
     'LuckyDrawAPIController' => $baseDir . '/app/controllers/api/v1/LuckyDrawAPIController.php',
@@ -921,6 +966,12 @@ return array(
     'OAuth\\OAuth2\\Token\\StdOAuth2Token' => $vendorDir . '/lusitanian/oauth/src/OAuth/OAuth2/Token/StdOAuth2Token.php',
     'OAuth\\OAuth2\\Token\\TokenInterface' => $vendorDir . '/lusitanian/oauth/src/OAuth/OAuth2/Token/TokenInterface.php',
     'OAuth\\ServiceFactory' => $vendorDir . '/lusitanian/oauth/src/OAuth/ServiceFactory.php',
+    'OAuth\\Unit\\Common\\Consumer\\CredentialsTest' => $vendorDir . '/lusitanian/oauth/tests/Unit/Common/Consumer/CredentialsTest.php',
+    'OAuth\\Unit\\Common\\Http\\HttpClientsTest' => $vendorDir . '/lusitanian/oauth/tests/Unit/Common/Http/HttpClientsTest.php',
+    'OAuth\\Unit\\Common\\Storage\\RedisTest' => $vendorDir . '/lusitanian/oauth/tests/Unit/Common/Storage/RedisTest.php',
+    'OAuth\\Unit\\Common\\Storage\\StorageTest' => $vendorDir . '/lusitanian/oauth/tests/Unit/Common/Storage/StorageTest.php',
+    'OAuth\\Unit\\Common\\Storage\\SymfonySessionTest' => $vendorDir . '/lusitanian/oauth/tests/Unit/Common/Storage/SymfonySessionTest.php',
+    'OAuth\\Unit\\ServiceFactoryTest' => $vendorDir . '/lusitanian/oauth/tests/Unit/ServiceFactoryTest.php',
     'Object' => $baseDir . '/app/models/Object.php',
     'ObjectAPIController' => $baseDir . '/app/controllers/api/v1/ObjectAPIController.php',
     'ObjectRelation' => $baseDir . '/app/models/ObjectRelation.php',
@@ -1151,6 +1202,8 @@ return array(
     'PermissionRole' => $baseDir . '/app/models/PermissionRole.php',
     'PersonalInterest' => $baseDir . '/app/models/PersonalInterest.php',
     'PersonalInterestAPIController' => $baseDir . '/app/controllers/api/v1/PersonalInterestAPIController.php',
+<<<<<<< HEAD
+    'PersonalInterestTableSeeder' => $baseDir . '/app/database/seeds/PersonalInterestTableSeeder.php',
     'Pheanstalk_ClassLoader' => $vendorDir . '/pda/pheanstalk/classes/Pheanstalk/ClassLoader.php',
     'Pheanstalk_Command' => $vendorDir . '/pda/pheanstalk/classes/Pheanstalk/Command.php',
     'Pheanstalk_Command_AbstractCommand' => $vendorDir . '/pda/pheanstalk/classes/Pheanstalk/Command/AbstractCommand.php',
@@ -1196,6 +1249,8 @@ return array(
     'Pheanstalk_Socket_StreamFunctions' => $vendorDir . '/pda/pheanstalk/classes/Pheanstalk/Socket/StreamFunctions.php',
     'Pheanstalk_Socket_WriteHistory' => $vendorDir . '/pda/pheanstalk/classes/Pheanstalk/Socket/WriteHistory.php',
     'Pheanstalk_YamlResponseParser' => $vendorDir . '/pda/pheanstalk/classes/Pheanstalk/YamlResponseParser.php',
+=======
+>>>>>>> gitlab-office/release-1.3.2
     'PosQuickProduct' => $baseDir . '/app/models/PosQuickProduct.php',
     'PosQuickProductAPIController' => $baseDir . '/app/controllers/api/v1/PosQuickProductAPIController.php',
     'Predis\\Autoloader' => $vendorDir . '/predis/predis/lib/Predis/Autoloader.php',
@@ -1499,6 +1554,10 @@ return array(
     'RetailerTenant' => $baseDir . '/app/models/RetailerTenant.php',
     'Role' => $baseDir . '/app/models/Role.php',
     'RoleAPIController' => $baseDir . '/app/controllers/api/v1/RoleAPIController.php',
+<<<<<<< HEAD
+    'RoleTableSeeder' => $baseDir . '/app/database/seeds/RoleTableSeeder.php',
+=======
+>>>>>>> gitlab-office/release-1.3.2
     'SeminyakVillageDatabaseSeeder' => $baseDir . '/app/database/seeds/SeminyakVillageDatabaseSeeder.php',
     'SessionAPIController' => $baseDir . '/app/controllers/api/v1/SessionAPIController.php',
     'SessionHandlerInterface' => $vendorDir . '/symfony/http-foundation/Symfony/Component/HttpFoundation/Resources/stubs/SessionHandlerInterface.php',
@@ -1506,6 +1565,7 @@ return array(
     'SettingAPIController' => $baseDir . '/app/controllers/api/v1/SettingAPIController.php',
     'SettingTranslation' => $baseDir . '/app/models/SettingTranslation.php',
     'ShutdownAPIController' => $baseDir . '/app/controllers/api/v1/ShutdownAPIController.php',
+<<<<<<< HEAD
     'Stack\\Builder' => $vendorDir . '/stack/builder/src/Stack/Builder.php',
     'Stack\\StackedHttpKernel' => $vendorDir . '/stack/builder/src/Stack/StackedHttpKernel.php',
     'Symfony\\Component\\BrowserKit\\Client' => $vendorDir . '/symfony/browser-kit/Symfony/Component/BrowserKit/Client.php',
@@ -2466,10 +2526,25 @@ return array(
     'System_SSH_Agent_Identity' => $vendorDir . '/phpseclib/phpseclib/phpseclib/System/SSH/Agent.php',
     'TablePromotionEmployee' => $baseDir . '/app/database/migrations/2015_12_04_080633_table_promotion_employee.php',
     'TableUserVerificationNumbers' => $baseDir . '/app/database/migrations/2015_11_23_054308_table_user_verification_numbers.php',
+    'TakashimayaBankSeeder' => $baseDir . '/app/database/seeds/TakashimayaBankSeeder.php',
+    'TakashimayaCategorySeeder' => $baseDir . '/app/database/seeds/TakashimayaCategorySeeder.php',
+    'TakashimayaDatabaseSeeder' => $baseDir . '/app/database/seeds/TakashimayaDatabaseSeeder.php',
+    'TakashimayaFloorSeeder' => $baseDir . '/app/database/seeds/TakashimayaFloorSeeder.php',
+    'TakashimayaIconSeeder' => $baseDir . '/app/database/seeds/TakashimayaIconSeeder.php',
+    'TakashimayaLanguageSeeder' => $baseDir . '/app/database/seeds/TakashimayaLanguageSeeder.php',
+    'TakashimayaLogoSeeder' => $baseDir . '/app/database/seeds/TakashimayaLogoSeeder.php',
+    'TakashimayaMallSeeder' => $baseDir . '/app/database/seeds/TakashimayaMallSeeder.php',
+    'TakashimayaMembershipSeeder' => $baseDir . '/app/database/seeds/TakashimayaMembershipSeeder.php',
+    'TakashimayaSettingSeeder' => $baseDir . '/app/database/seeds/TakashimayaSettingSeeder.php',
+    'TakashimayaTenantSeeder' => $baseDir . '/app/database/seeds/TakashimayaTenantSeeder.php',
+=======
+    'TablePromotionEmployee' => $baseDir . '/app/database/migrations/2015_12_04_080633_table_promotion_employee.php',
+    'TableUserVerificationNumbers' => $baseDir . '/app/database/migrations/2015_11_23_054308_table_user_verification_numbers.php',
     'TakashimayaIconSeeder' => $baseDir . '/app/database/seeds/TakashimayaIconSeeder.php',
     'TakashimayaLogoSeeder' => $baseDir . '/app/database/seeds/TakashimayaLogoSeeder.php',
     'TakashimayaMallSeeder' => $baseDir . '/app/database/seeds/TakashimayaMallSeeder.php',
     'TakashimayaSettingSeeder' => $baseDir . '/app/database/seeds/TakashimayaSettingSeeder.php',
+>>>>>>> gitlab-office/release-1.3.2
     'Tenant' => $baseDir . '/app/models/Tenant.php',
     'TenantAPIController' => $baseDir . '/app/controllers/api/v1/TenantAPIController.php',
     'TestCase' => $baseDir . '/app/tests/TestCase.php',

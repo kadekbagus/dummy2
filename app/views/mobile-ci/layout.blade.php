@@ -80,6 +80,7 @@
             var orbitIsViewing = false;
         </script>
         @include('mobile-ci.commonscripts')
+        @yield('ext_script_bot')
         @include('mobile-ci.push-notification-script')
         @yield('ext_script_bot')
         {{-- @include('mobile-ci.orbit-tour') --}}

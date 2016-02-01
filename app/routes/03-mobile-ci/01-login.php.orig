@@ -594,6 +594,7 @@ Route::group(
         });
 
         /**
+<<<<<<< HEAD
          * My Account
          */
         Route::get('/customer/my-account', function()
@@ -623,9 +624,7 @@ Route::group(
         Route::get('/app/v1/keyword/search', function()
         {
             return MobileCI\MobileCIAPIController::create()->getPowerSearch();
-        });
-	
-	/**
+=======
          * Tenant load more
          */
         Route::get('/app/v1/tenant/load-more', function()
@@ -663,6 +662,7 @@ Route::group(
         Route::get('/app/v1/lucky-draw/load-more', function()
         {
             return MobileCI\MobileCIAPIController::create()->getSearchLuckyDraw();
+>>>>>>> gitlab-office/release-1.3.2
         });
 
         Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);

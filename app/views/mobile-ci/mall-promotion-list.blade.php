@@ -1,5 +1,9 @@
 @extends('mobile-ci.layout')
 
+@section('ext_style')
+    {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
+@stop
+
 @section('content')
     <div class="container">
         <div class="mobile-ci list-item-container">

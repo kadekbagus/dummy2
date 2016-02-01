@@ -99,7 +99,7 @@ class TenantAPIController extends ControllerAPI
                     */
                 ),
                 array(
-                    'merchant_id' => 'required|orbit.empty.mall',
+                    'merchant_id' => 'orbit.empty.mall',
                     'retailer_id' => 'required|orbit.empty.tenant',//|orbit.exists.deleted_tenant_is_box_current_retailer',
                     /* for next version
                     'password'    => [
@@ -413,7 +413,7 @@ class TenantAPIController extends ControllerAPI
             $contact_person_phone = OrbitInput::post('contact_person_phone');
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
-            $sector_of_activity = OrbitInput::post('sector_of_activity'); 
+            $sector_of_activity = OrbitInput::post('sector_of_activity');
 
             $url = OrbitInput::post('url');
             $box_url = OrbitInput::post('box_url');
@@ -869,7 +869,11 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
+<<<<<<< HEAD
+                    'status'            => 'orbit.empty.tenant_status|orbit.empty.tenant_floor:' . $mall_id . ',' . $floor . '|orbit.empty.tenant_unit:' . $unit . '|orbit.exists.tenant_on_inactive_have_linked',
+=======
                     'status'            => 'orbit.empty.tenant_status',
+>>>>>>> gitlab-office/release-1.3.2
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
@@ -2166,6 +2170,7 @@ class TenantAPIController extends ControllerAPI
                 if (! empty($promotion)) {
                     return FALSE;
                 }
+
             }
 
             return TRUE;
