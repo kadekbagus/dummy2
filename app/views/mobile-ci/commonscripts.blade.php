@@ -158,7 +158,7 @@
 <script type="text/javascript">
     var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
         skip = {{Config::get('orbit.pagination.per_page', 25)}};
-
+        total_x_item = 0;
     /* Load more X function
      * It is used on news, promotion, lucky draw and coupon list
      * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
@@ -203,7 +203,7 @@
                 }
                 catalogueWrapper.append(itemList.join(''));
             }
-            if (skip >= data.total_records) {
+            if (data.total_records - take <= 0) {
                 btn.remove();
             }
         }).always(function(data){
