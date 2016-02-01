@@ -190,9 +190,7 @@
                                             <div><strong>'+data.records[i].name+'</strong></div>\
                                         </header>\
                                         <header class="list-item-subtitle">\
-                                            <div>\
-                                                '+data.records[i].description+'\
-                                            </div>\
+                                            <div>'+data.records[i].description+'</div>\
                                         </header>
                                     </div>\
                                     <div class="list-vignette-non-tenant"></div>\
