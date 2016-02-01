@@ -1544,7 +1544,13 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
-                $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+
+                // Get max tenant count
+                $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                    ->where('updated_at', '<', $campaignBeginDateTime)
+                    ->orderBy('number_active_tenants', 'desc')->first();
+
+                $previousDayCost = $baseCost * $row->number_active_tenants;
             }
         }
 
@@ -1575,8 +1581,15 @@ class CampaignReportAPIController extends ControllerAPI
 
                 if ($activationRow) {
 
+                    // Get max tenant count
+                    $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                        ->where('updated_at', '>=', $loopBeginDateTime)
+                        ->where('updated_at', '<', $loopEndDateTime)
+                        ->orderBy('number_active_tenants', 'desc')
+                        ->first();
+
                     // If there is an activation today, any deactivation won't be affected
-                    $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
+                    $cost = $previousDayCost = $baseCost * $row->number_active_tenants;
 
                     // Cancel
                     if ($campaignLog->updated_at->toDateTimeString() < $campaignBeginDateTimeMidnight) {
