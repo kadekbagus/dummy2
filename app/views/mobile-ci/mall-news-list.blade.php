@@ -8,7 +8,7 @@
                 @if(sizeof($data->records) > 0)
                     <div class="catalogue-wrapper">
                     @foreach($data->records as $news)
-                        <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$news->promotion_id}}" id="item-{{$news->promotion_id}}">
+                        <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$news->news_id}}" id="item-{{$news->news_id}}">
                             <section class="list-item-single-tenant">
                                 <a class="list-item-link" href="{{ url('customer/mallnewsdetail?id='.$news->news_id) }}">
                                     <div class="list-item-info">
