@@ -308,9 +308,9 @@
                                             </header>\
                                             <header class="list-item-badges">\
                                                 <div class="col-xs-12 badges-wrapper text-right">\
-                                                    '+ (data.records[i].promotion_flag == TRUE ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
-                                                    '+ (data.records[i].news_flag == TRUE ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
-                                                    '+ (data.records[i].coupon_flag == TRUE ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
+                                                    '+ (data.records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
+                                                    '+ (data.records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
+                                                    '+ (data.records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
                                                 </div>\
                                             </header>\
                                         </div>\
