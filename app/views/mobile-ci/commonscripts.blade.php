@@ -176,23 +176,25 @@
             skip = skip + skip;
             if(data.records.length > 0) {
                 for(var i = 0; i < data.records.length; i++) {
-                    var list = '<div class="main-theme-mall catalogue catalogue-other" id="product-'+data.records[i].merchant_id+'">\
-                            <div class="row catalogue-top">\
-                                <div class="col-xs-3 catalogue-img">\
-                                    <a href="'+data.records[i].url+'">\
-                                        <span class="link-spanner-other"></span>\
-                                        <img class="img-responsive side-margin-center" alt="" src="'+data.records[i].image+'"/>\
-                                    </a>\
-                                </div>\
-                                <div class="col-xs-9 catalogue-info">\
-                                    <a href="'+data.records[i].url+'">\
-                                        <span class="link-spanner-other"></span>\
-                                        <h4>'+data.records[i].name+'</h4>\
-                                        <p>'+data.records[i].description+'</p>\
-                                    </a>\
-                                </div>\
-                            </div>\
+                    var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].merchant_id+'" id="item-'+data.records[i].merchant_id+'">\
+                            <section class="list-item-single-tenant">\
+                                <a class="list-item-link" href="'+data.records[i].url+'">\
+                                    <div class="list-item-info">\
+                                        <header class="list-item-title">\
+                                            <div><strong>'+data.records[i].name+'</strong></div>\
+                                        </header>\
+                                        <header class="list-item-subtitle">\
+                                            <div>\
+                                                '+data.records[i].description+'\
+                                            </div>\
+                                        </header>
+                                    </div>\
+                                    <div class="list-vignette-non-tenant"></div>\
+                                    <img class="img-responsive img-fit-tenant" src="'+data.records[i].image+'"/>\
+                                </a>\
+                            </section>\
                         </div>';
+
                     itemList.push(list);
                 }
                 catalogueWrapper.append(itemList.join(''));
