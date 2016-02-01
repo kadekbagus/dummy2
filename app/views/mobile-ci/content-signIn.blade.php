@@ -16,7 +16,7 @@
     <div class="social-media-wraper" id="social-media-wraper">
         <div class="logged-in-container hide">
             <div class="row">
-                <div class="col-xs-12">
+                <div class="col-xs-12 sign-in-button">
                     <button id="logged-in-signin-button" type="button" class="btn btn-block btn-primary">Sign in</button>
                 </div>
             </div>
