@@ -5227,28 +5227,28 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
                                 date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') as created_at,
-                                (select 
-                                        {$tablePrefix}campaign_history_actions.action_name
+                                @previ := (select 
+                                        orbs_campaign_history_actions.action_name
                                     from
-                                        {$tablePrefix}campaign_histories a
-                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                        orbs_campaign_histories a
+                                            LEFT JOIN orbs_campaign_history_actions ON orbs_campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
-                                            and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by DATE_FORMAT(a.created_at, '%Y-%m-%d') desc, {$tablePrefix}campaign_history_actions.action_name  
-                                    limit 1) as action_status,
-                                (select 
-                                        {$tablePrefix}campaign_history_actions.action_name
-                                    from
-                                        {$tablePrefix}campaign_histories a
-                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
-                                    where
-                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
-                                            and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                        date_format(convert_tz(a.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= date_format(convert_tz(orbs_campaign_histories.created_at, '+00:00', '+08:00'), '%Y-%m-%d')
+                                            and (orbs_campaign_history_actions.action_name in ('activate' , 'deactivate'))
+                                            and a.campaign_id = orbs_campaign_histories.campaign_id
                                     order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                    limit 1) as previous_status
+                                    limit 1) as previous_status,
+                                ifnull((select 
+                                        orbs_campaign_history_actions.action_name
+                                    from
+                                        orbs_campaign_histories a
+                                            LEFT JOIN orbs_campaign_history_actions ON orbs_campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                    where
+                                        date_format(convert_tz(a.created_at, '+00:00', '+08:00'), '%Y-%m-%d') = date_format(convert_tz(orbs_campaign_histories.created_at, '+00:00', '+08:00'), '%Y-%m-%d')
+                                            and orbs_campaign_history_actions.action_name in ('activate' , 'deactivate')
+                                            and a.campaign_id = orbs_campaign_histories.campaign_id
+                                    order by orbs_campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                    limit 1), @previ) as action_status
                             from
                                 (select *
                                 from
@@ -5279,28 +5279,28 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_histories.number_active_tenants as tenants,
                                 {$tablePrefix}campaign_price.base_price,
                                 date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') as created_at,
-                                (select 
-                                        {$tablePrefix}campaign_history_actions.action_name
+                                @previ := (select 
+                                        orbs_campaign_history_actions.action_name
                                     from
-                                        {$tablePrefix}campaign_histories a
-                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                        orbs_campaign_histories a
+                                            LEFT JOIN orbs_campaign_history_actions ON orbs_campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                     where
-                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
-                                            and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by DATE_FORMAT(a.created_at, '%Y-%m-%d') desc, {$tablePrefix}campaign_history_actions.action_name 
-                                    limit 1) as action_status,
-                                (select 
-                                        {$tablePrefix}campaign_history_actions.action_name
-                                    from
-                                        {$tablePrefix}campaign_histories a
-                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
-                                    where
-                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
-                                            and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                        date_format(convert_tz(a.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= date_format(convert_tz(orbs_campaign_histories.created_at, '+00:00', '+08:00'), '%Y-%m-%d')
+                                            and (orbs_campaign_history_actions.action_name in ('activate' , 'deactivate'))
+                                            and a.campaign_id = orbs_campaign_histories.campaign_id
                                     order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                    limit 1) as previous_status
+                                    limit 1) as previous_status,
+                                ifnull((select 
+                                        orbs_campaign_history_actions.action_name
+                                    from
+                                        orbs_campaign_histories a
+                                            LEFT JOIN orbs_campaign_history_actions ON orbs_campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                    where
+                                        date_format(convert_tz(a.created_at, '+00:00', '+08:00'), '%Y-%m-%d') = date_format(convert_tz(orbs_campaign_histories.created_at, '+00:00', '+08:00'), '%Y-%m-%d')
+                                            and orbs_campaign_history_actions.action_name in ('activate' , 'deactivate')
+                                            and a.campaign_id = orbs_campaign_histories.campaign_id
+                                    order by orbs_campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                    limit 1), @previ) as action_status
                             from
                                 (select *
                                 from
