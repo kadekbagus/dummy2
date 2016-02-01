@@ -159,7 +159,12 @@
     var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
         skip = {{Config::get('orbit.pagination.per_page', 25)}};
 
-    function loadMoreX(itemtype) {
+    /* Load more X function
+     * It is used on news, promotion, lucky draw and coupon list
+     * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
+     *             ids(array(list of already loaded ids))
+     */
+    function loadMoreX(itemtype, ids) {
         var catalogueWrapper = $('.catalogue-wrapper');
         var itemList = [];
         var btn = $('#load-more-x');
@@ -170,7 +175,8 @@
             method: 'GET',
             data: {
                 take: take,
-                skip: skip
+                skip: skip,
+                ids: ids
             }
         }).done(function(data) {
             skip = skip + skip;

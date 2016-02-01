@@ -95,8 +95,12 @@
 @section('ext_script_bot')
 <script type="text/javascript">
     $(document).ready(function(){
-        $('#load-more-x').click(function(){
-            loadMoreX('news');
+        $('body').on('click', '#load-more-x', function(){
+            var listOfIDs = [];
+            $('.catalogue-wrapper .item-x').each(function(id){
+                listOfIDs.push($(this).data('ids'));
+            });
+            loadMoreX('news', listOfIDs);
         });
     }); 
 </script>
