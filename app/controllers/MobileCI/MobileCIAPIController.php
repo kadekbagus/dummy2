@@ -5288,6 +5288,11 @@ class MobileCIAPIController extends ControllerAPI
                 $news->whereNotIn('news_id', $ids);
             });
 
+            $news = $news->where('news.status', '=', 'active')
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('object_type', 'news')
+                ->whereRaw("? between begin_date and end_date", [$mallTime])
+
             $_news = clone $news;
 
             // Get the take args
