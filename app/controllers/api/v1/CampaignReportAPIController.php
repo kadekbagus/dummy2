@@ -1500,7 +1500,7 @@ class CampaignReportAPIController extends ControllerAPI
         $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
         
         // This assumes request begin time is always 00:00 of mall timezone
-        $campaignBeginDateTimeMidnight = substr($campaignBeginDateTime, 0, 10).' 00:00:00';
+        $campaignBeginDateTimeMidnight = substr($campaign->begin_date, 0, 10).' 00:00:00';
         $campaignBeginDateTimeMidnight = Carbon::createFromFormat('Y-m-d H:i:s', $campaignBeginDateTimeMidnight, $timezone)->setTimeZone('UTC')->toDateTimeString();
 
         $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
