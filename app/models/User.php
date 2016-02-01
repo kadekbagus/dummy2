@@ -215,6 +215,20 @@ class User extends Eloquent implements UserInterface
             } else {
                 return [$mall->merchant_id];
             }
+        } elseif ($this->isCampaignOwner() || $this->isCampaignEmployee()) {
+            $mall = $this->employee->retailers();
+
+            if (! empty($mallIds)) {
+                $mall->whereIn('retailer_id', (array)$mallIds);
+            }
+
+            $mall = $mall->first();
+
+            if (empty($mall)) {
+                return [];
+            } else {
+                return [$mall->merchant_id];
+            }
         } elseif ($this->isConsumer()) {
             $malls = Mall::excludeDeleted()
                          ->join('user_acquisitions', 'user_acquisitions.acquirer_id', '=', 'merchants.merchant_id')

@@ -497,13 +497,14 @@ class CampaignReportAPIController extends ControllerAPI
                                         $statustemp = $cq->previous_status;
                                         $tenanttemp = $cq->tenants;
                                     }
+                                    if (! $find) {
+                                        $campaignstatus = $statustemp;
+                                        $campaigntenant = $tenanttemp;
+                                    }
                                 }
                             }
                         }
-                        if (! $find) {
-                            $campaignstatus = $statustemp;
-                            $campaigntenant = $tenanttemp;
-                        }
+
                         if($dateloop >= $begin && $dateloop <= $end) {
                             if($campaignstatus === 'activate' || $campaignstatus === 'active' ){
                                 $spending = (int) $campaigntenant * $bp;
@@ -586,14 +587,14 @@ class CampaignReportAPIController extends ControllerAPI
                                         $statustemp = $nq->previous_status;
                                         $tenanttemp = $nq->tenants;
                                     }
-
+                                    if (!$find) {
+                                        $campaignstatus = $statustemp;
+                                        $campaigntenant = $tenanttemp;
+                                    }
                                 }
                             }
                         }
-                        if (!$find) {
-                            $campaignstatus = $statustemp;
-                            $campaigntenant = $tenanttemp;
-                        }
+
                         if($dateloop >= $begin && $dateloop <= $end) {
                             if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                                 $spending = (int) $campaigntenant * $bp;
@@ -906,6 +907,10 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get active date only
             $campaignDetailActive = array();
+
+            if ($endDate < $end) {
+                $end = $endDate;
+            }
 
             if (count($campaignHistory) > 0) {
                 for ($x = 0; $x<=$diff; $x++) {
@@ -1474,8 +1479,6 @@ class CampaignReportAPIController extends ControllerAPI
 
         // Date intervals
         $requestBeginDateTime = OrbitInput::get('start_date');
-        $requestBeginTime = substr($requestBeginDateTime, 11, 8);
-
         $requestEndDateTime = OrbitInput::get('end_date');
 
         // Init Carbon
@@ -1498,13 +1501,7 @@ class CampaignReportAPIController extends ControllerAPI
         $campaign = $campaign->find($id);
 
         $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
-        
-        // This assumes request begin time is always 00:00 of mall timezone
-        $campaignBeginDateTimeMidnight = substr($campaign->begin_date, 0, 10).' 00:00:00';
-        $campaignBeginDateTimeMidnight = Carbon::createFromFormat('Y-m-d H:i:s', $campaignBeginDateTimeMidnight, $timezone)->setTimeZone('UTC')->toDateTimeString();
-
         $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
-        $campaignEndDateTime2 = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->addMinute()->toDateTimeString();
 
         // Get the base cost
         $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
@@ -1544,13 +1541,7 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
-
-                // Get max tenant count
-                $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                    ->where('updated_at', '<', $campaignBeginDateTime)
-                    ->orderBy('number_active_tenants', 'desc')->first();
-
-                $previousDayCost = $baseCost * $row->number_active_tenants;
+                $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
             }
         }
 
@@ -1581,20 +1572,8 @@ class CampaignReportAPIController extends ControllerAPI
 
                 if ($activationRow) {
 
-                    // Get max tenant count
-                    $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                        ->where('updated_at', '>=', $loopBeginDateTime)
-                        ->where('updated_at', '<', $loopEndDateTime)
-                        ->orderBy('number_active_tenants', 'desc')
-                        ->first();
-
                     // If there is an activation today, any deactivation won't be affected
-                    $cost = $previousDayCost = $baseCost * $row->number_active_tenants;
-
-                    // Cancel
-                    if ($campaignLog->updated_at->toDateTimeString() < $campaignBeginDateTimeMidnight) {
-                        $cost = 0;
-                    }
+                    $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
 
                     $activationRowId = $activationRow->campaign_history_id;
                 }
@@ -1616,7 +1595,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
             // Data not found, but the date is in the interval
-            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime <= $campaignEndDateTime2) {
+            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime < $campaignEndDateTime) {
                 $cost = $previousDayCost;
 
             // Data not found
