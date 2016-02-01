@@ -191,7 +191,7 @@
                                         </header>\
                                         <header class="list-item-subtitle">\
                                             <div>'+data.records[i].description+'</div>\
-                                        </header>
+                                        </header>\
                                     </div>\
                                     <div class="list-vignette-non-tenant"></div>\
                                     <img class="img-responsive img-fit-tenant" src="'+data.records[i].image+'"/>\
