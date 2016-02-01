@@ -137,7 +137,7 @@ class UserUpdateNotifier
             // We are only interesting in 200 OK status
             $httpCode = $this->poster->getTransferInfo('http_code');
             if ((int)$httpCode !== 200) {
-                $errorMessage = sprintf('External response: Unexpected http response code %s, expected 200.', $httpCode);
+                $errorMessage = sprintf('External response: %s', $httpBody);
                 throw new Exception($errorMessage);
             }
 
@@ -145,7 +145,7 @@ class UserUpdateNotifier
 
             // Non-Zero code means an error
             if ((string)$response->code !== '0') {
-                $errorMessage = sprintf('External response: Unexpected response code %s, expected 0 (zero).', $response->code);
+                $errorMessage = sprintf('External response: %s', $response->message);
                 if ($data['human_error']) {
                     $errorMessage = ! empty($response->message) ? $response->message : $errorMessage;
                 }
