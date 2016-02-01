@@ -117,12 +117,8 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             }
 
-            $mall = App::make('orbit.empty.mall');
-            $now = Carbon::now($mall->timezone->timezone_name);
-            $timezone = $this->getTimezone($mall->merchant_id);
-            $timezoneOffset = $this->getTimezoneOffset($timezone);
-
             // Builder object
+            $now = date('Y-m-d H:i:s');
             $tablePrefix = DB::getTablePrefix();
 
             //get total cost news
@@ -130,9 +126,7 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
-                (
-                    SELECT fn_campaign_total_spending ('', {$tablePrefix}news.news_id, 'news', {$tablePrefix}news.begin_date, date_format(convert_tz(NOW(), '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')) as a
-                ) as spending,
+                0 as spending,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -174,9 +168,7 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
-                (
-                    SELECT fn_campaign_total_spending ('', {$tablePrefix}news.news_id, 'promotion', {$tablePrefix}news.begin_date, date_format(convert_tz(NOW(), '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')) as a
-                ) as spending,
+                0 as spending,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -215,9 +207,7 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
-                (
-                    SELECT fn_campaign_total_spending ('', {$tablePrefix}promotions.promotion_id, 'promotion', {$tablePrefix}promotions.begin_date, date_format(convert_tz(NOW(), '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')) as a
-                ) as spending,
+                0 as spending,
                 (
                     SELECT COUNT({$tablePrefix}activities.activity_id)
                     FROM {$tablePrefix}activities
@@ -256,7 +246,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign = $news->unionAll($promotions)->unionAll($coupons);
 
-
             $sql = $campaign->toSql();
             foreach($campaign->getBindings() as $binding)
             {
@@ -266,6 +255,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Make union result subquery
             $campaign = DB::table(DB::raw('(' . $sql . ') as a'));
+
 
             // Filter by campaign name
             OrbitInput::get('campaign_name', function($campaign_name) use ($campaign) {
@@ -315,7 +305,6 @@ class CampaignReportAPIController extends ControllerAPI
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
 
-
             // Get total page views
             $totalPageViews = $_campaign->sum('page_views');
 
@@ -326,7 +315,7 @@ class CampaignReportAPIController extends ControllerAPI
             $totalEstimated = $_campaign->sum('estimated_total');
 
             // Get total spending
-            $totalSpending = $_campaign->sum('spending');
+            // $totalSpending = $_campaign->sum('spending');
 
             $_campaign->select('campaign_id');
 
@@ -414,6 +403,211 @@ class CampaignReportAPIController extends ControllerAPI
 
                 $listOfCampaign[$key]->tenants = $linkToTenants;
             }
+
+            // get speending
+            foreach ($listOfCampaign as $key => $val) {
+                $mall = App::make('orbit.empty.mall');
+                $now = Carbon::now($mall->timezone->timezone_name);
+                $timezone = $this->getTimezone($mall->merchant_id);
+                $timezoneOffset = $this->getTimezoneOffset($timezone);
+                $start_date = new Carbon(substr($val->begin_date,0,10));
+                $end_date = new Carbon(substr($now,0,10));
+                $diff = $start_date->diffInDays($end_date);
+                $campaignidloop = $val->campaign_id;
+                $object_type = $val->campaign_type;
+                $begin =substr($val->begin_date,0,10);
+                $end =substr($now,0,10);
+                $bp = $val->base_price;
+                $totalSpendingCampaign =  0;
+                $campaignstatus = $val->status;
+                $campaigntenant = $val->total_tenant;
+                $statustemp = $val->status;
+                $tenanttemp = $val->total_tenant;
+                $start = new Carbon($start_date);
+                $find = FALSE;
+                if ($val->campaign_type === 'coupon') {
+
+                    $couponQuery = DB::select( DB::raw("select
+                                        {$tablePrefix}campaign_histories.campaign_id as campaign_id,
+                                        {$tablePrefix}campaign_histories.number_active_tenants as tenants,
+                                        {$tablePrefix}campaign_price.base_price,
+                                        date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') as created_at,
+                                        (select
+                                                {$tablePrefix}campaign_history_actions.action_name
+                                            from
+                                                {$tablePrefix}campaign_histories a
+                                                    LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                            where
+                                                date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
+                                                    and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
+                                                    and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                            limit 1) as action_status,
+                                        (select
+                                                {$tablePrefix}campaign_history_actions.action_name
+                                            from
+                                                {$tablePrefix}campaign_histories a
+                                                    LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                            where
+                                                date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
+                                                    and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
+                                                    and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                            limit 1) as previous_status
+                                    from
+                                        (select *
+                                        from
+                                            {$tablePrefix}campaign_histories
+                                        where
+                                            campaign_id = '". $campaignidloop ."'
+                                        order by number_active_tenants desc) {$tablePrefix}campaign_histories
+                                            left join
+                                        {$tablePrefix}promotions ON {$tablePrefix}promotions.promotion_id = {$tablePrefix}campaign_histories.campaign_id
+                                            left join
+                                        {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            left join
+                                        {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
+                                    group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') , {$tablePrefix}campaign_histories.campaign_id"));
+
+                    for ($x = 0; $x<=$diff; $x++) {
+                        $dateloop = $start->toDateString();
+                        $spending = 0;
+                        foreach($couponQuery as $cq) {
+                            if($cq->created_at <= $dateloop) {
+                                $find = FALSE;
+                                if ($cq->campaign_id === $campaignidloop) {
+                                    if($cq->created_at >= $begin && $cq->created_at <= $end) {
+                                        if ($cq->created_at === $dateloop) {
+                                            $find = TRUE;
+                                            $campaignstatus = $cq->action_status;
+                                            $campaigntenant = $cq->tenants;
+                                            $statustemp = $cq->previous_status;
+                                            $tenanttemp = $cq->tenants;
+                                        } else {
+                                            $find = FALSE;
+                                            $campaignstatus = $cq->action_status;
+                                            $campaigntenant = $cq->tenants;
+                                            $statustemp = $cq->previous_status;
+                                            $tenanttemp = $cq->tenants;
+                                        }
+                                    } else {
+                                        $find = FALSE;
+                                        $campaignstatus = $cq->action_status;
+                                        $campaigntenant = $cq->tenants;
+                                        $statustemp = $cq->previous_status;
+                                        $tenanttemp = $cq->tenants;
+                                    }
+                                    if (! $find) {
+                                        $campaignstatus = $statustemp;
+                                        $campaigntenant = $tenanttemp;
+                                    }
+                                }
+                            }
+                        }
+
+                        if($dateloop >= $begin && $dateloop <= $end) {
+                            if($campaignstatus === 'activate' || $campaignstatus === 'active' ){
+                                $spending = (int) $campaigntenant * $bp;
+                                $totalSpendingCampaign += $spending;
+                            }
+                        }
+                        $start->addDay();
+                    }
+
+                } elseif ($val->campaign_type === 'news' || $val->campaign_type === 'promotion') {
+
+                    $newsQuery = DB::select( DB::raw("select
+                                        {$tablePrefix}campaign_histories.campaign_id as campaign_id,
+                                        {$tablePrefix}campaign_histories.number_active_tenants as tenants,
+                                        {$tablePrefix}campaign_price.base_price,
+                                        date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') as created_at,
+                                        (select
+                                                {$tablePrefix}campaign_history_actions.action_name
+                                            from
+                                                {$tablePrefix}campaign_histories a
+                                                    LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                            where
+                                                date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
+                                                    and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
+                                                    and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                            limit 1) as action_status,
+                                        (select
+                                                {$tablePrefix}campaign_history_actions.action_name
+                                            from
+                                                {$tablePrefix}campaign_histories a
+                                                    LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                            where
+                                                date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
+                                                    and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
+                                                    and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                            limit 1) as previous_status
+                                    from
+                                        (select *
+                                        from
+                                            {$tablePrefix}campaign_histories
+                                        where
+                                            campaign_id = '". $campaignidloop ."'
+                                        order by number_active_tenants desc) {$tablePrefix}campaign_histories
+                                            left join
+                                        {$tablePrefix}news ON {$tablePrefix}news.news_id = {$tablePrefix}campaign_histories.campaign_id
+                                            left join
+                                        {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            left join
+                                        {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
+                                    group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
+
+
+                    for ($x = 0; $x<=$diff; $x++) {
+                        $dateloop = $start->toDateString();
+                        $spending = 0;
+                        foreach($newsQuery as $nq) {
+                            if($nq->created_at <= $dateloop) {
+                                $find = FALSE;
+                                if ($nq->campaign_id === $campaignidloop) {
+                                    if($nq->created_at >= $begin && $nq->created_at <= $end) {
+                                        if ($nq->created_at === $dateloop) {
+                                            $find = TRUE;
+                                            $campaignstatus = $nq->action_status;
+                                            $campaigntenant = $nq->tenants;
+                                            $statustemp = $nq->previous_status;
+                                            $tenanttemp = $nq->tenants;
+                                        } else {
+                                            $find = FALSE;
+                                            $campaignstatus = $nq->action_status;
+                                            $campaigntenant = $nq->tenants;
+                                            $statustemp = $nq->previous_status;
+                                            $tenanttemp = $nq->tenants;
+                                        }
+                                    } else {
+                                        $find = FALSE;
+                                        $campaignstatus = $nq->action_status;
+                                        $campaigntenant = $nq->tenants;
+                                        $statustemp = $nq->previous_status;
+                                        $tenanttemp = $nq->tenants;
+                                    }
+                                    if (!$find) {
+                                        $campaignstatus = $statustemp;
+                                        $campaigntenant = $tenanttemp;
+                                    }
+                                }
+                            }
+                        }
+
+                        if($dateloop >= $begin && $dateloop <= $end) {
+                            if($campaignstatus == 'activate' || $campaignstatus == 'active'){
+                                $spending = (int) $campaigntenant * $bp;
+                                $totalSpendingCampaign += $spending;
+                            }
+                        }
+                        $start->addDay();
+                    }
+                }
+                $listOfCampaign[$key]->spending = $totalSpendingCampaign;
+            }
+
+            $totalSpending = 0;
 
             $data = new stdclass();
             $data->total_records = $totalCampaign;
@@ -619,31 +813,28 @@ class CampaignReportAPIController extends ControllerAPI
                                         {$tablePrefix}campaign_histories.number_active_tenants as total_tenant,
                                         {$tablePrefix}campaign_price.base_price,
                                         date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') as created_at,
-                                        @previ := (
-                                            select
+                                        (select
                                                 {$tablePrefix}campaign_history_actions.action_name
                                             from
                                                 {$tablePrefix}campaign_histories a
-                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                                    LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                             where
                                                 date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
-                                            and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                            order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                            limit 1) as previous_status,
-                                        ifnull((
-                                            select
+                                                    and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
+                                                    and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                            limit 1) as action_status,
+                                        (select
                                                 {$tablePrefix}campaign_history_actions.action_name
                                             from
                                                 {$tablePrefix}campaign_histories a
-                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                                    LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                             where
-                                            date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') =  date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
-                                            and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                            order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                            limit 1
-                                        ), @previ) as action_status
+                                                date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
+                                                    and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
+                                                    and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                            limit 1) as previous_status
                                     from
                                         (select *
                                         from
@@ -667,31 +858,28 @@ class CampaignReportAPIController extends ControllerAPI
                                         {$tablePrefix}campaign_histories.number_active_tenants as total_tenant,
                                         {$tablePrefix}campaign_price.base_price,
                                         date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') as created_at,
-                                        @previ := (
-                                            select
+                                        (select
                                                 {$tablePrefix}campaign_history_actions.action_name
                                             from
                                                 {$tablePrefix}campaign_histories a
-                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                                    LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                             where
                                                 date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
-                                            and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                            order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                            limit 1) as previous_status,
-                                        ifnull((
-                                            select
+                                                    and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
+                                                    and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                            limit 1) as action_status,
+                                        (select
                                                 {$tablePrefix}campaign_history_actions.action_name
                                             from
                                                 {$tablePrefix}campaign_histories a
-                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                                    LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
                                             where
-                                            date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') =  date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
-                                            and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
-                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                            order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                            limit 1
-                                        ), @previ) as action_status
+                                                date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') <= date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
+                                                    and ({$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate'))
+                                                    and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                            order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
+                                            limit 1) as previous_status
                                     from
                                         (select *
                                         from
@@ -719,11 +907,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get active date only
             $campaignDetailActive = array();
-
-
-            if ($endDate < $end) {
-                $end = $endDate;
-            }
 
             if (count($campaignHistory) > 0) {
                 for ($x = 0; $x<=$diff; $x++) {
@@ -754,14 +937,14 @@ class CampaignReportAPIController extends ControllerAPI
                                     $statustemp = $nq->previous_status;
                                     $tenanttemp = $nq->total_tenant;
                                 }
-                                if (!$find) {
-                                    $campaignstatus = $statustemp;
-                                    $campaigntenant = $tenanttemp;
-                                }
+
                             }
                         }
                     }
-
+                    if (!$find) {
+                        $campaignstatus = $statustemp;
+                        $campaigntenant = $tenanttemp;
+                    }
                     if($dateloop >= $begin && $dateloop <= $end) {
                         if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                             $spending = (int) $campaigntenant * $nq->base_price;
@@ -888,7 +1071,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ->where('news.news_id', '=', $campaign_id)
                         ->get();
                 }
-
 
                 $unique_users = 0;
                 if (count($details[0]->unique_users) != 0) {
@@ -1293,8 +1475,6 @@ class CampaignReportAPIController extends ControllerAPI
 
         // Date intervals
         $requestBeginDateTime = OrbitInput::get('start_date');
-        $requestBeginTime = substr($requestBeginDateTime, 11, 8);
-
         $requestEndDateTime = OrbitInput::get('end_date');
 
         // Init Carbon
@@ -1317,13 +1497,7 @@ class CampaignReportAPIController extends ControllerAPI
         $campaign = $campaign->find($id);
 
         $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
-
-        // This assumes request begin time is always 00:00 of mall timezone
-        $campaignBeginDateTimeMidnight = substr($campaign->begin_date, 0, 10).' 00:00:00';
-        $campaignBeginDateTimeMidnight = Carbon::createFromFormat('Y-m-d H:i:s', $campaignBeginDateTimeMidnight, $timezone)->setTimeZone('UTC')->toDateTimeString();
-
         $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
-        $campaignEndDateTime2 = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->addMinute()->toDateTimeString();
 
         // Get the base cost
         $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
@@ -1332,8 +1506,8 @@ class CampaignReportAPIController extends ControllerAPI
         $previousDayCost = 0;
 
         // In case the creation date is earlier than the first active date
-        $campaignLog = CampaignHistory::ofCampaignTypeAndId($type, $id)
-            ->where('created_at', '<', $campaignBeginDateTime)
+        $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            ->where('updated_at', '<', $campaignBeginDateTime)
             ->orderBy('campaign_history_id', 'desc')->first();
 
         $activationActionId = CampaignHistoryActions::whereActionName('activate')->first()->campaign_history_action_id;
@@ -1345,7 +1519,7 @@ class CampaignReportAPIController extends ControllerAPI
             $deactivationRowId = null;
 
             // Null when not found
-            $activationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)
+            $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->whereCampaignHistoryActionId($activationActionId)
                 ->orderBy('campaign_history_id', 'desc')->first();
 
@@ -1354,7 +1528,7 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Null when not found
-            $deactivationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)
+            $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
                 ->whereCampaignHistoryActionId($deactivationActionId)
                 ->orderBy('campaign_history_id', 'desc')->first();
 
@@ -1363,13 +1537,7 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
-
-                // Get max tenant count
-                $row = CampaignHistory::ofCampaignTypeAndId($type, $id)
-                    ->where('created_at', '<', $campaignBeginDateTime)
-                    ->orderBy('number_active_tenants', 'desc')->first();
-
-                $previousDayCost = $baseCost * $row->number_active_tenants;
+                $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
             }
         }
 
@@ -1379,8 +1547,11 @@ class CampaignReportAPIController extends ControllerAPI
             $loopEndDateTime = $carbonLoopNextDay->toDateTimeString();
 
             // Let's retrieve it from DB
-            $campaignLog = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
-                ->orderBy('campaign_history_id', 'desc')->first();
+            $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                ->where('updated_at', '>=', $loopBeginDateTime)
+                ->where('updated_at', '<', $loopEndDateTime)
+                ->orderBy('campaign_history_id', 'desc')
+                ->first();
 
             // Data found
             if ($campaignLog) {
@@ -1389,29 +1560,24 @@ class CampaignReportAPIController extends ControllerAPI
                 $deactivationRowId = '';
 
                 // Null when not found
-                $activationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
+                $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                    ->where('updated_at', '>=', $loopBeginDateTime)
+                    ->where('updated_at', '<', $loopEndDateTime)
                     ->whereCampaignHistoryActionId($activationActionId)
                     ->orderBy('campaign_history_id', 'desc')->first();
 
                 if ($activationRow) {
 
-                    // Get max tenant count
-                    $row = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
-                        ->orderBy('number_active_tenants', 'desc')->first();
-
                     // If there is an activation today, any deactivation won't be affected
-                    $cost = $previousDayCost = $baseCost * $row->number_active_tenants;
-
-                    // Cancel
-                    if ($campaignLog->created_at->toDateTimeString() < $campaignBeginDateTimeMidnight) {
-                        $cost = 0;
-                    }
+                    $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
 
                     $activationRowId = $activationRow->campaign_history_id;
                 }
 
                 // Null when not found
-                $deactivationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
+                $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                    ->where('updated_at', '>=', $loopBeginDateTime)
+                    ->where('updated_at', '<', $loopEndDateTime)
                     ->whereCampaignHistoryActionId($deactivationActionId)
                     ->orderBy('campaign_history_id', 'desc')->first();
 
@@ -1425,7 +1591,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
             // Data not found, but the date is in the interval
-            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime <= $campaignEndDateTime2) {
+            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime < $campaignEndDateTime) {
                 $cost = $previousDayCost;
 
             // Data not found
