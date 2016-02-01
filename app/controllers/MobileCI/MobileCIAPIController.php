@@ -5225,6 +5225,11 @@ class MobileCIAPIController extends ControllerAPI
                             ->where('object_type', 'news')
                             ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
+            OrbitInput::get('ids', function($ids) use ($news)
+            {
+                $news->whereNotIn('news_id', $ids);
+            });
+
             $_news = clone $news;
 
             $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
