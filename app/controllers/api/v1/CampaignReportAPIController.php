@@ -1513,7 +1513,7 @@ class CampaignReportAPIController extends ControllerAPI
         $previousDayCost = 0;
 
         // In case the creation date is earlier than the first active date
-        $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+        $campaignLog = CampaignHistory::ofCampaignTypeAndId($type, $id)
             ->where('created_at', '<', $campaignBeginDateTime)
             ->orderBy('campaign_history_id', 'desc')->first();
 
@@ -1526,7 +1526,7 @@ class CampaignReportAPIController extends ControllerAPI
             $deactivationRowId = null;
 
             // Null when not found
-            $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            $activationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)
                 ->whereCampaignHistoryActionId($activationActionId)
                 ->orderBy('campaign_history_id', 'desc')->first();
 
@@ -1535,7 +1535,7 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             // Null when not found
-            $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+            $deactivationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)
                 ->whereCampaignHistoryActionId($deactivationActionId)
                 ->orderBy('campaign_history_id', 'desc')->first();
 
@@ -1546,7 +1546,7 @@ class CampaignReportAPIController extends ControllerAPI
             if ($activationRowId > $deactivationRowId || ($activationRowId === null && $deactivationRowId === null)) {
 
                 // Get max tenant count
-                $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
+                $row = CampaignHistory::ofCampaignTypeAndId($type, $id)
                     ->where('created_at', '<', $campaignBeginDateTime)
                     ->orderBy('number_active_tenants', 'desc')->first();
 
@@ -1560,11 +1560,8 @@ class CampaignReportAPIController extends ControllerAPI
             $loopEndDateTime = $carbonLoopNextDay->toDateTimeString();
 
             // Let's retrieve it from DB
-            $campaignLog = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                ->where('created_at', '>=', $loopBeginDateTime)
-                ->where('created_at', '<', $loopEndDateTime)
-                ->orderBy('campaign_history_id', 'desc')
-                ->first();
+            $campaignLog = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
+                ->orderBy('campaign_history_id', 'desc')->first();
 
             // Data found
             if ($campaignLog) {
@@ -1573,20 +1570,15 @@ class CampaignReportAPIController extends ControllerAPI
                 $deactivationRowId = '';
 
                 // Null when not found
-                $activationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                    ->where('created_at', '>=', $loopBeginDateTime)
-                    ->where('created_at', '<', $loopEndDateTime)
+                $activationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
                     ->whereCampaignHistoryActionId($activationActionId)
                     ->orderBy('campaign_history_id', 'desc')->first();
 
                 if ($activationRow) {
 
                     // Get max tenant count
-                    $row = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                        ->where('created_at', '>=', $loopBeginDateTime)
-                        ->where('created_at', '<', $loopEndDateTime)
-                        ->orderBy('number_active_tenants', 'desc')
-                        ->first();
+                    $row = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
+                        ->orderBy('number_active_tenants', 'desc')->first();
 
                     // If there is an activation today, any deactivation won't be affected
                     $cost = $previousDayCost = $baseCost * $row->number_active_tenants;
@@ -1600,9 +1592,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
                 // Null when not found
-                $deactivationRow = CampaignHistory::whereCampaignType($type)->whereCampaignId($id)
-                    ->where('created_at', '>=', $loopBeginDateTime)
-                    ->where('created_at', '<', $loopEndDateTime)
+                $deactivationRow = CampaignHistory::ofCampaignTypeAndId($type, $id)->ofTimestampRange($loopBeginDateTime, $loopEndDateTime)
                     ->whereCampaignHistoryActionId($deactivationActionId)
                     ->orderBy('campaign_history_id', 'desc')->first();
 
