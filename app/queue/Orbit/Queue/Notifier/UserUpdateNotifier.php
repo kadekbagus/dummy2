@@ -15,6 +15,9 @@ use CurlWrapperCurlException;
 use Exception;
 use Validator;
 use DB;
+use Mall;
+use Membership;
+use MembershipNumber;
 
 class UserUpdateNotifier
 {
@@ -112,6 +115,9 @@ class UserUpdateNotifier
                 'updated_at' => $user->updated_at,
             ];
 
+            // Update the user object based on the return value of external system
+            $insideTransactionFromNotifier = FALSE;
+
             if ($notifyData['auth_type'] === 'basic') {
                 $this->poster->setAuthType();
                 $this->poster->setAuthCredentials($notifyData['auth_user'], $notifyData['auth_password']);
@@ -119,10 +125,14 @@ class UserUpdateNotifier
 
             $this->poster->addHeader('Accept', 'application/json');
 
-            Log::info('Post data: ' . serialize($postData));
+            Log::info('Orbit Integration -- Update Member -- Post data: ' . serialize($postData));
 
             $this->poster->setUserAgent(Config::get('orbit-notifier.user-agent'));
             $this->poster->post($url, $postData);
+
+            // Lets try to decode the body
+            $httpBody = $this->poster->getResponse();
+            Log::info('Orbit Integration -- Update Member -- External response: ' . $httpBody);
 
             // We are only interesting in 200 OK status
             $httpCode = $this->poster->getTransferInfo('http_code');
@@ -130,10 +140,6 @@ class UserUpdateNotifier
                 $errorMessage = sprintf('Unexpected http response code %s, expected 200.', $httpCode);
                 throw new Exception($errorMessage);
             }
-
-            // Lets try to decode the body
-            $httpBody = $this->poster->getResponse();
-            Log::info('External response: ' . $httpBody);
 
             $response = json_decode($httpBody);
 
@@ -192,9 +198,6 @@ class UserUpdateNotifier
                 throw new Exception($errorMessage);
             }
 
-            // Update the user object based on the return value of external system
-            $insideTransactionFromNotifier = FALSE;
-
             if (! DB::connection()->getPdo()->inTransaction()) {
                 DB::connection()->getPdo()->beginTransaction();
                 $insideTransactionFromNotifier = TRUE;
@@ -211,6 +214,38 @@ class UserUpdateNotifier
                 $user->membership_number = $response->data->membership_number;
                 $user->membership_since = $response->data->membership_since;
                 $user->save();
+
+                // Note
+                // ----
+                // Update the membership number on membership_numbers table
+                // As of v1.3 - v2.0 there is only one membership card per mall
+                // so we only select the first active membership number
+                // Once we implements multiple membership card this routine code
+                // SHOULD be updated
+                $card = Membership::active()->where('merchant_id', $retailer->merchant_id)->first();
+                if (! is_object($card)) {
+                    $errorMessage = sprintf('Can not find membership card for mall or retailer: %s.', $retailer->name);
+                    throw new Exception($errorMessage);
+                }
+
+                $membershipNumber = MembershipNumber::active()
+                                                    ->where('user_id', $user->user_id)
+                                                    ->where('issuer_merchant_id', $retailer->merchant_id)
+                                                    ->where('membership_id', $card->membership_id)
+                                                    ->first();
+                // Create new membership number if not exists
+                if (! is_object($membershipNumber)) {
+                    Log::info( sprintf('Orbit Integration -- Update Member -- Membership number not found for user %s not found, creating new one.', $user->user_id) );
+                    $membershipNumber = new MembershipNumber();
+                    $membershipNumber->user_id = $user->user_id;
+                    $membershipNumber->issuer_merchant_id = $retailer->merchant_id;
+                    $membershipNumber->membership_id = $card->membership_id;
+                    $membershipNumber->status = MembershipNumber::STATUS_ACTIVE;
+                }
+
+                $membershipNumber->join_date = $response->data->membership_since;
+                $membershipNumber->membership_number = $response->data->membership_number;
+                $membershipNumber->save();
             }
 
             // Everything seems fine lets delete the job
@@ -220,7 +255,7 @@ class UserUpdateNotifier
                 DB::connection()->getPdo()->commit();
             }
 
-            Log::info($message);
+            Log::info('Orbit Integration -- Update Member -- Result: OK -- Message: ' . $message);
             return [
                 'status' => 'ok',
                 'message' => $message
@@ -229,7 +264,7 @@ class UserUpdateNotifier
             $message = sprintf('[Job ID: `%s`] Notify user-update User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
+            if (DB::connection()->getPdo()->inTransaction() && $insideTransactionFromNotifier === TRUE) {
                 DB::connection()->getPdo()->rollBack();
             }
 
@@ -238,7 +273,7 @@ class UserUpdateNotifier
             $message = sprintf('[Job ID: `%s`] Notify user-update User ID: `%s` to Retailer: `%s` URL: `%s` -> Error. Message: %s',
                                 $job->getJobId(), $userId, $retailerId, $url, $e->getMessage());
 
-            if (DB::connection()->getPdo()->inTransaction()) {
+            if (DB::connection()->getPdo()->inTransaction() && $insideTransactionFromNotifier === TRUE) {
                 DB::connection()->getPdo()->rollBack();
             }
 

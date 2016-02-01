@@ -940,6 +940,9 @@ class NewsAPIController extends ControllerAPI
                 }
 
                 $actionstatus = 'activate';
+                if ($status === 'inactive') {
+                    $actionstatus = 'deactivate';
+                }
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
                 // campaign history status
