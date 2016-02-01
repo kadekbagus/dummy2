@@ -287,26 +287,37 @@
                 skip = skip + skip;
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
-                        var list = '<div class="main-theme-mall catalogue catalogue-tenant" id="product-'+data.records[i].merchant_id+'">\
-                                <div class="row catalogue-top catalogue-top-tenant">\
-                                    <div class="col-xs-3 catalogue-img">\
-                                        <a href="'+data.records[i].url+'">\
-                                            <span class="link-spanner"></span>\
-                                            <img class="img-responsive side-margin-center" alt="" src="'+data.records[i].logo_orig+'"/>\
-                                        </a>\
-                                    </div>\
-                                    <div class="col-xs-9 catalogue-info">\
-                                        <a href="'+data.records[i].url+'">\
-                                            <span class="link-spanner"></span>\
-                                            <h4>'+data.records[i].name+'</h4>\
-                                            <h3><i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> '+ (data.records[i].floor ? ' ' + data.records[i].floor : '' ) + (data.records[i].unit ? ' - ' + data.records[i].unit : '' ) + '</h3>\
-                                            <h5 class="tenant-category">\
-                                                <i class="fa fa-tags" style="padding-left: 2px;padding-right: 4px;"></i>\
-                                                <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
-                                            </h5>\
-                                        </a>\
-                                    </div>\
-                                </div>\
+                        var list = '<div class="col-xs-12 col-sm-12" id="item-'+data.records[i].merchant_id+'">\
+                                <section class="list-item-single-tenant">\
+                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                        <div class="list-item-info">\
+                                            <header class="list-item-title">\
+                                                <div><strong>'+data.records[i].name+'</strong></div>\
+                                            </header>\
+                                            <header class="list-item-subtitle">\
+                                                <div>\
+                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
+                                                    '+ (data.records[i].floor ?  ' ' + data.records[i].floor : '') + (data.records[i].unit ? ' - ' + data.records[i].unit : '') +'\
+                                                </div>\
+                                                <div>\
+                                                    <div class="col-xs-6">\
+                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
+                                                        <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
+                                                    </div>\
+                                                </div>\
+                                            </header>\
+                                            <header class="list-item-badges">\
+                                                <div class="col-xs-12 badges-wrapper text-right">\
+                                                    '+ (data.records[i].promotion_flag == TRUE ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
+                                                    '+ (data.records[i].news_flag == TRUE ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
+                                                    '+ (data.records[i].coupon_flag == TRUE ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
+                                                </div>\
+                                            </header>\
+                                        </div>\
+                                        <div class="list-vignette-non-tenant"></div>\
+                                        <img class="img-responsive img-fit-tenant" src="'+ data.records[i].logo_orig +'"/>\
+                                    </a>\
+                                </section>\
                             </div>';
                         $('.catalogue-wrapper').append(list);
                     }
