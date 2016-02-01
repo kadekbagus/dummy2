@@ -2876,41 +2876,8 @@ class MobileCIAPIController extends ControllerAPI
                 ->orderBy(DB::raw('RAND()')) //randomize
                 ->get();
 
-            $_luckydraws = clone $luckydraws;
-
-            // Get the take args
-            $take = Config::get('orbit.pagination.per_page');
-            OrbitInput::get(
-                'take',
-                function ($_take) use (&$take, $maxRecord) {
-                    if ($_take > $maxRecord) {
-                        $_take = $maxRecord;
-                    }
-                    $take = $_take;
-                }
-            );
-            $luckydraws->take($take);
-
-            $skip = 0;
-            OrbitInput::get(
-                'skip',
-                function ($_skip) use (&$skip, $luckydraws) {
-                    if ($_skip < 0) {
-                        $_skip = 0;
-                    }
-
-                    $skip = $_skip;
-                }
-            );
-            $luckydraws->skip($skip);
-
-            $luckydraws->orderBy('start_date', 'desc');
-
-            $totalRec = $_luckydraws->count();
-            $listOfRec = $luckydraws->get();
-
-            if (!empty($alternateLanguage) && !empty($listOfRec)) {
-                foreach ($listOfRec as $key => $val) {
+            if (!empty($alternateLanguage) && !empty($luckydraws)) {
+                foreach ($luckydraws as $key => $val) {
 
                     $luckyDrawTranslation = \LuckyDrawTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -2953,15 +2920,15 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if ($listOfRec->isEmpty()) {
+            if ($luckydraws->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = $totalRec;
-                $data->returned_records = sizeof($listOfRec);
-                $data->records = $listOfRec;
+                $data->total_records = sizeof($luckydraws);
+                $data->returned_records = sizeof($luckydraws);
+                $data->records = $luckydraws;
             }
 
             $languages = $this->getListLanguages($retailer);
