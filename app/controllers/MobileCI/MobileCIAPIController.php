@@ -1510,8 +1510,13 @@ class MobileCIAPIController extends ControllerAPI
             $config->setConfig('session_origin.query_string.name', 'orbit_session');
             $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
             $config->setConfig('application_id', MobileCIAPIController::APPLICATION_ID);
-            $this->session = new Session($config);
-            $this->session->start();
+
+            try {
+                $this->session = new Session($config);
+                $this->session->start();
+            } catch (Exception $e) {
+                Redirect::to('/customer/logout');
+            }
         }
     }
 
