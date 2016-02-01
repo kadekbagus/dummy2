@@ -182,7 +182,7 @@
             skip = skip + skip;
             if(data.records.length > 0) {
                 for(var i = 0; i < data.records.length; i++) {
-                    var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].merchant_id+'" id="item-'+data.records[i].merchant_id+'">\
+                    var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
                             <section class="list-item-single-tenant">\
                                 <a class="list-item-link" href="'+data.records[i].url+'">\
                                     <div class="list-item-info">\
