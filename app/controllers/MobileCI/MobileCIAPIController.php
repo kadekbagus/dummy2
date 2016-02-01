@@ -5101,16 +5101,41 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            $news = $news->where('news.status', '=', 'active')
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'news')
-                        ->whereRaw("? between begin_date and end_date", [$mallTime])
-                        ->groupBy('news.news_id')
-                        ->orderBy(DB::raw('RAND()')) // randomize
-                        ->get();
+            $_news = clone $news;
 
-            if (!empty($alternateLanguage) && !empty($news)) {
-                foreach ($news as $key => $val) {
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $news->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $news) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $news->skip($skip);
+
+            $news->orderBy(DB::raw('RAND()'));
+
+            $totalRec = $_news->count();
+            $listOfRec = $news->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
+                foreach ($listOfRec as $key => $val) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -5153,15 +5178,15 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if ($news->isEmpty()) {
+            if ($listOfRec->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = sizeof($news);
-                $data->returned_records = sizeof($news);
-                $data->records = $news;
+                $data->total_records = $totalRec;
+                $data->returned_records = sizeof($listOfRec);
+                $data->records = $listOfRec;
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -5219,11 +5244,38 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
-            $news = \News::active()
-                            ->where('mall_id', $retailer->merchant_id)
-                            ->where('object_type', 'news')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime]);
+            $news = \News::with('translations')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+            // filter by age and gender
+            if ($userGender !== null) {
+                $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $news = $news->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $news = $news->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
 
             OrbitInput::get('ids', function($ids) use ($news)
             {
@@ -5231,11 +5283,6 @@ class MobileCIAPIController extends ControllerAPI
             });
 
             $_news = clone $news;
-
-            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
-            if ($maxRecord <= 0) {
-                $maxRecord = Config::get('orbit.pagination.max_record');
-            }
 
             // Get the take args
             $take = Config::get('orbit.pagination.per_page');
@@ -5263,7 +5310,7 @@ class MobileCIAPIController extends ControllerAPI
             );
             $news->skip($skip);
 
-            $news->orderBy('sticky_order', 'desc')->orderBy('created_at', 'desc');
+            $news->orderBy(DB::raw('RAND()'));
 
             $totalRec = $_news->count();
             $listOfRec = $news->get();
