@@ -80,6 +80,22 @@ class UserAPIController extends ControllerAPI
 
             if ($is_new_consumer_from_captive) {
                 $mallId = Config::get('orbit.shop.id');
+
+                if (empty($mallId)) {
+                    $domainName = $_SERVER['HTTP_HOST'];
+                    Log::info( sprintf('-- API/USER/NEW -- Missing current_mall trying to guess from %s', $domainName) );
+
+                    // try to guess from domain name
+                    $mallFromDomain = Setting::getMallByDomain($domainName);
+                    Log::info( sprintf('-- API/USER/NEW -- Mall ID/Name get from guessing: %s/%s', $mallFromDomain->merchant_id, $mallFromDomain->name));
+
+                    if (! $mallFromDomain) {
+                        $errorMessage = 'Mall is not found.';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    $mallId = $mallFromDomain->merchant_id;
+                }
+
                 $validator = Validator::make(
                     array(
                         'email'     => $email,
@@ -122,8 +138,9 @@ class UserAPIController extends ControllerAPI
             // we need this for the registration activity.
             $captive_location = null;
             if ($is_new_consumer_from_captive) {
-                $captive_location = Retailer::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
-                if (!isset($captive_location)) {
+                $captive_location = Mall::excludeDeleted()->where('user_id', '=', $user->user_id)->first();
+
+                if (! isset($captive_location)) {
                     OrbitShopAPI::throwInvalidArgument('cannot find captive portal location');
                 }
             }
@@ -173,6 +190,13 @@ class UserAPIController extends ControllerAPI
             Event::fire('orbit.user.postnewuser.after.save', array($this, $newuser));
             $this->response->data = $newuser;
 
+            $acq = new UserAcquisition();
+            $acq->user_id = $newuser->user_id;
+            $acq->acquirer_id = $mallId;
+            // @todo remove this hardcoded value of signup_via
+            $acq->signup_via = 'form';
+            $acq->save();
+
             // Commit the changes
             $this->commit();
 
@@ -188,6 +212,7 @@ class UserAPIController extends ControllerAPI
             Event::fire('orbit.user.postnewuser.after.commit', array($this, $newuser));
 
             if ($is_new_consumer_from_captive) {
+                Log::info(sprintf('-- API/USER/NEW -- Saving registration from captive for user %s', $newuser->user_email));
                 $registration_activity = Activity::mobileci()
                     ->setActivityType('registration')
                     ->setLocation($captive_location)
@@ -265,7 +290,7 @@ class UserAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
 
             // Rollback the changes
             $this->rollBack();
@@ -1523,7 +1548,7 @@ class UserAPIController extends ControllerAPI
                          }));
 
             if ($details === 'yes' || $this->detailYes === true) {
-                $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"), 'activities.activity_name', 'activities.location_id', DB::raw("CASE WHEN {$prefix}tmp_lucky.total_lucky_draw_number is null THEN 0 ELSE {$prefix}tmp_lucky.total_lucky_draw_number END AS total_lucky_draw_number"),
+                $users->addSelect(DB::raw("{$prefix}user_acquisitions.created_at as first_visit_date, 'Unknown', '0'"), DB::raw("CASE WHEN {$prefix}tmp_lucky.total_lucky_draw_number is null THEN 0 ELSE {$prefix}tmp_lucky.total_lucky_draw_number END AS total_lucky_draw_number"),
                                DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
                                         inner join {$prefix}promotions p on cp.promotion_id = p.promotion_id {$filterMallIds}
                                         where cp.user_id={$prefix}users.user_id) as total_usable_coupon,
@@ -1542,7 +1567,7 @@ class UserAPIController extends ControllerAPI
                                         // ON
                                         'tmp_lucky.user_id', '=', 'users.user_id');
             } else {
-                $users->addSelect(DB::raw("MIN({$prefix}activities.created_at) as first_visit_date"));
+                $users->addSelect(DB::raw("{$prefix}user_acquisitions.created_at as first_visit_date"));
             }
 
             $users->join('user_acquisitions', 'user_acquisitions.user_id', '=', 'users.user_id')
@@ -1557,15 +1582,6 @@ class UserAPIController extends ControllerAPI
                     'tmp_membership_numbers.user_id', '=', 'users.user_id');
 
             $current_mall = OrbitInput::get('current_mall');
-
-            $users->leftJoin('activities', function($join) use($current_mall) {
-                            $join->on('activities.user_id', '=', 'users.user_id')
-                                 ->where('activities.activity_name', '=', 'login_ok')
-                                 ->where('activities.role', '=', 'Consumer')
-                                 ->where('activities.group', '=', 'mobile-ci')
-                                 ->where('activities.location_id', '=', $current_mall)
-                                 ;
-                        });
 
             if (empty($listOfMallIds)) { // invalid mall id
                 $users->whereRaw('0');
@@ -2132,22 +2148,19 @@ class UserAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.user.postnewmembership.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
-
-            // set mall id
+            // validate user mall id for current_mall
             $mallId = OrbitInput::post('current_mall');
-            if (trim($mallId) === '') {
-                $mallId = OrbitInput::post('mall_id');
-            }
-
-            // get user mall_ids
             $listOfMallIds = $user->getUserMallIds($mallId);
             if (empty($listOfMallIds)) { // invalid mall id
                 $errorMessage = 'Invalid mall id.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $mallId = $listOfMallIds[0];
             }
+
+            Event::fire('orbit.user.postnewmembership.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
 
             $email = OrbitInput::post('email');
             $firstname = OrbitInput::post('firstname');
@@ -2529,12 +2542,22 @@ class UserAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            // validate user mall id for current_mall
+            $mallId = OrbitInput::post('current_mall');
+            $listOfMallIds = $user->getUserMallIds($mallId);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $mallId = $listOfMallIds[0];
+            }
+
             Event::fire('orbit.user.postupdatemembership.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
             // set mall id
-            $mallId = OrbitInput::post('current_mall');
+            //$mallId = OrbitInput::post('current_mall');
 
             // get user mall_ids
             $listOfMallIds = $user->getUserMallIds($mallId);
@@ -3082,11 +3105,20 @@ class UserAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            // validate user mall id for current_mall
+            $mallId = OrbitInput::post('current_mall');
+            $listOfMallIds = $user->getUserMallIds($mallId);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $mallId = $listOfMallIds[0];
+            }
+
             Event::fire('orbit.user.postdeletemembership.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
-            $mallId = OrbitInput::post('current_mall');;
             $user_id = OrbitInput::post('user_id');
             $password = OrbitInput::post('password');
 

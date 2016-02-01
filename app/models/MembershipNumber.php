@@ -7,12 +7,16 @@ class MembershipNumber extends Eloquent
      * MembershipNumber Model
      *
      * @author Tian <tian@dominopos.com>
+     * @author Rio Astamal <rio@dominopos.com>
      */
     use ModelStatusTrait;
 
     protected $table = 'membership_numbers';
 
     protected $primaryKey = 'membership_number_id';
+
+    const STATUS_ACTIVE = 'active';
+    const STATUS_NOTACTIVE = 'inactive';
 
     public function membership()
     {
@@ -27,6 +31,11 @@ class MembershipNumber extends Eloquent
     public function issuerMerchant()
     {
         return $this->belongsTo('Merchant', 'issuer_merchant_id', 'merchant_id');
+    }
+
+    public function mall()
+    {
+        return $this->belongsTo('Mall', 'issuer_merchant_id', 'merchant_id');
     }
 
     public function creator()

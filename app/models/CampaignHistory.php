@@ -67,4 +67,14 @@ class CampaignHistory extends Eloquent
                   ->orderBy('campaign_histories.campaign_history_id', 'DESC');
     }
 
+    public function scopeOfCampaignTypeAndId($query, $campaignType, $campaignId)
+    {
+        return $query->whereCampaignType($campaignType)->whereCampaignId($campaignId);
+    }
+
+    public function scopeOfTimestampRange($query, $beginDateTime, $endDateTime)
+    {
+        return $query->where('created_at', '>=', $beginDateTime)->where('created_at', '<', $endDateTime);
+    }
+
 }
