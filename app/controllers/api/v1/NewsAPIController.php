@@ -980,6 +980,30 @@ class NewsAPIController extends ControllerAPI
                     $campaignhistory->modified_by = $this->api->user->user_id;
                     $campaignhistory->save();
                 }
+            } else {
+                //check for first time insert for that day
+                $utcNow = Carbon::now();
+                $checkFirst = CampaignHistory::where('campaign_id', '=', $news_id)->where('created_at', 'like', $utcNow->toDateString().'%')->count();
+                if ($checkFirst === 0){
+                    $actionstatus = 'activate';
+                    if ($statusdb === 'inactive') {
+                        $actionstatus = 'deactivate';
+                    }
+                    $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                    $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
+                    // campaign history status
+                    if (! empty($rowcost)) {
+                        $campaignhistory = new CampaignHistory();
+                        $campaignhistory->campaign_type = $object_type;
+                        $campaignhistory->campaign_id = $news_id;
+                        $campaignhistory->campaign_history_action_id = $activeid;
+                        $campaignhistory->number_active_tenants = $rowcost->tenants;
+                        $campaignhistory->campaign_cost = $rowcost->cost;
+                        $campaignhistory->created_by = $this->api->user->user_id;
+                        $campaignhistory->modified_by = $this->api->user->user_id;
+                        $campaignhistory->save();
+                    }
+                } 
             }
 
             //check for add/remove tenant

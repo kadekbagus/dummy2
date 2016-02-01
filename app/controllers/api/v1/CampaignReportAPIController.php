@@ -908,6 +908,10 @@ class CampaignReportAPIController extends ControllerAPI
             // Get active date only
             $campaignDetailActive = array();
 
+            if ($endDate < $end) {
+                $end = $endDate;
+            }
+
             if (count($campaignHistory) > 0) {
                 for ($x = 0; $x<=$diff; $x++) {
                     $dateloop = $start->toDateString();
