@@ -608,7 +608,7 @@ class CouponAPIController extends ControllerAPI
             $campaignhistory->save();
 
             // save campaign history tenant
-            foreach ($retailer_ids as $retailer_id) {
+            foreach ($linkToTenantIds as $retailer_id) {
                 // insert tenant/merchant to campaign history
                 $tenantstatus = Tenant::getStatus($retailer_id);
                 if ($tenantstatus === 'active') {
@@ -982,6 +982,9 @@ class CouponAPIController extends ControllerAPI
                 }
 
                 $actionstatus = 'activate';
+                if ($status === 'inactive') {
+                    $actionstatus = 'deactivate';
+                }
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, FALSE)->first();
                 // campaign history status

@@ -1282,6 +1282,8 @@ class CampaignReportAPIController extends ControllerAPI
 
         // Date intervals
         $requestBeginDateTime = OrbitInput::get('start_date');
+        $requestBeginTime = substr($requestBeginDateTime, 11, 8);
+
         $requestEndDateTime = OrbitInput::get('end_date');
 
         // Init Carbon
@@ -1304,7 +1306,12 @@ class CampaignReportAPIController extends ControllerAPI
         $campaign = $campaign->find($id);
 
         $campaignBeginDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->begin_date, $timezone)->setTimezone('UTC')->toDateTimeString();
+        
+        // This assumes request begin time is always 00:00 of mall timezone
+        $campaignBeginDateTimeMidnight = substr($campaignBeginDateTime, 0, 10).' '.$requestBeginTime;
+
         $campaignEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->toDateTimeString();
+        $campaignEndDateTime2 = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->addMinute()->toDateTimeString();
 
         // Get the base cost
         $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
@@ -1378,6 +1385,11 @@ class CampaignReportAPIController extends ControllerAPI
                     // If there is an activation today, any deactivation won't be affected
                     $cost = $previousDayCost = $baseCost * $campaignLog->number_active_tenants;
 
+                    // Cancel
+                    if ($campaignLog->updated_at->toDateTimeString() < $campaignBeginDateTimeMidnight) {
+                        $cost = 0;
+                    }
+
                     $activationRowId = $activationRow->campaign_history_id;
                 }
 
@@ -1398,7 +1410,7 @@ class CampaignReportAPIController extends ControllerAPI
                 }
 
             // Data not found, but the date is in the interval
-            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime < $campaignEndDateTime) {
+            } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime <= $campaignEndDateTime2) {
                 $cost = $previousDayCost;
 
             // Data not found
