@@ -1278,15 +1278,14 @@ class IntermediateLoginController extends IntermediateBaseController
                 $retailer = Mall::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
 
                 try {
-                    $bg = Setting::getFromList($retailer->settings, 'background_image');
+                    $bg = Media::where('object_id', $retailer->merchant_id)
+                        ->where('media_name_id', 'retailer_background')
+                        ->where('media_name_long', 'retailer_background_orig')
+                        ->where('object_name', 'mall')
+                        ->first();
                 } catch (Exception $e) {
                 }
             } catch (Exception $e) {
-                $retailer = new stdClass();
-                // Fake some properties
-                $retailer->parent = new stdClass();
-                $retailer->parent->logo = '';
-                $retailer->parent->biglogo = '';
             }
 
             $display_name = Input::get('fname', '');
