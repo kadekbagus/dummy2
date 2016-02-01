@@ -1512,7 +1512,7 @@ class CampaignReportAPIController extends ControllerAPI
         $campaignEndDateTime2 = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->addMinute()->toDateTimeString();
 
         // Get the base cost
-        $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
+        $baseCost = CampaignPrice::whereCampaignType($type)->whereCampaignId($id)->first()->base_price;
 
         // Set the default initial cost
         $previousDayCost = 0;
