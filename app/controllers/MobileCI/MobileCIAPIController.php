@@ -5379,6 +5379,7 @@ class MobileCIAPIController extends ControllerAPI
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
                 $item->url = URL::to('customer/mallpromotion?id='.$item->news_id);
                 $item->name = mb_strlen($item->news_name) > 64 ? mb_substr($item->news_name, 0, 64) . '...' : $item->news_name;
+                $item->item_id = $item->news_id;
             }
 
             $data = new stdclass();
