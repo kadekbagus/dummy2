@@ -943,7 +943,7 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postupdatecoupon.after.validation', array($this, $validator));
 
-            $updatedcoupon = Coupon::with('couponRule', 'tenants', 'linkToTenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
+            $updatedcoupon = Coupon::where('promotion_id', $promotion_id)->first();
 
             $statusdb = $updatedcoupon->status;
             $enddatedb = $updatedcoupon->end_date;
@@ -966,7 +966,7 @@ class CouponAPIController extends ControllerAPI
                 $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
                 $utcenddatedb->setTimezone('UTC');
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, FALSE)->first();
+                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
                     $campaignhistory = new CampaignHistory();
@@ -986,7 +986,7 @@ class CouponAPIController extends ControllerAPI
                     $actionstatus = 'deactivate';
                 }
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, FALSE)->first();
+                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
                     $campaignhistory = new CampaignHistory();
