@@ -2801,7 +2801,7 @@ class ActivityAPIController extends ControllerAPI
                                                             oct.user_id,
                                                             oct.location_id,
                                                             oct.login_at,  
-                                                            IF( TIMEDIFF({$mallTime}, oct.login_at) > '{$expiry_time}',
+                                                            IF( TIMEDIFF('{$mallTime}', oct.login_at) > '{$expiry_time}',
                                                                 DATE_ADD(oct.login_at, INTERVAL {$expiry} SECOND),
                                                                 NULL
                                                               ) AS logout_at
