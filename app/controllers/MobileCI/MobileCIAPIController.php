@@ -2863,427 +2863,461 @@ class MobileCIAPIController extends ControllerAPI
      */
     public function getSearchTenant()
     {
-        $user = $this->getLoggedInUser();
+        $user = null;
+        try {
+            $user = $this->getLoggedInUser();
 
-        $sort_by = OrbitInput::get('sort_by');
-        $keyword = trim(OrbitInput::get('keyword'));
-        $category_id = trim(OrbitInput::get('cid'));
-        $floor = trim(OrbitInput::get('floor'));
+            $sort_by = OrbitInput::get('sort_by');
+            $keyword = trim(OrbitInput::get('keyword'));
+            $category_id = trim(OrbitInput::get('cid'));
+            $floor = trim(OrbitInput::get('floor'));
 
-        $pagetitle = Lang::get('mobileci.page_title.tenant_directory');
+            $pagetitle = Lang::get('mobileci.page_title.tenant_directory');
 
-        $validator = Validator::make(
-            array(
-                'sort_by' => $sort_by,
-            ),
-            array(
-                'sort_by' => 'in:name',
-            ),
-            array(
-                'in' => Lang::get('validation.orbit.empty.user_sortby'),
-            )
-        );
-        // Run the validation
-        if ($validator->fails()) {
-            $errorMessage = $validator->messages()->first();
-            $data = new stdclass();
-            $data->status = 0;
-            $data->total_records = 0;
-            $data->returned_records = 0;
-            $data->records = null;
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.user_sortby'),
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                $data = new stdclass();
+                $data->status = 0;
+                $data->total_records = 0;
+                $data->returned_records = 0;
+                $data->records = null;
 
-            return Response::json($data);
-        }
-
-        $retailer = $this->getRetailerInfo();
-
-        $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
-
-        $tenants = Tenant::with('mediaLogo');
-        if (!empty($alternateLanguage)) {
-            $tenants = $tenants->with(['categories' => function ($q) use ($alternateLanguage) {
-                $prefix = DB::getTablePrefix();
-                $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
-                    $join->on('categories.category_id', '=', 'category_translations.category_id');
-                    $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
-                });
-                $q->select('categories.*');
-                $q->addSelect([
-                    DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
-                    DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
-                ]);
-            }]);
-        }
-        else {
-            $tenants = $tenants->with('categories');
-        }
-
-        $tenants = $tenants->active('merchants')
-            ->where('parent_id', $retailer->merchant_id);
-
-        $tenants->select('merchants.*');
-
-        $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
-
-        $notfound = FALSE;
-        // Filter product by name pattern
-        OrbitInput::get(
-            'keyword',
-            function ($name) use ($tenants, $alternateLanguage) {
-                $name_like = "%$name%";
-                $tenants->where(
-                    function ($q) use ($name_like, $alternateLanguage) {
-                        $q->where('merchants.name', 'like', $name_like)
-                            ->orWhere('merchants.description', 'like', $name_like)
-                            ->orWhere('merchants.floor', 'like', $name_like);
-                        $q->orWhereHas('categories', function($q2) use ($name_like) {
-                            $q2->where('category_name', 'like', $name_like);
-                        });
-                        if (!empty($alternateLanguage)) {
-                            $q->orWhereHas('categories', function($q2) use ($name_like) {
-                                $q2->whereHas('translations', function($q3) use ($name_like) {
-                                    $q3->where('category_translations.category_name', 'like', $name_like);
-                                });
-                            });
-                            $q->orWhere('merchant_translations.name', 'like', $name_like)
-                                ->orWhere('merchant_translations.description', 'like', $name_like);
-                        }
-                    }
-                );
+                return Response::json($data);
             }
-        );
 
-        OrbitInput::get(
-            'cid',
-            function ($cid) use ($tenants, $retailer, &$notfound) {
-                if (! empty($cid)) {
-                    $category = \Category::active()
-                        ->where('merchant_id', $retailer->merchant_id)
-                        ->where('category_id', $cid)
-                        ->first();
-                    if (!is_object($category)) {
-                        $notfound = TRUE;
-                    }
+            $retailer = $this->getRetailerInfo();
+
+            $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
+
+            $tenants = Tenant::with('mediaLogo');
+            if (!empty($alternateLanguage)) {
+                $tenants = $tenants->with(['categories' => function ($q) use ($alternateLanguage) {
+                    $prefix = DB::getTablePrefix();
+                    $q->leftJoin('category_translations', function ($join) use ($alternateLanguage) {
+                        $join->on('categories.category_id', '=', 'category_translations.category_id');
+                        $join->where('category_translations.merchant_language_id', '=', $alternateLanguage->merchant_language_id);
+                    });
+                    $q->select('categories.*');
+                    $q->addSelect([
+                        DB::raw("COALESCE(${prefix}category_translations.category_name, ${prefix}categories.category_name) AS category_name"),
+                        DB::raw("COALESCE(${prefix}category_translations.description, ${prefix}categories.description) AS description"),
+                    ]);
+                }]);
+            }
+            else {
+                $tenants = $tenants->with('categories');
+            }
+
+            $tenants = $tenants->active('merchants')
+                ->where('parent_id', $retailer->merchant_id);
+
+            $tenants->select('merchants.*');
+
+            $this->maybeJoinWithTranslationsTable($tenants, $alternateLanguage);
+
+            $notfound = FALSE;
+            // Filter product by name pattern
+            OrbitInput::get(
+                'keyword',
+                function ($name) use ($tenants, $alternateLanguage) {
+                    $name_like = "%$name%";
                     $tenants->where(
-                        function ($q) use ($cid) {
-                            $q->whereHas('categories', function ($q2) use ($cid) {
-                                $q2->where('category_merchant.category_id', $cid);
+                        function ($q) use ($name_like, $alternateLanguage) {
+                            $q->where('merchants.name', 'like', $name_like)
+                                ->orWhere('merchants.description', 'like', $name_like)
+                                ->orWhere('merchants.floor', 'like', $name_like);
+                            $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                $q2->where('category_name', 'like', $name_like);
                             });
+                            if (!empty($alternateLanguage)) {
+                                $q->orWhereHas('categories', function($q2) use ($name_like) {
+                                    $q2->whereHas('translations', function($q3) use ($name_like) {
+                                        $q3->where('category_translations.category_name', 'like', $name_like);
+                                    });
+                                });
+                                $q->orWhere('merchant_translations.name', 'like', $name_like)
+                                    ->orWhere('merchant_translations.description', 'like', $name_like);
+                            }
                         }
                     );
                 }
-            }
-        );
+            );
 
-        OrbitInput::get(
-            'promotion_id',
-            function ($pid) use ($tenants, $retailer, &$notfound) {
-                if (! empty($pid)) {
-                    $news = \News::active()
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'promotion')
-                        ->where('news_id', $pid)->first();
-                    if (!is_object($news)) {
-                        $notfound = TRUE;
+            OrbitInput::get(
+                'cid',
+                function ($cid) use ($tenants, $retailer, &$notfound) {
+                    if (! empty($cid)) {
+                        $category = \Category::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('category_id', $cid)
+                            ->first();
+                        if (!is_object($category)) {
+                            $notfound = TRUE;
+                        }
+                        $tenants->where(
+                            function ($q) use ($cid) {
+                                $q->whereHas('categories', function ($q2) use ($cid) {
+                                    $q2->where('category_merchant.category_id', $cid);
+                                });
+                            }
+                        );
                     }
-                    $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
-                        $q->where('news_id', $pid);
-                    })->whereHas('news', function($q2) {
-                        $q2->where('object_type', 'promotion');
-                    })->get()->lists('merchant_id');
-                    // <-- should add exception if retailers not found
-                    $tenants->whereIn('merchants.merchant_id', $retailers);
                 }
-            }
-        );
+            );
 
-        OrbitInput::get(
-            'news_id',
-            function ($pid) use ($tenants, $retailer, &$notfound) {
-                if (! empty($pid)) {
-                    $news = \News::active()
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'news')
-                        ->where('news_id', $pid)->first();
-                    if (!is_object($news)) {
-                        $notfound = TRUE;
+            OrbitInput::get(
+                'promotion_id',
+                function ($pid) use ($tenants, $retailer, &$notfound) {
+                    if (! empty($pid)) {
+                        $news = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'promotion')
+                            ->where('news_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
+                        $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
+                            $q->where('news_id', $pid);
+                        })->whereHas('news', function($q2) {
+                            $q2->where('object_type', 'promotion');
+                        })->get()->lists('merchant_id');
+                        // <-- should add exception if retailers not found
+                        $tenants->whereIn('merchants.merchant_id', $retailers);
                     }
-                    $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
-                        $q->where('news_id', $pid);
-                    })->whereHas('news', function($q2) {
-                        $q2->where('object_type', 'news');
-                    })->get()->lists('merchant_id');
-                    $tenants->whereIn('merchants.merchant_id', $retailers);
                 }
-            }
-        );
+            );
 
-        OrbitInput::get(
-            'event_id',
-            function ($pid) use ($tenants, $retailer, &$notfound) {
-                if (! empty($pid)) {
-                    $event = \EventModel::active()
-                        ->where('merchant_id', $retailer->merchant_id)
-                        ->where('event_id', $pid)
-                        ->first();
-                    if (!is_object($event)) {
-                        $notfound = TRUE;
+            OrbitInput::get(
+                'news_id',
+                function ($pid) use ($tenants, $retailer, &$notfound) {
+                    if (! empty($pid)) {
+                        $news = \News::active()
+                            ->where('mall_id', $retailer->merchant_id)
+                            ->where('object_type', 'news')
+                            ->where('news_id', $pid)->first();
+                        if (!is_object($news)) {
+                            $notfound = TRUE;
+                        }
+                        $retailers = \NewsMerchant::whereHas('tenant', function($q) use($pid) {
+                            $q->where('news_id', $pid);
+                        })->whereHas('news', function($q2) {
+                            $q2->where('object_type', 'news');
+                        })->get()->lists('merchant_id');
+                        $tenants->whereIn('merchants.merchant_id', $retailers);
                     }
-                    $retailers = \EventRetailer::whereHas('retailer', function($q) use($pid) {
-                        $q->where('event_id', $pid);
-                    })->get()->lists('retailer_id');
-                    $tenants->whereIn('merchants.merchant_id', $retailers);
                 }
-            }
-        );
+            );
 
-        OrbitInput::get(
-            'fid',
-            function ($fid) use ($tenants) {
-                if (! empty($fid)) {
-                    $tenants->where('merchants.floor', $fid);
+            OrbitInput::get(
+                'event_id',
+                function ($pid) use ($tenants, $retailer, &$notfound) {
+                    if (! empty($pid)) {
+                        $event = \EventModel::active()
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->where('event_id', $pid)
+                            ->first();
+                        if (!is_object($event)) {
+                            $notfound = TRUE;
+                        }
+                        $retailers = \EventRetailer::whereHas('retailer', function($q) use($pid) {
+                            $q->where('event_id', $pid);
+                        })->get()->lists('retailer_id');
+                        $tenants->whereIn('merchants.merchant_id', $retailers);
+                    }
                 }
-            }
-        );
+            );
 
-        $_tenants = clone $tenants;
-
-        $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
-        if ($maxRecord <= 0) {
-            $maxRecord = Config::get('orbit.pagination.max_record');
-        }
-
-        // Get the take args
-        $take = Config::get('orbit.pagination.per_page');
-        OrbitInput::get(
-            'take',
-            function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
+            OrbitInput::get(
+                'fid',
+                function ($fid) use ($tenants) {
+                    if (! empty($fid)) {
+                        $tenants->where('merchants.floor', $fid);
+                    }
                 }
-                $take = $_take;
-            }
-        );
-        $tenants->take($take);
+            );
 
-        $skip = 0;
-        OrbitInput::get(
-            'skip',
-            function ($_skip) use (&$skip, $tenants) {
-                if ($_skip < 0) {
-                    $_skip = 0;
+            $_tenants = clone $tenants;
+
+            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
+            if ($maxRecord <= 0) {
+                $maxRecord = Config::get('orbit.pagination.max_record');
+            }
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
                 }
+            );
+            $tenants->take($take);
 
-                $skip = $_skip;
-            }
-        );
-        $tenants->skip($skip);
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $tenants) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-        // Default sort by
-        $sortBy = 'merchants.name';
-        // Default sort mode
-        $sortMode = 'asc';
-
-        OrbitInput::get(
-            'sort_by',
-            function ($_sortBy) use (&$sortBy) {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'name'      => 'merchants.name',
-                );
-                if (array_key_exists($_sortBy, $sortByMapping)) {
-                    $sortBy = $sortByMapping[$_sortBy];
+                    $skip = $_skip;
                 }
-            }
-        );
+            );
+            $tenants->skip($skip);
 
-        OrbitInput::get(
-            'sort_mode',
-            function ($_sortMode) use (&$sortMode) {
-                if (strtolower($_sortMode) !== 'desc') {
-                    $sortMode = 'asc';
-                } else {
-                    $sortMode = 'desc';
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get(
+                'sort_by',
+                function ($_sortBy) use (&$sortBy) {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'name'      => 'merchants.name',
+                    );
+                    if (array_key_exists($_sortBy, $sortByMapping)) {
+                        $sortBy = $sortByMapping[$_sortBy];
+                    }
                 }
-            }
-        );
+            );
 
-        if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
+            OrbitInput::get(
+                'sort_mode',
+                function ($_sortMode) use (&$sortMode) {
+                    if (strtolower($_sortMode) !== 'desc') {
+                        $sortMode = 'asc';
+                    } else {
+                        $sortMode = 'desc';
+                    }
+                }
+            );
+
+            if (!empty($alternateLanguage) && $sortBy === 'merchants.name') {
+                $prefix = DB::getTablePrefix();
+                $tenants->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
+            }
+            else {
+                $tenants->orderBy($sortBy, $sortMode);
+            }
+
             $prefix = DB::getTablePrefix();
-            $tenants->orderByRaw('COALESCE(' . $prefix . 'merchant_translations.name, ' . $prefix . 'merchants.name) ' . $sortMode);
-        }
-        else {
-            $tenants->orderBy($sortBy, $sortMode);
-        }
 
-        $prefix = DB::getTablePrefix();
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
 
-        $userAge = 0;
-        if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
-            $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
-        }
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
 
-        $userGender = 'U'; // default is Unknown
-        if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
-            $userGender =  $user->userDetail->gender;
-        }
+            $mallTime = Carbon::now($retailer->timezone->timezone_name);
 
-        $mallTime = Carbon::now($retailer->timezone->timezone_name);
+            $news_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
+                        ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
-        $news_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
-                    ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
-                    ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
-                        ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
-
-        // filter by age and gender
-        if ($userGender !== null) {
-            $news_flag = $news_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-        }
-        if ($userAge !== null) {
-            if ($userAge === 0){
-                $news_flag = $news_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-            } else {
-                if ($userAge >= 55) {
-                    $news_flag = $news_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+            // filter by age and gender
+            if ($userGender !== null) {
+                $news_flag = $news_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $news_flag = $news_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                 } else {
-                    $news_flag = $news_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                }
-            }
-        }
-
-        $news_flag = $news_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
-                    ->where('news.object_type', '=', 'news')
-                    ->where('news.status', '=', 'active')
-                    ->whereRaw("? between {$prefix}news.begin_date and {$prefix}news.end_date", [$mallTime])
-                    ->groupBy('merchants.name')->get();
-
-        $promotion_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
-                    ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
-                    ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
-                        ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
-
-        // filter by age and gender
-        if ($userGender !== null) {
-            $promotion_flag = $promotion_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-        }
-        if ($userAge !== null) {
-            if ($userAge === 0){
-                $promotion_flag = $promotion_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-            } else {
-                if ($userAge >= 55) {
-                    $promotion_flag = $promotion_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                } else {
-                    $promotion_flag = $promotion_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                }
-            }
-        }
-
-        $promotion_flag = $promotion_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
-                    ->where('news.object_type', '=', 'promotion')
-                    ->where('news.status', '=', 'active')
-                    ->whereRaw("? between {$prefix}news.begin_date and {$prefix}news.end_date", [$mallTime])
-                    ->groupBy('merchants.name')->get();
-
-        $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
-                    ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
-                    ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
-                        ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
-
-        // filter by age and gender
-        if ($userGender !== null) {
-            $coupon_flag = $coupon_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
-        }
-        if ($userAge !== null) {
-            if ($userAge === 0){
-                $coupon_flag = $coupon_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-            } else {
-                if ($userAge >= 55) {
-                    $coupon_flag = $coupon_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
-                } else {
-                    $coupon_flag = $coupon_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
-                }
-            }
-        }
-
-        $coupon_flag = $coupon_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
-                    ->where('promotions.is_coupon', '=', 'Y')
-                    ->where('promotions.status', '=', 'active')
-                    ->whereRaw("? between {$prefix}promotions.begin_date and {$prefix}promotions.end_date", [$mallTime])
-                    ->groupBy('merchants.name')->get();
-
-        $totalRec = $_tenants->count();
-        $listOfRec = $tenants->get();
-
-        foreach ($listOfRec as $tenant) {
-            if (empty($tenant->logo)) {
-                $tenant->logo = 'mobile-ci/images/default_product.png';
-            }
-            if (!empty($tenant->phone)) {
-                $phone = explode('|#|', $tenant->phone);
-                $tenant->phone = implode(' ', $phone);
-            }
-            $category_string = '';
-            foreach ($tenant->categories as $i => $category) {
-                if ($i == (count($tenant->categories) - 1)) {
-                    $category_string .= $category->category_name;
-                } else {
-                    $category_string .= $category->category_name . ', ';
-                }
-            }
-            $tenant->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
-            $tenant->url = URL::to('customer/tenant?id='.$tenant->merchant_id);
-            if (count($tenant->mediaLogo) > 0) {
-                foreach ($tenant->mediaLogo as $media) {
-                    if ($media->media_name_long == 'retailer_logo_orig') {
-                        $tenant->logo_orig = URL::asset($media->path);
+                    if ($userAge >= 55) {
+                        $news_flag = $news_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $news_flag = $news_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
                     }
                 }
-            } else {
-                $tenant->logo_orig = URL::asset('mobile-ci/images/default_product.png');
             }
-            $tenant->name = mb_strlen($tenant->name) > 64 ? mb_substr($tenant->name, 0, 64) . '...' : $tenant->name;
 
-            $tenant->promotion_flag = FALSE;
-            $tenant->news_flag = FALSE;
-            $tenant->coupon_flag = FALSE;
+            $news_flag = $news_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('news.object_type', '=', 'news')
+                        ->where('news.status', '=', 'active')
+                        ->whereRaw("? between {$prefix}news.begin_date and {$prefix}news.end_date", [$mallTime])
+                        ->groupBy('merchants.name')->get();
 
-            foreach ($news_flag as $value1) {
+            $promotion_flag = Tenant::select('merchants.name','news.news_name')->excludeDeleted('merchants')
+                        ->leftJoin('news_merchant', 'news_merchant.merchant_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('news', 'news.news_id', '=', 'news_merchant.news_id')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
 
-                if ($tenant->name === $value1->name) {
-                    $tenant->news_flag = TRUE;
+            // filter by age and gender
+            if ($userGender !== null) {
+                $promotion_flag = $promotion_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $promotion_flag = $promotion_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $promotion_flag = $promotion_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $promotion_flag = $promotion_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
                 }
             }
 
-            foreach ($promotion_flag as $value2) {
+            $promotion_flag = $promotion_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('news.object_type', '=', 'promotion')
+                        ->where('news.status', '=', 'active')
+                        ->whereRaw("? between {$prefix}news.begin_date and {$prefix}news.end_date", [$mallTime])
+                        ->groupBy('merchants.name')->get();
 
-                if ($tenant->name === $value2->name) {
-                    $tenant->promotion_flag = TRUE;
+            $coupon_flag = Tenant::select('merchants.name','promotions.promotion_name')->excludeDeleted('merchants')
+                        ->leftJoin('promotion_retailer', 'promotion_retailer.retailer_id', '=', 'merchants.merchant_id')
+                        ->leftJoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+            // filter by age and gender
+            if ($userGender !== null) {
+                $coupon_flag = $coupon_flag->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $coupon_flag = $coupon_flag->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $coupon_flag = $coupon_flag->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $coupon_flag = $coupon_flag->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
                 }
             }
 
-            foreach ($coupon_flag as $value3) {
+            $coupon_flag = $coupon_flag->where('merchants.parent_id', '=', $retailer->merchant_id)
+                        ->where('promotions.is_coupon', '=', 'Y')
+                        ->where('promotions.status', '=', 'active')
+                        ->whereRaw("? between {$prefix}promotions.begin_date and {$prefix}promotions.end_date", [$mallTime])
+                        ->groupBy('merchants.name')->get();
 
-                if ($tenant->name === $value3->name) {
-                    $tenant->coupon_flag = TRUE;
+            $totalRec = $_tenants->count();
+            $listOfRec = $tenants->get();
+
+            foreach ($listOfRec as $tenant) {
+                if (empty($tenant->logo)) {
+                    $tenant->logo = 'mobile-ci/images/default_product.png';
                 }
+                if (!empty($tenant->phone)) {
+                    $phone = explode('|#|', $tenant->phone);
+                    $tenant->phone = implode(' ', $phone);
+                }
+                $category_string = '';
+                foreach ($tenant->categories as $i => $category) {
+                    if ($i == (count($tenant->categories) - 1)) {
+                        $category_string .= $category->category_name;
+                    } else {
+                        $category_string .= $category->category_name . ', ';
+                    }
+                }
+                $tenant->category_string = mb_strlen($category_string) > 30 ? mb_substr($category_string, 0, 30, 'UTF-8') . '...' : $category_string;
+                $tenant->url = URL::to('customer/tenant?id='.$tenant->merchant_id);
+                if (count($tenant->mediaLogo) > 0) {
+                    foreach ($tenant->mediaLogo as $media) {
+                        if ($media->media_name_long == 'retailer_logo_orig') {
+                            $tenant->logo_orig = URL::asset($media->path);
+                        }
+                    }
+                } else {
+                    $tenant->logo_orig = URL::asset('mobile-ci/images/default_product.png');
+                }
+                $tenant->name = mb_strlen($tenant->name) > 64 ? mb_substr($tenant->name, 0, 64) . '...' : $tenant->name;
+
+                $tenant->promotion_flag = FALSE;
+                $tenant->news_flag = FALSE;
+                $tenant->coupon_flag = FALSE;
+
+                foreach ($news_flag as $value1) {
+
+                    if ($tenant->name === $value1->name) {
+                        $tenant->news_flag = TRUE;
+                    }
+                }
+
+                foreach ($promotion_flag as $value2) {
+
+                    if ($tenant->name === $value2->name) {
+                        $tenant->promotion_flag = TRUE;
+                    }
+                }
+
+                foreach ($coupon_flag as $value3) {
+
+                    if ($tenant->name === $value3->name) {
+                        $tenant->coupon_flag = TRUE;
+                    }
+                }
+
+                $tenant->url = URL::to('customer/tenant?id=' . $tenant->merchant_id);
             }
 
-            $tenant->url = URL::to('customer/tenant?id=' . $tenant->merchant_id);
-        }
+            $data = new stdclass();
+            $data->status = 1;
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
 
-        $data = new stdclass();
-        $data->status = 1;
-        $data->total_records = $totalRec;
-        $data->returned_records = count($listOfRec);
-        $data->records = $listOfRec;
+            return Response::json($data);
 
-        return Response::json($data);
+        } catch (Exception $e) {
+            switch ($e->getCode()) {
+                case Session::ERR_UNKNOWN;
+                case Session::ERR_IP_MISS_MATCH;
+                case Session::ERR_UA_MISS_MATCH;
+                case Session::ERR_SESS_NOT_FOUND;
+                case Session::ERR_SESS_EXPIRE;
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = 'session_expired';
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+
+                    break;
+
+                default:
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = $e->getMessage();
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+            }
+
+            return Response::json($data);
+        } 
     }
 
     /**
@@ -3409,7 +3443,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $languages = $this->getListLanguages($retailer);
 
-            $activityPageNotes = sprintf('Page viewed: %s', 'News List Page');
+            $activityPageNotes = sprintf('Page viewed: %s', 'Lucky Draw List Page');
             $activityPage->setUser($user)
                 ->setActivityName('view_lucky_draw_list')
                 ->setActivityNameLong('View Lucky Draw List')
@@ -3474,7 +3508,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('mall_id', $retailer->merchant_id)
                 ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
 
-            OrbitInput::get('ids', function($ids) use ($news)
+            OrbitInput::get('ids', function($ids) use ($luckydraws)
             {
                 $luckydraws->whereNotIn('lucky_draws.lucky_draw_id', $ids);
             });
@@ -4088,7 +4122,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $coupons->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_coupons->count();
+            $totalRec = count($_coupons->get());
             $listOfRec = $coupons->get();
 
             if (! empty($alternateLanguage) || ! empty($listOfRec)) {
@@ -4216,7 +4250,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
             
-            OrbitInput::get('ids', function($ids) use ($news)
+            OrbitInput::get('ids', function($ids) use ($coupons)
             {
                 $coupons->whereNotIn('promotions.promotion_id', $ids);
             });
@@ -4258,7 +4292,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $coupons->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_coupons->count();
+            $totalRec = count($_coupons->get());
             $listOfRec = $coupons->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
@@ -4276,7 +4310,7 @@ class MobileCIAPIController extends ControllerAPI
                             }
                         }
 
-                        $media = $couponTranslation->find($couponTranslation->news_translation_id)
+                        $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
                             ->media_orig()
                             ->first();
 
@@ -4292,7 +4326,7 @@ class MobileCIAPIController extends ControllerAPI
                                     ->where('promotion_id', $val->promotion_id)->first();
 
                                 // get default image
-                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
                                     ->media_orig()
                                     ->first();
 
@@ -4321,12 +4355,33 @@ class MobileCIAPIController extends ControllerAPI
             return Response::json($data);
 
         } catch (Exception $e) {
-            $data = new stdclass();
-            $data->status = 0;
-            $data->message = $e->getMessage();
-            $data->total_records = 0;
-            $data->returned_records = 0;
-            $data->records = null;
+            switch ($e->getCode()) {
+                case Session::ERR_UNKNOWN;
+                case Session::ERR_IP_MISS_MATCH;
+                case Session::ERR_UA_MISS_MATCH;
+                case Session::ERR_SESS_NOT_FOUND;
+                case Session::ERR_SESS_EXPIRE;
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = 'session_expired';
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+
+                    break;
+
+                default:
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = $e->getMessage();
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+            }
 
             return Response::json($data);
         }
@@ -4741,8 +4796,7 @@ class MobileCIAPIController extends ControllerAPI
             $promotions = $promotions->where('news.status', '=', 'active')
                         ->where('mall_id', $retailer->merchant_id)
                         ->where('object_type', 'promotion')
-                        ->whereRaw("? between begin_date and end_date", [$mallTime])
-                        ->groupBy('news.news_id');
+                        ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
             $_promotions = clone $promotions;
 
@@ -4877,7 +4931,8 @@ class MobileCIAPIController extends ControllerAPI
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
-    public function getSearchPromotion() {
+    public function getSearchPromotion()
+    {
         $user = null;
         try {
             // Require authentication

@@ -1,17 +1,14 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
-@stop
-
 @section('content')
     <div class="container">
         <div class="mobile-ci list-item-container">
             <div class="row">
             @if($data->status === 1)
                 @if(sizeof($data->records) > 0)
+                    <div class="catalogue-wrapper">
                     @foreach($data->records as $promo)
-                        <div class="col-xs-12 col-sm-12" id="item-{{$promo->promotion_id}}">
+                        <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$promo->news_id}}" id="item-{{$promo->news_id}}">
                             <section class="list-item-single-tenant">
                                 <a class="list-item-link" href="{{ url('customer/mallpromotion?id='.$promo->news_id) }}">
                                     <div class="list-item-info">
@@ -68,6 +65,14 @@
                             </section>
                         </div>
                     @endforeach
+                    </div>
+                    @if($data->returned_records < $data->total_records)
+                        <div class="row">
+                            <div class="col-xs-12 padded">
+                                <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                            </div>
+                        </div>
+                    @endif
                 @else
                     <div class="row padded">
                         <div class="col-xs-12">
@@ -87,34 +92,16 @@
     </div>
 @stop
 
-@section('modals')
-<!-- Modal -->
-<div class="modal fade" id="hasCouponModal" tabindex="-1" role="dialog" aria-labelledby="hasCouponLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="hasCouponLabel">{{ Lang::get('mobileci.modals.coupon_title') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row ">
-                    <div class="col-xs-12 vertically-spaced">
-                        <p></p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <input type="hidden" name="detail" id="detail" value="">
-                    <div class="col-xs-6">
-                        <button type="button" id="applyCoupon" class="btn btn-success btn-block">{{ Lang::get('mobileci.modals.coupon_use') }}</button>
-                    </div>
-                    <div class="col-xs-6">
-                        <button type="button" id="denyCoupon" class="btn btn-danger btn-block">{{ Lang::get('mobileci.modals.coupon_ignore') }}</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+@section('ext_script_bot')
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('body').on('click', '#load-more-x', function(){
+            var listOfIDs = [];
+            $('.catalogue-wrapper .item-x').each(function(id){
+                listOfIDs.push($(this).data('ids'));
+            });
+            loadMoreX('promotion', listOfIDs);
+        });
+    }); 
+</script>
 @stop
