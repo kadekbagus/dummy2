@@ -3317,7 +3317,7 @@ class MobileCIAPIController extends ControllerAPI
             $luckydraws = LuckyDraw::with('translations')
                 ->active()
                 ->where('mall_id', $retailer->merchant_id)
-                ->whereRaw("? between start_date and grace_period_date", [$mallTime])
+                ->whereRaw("? between start_date and grace_period_date", [$mallTime]);
 
             $_luckydraws = clone $luckydraws;
 
