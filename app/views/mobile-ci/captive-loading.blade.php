@@ -48,7 +48,7 @@ body.bg {
         </header>
 
         <div class="col-xs-12 text-center welcome-user">
-            <h3>{{ Lang::get('mobileci.greetings.welcome') }}, <br><span class="signedUser"></span><span class="userName">{{{ $display_name or '' }}}</span>!</h3>
+            <h3>{{ Lang::get('mobileci.greetings.welcome') }},<br><span class="userName">{{{ $display_name or '' }}}</span>!</h3>
         </div>
         <div class="col-xs-12 text-center">
             <button type="button" class="btn btn-info btn-block">{{ Lang::get('mobileci.signin.loading_orbit') }}</button>
