@@ -240,7 +240,7 @@
                     payload: "{{{ Input::get('payload', '') }}}",
                     mac_address: {{ json_encode(Input::get('mac_address', '')) }},
                     auto_login: "{{{ Input::get('auto_login', 'no') }}}",
-                    from_captive: "{{{ Input::get('from_catptive', 'no') }}}"
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
                 }
             }).done(function (response, status, xhr) {
                 if (response.code !== 0 && response.code !== 302) {
@@ -529,11 +529,17 @@
         $('.logged-in-container').removeClass('hide');
 
         $('.social-media-container').addClass('hide');
+    },
+    isFromCaptiveFn = function () {
+        if ('{{{ Input::get('from_captive', 'no') }}}' === 'yes') {
+            $('#social-media-wraper').addClass('hide');
+        }
     };
 
     orbitSignUpForm.boot = function() {
         isSignedInFn();
         inProgressFn();
+        isFromCaptiveFn();
         errorValidationFn();
 
         for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
