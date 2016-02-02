@@ -117,6 +117,11 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             }
 
+            $mall = App::make('orbit.empty.mall');
+            $now = Carbon::now($mall->timezone->timezone_name);
+            $timezone = $this->getTimezone($mall->merchant_id);
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
             // Builder object
             $now = date('Y-m-d H:i:s');
             $tablePrefix = DB::getTablePrefix();
@@ -941,14 +946,14 @@ class CampaignReportAPIController extends ControllerAPI
                                     $statustemp = $nq->previous_status;
                                     $tenanttemp = $nq->total_tenant;
                                 }
-
+                                if (!$find) {
+                                    $campaignstatus = $statustemp;
+                                    $campaigntenant = $tenanttemp;
+                                }
                             }
                         }
                     }
-                    if (!$find) {
-                        $campaignstatus = $statustemp;
-                        $campaigntenant = $tenanttemp;
-                    }
+
                     if($dateloop >= $begin && $dateloop <= $end) {
                         if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                             $spending = (int) $campaigntenant * $nq->base_price;
@@ -1512,7 +1517,7 @@ class CampaignReportAPIController extends ControllerAPI
         $campaignEndDateTime2 = Carbon::createFromFormat('Y-m-d H:i:s', $campaign->end_date, $timezone)->setTimezone('UTC')->addMinute()->toDateTimeString();
 
         // Get the base cost
-        $baseCost = CampaignBasePrices::ofMallAndType($mallId, $type)->first()->price;
+        $baseCost = CampaignPrice::whereCampaignType($type)->whereCampaignId($id)->first()->base_price;
 
         // Set the default initial cost
         $previousDayCost = 0;

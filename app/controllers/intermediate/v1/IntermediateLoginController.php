@@ -250,6 +250,8 @@ class IntermediateLoginController extends IntermediateBaseController
         $from = OrbitInput::get('from', '');
         $full_data = OrbitInput::get('full_data', '');
         $check_only = OrbitInput::get('check_only', '');
+        $auto_login = OrbitInput::get('auto_login', 'no');
+        $from_captive = OrbitInput::get('from_captive', 'no');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -262,6 +264,8 @@ class IntermediateLoginController extends IntermediateBaseController
             'from' => $from,
             'full_data' => $full_data,
             'check_only' => $check_only,
+            'auto_login' => $auto_login,
+            'from_captive' => $from_captive
         ])) {
             return $this->displayValidationError();
         }
@@ -292,6 +296,9 @@ class IntermediateLoginController extends IntermediateBaseController
                 $params['payload'] = '';
                 $params['user_acquisition_id'] = '';
             }
+
+            $params['auto_login'] = $auto_login;
+            $params['from_captive'] = $from_captive;
         } else {
             $params['message'] = $response->message;
         }
@@ -356,6 +363,8 @@ class IntermediateLoginController extends IntermediateBaseController
         $payload = OrbitInput::get('payload', '');
         $user_acquisition_id = OrbitInput::get('user_acquisition_id', '');
         $user_status = OrbitInput::get('user_status', '');
+        $auto_login = OrbitInput::get('auto_login', 'no');
+        $from_captive = OrbitInput::get('from_captive', 'no');
 
         $mac = OrbitInput::get('mac', '');
         $timestamp = (int)OrbitInput::get('timestamp', 0);
@@ -383,6 +392,8 @@ class IntermediateLoginController extends IntermediateBaseController
             'apikey_id' => $apikey_id,
             'payload' => $payload,
             'user_acquisition_id' => $user_acquisition_id,
+            'auto_login' => $auto_login,
+            'from_captive' => $from_captive
         ])) {
             return [false, $this->displayValidationError()];
         }
@@ -487,13 +498,20 @@ class IntermediateLoginController extends IntermediateBaseController
 
         $this->postLoginMobileCI(); // sets cookies & inserts activity - we ignore the JSON result
 
+        $proceed = OrbitInput::get('from_captive', 'no') === 'yes' && OrbitInput::get('auto_login', 'yes');
+        if ($proceed) {
+            $sid = $this->session->getSessionId();
+            $url = URL::Route("captive-portal") . sprintf('&loadsession=%s&fname=&email=%s', $sid, $email);
+
+            return Redirect::to($url);
+        }
+
         /** @var \MobileCI\MobileCIAPIController $mobile_ci */
         $mobile_ci = MobileCIAPIController::create('raw');
 
         // hack: we get the landing URL from the sign in view's data so we don't duplicate logic.
         $view = $mobile_ci->getSignInView();
         $view_data = $view->getData();
-
         return Redirect::away($view_data['landing_url']);
     }
 
@@ -1260,15 +1278,14 @@ class IntermediateLoginController extends IntermediateBaseController
                 $retailer = Mall::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
 
                 try {
-                    $bg = Setting::getFromList($retailer->settings, 'background_image');
+                    $bg = Media::where('object_id', $retailer->merchant_id)
+                        ->where('media_name_id', 'retailer_background')
+                        ->where('media_name_long', 'retailer_background_orig')
+                        ->where('object_name', 'mall')
+                        ->first();
                 } catch (Exception $e) {
                 }
             } catch (Exception $e) {
-                $retailer = new stdClass();
-                // Fake some properties
-                $retailer->parent = new stdClass();
-                $retailer->parent->logo = '';
-                $retailer->parent->biglogo = '';
             }
 
             $display_name = Input::get('fname', '');
