@@ -180,7 +180,7 @@
             }
         }).done(function(data) {
             if(data.status == 1) {
-                skip = skip + skip;
+                skip = skip + take;
                 if(data.records.length > 0) {
                     for(var i = 0; i < data.records.length; i++) {
                         var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
