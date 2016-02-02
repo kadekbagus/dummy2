@@ -1747,94 +1747,44 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             $campaign_view = DB::select("
-                                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
-                                        count(activity_id) as value
+                                select 
+                                    date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
+                                    count(campaign_page_view_id) as value
                                 from
-                                    {$tablePrefix}activities ac
-                                where
-                                    ac.object_id = ?
-                                        and ((ac.activity_name = 'view_coupon'
-                                        and ac.activity_type = 'view'
-                                        and ac.module_name = 'Coupon'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
-
-                                        or (ac.activity_name = 'view_news'
-                                        and ac.activity_type = 'view'
-                                        and ac.module_name = 'News'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
-
-                                        or (ac.activity_name = 'view_promotion'
-                                        and ac.activity_type = 'view'
-                                        and ac.module_name = 'Promotion'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest')))
-                                        and ac.location_id = ?
-                                        and ac.created_at between ? and ?
+                                    {$tablePrefix}campaign_page_views
+                                where 
+                                    campaign_id = ? and
+                                    location_id = ? and 
+                                    created_at between ? and ?
                                 group by 1
                                 order by 1
             ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
 
 
             $pop_up_view = DB::select("
-                                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
-                                        count(activity_id) as value
+                                select 
+                                    date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
+                                    count(campaign_popup_view_id) as value
                                 from
-                                    {$tablePrefix}activities ac
-                                where
-                                    ac.object_id = ?
-                                        and ((ac.activity_name = 'view_coupon_popup'
-                                        and ac.activity_name_long = 'View Coupon Pop Up'
-                                        and ac.activity_type = 'view'
-                                        and ac.module_name = 'Coupon'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
-                                        or (ac.activity_name = 'view_news_popup'
-                                        and ac.activity_name_long = 'View News Pop Up'
-                                        and ac.activity_type = 'view'
-                                        and ac.module_name = 'News'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
-                                        or (ac.activity_name = 'view_promotion_popup'
-                                        and ac.activity_name_long = 'View Promotion Pop Up'
-                                        and ac.activity_type = 'view'
-                                        and ac.module_name = 'Promotion'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest')))
-                                        and ac.location_id = ?
-                                        and ac.created_at between ? and ?
+                                    {$tablePrefix}campaign_popup_views
+                                where 
+                                    campaign_id = ? and
+                                    location_id = ? and
+                                    created_at between ? and ?
                                 group by 1
                                 order by 1
             ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
 
             $pop_up_click = DB::select("
-                                select date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
-                                        count(activity_id) as value
+                                select 
+                                    date_format(convert_tz(created_at, '+00:00', ?), '%Y-%m-%d') as date,
+                                    count(campaign_click_id) as value
                                 from
-                                    {$tablePrefix}activities ac
-                                where
-                                    ac.object_id = ?
-                                        and ((ac.activity_name = 'click_coupon_popup'
-                                        and ac.activity_name_long = 'Click Coupon Pop Up'
-                                        and ac.activity_type = 'click'
-                                        and ac.module_name = 'Coupon'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
-                                        or (ac.activity_name = 'click_news_popup'
-                                        and ac.activity_name_long = 'Click News Pop Up'
-                                        and ac.activity_type = 'click'
-                                        and ac.module_name = 'News'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest'))
-                                        or (ac.activity_name = 'click_promotion_popup'
-                                        and ac.activity_name_long = 'Click Promotion Pop Up'
-                                        and ac.activity_type = 'click'
-                                        and ac.module_name = 'Promotion'
-                                        and ac.group = 'mobile-ci'
-                                        and (ac.role = 'Consumer' or ac.role = 'Guest')))
-                                        and ac.location_id = ?
-                                        and ac.created_at between ? and ?
+                                    {$tablePrefix}campaign_clicks
+                                where 
+                                    campaign_id = ? and
+                                    location_id = ? and
+                                    created_at between ? and ?
                                 group by 1
                                 order by 1
             ", array($timezoneOffset, $campaign_id, $current_mall, $start_date, $end_date));
