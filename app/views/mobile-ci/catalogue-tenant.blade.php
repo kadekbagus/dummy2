@@ -124,7 +124,7 @@
                             </div>
                         @endforeach
                         </div>
-                    @if($data->returned_records <= $data->total_records)
+                    @if($data->returned_records < $data->total_records)
                         <div class="row">
                             <div class="col-xs-12 padded">
                                 <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
