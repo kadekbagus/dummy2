@@ -5391,12 +5391,33 @@ class MobileCIAPIController extends ControllerAPI
             return Response::json($data);
 
         } catch (Exception $e) {
-            $data = new stdclass();
-            $data->status = 0;
-            $data->message = $e->getMessage();
-            $data->total_records = 0;
-            $data->returned_records = 0;
-            $data->records = null;
+            switch ($e->getCode()) {
+                case Session::ERR_UNKNOWN;
+                case Session::ERR_IP_MISS_MATCH;
+                case Session::ERR_UA_MISS_MATCH;
+                case Session::ERR_SESS_NOT_FOUND;
+                case Session::ERR_SESS_EXPIRE;
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = 'session_expired';
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+
+                    break;
+
+                default:
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = $e->getMessage();
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+            }
 
             return Response::json($data);
         }

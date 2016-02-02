@@ -179,32 +179,38 @@
                 ids: ids
             }
         }).done(function(data) {
-            skip = skip + skip;
-            if(data.records.length > 0) {
-                for(var i = 0; i < data.records.length; i++) {
-                    var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
-                            <section class="list-item-single-tenant">\
-                                <a class="list-item-link" href="'+data.records[i].url+'">\
-                                    <div class="list-item-info">\
-                                        <header class="list-item-title">\
-                                            <div><strong>'+data.records[i].name+'</strong></div>\
-                                        </header>\
-                                        <header class="list-item-subtitle">\
-                                            <div>'+data.records[i].description+'</div>\
-                                        </header>\
-                                    </div>\
-                                    <div class="list-vignette-non-tenant"></div>\
-                                    <img class="img-responsive img-fit-tenant" src="'+data.records[i].image+'"/>\
-                                </a>\
-                            </section>\
-                        </div>';
+            if(data.status == 1) {
+                skip = skip + skip;
+                if(data.records.length > 0) {
+                    for(var i = 0; i < data.records.length; i++) {
+                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
+                                <section class="list-item-single-tenant">\
+                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                        <div class="list-item-info">\
+                                            <header class="list-item-title">\
+                                                <div><strong>'+data.records[i].name+'</strong></div>\
+                                            </header>\
+                                            <header class="list-item-subtitle">\
+                                                <div>'+data.records[i].description+'</div>\
+                                            </header>\
+                                        </div>\
+                                        <div class="list-vignette-non-tenant"></div>\
+                                        <img class="img-responsive img-fit-tenant" src="'+data.records[i].image+'"/>\
+                                    </a>\
+                                </section>\
+                            </div>';
 
-                    itemList.push(list);
+                        itemList.push(list);
+                    }
+                    catalogueWrapper.append(itemList.join(''));
                 }
-                catalogueWrapper.append(itemList.join(''));
-            }
-            if (data.total_records - take <= 0) {
-                btn.remove();
+                if (data.total_records - take <= 0) {
+                    btn.remove();
+                }
+            } else {
+                if(data.message === 'session_expired') {
+                    window.location.replace('/customer');
+                }
             }
         }).always(function(data){
             btn.removeAttr('disabled', 'disabled');
