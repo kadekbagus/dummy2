@@ -4292,7 +4292,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $coupons->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_coupons->count();
+            $totalRec = count($_coupons->get());
             $listOfRec = $coupons->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
