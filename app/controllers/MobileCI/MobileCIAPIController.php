@@ -3381,7 +3381,7 @@ class MobileCIAPIController extends ControllerAPI
             );
             $luckydraws->skip($skip);
 
-            $luckydraws->orderBy('start_date', 'desc');
+            $luckydraws->orderBy(DB::raw('RAND()'));
 
             $totalRec = $_luckydraws->count();
             $listOfRec = $luckydraws->get();
@@ -4122,7 +4122,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $coupons->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_coupons->count();
+            $totalRec = count($_coupons->get());
             $listOfRec = $coupons->get();
 
             if (! empty($alternateLanguage) || ! empty($listOfRec)) {
@@ -4250,7 +4250,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('promotions.merchant_id', $retailer->merchant_id)
                 ->where('issued_coupons.user_id', $user->user_id);
             
-            OrbitInput::get('ids', function($ids) use ($news)
+            OrbitInput::get('ids', function($ids) use ($coupons)
             {
                 $coupons->whereNotIn('promotions.promotion_id', $ids);
             });
@@ -4292,7 +4292,7 @@ class MobileCIAPIController extends ControllerAPI
 
             $coupons->orderBy(DB::raw('RAND()'));
 
-            $totalRec = $_coupons->count();
+            $totalRec = count($_coupons->get());
             $listOfRec = $coupons->get();
 
             if (!empty($alternateLanguage) && !empty($listOfRec)) {
@@ -4310,7 +4310,7 @@ class MobileCIAPIController extends ControllerAPI
                             }
                         }
 
-                        $media = $couponTranslation->find($couponTranslation->news_translation_id)
+                        $media = $couponTranslation->find($couponTranslation->coupon_translation_id)
                             ->media_orig()
                             ->first();
 
@@ -4326,7 +4326,7 @@ class MobileCIAPIController extends ControllerAPI
                                     ->where('promotion_id', $val->promotion_id)->first();
 
                                 // get default image
-                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->news_translation_id)
+                                $mediaDefaultLanguage = $contentDefaultLanguage->find($contentDefaultLanguage->coupon_translation_id)
                                     ->media_orig()
                                     ->first();
 
