@@ -3381,7 +3381,7 @@ class MobileCIAPIController extends ControllerAPI
             );
             $luckydraws->skip($skip);
 
-            $luckydraws->orderBy('start_date', 'desc');
+            $luckydraws->orderBy(DB::raw('RAND()'));
 
             $totalRec = $_luckydraws->count();
             $listOfRec = $luckydraws->get();
