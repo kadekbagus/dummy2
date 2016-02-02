@@ -3,6 +3,7 @@
 /**
  * An API controller for managing Mobile CI.
  */
+use Log;
 use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\Helper\Net\Domain;
@@ -620,7 +621,6 @@ class MobileCIAPIController extends ControllerAPI
     {
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
-
 
         $googlePlusUrl = URL::route('mobile-ci.social_google_callback');
 
@@ -1717,8 +1717,13 @@ class MobileCIAPIController extends ControllerAPI
             $config->setConfig('session_origin.query_string.name', 'orbit_session');
             $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
             $config->setConfig('application_id', MobileCIAPIController::APPLICATION_ID);
-            $this->session = new Session($config);
-            $this->session->start();
+
+            try {
+                $this->session = new Session($config);
+                $this->session->start();
+            } catch (Exception $e) {
+                Redirect::to('/customer/logout');
+            }
         }
     }
 
@@ -7405,6 +7410,8 @@ class MobileCIAPIController extends ControllerAPI
         $callback_req = \Symfony\Component\HttpFoundation\Request::create(
             $callback_url, 'GET', ['mac_address' => $mac_address]);
 
+        $from_captive = OrbitInput::post('from_captive', 'no');
+        $auto_login = OrbitInput::post('auto_login', 'no');
         $values = [
             'email' => $email,
             'retailer_id' => $retailer->merchant_id,
@@ -7413,9 +7420,15 @@ class MobileCIAPIController extends ControllerAPI
             'from' => $from,
             'full_data' => 'no',
             'check_only' => 'no',
+            'auto_login' => $auto_login,
+            'from_captive' => $from_captive
         ];
 
+        Log::info('-- CI REDIRECT TO CLOUD getUri(): ' . $callback_req->getUri());
+        // Log::info('-- CI REDIRECT TO CLOUD Cloud Value: ' . $values);
+
         $values = CloudMAC::wrapDataFromBox($values);
+
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
         $this->response->data = [
             'redirect_to' => $req->getUri(),
