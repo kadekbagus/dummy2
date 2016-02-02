@@ -535,8 +535,8 @@
         $('.social-media-container').addClass('hide');
     },
     isFromCaptiveFn = function () {
-        if ({{{ Input::get('from_captive', 'no') }}} === 'yes') {
-            $('.social-media-wraper').addClass('hide');
+        if ('{{{ Input::get('from_captive', 'no') }}}' === 'yes') {
+            $('#social-media-wraper').addClass('hide');
         }
     };
 
