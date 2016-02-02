@@ -957,10 +957,7 @@ class NewsAPIController extends ControllerAPI
                     $campaignhistory->modified_by = $this->api->user->user_id;
                     $campaignhistory->save();
                 }
-            } 
-
-            //check for update status
-            if ($statusdb != $status) {
+            } elseif ($statusdb != $status) {
                 // get action id for campaign history
                 $actionstatus = 'activate';
                 if ($status === 'inactive') {

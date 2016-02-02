@@ -14,15 +14,20 @@
 #signedIn{
   display: none;
 }
-@if(!empty($bg))
-  @if(!empty($bg[0]))
-  body.bg{
-    background: url('{{ asset($bg[0]) }}');
-    background-size: cover;
-    background-repeat: no-repeat;
-  }
-  @endif
+body.bg {
+@if(!empty($bg) && !empty($bg->path))
+    background: url('{{ asset($bg->path) }}');
+@else
+    background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
 @endif
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    height: 478px;
+    display: table;
+    width: 100%;
+}
 </style>
 @stop
 
@@ -32,7 +37,7 @@
         <header>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->logo) }}" />
                 </div>
             </div>
         </header>

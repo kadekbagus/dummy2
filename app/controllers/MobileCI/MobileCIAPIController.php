@@ -3,6 +3,7 @@
 /**
  * An API controller for managing Mobile CI.
  */
+use Log;
 use Net\MacAddr;
 use Orbit\Helper\Email\MXEmailChecker;
 use Orbit\Helper\Net\Domain;
@@ -620,7 +621,6 @@ class MobileCIAPIController extends ControllerAPI
     {
         $bg = null;
         $start_button_label = Config::get('shop.start_button_label');
-
 
         $googlePlusUrl = URL::route('mobile-ci.social_google_callback');
 
@@ -1717,8 +1717,13 @@ class MobileCIAPIController extends ControllerAPI
             $config->setConfig('session_origin.query_string.name', 'orbit_session');
             $config->setConfig('session_origin.cookie.name', 'orbit_sessionx');
             $config->setConfig('application_id', MobileCIAPIController::APPLICATION_ID);
-            $this->session = new Session($config);
-            $this->session->start();
+
+            try {
+                $this->session = new Session($config);
+                $this->session->start();
+            } catch (Exception $e) {
+                Redirect::to('/customer/logout');
+            }
         }
     }
 
@@ -5102,15 +5107,45 @@ class MobileCIAPIController extends ControllerAPI
             }
 
             $news = $news->where('news.status', '=', 'active')
-                        ->where('mall_id', $retailer->merchant_id)
-                        ->where('object_type', 'news')
-                        ->whereRaw("? between begin_date and end_date", [$mallTime])
-                        ->groupBy('news.news_id')
-                        ->orderBy(DB::raw('RAND()')) // randomize
-                        ->get();
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('object_type', 'news')
+                ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
-            if (!empty($alternateLanguage) && !empty($news)) {
-                foreach ($news as $key => $val) {
+            $_news = clone $news;
+
+            // Get the take args
+            $take = Config::get('orbit.pagination.per_page');
+            OrbitInput::get(
+                'take',
+                function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+                }
+            );
+            $news->take($take);
+
+            $skip = 0;
+            OrbitInput::get(
+                'skip',
+                function ($_skip) use (&$skip, $news) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                }
+            );
+            $news->skip($skip);
+
+            $news->orderBy(DB::raw('RAND()'));
+
+            $totalRec = $_news->count();
+            $listOfRec = $news->get();
+
+            if (!empty($alternateLanguage) && !empty($listOfRec)) {
+                foreach ($listOfRec as $key => $val) {
 
                     $newsTranslation = \NewsTranslation::excludeDeleted()
                         ->where('merchant_language_id', '=', $alternateLanguage->merchant_language_id)
@@ -5153,15 +5188,15 @@ class MobileCIAPIController extends ControllerAPI
                 }
             }
 
-            if ($news->isEmpty()) {
+            if ($listOfRec->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
             } else {
                 $data = new stdclass();
                 $data->status = 1;
-                $data->total_records = sizeof($news);
-                $data->returned_records = sizeof($news);
-                $data->records = $news;
+                $data->total_records = $totalRec;
+                $data->returned_records = sizeof($listOfRec);
+                $data->records = $listOfRec;
             }
 
             $languages = $this->getListLanguages($retailer);
@@ -5219,18 +5254,56 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.max_record');
+            if ($maxRecord <= 0) {
+                $maxRecord = 300;
+            }
+
+            $userAge = 0;
+            if ($user->userDetail->birthdate !== '0000-00-00' && $user->userDetail->birthdate !== null) {
+                $userAge =  $this->calculateAge($user->userDetail->birthdate); // 27
+            }
+
+            $userGender = 'U'; // default is Unknown
+            if ($user->userDetail->gender !== '' && $user->userDetail->gender !== null) {
+                $userGender =  $user->userDetail->gender;
+            }
+
             $mallTime = Carbon::now($retailer->timezone->timezone_name);
-            $news = \News::active()
-                            ->where('mall_id', $retailer->merchant_id)
-                            ->where('object_type', 'news')
-                            ->whereRaw("? between begin_date and end_date", [$mallTime]);
+            $news = \News::with('translations')
+                            ->leftJoin('campaign_gender', 'campaign_gender.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_age', 'campaign_age.campaign_id', '=', 'news.news_id')
+                            ->leftJoin('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+
+            // filter by age and gender
+            if ($userGender !== null) {
+                $news = $news->whereRaw(" ( gender_value = ? OR is_all_gender = 'Y' ) ", [$userGender]);
+            }
+
+            if ($userAge !== null) {
+                if ($userAge === 0){
+                    $news = $news->whereRaw(" ( (min_value = ? and max_value = ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                } else {
+                    if ($userAge >= 55) {
+                        $news = $news->whereRaw( "( (min_value = 55 and max_value = 0 ) or is_all_age = 'Y' ) ");
+                    } else {
+                        $news = $news->whereRaw( "( (min_value <= ? and max_value >= ? ) or is_all_age = 'Y' ) ", array([$userAge], [$userAge]));
+                    }
+                }
+            }
+
+            OrbitInput::get('ids', function($ids) use ($news)
+            {
+                $news->whereNotIn('news_id', $ids);
+            });
+
+            $news = $news->where('news.status', '=', 'active')
+                ->where('mall_id', $retailer->merchant_id)
+                ->where('object_type', 'news')
+                ->whereRaw("? between begin_date and end_date", [$mallTime]);
 
             $_news = clone $news;
-
-            $maxRecord = (int) Config::get('orbit.pagination.max_record', 50);
-            if ($maxRecord <= 0) {
-                $maxRecord = Config::get('orbit.pagination.max_record');
-            }
 
             // Get the take args
             $take = Config::get('orbit.pagination.per_page');
@@ -5258,7 +5331,7 @@ class MobileCIAPIController extends ControllerAPI
             );
             $news->skip($skip);
 
-            $news->orderBy('sticky_order', 'desc')->orderBy('created_at', 'desc');
+            $news->orderBy(DB::raw('RAND()'));
 
             $totalRec = $_news->count();
             $listOfRec = $news->get();
@@ -5311,6 +5384,7 @@ class MobileCIAPIController extends ControllerAPI
                 $item->image = empty($item->image) ? URL::asset('mobile-ci/images/default_news.png') : URL::asset($item->image);
                 $item->url = URL::to('customer/mallpromotion?id='.$item->news_id);
                 $item->name = mb_strlen($item->news_name) > 64 ? mb_substr($item->news_name, 0, 64) . '...' : $item->news_name;
+                $item->item_id = $item->news_id;
             }
 
             $data = new stdclass();
@@ -5322,12 +5396,33 @@ class MobileCIAPIController extends ControllerAPI
             return Response::json($data);
 
         } catch (Exception $e) {
-            $data = new stdclass();
-            $data->status = 0;
-            $data->message = $e->getMessage();
-            $data->total_records = 0;
-            $data->returned_records = 0;
-            $data->records = null;
+            switch ($e->getCode()) {
+                case Session::ERR_UNKNOWN;
+                case Session::ERR_IP_MISS_MATCH;
+                case Session::ERR_UA_MISS_MATCH;
+                case Session::ERR_SESS_NOT_FOUND;
+                case Session::ERR_SESS_EXPIRE;
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = 'session_expired';
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+
+                    break;
+
+                default:
+                    $data = new stdclass();
+                    $data->total_records = 0;
+                    $data->returned_records = 0;
+                    $data->records = null;
+                    $data->message = $e->getMessage();
+                    $data->status = 0;
+
+                    $this->response->data = $data;
+            }
 
             return Response::json($data);
         }
@@ -7315,6 +7410,8 @@ class MobileCIAPIController extends ControllerAPI
         $callback_req = \Symfony\Component\HttpFoundation\Request::create(
             $callback_url, 'GET', ['mac_address' => $mac_address]);
 
+        $from_captive = OrbitInput::post('from_captive', 'no');
+        $auto_login = OrbitInput::post('auto_login', 'no');
         $values = [
             'email' => $email,
             'retailer_id' => $retailer->merchant_id,
@@ -7323,9 +7420,15 @@ class MobileCIAPIController extends ControllerAPI
             'from' => $from,
             'full_data' => 'no',
             'check_only' => 'no',
+            'auto_login' => $auto_login,
+            'from_captive' => $from_captive
         ];
 
+        Log::info('-- CI REDIRECT TO CLOUD getUri(): ' . $callback_req->getUri());
+        // Log::info('-- CI REDIRECT TO CLOUD Cloud Value: ' . $values);
+
         $values = CloudMAC::wrapDataFromBox($values);
+
         $req = \Symfony\Component\HttpFoundation\Request::create($url, 'GET', $values);
         $this->response->data = [
             'redirect_to' => $req->getUri(),
