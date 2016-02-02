@@ -32,6 +32,11 @@ body.bg {
 @stop
 
 @section('content')
+<div class="spinner-backdrop" id="spinner-backdrop">
+    <div class="spinner-container">
+        <i class="fa fa-spin fa-spinner"></i>
+    </div>
+</div>
 <div class="row top-space" id="signIn">
     <div class="col-xs-12">
         <header>
@@ -44,14 +49,6 @@ body.bg {
 
         <div class="col-xs-12 text-center welcome-user">
             <h3>{{ Lang::get('mobileci.greetings.welcome') }}, <br><span class="signedUser"></span><span class="userName">{{{ $display_name or '' }}}</span>!</h3>
-        </div>
-
-        <div class="col-xs-12 text-center">
-            <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
-                <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block" onclick="return false;">{{ Lang::get('mobileci.signin.loading_orbit') }}</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
