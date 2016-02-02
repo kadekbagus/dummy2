@@ -1608,6 +1608,11 @@ class CampaignReportAPIController extends ControllerAPI
 
                 if ($deactivationRow) {
                     $deactivationRowId = $deactivationRow->campaign_history_id;
+
+                    // Set cost as 0 when there's only the deactivation today
+                    if (!$activationRow) {
+                        $cost = 0;
+                    }
                 }
 
                 // If there is a deactivation at last row, it will be affected tomorrow
