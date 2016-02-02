@@ -504,7 +504,7 @@ class DashboardAPIController extends ControllerAPI
 
             // This is for another campaign
             $campaigns = CampaignGroupName::getPageViewByLocation($merchantId, $beginDate, $endDate)->get();
-
+print_r($campaigns->toArray());
             $keys = [
                 'Coupon' => 'coupons',
                 'Event' => 'events',
@@ -4458,35 +4458,28 @@ class DashboardAPIController extends ControllerAPI
             }
             Event::fire('orbit.dashboard.gettotalpageview.after.validation', array($this, $validator));
 
-            $tablePrefix = DB::getTablePrefix();
+            $campaignList = ['Coupon', 'News', 'Promotion'];
 
-            $result = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as total_page_view"))
-                        ->whereRaw("(({$tablePrefix}activities.activity_name = 'view_promotion' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View Promotion Detail' AND
-                                     {$tablePrefix}activities.module_name = 'Promotion' AND
-                                     {$tablePrefix}activities.activity_type = 'view') OR
-                                     
-                                     ({$tablePrefix}activities.activity_name = 'view_news' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View News Detail' AND
-                                     {$tablePrefix}activities.module_name = 'News' AND
-                                     {$tablePrefix}activities.activity_type = 'view') OR
-                                     
-                                     ({$tablePrefix}activities.activity_name = 'view_coupon' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View Coupon Detail' AND
-                                     {$tablePrefix}activities.module_name = 'Coupon' AND
-                                     {$tablePrefix}activities.activity_type = 'view'))
-                                ")
-                        ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                        ->where('activities.location_id','=', $current_mall)
-                        ->where('activities.created_at', '>=', $start_date)
-                        ->where('activities.created_at', '<=', $end_date)->first();
+            $campaigns = CampaignGroupName::getPageViewByLocation($current_mall, $start_date, $end_date)->get();
 
+            $total = 0;
 
-            if (empty($result)) {
+            foreach ($campaigns as $key => $value) 
+            {
+                if( in_array($campaigns[$key]->campaign_group_name, $campaignList) )
+                {
+                    $total = $total+$campaigns[$key]->count;
+                }
+            }
+
+            if (empty($campaigns)) {
                 $this->response->message = Lang::get('statuses.orbit.nodata.object');
             }
 
-            $this->response->data = $result;
+            $data = new stdclass();
+            $data->total_page_view = $total;
+
+            $this->response->data = $data;
 
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.dashboard.gettotalpageview.access.forbidden', array($this, $e));
