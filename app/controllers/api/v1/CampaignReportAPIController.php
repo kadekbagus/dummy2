@@ -941,14 +941,14 @@ class CampaignReportAPIController extends ControllerAPI
                                     $statustemp = $nq->previous_status;
                                     $tenanttemp = $nq->total_tenant;
                                 }
-
+                                if (!$find) {
+                                    $campaignstatus = $statustemp;
+                                    $campaigntenant = $tenanttemp;
+                                }
                             }
                         }
                     }
-                    if (!$find) {
-                        $campaignstatus = $statustemp;
-                        $campaigntenant = $tenanttemp;
-                    }
+
                     if($dateloop >= $begin && $dateloop <= $end) {
                         if($campaignstatus == 'activate' || $campaignstatus == 'active'){
                             $spending = (int) $campaigntenant * $nq->base_price;
