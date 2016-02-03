@@ -365,6 +365,29 @@ class DashboardAPIController extends ControllerAPI
                         $flag_type = true;
                         break;
 
+                // show coupon
+                case 'coupons':
+                    $query = Coupon::select(DB::raw("COUNT({$tablePrefix}campaign_page_views.campaign_page_view_id) as score,
+                                {$tablePrefix}promotions.promotion_name as name, {$tablePrefix}promotions.promotion_id as object_id,
+                                count({$tablePrefix}campaign_page_views.campaign_page_view_id) / (select count(cp.campaign_page_view_id)
+                                from {$tablePrefix}promotions pr
+                                left join {$tablePrefix}campaign_page_views cp on cp.campaign_id = pr.promotion_id and pr.is_coupon = 'Y'
+                                left join {$tablePrefix}campaign_group_names cgn on cgn.campaign_group_name_id=cp.campaign_group_name_id
+                                where cp.location_id = {$quote($merchant_id)} and cp.created_at between {$quote($start_date)} and {$quote($end_date)}) * 100 as percentage")
+                            )
+                            ->leftJoin('campaign_page_views', 'campaign_page_views.campaign_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('campaign_group_names', function($q) use ($quote) {
+                                    $q->on('campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id');
+                                    $q->on('campaign_group_names.campaign_group_name', '=', DB::raw($quote('Coupon')));
+                            })
+                            ->whereBetween('campaign_page_views.created_at', [$start_date, $end_date])
+                            ->where('promotions.merchant_id', $merchant_id)
+                            ->groupBy('promotions.promotion_id')
+                            ->orderBy(DB::raw('1'), 'desc')
+                            ->take($take);
+                        $flag_type = true;
+                        break;
+
                 // by default do nothing
                 default:
                      $query = null;
@@ -535,6 +558,7 @@ class DashboardAPIController extends ControllerAPI
             $data->events = $objectKeys['events'];
             $data->promotions = $objectKeys['promotions'];
             $data->lucky_draws = $objectKeys['lucky_draws'];
+            $data->coupons = $objectKeys['coupons'];
 
             $this->response->data = $data;
 
@@ -646,7 +670,7 @@ class DashboardAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id'  => 'required',
-                    'type'         => 'required|in:news,promotions,lucky_draws,events',
+                    'type'         => 'required|in:news,promotions,lucky_draws,events,coupons',
                     'object_id'    => 'required',
                     'start_date'   => 'required|date_format:Y-m-d H:i:s',
                     'end_date'     => 'required|date_format:Y-m-d H:i:s'
@@ -664,7 +688,7 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            if ($type === 'news' || $type === 'promotions' || $type === 'lucky_draws') {
+            if ($type === 'news' || $type === 'promotions' || $type === 'lucky_draws' || $type === 'coupons') {
                 switch ($type) {
                     case 'news':
                         $campaign_group_name = 'News';
@@ -674,6 +698,9 @@ class DashboardAPIController extends ControllerAPI
                         break;
                     case 'lucky_draws':
                         $campaign_group_name = 'Lucky Draw';
+                        break;
+                    case 'coupons':
+                        $campaign_group_name = 'Coupon';
                         break;
                 }
                 $tableName = 'campaign_page_views';
