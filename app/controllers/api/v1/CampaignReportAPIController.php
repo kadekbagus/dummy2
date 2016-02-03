@@ -1620,6 +1620,11 @@ class CampaignReportAPIController extends ControllerAPI
                     $previousDayCost = 0;
                 }
 
+                // When the change is only the tenant count change
+                if (!($activationRow && $deactivationRow)) {
+                    $cost = $previousDayCost = 0;
+                }
+
             // Data not found, but the date is in the interval
             } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime <= $campaignEndDateTime2) {
                 $cost = $previousDayCost;
