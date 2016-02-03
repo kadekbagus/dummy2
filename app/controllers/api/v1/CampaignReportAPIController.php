@@ -24,6 +24,20 @@ class CampaignReportAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     /**
+     * There should be Carbon method for this
+     * @author Qosdil A. <qosdil@gmail.com>
+     */
+    private function getTimezoneHoursDiff($timezone)
+    {
+        $mallDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00', $timezone);
+        $utcDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00');
+        $diff = $mallDateTime->diff($utcDateTime);
+        $sign = ($diff->invert) ? '-' : '+';
+        $hour = ($diff->h < 10) ? '0'.$diff->h : $diff->h;
+        return $sign.$hour.':00';
+    }
+
+    /**
      * GET - Campaign Report Summary List
      *
      * @author Firmansyah <firmansyah@dominopos.com>
@@ -1266,6 +1280,22 @@ class CampaignReportAPIController extends ControllerAPI
         return $output;
     }
 
+    public function getSpending()
+    {
+        // Campaign ID
+        $id = OrbitInput::get('campaign_id');
+
+        // News, promotion or coupon
+        $type = OrbitInput::get('campaign_type');
+
+        // Get mall's timezone
+        $mallId = OrbitInput::get('current_mall');
+        $timezone = Mall::find($mallId)->timezone->timezone_name;
+
+        $method = \Input::get('m', 2);
+        return $this->{'getSpending'.$method}($id, $type, $timezone);
+    }
+
     /**
      * Get the campaign spending
      *
@@ -1275,17 +1305,9 @@ class CampaignReportAPIController extends ControllerAPI
      * @author Qosdil A. <qosdil@dominopos.com>
      * @todo Validations
      */
-    public function getSpending()
+    private function getSpending1($id, $type, $mallTimezone)
     {
-        // Mall ID
-        $mallId = OrbitInput::get('current_mall');
-        $timezone = Mall::find($mallId)->timezone->timezone_name;
-
-        // Campaign ID
-        $id = OrbitInput::get('campaign_id');
-
-        // News, promotion or coupon
-        $type = OrbitInput::get('campaign_type');
+        $timezone = $mallTimezone;
 
         // Date intervals
         $requestBeginDateTime = OrbitInput::get('start_date');
@@ -1425,6 +1447,11 @@ class CampaignReportAPIController extends ControllerAPI
                     $previousDayCost = 0;
                 }
 
+                // When the change is only the tenant count change
+                if (!($activationRow && $deactivationRow)) {
+                    $cost = $previousDayCost = 0;
+                }
+
             // Data not found, but the date is in the interval
             } elseif ($loopBeginDateTime >= $campaignBeginDateTime && $loopEndDateTime <= $campaignEndDateTime2) {
                 $cost = $previousDayCost;
@@ -1446,6 +1473,55 @@ class CampaignReportAPIController extends ControllerAPI
             // Increment day by 1
             $carbonLoop->addDay();
             $carbonLoopNextDay->addDay();
+        }
+
+        $this->response->data = $outputs;
+
+        return $this->render(200);
+    }
+
+    /**
+     * getSpending2
+     *
+     * Implements Thomas' proc.
+     *
+     * @author Qosdil A. <qosdil@dominopos.com>
+     */
+    private function getSpending2($id, $type, $mallTimezone)
+    {
+        $requestBeginDateTime = OrbitInput::get('start_date');
+        $requestBeginDate = substr($requestBeginDateTime, 0, 10);
+
+        $requestEndDateTime = OrbitInput::get('end_date');
+        $requestEndDate = substr($requestEndDateTime, 0, 10);
+
+        $hoursDiff = $this->getTimezoneHoursDiff($mallTimezone);
+
+        // $procResults is an array
+        $procResults = \DB::select("CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)", [
+            $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff
+        ]);
+
+        foreach ($procResults as $row) {
+            $costs[$row->comp_date] = $row->daily_cost;
+        }
+
+        $carbonLoop = Carbon::createFromFormat('Y-m-d', $requestBeginDate);
+        while ($carbonLoop->toDateString() <= $requestEndDate) {
+            $loopDate = $carbonLoop->toDateString();
+            $cost = isset($costs[$loopDate]) ? $costs[$loopDate] : 0;
+
+            // Add to output array
+            $outputs[] = [
+                'date' => $carbonLoop->setTimezone($mallTimezone)->toDateString(),
+                'cost' => (int) $cost, // Format cost as integer
+            ];
+
+            // Set it back to UTC
+            $carbonLoop->setTimezone('UTC');
+
+            // Increment day by 1
+            $carbonLoop->addDay();
         }
 
         $this->response->data = $outputs;
