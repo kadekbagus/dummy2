@@ -504,7 +504,7 @@ class DashboardAPIController extends ControllerAPI
 
             // This is for another campaign
             $campaigns = CampaignGroupName::getPageViewByLocation($merchantId, $beginDate, $endDate)->get();
-print_r($campaigns->toArray());
+
             $keys = [
                 'Coupon' => 'coupons',
                 'Event' => 'events',
