@@ -24,6 +24,20 @@ class CampaignReportAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     /**
+     * There should be Carbon method for this
+     * @author Qosdil A. <qosdil@gmail.com>
+     */
+    private function getTimezoneHoursDiff($timezone)
+    {
+        $mallDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00', $timezone);
+        $utcDateTime = Carbon::createFromFormat('Y-m-d H:i:s', '2016-01-01 00:00:00');
+        $diff = $mallDateTime->diff($utcDateTime);
+        $sign = ($diff->invert) ? '-' : '+';
+        $hour = ($diff->h < 10) ? '0'.$diff->h : $diff->h;
+        return $sign.$hour.':00';
+    }
+
+    /**
      * GET - Campaign Report Summary List
      *
      * @author Firmansyah <firmansyah@dominopos.com>
@@ -1676,8 +1690,7 @@ class CampaignReportAPIController extends ControllerAPI
         $requestEndDateTime = OrbitInput::get('end_date');
         $requestEndDate = substr($requestEndDateTime, 0, 10);
 
-        // Tmp
-        $hoursDiff = '+08:00';
+        $hoursDiff = $this->getTimezoneHoursDiff($mallTimezone);
 
         // $procResults is an array
         $procResults = \DB::select("CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)", [
