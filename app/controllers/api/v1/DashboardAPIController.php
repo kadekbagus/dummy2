@@ -670,7 +670,7 @@ class DashboardAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id'  => 'required',
-                    'type'         => 'required|in:news,promotions,lucky_draws,events',
+                    'type'         => 'required|in:news,promotions,lucky_draws,events,coupons',
                     'object_id'    => 'required',
                     'start_date'   => 'required|date_format:Y-m-d H:i:s',
                     'end_date'     => 'required|date_format:Y-m-d H:i:s'
@@ -688,7 +688,7 @@ class DashboardAPIController extends ControllerAPI
 
             $tablePrefix = DB::getTablePrefix();
 
-            if ($type === 'news' || $type === 'promotions' || $type === 'lucky_draws') {
+            if ($type === 'news' || $type === 'promotions' || $type === 'lucky_draws' || $type === 'coupons') {
                 switch ($type) {
                     case 'news':
                         $campaign_group_name = 'News';
@@ -698,6 +698,9 @@ class DashboardAPIController extends ControllerAPI
                         break;
                     case 'lucky_draws':
                         $campaign_group_name = 'Lucky Draw';
+                        break;
+                    case 'coupons':
+                        $campaign_group_name = 'Coupon';
                         break;
                 }
                 $tableName = 'campaign_page_views';
