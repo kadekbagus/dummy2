@@ -136,6 +136,16 @@ class CampaignReportAPIController extends ControllerAPI
             $timezone = $this->getTimezone($mall->merchant_id);
             $timezoneOffset = $this->getTimezoneOffset($timezone);
 
+            // $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
+            // $startConvert->setTimezone($timezone);
+
+            // $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
+            // $endConvert->setTimezone($timezone);
+
+            // $start_date = $startConvert->toDateString();
+            // $end_date = $endConvert->toDateString();
+
+
             // Builder object
             $now = date('Y-m-d H:i:s');
             $tablePrefix = DB::getTablePrefix();
@@ -146,34 +156,26 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'news', {$tablePrefix}news.begin_date, '".$now."', '".$timezoneOffset."'), 0.00) AS campaign_total_cost
+                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'news', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 )
                 as spending,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_news'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
+                    select count(campaign_page_view_id) as value
+                    from {$tablePrefix}campaign_page_views
+                    where campaign_id = {$tablePrefix}news.news_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as page_views,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_news_popup'
-                    AND {$tablePrefix}activities.activity_name_long = 'View News Pop Up'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
+                    select count(campaign_popup_view_id) as value
+                    from {$tablePrefix}campaign_popup_views
+                    where campaign_id = {$tablePrefix}news.news_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as popup_views,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'click_news_popup'
-                    AND {$tablePrefix}activities.activity_name_long = 'Click News Pop Up'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
+                    select count(campaign_click_id) as value
+                    from {$tablePrefix}campaign_clicks
+                    where campaign_id = {$tablePrefix}news.news_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status"))
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -191,32 +193,27 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'promotion', {$tablePrefix}news.begin_date, '".$now."', '".$timezoneOffset."'), 0.00) AS campaign_total_cost
+                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'promotion', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 )
                 as spending,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_promotion'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
+                    select count(campaign_page_view_id) as value
+                    from {$tablePrefix}campaign_page_views
+                    where campaign_id = {$tablePrefix}news.news_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as page_views,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_promotion_popup'
-                    AND {$tablePrefix}activities.activity_name_long = 'View Promotion Pop Up'
+                    select count(campaign_popup_view_id) as value
+                    from {$tablePrefix}campaign_popup_views
+                    where campaign_id = {$tablePrefix}news.news_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as popup_views,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'click_promotion_popup'
-                    AND {$tablePrefix}activities.activity_name_long = 'Click Promotion Pop Up'
+                    select count(campaign_click_id) as value
+                    from {$tablePrefix}campaign_clicks
+                    where campaign_id = {$tablePrefix}news.news_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
-
                 {$tablePrefix}news.status"))
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
@@ -233,34 +230,26 @@ class CampaignReportAPIController extends ControllerAPI
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 (
-                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'coupon', {$tablePrefix}promotions.begin_date, '".$now."', '".$timezoneOffset."'), 0.00) AS campaign_total_cost
+                    SELECT IFNULL(fnc_campaign_cost(campaign_id, 'coupon', {$tablePrefix}promotions.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
                 )
                 as spending,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_coupon'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
+                    select count(campaign_page_view_id) as value
+                    from {$tablePrefix}campaign_page_views
+                    where campaign_id = {$tablePrefix}promotions.promotion_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as page_views,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'view_coupon_popup'
-                    AND {$tablePrefix}activities.activity_name_long = 'View Coupon Pop Up'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
+                    select count(campaign_popup_view_id) as value
+                    from {$tablePrefix}campaign_popup_views
+                    where campaign_id = {$tablePrefix}promotions.promotion_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as popup_views,
                 (
-                    SELECT COUNT({$tablePrefix}activities.activity_id)
-                    FROM {$tablePrefix}activities
-                    WHERE `campaign_id` = {$tablePrefix}activities.object_id
-                    AND {$tablePrefix}activities.activity_name = 'click_coupon_popup'
-                    AND {$tablePrefix}activities.activity_name_long = 'Click Coupon Pop Up'
-                    AND {$tablePrefix}activities.group = 'mobile-ci'
-                    AND ({$tablePrefix}activities.role = 'Consumer' or {$tablePrefix}activities.role = 'Guest')
+                    select count(campaign_click_id) as value
+                    from {$tablePrefix}campaign_clicks
+                    where campaign_id = {$tablePrefix}promotions.promotion_id
+                    and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}promotions.status"))
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
@@ -332,18 +321,28 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
+            $__campaign = clone $campaign;
+
+            $query_sum = array(
+                'SUM(page_views) AS page_views',
+                'SUM(popup_views) AS popup_views',
+                'SUM(estimated_total) AS estimated_total',
+                'SUM(spending) AS spending'
+            );
+
+            $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
 
             // Get total page views
-            $totalPageViews = $_campaign->sum('page_views');
+            $totalPageViews = $total[0]->page_views;
 
             // Get total popup views
-            $totalPopupViews = $_campaign->sum('popup_views');
+            $totalPopupViews = $total[0]->popup_views;
 
             // Get total estimate
-            $totalEstimated = $_campaign->sum('estimated_total');
+            $totalEstimated = $total[0]->estimated_total;
 
             // Get total spending
-            $totalSpending = $_campaign->sum('spending');
+            $totalSpending = $total[0]->spending;
 
             $_campaign->select('campaign_id');
 
@@ -1892,4 +1891,10 @@ class CampaignReportAPIController extends ControllerAPI
 
         return $dt->format('P');
     }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
 }
