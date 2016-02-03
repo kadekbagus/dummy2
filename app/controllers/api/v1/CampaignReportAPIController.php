@@ -1490,10 +1490,14 @@ class CampaignReportAPIController extends ControllerAPI
     private function getSpending2($id, $type, $mallTimezone)
     {
         $requestBeginDateTime = OrbitInput::get('start_date');
-        $requestBeginDate = substr($requestBeginDateTime, 0, 10);
+
+        // Begin date in mall's timezone
+        $requestBeginDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestBeginDateTime)->setTimezone($mallTimezone)->toDateString();
 
         $requestEndDateTime = OrbitInput::get('end_date');
-        $requestEndDate = substr($requestEndDateTime, 0, 10);
+
+        // End date in mall's timezone
+        $requestEndDate = Carbon::createFromFormat('Y-m-d H:i:s', $requestEndDateTime)->setTimezone($mallTimezone)->toDateString();
 
         $hoursDiff = $this->getTimezoneHoursDiff($mallTimezone);
 
