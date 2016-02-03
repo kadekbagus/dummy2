@@ -25,6 +25,11 @@ class LuckyDrawAPIController extends ControllerAPI
     const MIN_NUMBER = 1;
 
     /**
+     * Default language name used if none are sent
+     */
+    const DEFAULT_LANG = 'en';
+
+    /**
      * POST - Create New Lucky Draw
      *
      * List of API Parameters
@@ -80,23 +85,35 @@ class LuckyDrawAPIController extends ControllerAPI
 
             // set mall id
             $mall_id = OrbitInput::post('mall_id', OrbitInput::post('merchant_id'));
-            if (trim($mall_id) === '') {
-                // if not being sent, then set to current box mall id
-                $mall_id = Config::get('orbit.shop.id');
+            $listOfMallIds = $user->getUserMallIds($mall_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $mall_id = $listOfMallIds[0];
             }
 
             $lucky_draw_name = OrbitInput::post('lucky_draw_name');
             $description = OrbitInput::post('description');
             $start_date = OrbitInput::post('start_date');
             $end_date = OrbitInput::post('end_date');
+
             $draw_date = OrbitInput::post('draw_date');
+            // set default value for draw date. if draw_date is empty, then set its value with end_date plus one second
+            if ((trim($draw_date) === '') && (trim($end_date) !== '')) {
+                $draw_date = Carbon::createFromFormat('Y-m-d H:i:s', $end_date);
+                $draw_date = $draw_date->addSeconds(1)->__toString();
+            }
+
             $minimum_amount = OrbitInput::post('minimum_amount');
             $min_number = OrbitInput::post('min_number');
             $max_number = OrbitInput::post('max_number');
             $external_lucky_draw_id = OrbitInput::post('external_lucky_draw_id');
             $grace_period_date = OrbitInput::post('grace_period_date');
             $grace_period_in_days = OrbitInput::post('grace_period_in_days');
-            $id_language_default = OrbitInput::post('id_language_default');
+
+            $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
+            $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
 
             // set default value for status
             $status = OrbitInput::post('status');
@@ -125,7 +142,7 @@ class LuckyDrawAPIController extends ControllerAPI
                     'id_language_default'      => $id_language_default,
                 ),
                 array(
-                    'mall_id'                  => 'required|orbit.empty.mall',
+                    'mall_id'                  => 'orbit.empty.mall',
                     'lucky_draw_name'          => 'required|max:255|orbit.exists.lucky_draw_name:' . $mall_id,
                     'description'              => 'required',
                     'start_date'               => 'required|date_format:Y-m-d H:i:s',
@@ -360,9 +377,12 @@ class LuckyDrawAPIController extends ControllerAPI
 
             // set mall id
             $mall_id = OrbitInput::post('mall_id', OrbitInput::post('merchant_id'));
-            if (trim($mall_id) === '') {
-                // if not being sent, then set to current box mall id
-                $mall_id = Config::get('orbit.shop.id');
+            $listOfMallIds = $user->getUserMallIds($mall_id);
+            if (empty($listOfMallIds)) { // invalid mall id
+                $errorMessage = 'Invalid mall id.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } else {
+                $mall_id = $listOfMallIds[0];
             }
 
             $lucky_draw_id = OrbitInput::post('lucky_draw_id');
@@ -371,7 +391,10 @@ class LuckyDrawAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $draw_date = OrbitInput::post('draw_date');
             $grace_period_date = OrbitInput::post('grace_period_date');
-            $id_language_default = OrbitInput::post('id_language_default');
+
+            $default_merchant_language_id = MerchantLanguage::getLanguageIdByMerchant($mall_id, static::DEFAULT_LANG);
+            $id_language_default = OrbitInput::post('id_language_default', $default_merchant_language_id);
+
             $now = date('Y-m-d H:i:s');
 
             $data = array(
@@ -1092,6 +1115,8 @@ class LuckyDrawAPIController extends ControllerAPI
                         $luckydraws->with('translations');
                     } elseif ($relation === 'translations.media') {
                         $luckydraws->with('translations.media');
+                    } elseif ($relation === 'translations.language.language') {
+                        $luckydraws->with('translations.language.language');
                     } elseif ($relation === 'announcements') {
                         $luckydraws->with('announcements');
                     } elseif ($relation === 'prizes') {
@@ -1104,6 +1129,8 @@ class LuckyDrawAPIController extends ControllerAPI
                         $luckydraws->with('prizes.winners.number.user');
                     } elseif ($relation === 'announcements.translations') {
                         $luckydraws->with('announcements.translations');
+                    } elseif ($relation === 'announcements.translations.language.language') {
+                        $luckydraws->with('announcements.translations.language.language');
                     } elseif ($relation === 'announcements.translations.media') {
                         $luckydraws->with('announcements.translations.media');
                     }
@@ -2434,52 +2461,61 @@ class LuckyDrawAPIController extends ControllerAPI
                                 $lucky_draw_number_winner->save();
                             }
                         } else {
-                            // if these two conditional maybe included in lucky draw campaign setup then it should be changed from config to LuckyDraw
-                            // conditional check for someone has already won another prize
-                            if (! Config::get('orbit.lucky_draw.winner.more_than_one_all_prize_enabled', FALSE)) {
-                                $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()
+                            if (! empty($winner->lucky_draw_number_code)) {
+                                // check issued number existance
+                                $lucky_draw_number = LuckyDrawNumber::excludeDeleted()->where('lucky_draw_id', $lucky_draw_id)->where('lucky_draw_number_code', $winner->lucky_draw_number_code)->first();
+                                if (! is_object($lucky_draw_number)) {
+                                    $errorMessage = 'Lucky draw number (' . $winner->lucky_draw_number_code . ') is not found.';
+                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                }
+
+                                // if these two conditional maybe included in lucky draw campaign setup then it should be changed from config to LuckyDraw
+                                // conditional check for someone has already won another prize
+                                if (! Config::get('orbit.lucky_draw.winner.more_than_one_all_prize_enabled', FALSE)) {
+                                    $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()
+                                        ->where('lucky_draw_id', $lucky_draw_id)
+                                        ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                        ->first();
+                                    if (is_object($lucky_draw_number_winner)) {
+                                        $errorMessage = $winner->lucky_draw_number_code . ' has already won another prize.';
+                                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                    }
+                                }
+
+                                // conditional check for someone has already won the same prize
+                                if (! Config::get('orbit.lucky_draw.winner.more_than_one_single_prize_enabled', FALSE)) {
+                                    $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()
+                                        ->where('lucky_draw_id', $lucky_draw_id)
+                                        ->where('lucky_draw_prize_id', $prize->lucky_draw_prize_id)
+                                        ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
+                                        ->first();
+                                    if (is_object($lucky_draw_number_winner)) {
+                                        $errorMessage = $winner->lucky_draw_number_code . ' has already won the same prize.';
+                                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                                    }
+                                }
+
+                                $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()
                                     ->where('lucky_draw_id', $lucky_draw_id)
                                     ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
                                     ->first();
-                                if (is_object($lucky_draw_number_winner)) {
-                                    $errorMessage = $winner->lucky_draw_number_code . ' has already won another prize.';
+
+                                if (is_object($lucky_draw_number_winner_prev)) {
+                                    $this->rollBack();
+                                    $errorMessage = 'Winning number is duplicated.';
                                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                                 }
+
+                                $lucky_draw_number_winner = new LuckyDrawWinner();
+                                $lucky_draw_number_winner->lucky_draw_id = $lucky_draw_id;
+                                $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
+                                $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
+                                $lucky_draw_number_winner->lucky_draw_prize_id = $prize->lucky_draw_prize_id;
+                                $lucky_draw_number_winner->status = 'active';
+                                $lucky_draw_number_winner->created_by = $this->api->user->user_id;
+                                $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
+                                $lucky_draw_number_winner->save();
                             }
-
-                            // conditional check for someone has already won the same prize
-                            if (! Config::get('orbit.lucky_draw.winner.more_than_one_single_prize_enabled', FALSE)) {
-                                $lucky_draw_number_winner = LuckyDrawWinner::excludeDeleted()
-                                    ->where('lucky_draw_id', $lucky_draw_id)
-                                    ->where('lucky_draw_prize_id', $prize->lucky_draw_prize_id)
-                                    ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
-                                    ->first();
-                                if (is_object($lucky_draw_number_winner)) {
-                                    $errorMessage = $winner->lucky_draw_number_code . ' has already won the same prize.';
-                                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                                }
-                            }
-
-                            $lucky_draw_number_winner_prev = LuckyDrawWinner::excludeDeleted()
-                                ->where('lucky_draw_id', $lucky_draw_id)
-                                ->where('lucky_draw_winner_code', $winner->lucky_draw_number_code)
-                                ->first();
-
-                            if (is_object($lucky_draw_number_winner_prev)) {
-                                $this->rollBack();
-                                $errorMessage = 'Winning number is duplicated.';
-                                OrbitShopAPI::throwInvalidArgument($errorMessage);
-                            }
-
-                            $lucky_draw_number_winner = new LuckyDrawWinner();
-                            $lucky_draw_number_winner->lucky_draw_id = $lucky_draw_id;
-                            $lucky_draw_number_winner->lucky_draw_winner_code = $winner->lucky_draw_number_code;
-                            $lucky_draw_number_winner->lucky_draw_number_id = $lucky_draw_number->lucky_draw_number_id;
-                            $lucky_draw_number_winner->lucky_draw_prize_id = $prize->lucky_draw_prize_id;
-                            $lucky_draw_number_winner->status = 'active';
-                            $lucky_draw_number_winner->created_by = $this->api->user->user_id;
-                            $lucky_draw_number_winner->modified_by = $this->api->user->user_id;
-                            $lucky_draw_number_winner->save();
                         }
                     }
 
@@ -3681,7 +3717,7 @@ class LuckyDrawAPIController extends ControllerAPI
             $mall = Mall::with('timezone')->excludeDeleted()->where('merchant_id', $mall_id)->first();
 
             $lucky_draw = App::make('orbit.empty.lucky_draw');
-            
+
             if (Carbon::now($mall->timezone->timezone_name) < $lucky_draw->draw_date) {
                 $errorMessage = "Cannot blast the winner. This lucky draw's draw date is not reached yet.";
                 OrbitShopAPI::throwInvalidArgument($errorMessage);

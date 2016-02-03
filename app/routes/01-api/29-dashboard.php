@@ -72,3 +72,9 @@ Route::get('/api/v1/dashboard/campaign-total-spending', "DashboardAPIController@
 
 // Get Dashboard unique users
 Route::get('/api/v1/dashboard/unique-user', "DashboardAPIController@getUniqueUsers");
+
+// Get Dashboard Campaign spending
+Route::get('/api/v1/dashboard/campaign-spending', "DashboardAPIController@getCampaignSpending");
+
+// Get Dashboard Total campaign spending
+Route::get('/api/v1/dashboard/total-spending', "DashboardAPIController@getCampaignSpending");

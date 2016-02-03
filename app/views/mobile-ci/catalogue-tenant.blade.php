@@ -1,9 +1,5 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
-@stop
-
 @section('content')
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
@@ -62,71 +58,80 @@
             <div class="container">
                 <div class="mobile-ci list-item-container">
                     <div class="row">
-                    @if($link_to_coupon_data->linkedToCS)
-                        <div class="col-xs-12 col-sm-12" id="item-cs">
-                            <section class="list-item-single-tenant">
-                                <div class="list-item-info">
-                                    <header class="list-item-title">
-                                        <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
-                                    </header>
-                                </div>
-                                <div class="list-vignette-non-tenant"></div>
-                                <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
-                            </section>
-                        </div>
-                    @endif
-                    @foreach($data->records as $tenant)
-                        <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
-                            <section class="list-item-single-tenant">
-                                <a class="list-item-link" href="{{ url('customer/tenant?id='.$tenant->merchant_id) }}">
+                        <div class="catalogue-wrapper">
+                        @if($link_to_coupon_data->linkedToCS)
+                            <div class="col-xs-12 col-sm-12" id="item-cs">
+                                <section class="list-item-single-tenant">
                                     <div class="list-item-info">
                                         <header class="list-item-title">
-                                            <div><strong>{{ $tenant->name }}</strong></div>
-                                        </header>
-                                        <header class="list-item-subtitle">
-                                            <div>
-                                                <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> 
-                                                {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
-                                            </div>
-                                            <div>
-                                                <div class="col-xs-6">
-                                                    <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
-                                                    @if(empty($tenant->category_string))
-                                                        <span>-</span>
-                                                    @else
-                                                        <span>{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </header>
-                                        <header class="list-item-badges">
-                                            <div class="col-xs-12 badges-wrapper text-right">
-                                                @if($tenant->promotion_flag)
-                                                <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
-                                                @endif
-                                                @if($tenant->news_flag)
-                                                <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
-                                                @endif
-                                                @if($tenant->coupon_flag)
-                                                <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
-                                                @endif
-                                            </div>
+                                            <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
                                         </header>
                                     </div>
                                     <div class="list-vignette-non-tenant"></div>
-                                    @if(!count($tenant->mediaLogo) > 0)
-                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
-                                    @endif
-                                    @foreach($tenant->mediaLogo as $media)
-                                    @if($media->media_name_long == 'retailer_logo_orig')
-                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
-                                    @endif
-                                    @endforeach
-                                </a>
-                            </section>
+                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
+                                </section>
+                            </div>
+                        @endif
+                        @foreach($data->records as $tenant)
+                            <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
+                                <section class="list-item-single-tenant">
+                                    <a class="list-item-link" href="{{ url('customer/tenant?id='.$tenant->merchant_id) }}">
+                                        <div class="list-item-info">
+                                            <header class="list-item-title">
+                                                <div><strong>{{ $tenant->name }}</strong></div>
+                                            </header>
+                                            <header class="list-item-subtitle">
+                                                <div>
+                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> 
+                                                    {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
+                                                </div>
+                                                <div>
+                                                    <div class="col-xs-6">
+                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
+                                                        @if(empty($tenant->category_string))
+                                                            <span>-</span>
+                                                        @else
+                                                            <span>{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </header>
+                                            <header class="list-item-badges">
+                                                <div class="col-xs-12 badges-wrapper text-right">
+                                                    @if($tenant->promotion_flag)
+                                                    <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
+                                                    @endif
+                                                    @if($tenant->news_flag)
+                                                    <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
+                                                    @endif
+                                                    @if($tenant->coupon_flag)
+                                                    <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
+                                                    @endif
+                                                </div>
+                                            </header>
+                                        </div>
+                                        <div class="list-vignette-non-tenant"></div>
+                                        @if(!count($tenant->mediaLogo) > 0)
+                                        <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+                                        @endif
+                                        @foreach($tenant->mediaLogo as $media)
+                                        @if($media->media_name_long == 'retailer_logo_orig')
+                                        <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
+                                        @endif
+                                        @endforeach
+                                    </a>
+                                </section>
+                            </div>
+                        @endforeach
                         </div>
-                    @endforeach
                     </div>
+                    @if($data->returned_records < $data->total_records)
+                        <div class="row">
+                            <div class="col-xs-12 padded">
+                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         @else
@@ -197,71 +202,8 @@
     @endif
 @stop
 
-@section('modals')
-<!-- Modal -->
-<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.promotion.info') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <p style="font-size:15px;">
-                            <b>{{ Lang::get('mobileci.modals.enjoy_free') }}</b>
-                            <br>
-                            @if ($active_user)
-                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">{{ Lang::get('mobileci.modals.unlimited') }}</span>
-                            @else
-                                <span style="color:#0aa5d5; font-size:22px; font-weight: bold;">30 {{ Lang::get('mobileci.modals.minutes') }}</span>
-                            @endif
-                            <br>
-                            <b>{{ Lang::get('mobileci.modals.internet') }}</b>
-                            <br><br>
-                            <b>{{ Lang::get('mobileci.modals.check_out_our') }}</b>
-                            <br>
-                            <b><span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.promotion') }}</span> {{ Lang::get('mobileci.page_title.and') }} <span style="color:#0aa5d5;">{{ Lang::get('mobileci.page_title.coupon_single') }}</span></b>
-                        </p>
-                    </div>
-                </div>
-                <div class="row" style="margin-left: -30px; margin-right: -30px; margin-bottom: -15px;">
-                    <div class="col-xs-12">
-                        <img class="img-responsive" src="{{ asset('mobile-ci/images/pop-up-banner.png') }}">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-xs-12 text-left">
-                            <input type="checkbox" name="verifyModalCheck" id="verifyModalCheck" style="top:2px;position:relative;">
-                            <label for="verifyModalCheck">{{ Lang::get('mobileci.modals.do_not_display') }}</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@stop
-
 @section('ext_script_bot')
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-{{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
-    var cookie_dismiss_name = 'dismiss_verification_popup';
-    var cookie_dismiss_name_2 = 'dismiss_activation_popup';
-
-    @if ($active_user)
-    cookie_dismiss_name = 'dismiss_verification_popup_unlimited';
-    @endif
-
     /**
      * Get Query String from the URL
      *
@@ -283,59 +225,7 @@
             return uri + separator + key + "=" + value;
         }
     }
-    $(document).ready(function(){   
-        $('#verifyModal').on('hidden.bs.modal', function () {
-            if ($('#verifyModalCheck')[0].checked) {
-                $.cookie(cookie_dismiss_name, 't', {expires: 3650});
-            }
-        });
-
-        // $('#userActivationModal').on('hidden.bs.modal', function () {
-        //     $.cookie(cookie_dismiss_name_2, 't', {path: '/', domain: window.location.hostname, expires: 3650});
-        // });
-
-        {{-- a sequence of modals... --}}
-        var modals = [
-            {
-                selector: '#verifyModal',
-                display: get('internet_info') == 'yes' && !$.cookie(cookie_dismiss_name)
-            }
-            // ,
-            // {
-            //     selector: '#userActivationModal',
-            //     @if ($active_user)
-            //         display: false
-            //     @else
-            //         display: get('from_login') === 'yes' && !$.cookie(cookie_dismiss_name_2)
-            //     @endif
-            // }
-        ];
-        var modalIndex;
-
-        for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-            {{-- for each displayable modal, after it is hidden try and display the next displayable modal --}}
-            if (modals[modalIndex].display) {
-                $(modals[modalIndex].selector).on('hidden.bs.modal', (function(myIndex) {
-                    return function() {
-                        for (var i = myIndex + 1; i < modals.length; i++) {
-                            if (modals[i].display) {
-                                $(modals[i].selector).modal();
-                                return;
-                            }
-                        }
-                    }
-                })(modalIndex));
-            }
-        }
-
-        {{-- display the first displayable modal --}}
-        for (modalIndex = 0; modalIndex < modals.length; modalIndex++) {
-            if (modals[modalIndex].display) {
-                $(modals[modalIndex].selector).modal();
-                break;
-            }
-        }
-
+    $(document).ready(function(){
         $(document).on('show.bs.modal', '.modal', function (event) {
             var zIndex = 1040 + (10 * $('.modal:visible').length);
             $(this).css('z-index', zIndex);
@@ -371,18 +261,75 @@
             window.location.replace(path);
         });
 
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
-        });
-    }); 
-    
-    $(window).resize(function(){
-        $('.catalogue-img img').each(function(){
-            var h = $(this).height();
-            var ph = $('.catalogue').height();
-            $(this).css('margin-top', ((ph-h)/2) + 'px');
+        var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+            skip = {{Config::get('orbit.pagination.per_page', 25)}};
+
+        var keyword = '{{{Input::get('keyword', '')}}}';
+        var cid = '{{{Input::get('cid', '')}}}';
+        var fid = '{{{Input::get('fid', '')}}}';
+        var promotion_id = '{{{Input::get('promotion_id', '')}}}';
+
+        $('#load-more-tenants').click(function(){
+            var btn = $(this);
+            btn.attr('disabled', 'disabled');
+            btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+            $.ajax({
+                url: apiPath + 'tenant/load-more',
+                method: 'GET',
+                data: {
+                    take: take,
+                    skip: skip,
+                    keyword: keyword,
+                    cid: cid,
+                    fid: fid,
+                    promotion_id: promotion_id
+                }
+            }).done(function(data) {
+                skip = skip + skip;
+                if(data.records.length > 0) {
+                    for(var i = 0; i < data.records.length; i++) {
+                        var list = '<div class="col-xs-12 col-sm-12" id="item-'+data.records[i].merchant_id+'">\
+                                <section class="list-item-single-tenant">\
+                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                        <div class="list-item-info">\
+                                            <header class="list-item-title">\
+                                                <div><strong>'+data.records[i].name+'</strong></div>\
+                                            </header>\
+                                            <header class="list-item-subtitle">\
+                                                <div>\
+                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
+                                                    '+ (data.records[i].floor ?  ' ' + data.records[i].floor : '') + (data.records[i].unit ? ' - ' + data.records[i].unit : '') +'\
+                                                </div>\
+                                                <div>\
+                                                    <div class="col-xs-6">\
+                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
+                                                        <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
+                                                    </div>\
+                                                </div>\
+                                            </header>\
+                                            <header class="list-item-badges">\
+                                                <div class="col-xs-12 badges-wrapper text-right">\
+                                                    '+ (data.records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
+                                                    '+ (data.records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
+                                                    '+ (data.records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
+                                                </div>\
+                                            </header>\
+                                        </div>\
+                                        <div class="list-vignette-non-tenant"></div>\
+                                        <img class="img-responsive img-fit-tenant" src="'+ data.records[i].logo_orig +'"/>\
+                                    </a>\
+                                </section>\
+                            </div>';
+                        $('.catalogue-wrapper').append(list);
+                    }
+                }
+                if (skip >= data.total_records) {
+                    btn.remove();
+                }
+            }).always(function(data){
+                btn.removeAttr('disabled', 'disabled');
+                btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+            });
         });
     });
 </script>

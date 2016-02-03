@@ -126,14 +126,106 @@
 </div>
 <div class="row back-drop search-back-drop"></div>
 
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.jqueryui.1_11_2', 'mobile-ci/scripts/jquery-ui.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof jQuery.ui === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/jquery-ui.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
-{{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.lightslider.1_1_2', 'mobile-ci/scripts/lightslider.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().lightSlider === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/lightslider.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
+{{ HTML::script(Config::get('orbit.cdn.panzoom.2_0_5', 'mobile-ci/scripts/jquery.panzoom.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().panzoom === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/jquery.panzoom.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
-{{ HTML::script('mobile-ci/scripts/polyfill.object-fit.min.js') }}
 <script type="text/javascript">
+    var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+        skip = {{Config::get('orbit.pagination.per_page', 25)}};
+        total_x_item = 0;
+    /* Load more X function
+     * It is used on news, promotion, lucky draw and coupon list
+     * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
+     *             ids(array(list of already loaded ids))
+     */
+    function loadMoreX(itemtype, ids) {
+        var catalogueWrapper = $('.catalogue-wrapper');
+        var itemList = [];
+        var btn = $('#load-more-x');
+        btn.attr('disabled', 'disabled');
+        btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+        $.ajax({
+            url: apiPath + itemtype + '/load-more',
+            method: 'GET',
+            data: {
+                take: take,
+                skip: skip,
+                ids: ids
+            }
+        }).done(function(data) {
+            if(data.status == 1) {
+                skip = skip + take;
+                if(data.records.length > 0) {
+                    for(var i = 0; i < data.records.length; i++) {
+                        var coupon_badge = '';
+                        if(itemtype === 'my-coupon') {
+                            coupon_badge = '<div class="coupon-new-badge"><div class="new-number">'+data.records[i].quantity+'</div></div>';
+                        }
+                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
+                                <section class="list-item-single-tenant">\
+                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                        '+coupon_badge+'\
+                                        <div class="list-item-info">\
+                                            <header class="list-item-title">\
+                                                <div><strong>'+data.records[i].name+'</strong></div>\
+                                            </header>\
+                                            <header class="list-item-subtitle">\
+                                                <div>'+data.records[i].description+'</div>\
+                                            </header>\
+                                        </div>\
+                                        <div class="list-vignette-non-tenant"></div>\
+                                        <img class="img-responsive img-fit-tenant" src="'+data.records[i].image+'"/>\
+                                    </a>\
+                                </section>\
+                            </div>';
+
+                        itemList.push(list);
+                    }
+                    catalogueWrapper.append(itemList.join(''));
+                }
+                if (data.total_records - take <= 0) {
+                    btn.remove();
+                }
+            } else {
+                if(data.message === 'session_expired') {
+                    window.location.replace('/customer');
+                }
+            }
+        }).always(function(data){
+            btn.removeAttr('disabled', 'disabled');
+            btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+        });
+    }
+
+    var tabOpen = false; // this var is for tabs on tenant detail views
     $(document).ready(function(){
+        var menuOpen = false;
         navigator.getBrowser= (function(){
             var ua = navigator.userAgent, tem,
                 M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
@@ -149,15 +241,19 @@
             if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
             return M;
         })();
-        // var browser = navigator.getBrowser[0];
-        // if(browser.indexOf('IE')) {
-        //     objectFit.polyfill({
-        //         selector: '.img-fit, .img-fit-tenant',
-        //         fittype: 'cover',
-        //         disableCrossDomain: 'true'
-        //     });
-        //     $('.img-fit, .img-fit-tenant').closest('.col-xs-12, .col-xs-6').css('height', '160px').css('overflow', 'hidden');
-        // }
+        var browser = navigator.getBrowser[0];
+        $.fn.addBlur = function(){
+            if(browser.indexOf('Firefox') < 0) {
+                $(this).removeClass('unblurred');
+                $(this).addClass('blurred');
+            }
+        }
+        $.fn.removeBlur = function(){
+            if(browser.indexOf('Firefox') < 0) {
+                $(this).removeClass('blurred');
+                $(this).addClass('unblurred');
+            }
+        }
         function isInArray(value, str) {
             return str.indexOf(value) > -1;
         }
@@ -173,9 +269,9 @@
             });
         }
         var slider = null;
+        var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
         setTimeout(function(){
             if ($.cookie('dismiss_campaign_cards') !== 't') {
-                var cookieLang = $.cookie('orbit_preferred_language') ? $.cookie('orbit_preferred_language') : 'en'; //send user lang from cookie
                 $.ajax({
                     url: apiPath + 'campaign/list?lang='+cookieLang,
                     method: 'GET'
@@ -194,7 +290,7 @@
                         }
                         var autoSliderOption = data.data.records.length > 1 ? true : false;
                         $('body').addClass('freeze-scroll');
-                        $('.content-container, .header-container, footer').addClass('blurred');
+                        $('.content-container, .header-container, footer').addBlur();
                         $('.campaign-cards-back-drop').fadeIn('slow');
                         $('.campaign-cards-container').toggle('slide', {direction: 'down'}, 'slow');
                         slider = $('#campaign-cards').lightSlider({
@@ -207,6 +303,7 @@
                             loop:autoSliderOption,
                             pager: autoSliderOption,
                             onSliderLoad: function(el) {
+                                $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
                                 $('#campaign-cards').removeClass('cS-hidden');
                                 var active_card_id = $(el).children('.active').data('campaign-id');
                                 var active_card_type = $(el).children('.active').data('campaign-type');
@@ -220,10 +317,10 @@
                                 }
                             },
                             onBeforeSlide: function (el) {
-                                $('.campaign-cards-close-btn').fadeOut('fast');
+                                $('#campaign-cards-close-btn').fadeOut('fast');
                             },
                             onAfterSlide: function(el) {
-                                $('.campaign-cards-close-btn').fadeIn('fast');
+                                $('#campaign-cards-close-btn').fadeIn('fast');
                                 var active_card_id = $(el).children('.active').data('campaign-id');
                                 var active_card_type = $(el).children('.active').data('campaign-type');
                                 var recorded_popup = localStorage.getItem('campaign_popup');
@@ -245,7 +342,7 @@
             slider.pause();
             $.cookie('dismiss_campaign_cards', 't', {expires: 3650, path: '/'});
             $('body').removeClass('freeze-scroll');
-            $('.content-container, .header-container, footer').removeClass('blurred');
+            $('.content-container, .header-container, footer').removeBlur();
             $('.campaign-cards-back-drop').fadeOut('slow');
             $('.campaign-cards-container').toggle('slide', {direction: 'up'}, 'fast');
         });
@@ -301,7 +398,8 @@
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
             $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeIn('fast');
-            $('.content-container, .header-container, footer').addClass('blurred');
+            $('#search-type').val('');
+            $('.content-container, .header-container, footer').addBlur();
             //$('#SearchProducts').modal();
             setTimeout(function(){
                 $('#search-type').focus();
@@ -311,7 +409,10 @@
             $('.search-container').toggle('slide', {direction: 'down'}, 'slow');
             $('.search-top').toggle('slide', {direction: 'down'}, 'fast');
             $('.search-back-drop').fadeOut('fast');
-            $('.content-container, .header-container, footer').removeClass('blurred');
+            if(!menuOpen){
+                $('.content-container, footer').removeBlur();
+            }
+            $('.header-container').removeBlur();
             $('#search-type').val('');
             // ------------- cuma dummy
             $('.search-results').hide();
@@ -328,12 +429,12 @@
                 $('#search-type').blur();
                 $('#search-type').attr('disabled', 'disabled');
                 $('.search-results').fadeOut('fast');
-                var keyword = $('#search-type').val();
+                var keyword = encodeURIComponent($('#search-type').val());
                 var loader = '<div class="text-center" id="search-loader" style="font-size:48px;color:#fff;"><i class="fa fa-spinner fa-spin"></i></div>';
                 $('.search-wrapper').append(loader);
 
                 $.ajax({
-                    url: apiPath + 'keyword/search?keyword=' + keyword,
+                    url: apiPath + 'keyword/search?keyword=' + keyword + '&lang=' + cookieLang,
                     method: 'GET'
                 }).done(function(data) {
                     if (data.data.total_records > 0) {
@@ -351,31 +452,12 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.tenants[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.tenants[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.tenants[i].object_description ? data.data.grouped_records.tenants[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
                             }
                             tenants += '</ul>';
-                        }
-                        if (data.data.grouped_records.news.length > 0) {
-                            search_results.news = data.data.grouped_records.news;
-                            news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
-                            for(var i = 0; i < data.data.grouped_records.news.length; i++) {
-                                var hide = i > 2 ? 'limited hide' : '';
-                                news += '<li class="search-result-group '+ hide +'">\
-                                        <a href="'+ data.data.grouped_records.news[i].object_url +'">\
-                                            <div class="col-xs-2 text-center">\
-                                                <img src="'+ data.data.grouped_records.news[i].object_image +'">\
-                                            </div>\
-                                            <div class="col-xs-10">\
-                                                <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.news[i].object_description +'</p>\
-                                            </div>\
-                                        </a>\
-                                    </li>';
-                            }
-                            news += '</ul>';
                         }
                         if (data.data.grouped_records.promotions.length > 0) {
                             search_results.promotions = data.data.grouped_records.promotions;
@@ -389,12 +471,31 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.promotions[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.promotions[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.promotions[i].object_description ? data.data.grouped_records.promotions[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
                             }
                             promotions += '</ul>';
+                        }
+                        if (data.data.grouped_records.news.length > 0) {
+                            search_results.news = data.data.grouped_records.news;
+                            news = '<h4>{{Lang::get('mobileci.page_title.news')}}</h4><ul>'
+                            for(var i = 0; i < data.data.grouped_records.news.length; i++) {
+                                var hide = i > 2 ? 'limited hide' : '';
+                                news += '<li class="search-result-group '+ hide +'">\
+                                        <a href="'+ data.data.grouped_records.news[i].object_url +'">\
+                                            <div class="col-xs-2 text-center">\
+                                                <img src="'+ data.data.grouped_records.news[i].object_image +'">\
+                                            </div>\
+                                            <div class="col-xs-10">\
+                                                <h5><strong>'+ data.data.grouped_records.news[i].object_name +'</strong></h5>\
+                                                <p>'+ (data.data.grouped_records.news[i].object_description ? data.data.grouped_records.news[i].object_description : '') +'</p>\
+                                            </div>\
+                                        </a>\
+                                    </li>';
+                            }
+                            news += '</ul>';
                         }
                         if (data.data.grouped_records.coupons.length > 0) {
                             search_results.coupons = data.data.grouped_records.coupons;
@@ -408,7 +509,7 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.coupons[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.coupons[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.coupons[i].object_description ? data.data.grouped_records.coupons[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
@@ -427,15 +528,19 @@
                                             </div>\
                                             <div class="col-xs-10">\
                                                 <h5><strong>'+ data.data.grouped_records.lucky_draws[i].object_name +'</strong></h5>\
-                                                <p>'+ data.data.grouped_records.lucky_draws[i].object_description +'</p>\
+                                                <p>'+ (data.data.grouped_records.lucky_draws[i].object_description ? data.data.grouped_records.lucky_draws[i].object_description : '') +'</p>\
                                             </div>\
                                         </a>\
                                     </li>';
                             }
                             lucky_draws += '</ul>';
                         }
-                        $('.search-results').html(show_result + tenants + news + promotions + coupons + lucky_draws);
+                        var zonk = '<div style="width:100%;height:160px;background:transparent;">&nbsp;</div>'
+                        $('.search-results').html(show_result + tenants + promotions + news + coupons + lucky_draws + zonk);
                     } else {
+                        if(data.message == 'Your session has expired.' || data.message == 'Invalid session data.') {
+                            window.location.href = 'http://' + location.host;
+                        }
                         $('.search-results').html('<h5><i>{{Lang::get('mobileci.search.no_result')}}</i></h5>');
                     }
                 }).fail(function(data){
@@ -532,7 +637,7 @@
                 resetImage();
                 fl = $.featherlight.current();
                 $("body").addClass("freeze-scroll");
-                $('.content-container, .header-container, footer').addClass('blurred');
+                $('.content-container, .header-container, footer').addBlur();
                 $(".featherlight-image").panzoom({
                     minScale: 1,
                     maxScale: 5,
@@ -556,7 +661,10 @@
                     if(! changed) {
                         fl.close();
                         $("body").removeClass("freeze-scroll");
-                        $('.content-container, .header-container, footer').removeClass('blurred');
+                        if(!menuOpen){
+                            $('.content-container, footer').removeBlur();
+                        }
+                        $('.header-container').removeBlur();
                     }
                 });
             }, 50);
@@ -576,21 +684,47 @@
 
         $(document).on('click', '.featherlight-close', function(){
             $("body").removeClass("freeze-scroll");
-            $('.content-container, .header-container, footer').removeClass('blurred');
+            if(!menuOpen){
+                $('.content-container, footer').removeBlur();
+            }
+            $('.header-container').removeBlur();
         });
 
         $(document).on('click', '.featherlight-content, .featherlight-image', function(){
             fl.close();
             $("body").removeClass("freeze-scroll");
-            $('.content-container, .header-container, footer').removeClass('blurred');
+            if(!menuOpen){
+                $('.content-container, footer').removeBlur();
+            }
+            $('.header-container').removeBlur();
         });
-
         $('#slide-trigger, .slide-menu-backdrop').click(function(){
+            if(menuOpen) {
+                menuOpen = false;
+            } else {
+                menuOpen = true;
+            }
+            // $('html, body').animate({scrollTop:0}, 'fast');
             $('.slide-menu-container').toggle('slide', {direction: 'right'}, 'slow');
             $('.slide-menu-backdrop').toggle('fade', 'slow');
-            $('html').toggleClass('freeze-scroll');
-            $('#orbit-tour-profile').toggleClass('active');
-            $('#slide-trigger').toggleClass('active');
+            if(menuOpen) {
+                $('.header-container').css('height', '100%');
+                $('.content-container, .header-location-banner, .header-tenant-tab, footer').addBlur();
+                $('body').addClass('freeze-scroll');
+                $('#orbit-tour-profile').addClass('active');
+                $('#slide-trigger').addClass('active');
+            } else {
+                if(!menuOpen){
+                    $('.content-container, footer').removeBlur();
+                }
+                $('.header-container').css('height', '92px');
+                $('.header-location-banner, .header-tenant-tab').removeBlur();
+                if(!tabOpen){
+                    $('body').removeClass('freeze-scroll');
+                }
+                $('#orbit-tour-profile').removeClass('active');
+                $('#slide-trigger').removeClass('active');
+            }
         });
     });
 </script>

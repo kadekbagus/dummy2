@@ -14,39 +14,44 @@
 #signedIn{
   display: none;
 }
-@if(!empty($bg))
-  @if(!empty($bg[0]))
-  body.bg{
-    background: url('{{ asset($bg[0]) }}');
-    background-size: cover;
-    background-repeat: no-repeat;
-  }
-  @endif
+body.bg {
+@if(!empty($bg) && !empty($bg->path))
+    background: url('{{ asset($bg->path) }}');
+@else
+    background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
 @endif
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    height: 478px;
+    display: table;
+    width: 100%;
+}
 </style>
 @stop
 
 @section('content')
+<div class="spinner-backdrop" id="spinner-backdrop">
+    <div class="spinner-container">
+        <i class="fa fa-spin fa-spinner"></i>
+    </div>
+</div>
 <div class="row top-space" id="signIn">
     <div class="col-xs-12">
         <header>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->logo) }}" />
                 </div>
             </div>
         </header>
 
         <div class="col-xs-12 text-center welcome-user">
-            <h3>{{ Lang::get('mobileci.greetings.welcome') }}, <br><span class="signedUser"></span><span class="userName">{{{ $display_name or '' }}}</span>!</h3>
+            <h3>{{ Lang::get('mobileci.greetings.welcome') }},<br><span class="userName">{{{ $display_name or '' }}}</span>!</h3>
         </div>
-
         <div class="col-xs-12 text-center">
-            <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
-                <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block" onclick="return false;">{{ Lang::get('mobileci.signin.loading_orbit') }}</button>
-                </div>
-            </form>
+            <button type="button" class="btn btn-info btn-block">{{ Lang::get('mobileci.signin.loading_orbit') }}</button>
         </div>
     </div>
 </div>

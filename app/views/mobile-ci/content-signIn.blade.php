@@ -6,11 +6,28 @@
 
 <div class="content-signin">
     <div class="slogan-container" id="slogan-container">
+        <div class="logged-in-user hide">
+            Welcome, {{$display_name}}
+        </div>
         <div class="slogan">
             {{ Config::get('shop.start_button_label') }}
         </div>
     </div>
     <div class="social-media-wraper" id="social-media-wraper">
+        <div class="logged-in-container hide">
+            <div class="row">
+                <div class="col-xs-12 sign-in-button">
+                    <button id="logged-in-signin-button" type="button" class="btn btn-block btn-primary">Sign in</button>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <em>Not {{$display_name}}?</em>
+                    <a id='not-me'>Click here</a>
+                </div>
+            </div>
+        </div>
         <div class="social-media-container">
             <div class="row">
                 <div class="col-xs-12 text-center label">
@@ -28,7 +45,7 @@
                                    value="{{{ $orbitToFacebookOriginValue }}}"/>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary icon-button facebook text-center">
+                            <button id="fbLoginButton" type="submit" class="btn btn-primary icon-button facebook text-center">
                                     <i class="fa fa-facebook fa-4x"></i>
                             </button>
                         </div>
@@ -43,7 +60,7 @@
                             <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-danger icon-button google text-center">
+                            <button id="googleLoginButton" type="submit" class="btn btn-danger icon-button google text-center">
                                 <i class="fa fa-google fa-4x"></i>
                             </button>
                         </div>
@@ -66,7 +83,7 @@
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
-    
+
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
@@ -163,7 +180,12 @@
     $('#formModal').on('show.bs.modal', function () {
         $('#slogan-container, #social-media-wraper').addClass('hide');
     });
-    
+
+    $('#formModal').on('shown.bs.modal', function () {
+        $('#signinForm #email').focus();
+        $('#signupForm #firstName').focus();
+    });
+
     $('#formModal').on('hide.bs.modal', function () {
         $('#slogan-container, #social-media-wraper').removeClass('hide');
     });
@@ -216,14 +238,23 @@
                 data: {
                     email: custEmail,
                     payload: "{{{ Input::get('payload', '') }}}",
-                    mac_address: {{ json_encode(Input::get('mac_address', '')) }}
+                    mac_address: {{ json_encode(Input::get('mac_address', '')) }},
+                    auto_login: "{{{ Input::get('auto_login', 'no') }}}",
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
                 }
             }).done(function (response, status, xhr) {
                 if (response.code !== 0 && response.code !== 302) {
                     toastr.error(response.message);
                     return;
                 }
-
+                var shiftHostName = window.location.hostname.split('.');
+                    shiftHostName.shift();
+                var baseDomain = shiftHostName.join('.');
+                $.cookie('login_from', 'Form', {
+                    path: '/',
+                    expires: 3650,
+                    domain: baseDomain
+                });
                 // Cloud redirection?
                 if (response.data.redirect_to) {
                     document.location = response.data.redirect_to;
@@ -264,7 +295,6 @@
                 orbitSignUpForm.disableEnableAllButton();
 
                 orbitSignUpForm.switchForm('signup');
-                $('#signupForm #firstName').focus();
             },
             // Proceed the login for identified user
             userIdentified
@@ -374,7 +404,7 @@
             $('#spinner-backdrop').addClass('hide');
             return;
         }
-        
+
         $('#spinner-backdrop').removeClass('hide');
     }
 
@@ -391,9 +421,11 @@
         if (theForm === 'signin') {
             $('#signin-form-wrapper').removeClass('hide');
             $('#signup-form-wrapper').addClass('hide');
+            $('#signinForm #email').focus();
         } else {
             $('#signin-form-wrapper').addClass('hide');
             $('#signup-form-wrapper').removeClass('hide');
+            $('#signupForm #firstName').focus();
         }
     };
 
@@ -465,7 +497,7 @@
             $('#btn-signup-form').attr('disabled', 'disabled');
         }
     }
-    
+
     var errorValidationFn = function () {
         var errorMessage = '{{isset($error) ? $error : 'No Error'}}';
         if (errorMessage !== 'No Error') {
@@ -480,13 +512,36 @@
             return;
         }
         $('#spinner-backdrop').addClass('hide');
+    },
+    isSignedInFn = function () {
+        var displayName = '{{isset($display_name) ? $display_name : ''}}',
+            userEmail = '{{isset($user_email) ? $user_email : ''}}';
+
+        if (displayName === '' && userEmail === '') {
+            $('.logged-in-user').addClass('hide');
+            $('.logged-in-container').addClass('hide');
+
+            $('.social-media-container').removeClass('hide');
+            return;
+        }
+
+        $('.logged-in-user').removeClass('hide');
+        $('.logged-in-container').removeClass('hide');
+
+        $('.social-media-container').addClass('hide');
+    },
+    isFromCaptiveFn = function () {
+        if ('{{{ Input::get('from_captive', 'no') }}}' === 'yes') {
+            $('#social-media-wraper').addClass('hide');
+        }
     };
-    
 
     orbitSignUpForm.boot = function() {
+        isSignedInFn();
         inProgressFn();
+        isFromCaptiveFn();
         errorValidationFn();
-        
+
         for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
             $(orbitSignUpForm.formElementsInput[i]).keyup(function(e) {
                 orbitSignUpForm.enableDisableSignup();
@@ -515,6 +570,29 @@
             } else {
                 $('#btn-signin-form').attr('disabled', 'disabled');
             }
+        });
+
+        $('#logged-in-signin-button').click(function() {
+            var loginFrom = '{{$login_from}}';
+
+            switch (loginFrom) {
+                case 'Form':
+                    orbitSignUpForm.doLogin();
+                    break;
+                case 'Facebook':
+                    $('#fbLoginButton').click();
+                    break;
+                case 'Google':
+                    $('#googleLoginButton').click();
+                    break;
+            }
+        });
+
+        $('#not-me').click(function () {
+            var currentDomain = orbitGetDomainName();
+            $.removeCookie('orbit_email', {path: '/', domain: currentDomain});
+            $.removeCookie('orbit_firstname', {path: '/', domain: currentDomain});
+            window.location.replace('/customer/logout?not_me=true');
         });
 
         $('#btn-signin-form').click(function(e) {
