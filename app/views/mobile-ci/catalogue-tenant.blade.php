@@ -124,6 +124,7 @@
                             </div>
                         @endforeach
                         </div>
+                    </div>
                     @if($data->returned_records < $data->total_records)
                         <div class="row">
                             <div class="col-xs-12 padded">
