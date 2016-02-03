@@ -4458,35 +4458,28 @@ class DashboardAPIController extends ControllerAPI
             }
             Event::fire('orbit.dashboard.gettotalpageview.after.validation', array($this, $validator));
 
-            $tablePrefix = DB::getTablePrefix();
+            $campaignList = ['Coupon', 'News', 'Promotion'];
 
-            $result = Activity::select(DB::raw("count(distinct {$tablePrefix}activities.activity_id) as total_page_view"))
-                        ->whereRaw("(({$tablePrefix}activities.activity_name = 'view_promotion' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View Promotion Detail' AND
-                                     {$tablePrefix}activities.module_name = 'Promotion' AND
-                                     {$tablePrefix}activities.activity_type = 'view') OR
-                                     
-                                     ({$tablePrefix}activities.activity_name = 'view_news' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View News Detail' AND
-                                     {$tablePrefix}activities.module_name = 'News' AND
-                                     {$tablePrefix}activities.activity_type = 'view') OR
-                                     
-                                     ({$tablePrefix}activities.activity_name = 'view_coupon' AND
-                                     {$tablePrefix}activities.activity_name_long = 'View Coupon Detail' AND
-                                     {$tablePrefix}activities.module_name = 'Coupon' AND
-                                     {$tablePrefix}activities.activity_type = 'view'))
-                                ")
-                        ->whereRaw("({$tablePrefix}activities.role = 'Consumer' OR {$tablePrefix}activities.role = 'Guest')")
-                        ->where('activities.location_id','=', $current_mall)
-                        ->where('activities.created_at', '>=', $start_date)
-                        ->where('activities.created_at', '<=', $end_date)->first();
+            $campaigns = CampaignGroupName::getPageViewByLocation($current_mall, $start_date, $end_date)->get();
 
+            $total = 0;
 
-            if (empty($result)) {
+            foreach ($campaigns as $key => $value) 
+            {
+                if( in_array($campaigns[$key]->campaign_group_name, $campaignList) )
+                {
+                    $total = $total+$campaigns[$key]->count;
+                }
+            }
+
+            if (empty($campaigns)) {
                 $this->response->message = Lang::get('statuses.orbit.nodata.object');
             }
 
-            $this->response->data = $result;
+            $data = new stdclass();
+            $data->total_page_view = $total;
+
+            $this->response->data = $data;
 
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.dashboard.gettotalpageview.access.forbidden', array($this, $e));
@@ -4792,7 +4785,7 @@ class DashboardAPIController extends ControllerAPI
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
                                     limit 1) as previous_status,
-                                ifnull(case when (select 
+                                ifnull((case when (select 
                                        {$tablePrefix}campaign_history_actions.action_name
                                     from
                                        {$tablePrefix}campaign_histories a
@@ -4801,8 +4794,8 @@ class DashboardAPIController extends ControllerAPI
                                         date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') = date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                    limit 1) = 'deactivate' then (select 
+                                    order by {$tablePrefix}campaign_history_actions.action_name, date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') desc
+                                    limit 1) = 'deactivate' THEN (select 
                                        {$tablePrefix}campaign_history_actions.action_name
                                     from
                                        {$tablePrefix}campaign_histories a
@@ -4811,8 +4804,18 @@ class DashboardAPIController extends ControllerAPI
                                         date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') < date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                    limit 1) end, @previ) as action_status
+                                    order by a.campaign_history_id desc, date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') desc
+                                    limit 1) ELSE (select 
+                                       {$tablePrefix}campaign_history_actions.action_name
+                                    from
+                                       {$tablePrefix}campaign_histories a
+                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                    where
+                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') = date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
+                                            and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
+                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                    order by {$tablePrefix}campaign_history_actions.action_name, date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') desc
+                                    limit 1) end ), @previ) as action_status
                             from
                                 (select *
                                 from
@@ -4836,7 +4839,7 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
-                            group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
+                            group by date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d'), {$tablePrefix}campaign_histories.campaign_id") );
 
             $couponQuery = DB::select( DB::raw("select 
                                 {$tablePrefix}campaign_histories.campaign_id as campaign_id,
@@ -4854,7 +4857,7 @@ class DashboardAPIController extends ControllerAPI
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     order by a.campaign_history_id desc, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
                                     limit 1) as previous_status,
-                                ifnull(case when (select 
+                                ifnull((case when (select 
                                        {$tablePrefix}campaign_history_actions.action_name
                                     from
                                        {$tablePrefix}campaign_histories a
@@ -4863,8 +4866,8 @@ class DashboardAPIController extends ControllerAPI
                                         date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') = date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                    limit 1) = 'deactivate' then (select 
+                                    order by {$tablePrefix}campaign_history_actions.action_name, date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') desc
+                                    limit 1) = 'deactivate' THEN (select 
                                        {$tablePrefix}campaign_history_actions.action_name
                                     from
                                        {$tablePrefix}campaign_histories a
@@ -4873,8 +4876,18 @@ class DashboardAPIController extends ControllerAPI
                                         date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') < date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
                                             and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
                                             and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
-                                    order by {$tablePrefix}campaign_history_actions.action_name, DATE_FORMAT(a.created_at, '%Y-%m-%d') desc
-                                    limit 1) end, @previ) as action_status
+                                    order by a.campaign_history_id desc, date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') desc
+                                    limit 1) ELSE (select 
+                                       {$tablePrefix}campaign_history_actions.action_name
+                                    from
+                                       {$tablePrefix}campaign_histories a
+                                            LEFT JOIN {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = a.campaign_history_action_id
+                                    where
+                                        date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') = date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d')
+                                            and {$tablePrefix}campaign_history_actions.action_name in ('activate' , 'deactivate')
+                                            and a.campaign_id = {$tablePrefix}campaign_histories.campaign_id
+                                    order by {$tablePrefix}campaign_history_actions.action_name, date_format(convert_tz(a.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') desc
+                                    limit 1) end ), @previ) as action_status
                             from
                                 (select *
                                 from
@@ -4898,7 +4911,7 @@ class DashboardAPIController extends ControllerAPI
                                 {$tablePrefix}campaign_price ON {$tablePrefix}campaign_price.campaign_id = {$tablePrefix}campaign_histories.campaign_id
                                     left join
                                 {$tablePrefix}campaign_history_actions ON {$tablePrefix}campaign_history_actions.campaign_history_action_id = {$tablePrefix}campaign_histories.campaign_history_action_id
-                            group by DATE_FORMAT({$tablePrefix}campaign_histories.created_at, '%Y-%m-%d') , {$tablePrefix}campaign_histories.campaign_id"));
+                            group by date_format(convert_tz({$tablePrefix}campaign_histories.created_at, '+00:00', '".$timezoneOffset."'), '%Y-%m-%d') , {$tablePrefix}campaign_histories.campaign_id"));
     
             $data = array();
 

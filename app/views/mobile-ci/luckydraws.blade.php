@@ -6,8 +6,9 @@
             <div class="row">
             @if($data->status === 1)
                 @if(sizeof($data->records) > 0)
+                    <div class="catalogue-wrapper">
                     @foreach($data->records as $luckydraw)
-                        <div class="col-xs-12 col-sm-12" id="item-{{$luckydraw->lucky_draw_id}}">
+                        <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$luckydraw->lucky_draw_id}}" id="item-{{$luckydraw->lucky_draw_id}}">
                             <section class="list-item-single-tenant">
                                 <a class="list-item-link" href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
                                     <div class="list-item-info">
@@ -64,6 +65,14 @@
                             </section>
                         </div>
                     @endforeach
+                    </div>
+                    @if($data->returned_records < $data->total_records)
+                        <div class="row">
+                            <div class="col-xs-12 padded">
+                                <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                            </div>
+                        </div>
+                    @endif
                 @else
                     <div class="row padded">
                         <div class="col-xs-12">
@@ -83,31 +92,16 @@
     </div>
 @stop
 
-@section('modals')
-<div class="modal fade" id="userActivationModal" tabindex="-1" role="dialog" aria-labelledby="userActivationModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="userActivationModalLabel"><i class="fa fa-envelope-o"></i> {{ Lang::get('mobileci.promotion.info') }}</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <p style="font-size:15px;">
-                            {{{ sprintf(Lang::get('mobileci.modals.message_user_activation'), $user_email) }}}
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="row">
-                    <div class="col-xs-12 text-center">
-                        <button type="button" class="btn btn-info btn-block" data-dismiss="modal">{{ Lang::get('mobileci.modals.okay') }}</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+@section('ext_script_bot')
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('body').on('click', '#load-more-x', function(){
+            var listOfIDs = [];
+            $('.catalogue-wrapper .item-x').each(function(id){
+                listOfIDs.push($(this).data('ids'));
+            });
+            loadMoreX('lucky-draw', listOfIDs);
+        });
+    }); 
+</script>
 @stop

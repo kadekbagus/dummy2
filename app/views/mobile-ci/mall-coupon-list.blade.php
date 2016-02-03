@@ -1,17 +1,14 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
-@stop
-
 @section('content')
     <div class="container">
         <div class="mobile-ci list-item-container">
             <div class="row">
             @if($data->status === 1)
                 @if(sizeof($data->records) > 0)
+                    <div class="catalogue-wrapper">
                     @foreach($data->records as $coupon)
-                        <div class="col-xs-12 col-sm-12" id="item-{{$coupon->promotion_id}}">
+                        <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$coupon->promotion_id}}"  id="item-{{$coupon->promotion_id}}">
                             <section class="list-item-single-tenant">
                                 <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupon->promotion_id) }}">
                                     <div class="coupon-new-badge">
@@ -71,6 +68,14 @@
                             </section>
                         </div>
                     @endforeach
+                    </div>
+                    @if($data->returned_records < $data->total_records)
+                        <div class="row">
+                            <div class="col-xs-12 padded">
+                                <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
+                            </div>
+                        </div>
+                    @endif
                 @else
                     <div class="row padded">
                         <div class="col-xs-12">
@@ -120,4 +125,18 @@
         </div>
     </div>
 </div>
+@stop
+
+@section('ext_script_bot')
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('body').on('click', '#load-more-x', function(){
+            var listOfIDs = [];
+            $('.catalogue-wrapper .item-x').each(function(id){
+                listOfIDs.push($(this).data('ids'));
+            });
+            loadMoreX('my-coupon', listOfIDs);
+        });
+    }); 
+</script>
 @stop
