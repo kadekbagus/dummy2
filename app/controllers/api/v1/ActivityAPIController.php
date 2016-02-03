@@ -2727,94 +2727,128 @@ class ActivityAPIController extends ControllerAPI
             $date_diff = Carbon::parse($start_date)->diff(Carbon::parse($end_date)->addMinute())->days;
             $start_date_minus_one_hour = Carbon::parse($start_date)->subHour();
 
+            $mallTime = Carbon::now($this->getTimezone($current_mall));
+            $expiry = Config::get('orbit.session.expire', 3600); // value shoud be less than 86400 (seconds in a day)
+            $expiry_time = gmdate("H:i:s", $expiry);
+
             $quote = function($arg)
             {
                 return DB::connection()->getPdo()->quote($arg);
             };
 
+            // Thomas's number of connected users hourly with aggregates v2
             $activities = DB::select(DB::raw("
-                SELECT      
-                    DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time, 
-                    DATE_FORMAT(DATE_ADD(ppp1.comp_date, INTERVAL 1 HOUR),'%H:00') AS end_time, 
-                    SUM(ppp1.connected_hourly) AS score
-                FROM
-                    (
-                    SELECT 
-                        pp1.comp_date,
-                        pp2.login_count, 
-                        pp1.delayed_logout_count, 
-                        @conn_hour, 
-                        (@conn_hour := (@conn_hour + pp2.login_count) - pp1.delayed_logout_count) AS connected_hourly,
-                        pp1.logout_count 
+                    SELECT
+                        DATE_FORMAT(ppp1.comp_date,'%H:00') AS start_time, 
+                        DATE_FORMAT(DATE_ADD(ppp1.comp_date, INTERVAL 1 HOUR),'%H:00') AS end_time, 
+                        SUM(ppp1.connected_hourly) AS score
                     FROM
-                        (SELECT @conn_hour := 0) AS init_var_main,
                         (
                             SELECT 
-                                s2.comp_date,
-                                IFNULL(p2.logout_count, 0) AS logout_count,
-                                @delayed_lo_count AS delayed_logout_count,
-                                (@delayed_lo_count := IFNULL(p2.logout_count, 0)) 
+                                pp1.comp_date,
+                                pp2.login_count, 
+                                pp1.delayed_logout_count,
+                                @conn_hour,  
+                                (@conn_hour := (@conn_hour + pp2.login_count) - pp1.delayed_logout_count) AS connected_hourly,
+                                pp1.logout_count 
                             FROM
-                                (SELECT @delayed_lo_count := 0) AS init_var_sp2,
+                                (SELECT @conn_hour := 0) AS init_var_main,
                                 (
                                     SELECT 
-                                        DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
+                                        s2.comp_date,
+                                        IFNULL(p2.logout_count, 0) AS logout_count,
+                                        @delayed_lo_count AS delayed_logout_count,
+                                        (@delayed_lo_count := IFNULL(p2.logout_count, 0)) 
                                     FROM
-                                        {$tablePrefix}sequence ts
-                                    WHERE
-                                        ts.sequence_number <= ({$date_diff} * 24)       
-                                ) AS s2
+                                        (SELECT @delayed_lo_count := 0) AS init_var_sp2,
+                                        (
+                                            SELECT 
+                                                DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
+                                            FROM
+                                                {$tablePrefix}sequence ts
+                                            WHERE
+                                                ts.sequence_number <= ({$date_diff} * 24)
+                                        ) AS s2
+                                    LEFT JOIN
+                                        (
+                                            SELECT 
+                                                DATE_FORMAT(s_lo.logout_at, '%Y-%m-%d %H:00:00') AS logout_datehour,
+                                                COUNT(DATE_FORMAT(s_lo.logout_at, '%Y-%m-%d %H:00:00')) AS logout_count
+                                            FROM
+                                                (
+                                                    (   SELECT 
+                                                            oct.connection_time_id,
+                                                            oct.session_id,
+                                                            oct.user_id,
+                                                            oct.location_id,
+                                                            oct.login_at,  
+                                                            oct.logout_at
+                                                        FROM
+                                                            {$tablePrefix}connection_times oct
+                                                        WHERE
+                                                            oct.location_id = {$quote($current_mall)} AND
+                                                            oct.logout_at IS NOT NULL
+                                                            AND oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
+                                                    )
+                                                    UNION
+                                                    (
+                                                        SELECT
+                                                            oct.connection_time_id,
+                                                            oct.session_id,
+                                                            oct.user_id,
+                                                            oct.location_id,
+                                                            oct.login_at,  
+                                                            IF( TIMEDIFF('{$mallTime}', oct.login_at) > '{$expiry_time}',
+                                                                DATE_ADD(oct.login_at, INTERVAL {$expiry} SECOND),
+                                                                NULL
+                                                              ) AS logout_at
+                                                        FROM 
+                                                            {$tablePrefix}connection_times oct
+                                                        WHERE 
+                                                            oct.location_id = {$quote($current_mall)} AND
+                                                            oct.logout_at IS NULL
+                                                            AND oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
+                                                    ) 
+                                                )AS s_lo
+                                            GROUP BY logout_datehour
+                                            ORDER BY logout_datehour
+                                        ) AS p2
+                                    ON s2.comp_date = p2.logout_datehour
+                                ) AS pp1
                             LEFT JOIN
                                 (
                                     SELECT 
-                                        DATE_FORMAT(oct.logout_at, '%Y-%m-%d %H:00:00') AS logout_datehour,
-                                        COUNT(DATE_FORMAT(oct.logout_at, '%Y-%m-%d %H:00:00')) AS logout_count
-                                    FROM 
-                                        {$tablePrefix}connection_times oct
-                                    WHERE
-                                        oct.logout_at IS NOT NULL AND
-                                        oct.location_id = {$quote($current_mall)} AND
-                                        oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
-                                    GROUP BY logout_datehour
-                                    ORDER BY logout_datehour
-                                ) AS p2
-                            ON s2.comp_date = p2.logout_datehour
-                        ) AS pp1
-                    LEFT JOIN
-                        (
-                            SELECT 
-                                s1.comp_date,
-                                IFNULL(p1.login_count, 0) AS login_count
-                            FROM
-                                (
-                                    SELECT 
-                                        DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
+                                        s1.comp_date,
+                                        IFNULL(p1.login_count, 0) AS login_count
                                     FROM
-                                        {$tablePrefix}sequence ts
-                                    WHERE
-                                        ts.sequence_number <= ({$date_diff} * 24)    
-                                ) AS s1
-                            LEFT JOIN
-                                (
-                                    SELECT 
-                                        DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00') AS login_datehour,
-                                        COUNT(DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00')) AS login_count
-                                    FROM
-                                        {$tablePrefix}connection_times oct
-                                    WHERE
-                                        oct.logout_at IS NOT NULL AND
-                                        oct.location_id = {$quote($current_mall)} AND
-                                        oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
-                                    GROUP BY login_datehour
-                                    ORDER BY login_datehour
-                                ) AS p1
-                            on s1.comp_date = p1.login_datehour
-                        ) AS pp2
-                    ON pp1.comp_date = pp2.comp_date
-                    ) AS ppp1
-                GROUP BY start_time
-                ORDER BY start_time;
-                    "));
+                                        (
+                                            SELECT 
+                                                DATE_FORMAT(DATE_ADD('{$start_date_minus_one_hour}', INTERVAL sequence_number HOUR), '%Y-%m-%d %H:00:00') AS comp_date
+                                            FROM
+                                                {$tablePrefix}sequence ts
+                                            WHERE
+                                                ts.sequence_number <= ({$date_diff} * 24)
+                                        ) AS s1
+                                    LEFT JOIN
+                                        (
+                                            SELECT 
+                                                DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00') AS login_datehour,
+                                                COUNT(DATE_FORMAT(oct.login_at, '%Y-%m-%d %H:00:00')) AS login_count
+                                            FROM
+                                                {$tablePrefix}connection_times oct
+                                            WHERE
+                                                oct.location_id = {$quote($current_mall)} AND
+                                                oct.login_at BETWEEN {$quote($start_date)} AND {$quote($end_date)}
+                                            GROUP BY login_datehour
+                                            ORDER BY login_datehour
+                                        ) AS p1
+                                    on s1.comp_date = p1.login_datehour
+                                ) AS pp2
+                            ON pp1.comp_date = pp2.comp_date
+                        ) AS ppp1
+                    GROUP BY start_time
+                    ORDER BY start_time;
+                "));
 
             $this->response->data = [
                     'start_date' => $start_date,
