@@ -309,7 +309,14 @@
 @stop
 
 @section('ext_script_bot')
-    {{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
+    {{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
+    {{-- Script fallback --}}
+    <script>
+        if (typeof $().featherlight === 'undefined') {
+            document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
+        }
+    </script>
+    {{-- End of Script fallback --}}
     <script type="text/javascript">
         $(document).ready(function(){
             $('#image-gallery').lightSlider({
@@ -369,9 +376,18 @@
                     $('#slide-tab-news').closest('li').removeClass('active');
                     $('#slide-tab-coupon').closest('li').removeClass('active');
                 } else {
+                    if(tabOpen){
+                        tabOpen = false;
+                    } else {
+                        tabOpen = true;
+                    }
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                     $('body').toggleClass('freeze-scroll');
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
+                }
+                if(!tabOpen){
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
                 }
                 $('#slide-tab-promo-container').toggle('fade', 'slow');
                 $('#slide-tab-promo').closest('li').toggleClass('active');
@@ -408,9 +424,18 @@
                     $('#slide-tab-promo').closest('li').removeClass('active');
                     $('#slide-tab-news').closest('li').removeClass('active');
                 } else {
+                    if(tabOpen){
+                        tabOpen = false;
+                    } else {
+                        tabOpen = true;
+                    }
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                     $('body').toggleClass('freeze-scroll');
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
+                }
+                if(!tabOpen){
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
                 }
                 $('#slide-tab-coupon-container').toggle('fade', 'slow');
                 $('#slide-tab-coupon').closest('li').toggleClass('active');

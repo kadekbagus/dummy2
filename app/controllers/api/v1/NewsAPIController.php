@@ -626,6 +626,7 @@ class NewsAPIController extends ControllerAPI
             $updatednews = News::with('tenants')->excludeDeleted()->where('news_id', $news_id)->first();
 
             $statusdb = $updatednews->status;
+            $enddatedb = $updatednews->end_date;
             //check get merchant for db
             $newsmerchantdb = NewsMerchant::select('merchant_id')->where('news_id', $news_id)->get()->toArray();
             $merchantdb = array();
@@ -916,8 +917,47 @@ class NewsAPIController extends ControllerAPI
             $actionhistory = '';
             $mall = App::make('orbit.empty.mall');
             $now = Carbon::now($mall->timezone->timezone_name);
-            //check for update status
-            if ($statusdb != $status) {
+
+            if ($enddatedb < $now) {
+                $actionstatus = 'deactivate';
+                $deactivate = substr($enddatedb, 0, 10) . " " . '23:59:59';
+                $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
+                $utcenddatedb->setTimezone('UTC');
+                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
+                // campaign history status
+                if (! empty($rowcost)) {
+                    $campaignhistory = new CampaignHistory();
+                    $campaignhistory->campaign_type = $object_type;
+                    $campaignhistory->campaign_id = $news_id;
+                    $campaignhistory->campaign_history_action_id = $activeid;
+                    $campaignhistory->number_active_tenants = $rowcost->tenants;
+                    $campaignhistory->campaign_cost = $rowcost->cost;
+                    $campaignhistory->created_by = $this->api->user->user_id;
+                    $campaignhistory->modified_by = $this->api->user->user_id;
+                    $campaignhistory->created_at = $utcenddatedb;
+                    $campaignhistory->save();
+                }
+
+                $actionstatus = 'activate';
+                if ($status === 'inactive') {
+                    $actionstatus = 'deactivate';
+                }
+                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
+                // campaign history status
+                if (! empty($rowcost)) {
+                    $campaignhistory = new CampaignHistory();
+                    $campaignhistory->campaign_type = $object_type;
+                    $campaignhistory->campaign_id = $news_id;
+                    $campaignhistory->campaign_history_action_id = $activeid;
+                    $campaignhistory->number_active_tenants = $rowcost->tenants;
+                    $campaignhistory->campaign_cost = $rowcost->cost;
+                    $campaignhistory->created_by = $this->api->user->user_id;
+                    $campaignhistory->modified_by = $this->api->user->user_id;
+                    $campaignhistory->save();
+                }
+            } elseif ($statusdb != $status) {
                 // get action id for campaign history
                 $actionstatus = 'activate';
                 if ($status === 'inactive') {
@@ -937,6 +977,30 @@ class NewsAPIController extends ControllerAPI
                     $campaignhistory->modified_by = $this->api->user->user_id;
                     $campaignhistory->save();
                 }
+            } else {
+                //check for first time insert for that day
+                $utcNow = Carbon::now();
+                $checkFirst = CampaignHistory::where('campaign_id', '=', $news_id)->where('created_at', 'like', $utcNow->toDateString().'%')->count();
+                if ($checkFirst === 0){
+                    $actionstatus = 'activate';
+                    if ($statusdb === 'inactive') {
+                        $actionstatus = 'deactivate';
+                    }
+                    $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                    $rowcost = CampaignHistory::getRowCost($news_id, $status, $actionhistory, $now, FALSE)->first();
+                    // campaign history status
+                    if (! empty($rowcost)) {
+                        $campaignhistory = new CampaignHistory();
+                        $campaignhistory->campaign_type = $object_type;
+                        $campaignhistory->campaign_id = $news_id;
+                        $campaignhistory->campaign_history_action_id = $activeid;
+                        $campaignhistory->number_active_tenants = $rowcost->tenants;
+                        $campaignhistory->campaign_cost = $rowcost->cost;
+                        $campaignhistory->created_by = $this->api->user->user_id;
+                        $campaignhistory->modified_by = $this->api->user->user_id;
+                        $campaignhistory->save();
+                    }
+                } 
             }
 
             //check for add/remove tenant

@@ -28,7 +28,7 @@ class CampaignHistory extends Eloquent
                 } else if ($action === "delete") {
                     $cost->selectraw(DB::raw("{$tablePrefix}campaign_histories.number_active_tenants - 1 as tenants, (CASE WHEN '".$now."' < {$tablePrefix}promotions.begin_date THEN (((CASE WHEN {$tablePrefix}campaign_histories.created_at < {$tablePrefix}promotions.begin_date THEN DATEDIFF('" . $now . "', {$tablePrefix}campaign_histories.created_at) ELSE DATEDIFF('" . $now . "', {$tablePrefix}promotions.begin_date) END) * {$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) - {$tablePrefix}campaign_price.base_price + {$tablePrefix}campaign_histories.campaign_cost) ELSE (((CASE WHEN {$tablePrefix}campaign_histories.created_at < {$tablePrefix}promotions.begin_date THEN DATEDIFF('" . $now . "', {$tablePrefix}campaign_histories.created_at) ELSE DATEDIFF('" . $now . "', {$tablePrefix}promotions.begin_date) END) * {$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) + {$tablePrefix}campaign_histories.campaign_cost) END) AS cost"));
                 } else {
-                    $cost->selectraw(DB::raw("{$tablePrefix}campaign_histories.number_active_tenants as tenants, (CASE WHEN DATE_FORMAT('".$now."','%Y-%m-%d') <= {$tablePrefix}campaign_histories.created_at THEN {$tablePrefix}campaign_histories.campaign_cost ELSE (({$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) + {$tablePrefix}campaign_histories.campaign_cost) END) AS cost"));
+                    $cost->selectraw(DB::raw("{$tablePrefix}campaign_histories.number_active_tenants as tenants, (CASE WHEN DATE_FORMAT('".$now."','%Y-%m-%d') <= {$tablePrefix}campaign_histories.created_at THEN ({$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) ELSE (({$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) + {$tablePrefix}campaign_histories.campaign_cost) END) AS cost"));
                 }
             } else {
                 if ($action === "add") {
@@ -48,7 +48,7 @@ class CampaignHistory extends Eloquent
                 } else if ($action === "delete") {
                     $cost->selectraw(DB::raw("{$tablePrefix}campaign_histories.number_active_tenants - 1 as tenants, (CASE WHEN '".$now."' < {$tablePrefix}news.begin_date THEN (((CASE WHEN {$tablePrefix}campaign_histories.created_at < {$tablePrefix}news.begin_date THEN DATEDIFF('" . $now . "', {$tablePrefix}campaign_histories.created_at) ELSE DATEDIFF('" . $now . "', {$tablePrefix}news.begin_date) END) * {$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) - {$tablePrefix}campaign_price.base_price + {$tablePrefix}campaign_histories.campaign_cost) ELSE (((CASE WHEN {$tablePrefix}campaign_histories.created_at < {$tablePrefix}news.begin_date THEN DATEDIFF('" . $now . "', {$tablePrefix}campaign_histories.created_at) ELSE DATEDIFF('" . $now . "', {$tablePrefix}news.begin_date) END) * {$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) + {$tablePrefix}campaign_histories.campaign_cost) END) AS cost"));
                 } else {
-                    $cost->selectraw(DB::raw("{$tablePrefix}campaign_histories.number_active_tenants as tenants, (CASE WHEN DATE_FORMAT('".$now."','%Y-%m-%d') <= {$tablePrefix}campaign_histories.created_at THEN {$tablePrefix}campaign_histories.campaign_cost ELSE (({$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) + {$tablePrefix}campaign_histories.campaign_cost) END) AS cost"));
+                    $cost->selectraw(DB::raw("{$tablePrefix}campaign_histories.number_active_tenants as tenants, (CASE WHEN DATE_FORMAT('".$now."','%Y-%m-%d') <= {$tablePrefix}campaign_histories.created_at THEN ({$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) ELSE (({$tablePrefix}campaign_histories.number_active_tenants * {$tablePrefix}campaign_price.base_price) + {$tablePrefix}campaign_histories.campaign_cost) END) AS cost"));
                 }
             } else {
                 if ($action === "add") {
@@ -65,6 +65,16 @@ class CampaignHistory extends Eloquent
         
         return $cost->where('campaign_histories.campaign_id', '=', $campaignid)
                   ->orderBy('campaign_histories.campaign_history_id', 'DESC');
+    }
+
+    public function scopeOfCampaignTypeAndId($query, $campaignType, $campaignId)
+    {
+        return $query->whereCampaignType($campaignType)->whereCampaignId($campaignId);
+    }
+
+    public function scopeOfTimestampRange($query, $beginDateTime, $endDateTime)
+    {
+        return $query->where('created_at', '>=', $beginDateTime)->where('created_at', '<', $endDateTime);
     }
 
 }

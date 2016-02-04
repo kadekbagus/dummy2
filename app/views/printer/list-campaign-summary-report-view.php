@@ -195,8 +195,8 @@
             <th style="text-align:left;">Mall</th>
             <th style="text-align:left;">Campaign Dates</th>
             <th style="text-align:left;">Page Views</th>
-            <th style="text-align:left;">Views Popup</th>
-            <th style="text-align:left;">Clicks Popup</th>
+            <th style="text-align:left;">Pop Up Views</th>
+            <th style="text-align:left;">Pop Up Clicks</th>
             <th style="text-align:left;">Daily Cost (IDR)</th>
             <th style="text-align:left;">Estimated Total Cost (IDR)</th>
             <th style="text-align:left;">Spending (IDR)</th>
@@ -215,13 +215,28 @@
                             <td><?php echo htmlentities($value->campaign_type); ?></td>
                             <td><?php echo $value->total_tenant; ?></td>
                             <td><?php echo htmlentities($value->mall_name); ?></td>
-                            <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y H:i:s') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y H:i:s'); ?></td>
+                            <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y'); ?></td>
                             <td><?php echo $value->page_views; ?></td>
                             <td><?php echo $value->popup_views; ?></td>
                             <td><?php echo $value->popup_clicks; ?></td>
-                            <td><?php echo number_format($value->base_price,0,',','.'); ?></td>
-                            <td><?php echo number_format($value->estimated_total,0,',','.'); ?></td>
-                            <td><?php echo number_format($value->spending,0,',','.'); ?></td>
+                            <td>
+                                <?php
+                                    $base_price_fix = str_replace('.00', '', $value->base_price);
+                                    echo number_format($base_price_fix,0,',','.');
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    $estimated_total_fix = str_replace('.00', '', $value->estimated_total);
+                                    echo number_format($estimated_total_fix,0,',','.');
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    $spending_fix = str_replace('.00', '', $value->spending);
+                                    echo number_format($spending_fix,0,',','.');
+                                ?>
+                            </td>
                             <td><?php echo $value->status; ?></td>
                         </tr>
                     <?php

@@ -126,12 +126,103 @@
 </div>
 <div class="row back-drop search-back-drop"></div>
 
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.jqueryui.1_11_2', 'mobile-ci/scripts/jquery-ui.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof jQuery.ui === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/jquery-ui.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
-{{ HTML::script('mobile-ci/scripts/lightslider.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
+{{ HTML::script(Config::get('orbit.cdn.lightslider.1_1_2', 'mobile-ci/scripts/lightslider.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().lightSlider === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/lightslider.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
+{{ HTML::script(Config::get('orbit.cdn.panzoom.2_0_5', 'mobile-ci/scripts/jquery.panzoom.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().panzoom === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/jquery.panzoom.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
+
 {{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+        skip = {{Config::get('orbit.pagination.per_page', 25)}};
+        total_x_item = 0;
+    /* Load more X function
+     * It is used on news, promotion, lucky draw and coupon list
+     * parameters: itemtype(news,promotion,lucky-draw,my-coupon)
+     *             ids(array(list of already loaded ids))
+     */
+    function loadMoreX(itemtype, ids) {
+        var catalogueWrapper = $('.catalogue-wrapper');
+        var itemList = [];
+        var btn = $('#load-more-x');
+        btn.attr('disabled', 'disabled');
+        btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+        $.ajax({
+            url: apiPath + itemtype + '/load-more',
+            method: 'GET',
+            data: {
+                take: take,
+                skip: skip,
+                ids: ids
+            }
+        }).done(function(data) {
+            if(data.status == 1) {
+                skip = skip + take;
+                if(data.records.length > 0) {
+                    for(var i = 0; i < data.records.length; i++) {
+                        var coupon_badge = '';
+                        if(itemtype === 'my-coupon') {
+                            coupon_badge = '<div class="coupon-new-badge"><div class="new-number">'+data.records[i].quantity+'</div></div>';
+                        }
+                        var list = '<div class="col-xs-12 col-sm-12 item-x" data-ids="'+data.records[i].item_id+'" id="item-'+data.records[i].item_id+'">\
+                                <section class="list-item-single-tenant">\
+                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                        '+coupon_badge+'\
+                                        <div class="list-item-info">\
+                                            <header class="list-item-title">\
+                                                <div><strong>'+data.records[i].name+'</strong></div>\
+                                            </header>\
+                                            <header class="list-item-subtitle">\
+                                                <div>'+data.records[i].description+'</div>\
+                                            </header>\
+                                        </div>\
+                                        <div class="list-vignette-non-tenant"></div>\
+                                        <img class="img-responsive img-fit-tenant" src="'+data.records[i].image+'"/>\
+                                    </a>\
+                                </section>\
+                            </div>';
+
+                        itemList.push(list);
+                    }
+                    catalogueWrapper.append(itemList.join(''));
+                }
+                if (data.total_records - take <= 0) {
+                    btn.remove();
+                }
+            } else {
+                if(data.message === 'session_expired') {
+                    window.location.replace('/customer');
+                }
+            }
+        }).always(function(data){
+            btn.removeAttr('disabled', 'disabled');
+            btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+        });
+    }
+
     var tabOpen = false; // this var is for tabs on tenant detail views
     $(document).ready(function(){
         var menuOpen = false;
