@@ -4271,6 +4271,17 @@ class DashboardAPIController extends ControllerAPI
             // activity name long should include source.
 
             $tablePrefix = DB::getTablePrefix();
+            $timezone = $this->getTimezone($merchant_id);
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
+            $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
+            $startConvert->setTimezone($timezone);
+
+            $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
+            $endConvert->setTimezone($timezone);
+
+            $start_date = $startConvert->toDateString();
+            $end_date = $endConvert->toDateString();
 
             //get total cost news
             $news = DB::table('news')->selectraw(DB::raw("COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS total"))
@@ -4767,8 +4778,14 @@ class DashboardAPIController extends ControllerAPI
             $timezone = $this->getTimezone($merchant_id);
             $timezoneOffset = $this->getTimezoneOffset($timezone);
 
-            $start_date = substr($start_date,0,10);
-            $end_date = substr($end_date,0,10);
+            $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
+            $startConvert->setTimezone($timezone);
+
+            $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
+            $endConvert->setTimezone($timezone);
+
+            $start_date = $startConvert->toDateString();
+            $end_date = $endConvert->toDateString();
 
             $totalnews = DB::select( DB::raw("SELECT SUM(IFNULL(fnc_campaign_cost(news_id, 'news', {$this->quote($start_date)}, {$this->quote($end_date)}, {$this->quote($timezoneOffset)}), 0.00)) AS campaign_total_cost
                                             FROM {$tablePrefix}news
