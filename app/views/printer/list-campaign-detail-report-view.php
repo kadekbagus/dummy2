@@ -120,7 +120,7 @@
         <tr>
             <td>Active campaign days</td>
             <td>:</td>
-            <td><strong><?php echo number_format($activeCampaignDays, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalCampaign, 0, '.', '.'); ?></strong></td>
         </tr>
         <tr>
             <td>Total page views</td>
@@ -177,43 +177,30 @@
             <th style="text-align:left;">Location</th>
             <th style="text-align:left;">Unique users</th>
             <th style="text-align:left;">Campaign page views</th>
-            <th style="text-align:left;">Campaign page view rate</th>
+            <th style="text-align:left;">Campaign page view rate (%)</th>
             <th style="text-align:left;">Pop up views</th>
-            <th style="text-align:left;">Pop up view rate</th>
+            <th style="text-align:left;">Pop up view rate (%)</th>
             <th style="text-align:left;">Pop up clicks</th>
-            <th style="text-align:left;">Pop up click rate</th>
-            <th style="text-align:left;">Spending</th>
+            <th style="text-align:left;">Pop up click rate (%)</th>
+            <th style="text-align:left;">Spending (IDR)</th>
         </thead>
 
         <tbody>
-            <?php
-            $no  = 1;
-            if ($totalRecord > 0) {
-                foreach ($data as $key => $value) {
-                    ?>
-                        <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                            <td><?php echo $no; ?></td>
-                            <td><?php echo $value['campaign_date']; ?></td>
-                            <td><?php echo htmlentities($value['mall_name']); ?></td>
-                            <td><?php echo $value['unique_users']; ?></td>
-                            <td><?php echo $value['campaign_pages_views']; ?></td>
-                            <td><?php echo $value['campaign_pages_view_rate'] . ' %'; ?></td>
-                            <td><?php echo $value['popup_views']; ?></td>
-                            <td><?php echo $value['popup_view_rate'] . ' %'; ?></td>
-                            <td><?php echo $value['popup_clicks']; ?></td>
-                            <td><?php echo $value['popup_click_rate'] . ' %'; ?></td>
-                            <td>
-                                <?php
-                                    $spending_fix = str_replace('.00', '', $value['spending']);
-                                    echo number_format($spending_fix,0,',','.');
-                                ?>
-                            </td>
-                        </tr>
-                    <?php
-                    $no++;
-                }
-            }
-            ?>
+            <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
+                <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
+                    <td><?php echo $count++; ?></td>
+                    <td><?php echo $row->campaign_date; ?></td>
+                    <td><?php echo htmlentities($row->mall_name); ?></td>
+                    <td><?php echo $row->unique_users; ?></td>
+                    <td><?php echo $row->campaign_pages_views; ?></td>
+                    <td><?php echo $row->campaign_pages_view_rate; ?></td>
+                    <td><?php echo $row->popup_views; ?></td>
+                    <td><?php echo $row->popup_view_rate; ?></td>
+                    <td><?php echo $row->popup_clicks; ?></td>
+                    <td><?php echo $row->popup_click_rate; ?></td>
+                    <td><?php echo number_format($row->spending, 0); ?></td>
+                </tr>
+            <?php endwhile ; ?>
         </tbody>
 
     </table>
