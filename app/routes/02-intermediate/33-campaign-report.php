@@ -15,6 +15,11 @@ Route::get('/app/v1/campaign-report-summary/list', 'IntermediateAuthController@C
 Route::get('/app/v1/campaign-report-detail/list', 'IntermediateAuthController@CampaignReport_getCampaignReportDetail');
 
 /**
+ * Get Tenant Campaign Summary
+ */
+Route::get('/app/v1/tenant-campaign-summary/list', 'IntermediateAuthController@CampaignReport_getTenantCampaignSummary');
+
+/**
  * Campaign Report Dashboard Demographic
  */
 Route::get('/app/v1/campaign-report/campaign-demographic', 'IntermediateAuthController@CampaignReport_getCampaignDemographic');
