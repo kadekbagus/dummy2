@@ -1173,6 +1173,10 @@ class CampaignReportAPIController extends ControllerAPI
 
         $procCallStatement = 'CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)';
 
+        // Restart DB connection so that DB::select below will use the WRITE connection
+        // Otherwise, DB::select won't get the temp table
+        \DB::beginTransaction();
+
         // It should return true
         $procCall = \DB::statement($procCallStatement, [
             $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff
