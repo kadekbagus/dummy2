@@ -17,8 +17,14 @@ class postNewLuckyDrawTest extends TestCase
         parent::setUp();
 
         $this->apikey = Factory::create('apikey_super_admin');
-        $this->merchant   = Factory::create('Merchant');
-        $this->retailer   = Factory::create('Retailer', ['parent_id' => $this->merchant->merchant_id, 'is_mall' => 'yes']);
+        $this->retailer   = Factory::create('Mall');
+
+        // Languages for mall
+        $langEn = Factory::create('Language', ['name' => 'en']);
+        $merchantLang = Factory::create('MerchantLanguage', [
+            'merchant_id' => $this->retailer->merchant_id,
+            'language_id' => $langEn->language_id
+        ]);
 
         Config::set('orbit.shop.id', $this->retailer->merchant_id);
 
@@ -42,6 +48,7 @@ class postNewLuckyDrawTest extends TestCase
             'end_date' => $dateNextWeek,
             'minimum_amount' => 10000,
             'grace_period_date' => $dateTwoWeek,
+            'draw_date' => $dateTwoWeek,
             'min_number' => 1001,
             'max_number' => 2000,
             'status' => 'active',

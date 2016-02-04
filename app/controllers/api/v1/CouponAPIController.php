@@ -943,7 +943,7 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postupdatecoupon.after.validation', array($this, $validator));
 
-            $updatedcoupon = Coupon::with('couponRule', 'tenants', 'linkToTenants')->excludeDeleted()->where('promotion_id', $promotion_id)->first();
+            $updatedcoupon = Coupon::where('promotion_id', $promotion_id)->first();
 
             $statusdb = $updatedcoupon->status;
             $enddatedb = $updatedcoupon->end_date;
@@ -966,7 +966,7 @@ class CouponAPIController extends ControllerAPI
                 $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
                 $utcenddatedb->setTimezone('UTC');
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, FALSE)->first();
+                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
                     $campaignhistory = new CampaignHistory();
@@ -982,8 +982,11 @@ class CouponAPIController extends ControllerAPI
                 }
 
                 $actionstatus = 'activate';
+                if ($status === 'inactive') {
+                    $actionstatus = 'deactivate';
+                }
                 $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
-                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, FALSE)->first();
+                $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
                     $campaignhistory = new CampaignHistory();
@@ -996,10 +999,7 @@ class CouponAPIController extends ControllerAPI
                     $campaignhistory->modified_by = $this->api->user->user_id;
                     $campaignhistory->save();
                 }
-            }
-
-            //check for update status
-            if ($statusdb != $status) {
+            } elseif ($statusdb != $status) {
                 // get action id for campaign history
                 $actionstatus = 'activate';
                 if ($status === 'inactive') {
@@ -1018,6 +1018,29 @@ class CouponAPIController extends ControllerAPI
                     $campaignhistory->created_by = $this->api->user->user_id;
                     $campaignhistory->modified_by = $this->api->user->user_id;
                     $campaignhistory->save();
+                }
+            } else {
+                $utcNow = Carbon::now();
+                $checkFirst = CampaignHistory::where('campaign_id', '=', $promotion_id)->where('created_at', 'like', $utcNow->toDateString().'%')->count();
+                if ($checkFirst === 0){
+                    $actionstatus = 'activate';
+                    if ($statusdb === 'inactive') {
+                        $actionstatus = 'deactivate';
+                    }
+                    $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                    $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
+                    // campaign history status
+                    if (! empty($rowcost)) {
+                        $campaignhistory = new CampaignHistory();
+                        $campaignhistory->campaign_type = 'coupon';
+                        $campaignhistory->campaign_id = $promotion_id;
+                        $campaignhistory->campaign_history_action_id = $activeid;
+                        $campaignhistory->number_active_tenants = $rowcost->tenants;
+                        $campaignhistory->campaign_cost = $rowcost->cost;
+                        $campaignhistory->created_by = $this->api->user->user_id;
+                        $campaignhistory->modified_by = $this->api->user->user_id;
+                        $campaignhistory->save();
+                    }
                 }
             }
 
