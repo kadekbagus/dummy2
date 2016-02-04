@@ -618,7 +618,7 @@ class CampaignReportAPIController extends ControllerAPI
             $endDate = date("Y-m-d", strtotime($getBeginEndDate[0]->end_date));
             $today = date("Y-m-d");
 
-            $procResults = DB::statement("CALL prc_campaign_detailed_cost_test({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, {$this->quote($beginDate)}, {$this->quote($endDate)}, {$this->quote($timezoneOffset)})");
+            $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, {$this->quote($beginDate)}, {$this->quote($endDate)}, {$this->quote($timezoneOffset)})");
             if($procResults){
 
                     // Get list campaign per date
@@ -1171,7 +1171,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         $hoursDiff = $this->getTimezoneHoursDiff($mallTimezone);
 
-        $procCallStatement = 'CALL prc_campaign_detailed_cost_test(?, ?, ?, ?, ?)';
+        $procCallStatement = 'CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)';
 
         // It should return true
         $procCall = \DB::statement($procCallStatement, [
@@ -1179,7 +1179,7 @@ class CampaignReportAPIController extends ControllerAPI
         ]);
 
         if ($procCall === false) {
-            // What to do here? 
+            // What to do here?
         }
 
         // Now let's retrieve the data from the temporary table
@@ -1206,7 +1206,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Increment day by 1
             $carbonLoop->addDay();
         }
-        
+
         $this->response->data = $outputs;
 
         return $this->render(200);
