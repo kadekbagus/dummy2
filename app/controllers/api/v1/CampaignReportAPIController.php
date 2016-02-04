@@ -556,7 +556,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'campaign_id' => 'required',
                     'campaign_type' => 'required',
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:updated_at,campaign_date,campaign_name,campaign_type,tenant,mall_name,begin_date,end_date,page_views,popup_views,popup_clicks,base_price,estimated_total,spending,status',
+                    'sort_by' => 'in:campaign_date,total_tenant,mall_name,unique_users,campaign_pages_views,campaign_pages_view_rate,popup_views,popup_view_rate,popup_clicks,popup_click_rate,spending',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -616,62 +616,70 @@ class CampaignReportAPIController extends ControllerAPI
             $timezoneOffset = $this->getTimezoneOffset($timezone);
             $beginDate = date("Y-m-d", strtotime($getBeginEndDate[0]->begin_date));
             $endDate = date("Y-m-d", strtotime($getBeginEndDate[0]->end_date));
-            $today = date("Y-m-d");
+            $now = Carbon::now($mall->timezone->timezone_name);
 
             \DB::beginTransaction();
 
-            $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, {$this->quote($beginDate)}, {$this->quote($endDate)}, {$this->quote($timezoneOffset)})");
+            $procResults = DB::statement("CALL prc_campaign_detailed_cost({$this->quote($campaign_id)}, {$this->quote($campaign_type)}, {$this->quote($beginDate)}, {$this->quote($now)}, {$this->quote($timezoneOffset)})");
 
             if ($procResults === false) {
                 // Do Nothing
             }
 
             $sql = "
-                    (select
-                        tmp_campaign_cost_detail.comp_date as campaign_date,
+                    (SELECT
+                        tmp_campaign_cost_detail.comp_date AS campaign_date,
                         tmp_campaign_cost_detail.campaign_id,
-                        tmp_campaign_cost_detail.campaign_status as campaign_status,
-                        tmp_campaign_cost_detail.campaign_number_tenant as total_tenant,
+                        tmp_campaign_cost_detail.campaign_status AS campaign_status,
+                        tmp_campaign_cost_detail.campaign_number_tenant AS total_tenant,
                         tmp_campaign_cost_detail.base_price,
-                        tmp_campaign_cost_detail.daily_cost as spending,
+                        tmp_campaign_cost_detail.daily_cost AS spending,
                         tmp_campaign_cost_detail.campaign_start_date,
                         tmp_campaign_cost_detail.campaign_end_date,
                         tmp_campaign_cost_detail.mall_id,
-                        name as mall_name,
+                        name AS mall_name,
                     (
-                        select count(distinct user_id)
-                        from orb_user_signin
-                        where location_id = 'tmp_campaign_cost_detail.mall_id'
-                        and created_at = tmp_campaign_cost_detail.comp_date
-                    ) as unique_users,
+                        SELECT count(distinct user_id)
+                        FROM {$tablePrefix}user_signin
+                        WHERE location_id = {$this->quote($current_mall)}
+                        AND DATE(created_at) = campaign_date
+                    ) AS unique_users,
                     (
-                        select count(campaign_page_view_id) as value
-                        from orb_campaign_page_views
-                        where location_id = 'tmp_campaign_cost_detail.mall_id'
-                        and created_at = tmp_campaign_cost_detail.comp_date
-                    ) as campaign_pages_views,
+                        SELECT count(campaign_page_view_id) AS value
+                        FROM {$tablePrefix}campaign_page_views
+                        WHERE campaign_id = tmp_campaign_cost_detail.campaign_id
+                        AND location_id = {$this->quote($current_mall)}
+                        AND DATE(created_at) = campaign_date
+                    ) AS campaign_pages_views,
                     (
-                        select count(campaign_popup_view_id) as value
-                        from orb_campaign_popup_views
-                        where campaign_id = tmp_campaign_cost_detail.campaign_id
-                    ) as popup_views,
+                        SELECT count(campaign_popup_view_id) AS value
+                        FROM {$tablePrefix}campaign_popup_views
+                        WHERE campaign_id = tmp_campaign_cost_detail.campaign_id
+                        AND location_id = {$this->quote($current_mall)}
+                        AND DATE(created_at) = campaign_date
+                    ) AS popup_views,
                     (
-                        select count(campaign_click_id) as value
-                        from orb_campaign_clicks
-                        where location_id = 'tmp_campaign_cost_detail.mall_id'
-                        and created_at = tmp_campaign_cost_detail.comp_date
-                    ) as popup_clicks,
-                    (0) AS campaign_pages_view_rate,
-                    (0) AS popup_view_rate,
-                    (0) AS popup_click_rate
+                        SELECT count(campaign_click_id) AS value
+                        FROM {$tablePrefix}campaign_clicks
+                        WHERE location_id = {$this->quote($current_mall)}
+                        AND DATE(created_at) = campaign_date
+                    ) AS popup_clicks,
+                    (
+                        SELECT IFNULL ( ROUND((campaign_pages_views / unique_users), 0) * 100, 0 )
+                    ) AS campaign_pages_view_rate,
+                    (
+                        SELECT IFNULL (ROUND((popup_views / unique_users), 0) * 100, 0)
+                    ) AS popup_view_rate,
+                    (
+                        SELECT IFNULL (ROUND((popup_clicks / popup_views), 0) * 100, 0)
+                    ) AS popup_click_rate
                     FROM
                     tmp_campaign_cost_detail
-                    LEFT JOIN orb_merchants
-                    ON tmp_campaign_cost_detail.mall_id = orb_merchants.merchant_id
-                    ) as tbl
+                    LEFT JOIN {$tablePrefix}merchants
+                    ON tmp_campaign_cost_detail.mall_id = {$tablePrefix}merchants.merchant_id
+                    ) AS tbl
                 ";
 
-            // orb_tbl.campaign_status
             $campaign = DB::table(DB::raw($sql))->where("campaign_status", '=', 'activate');
 
             // Filter by campaign name
@@ -679,6 +687,9 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaign->where('mall_name', 'like', "%$campaign_name%");
             });
 
+            if($start_date != '' && $end_date != ''){
+                $campaign->whereRaw("campaign_date between ? and ?", [$start_date, $end_date]);
+            }
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
@@ -694,13 +705,13 @@ class CampaignReportAPIController extends ControllerAPI
             $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
 
             // Get total page views
-            $totalPageViews = $total[0]->campaign_pages_views;
+            $totalPageViews = round($total[0]->campaign_pages_views, 2);
 
             // Get total popup views
-            $totalPopupViews = $total[0]->popup_views;
+            $totalPopupViews = round($total[0]->popup_views, 2);
 
             // Get total estimate
-            $totalPopupClicks = $total[0]->popup_clicks;
+            $totalPopupClicks = round($total[0]->popup_clicks, 2);
 
             // Get total spending
             $totalSpending = $total[0]->spending;
@@ -763,8 +774,8 @@ class CampaignReportAPIController extends ControllerAPI
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
+                if (strtolower($_sortMode) !== 'desc') {
+                    $sortMode = 'asc';
                 }
             });
 

@@ -161,7 +161,7 @@
             </tr>
         <?php } elseif($mallName != '') { ?>
             <tr>
-                <td>Filter by  Location</td>
+                <td>Filter by Location</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
@@ -170,7 +170,6 @@
     </table>
 
     <table style="width:100%">
-
         <thead>
             <th style="text-align:left;">No</th>
             <th style="text-align:left;">Date</th>
@@ -184,7 +183,6 @@
             <th style="text-align:left;">Pop up click rate (%)</th>
             <th style="text-align:left;">Spending (IDR)</th>
         </thead>
-
         <tbody>
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
