@@ -134,20 +134,11 @@ class CampaignReportAPIController extends ControllerAPI
             $mall = App::make('orbit.empty.mall');
             $now = Carbon::now($mall->timezone->timezone_name);
             $timezone = $this->getTimezone($mall->merchant_id);
+
+            // Get now date with timezone
             $timezoneOffset = $this->getTimezoneOffset($timezone);
 
-            // $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
-            // $startConvert->setTimezone($timezone);
-
-            // $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
-            // $endConvert->setTimezone($timezone);
-
-            // $start_date = $startConvert->toDateString();
-            // $end_date = $endConvert->toDateString();
-
-
             // Builder object
-            $now = date('Y-m-d H:i:s');
             $tablePrefix = DB::getTablePrefix();
 
             //get total cost news
