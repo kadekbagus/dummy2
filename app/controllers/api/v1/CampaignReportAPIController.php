@@ -1529,13 +1529,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Increment day by 1
             $carbonLoop->addDay();
         }
-
-        // Debugging in output, since we're anable to access the logs.
-        if (\Input::get('dd')) {
-            $procCall = sprintf(str_replace('?', "'%s'", $procCallStatement), $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff);
-            $outputs = array_merge($outputs, compact('procCall'));
-        }
-
+        
         $this->response->data = $outputs;
 
         return $this->render(200);
