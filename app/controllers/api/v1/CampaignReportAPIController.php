@@ -24,7 +24,10 @@ class CampaignReportAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     /**
-     * There should be Carbon method for this
+     * There should be a Carbon method for this.
+     *
+     * @param string $timezone The timezone name, e.g. 'Asia/Jakarta'.
+     * @return string The hours diff, e.g. '+07:00'.
      * @author Qosdil A. <qosdil@gmail.com>
      */
     private function getTimezoneHoursDiff($timezone)
