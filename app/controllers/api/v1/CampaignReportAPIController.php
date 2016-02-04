@@ -1518,6 +1518,12 @@ class CampaignReportAPIController extends ControllerAPI
             $carbonLoop->addDay();
         }
 
+        // Debugging in output, since we're anable to access the logs.
+        if (\Input::get('dd')) {
+            $procCall = sprintf("CALL prc_campaign_detailed_cost('%s', '%s', '%s', '%s', '%s')", $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff);
+            $outputs = array_merge($outputs, compact('procCall'));
+        }
+
         $this->response->data = $outputs;
 
         return $this->render(200);
