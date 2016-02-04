@@ -1494,10 +1494,19 @@ class CampaignReportAPIController extends ControllerAPI
 
         $hoursDiff = $this->getTimezoneHoursDiff($mallTimezone);
 
-        // $procResults is an array
-        $procResults = \DB::select("CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)", [
+        $procCallStatement = 'CALL prc_campaign_detailed_cost_test(?, ?, ?, ?, ?)';
+
+        // It should return true
+        $procCall = \DB::statement($procCallStatement, [
             $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff
         ]);
+
+        if ($procCall === false) {
+            // What to do here? 
+        }
+
+        // Now let's retrieve the data from the temporary table
+        $procResults = DB::select('select * from tmp_campaign_cost_detail');
 
         foreach ($procResults as $row) {
             $costs[$row->comp_date] = $row->daily_cost;
@@ -1520,13 +1529,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Increment day by 1
             $carbonLoop->addDay();
         }
-
-        // Debugging in output, since we're anable to access the logs.
-        if (\Input::get('dd')) {
-            $procCall = sprintf("CALL prc_campaign_detailed_cost('%s', '%s', '%s', '%s', '%s')", $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff);
-            $outputs = array_merge($outputs, compact('procCall'));
-        }
-
+        
         $this->response->data = $outputs;
 
         return $this->render(200);
