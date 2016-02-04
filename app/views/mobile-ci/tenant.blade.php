@@ -376,9 +376,18 @@
                     $('#slide-tab-news').closest('li').removeClass('active');
                     $('#slide-tab-coupon').closest('li').removeClass('active');
                 } else {
+                    if(tabOpen){
+                        tabOpen = false;
+                    } else {
+                        tabOpen = true;
+                    }
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                     $('body').toggleClass('freeze-scroll');
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
+                }
+                if(!tabOpen){
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
                 }
                 $('#slide-tab-promo-container').toggle('fade', 'slow');
                 $('#slide-tab-promo').closest('li').toggleClass('active');
@@ -415,9 +424,18 @@
                     $('#slide-tab-promo').closest('li').removeClass('active');
                     $('#slide-tab-news').closest('li').removeClass('active');
                 } else {
+                    if(tabOpen){
+                        tabOpen = false;
+                    } else {
+                        tabOpen = true;
+                    }
                     $('.slide-tab-container').toggle('slide', {direction: 'up'}, 'slow');
                     $('.slide-menu-backdrop-tab').toggle('fade', 'slow');
                     $('body').toggleClass('freeze-scroll');
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').addBlur();
+                }
+                if(!tabOpen){
+                    $('.content-container').children().not('.slide-tab-container, .slide-menu-backdrop-tab').removeBlur();
                 }
                 $('#slide-tab-coupon-container').toggle('fade', 'slow');
                 $('#slide-tab-coupon').closest('li').toggleClass('active');

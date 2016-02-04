@@ -92,10 +92,13 @@ return array(
             'interval'  => 5000
         ],
 
+        // enable/disable membership card pop up
         'membership' => true,
 
+        // number of days to define the campaigns/tenants as "new" on widgets
         'widget_new_threshold' => 1, // in day(s)
 
+        // number of seconds to delay the display of campaign pop up
         'event_delay' => 2.5, //in second(s)
     ),
 

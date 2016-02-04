@@ -24,7 +24,10 @@ class CampaignReportAPIController extends ControllerAPI
     protected $returnBuilder = FALSE;
 
     /**
-     * There should be Carbon method for this
+     * There should be a Carbon method for this.
+     *
+     * @param string $timezone The timezone name, e.g. 'Asia/Jakarta'.
+     * @return string The hours diff, e.g. '+07:00'.
      * @author Qosdil A. <qosdil@gmail.com>
      */
     private function getTimezoneHoursDiff($timezone)
@@ -134,20 +137,11 @@ class CampaignReportAPIController extends ControllerAPI
             $mall = App::make('orbit.empty.mall');
             $now = Carbon::now($mall->timezone->timezone_name);
             $timezone = $this->getTimezone($mall->merchant_id);
+
+            // Get now date with timezone
             $timezoneOffset = $this->getTimezoneOffset($timezone);
 
-            // $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
-            // $startConvert->setTimezone($timezone);
-
-            // $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
-            // $endConvert->setTimezone($timezone);
-
-            // $start_date = $startConvert->toDateString();
-            // $end_date = $endConvert->toDateString();
-
-
             // Builder object
-            $now = date('Y-m-d H:i:s');
             $tablePrefix = DB::getTablePrefix();
 
             //get total cost news
@@ -1525,6 +1519,12 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Increment day by 1
             $carbonLoop->addDay();
+        }
+
+        // Debugging in output, since we're anable to access the logs.
+        if (\Input::get('dd')) {
+            $procCall = sprintf("CALL prc_campaign_detailed_cost('%s', '%s', '%s', '%s', '%s')", $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff);
+            $outputs = array_merge($outputs, compact('procCall'));
         }
 
         $this->response->data = $outputs;
