@@ -669,7 +669,6 @@ class CampaignReportAPIController extends ControllerAPI
                             LEFT JOIN orb_merchants
                             ON tmp_campaign_cost_detail.mall_id = orb_merchants.merchant_id
                             where campaign_status = 'activate'
-                            ORDDR
                         ");
 
                     // Get total
