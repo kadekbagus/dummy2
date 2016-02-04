@@ -1171,7 +1171,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         $hoursDiff = $this->getTimezoneHoursDiff($mallTimezone);
 
-        $procCallStatement = 'CALL prc_campaign_detailed_cost_test(?, ?, ?, ?, ?)';
+        $procCallStatement = 'CALL prc_campaign_detailed_cost(?, ?, ?, ?, ?)';
 
         // It should return true
         $procCall = \DB::statement($procCallStatement, [
