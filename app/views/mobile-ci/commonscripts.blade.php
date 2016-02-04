@@ -98,6 +98,55 @@
 {{ HTML::script('mobile-ci/scripts/offline.js') }}
 {{ HTML::script('mobile-ci/scripts/jquery.panzoom.min.js') }}
 <script type="text/javascript">
+    var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+        skip = {{Config::get('orbit.pagination.per_page', 25)}};
+
+    function loadMoreX(itemtype) {
+        var catalogueWrapper = $('.catalogue-wrapper');
+        var itemList = [];
+        var btn = $('#load-more-x');
+        btn.attr('disabled', 'disabled');
+        btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+        $.ajax({
+            url: apiPath + itemtype + '/load-more',
+            method: 'GET',
+            data: {
+                take: take,
+                skip: skip
+            }
+        }).done(function(data) {
+            skip = skip + skip;
+            if(data.records.length > 0) {
+                for(var i = 0; i < data.records.length; i++) {
+                    var list = '<div class="main-theme-mall catalogue catalogue-other" id="product-'+data.records[i].merchant_id+'">\
+                            <div class="row catalogue-top">\
+                                <div class="col-xs-3 catalogue-img">\
+                                    <a href="'+data.records[i].url+'">\
+                                        <span class="link-spanner-other"></span>\
+                                        <img class="img-responsive side-margin-center" alt="" src="'+data.records[i].image+'"/>\
+                                    </a>\
+                                </div>\
+                                <div class="col-xs-9 catalogue-info">\
+                                    <a href="'+data.records[i].url+'">\
+                                        <span class="link-spanner-other"></span>\
+                                        <h4>'+data.records[i].name+'</h4>\
+                                        <p>'+data.records[i].description+'</p>\
+                                    </a>\
+                                </div>\
+                            </div>\
+                        </div>';
+                    itemList.push(list);
+                }
+                catalogueWrapper.append(itemList.join(''));
+            }
+            if (skip >= data.total_records) {
+                btn.remove();
+            }
+        }).always(function(data){
+            btn.removeAttr('disabled', 'disabled');
+            btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+        });
+    }
     $(document).ready(function(){
         var run = function () {
             if (Offline.state === 'up') {
@@ -252,6 +301,5 @@
             fl.close();
             $("body").removeClass("modal-open");
         });
-
     });
 </script>

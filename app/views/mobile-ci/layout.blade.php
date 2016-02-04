@@ -14,8 +14,8 @@
         <script type="text/javascript">
             var orbitIsViewing = false;
         </script>
-        @yield('ext_script_bot')
         @include('mobile-ci.commonscripts')
+        @yield('ext_script_bot')
         @include('mobile-ci.push-notification-script')
         {{-- @include('mobile-ci.orbit-tour') --}}
 

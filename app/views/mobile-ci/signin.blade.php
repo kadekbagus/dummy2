@@ -33,7 +33,7 @@
             display: none;
         }
 
-        
+
     </style>
     <script type="text/javascript">
     </script>
@@ -397,12 +397,9 @@
                 data: {
                     email: $('#email').val().trim(),
                     payload: "{{{ Input::get('payload', '') }}}",
-                    mac_address: {{ json_encode(Input::get('mac_address', '')) }}
-
-
-
-
-
+                    mac_address: {{ json_encode(Input::get('mac_address', '')) }},
+                    auto_login: "{{{ Input::get('auto_login', 'no') }}}",
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
                 }
             }).done(function (data, status, xhr) {
                 orbit_login_processing = false;

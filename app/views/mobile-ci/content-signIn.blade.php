@@ -6,11 +6,28 @@
 
 <div class="content-signin">
     <div class="slogan-container" id="slogan-container">
+        <div class="logged-in-user hide">
+            Welcome, {{$display_name}}
+        </div>
         <div class="slogan">
             Feel The New Shopping Experience
         </div>
     </div>
     <div class="social-media-wraper" id="social-media-wraper">
+        <div class="logged-in-container hide">
+            <div class="row">
+                <div class="col-xs-12">
+                    <button id="logged-in-signin-button" type="button" class="btn btn-block btn-primary">Sign in</button>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <em>Not {{$display_name}}?</em>
+                    <a id='not-me'>Click here</a>
+                </div>
+            </div>
+        </div>
         <div class="social-media-container">
             <div class="row">
                 <div class="col-xs-12 text-center label">
@@ -21,13 +38,14 @@
                     <form name="fbLoginForm" id="fbLoginForm" action="{{ URL::route('mobile-ci.social_login') }}" method="post">
                         <div class="form-group">
                             <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
+                            <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                             <input type="hidden" class="form-control" name="mac_address"
                                    value="{{{ Input::get('mac_address', '') }}}"/>
                             <input type="hidden" class="form-control" name="{{{ $orbitOriginName }}}"
                                    value="{{{ $orbitToFacebookOriginValue }}}"/>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-primary icon-button facebook text-center">
+                            <button id="fbLoginButton" type="submit" class="btn btn-primary icon-button facebook text-center">
                                     <i class="fa fa-facebook fa-4x"></i>
                             </button>
                         </div>
@@ -38,10 +56,11 @@
                     <form name="googleLoginForm" id="googleLoginForm" action="{{ $googlePlusUrl }}" method="get">
                         <div class="form-group">
                             <input type="hidden" class="form-control" name="time" value="{{{ $orbitTime }}}"/>
+                            <input type="hidden" class="form-control" name="from_captive" value="{{{ Input::get('from_captive', '') }}}"/>
                             <input type="hidden" class="form-control" name="mac_address" value="{{{ Input::get('mac_address', '') }}}"/>
                         </div>
                         <div class="form-group">
-                            <button type="submit" class="btn btn-danger icon-button google text-center">
+                            <button id="googleLoginButton" type="submit" class="btn btn-danger icon-button google text-center">
                                 <i class="fa fa-google fa-4x"></i>
                             </button>
                         </div>
@@ -59,12 +78,12 @@
 <div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel">
     <div class="modal-dialog">
         <div class="modal-content" id="signin-form-wrapper">
-            <form  name="signinForm" id="signinForm" action="{{ url('customer/login') }}" method="post">
+            <form  name="signinForm" id="signinForm" method="post">
                 <div class="modal-body">
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
-    
+
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
                     </div>
@@ -82,12 +101,12 @@
             </form>
         </div>
         <div class="modal-content hide" id="signup-form-wrapper">
-            <form  name="signupForm" id="signupForm" action="{{ url('customer/login') }}" method="post">
+            <form  name="signupForm" id="signupForm" method="post">
                 <div class="modal-body">
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
-                    
+
                     <span class="mandatory-label">All fields are mandatory</span>
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
@@ -157,15 +176,20 @@
 <script type="text/javascript">
     toastr.options.closeButton = true;
     toastr.options.closeDuration = 300;
-    
-    
+
+
     var contentHeight = $(window).height() - 90;
     $('.content-signin').height(contentHeight);
-    
+
     $('#formModal').on('show.bs.modal', function () {
         $('#slogan-container, #social-media-wraper').addClass('hide');
     });
-    
+
+    $('#formModal').on('shown.bs.modal', function () {
+        $('#signinForm #email').focus();
+        $('#signupForm #firstName').focus();
+    });
+
     $('#formModal').on('hide.bs.modal', function () {
         $('#slogan-container, #social-media-wraper').removeClass('hide');
     });
@@ -198,8 +222,7 @@
      * @author Rio Astamal <rio@dominopos.com>
      * @return void
      */
-    orbitSignUpForm.doLogin = function()
-    {
+    orbitSignUpForm.doLogin = function() {
         var custEmail = $('#signinForm #email').val().trim();
 
         // Flag the processing
@@ -219,16 +242,23 @@
                 data: {
                     email: custEmail,
                     payload: "{{{ Input::get('payload', '') }}}",
-                    mac_address: {{ json_encode(Input::get('mac_address', '')) }}
+                    mac_address: {{ json_encode(Input::get('mac_address', '')) }},
+                    auto_login: "{{{ Input::get('auto_login', 'no') }}}",
+                    from_captive: "{{{ Input::get('from_captive', 'no') }}}"
                 }
             }).done(function (response, status, xhr) {
-                orbitSignUpForm.disableEnableAllButton();
-
                 if (response.code !== 0 && response.code !== 302) {
                     toastr.error(response.message);
                     return;
                 }
-
+                var shiftHostName = window.location.hostname.split('.');
+                    shiftHostName.shift();
+                var baseDomain = shiftHostName.join('.');
+                $.cookie('login_from', 'Form', {
+                    path: '/',
+                    expires: 3650,
+                    domain: baseDomain
+                });
                 // Cloud redirection?
                 if (response.data.redirect_to) {
                     document.location = response.data.redirect_to;
@@ -259,7 +289,7 @@
                 // @todo isplay this the error
                 orbitSignUpForm.disableEnableAllButton();
             });
-        }
+        };
 
         orbitSignUpForm.checkCustomerEmail(custEmail,
             // Send back to sign up form for unknown email
@@ -269,7 +299,6 @@
                 orbitSignUpForm.disableEnableAllButton();
 
                 orbitSignUpForm.switchForm('signup');
-                $('#signupForm #firstName').focus();
             },
             // Proceed the login for identified user
             userIdentified
@@ -317,9 +346,6 @@
                     birth_date: birthdate.day + '-' + birthdate.month + '-' + birthdate.year
                 }
             }).done(function (resp, status, xhr) {
-                orbitSignUpForm.isProcessing = false;
-                orbitSignUpForm.disableEnableAllButton();
-
                 if (resp.status === 'error') {
                     // do something
                     return;
@@ -382,7 +408,7 @@
             $('#spinner-backdrop').addClass('hide');
             return;
         }
-        
+
         $('#spinner-backdrop').removeClass('hide');
     }
 
@@ -399,9 +425,11 @@
         if (theForm === 'signin') {
             $('#signin-form-wrapper').removeClass('hide');
             $('#signup-form-wrapper').addClass('hide');
+            $('#signinForm #email').focus();
         } else {
             $('#signin-form-wrapper').addClass('hide');
             $('#signup-form-wrapper').removeClass('hide');
+            $('#signupForm #firstName').focus();
         }
     };
 
@@ -474,7 +502,50 @@
         }
     }
 
+    var errorValidationFn = function () {
+        var errorMessage = '{{isset($error) ? $error : 'No Error'}}';
+        if (errorMessage !== 'No Error') {
+            toastr(errorMessage);
+            $('#spinner-backdrop').addClass('hide');
+        }
+    },
+    inProgressFn = function () {
+        var progressStatus = {{isset($isInProgress) ? $isInProgress : 'false'}};
+        if (progressStatus === true) {
+            $('#spinner-backdrop').removeClass('hide');
+            return;
+        }
+        $('#spinner-backdrop').addClass('hide');
+    },
+    isSignedInFn = function () {
+        var displayName = '{{isset($display_name) ? $display_name : ''}}',
+            userEmail = '{{isset($user_email) ? $user_email : ''}}';
+
+        if (displayName === '' && userEmail === '') {
+            $('.logged-in-user').addClass('hide');
+            $('.logged-in-container').addClass('hide');
+
+            $('.social-media-container').removeClass('hide');
+            return;
+        }
+
+        $('.logged-in-user').removeClass('hide');
+        $('.logged-in-container').removeClass('hide');
+
+        $('.social-media-container').addClass('hide');
+    },
+    isFromCaptiveFn = function () {
+        if ('{{{ Input::get('from_captive', 'no') }}}' === 'yes') {
+            $('#social-media-wraper').addClass('hide');
+        }
+    };
+
     orbitSignUpForm.boot = function() {
+        isSignedInFn();
+        inProgressFn();
+        isFromCaptiveFn();
+        errorValidationFn();
+
         for (var i=0; i<orbitSignUpForm.formElementsInput.length; i++) {
             $(orbitSignUpForm.formElementsInput[i]).keyup(function(e) {
                 orbitSignUpForm.enableDisableSignup();
@@ -495,7 +566,7 @@
             }
         });
 
-        $('#signinForm #email').keyup(function(e) {
+        $('#signinForm #email').on('input', function(e) {
             var value = $(this).val();
 
             if (isValidEmailAddress(value)) {
@@ -503,6 +574,29 @@
             } else {
                 $('#btn-signin-form').attr('disabled', 'disabled');
             }
+        });
+
+        $('#logged-in-signin-button').click(function() {
+            var loginFrom = '{{$login_from}}';
+
+            switch (loginFrom) {
+                case 'Form':
+                    orbitSignUpForm.doLogin();
+                    break;
+                case 'Facebook':
+                    $('#fbLoginButton').click();
+                    break;
+                case 'Google':
+                    $('#googleLoginButton').click();
+                    break;
+            }
+        });
+
+        $('#not-me').click(function () {
+            var currentDomain = orbitGetDomainName();
+            $.removeCookie('orbit_email', {path: '/', domain: currentDomain});
+            $.removeCookie('orbit_firstname', {path: '/', domain: currentDomain});
+            window.location.replace('/customer/logout?not_me=true');
         });
 
         $('#btn-signin-form').click(function(e) {
