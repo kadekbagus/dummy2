@@ -403,17 +403,17 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             // Return the instance of Query Builder
-            // if ($this->returnBuilder) {
-            //     return [
-            //         'builder' => $campaign,
-            //         'count' => $_campaign->count(),
-            //         'totalRecord' => $totalCampaign,
-            //         'totalPageViews' => $totalPageViews,
-            //         'totalPopUpViews' => $totalPopUpViews,
-            //         'totalSpending' => $totalSpending,
-            //         'totalEstimatedCost' => $totalEstimatedCost,
-            //     ];
-            // }
+            if ($this->returnBuilder) {
+                return [
+                    'builder' => $campaign,
+                    'count' => $_campaign->count(),
+                    'totalRecord' => $totalCampaign,
+                    'totalPageViews' => $totalPageViews,
+                    'totalPopUpViews' => $totalPopUpViews,
+                    'totalSpending' => $totalSpending,
+                    'totalEstimatedCost' => $totalEstimatedCost,
+                ];
+            }
 
             $campaign->orderBy($sortBy, $sortMode);
 
@@ -903,16 +903,24 @@ class CampaignReportAPIController extends ControllerAPI
             $campaign_id = OrbitInput::get('campaign_id');
             $campaign_type = OrbitInput::get('campaign_type');
             $campaign_date = OrbitInput::get('campaign_date');
+            $current_mall = OrbitInput::get('current_mall');
 
             $this->registerCustomValidation();
 
+
+
+
+
+
             $validator = Validator::make(
                 array(
+                    'current_mall' => $current_mall,
                     'campaign_id' => $campaign_id,
                     'campaign_type' => $campaign_type,
                     'campaign_date' => $campaign_date,
                 ),
                 array(
+                    'current_mall' => 'required|orbit.empty.mall',
                     'campaign_id' => 'required',
                     'campaign_type' => 'required',
                     'campaign_date' => 'required',
@@ -949,7 +957,6 @@ class CampaignReportAPIController extends ControllerAPI
                     $perPage = 20;
                 }
             }
-
 
             $mall = App::make('orbit.empty.mall');
             $timezone = $this->getTimezone($mall->merchant_id);
