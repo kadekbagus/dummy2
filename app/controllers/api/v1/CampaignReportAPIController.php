@@ -950,21 +950,47 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             }
 
+
+            $mall = App::make('orbit.empty.mall');
+            $timezone = $this->getTimezone($mall->merchant_id);
+
+            // Get now date with timezone
+            $timezoneOffset = $this->getTimezoneOffset($timezone);
+
             // Builder object
             $tablePrefix = DB::getTablePrefix();
 
             if ($campaign_type === 'news' or $campaign_type === 'promotion') {
-                $linkToTenants = DB::table('news_merchant')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
-                    ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                    ->where('news_merchant.news_id', $campaign_id)
-                    ->where('merchants.status', 'active')
-                    ->get();
-            } elseif ($campaign_type === 'coupon') {
-                $linkToTenants = DB::table('promotion_retailer')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
-                    ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                    ->where('promotion_retailer.promotion_id', $campaign_id)
-                    ->where('merchants.status', 'active')
-                    ->get();
+                $linkToTenants = DB::select(DB::raw("
+                            SELECT
+                                och.campaign_id,
+                                och.campaign_history_action_id,
+                                ocha.action_name,
+                                och.campaign_external_value,
+                                om.name,
+                                DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                            FROM
+                                {$tablePrefix}campaign_histories och
+                            LEFT JOIN
+                                {$tablePrefix}campaign_history_actions ocha
+                            ON och.campaign_history_action_id = ocha.campaign_history_action_id
+                            LEFT JOIN
+                                {$tablePrefix}merchants om
+                            ON om.merchant_id = och.campaign_external_value
+                            WHERE
+                                och.campaign_history_action_id IN ('KcCyuvkMAg-XeXqh', 'KcCyuvkMAg-XeXqi')
+                                AND och.campaign_external_value NOT IN
+                                    (SELECT campaign_external_value
+                                    FROM {$tablePrefix}campaign_histories
+                                    WHERE campaign_history_action_id = 'KcCyuvkMAg-XeXqi'
+                                    AND {$tablePrefix}campaign_histories.campaign_id = och.campaign_id
+                                    AND DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($campaign_date)})
+                                AND och.campaign_type COLLATE utf8_unicode_ci = {$this->quote($campaign_type)} COLLATE utf8_unicode_ci
+                                AND och.campaign_id =  {$this->quote($campaign_id)}
+                                AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($campaign_date)}
+                            group by och.campaign_external_value
+                            ORDER BY och.created_at DESC, ocha.action_name
+                    "));
             }
 
             $this->response->data = $linkToTenants;
