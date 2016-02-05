@@ -1621,12 +1621,9 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Add to output array
             $outputs[] = [
-                'date' => $carbonLoop->setTimezone($mallTimezone)->toDateString(),
+                'date' => $carbonLoop->toDateString(),
                 'cost' => (int) $cost, // Format cost as integer
             ];
-
-            // Set it back to UTC
-            $carbonLoop->setTimezone('UTC');
 
             // Increment day by 1
             $carbonLoop->addDay();
