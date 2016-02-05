@@ -962,12 +962,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             $linkToTenants = DB::select(DB::raw("
                         SELECT
-                            och.campaign_id,
-                            och.campaign_history_action_id,
-                            ocha.action_name,
-                            och.campaign_external_value,
-                            om.name,
-                            DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                            om.name
                         FROM
                             {$tablePrefix}campaign_histories och
                         LEFT JOIN
