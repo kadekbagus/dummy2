@@ -21,11 +21,19 @@ Route::get('/api/v1/campaign-report-detail/list', function()
 });
 
 /**
- * Campaign Report Detail Listing
+ * Get Tenant Campaign Summary
  */
 Route::get('/api/v1/tenant-campaign-summary/list', function()
 {
     return CampaignReportAPIController::create()->getTenantCampaignSummary();
+});
+
+/**
+ * Get Tenant Campaign Detail
+ */
+Route::get('/api/v1/tenant-campaign-detail/list', function()
+{
+    return CampaignReportAPIController::create()->getTenantCampaignDetail();
 });
 
 /**

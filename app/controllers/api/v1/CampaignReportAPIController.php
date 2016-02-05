@@ -267,7 +267,6 @@ class CampaignReportAPIController extends ControllerAPI
             // Make union result subquery
             $campaign = DB::table(DB::raw('(' . $sql . ') as a'));
 
-
             // Filter by campaign name
             OrbitInput::get('campaign_name', function($campaign_name) use ($campaign) {
                 $campaign->where('campaign_name', 'like', "%$campaign_name%");
@@ -402,6 +401,19 @@ class CampaignReportAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
+
+            // Return the instance of Query Builder
+            // if ($this->returnBuilder) {
+            //     return [
+            //         'builder' => $campaign,
+            //         'count' => $_campaign->count(),
+            //         'totalRecord' => $totalCampaign,
+            //         'totalPageViews' => $totalPageViews,
+            //         'totalPopUpViews' => $totalPopUpViews,
+            //         'totalSpending' => $totalSpending,
+            //         'totalEstimatedCost' => $totalEstimatedCost,
+            //     ];
+            // }
 
             $campaign->orderBy($sortBy, $sortMode);
 
@@ -853,27 +865,28 @@ class CampaignReportAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string   `campaign_id            (required) - Campaign id (news_id, promotion_id, coupon_id)
-     * @param string   `campaign_type          (required) - news, promotion, coupon
+     * @param string   `campaign_id`            (required) - Campaign id (news_id, promotion_id, coupon_id)
+     * @param string   `campaign_type`          (required) - news, promotion, coupon
+     * @param string   `campaign_date`          (required) - date campaign
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getTenantCampaignSummary()
+    public function getTenantCampaignDetail()
     {
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.before.auth', array($this));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.after.auth', array($this));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.after.auth', array($this));
 
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.before.authz', array($this, $user));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -883,12 +896,13 @@ class CampaignReportAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.after.authz', array($this, $user));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
 
             $campaign_id = OrbitInput::get('campaign_id');
             $campaign_type = OrbitInput::get('campaign_type');
+            $campaign_date = OrbitInput::get('campaign_date');
 
             $this->registerCustomValidation();
 
@@ -896,24 +910,26 @@ class CampaignReportAPIController extends ControllerAPI
                 array(
                     'campaign_id' => $campaign_id,
                     'campaign_type' => $campaign_type,
+                    'campaign_date' => $campaign_date,
                 ),
                 array(
                     'campaign_id' => 'required',
                     'campaign_type' => 'required',
+                    'campaign_date' => 'required',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
                 )
             );
 
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.before.validation', array($this, $validator));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.after.validation', array($this, $validator));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.after.validation', array($this, $validator));
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.coupon.max_record');
@@ -954,7 +970,7 @@ class CampaignReportAPIController extends ControllerAPI
             $this->response->data = $linkToTenants;
 
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.access.forbidden', array($this, $e));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -962,7 +978,7 @@ class CampaignReportAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.invalid.arguments', array($this, $e));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -974,7 +990,7 @@ class CampaignReportAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 400;
         } catch (QueryException $e) {
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.query.error', array($this, $e));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -988,7 +1004,7 @@ class CampaignReportAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.general.exception', array($this, $e));
+            Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -997,7 +1013,164 @@ class CampaignReportAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.campaignreportdetail.getcampaignreportdetail.before.render', array($this, &$output));
+        Event::fire('orbit.campaignreportdetail.gettenantcampaignsummary.before.render', array($this, &$output));
+
+        return $output;
+    }
+
+
+    /**
+     * GET - Get Tenant Per Campaign
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string   `campaign_id            (required) - Campaign id (news_id, promotion_id, coupon_id)
+     * @param string   `campaign_type          (required) - news, promotion, coupon
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getTenantCampaignSummary()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $campaign_id = OrbitInput::get('campaign_id');
+            $campaign_type = OrbitInput::get('campaign_type');
+
+            $this->registerCustomValidation();
+
+            $validator = Validator::make(
+                array(
+                    'campaign_id' => $campaign_id,
+                    'campaign_type' => $campaign_type,
+                ),
+                array(
+                    'campaign_id' => 'required',
+                    'campaign_type' => 'required',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
+                )
+            );
+
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.after.validation', array($this, $validator));
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.coupon.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.coupon.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
+            }
+
+            $tablePrefix = DB::getTablePrefix();
+
+            // Builder object
+            if ($campaign_type === 'news' or $campaign_type === 'promotion') {
+                $linkToTenants = DB::table('news_merchant')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
+                    ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                    ->where('news_merchant.news_id', $campaign_id)
+                    ->where('merchants.status', 'active')
+                    ->get();
+            } elseif ($campaign_type === 'coupon') {
+                $linkToTenants = DB::table('promotion_retailer')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
+                    ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                    ->where('promotion_retailer.promotion_id', $campaign_id)
+                    ->where('merchants.status', 'active')
+                    ->get();
+            }
+
+            $this->response->data = $linkToTenants;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 400;
+        } catch (QueryException $e) {
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = 'null';
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.campaignreportdetail.gettenantcampaigndetail.before.render', array($this, &$output));
 
         return $output;
     }
