@@ -1459,6 +1459,12 @@ class CampaignReportAPIController extends ControllerAPI
             $carbonLoop->addDay();
         }
 
+        // Debug the proc call
+        if (Config::get('app.debug')) {
+            $procCall = sprintf(str_replace('?', "'%s'", $procCallStatement), $id, $type, $requestBeginDate, $requestEndDate, $hoursDiff);
+            Log::info('Proc call: '.$procCall);
+        }
+
         $this->response->data = $outputs;
 
         return $this->render(200);
