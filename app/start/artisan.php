@@ -35,6 +35,9 @@ Artisan::add(new DeleteInactiveCISessions);
 // Insert campaign base price for merchant
 Artisan::add(new BasePrice);
 
+//Create/install function and stored procedure
+Artisan::add(new MysqlStoredProcedure);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
