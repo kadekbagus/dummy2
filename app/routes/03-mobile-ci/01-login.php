@@ -566,7 +566,7 @@ Route::group(
          */
         Route::get('/app/v1/inbox/unread-count', function()
         {
-            return InboxAPIController::create()->getPollAlert();
+            return InboxAPIController::create()->getPollMessages();
         });
 
         /**
