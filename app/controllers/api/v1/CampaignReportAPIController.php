@@ -402,23 +402,22 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             });
 
+            $campaign->orderBy($sortBy, $sortMode);
+
+            $totalCampaign = $_campaign->count();
+            $listOfCampaign = $campaign->get();
+
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
                 return [
                     'builder' => $campaign,
                     'count' => $_campaign->count(),
-                    'totalRecord' => $totalCampaign,
                     'totalPageViews' => $totalPageViews,
-                    'totalPopUpViews' => $totalPopUpViews,
+                    'totalPopUpViews' => $totalPopupViews,
                     'totalSpending' => $totalSpending,
-                    'totalEstimatedCost' => $totalEstimatedCost,
+                    'totalEstimatedCost' => $totalEstimated,
                 ];
             }
-
-            $campaign->orderBy($sortBy, $sortMode);
-
-            $totalCampaign = $_campaign->count();
-            $listOfCampaign = $campaign->get();
 
             $data = new stdclass();
             $data->total_records = $totalCampaign;
@@ -906,11 +905,6 @@ class CampaignReportAPIController extends ControllerAPI
             $current_mall = OrbitInput::get('current_mall');
 
             $this->registerCustomValidation();
-
-
-
-
-
 
             $validator = Validator::make(
                 array(

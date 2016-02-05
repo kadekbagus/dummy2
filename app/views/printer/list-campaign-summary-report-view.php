@@ -202,50 +202,25 @@
             <th style="text-align:left;">Spending (IDR)</th>
             <th style="text-align:left;">Status</th>
         </thead>
-
         <tbody>
-            <?php
-            $no  = 1;
-            if ($totalRecord > 0) {
-                foreach ($data as $key => $value) {
-                    ?>
-                        <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                            <td><?php echo $no; ?></td>
-                            <td><?php echo htmlentities($value->campaign_name); ?></td>
-                            <td><?php echo htmlentities($value->campaign_type); ?></td>
-                            <td><?php echo $value->total_tenant; ?></td>
-                            <td><?php echo htmlentities($value->mall_name); ?></td>
-                            <td><?php echo $this->printDateTime($value->begin_date, $timezone, 'd M Y') . ' - ' . $this->printDateTime($value->end_date, $timezone, 'd M Y'); ?></td>
-                            <td><?php echo $value->page_views; ?></td>
-                            <td><?php echo $value->popup_views; ?></td>
-                            <td><?php echo $value->popup_clicks; ?></td>
-                            <td>
-                                <?php
-                                    $base_price_fix = str_replace('.00', '', $value->base_price);
-                                    echo number_format($base_price_fix,0,',','.');
-                                ?>
-                            </td>
-                            <td>
-                                <?php
-                                    $estimated_total_fix = str_replace('.00', '', $value->estimated_total);
-                                    echo number_format($estimated_total_fix,0,',','.');
-                                ?>
-                            </td>
-                            <td>
-                                <?php
-                                    $spending_fix = str_replace('.00', '', $value->spending);
-                                    echo number_format($spending_fix,0,',','.');
-                                ?>
-                            </td>
-                            <td><?php echo $value->status; ?></td>
-                        </tr>
-                    <?php
-                    $no++;
-                }
-            }
-            ?>
+            <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
+                <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
+                    <td><?php echo $count++; ?></td>
+                    <td><?php echo htmlentities($row->campaign_name); ?></td>
+                    <td><?php echo htmlentities($row->campaign_type); ?></td>
+                    <td><?php echo $row->total_tenant; ?></td>
+                    <td><?php echo htmlentities($row->mall_name); ?></td>
+                    <td><?php echo $this->printDateTime($row->begin_date, $timezone, 'd M Y') . ' - ' . $this->printDateTime($row->end_date, $timezone, 'd M Y'); ?></td>
+                    <td><?php echo $row->page_views; ?></td>
+                    <td><?php echo $row->popup_views; ?></td>
+                    <td><?php echo $row->popup_clicks; ?></td>
+                    <td><?php echo number_format($row->base_price, 0); ?></td>
+                    <td><?php echo number_format($row->estimated_total, 0); ?></td>
+                    <td><?php echo number_format($row->spending, 0); ?></td>
+                    <td><?php echo $row->status; ?></td>
+                </tr>
+            <?php endwhile ; ?>
         </tbody>
-
     </table>
 </div>
 

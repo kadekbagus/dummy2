@@ -32,14 +32,28 @@ class CampaignReportPrinterController extends DataPrinterController
                                             ->setReturnBuilder(TRUE)
                                             ->getCampaignReportSummary();
 
-        $data = $response->data->records;
+        if (! is_array($response)) {
+            return Response::make($response->message);
+        }
 
         // get total data
-        $totalRecord = $response->data->total_records;
-        $totalPageViews = $response->data->total_page_views;
-        $totalPopUpViews = $response->data->total_pop_up_views;
-        $totalEstimatedCost = $response->data->total_estimated_cost;
-        $totalSpending = $response->data->total_spending;
+        $campaign = $response['builder'];
+        $totalRecord = $response['count'];
+        $totalPageViews = $response['totalPageViews'];
+        $totalPopUpViews = $response['totalPopUpViews'];
+        $totalEstimatedCost = $response['totalEstimatedCost'];
+        $totalSpending = $response['totalSpending'];
+
+
+        $pdo = DB::Connection()->getPdo();
+
+        $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
+
+        $sql = $campaign->toSql();
+        $binds = $campaign->getBindings();
+
+        $statement = $pdo->prepare($sql);
+        $statement->execute($binds);
 
         // Filter mode
         $filter = '';
@@ -50,9 +64,6 @@ class CampaignReportPrinterController extends DataPrinterController
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
         $status = OrbitInput::get('status');
-
-
-        $this->prepareUnbufferedQuery();
 
         $pageTitle = 'Campaign Summary Report';
 
@@ -93,33 +104,26 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Tenants', 'Mall', 'Campaign Dates', 'Page Views', 'Pop Up Views', 'Pop Up Clicks', 'Daily Cost (IDR)', 'Estimated Total Cost (IDR)', 'Spending (IDR)', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
-                $no  = 1;
-                if ($totalRecord > 0) {
-                    foreach ($data as $key => $value) {
-                        $base_price_fix = str_replace('.00', '', $value->base_price);
-                        $estimated_total_fix = str_replace('.00', '', $value->estimated_total);
-                        $spending_fix = str_replace('.00', '', $value->spending);
-
+                $count = 1;
+                while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
-                                $no,
-                                $value->campaign_name,
-                                $value->campaign_type,
-                                $value->total_tenant,
-                                $value->mall_name,
-                                $this->printDateTime($value->begin_date, $timezone, 'd M Y'),
-                                $this->printDateTime($value->end_date, $timezone, 'd M Y'),
-                                $value->page_views,
-                                $value->popup_views,
-                                $value->popup_clicks,
-                                $base_price_fix,
-                                $estimated_total_fix,
-                                $spending_fix,
-                                $value->status
-                        );
-                        $no++;
-                    }
+                            $count,
+                            $row->campaign_name,
+                            $row->campaign_type,
+                            $row->total_tenant,
+                            $row->mall_name,
+                            $this->printDateTime($row->begin_date, $timezone, 'd M Y'),
+                            $this->printDateTime($row->end_date, $timezone, 'd M Y'),
+                            $row->page_views,
+                            $row->popup_views,
+                            $row->popup_clicks,
+                            number_format($row->base_price, 0),
+                            number_format($row->estimated_total, 0),
+                            number_format($row->spending, 0),
+                            $row->status
+                    );
+                    $count++;
                 }
-
                 break;
 
             case 'print':
@@ -210,7 +214,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $row->campaign_date,
+                            $this->printDateTime($row->campaign_date, $timezone, 'd M Y'),
                             htmlentities($row->mall_name),
                             $row->unique_users,
                             $row->campaign_pages_views,
