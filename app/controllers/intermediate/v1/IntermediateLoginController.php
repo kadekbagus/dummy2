@@ -536,6 +536,9 @@ class IntermediateLoginController extends IntermediateBaseController
         $mac = OrbitInput::post('mac', '');
         $timestamp = (int)OrbitInput::post('timestamp', 0);
 
+        $auto_login = OrbitInput::get('auto_login', 'no');
+        $from_captive = OrbitInput::get('from_captive', 'no');
+
         $status = OrbitInput::post('status', 'failed');
         if ($status !== 'success') {
             $message = OrbitInput::post('message');
@@ -562,6 +565,8 @@ class IntermediateLoginController extends IntermediateBaseController
             'user_acquisition_id' => $user_acquisition_id,
             'user' => $user,
             'user_detail' => $user_detail,
+            'auto_login' => $auto_login,
+            'from_captive' => $from_captive
         ])) {
             return $this->displayValidationError(true);
         }
