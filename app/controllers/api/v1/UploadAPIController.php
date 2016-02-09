@@ -42,7 +42,7 @@ class UploadAPIController extends ControllerAPI
 
             foreach($keys as $key) {
                 $type = (string)$key;
-                if (!preg_match('/^[a-z.]+$/', $type)) {
+                if (!preg_match('/^[a-z._]+$/', $type)) {
                     OrbitShopAPI::throwInvalidArgument('Type must be alphabetic separated by dots');
                 }
                 $config = Config::get('orbit.upload.' . $type, null);
