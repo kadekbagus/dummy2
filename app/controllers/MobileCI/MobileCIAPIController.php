@@ -2734,6 +2734,7 @@ class MobileCIAPIController extends ControllerAPI
             if ($listOfRec->isEmpty()) {
                 $data = new stdclass();
                 $data->status = 0;
+                $data->custom_message = Config::get('orbit.lucky_draw.custom_message', '');
             } else {
                 $data = new stdclass();
                 $data->status = 1;

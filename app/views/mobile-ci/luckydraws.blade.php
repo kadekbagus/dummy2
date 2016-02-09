@@ -6,88 +6,88 @@
 
 @section('content')
     @if($data->status === 1)
-        @if(sizeof($data->records) > 0)
-            <div class="catalogue-wrapper">
-            @foreach($data->records as $luckydraw)
-                <div class="main-theme-mall catalogue catalogue-other" id="product-{{$luckydraw->lucky_draw_id}}">
-                    <div class="row catalogue-top">
-                        <div class="col-xs-3 catalogue-img">
-                            <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
-                                <span class="link-spanner-other"></span>
-                                @if(!empty($luckydraw->image))
-                                <img class="img-responsive" alt="" src="{{ asset($luckydraw->image) }}">
+        <div class="catalogue-wrapper">
+        @foreach($data->records as $luckydraw)
+            <div class="main-theme-mall catalogue catalogue-other" id="product-{{$luckydraw->lucky_draw_id}}">
+                <div class="row catalogue-top">
+                    <div class="col-xs-3 catalogue-img">
+                        <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
+                            <span class="link-spanner-other"></span>
+                            @if(!empty($luckydraw->image))
+                            <img class="img-responsive" alt="" src="{{ asset($luckydraw->image) }}">
+                            @else
+                            <img class="img-responsive" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}"/>
+                            @endif
+                        </a>
+                    </div>
+                    <div class="col-xs-9 catalogue-info">
+                        <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
+                            <span class="link-spanner-other"></span>
+                            <h4>{{ $luckydraw->lucky_draw_name }}</h4>
+                            <p>
+                            {{-- Limit description per two line and 64 total character --}}
+                            <?php
+                                $desc = explode("\n", $luckydraw->description);
+                            ?>
+                            @if (mb_strlen($luckydraw->description) > 64)
+                                @if (count($desc) > 2)
+                                    <?php
+                                        $two_row = array_slice($desc, 0, 2);
+                                    ?>
+                                    @foreach ($two_row as $key => $value)
+                                        @if ($key === 0)
+                                            {{{ $value }}} <br>
+                                        @else
+                                            {{{ $value }}} ...
+                                        @endif
+                                    @endforeach
                                 @else
-                                <img class="img-responsive" src="{{ asset('mobile-ci/images/default_lucky_number.png') }}"/>
+                                    {{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') . '...' }}}
                                 @endif
-                            </a>
-                        </div>
-                        <div class="col-xs-9 catalogue-info">
-                            <a href="{{ url('customer/luckydraw?id='.$luckydraw->lucky_draw_id) }}">
-                                <span class="link-spanner-other"></span>
-                                <h4>{{ $luckydraw->lucky_draw_name }}</h4>
-                                <p>
-                                {{-- Limit description per two line and 64 total character --}}
-                                <?php
-                                    $desc = explode("\n", $luckydraw->description);
-                                ?>
-                                @if (mb_strlen($luckydraw->description) > 64)
-                                    @if (count($desc) > 2)
-                                        <?php
-                                            $two_row = array_slice($desc, 0, 2);
-                                        ?>
-                                        @foreach ($two_row as $key => $value)
-                                            @if ($key === 0)
-                                                {{{ $value }}} <br>
-                                            @else
-                                                {{{ $value }}} ...
-                                            @endif
-                                        @endforeach
-                                    @else
-                                        {{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') . '...' }}}
-                                    @endif
+                            @else
+                                @if (count($desc) > 2)
+                                    <?php
+                                        $two_row = array_slice($desc, 0, 2);
+                                    ?>
+                                    @foreach ($two_row as $key => $value)
+                                        @if ($key === 0)
+                                            {{{ $value }}} <br>
+                                        @else
+                                            {{{ $value }}} ...
+                                        @endif
+                                    @endforeach
                                 @else
-                                    @if (count($desc) > 2)
-                                        <?php
-                                            $two_row = array_slice($desc, 0, 2);
-                                        ?>
-                                        @foreach ($two_row as $key => $value)
-                                            @if ($key === 0)
-                                                {{{ $value }}} <br>
-                                            @else
-                                                {{{ $value }}} ...
-                                            @endif
-                                        @endforeach
-                                    @else
-                                        {{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') }}}
-                                    @endif
+                                    {{{ mb_substr($luckydraw->description, 0, 64, 'UTF-8') }}}
                                 @endif
-                                </p>
-                            </a>
-                        </div>
+                            @endif
+                            </p>
+                        </a>
                     </div>
                 </div>
-            @endforeach
             </div>
-            @if($data->returned_records < $data->total_records)
-                <div class="row">
-                    <div class="col-xs-12 padded">
-                        <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
-                    </div>
-                </div>
-            @endif
-        @else
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>{{ Lang::get('mobileci.greetings.latest_luckydraw_coming_soon') }}</h4>
+        @endforeach
+        </div>
+        @if($data->returned_records < $data->total_records)
+            <div class="row">
+                <div class="col-xs-12 padded">
+                    <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
                 </div>
             </div>
         @endif
     @else
+        @if(! empty($data->custom_message))
+        <div class="row padded">
+            <div class="col-xs-12">
+                {{ $data->custom_message }}
+            </div>
+        </div>
+        @else
         <div class="row padded">
             <div class="col-xs-12">
                 <h4>{{ Lang::get('mobileci.greetings.latest_luckydraw_coming_soon') }}</h4>
             </div>
         </div>
+        @endif
     @endif
 @stop
 
