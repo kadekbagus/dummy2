@@ -214,16 +214,16 @@ class CampaignReportPrinterController extends DataPrinterController
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $this->printDateTime($row->campaign_date, $timezone, 'd M Y'),
+                            date('d M Y', strtotime($row->campaign_date)),
                             htmlentities($row->mall_name),
                             $row->unique_users,
                             $row->campaign_pages_views,
-                            $row->campaign_pages_view_rate,
+                            round($row->campaign_pages_view_rate, 2),
                             $row->popup_views,
-                            $row->popup_view_rate,
+                            round($row->popup_view_rate, 2),
                             $row->popup_clicks,
-                            $row->popup_click_rate,
-                            $row->spending
+                            round($row->popup_click_rate, 2),
+                            number_format($row->spending, 0)
                     );
                     $count++;
                 }

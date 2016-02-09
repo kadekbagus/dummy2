@@ -187,15 +187,15 @@
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
-                    <td><?php echo $row->campaign_date; ?></td>
+                    <td><?php echo date('d M Y', strtotime($row->campaign_date)); ?></td>
                     <td><?php echo htmlentities($row->mall_name); ?></td>
                     <td><?php echo $row->unique_users; ?></td>
                     <td><?php echo $row->campaign_pages_views; ?></td>
-                    <td><?php echo $row->campaign_pages_view_rate; ?></td>
+                    <td><?php echo round($row->campaign_pages_view_rate, 2); ?></td>
                     <td><?php echo $row->popup_views; ?></td>
-                    <td><?php echo $row->popup_view_rate; ?></td>
+                    <td><?php echo round($row->popup_view_rate, 2); ?></td>
                     <td><?php echo $row->popup_clicks; ?></td>
-                    <td><?php echo $row->popup_click_rate; ?></td>
+                    <td><?php echo round($row->popup_click_rate, 2); ?></td>
                     <td><?php echo number_format($row->spending, 0); ?></td>
                 </tr>
             <?php endwhile ; ?>
