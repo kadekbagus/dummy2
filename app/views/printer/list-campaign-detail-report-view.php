@@ -120,27 +120,27 @@
         <tr>
             <td>Active campaign days</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalCampaign, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalCampaign, 0); ?></strong></td>
         </tr>
         <tr>
             <td>Total page views</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalPageViews, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
         <tr>
             <td>Total pop up views</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalPopupViews, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalPopupViews, 0); ?></strong></td>
         </tr>
         <tr>
             <td>Total pop up clicks</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalPopupClicks, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalPopupClicks, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total spending</td>
+            <td>Total spending (IDR)</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
         </tr>
 
 
