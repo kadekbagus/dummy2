@@ -161,7 +161,7 @@
             </tr>
         <?php } elseif($mallName != '') { ?>
             <tr>
-                <td>Filter by Location</td>
+                <td>Filter by Mall</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
@@ -173,7 +173,8 @@
         <thead>
             <th style="text-align:left;">No</th>
             <th style="text-align:left;">Date</th>
-            <th style="text-align:left;">Location</th>
+            <th style="text-align:left;">Tenants</th>
+            <th style="text-align:left;">Mall</th>
             <th style="text-align:left;">Unique users</th>
             <th style="text-align:left;">Campaign page views</th>
             <th style="text-align:left;">Campaign page view rate (%)</th>
@@ -187,7 +188,8 @@
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
                 <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
                     <td><?php echo $count++; ?></td>
-                    <td><?php echo date('d M Y', strtotime($row->campaign_date)); ?></td>
+                    <td><?php echo $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'); ?></td>
+                    <td><?php echo $row->total_tenant; ?></td>
                     <td><?php echo htmlentities($row->mall_name); ?></td>
                     <td><?php echo $row->unique_users; ?></td>
                     <td><?php echo $row->campaign_pages_views; ?></td>
