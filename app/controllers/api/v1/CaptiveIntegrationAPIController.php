@@ -449,7 +449,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
             $macs->skip($skip);
 
             // Default sort by
-            $sortBy = 'mac_addresses.created_at';
+            $sortBy = 'mac_addresses.updated_at';
             // Default sort mode
             $sortMode = 'desc';
 
@@ -457,6 +457,7 @@ class CaptiveIntegrationAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'created_at'              => 'mac_addresses.created_at',
+                    'updated_at'              => 'mac_addresses.updated_at',
                     'mac'                     => 'mac_addresses.mac_address',
                     'email'                   => 'mac_addresses.email'
                 );
