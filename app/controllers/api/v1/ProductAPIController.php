@@ -92,7 +92,7 @@ class ProductAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $product_id = OrbitInput::post('product_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('current_mall');;
 
             // product_code is the same as SKU
             $product_code = OrbitInput::post('product_code');
@@ -121,15 +121,15 @@ class ProductAPIController extends ControllerAPI
                     'product_variants_delete'    => $product_combinations_delete
                 ),
                 array(
-                    'product_id'        => 'required|numeric|orbit.empty.product',
+                    'product_id'        => 'required|orbit.empty.product',
                     'upc_code'          => 'orbit.exists.product.upc_code_but_me',
                     'product_code'      => 'orbit.exists.product.sku_code_but_me',
-                    'merchant_id'       => 'numeric|orbit.empty.merchant',
-                    'category_id1'      => 'numeric|orbit.empty.category_id1',
-                    'category_id2'      => 'numeric|orbit.empty.category_id2',
-                    'category_id3'      => 'numeric|orbit.empty.category_id3',
-                    'category_id4'      => 'numeric|orbit.empty.category_id4',
-                    'category_id5'      => 'numeric|orbit.empty.category_id5',
+                    'merchant_id'       => 'orbit.empty.merchant',
+                    'category_id1'      => 'orbit.empty.category_id1',
+                    'category_id2'      => 'orbit.empty.category_id2',
+                    'category_id3'      => 'orbit.empty.category_id3',
+                    'category_id4'      => 'orbit.empty.category_id4',
+                    'category_id5'      => 'orbit.empty.category_id5',
                     'product_variants_delete'   => 'array|orbit.empty.product_variant_array'
                 ),
                 array(
@@ -145,15 +145,15 @@ class ProductAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postupdateproduct.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postupdateproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedproduct = App::make('orbit.empty.product');
             App::instance('memory:current.updated.product', $updatedproduct);
@@ -267,7 +267,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id1) === '') {
                     $category_id1 = NULL;
                 }
-                $updatedproduct->category_id1 = (int) $category_id1;
+                $updatedproduct->category_id1 =  $category_id1;
                 $updatedproduct->load('category1');
             });
 
@@ -275,7 +275,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id2) === '') {
                     $category_id2 = NULL;
                 }
-                $updatedproduct->category_id2 = (int) $category_id2;
+                $updatedproduct->category_id2 =  $category_id2;
                 $updatedproduct->load('category2');
             });
 
@@ -283,7 +283,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id3) === '') {
                     $category_id3 = NULL;
                 }
-                $updatedproduct->category_id3 = (int) $category_id3;
+                $updatedproduct->category_id3 =  $category_id3;
                 $updatedproduct->load('category3');
             });
 
@@ -291,7 +291,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id4) === '') {
                     $category_id4 = NULL;
                 }
-                $updatedproduct->category_id4 = (int) $category_id4;
+                $updatedproduct->category_id4 =  $category_id4;
                 $updatedproduct->load('category4');
             });
 
@@ -299,7 +299,7 @@ class ProductAPIController extends ControllerAPI
                 if (trim($category_id5) === '') {
                     $category_id5 = NULL;
                 }
-                $updatedproduct->category_id5 = (int) $category_id5;
+                $updatedproduct->category_id5 =  $category_id5;
                 $updatedproduct->load('category5');
             });
 
@@ -321,7 +321,7 @@ class ProductAPIController extends ControllerAPI
 
                         ),
                         array(
-                            'retailer_id'   => 'numeric|orbit.empty.retailer',
+                            'retailer_id'   => 'orbit.empty.retailer',
                         )
                     );
 
@@ -1147,7 +1147,7 @@ class ProductAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('current_mall');;
 
             // This product_code is the same as SKU
             $product_code = OrbitInput::post('product_code');
@@ -1188,16 +1188,16 @@ class ProductAPIController extends ControllerAPI
                     'category_id5'      => $category_id5,
                 ),
                 array(
-                    'merchant_id'           => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'           => 'required|orbit.empty.merchant',
                     'product_name'          => 'required',
                     'status'                => 'required|orbit.empty.product_status',
                     'upc_code'              => 'orbit.exists.product.upc_code',
                     'product_code'          => 'orbit.exists.product.sku_code',
-                    'category_id1'          => 'numeric|orbit.empty.category_id1',
-                    'category_id2'          => 'numeric|orbit.empty.category_id2',
-                    'category_id3'          => 'numeric|orbit.empty.category_id3',
-                    'category_id4'          => 'numeric|orbit.empty.category_id4',
-                    'category_id5'          => 'numeric|orbit.empty.category_id5',
+                    'category_id1'          => 'orbit.empty.category_id1',
+                    'category_id2'          => 'orbit.empty.category_id2',
+                    'category_id3'          => 'orbit.empty.category_id3',
+                    'category_id4'          => 'orbit.empty.category_id4',
+                    'category_id5'          => 'orbit.empty.category_id5',
                 ),
                 array(
                     // Duplicate UPC error message
@@ -1214,6 +1214,9 @@ class ProductAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postnewproduct.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -1227,7 +1230,7 @@ class ProductAPIController extends ControllerAPI
 
                     ),
                     array(
-                        'retailer_id'   => 'numeric|orbit.empty.retailer',
+                        'retailer_id'   => 'orbit.empty.retailer',
                     )
                 );
 
@@ -1243,9 +1246,6 @@ class ProductAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.product.postnewproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $newproduct = new Product();
             $newproduct->merchant_id = $merchant_id;
@@ -1526,11 +1526,14 @@ class ProductAPIController extends ControllerAPI
                     'product_id' => $product_id,
                 ),
                 array(
-                    'product_id' => 'required|numeric|orbit.empty.product|orbit.exists.product_have_transaction',
+                    'product_id' => 'required|orbit.empty.product|orbit.exists.product_have_transaction',
                 )
             );
 
             Event::fire('orbit.product.postdeleteproduct.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -1538,9 +1541,6 @@ class ProductAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postdeleteproduct.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deleteproduct = Product::excludeDeleted()->allowedForUser($user)->where('product_id', $product_id)->first();
             $deleteproduct->status = 'deleted';
@@ -1702,7 +1702,7 @@ class ProductAPIController extends ControllerAPI
         // Check the existance of retailer id
         Validator::extend('orbit.empty.retailer', function ($attribute, $value, $parameters) {
             $merchant = App::make('orbit.empty.merchant');
-            $retailer = Retailer::excludeDeleted()->allowedForUser($this->api->user)
+            $retailer = Mall::excludeDeleted()->allowedForUser($this->api->user)
                         ->where('merchant_id', $value)
                         ->where('parent_id', $merchant->merchant_id)
                         ->first();

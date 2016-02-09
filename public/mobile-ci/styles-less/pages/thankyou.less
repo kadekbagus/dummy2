@@ -60,13 +60,26 @@ canvas{
     padding:0;
   }
 }
+.countdown{
+  
+}
+.active-countdown{
+  background:#109D58;
+}
+.danger-countdown{
+  background:#BA0001;
+}
+.inactive-countdown{
+  background:#DC4437;
+}
 #clock{
   text-align:center;
+  font-weight:bold;
+  color:#fff;
   .clock-block{
     width:64px;
     font-size:20px;
     padding:10px;
-    background-color:#86FAC1;
     display: inline-block;
   }
   .clock-content{
@@ -83,7 +96,6 @@ canvas{
     width:64px;
     font-size:20px;
     padding:10px;
-    background-color:#86FAC1;
     display: inline-block;
   }
   .countdown-period{
@@ -91,6 +103,11 @@ canvas{
   }
   .countdown-period{
     font-size:12px;
+  }
+  &.no-luck{
+    .countdown-section{
+      background-color:#FA8686;
+    }
   }
 }
 
@@ -100,22 +117,29 @@ canvas{
     padding:0;
   }
 }
-.lucky-number-container{
-  padding:10px;
-  font-size:16px;
-  border-top:1px solid #dedede;
-  font-weight:bold;
-  &:hover{
-    background: @theme-main;
-    color:@theme-main-complimentary-2;
+.lucky-number-row{
+  .lucky-number-col{
+    .lucky-number-container{
+      padding:10px;
+      font-size:16px;
+      border-top:1px solid #dedede;
+      font-weight:bold;
+      &:hover{
+        background: @theme-main;
+        color:@theme-main-complimentary-2;
+      }
+      &:hover{
+        cursor:pointer;
+      }
+    } 
   }
   &:last-child{
-    border-bottom:1px solid #dedede;
-  }
-  &:hover{
-    cursor:pointer;
+    .lucky-number-container{
+      border-bottom:1px solid #dedede;
+    }
   }
 }
+
 .winning-number-wrapper{
   padding:10px;
   font-size:16px;
@@ -160,4 +184,32 @@ canvas{
   li{
     cursor:pointer;
   }
+}
+.catalogue-short-des{
+  p{
+    white-space: pre-wrap;
+  }
+}
+.vertically-spaced{
+  p{
+    white-space: pre-wrap;
+  }
+}
+.catalogue-top{
+  &.catalogue-top-tenant{
+    img{
+      margin-top:27px;
+    }
+  }
+  p{
+    white-space: nowrap;
+    height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
+  }
+}
+.side-margin-center{
+  margin:0 auto;
 }

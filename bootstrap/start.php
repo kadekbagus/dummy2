@@ -38,8 +38,16 @@ $env = $app->detectEnvironment(function() {
 	// Check for a file name orbit.env.php on the root of this app
 	// if it exists use it.
 	$orbitEnvApp = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'orbit.env.php';
-	if (file_exists($orbitEnvApp)) {
+	if (file_exists($orbitEnvApp) && ! isset($_SERVER['HTTP_HOST'])) {
 		return require $orbitEnvApp;
+	}
+
+	// Check for the host name (domain)
+	if (isset($_SERVER['HTTP_HOST'])) {
+		// Prevent directory travelsal, no?
+		$orbitDomainConf = str_replace('..', '', $_SERVER['HTTP_HOST']);
+
+		return $orbitDomainConf;
 	}
 
 	// Default return production

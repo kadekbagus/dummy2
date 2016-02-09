@@ -105,7 +105,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">CRM Data List</h2>
+    <h2 style="margin-bottom:0.5em;">CRM Data</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -130,6 +130,7 @@
             <th style="text-align:left;">News</th>
             <th style="text-align:left;">Promotions</th>
             <th style="text-align:left;">Coupons</th>
+            <th style="text-align:left;">Lucky Draws</th>
         </thead>
         <tbody>
         <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
@@ -137,12 +138,13 @@
                 <td><?php echo ($count); ?></td>
                 <td><?php echo ($row->user_email); ?></td>
                 <td><?php echo $me->printGender($row); ?></td>
-                <td><?php echo $me->printDateTime($row); ?></td>
+                <td><?php echo $me->printDateTime($row, $timezone); ?></td>
                 <td><?php echo ($row->activity_name_long); ?></td>
                 <td><?php echo $me->printUtf8($row->retailer_name); ?></td>
                 <td><?php echo $me->printUtf8($row->news_name); ?></td>
                 <td><?php echo $me->printUtf8($row->promotion_news_name); ?></td>
                 <td><?php echo $me->printUtf8($row->coupon_name); ?></td>
+                <td><?php echo $me->printUtf8($row->object_display_name); ?></td>
             </tr>
         <?php $count++; endwhile; ?>
         </tbody>

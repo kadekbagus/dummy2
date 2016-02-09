@@ -1,9 +1,5 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
-@stop
-
 @section('content')
     @if($data->status === 1)
         @if(sizeof($data->records) > 0)
@@ -11,55 +7,42 @@
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="buttonLabel">
-                                    @if(!empty(Input::get('cid')))
-                                        <?php
-                                            $namex = $categories->filter(function ($item) {
-                                                return $item->category_id == Input::get('cid');
-                                            })->first()->category_name;
-                                            echo $namex;
-                                        ?>
+                            <label class="select-label">
+                                <select class="select" id="category">
+                                    @if(empty(Input::get('cid')))
+                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
                                     @else
-                                        Category
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
                                     @endif
-                                </span>
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="category">
-                                <li data-category=""><span>All</span></li>
-                                @foreach($categories as $category)
-                                <li data-category="{{ $category->category_id }}"><span>{{ $category->category_name }}</span></li>
-                                @endforeach
-                            </ul>
+                                    @foreach($categories as $category)
+                                    @if($category->category_id == Input::get('cid'))
+                                    <option value="{{ $category->category_id }}" selected="selected">{{ $category->category_name }}</option>
+                                    @else
+                                    <option value="{{ $category->category_id }}">{{ $category->category_name }}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
                     </div>
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel2" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="buttonLabel">
-                                    @if(!empty(Input::get('fid')))
-                                        {{ Input::get('fid') }}
+                            <label class="select-label">
+                                <select class="select" id="floor">
+                                    @if(empty(Input::get('fid')))
+                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
                                     @else
-                                        Floor
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
                                     @endif
-                                </span>
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel2" id="floor">
-                                <li data-category=""><span>All</span></li>
-                                <li data-floor="LG"><span>LG</span></li>
-                                <li data-floor="G"><span>G</span></li>
-                                <li data-floor="UG"><span>UG</span></li>
-                                <li data-floor="L1"><span>L1</span></li>
-                                <li data-floor="L2"><span>L2</span></li>
-                                <!-- Lippo Mall Puri only has floor up to L2
-                                <li data-floor="L3"><span>L3</span></li>
-                                <li data-floor="L4"><span>L4</span></li>
-                                <li data-floor="L5"><span>L5</span></li>
-                                <li data-floor="L6"><span>L6</span></li>
-                                -->
-                            </ul>
+                                    @foreach($floorList as $floor)
+                                    @if($floor->object_name == Input::get('fid'))
+                                    <option value="{{ $floor->object_name }}" selected="selected">{{ $floor->object_name }}</option>
+                                    @else
+                                    <option value="{{ $floor->object_name }}">{{ $floor->object_name }}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
@@ -72,90 +55,126 @@
                     </div>
                 </div>
             </div>
-            @foreach($data->records as $product)
-                <div class="main-theme-mall catalogue" id="product-{{$product->product_id}}">
-                    <div class="row catalogue-top">
-                        <div class="col-xs-6 catalogue-img">
-                            @foreach($product->mediaLogo as $media)
-                            @if($media->media_name_long == 'retailer_logo_orig')
-                            <a href="{{ asset($media->path) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($media->path) }}"></a>
-                            @endif
-                            @endforeach
+            <div class="container">
+                <div class="mobile-ci list-item-container">
+                    <div class="row">
+                        <div class="catalogue-wrapper">
+                        @if($link_to_coupon_data->linkedToCS)
+                            <div class="col-xs-12 col-sm-12" id="item-cs">
+                                <section class="list-item-single-tenant">
+                                    <div class="list-item-info">
+                                        <header class="list-item-title">
+                                            <div><strong>{{ Lang::get('mobileci.coupon.all_cs') }}</strong></div>
+                                        </header>
+                                    </div>
+                                    <div class="list-vignette-non-tenant"></div>
+                                    <img class="img-responsive img-fit-tenant" alt="" src="{{ asset('mobile-ci/images/default_cs.png') }}"/>
+                                </section>
+                            </div>
+                        @endif
+                        @foreach($data->records as $tenant)
+                            <div class="col-xs-12 col-sm-12" id="item-{{$tenant->merchant_id}}">
+                                <section class="list-item-single-tenant">
+                                    <a class="list-item-link" href="{{ url('customer/tenant?id='.$tenant->merchant_id) }}">
+                                        <div class="list-item-info">
+                                            <header class="list-item-title">
+                                                <div><strong>{{ $tenant->name }}</strong></div>
+                                            </header>
+                                            <header class="list-item-subtitle">
+                                                <div>
+                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> 
+                                                    {{{ !empty($tenant->floor) ? ' ' . $tenant->floor : '' }}}{{{ !empty($tenant->unit) ? ' - ' . $tenant->unit : '' }}}
+                                                </div>
+                                                <div>
+                                                    <div class="col-xs-6">
+                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>
+                                                        @if(empty($tenant->category_string))
+                                                            <span>-</span>
+                                                        @else
+                                                            <span>{{ mb_strlen($tenant->category_string) > 30 ? mb_substr($tenant->category_string, 0, 30, 'UTF-8') . '...' : $tenant->category_string }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </header>
+                                            <header class="list-item-badges">
+                                                <div class="col-xs-12 badges-wrapper text-right">
+                                                    @if($tenant->promotion_flag)
+                                                    <span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>
+                                                    @endif
+                                                    @if($tenant->news_flag)
+                                                    <span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>
+                                                    @endif
+                                                    @if($tenant->coupon_flag)
+                                                    <span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>
+                                                    @endif
+                                                </div>
+                                            </header>
+                                        </div>
+                                        <div class="list-vignette-non-tenant"></div>
+                                        @if(!count($tenant->mediaLogo) > 0)
+                                        <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_tenants_directory.png') }}"/>
+                                        @endif
+                                        @foreach($tenant->mediaLogo as $media)
+                                        @if($media->media_name_long == 'retailer_logo_orig')
+                                        <img class="img-responsive img-fit-tenant" alt="" src="{{ asset($media->path) }}"/>
+                                        @endif
+                                        @endforeach
+                                    </a>
+                                </section>
+                            </div>
+                        @endforeach
                         </div>
                     </div>
-
-                    <div class="row">
-                        <div class="col-xs-9">
-                            <h4>{{ $product->name }} at</h4>
-                            <h3>{{ $retailer->name }} - {{ $product->floor }} - {{ $product->unit }}</h3>
-                            <h5 class="tenant-category">
-                            @foreach($product->categories as $cat)
-                                <span>{{$cat->category_name}}</span>
-                            @endforeach
-                            </h5>
-                        </div>
-                        <div class="col-xs-3">
-                            <div class="circlet btn-blue detail-btn pull-right">
-                                <a href="{{ url('customer/tenant?id='.$product->merchant_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
+                    @if($data->returned_records < $data->total_records)
+                        <div class="row">
+                            <div class="col-xs-12 padded">
+                                <button class="btn btn-info btn-block" id="load-more-tenants">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
-            @endforeach
+            </div>
         @else
             <div id="search-tool">
                 <div class="row">
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="buttonLabel">
-                                    @if(!empty(Input::get('cid')))
-                                        <?php
-                                            $namex = $categories->filter(function ($item) {
-                                                return $item->category_id == Input::get('cid');
-                                            })->first()->category_name;
-                                            echo $namex;
-                                        ?>
+                            <label class="select-label">
+                                <select class="select" id="category">
+                                    @if(empty(Input::get('cid')))
+                                        <option>{{ Lang::get('mobileci.tenant.category') }}</option>
                                     @else
-                                        Category
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
                                     @endif
-                                </span>
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" id="category">
-                                <li data-category=""><span>All</span></li>
-                                @foreach($categories as $category)
-                                <li data-category="{{ $category->category_id }}"><span>{{ $category->category_name }}</span></li>
-                                @endforeach
-                            </ul>
+                                    @foreach($categories as $category)
+                                    @if($category->category_id == Input::get('cid'))
+                                    <option value="{{ $category->category_id }}" selected="selected">{{ $category->category_name }}</option>
+                                    @else
+                                    <option value="{{ $category->category_id }}">{{ $category->category_name }}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
                     </div>
                     <div class="col-xs-5 search-tool-col">
                         <div class="dropdown">
-                            <button id="dLabel2" type="button" class="btn btn-info btn-block" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="buttonLabel">
-                                    @if(!empty(Input::get('fid')))
-                                        {{ Input::get('fid') }}
+                            <label class="select-label">
+                                <select class="select" id="floor">
+                                    @if(empty(Input::get('fid')))
+                                        <option>{{ Lang::get('mobileci.tenant.floor') }}</option>
                                     @else
-                                        Floor
+                                        <option>{{ Lang::get('mobileci.tenant.all') }}</option>
                                     @endif
-                                </span>
-                                <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel2" id="floor">
-                                <li data-category=""><span>All</span></li>
-                                <li data-floor="LG"><span>LG</span></li>
-                                <li data-floor="G"><span>G</span></li>
-                                <li data-floor="UG"><span>UG</span></li>
-                                <li data-floor="L1"><span>L1</span></li>
-                                <li data-floor="L2"><span>L2</span></li>
-                                <!-- Lippo Mall Puri only has floor up to L2
-                                <li data-floor="L3"><span>L3</span></li>
-                                <li data-floor="L4"><span>L4</span></li>
-                                <li data-floor="L5"><span>L5</span></li>
-                                <li data-floor="L6"><span>L6</span></li>
-                                -->
-                            </ul>
+                                    @foreach($floorList as $floor)
+                                    @if($floor->object_name == Input::get('fid'))
+                                    <option value="{{ $floor->object_name }}" selected="selected">{{ $floor->object_name }}</option>
+                                    @else
+                                    <option value="{{ $floor->object_name }}">{{ $floor->object_name }}</option>
+                                    @endif
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
                     </div>
                     <div class="col-xs-2 search-tool-col text-right">
@@ -183,39 +202,20 @@
     @endif
 @stop
 
-@section('modals')
-<!-- Modal -->
-<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
-    <div class="modal-dialog orbit-modal">
-        <div class="modal-content">
-            <div class="modal-header orbit-modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.modals.close') }}</span></button>
-                <h4 class="modal-title" id="verifyModalLabel"><i class="fa fa-envelope-o"></i> Info</h4>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xs-12">
-                        <p>
-                            Mau browsing sepuasnya?<br>
-                            Atau mau ikutan undian berhadiah?<br>
-                            Buka email Anda untuk verifikasi sekarang juga!!<br>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="pull-right"><button type="button" class="btn btn-default" data-dismiss="modal">{{ Lang::get('mobileci.modals.close') }}</button></div>
-            </div>
-        </div>
-    </div>
-</div>
-@stop
-
 @section('ext_script_bot')
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-{{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
-{{ HTML::script('mobile-ci/scripts/jquery.cookie.js') }}
 <script type="text/javascript">
+    /**
+     * Get Query String from the URL
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @param string n - Name of the parameter
+     */
+    function get(n)
+    {
+        var half = location.search.split(n + '=')[1];
+        return half !== undefined ? decodeURIComponent(half.split('&')[0]) : null;
+    }
+
     function updateQueryStringParameter(uri, key, value) {
         var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
         var separator = uri.indexOf('?') !== -1 ? "&" : "?";
@@ -233,34 +233,103 @@
                 $('.modal-backdrop').not('.modal-stack').css('z-index', 0).addClass('modal-stack');
             }, 0);
         });
-        if(!$.cookie('dismiss_verification_popup')) {
-            $.cookie('dismiss_verification_popup', 't', { expires: 1 });
-            $('#verifyModal').modal();
-        }
 
         var promo = '';
         @if(!empty(Input::get('promotion_id')))
-            promo = '&promotion_id='+{{Input::get('promotion_id')}};
+            promo = '&promotion_id='+'{{Input::get('promotion_id')}}';
         @endif
         var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}'+promo;
         $('#dLabel').dropdown();
         $('#dLabel2').dropdown();
 
-        $('#category>li').click(function(){
-            if(!$(this).data('category')) {
-                $(this).data('category', '');
+        $('#category').change(function(){
+            var val = '';
+            if($('#category > option:selected').attr('value')) {
+                val = $('#category > option:selected').attr('value');
             }
-            path = updateQueryStringParameter(path, 'cid', $(this).data('category'));
+            path = updateQueryStringParameter(path, 'cid', val);
             console.log(path);
             window.location.replace(path);
         });
-        $('#floor>li').click(function(){
-            if(!$(this).data('floor')) {
-                $(this).data('floor', '');
+        $('#floor').change(function(){
+            var val = '';
+            if($('#floor > option:selected').attr('value')) {
+                val = $('#floor > option:selected').attr('value');
             }
-            path = updateQueryStringParameter(path, 'fid', $(this).data('floor'));
+            path = updateQueryStringParameter(path, 'fid', val);
             console.log(path);
             window.location.replace(path);
+        });
+
+        var take = {{Config::get('orbit.pagination.per_page', 25)}}, 
+            skip = {{Config::get('orbit.pagination.per_page', 25)}};
+
+        var keyword = '{{{Input::get('keyword', '')}}}';
+        var cid = '{{{Input::get('cid', '')}}}';
+        var fid = '{{{Input::get('fid', '')}}}';
+        var promotion_id = '{{{Input::get('promotion_id', '')}}}';
+
+        $('#load-more-tenants').click(function(){
+            var btn = $(this);
+            btn.attr('disabled', 'disabled');
+            btn.html('<i class="fa fa-circle-o-notch fa-spin"></i>');
+            $.ajax({
+                url: apiPath + 'tenant/load-more',
+                method: 'GET',
+                data: {
+                    take: take,
+                    skip: skip,
+                    keyword: keyword,
+                    cid: cid,
+                    fid: fid,
+                    promotion_id: promotion_id
+                }
+            }).done(function(data) {
+                skip = skip + skip;
+                if(data.records.length > 0) {
+                    for(var i = 0; i < data.records.length; i++) {
+                        var list = '<div class="col-xs-12 col-sm-12" id="item-'+data.records[i].merchant_id+'">\
+                                <section class="list-item-single-tenant">\
+                                    <a class="list-item-link" href="'+data.records[i].url+'">\
+                                        <div class="list-item-info">\
+                                            <header class="list-item-title">\
+                                                <div><strong>'+data.records[i].name+'</strong></div>\
+                                            </header>\
+                                            <header class="list-item-subtitle">\
+                                                <div>\
+                                                    <i class="fa fa-map-marker" style="padding-left: 5px;padding-right: 8px;"></i> \
+                                                    '+ (data.records[i].floor ?  ' ' + data.records[i].floor : '') + (data.records[i].unit ? ' - ' + data.records[i].unit : '') +'\
+                                                </div>\
+                                                <div>\
+                                                    <div class="col-xs-6">\
+                                                        <i class="fa fa-list" style="padding-left: 2px;padding-right: 4px;"></i>\
+                                                        <span>'+ (data.records[i].category_string ? data.records[i].category_string : '-') +'</span>\
+                                                    </div>\
+                                                </div>\
+                                            </header>\
+                                            <header class="list-item-badges">\
+                                                <div class="col-xs-12 badges-wrapper text-right">\
+                                                    '+ (data.records[i].promotion_flag ? '<span class="badges promo-badges text-center"><i class="fa fa-bullhorn"></i></span>' : '') +'\
+                                                    '+ (data.records[i].news_flag ? '<span class="badges news-badges text-center"><i class="fa fa-newspaper-o"></i></span>' : '') +'\
+                                                    '+ (data.records[i].coupon_flag ? '<span class="badges coupon-badges text-center"><i class="fa fa-ticket"></i></span>' : '') +'\
+                                                </div>\
+                                            </header>\
+                                        </div>\
+                                        <div class="list-vignette-non-tenant"></div>\
+                                        <img class="img-responsive img-fit-tenant" src="'+ data.records[i].logo_orig +'"/>\
+                                    </a>\
+                                </section>\
+                            </div>';
+                        $('.catalogue-wrapper').append(list);
+                    }
+                }
+                if (skip >= data.total_records) {
+                    btn.remove();
+                }
+            }).always(function(data){
+                btn.removeAttr('disabled', 'disabled');
+                btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
+            });
         });
     });
 </script>

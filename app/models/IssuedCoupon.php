@@ -13,7 +13,7 @@ class IssuedCoupon extends Eloquent
      */
     use ModelStatusTrait;
 
-    const ISSUE_COUPON_INCREMENT = 1111111;
+    const ISSUE_COUPON_INCREMENT = 1111110;
 
     protected $table = 'issued_coupons';
 
@@ -34,6 +34,22 @@ class IssuedCoupon extends Eloquent
         return $this->belongsTo('Retailer', 'issuer_retailer_id', 'merchant_id');
     }
 
+    public function redeemretailer()
+    {
+        return $this->belongsTo('Tenant', 'redeem_retailer_id', 'merchant_id');
+    }
+
+    /**
+     * Redeem Retailer has many uploaded media.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function redeemRetailerMedia()
+    {
+        return $this->hasMany('Media', 'object_id', 'redeem_retailer_id')
+                    ->where('object_name', 'retailer');
+    }
+
     /**
      * Save issued coupon based on promotion object.
      *
@@ -45,11 +61,13 @@ class IssuedCoupon extends Eloquent
      */
     public function issue($promotion, $userId, $admin)
     {
-        $maxIssueId = DB::table('issued_coupons')->max('issued_coupon_id');
-
+        $maxIssueId = DB::table('issued_coupons')->max(DB::raw('CAST(issued_coupon_code as UNSIGNED)'));
+        if (empty($maxIssueId)) {
+            $maxIssueId = static::ISSUE_COUPON_INCREMENT;
+        }
         $issued = new static();
         $issued->promotion_id = $promotion->promotion_id;
-        $issued->issued_coupon_code = static::ISSUE_COUPON_INCREMENT + $maxIssueId;
+        $issued->issued_coupon_code = $maxIssueId + 1;
         $issued->user_id = $userId;
         $issued->expired_date = $promotion->coupon_validity_in_date;
         $issued->issued_date = date('Y-m-d H:i:s');

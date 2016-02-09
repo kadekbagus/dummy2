@@ -27,10 +27,10 @@
 
 $factory('EventModel', [
     'merchant_id' => 'factory:Merchant',
-    'event_name'  => $faker->opera(),
+    'event_name'  => $faker->words(2),
     'event_type'  => $faker->randomElement(['link', 'informative']),
-    'description' => $faker->sentence(),
     'status'      => 'active',
+    'description' => $faker->sentence(),
     'begin_date'  => $faker->dateTimeBetween('-2 months'),
     'end_date'    => $faker->dateTimeBetween('+2 days', "+1 months")
 ]);

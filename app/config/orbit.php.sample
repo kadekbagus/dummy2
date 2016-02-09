@@ -3,9 +3,51 @@
  * Orbit specific configuraiton.
  */
 return array(
+    // cdn path
+    'cdn' => array(
+        'jquery' => array(
+            '2_1_1' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'
+        ),
+        'bootstrap' => array(
+            '3_3_1' => 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.1/js/bootstrap.min.js'
+        ),
+        'jqueryui' => array(
+            '1_11_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js'
+        ),
+        'lightslider' => array(
+            '1_1_2' => 'https://cdnjs.cloudflare.com/ajax/libs/lightslider/1.1.2/js/lightslider.min.js'
+        ),
+        'panzoom' => array(
+            '2_0_5' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery.panzoom/2.0.5/jquery.panzoom.min.js'
+        ),
+        'featherlight' => array(
+            '1_0_3' => 'https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.0.3/featherlight.min.js'
+        ),
+        'countdown' => array(
+            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.countdown.min.js'
+        ),
+        // this is for countdown above
+        'jquery_plugin' => array(
+            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.plugin.min.js'
+        ),
+        //font
+        'fonts' => array(
+            'ubuntu' => 'https://fonts.googleapis.com/css?family=Ubuntu:400',
+            'font_awesome' => array(
+                '4_2_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/fonts/fontawesome-webfont' // this url without font extension
+            ),
+            'glyphicon' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/fonts/glyphicons-halflings-regular' // this url without font extension
+        ),
+    ),
+
+    'assets' => array(
+        // Asset root (without trailing slash)
+        // leave undefined to work from app root
+        // 'root' => 'http://assets.myorbit.com'
+    ),
 
     // Languages that supported by orbit app
-    'languages' => array('en','id'),
+    'languages' => array('en', 'zh', 'ja'),
 
     'api' => array(
         'signature' => array(
@@ -20,6 +62,12 @@ return array(
         'blackhole_domain'  => 'orbit.mall'
     ),
 
+    // agreement configuration
+    'agreement' => array(
+        // This should be frontend URL not backend
+        'url'  => 'http://mall-portal.url/#/service-agreement?token=%s'
+    ),
+
     'shop' => array(
         // Id of the retailer
         'id'    => NULL,
@@ -27,18 +75,62 @@ return array(
         'search_limit' => 300,
 
         // Notification polling interval, in seconds.
-        'poll_interval' => 8
+        'poll_interval' => 8,
+
+        // config to validate if membership number have to be unique or not
+        'membership_number_unique_check' => false,
+
+        //guest mode
+        'guest_mode' => false,
+
+        // Internet offline check
+        'offline_check' => [
+            'enable'    => TRUE,
+
+            // enable must be true
+            // in milliseconds
+            'interval'  => 5000
+        ],
+
+        // enable/disable membership card pop up
+        'membership' => true,
+
+        // number of days to define the campaigns/tenants as "new" on widgets
+        'widget_new_threshold' => 1, // in day(s)
+
+        // number of seconds to delay the display of campaign pop up
+        'event_delay' => 2.5, //in second(s)
     ),
 
     // General contact data
     'contact_information' => array(
         'customer_service'  => array(
-            'email' => 'cs@myorbit.com',
+            'email' => 'support@myorbit.com',
             'name'  => 'Orbit Customer Service',
             'phone' => '+62123456789',
             'fax'   => '+62123456789',
             'office_hour'   => '9am - 6pm'
-        )
+        ),
+        'privacy_policy_url' => '',
+        'terms_of_service_url' => '',
+    ),
+
+    // Lucky Draw
+    'lucky_draw' => array(
+        // Maximum LD number per issuance
+        'max_per_issuance' => 1000,
+
+        // batch number to issue lucky draw number on demand.
+        'batch'  => 5,
+
+        // lucky draw winning number config
+        'winner' => array(
+            // if TRUE then winner can have another prize on the same campaign
+            'more_than_one_all_prize_enabled' => TRUE,
+
+            // if TRUE then winner can have another same prize on the same campaign
+            'more_than_one_single_prize_enabled' => TRUE,
+        ),
     ),
 
     // Default Pagination
@@ -183,6 +275,42 @@ return array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
+
+        // Lucky Draw Number Receipt
+        'lucky_draw_number_receipt' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Lucky Draw Number
+        'lucky_draw_number' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Lucky Draw Prize
+        'lucky_draw_prize' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Membership
+        'membership' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Membership Number
+        'membership_number' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // Inbox Notification
+        'inbox' => array(
+            'per_page'      => 15,
+            'max_record'    => 100,
+        ),
     ),
 
     'registration' => array(
@@ -201,7 +329,11 @@ return array(
 
             // Activation URL
             // This should be frontend URL not backend
-            'activation_base_url' => 'http://orbit-mall.here/#/activate-account?token=%s',
+            'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
+
+            // Setup Password URL
+            // This should be frontend URL not backend
+            'setup_new_password_url' => 'http://customer.orbit-mall.here/#/setup-new-password?token=%s',
 
             // Number of days the activation link will expires
             'activation_expire' => 365,
@@ -214,7 +346,9 @@ return array(
             'fake'  => FALSE,
 
             // Flag to send welcome email
-            'send_welcome_email'    => FALSE
+            'send_welcome_email'    => FALSE,
+
+            'cloud_login_url' => 'http://orbit-mall.here/app/v1/customer/cloud-login'
         ),
     ),
 
@@ -483,6 +617,10 @@ return array(
             'super admin',
         ),
 
+        // list of allowed ip that can access mobile ci
+        // to allow all ip address simply put string '*'
+        'allowed_ips' =>  '*',
+
         'csrf' => array(
             // Use CSRF protection?
             'protect'   => TRUE,
@@ -524,6 +662,11 @@ return array(
             // via STDIN
             'reboot'    => 'sudo /home/orbit/scripts/helpers/shutdown.sh'
         ),
+
+        // Email validity
+        'email' => array(
+            'fake_mx' => FALSE
+        )
     ),
 
     'upload'    => array(
@@ -1075,6 +1218,77 @@ return array(
             ),
         ),
 
+        'mall'  => array(
+            'logo'  => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/malls/logo',
+
+                // Default HTML element name
+                'name'          => 'logo',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+        ),
+
         // -------------------------------------------------------------------//
         // Product Related Uploads
         // -------------------------------------------------------------------//
@@ -1146,6 +1360,75 @@ return array(
                 // Callback after saving the file
                 'after_saving'  => NULL,
             ),
+
+            'translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/product/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
         ),
 
         // -------------------------------------------------------------------//
@@ -1167,6 +1450,74 @@ return array(
 
                 // Default HTML element name
                 'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/promotion/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
 
                 // Force create directory when not exists
                 'create_directory'  => TRUE,
@@ -1369,6 +1720,74 @@ return array(
                 // Callback after saving the file
                 'after_saving'  => NULL,
             ),
+
+            'translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/coupon/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
         ),
 
         // -------------------------------------------------------------------//
@@ -1390,6 +1809,74 @@ return array(
 
                 // Default HTML element name
                 'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/event/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
 
                 // Force create directory when not exists
                 'create_directory'  => TRUE,
@@ -1498,6 +1985,74 @@ return array(
                 'crop'          => array(
                     // Profile name
                     'default' => array(
+                        'width'     => 500,
+                        'height'    => 500,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/widgets/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
                         'width'     => 100,
                         'height'    => 100,
                     )
@@ -1515,6 +2070,7 @@ return array(
                 // Callback after saving the file
                 'after_saving'  => NULL,
             ),
+
         ),
 
         // -------------------------------------------------------------------//
@@ -1588,6 +2144,75 @@ return array(
                 // Callback after saving the file
                 'after_saving'  => NULL,
             ),
+
+            'translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/news/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
         ),
 
         // -------------------------------------------------------------------//
@@ -1661,6 +2286,353 @@ return array(
                 // Callback after saving the file
                 'after_saving'  => NULL,
             ),
+
+            'translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/lucky-draws/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'announcement' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/lucky-draws/announcements',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 400,
+                        'height'    => 400
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'announcement_translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/lucky-draws/announcements/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+        ),
+
+        // -------------------------------------------------------------------//
+        // Membership Related Uploads
+        // -------------------------------------------------------------------//
+        'membership'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/membership',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 400,
+                        'height'    => 400
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'translation' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/membership/translation',
+
+                // Default HTML element name
+                'name'          => 'image_translation',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 640,
+                        'height'    => 480
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
         ),
 
     ),
@@ -1697,4 +2669,100 @@ return array(
             'path'  => '/home/orbitadmin/scripts/helpers/screen-display.sh'
         )
     ),
+    'social_login' => [
+        'facebook' => [
+            'app_id'        => '',
+            'app_secret'    => '',
+            'version'       => 'v2.4'
+        ],
+    ],
+
+    'activity_columns' => array(
+        'Email Sign Up'                                => 'Sign Up via Mobile (Email Address)',
+        'Facebook Sign Up'                             => 'Sign Up via Mobile (Facebook)',
+        'Google Sign Up'                               => 'Sign Up via Mobile (Google+)',
+        'Sign In'                                      => 'Sign In',
+        'Sign Up via CS'                               => 'Sign Up via Customer Service',
+        'Customer Activation'                          => 'Customer Activation',
+        'Network Check In'                             => 'Network Check In',
+        'Network Check Out'                            => 'Network Check Out',
+        'Sign Out'                                     => 'Sign Out',
+        'View (Home Page)'                             => 'View (Home Page)',
+        'View Coupon List'                             => 'View Coupon List',
+        'View Coupon Detail'                           => 'View Coupon Detail',
+        'View Coupon Campaign Detail'                  => 'View Coupon Campaign Detail',
+        'Coupon Redemption Successful'                 => 'Coupon Redemption (Successful)',
+        'Coupon Issuance'                              => 'Coupon Issuance',
+        'View News List'                               => 'View News List',
+        'View News Detail'                             => 'View News Detail',
+        'View News Tenant List'                        => 'View News Tenant List',
+        'View Promotion List'                          => 'View Promotion List',
+        'View Promotion Detail'                        => 'View Promotion Detail',
+        'View Promotion Tenant List'                   => 'View Promotion Tenant List',
+        'View Tenant List'                             => 'View Tenant List',
+        'View Tenant Detail'                           => 'View Tenant Detail',
+        'Widget Click Tenant'                          => 'Widget Click Tenant',
+        'Widget Click News'                            => 'Widget Click News',
+        'Widget Click Promotion'                       => 'Widget Click Promotion',
+        'Widget Click Coupon'                          => 'Widget Click Coupon',
+        'Widget Click Lucky Draw'                      => 'Widget Click Lucky Draw',
+        'View Lucky Draw List'                         => 'View Lucky Draw List',
+        'View Lucky Draw Detail'                       => 'View Lucky Draw Detail',
+        'View Prizes & Winning Numbers'                => 'View Winning Numbers & Prizes',
+        'Lucky Draw Number Issuance'                   => 'Lucky Draw Number Issuance',
+        'Read Lucky Draw Number Issuance Notification' => 'Read Lucky Draw Number Issuance Notification',
+        'Read Winner Announcement Notification'        => 'Read Winner Announcement Notification',
+        'Read Coupon Issuance Notification'            => 'Read Coupon Issuance Notification',
+        'Read Activation Notification'                 => 'Read Activation Notification',
+        'View Coupon Pop Up'                           => 'View Coupon Pop Up',
+        'Click Coupon Pop Up'                          => 'Click Coupon Pop Up',
+        'View Promotion Pop Up'                        => 'View Promotion Pop Up',
+        'Click Promotion Pop Up'                       => 'Click Promotion Pop Up',
+        'View News Pop Up'                             => 'View News Pop Up',
+        'Click News Pop Up'                            => 'Click News Pop Up',
+        'Search'                                       => 'Search',
+    ),
+
+    'menus' => array(
+        'mall' => array(
+            'mall_dashboard',
+            'mall_settings',
+            'mall_widgets',
+            'mall_tenants',
+            'mall_luckydraws',
+            'mall_employee',
+            'mall_membership',
+            'mall_crm_detail',
+            'mall_crm_summary',
+            'mall_consumer'
+        ),
+        'pmp' => array(
+            'pmp_dashboard',
+            'pmp_campaign_dashboard',
+            'pmp_campaign_detail',
+            'pmp_campaigns',
+            'pmp_news',
+            'pmp_coupons',
+            'pmp_promotions',
+            'pmp_report_news',
+            'pmp_report_promotions',
+            'pmp_employee'
+        )
+    ),
+
+    'genders' => array(
+        'M' => 'Male',
+        'F' => 'Female',
+        'U' => 'Unknown',
+    ),
+
+    'age_ranges' => array(
+        '55 +',
+        '45 - 54',
+        '35 - 44',
+        '25 - 34',
+        '15 - 24',
+        '0 - 14',
+    ),
+
 );

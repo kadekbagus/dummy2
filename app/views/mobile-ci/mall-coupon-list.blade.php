@@ -1,48 +1,98 @@
 @extends('mobile-ci.layout')
 
-@section('ext_style')
-    {{ HTML::style('mobile-ci/stylesheet/featherlight.min.css') }}
-@stop
-
 @section('content')
-    @if($data->status === 1)
-        @if(sizeof($data->records) > 0)
-            @foreach($data->records as $product)
-                <div class="main-theme-mall catalogue" id="product-{{$product->promotion_id}}">
-                    <div class="row catalogue-top">
-                        <div class="col-xs-3 catalogue-img">
-                            @if(!empty($product->promo_image))
-                            <a href="{{ asset($product->promo_image) }}" data-featherlight="image" class="text-left"><img class="img-responsive" alt="" src="{{ asset($product->promo_image) }}"></a>
-                            @else
-                            <a class="img-responsive" src="{{ asset('mobile-ci/images/default_product.png') }}"/>
-                            @endif
+    <div class="container">
+        <div class="mobile-ci list-item-container">
+            <div class="row">
+            @if($data->status === 1)
+                @if(sizeof($data->records) > 0)
+                    <div class="catalogue-wrapper">
+                    @foreach($data->records as $coupon)
+                        <div class="col-xs-12 col-sm-12 item-x" data-ids="{{$coupon->promotion_id}}"  id="item-{{$coupon->promotion_id}}">
+                            <section class="list-item-single-tenant">
+                                <a class="list-item-link" href="{{ url('customer/mallcoupon?id='.$coupon->promotion_id) }}">
+                                    <div class="coupon-new-badge">
+                                        <div class="new-number">{{$coupon->quantity}}</div>
+                                    </div>
+                                    <div class="list-item-info">
+                                        <header class="list-item-title">
+                                            <div><strong>{{ $coupon->promotion_name }}</strong></div>
+                                        </header>
+                                        <header class="list-item-subtitle">
+                                            <div>
+                                                {{-- Limit description per two line and 45 total character --}}
+                                                <?php
+                                                    $desc = explode("\n", $coupon->description);
+                                                ?>
+                                                @if (mb_strlen($coupon->description) > 45)
+                                                    @if (count($desc) > 1)
+                                                        <?php
+                                                            $two_row = array_slice($desc, 0, 1);
+                                                        ?>
+                                                        @foreach ($two_row as $key => $value)
+                                                            @if ($key === 0)
+                                                                {{{ $value }}} <br>
+                                                            @else
+                                                                {{{ $value }}} ...
+                                                            @endif
+                                                        @endforeach
+                                                    @else
+                                                        {{{ mb_substr($coupon->description, 0, 45, 'UTF-8') . '...' }}}
+                                                    @endif
+                                                @else
+                                                    @if (count($desc) > 1)
+                                                        <?php
+                                                            $two_row = array_slice($desc, 0, 1);
+                                                        ?>
+                                                        @foreach ($two_row as $key => $value)
+                                                            @if ($key === 0)
+                                                                {{{ $value }}} <br>
+                                                            @else
+                                                                {{{ $value }}} ...
+                                                            @endif
+                                                        @endforeach
+                                                    @else
+                                                        {{{ mb_substr($coupon->description, 0, 45, 'UTF-8') }}}
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        </header>
+                                    </div>
+                                    <div class="list-vignette-non-tenant"></div>
+                                    @if(!empty($coupon->image))
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset($coupon->image) }}" />
+                                    @else
+                                    <img class="img-responsive img-fit-tenant" src="{{ asset('mobile-ci/images/default_coupon.png') }}"/>
+                                    @endif
+                                </a>
+                            </section>
                         </div>
-                        <div class="col-xs-6">
-                            <h4>{{ $product->promotion_name }}</h4>
-                            <p>{{ substr($product->description, 0, 120) }}</p>
-                        </div>
-                        <div class="col-xs-3" style="margin-top:20px">
-                            <div class="circlet btn-blue detail-btn pull-right">
-                                <a href="{{ url('customer/mallcoupon?id='.$product->issued_coupon_id) }}"><span class="link-spanner"></span><i class="fa fa-ellipsis-h"></i></a>
+                    @endforeach
+                    </div>
+                    @if($data->returned_records < $data->total_records)
+                        <div class="row">
+                            <div class="col-xs-12 padded">
+                                <button class="btn btn-info btn-block" id="load-more-x">{{Lang::get('mobileci.notification.load_more_btn')}}</button>
                             </div>
                         </div>
+                    @endif
+                @else
+                    <div class="row padded">
+                        <div class="col-xs-12">
+                            <h4>{{ Lang::get('mobileci.greetings.how_to_get_coupons') }}</h4>
+                        </div>
+                    </div>
+                @endif
+            @else
+                <div class="row padded">
+                    <div class="col-xs-12">
+                        <h4>{{ Lang::get('mobileci.greetings.how_to_get_coupons') }}</h4>
                     </div>
                 </div>
-            @endforeach
-        @else
-            <div class="row padded">
-                <div class="col-xs-12">
-                    <h4>Please check with customer service how to get coupons.</h4>
-                </div>
-            </div>
-        @endif
-    @else
-        <div class="row padded">
-            <div class="col-xs-12">
-                <h4>Please check with customer service how to get coupons.</h4>
+            @endif
             </div>
         </div>
-    @endif
+    </div>
 @stop
 
 @section('modals')
@@ -78,38 +128,15 @@
 @stop
 
 @section('ext_script_bot')
-{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-{{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
 <script type="text/javascript">
-    function updateQueryStringParameter(uri, key, value) {
-        var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
-        var separator = uri.indexOf('?') !== -1 ? "&" : "?";
-        if (uri.match(re)) {
-            return uri.replace(re, '$1' + key + "=" + value + '$2');
-        } else {
-            return uri + separator + key + "=" + value;
-        }
-    }
     $(document).ready(function(){
-        var path = '{{ url('/customer/tenants?keyword='.Input::get('keyword').'&sort_by=name&sort_mode=asc&cid='.Input::get('cid').'&fid='.Input::get('fid')) }}';
-        $('#dLabel').dropdown();
-        $('#dLabel2').dropdown();
-        $('#category>li').click(function(){
-            if(!$(this).data('category')) {
-                $(this).data('category', '');
-            }
-            path = updateQueryStringParameter(path, 'cid', $(this).data('category'));
-            console.log(path);
-            window.location.replace(path);
+        $('body').on('click', '#load-more-x', function(){
+            var listOfIDs = [];
+            $('.catalogue-wrapper .item-x').each(function(id){
+                listOfIDs.push($(this).data('ids'));
+            });
+            loadMoreX('my-coupon', listOfIDs);
         });
-        $('#floor>li').click(function(){
-            if(!$(this).data('floor')) {
-                $(this).data('floor', '');
-            }
-            path = updateQueryStringParameter(path, 'fid', $(this).data('floor'));
-            console.log(path);
-            window.location.replace(path);
-        });
-    });
+    }); 
 </script>
 @stop

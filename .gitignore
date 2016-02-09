@@ -6,6 +6,7 @@ composer.phar
 Thumbs.db
 /.idea
 *.iml
+.project
 
 # Config
 app/config/app.php
@@ -16,6 +17,7 @@ app/config/testing/database.php
 app/config/testing/mail.php
 app/config/orbit.php
 app/config/mail.php
+app/config/orbit-notifier.php
 public/mobile-ci/scripts/config.js
 public/templatepos/js/config.js
 
@@ -41,3 +43,16 @@ app/storage/orbit-session/**
 
 # Orbit Compiled Routes
 app/routes/orbit-compiled-routes.php
+
+# Trusted proxies config
+app/config/packages/fideloper/proxy/config.php
+
+# CI dev css
+public/mobile-ci/stylesheet/orbit.lmp.mardi.css
+public/mobile-ci/stylesheet/orbit.smv.mardi.css
+public/mobile-ci/stylesheet/orbit.tks.mardi.css
+
+public/mobile-ci/stylesheet/main.css
+public/mobile-ci/stylesheet/orbit.lmp.sym.css
+public/mobile-ci/stylesheet/orbit.smv.sym.css
+public/mobile-ci/stylesheet/orbit.tks.sym.css

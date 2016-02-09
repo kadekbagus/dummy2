@@ -7,7 +7,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 
@@ -64,12 +64,15 @@ class RetailerAPIController extends ControllerAPI
                     'password'    => $password,
                 ),
                 array(
-                    'retailer_id' => 'required|numeric|orbit.empty.retailer|orbit.exists.deleted_retailer_is_box_current_retailer',
+                    'retailer_id' => 'required|orbit.empty.retailer|orbit.exists.deleted_retailer_is_box_current_retailer',
                     'password'    => 'required|orbit.access.wrongpassword',
                 )
             );
 
             Event::fire('orbit.retailer.postdeleteretailer.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -77,9 +80,6 @@ class RetailerAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.retailer.postdeleteretailer.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // soft delete retailer.
             $deleteretailer = Retailer::excludeDeleted()->allowedForUser($user)->where('merchant_id', $retailer_id)->first();
@@ -347,13 +347,16 @@ class RetailerAPIController extends ControllerAPI
                     'email'     => 'required|email|orbit.exists.email',
                     'name'      => 'required',
                     'status'    => 'required|orbit.empty.retailer_status',
-                    'parent_id' => 'required|numeric|orbit.empty.merchant',
-                    'country'   => 'required|numeric',
+                    'parent_id' => 'required|orbit.empty.merchant',
+                    'country'   => 'required',
                     'url'       => 'orbit.formaterror.url.web'
                 )
             );
 
             Event::fire('orbit.retailer.postnewretailer.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -362,12 +365,9 @@ class RetailerAPIController extends ControllerAPI
             }
             Event::fire('orbit.retailer.postnewretailer.after.validation', array($this, $validator));
 
-            // Begin database transaction
-            $this->beginTransaction();
-
             $roleRetailer = Role::where('role_name', 'retailer owner')->first();
             if (empty($roleRetailer)) {
-                OrbitShopAPI::throwInvalidArgument('Could not find role named "Merchant Owner".');
+                OrbitShopAPI::throwInvalidArgument('Could not find role named "Retailer Owner".');
             }
 
             $newuser = new User();
@@ -637,12 +637,12 @@ class RetailerAPIController extends ControllerAPI
                     'url'               => $url,
                 ),
                 array(
-                    'retailer_id'       => 'required|numeric|orbit.empty.retailer',
-                    'user_id'           => 'numeric|orbit.empty.user',
+                    'retailer_id'       => 'required|orbit.empty.retailer',
+                    'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.retailer_status|orbit.exists.inactive_retailer_is_box_current_retailer:'.$retailer_id,
                     'orid'              => 'orid_exists_but_me',
-                    'parent_id'         => 'numeric|orbit.empty.merchant',
+                    'parent_id'         => 'orbit.empty.merchant',
                     'url'               => 'orbit.formaterror.url.web'
                 ),
                 array(
@@ -653,15 +653,15 @@ class RetailerAPIController extends ControllerAPI
 
             Event::fire('orbit.retailer.postupdateretailer.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.retailer.postupdateretailer.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedretailer = Retailer::excludeDeleted()->allowedForUser($user)->where('merchant_id', $retailer_id)->first();
 
@@ -1020,7 +1020,7 @@ class RetailerAPIController extends ControllerAPI
 */
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -1077,10 +1077,19 @@ class RetailerAPIController extends ControllerAPI
                                  ->select('merchants.*', DB::raw('m.name as merchant_name'))
                                  ->join('merchants AS m', DB::raw('m.merchant_id'), '=', 'merchants.parent_id');
 
-            // Filter retailer by Ids
-            OrbitInput::get('merchant_id', function($merchantIds) use ($retailers)
+            // @author Irianto Pratama <irianto@dominopos.com>
+            // Filter retailer by location id
+            OrbitInput::get('merchant_by_location_id', function($merchant_by_location_id) use ($retailers)
             {
-                $retailers->whereIn('merchants.merchant_id', $merchantIds);
+                $retailers->with('merchant_as_parent')
+                          ->where('merchants.location_id', '=', $merchant_by_location_id)
+                          ->select('merchants.merchant_id', 'merchants.name', 'merchants.parent_id');
+            });
+
+            // Filter retailer by Ids
+            OrbitInput::get('retailer_id', function($retailerIds) use ($retailers)
+            {
+                $retailers->whereIn('merchants.merchant_id', $retailerIds);
             });
 
             // Filter retailer by Ids
@@ -1663,12 +1672,21 @@ class RetailerAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.retailer.getcitylist.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_retailer')) {
-                Event::fire('orbit.retailer.getcitylist.authz.notallowed', array($this, $user));
-                $viewRetailerLang = Lang::get('validation.orbit.actionlist.view_retailer');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewRetailerLang));
+            // if (! ACL::create($user)->isAllowed('view_retailer')) {
+            //     Event::fire('orbit.retailer.getcitylist.authz.notallowed', array($this, $user));
+            //     $viewRetailerLang = Lang::get('validation.orbit.actionlist.view_retailer');
+            //     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewRetailerLang));
+            //     ACL::throwAccessForbidden($message);
+            // }
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
+
             Event::fire('orbit.retailer.getcitylist.after.authz', array($this, $user));
 
             $retailers = Retailer::excludeDeleted()

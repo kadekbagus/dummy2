@@ -14,46 +14,64 @@
 #signedIn{
   display: none;
 }
-@if(!empty($bg))
-  @if(!empty($bg[0]))
-  body.bg{
-    background: url('{{ asset($bg[0]) }}');
-    background-size: cover;
-    background-repeat: no-repeat;
-  }
-  @endif
+body.bg {
+@if(!empty($bg) && !empty($bg->path))
+    background: url('{{ asset($bg->path) }}');
+@else
+    background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
 @endif
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    height: 478px;
+    display: table;
+    width: 100%;
+}
 </style>
 @stop
 
 @section('content')
+<div class="spinner-backdrop" id="spinner-backdrop">
+    <div class="spinner-container">
+        <i class="fa fa-spin fa-spinner"></i>
+    </div>
+</div>
 <div class="row top-space" id="signIn">
     <div class="col-xs-12">
         <header>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <span class="greetings">{{ Lang::get('mobileci.greetings.welcome') }}</span>
-                </div>
-            </div>
-            <div class="row vertically-spaced">
-                <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->parent->biglogo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->logo) }}" />
                 </div>
             </div>
         </header>
-        <form name="loginForm" id="loginForm" action="{{ url('customer/login') }}" method="post">
-            <div class="form-group">
-                <button type="submit" class="btn btn-info btn-block" onclick="return false;">Loading Orbit, please wait...</button>
-            </div>
-        </form>
+
+        <div class="col-xs-12 text-center welcome-user">
+            <h3>{{ Lang::get('mobileci.greetings.welcome') }},<br><span class="userName">{{{ $display_name or '' }}}</span>!</h3>
+        </div>
+        <div class="col-xs-12 text-center">
+            <button type="button" class="btn btn-info btn-block">{{ Lang::get('mobileci.signin.loading_orbit') }}</button>
+        </div>
     </div>
 </div>
-@stop
+
 @section('footer')
 <footer>
     <div class="row">
         <div class="col-xs-12 text-center">
-            <img class="img-responsive orbit-footer" style="width:120px;" src="{{ asset('mobile-ci/images/orbit_footer.png') }}">
+            <img class="img-responsive orbit-footer"  src="{{ asset('mobile-ci/images/orbit_footer.png') }}">
+        </div>
+        <div class="text-center">
+            {{ 'Orbit v' . ORBIT_APP_VERSION }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 text-center">
+            <span class="fa-stack fa-lg offline">
+              <i class="fa fa-globe fa-stack-1x globe"></i>
+              <i id="offlinemark"></i>
+            </span>
         </div>
     </div>
 </footer>
@@ -108,7 +126,7 @@ window.onload = function() {
 
     // Submit the form, but wait for few seconds to make sure the Captive
     // portal knows that the internet connection ready
-    var delay = 2.5;  // seconds
+    var delay = 2;  // seconds
     setTimeout(function() {
         frm.submit();
     }, delay * 1000);

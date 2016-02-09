@@ -58,7 +58,7 @@ class postDeleteCategoryTest extends TestCase
 
     public function testOK_delete_owned_category()
     {
-        $role = Factory::create('role_admin');
+        $role = Factory::create('Role', ['role_name' => 'mall admin']);
         $permission = Factory::create('Permission', ['permission_name' => 'delete_category']);
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $authData = Factory::create('Apikey', ['user_id' => $user->user_id]);
@@ -102,7 +102,7 @@ class postDeleteCategoryTest extends TestCase
 
     public function testOK_delete_same_merchant_owner()
     {
-        $role = Factory::create('role_admin');
+        $role = Factory::create('Role', ['role_name' => 'mall owner']);
         $permission = Factory::create('Permission', ['permission_name' => 'delete_category']);
         $user = Factory::create('User', ['user_role_id' => $role->role_id]);
         $authData = Factory::create('Apikey', ['user_id' => $user->user_id]);

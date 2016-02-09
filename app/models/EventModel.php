@@ -24,9 +24,8 @@ class EventModel extends Eloquent
 
     public function retailers()
     {
-        return $this->belongsToMany('Retailer', 'event_retailer', 'event_id', 'retailer_id')
+        return $this->belongsToMany('Tenant', 'event_retailer', 'event_id', 'retailer_id')
             ->withPivot('object_type')
-            ->where('merchants.is_mall', 'no')
             ->where('event_retailer.object_type', 'retailer');
     }
 
@@ -61,6 +60,16 @@ class EventModel extends Eloquent
     public function modifier()
     {
         return $this->belongsTo('User', 'modified_by', 'user_id');
+    }
+
+    /**
+     * Event strings can be translated to many languages.
+     */
+    public function translations()
+    {
+        return $this->hasMany('EventTranslation', 'event_id', 'event_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
     }
 
     /**

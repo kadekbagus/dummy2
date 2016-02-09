@@ -70,3 +70,44 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
     }
 
 });
+
+
+/**
+ * Listen on:    `orbit.news.after.translation.save`
+ * Purpose:      Handle file upload on news cause selected language translation
+ *
+ * @author Firmansyah <firmansyah@dominopos.com>
+ *
+ * @param NewsAPIController $controller
+ * @param NewsTranslations $news_translations
+ */
+Event::listen('orbit.news.after.translation.save', function($controller, $news_translations)
+{
+
+    $image_id = $news_translations->merchant_language_id;
+    
+    $files = OrbitInput::files('image_translation_' . $image_id);
+    if (! $files) {
+        return;
+    }
+
+    $_POST['news_translation_id'] = $news_translations->news_translation_id;
+    $_POST['news_id'] = $news_translations->news_id;
+    $_POST['merchant_language_id'] = $news_translations->merchant_language_id;
+    $response = UploadAPIController::create('raw')
+                                   ->setCalledFrom('news.translations')
+                                   ->postUploadNewsTranslationImage();
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+
+    unset($_POST['news_translation_id']);
+    unset($_POST['news_id']);
+    unset($_POST['merchant_language_id']);
+
+    $news_translations->setRelation('media', $response->data);
+    $news_translations->media = $response->data;
+    $news_translations->image_translation = $response->data[0]->path;
+});

@@ -25,4 +25,5 @@ trait MallTrait
                     $query->orWhereNull('merchants.is_mall');
         });
     }
+
 }

@@ -78,11 +78,30 @@ a:hover{
     }
     .row{
       margin-left: 0px; 
-      margin-right: 0px; 
+      margin-right: 0px;
+      h4{
+        font-size: 15px;
+        font-weight: bold;
+        word-wrap: break-word;
+      }
+      h3{
+        font-size: 14px;
+        font-weight: normal;
+        margin-top:-2px;
+      }
+      h5{
+        font-size: 14px;
+        font-weight: normal;
+      }
     }
 }
 .catalogue.promo-list{
     border-bottom: 1px solid #dedede;
+}
+.catalogue-info{
+    a{
+        color:#000;
+    }
 }
 .catalogue:first-child {
     border-top:0px;
@@ -162,6 +181,14 @@ a:hover{
         padding: 0px;
     }
 }
+.middle-earth{
+    &:before {
+        content: ' ';
+        display: inline-block;
+        vertical-align: middle;
+        height: 100%;
+    }
+}
 .catalogue-control-cart {
     margin-top: 28px;
 }
@@ -171,10 +198,19 @@ a:hover{
         display: block;
     }
     img {
-        max-height: 120px;
+        max-height: 80px;
         margin-top: 4px;
         //margin: 0 auto;
+        width: 100%;
+        height: 76px;
+        object-fit: contain;
     }
+    /*&:before {
+        content: ' ';
+        display: inline-block;
+        vertical-align: middle;
+        height: 100%;
+    }*/
 }
 .ribbon-wrapper-red {
     width: 80px;
@@ -402,7 +438,7 @@ span.little-circlet {
 }
 .modal-header.orbit-modal-header{
   color: #fff;
-  background-color: #0aa5d5;
+  background-color: @theme-main-complimentary-4;
 }
 ul.family-list{
     margin-top:8px;
@@ -511,7 +547,7 @@ h3.currency.currency-promo{
 .link-spanner{
     position:absolute; 
     width:100%;
-    height:100%;
+    height:130px; //same as .catalogue height
     top:0;
     left: 0;
     z-index: 1;
@@ -539,4 +575,133 @@ h5.tenant-category{
             content: '';
         }
     }
+}
+
+.select {
+    padding:5px;
+    margin: 0;
+    -webkit-border-radius:4px;
+    -moz-border-radius:4px;
+    border-radius:4px;
+    background: @theme-main-complimentary;
+    color:#fff;
+    border:none;
+    outline:none;
+    display: inline-block;
+    -webkit-appearance:none;
+    -moz-appearance:none;
+    appearance:none;
+    cursor:pointer;
+    width: 100%;
+}
+
+/* Targetting Webkit browsers only. FF will show the dropdown arrow with so much padding. */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    .select {padding-right:18px}
+}
+
+.select-label {
+    position:relative;
+    width: 100%;
+}
+.select-label:after {
+    content:'▼';
+    font:16px "Consolas", monospace;
+    color:#fff;
+    right:8px; top:5px;
+    padding:0 0 2px;
+    position:absolute;
+    pointer-events:none;
+}
+.select-label:before {
+    content:'';
+    right:6px; top:0px;
+    width:20px; height:20px;
+    position:absolute;
+    pointer-events:none;
+    display:block;
+}
+.catalogue-tenant{
+    height:130px;
+}
+.catalogue-other{
+    height:86px;
+}
+
+.list-item-container{
+    
+}
+
+.list-item-title {
+  color: @theme-main-complimentary-2;
+  //background-color: @theme-main;
+  //font-size: 3vw;
+  font-size: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  div {
+      height:28px;
+      overflow: hidden;
+  }
+}
+.list-item-subtitle{
+    //font-size:2.5vw;
+    font-size:14px;
+    div{
+        height:20px;
+        overflow: hidden;
+    }
+}
+.list-item-single {
+  background-color: #fff;
+  height:96px;
+}
+.list-item-single-tenant {
+  background-color: #fff;
+  height:150px;
+}
+    
+.list-item-info{
+  position:absolute;
+  bottom:0;
+  left:0;
+  width:100%;
+  color:#fff;
+  padding:0 12px 8px 12px;
+  z-index:1;
+}
+
+.img-fit-not-tenant{
+  width:100%;
+  height:96px;
+  object-fit:cover;
+}
+
+.img-fit-tenant{
+  width:100%;
+  height:150px;
+  object-fit:cover;
+}
+
+.product-detail{
+    img{
+        position: absolute;
+        top:0em;
+        width: 100%;
+        height: 270px;
+        width:100%;
+        object-fit:cover;
+        z-index: 0;
+    }
+}
+.product-info{
+    position: relative;
+    margin-top: 269px;
+    background: @theme-main;
+    color:#fff;
+    font-size: 1.3em;
+    z-index: 2;
+    -webkit-box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
+    -moz-box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
+    box-shadow: 0px -25px 91px -6px rgba(0,0,0,0.4);
 }

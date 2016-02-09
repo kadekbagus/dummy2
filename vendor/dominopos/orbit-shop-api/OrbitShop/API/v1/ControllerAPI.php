@@ -27,7 +27,7 @@ abstract class ControllerAPI extends Controller
      *
      * @var PDO
      */
-    public $pdo = NULL;
+    private $pdo = NULL;
 
     /**
      * The HTTP response type.
@@ -250,7 +250,7 @@ abstract class ControllerAPI extends Controller
             return;
         }
 
-        $this->pdo->beginTransaction();
+        DB::connection()->beginTransaction();
     }
 
     /**
@@ -267,8 +267,8 @@ abstract class ControllerAPI extends Controller
 
         // Make sure we are in transaction mode, to prevent the rollback()
         // complaining
-        if ($this->pdo->inTransaction()) {
-            $this->pdo->rollBack();
+        if (DB::connection()->transactionLevel() > 0) {
+            DB::connection()->rollBack();
         }
     }
 
@@ -284,7 +284,7 @@ abstract class ControllerAPI extends Controller
             return;
         }
 
-        $this->pdo->commit();
+        DB::connection()->commit();
     }
 
     /**

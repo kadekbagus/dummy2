@@ -15,15 +15,23 @@ return array(
         'transfercart'  => 'TRANSFER CART',
         'customer_id'   => 'CUSTOMER ID',
         'logout'        => 'KELUAR',
+        "language"      => "BAHASA",
         'payment'       => 'PEMBAYARAN',
         'searching'     => 'PENCARIAN',
         'new_products'  => 'PRODUK BARU',
         'promotions'    => 'PROMOSI',
-        'coupons'       => 'KUPON SAYA',
+        'my_coupons'    => 'KUPON SAYA',
         'coupon_single' => 'KUPON',
         'promotion'     => 'PROMOSI',
         'not_found'     => 'ERROR',
         'recognize_me'  => 'KENALI SAYA',
+        'tenant_directory'  => 'DIREKTORI PENYEWA',
+        'promotions_tenants'=> 'PROMOSI DARI PELANGGAN',
+        'news_tenants'      => 'BERITA DARI PELANGGAN',
+        'events_tenants'    => 'ACARA DARI PELANGGAN',
+        'coupons'           => 'KUPON',
+        'promotions'        => 'PROMOSI',
+        'news'              => 'BERITA',
         'membership'    => 'MEMBERSHIP'
     ),
 
@@ -38,12 +46,16 @@ return array(
     ),
 
     'greetings'         => array(
-        'welcome'       => 'Selamat Datang'
+        'welcome'       => 'Selamat Datang',
+        'latest_news_coming_soon' => 'Periksa berita terbaru kami akan segera hadir.',
+        'new_promotions_coming_soon' => 'Periksa promosi baru kami akan segera hadir.',
+        'how_to_get_coupons' => 'Silahkan periksa dengan layanan pelanggan bagaimana untuk mendapatkan kupon.',
     ),
 
     // modal specific lang
     'modals'                    => array(
         'close'                 => 'Tutup',
+        'ok'                    => 'OK',
         'email_error'           => 'Harap isi email terlebih dahulu.',
         'event_title'           => 'Events',
         'info_title'            => 'Info',
@@ -55,7 +67,8 @@ return array(
         'delete_coupon_title'   => 'Hapus Kupon',
         'close_cart_title'      => 'Tutup Keranjang',
         'reset_cart_title'      => 'Hapus Keranjang',
-        'membership_title'      => 'Informasi Membership',
+        'membership_title'      => 'Membership',
+        'language_title'        => 'Pilih Bahasa',
 
         'message_no_coupon'     => 'Maaf, Anda belum memiliki kupon.',
         'message_no_new_product'=> 'Maaf, tidak ada produk baru untuk saat ini.',
@@ -80,6 +93,16 @@ return array(
         'yes_button'            => 'Ya',
         'do_not_show_label'     => 'Jangan tunjukkan pesan ini lagi',
         'new_product_price'     => 'Harga baru',
+        'okay'                  => 'OK',
+
+        'message_user_activation' => 'Harap aktifkan akun anda',
+    ),
+
+    //tenant catalogue
+    'tenant'         => array(
+        'floor'                 => 'Lantai',
+        'category'              => 'Kategori',
+        'all'                   => 'All',
     ),
 
     // page specific lang
@@ -91,6 +114,14 @@ return array(
         'click_here'        => 'klik disini',
         'email_not_valid'   => 'Alamat email tidak valid',
         'logging_in_button' => 'Sedang login. Harap tunggu...',
+        'login_via_facebook' => 'Login via Facebook',
+        'login_via_google' => 'Login via Google+',
+        'or_between_email_and_fb' => 'ATAU',
+        'agree_to_terms' => 'Saya setuju dengan <a href="%s" id="orbit-privacy-policy-anchor">Privacy Policy</a> dan <a href="%s" id="orbit-tos-anchor">Syarat dan Ketentuan</a>',
+        'must_accept_terms' => 'Anda harus menyetujui <strong>Privacy Policy</strong> dan <strong>Syarat dan Ketentuan</strong> Orbit sebelum anda bisa login',
+        'accept_modal_button_text' => 'OK',
+        'connecting_to_facebook' => 'Menghubungi Facebook...',
+        'connecting_to_google' => 'Menghubungi Google...',
     ),
 
     'catalogue'         => array(

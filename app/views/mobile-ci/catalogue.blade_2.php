@@ -22,8 +22,8 @@
     <div class="modal-dialog orbit-modal">
       <div class="modal-content">
         <div class="modal-header orbit-modal-header">
-          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-          <h4 class="modal-title" id="hasCouponLabel">Kupon Saya</h4>
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{{ Lang::get('mobileci.activation.close') }}</span></button>
+          <h4 class="modal-title" id="hasCouponLabel">{{ Lang::get('mobileci.coupon.my_coupon') }}</h4>
         </div>
         <div class="modal-body">
           <div class="row ">
@@ -36,10 +36,10 @@
             <div class="row">
               <input type="hidden" name="detail" id="detail" value="">
               <div class="col-xs-6">
-                <button type="button" id="applyCoupon" class="btn btn-success btn-block">Gunakan</button>
+                <button type="button" id="applyCoupon" class="btn btn-success btn-block">{{ Lang::get('mobileci.coupon.use') }}</button>
               </div>
               <div class="col-xs-6">
-                <button type="button" id="denyCoupon" class="btn btn-danger btn-block">Lain Kali</button>
+                <button type="button" id="denyCoupon" class="btn btn-danger btn-block">{{ Lang::get('mobileci.coupon.next_time') }}</button>
               </div>
             </div>
         </div>
@@ -50,7 +50,14 @@
 
 @section('ext_script_bot')
 	{{ HTML::script('mobile-ci/scripts/jquery-ui.min.js') }}
-	{{ HTML::script('mobile-ci/scripts/featherlight.min.js') }}
+	{{ HTML::script(Config::get('orbit.cdn.featherlight.1_0_3', 'mobile-ci/scripts/featherlight.min.js')) }}
+{{-- Script fallback --}}
+<script>
+    if (typeof $().featherlight === 'undefined') {
+        document.write('<script src="{{asset('mobile-ci/scripts/featherlight.min.js')}}">\x3C/script>');
+    }
+</script>
+{{-- End of Script fallback --}}
 	{{ HTML::script('mobile-ci/scripts/jquery.storageapi.min.js') }}
 	<script type="text/javascript">
 		// window.onunload = function(){};

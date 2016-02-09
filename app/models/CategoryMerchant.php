@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This links a Category with a specific Merchant (which is a Tenant of a Mall).
+ * A single Tenant may be in multiple categories.
+ *
+ * The merchant_id in Category refers to its owning Mall.
+ *
+ */
 class CategoryMerchant extends Eloquent
 {
     /**
@@ -11,9 +18,9 @@ class CategoryMerchant extends Eloquent
 
     protected $primaryKey = 'category_merchant_id';
 
-    public function mall()
+    public function retailer()
     {
-        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall();
+        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall('no');
     }
 
     public function category()

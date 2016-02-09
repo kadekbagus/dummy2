@@ -19,6 +19,6 @@ class EventRetailer extends Eloquent
 
     public function retailer()
     {
-        return $this->belongsTo('Retailer', 'retailer_id', 'merchant_id')->isMall('no');
+        return $this->belongsTo('Tenant', 'retailer_id', 'merchant_id');
     }
 }

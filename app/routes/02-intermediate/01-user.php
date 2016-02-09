@@ -33,45 +33,42 @@ Route::post('/app/v1/user/changepassword', 'IntermediateAuthController@User_post
  */
 Route::post('/app/v1/user-profile-picture/delete', 'IntermediateAuthController@Upload_postDeleteUserImage');
 
-Route::group(['before' => 'orbit-settings'], function()
-{
-    /**
-     * Create New Employee
-     */
-    Route::post('/app/v1/employee/new', 'IntermediateAuthController@Employee_postNewMallEmployee');
+/**
+ * Create New Employee
+ */
+Route::post('/app/v1/employee/new', 'IntermediateAuthController@Employee_postNewMallEmployee');
 
-    /**
-     * Update an Employee
-     */
-    Route::post('/app/v1/employee/update', 'IntermediateAuthController@Employee_postUpdateMallEmployee');
+/**
+ * Update an Employee
+ */
+Route::post('/app/v1/employee/update', 'IntermediateAuthController@Employee_postUpdateMallEmployee');
 
-    /**
-     * Delete an Employee
-     */
-    Route::post('/app/v1/employee/delete', 'IntermediateAuthController@Employee_postDeleteMallEmployee');
+/**
+ * Delete an Employee
+ */
+Route::post('/app/v1/employee/delete', 'IntermediateAuthController@Employee_postDeleteMallEmployee');
 
-    /**
-     * Search Employees
-     */
-    Route::get('/app/v1/employee/list', 'IntermediateAuthController@Employee_getSearchMallEmployee');
+/**
+ * Search Employees
+ */
+Route::get('/app/v1/employee/list', 'IntermediateAuthController@Employee_getSearchMallEmployee');
 
-    /**
-     * Create New Membership
-     */
-    Route::post('/app/v1/membership/new', 'IntermediateAuthController@User_postNewMembership');
+/**
+ * Create New Membership
+ */
+Route::post('/app/v1/membership/new', 'IntermediateAuthController@User_postNewMembership');
 
-    /**
-     * List membership
-     */
-    Route::get('/app/v1/membership/list', 'IntermediateAuthController@User_getConsumerListing');
+/**
+ * List membership
+ */
+Route::get('/app/v1/membership/list', 'IntermediateAuthController@User_getConsumerListing');
 
-    /**
-     * Update New Membership
-     */
-    Route::post('/app/v1/membership/update', 'IntermediateAuthController@User_postUpdateMembership');
+/**
+ * Update New Membership
+ */
+Route::post('/app/v1/membership/update', 'IntermediateAuthController@User_postUpdateMembership');
 
-    /**
-     * Delete Membership
-     */
-    Route::post('/app/v1/membership/delete', 'IntermediateAuthController@User_postDeleteMembership');
-});
+/**
+ * Delete Membership
+ */
+Route::post('/app/v1/membership/delete', 'IntermediateAuthController@User_postDeleteMembership');

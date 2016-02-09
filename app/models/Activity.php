@@ -5,6 +5,8 @@
  * @author Rio Astamal <me@rioastamal.net>
  */
 use OrbitRelation\BelongsTo as BelongsToObject;
+use DominoPOS\OrbitSession\SessionConfig;
+use DominoPOS\OrbitSession\Session;
 
 class Activity extends Eloquent
 {
@@ -19,6 +21,8 @@ class Activity extends Eloquent
     const ACTIVITY_REPONSE_OK = 'OK';
     const ACTIVITY_RESPONSE_FAILED = 'Failed';
 
+    const ACTIVTY_GROUP_MOBILE = 'mobile-ci';
+
     protected $hidden = ['http_method', 'request_uri', 'post_data', 'metadata_user', 'metadata_staff', 'metadata_object', 'metadata_location'];
 
     /**
@@ -26,6 +30,13 @@ class Activity extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+
+    /**
+     * Store the session object.
+     *
+     * @var Session
+     */
+    protected static $session = NULL;
 
     /**
      * Add new masked fields, so it will not saved plaintext
@@ -284,10 +295,6 @@ class Activity extends Eloquent
     public function setLocation($location)
     {
         if (is_object($location)) {
-            if (TRUE === ($location instanceof Retailer)) {
-                $location->parent;
-            }
-
             $this->location_id = $location->merchant_id;
             $this->location_name = $location->name;
             $this->metadata_location = $location->toJSON();
@@ -303,12 +310,51 @@ class Activity extends Eloquent
      * @param Object $object
      * @return Activity
      */
-    public function setObject($object)
+    public function setObject($object, $setDisplayName = FALSE)
     {
         if (is_object($object)) {
             $primaryKey = $object->getKeyName();
             $this->object_id = $object->$primaryKey;
             $this->object_name = get_class($object);
+
+            if ($setDisplayName) {
+                switch (get_class($object)) {
+                    case 'News':
+                        $this->object_display_name = $object->news_name;
+                        break;
+
+                    case 'Promotion':
+                        $this->object_display_name = $object->promotion_name;
+                        break;
+
+                    case 'Merchant':
+                        $this->object_display_name = $object->name;
+                        break;
+
+                    case 'LuckyDraw':
+                        $this->object_display_name = $object->lucky_draw_name;
+                        break;
+
+                    case 'EventModel':
+                        $this->object_display_name = $object->event_name;
+                        break;
+
+                    case 'Event':
+                        $this->object_display_name = $object->event_name;
+                        break;
+
+                    case 'Object':
+                        $this->object_display_name = $object->object_name;
+                        break;
+
+                    case 'User':
+                        $this->object_display_name = $object->getFullName();
+                        break;
+
+                    default:
+                        break;
+                }
+            }
 
             $this->metadata_object = $object->toJSON();
         }
@@ -539,6 +585,14 @@ class Activity extends Eloquent
     }
 
     /**
+     * An activity could belongs to an Widget
+     */
+    public function widget()
+    {
+        return $this->belongsToObject('Widget', 'object_id', 'widget_id');
+    }
+
+    /**
      * Activity has many children.
      *
      */
@@ -595,10 +649,9 @@ class Activity extends Eloquent
 
         return $builder->addSelect(DB::raw($prefix . 'merchants.name as retailer_name'))
                        ->leftJoin('merchants', function ($join) {
-                            $join->on('activities.object_name', '=', DB::raw('"Retailer"'));
+                            $join->on('activities.object_name', '=', DB::raw('"Tenant"'));
                             $join->on('merchants.merchant_id', '=', 'activities.object_id');
-                            $join->on('merchants.object_type', '=', DB::raw('"retailer"'));
-                            $join->on('merchants.is_mall', '=', DB::raw('"no"'));
+                            $join->on('merchants.object_type', '=', DB::raw('"tenant"'));
                             $join->on('merchants.status', '!=', DB::raw('"deleted"'));
                        });
     }
@@ -608,16 +661,15 @@ class Activity extends Eloquent
      *
      * @author Rio Astamal <me@rioastamal.net>
      * @param Illuminate\Database\Query\Builder $builder
-     * @param array $merchantIds
      * @return Illuminate\Database\Query\Builder
      */
-    public function scopeMerchantIds($builder, array $merchantIds)
+    public function scopeMerchantIds($builder)
     {
+        // need to rename this so it does not conflict if used with scopeJoinRetailer
         return $builder->select('activities.*')
-                       ->join('merchants', 'merchants.merchant_id', '=', 'activities.location_id')
-                       ->whereIn('merchants.parent_id', $merchantIds)
-                       ->where('merchants.status', 'active')
-                       ->where('merchants.object_type', 'retailer');
+                       ->join('merchants as ' . DB::getTablePrefix() .  'malls', 'malls.merchant_id', '=', 'activities.location_id')
+                       ->where('malls.status', 'active')
+                       ->where('malls.object_type', 'mall');
     }
 
     /**
@@ -671,7 +723,7 @@ class Activity extends Eloquent
      */
     public function save(array $options = array())
     {
-        if (App::environment() === 'testing') {
+        if ((App::environment() === 'testing') && (Config::get('orbit.activity.force.save', FALSE) !== TRUE)) {
             // Skip saving
             return 1;
         }
@@ -692,7 +744,31 @@ class Activity extends Eloquent
                 $this->module_name = $this->event_name;
             }
         }
-        return parent::save($options);
+
+        // Try to get the session id if this is coming from mobile activity
+        if ($this->group === static::ACTIVTY_GROUP_MOBILE) {
+            // does the session_id already filled?
+            if (! $this->session_id) {
+                // try to get the current session id
+                $this->session_id = static::getSessionId();
+            }
+
+            if ($this->activity_type !== 'logout'){
+                $this->saveToConnectedNow();
+            }
+        }
+
+        $result = parent::save($options);
+
+        // Save to additional activities table
+        $this->saveToCampaignPageViews();
+        $this->saveToCampaignPopUpView();
+        $this->saveToCampaignPopUpClick();
+        $this->saveToMerchantPageView();
+        $this->saveToWidgetClick();
+        $this->saveToConnectionTime();
+
+        return $result;
     }
 
     /**
@@ -737,5 +813,390 @@ class Activity extends Eloquent
     protected static function getRequestUri()
     {
         return isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'Activity: Unknown request Uri';
+    }
+
+    /**
+     * scope to consider activity from users
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $builder
+     * @param array $merchantIds
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public function scopeConsiderCustomer($builder)
+    {
+        $builder->whereNotIn('group', array('pos', 'portal'));
+
+        if (! empty($merchantIds)) {
+            $this->scopeMerchantIds($builder);
+        }
+
+        return $builder;
+    }
+
+    /**
+     * Scope to filter based on merchant ids in widget click
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     * @param Illuminate\Database\Query\Builder $builder
+     * @param array $merchantIds
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function scopeMerchantIds_widget_click($builder, array $merchantIds)
+    {
+        // need to rename this so it does not conflict if used with scopeJoinRetailer
+        return $builder->select('activities.*')
+                       ->join('widgets', 'widgets.widget_id', '=', 'activities.object_id' )
+                       ->join('merchants as ' . DB::getTablePrefix() .  'mall', 'mall.parent_id', '=', 'widgets.merchant_id')
+                       ->whereIn('mall.merchant_id', $merchantIds)
+                       ->where('mall.status', 'active')
+                       ->where('mall.object_type', 'mall');
+    }
+
+
+    /**
+     * Set Session id for certain condition
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @param string $id
+     * @return Activity
+     */
+    public function setSessionId($id) {
+        $this->session_id = $id;
+
+        return $this;
+    }
+
+    /**
+     *  Set Session static to force session field id
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @param $session
+     */
+    public static function setSession($session) {
+        static::$session = $session;
+    }
+
+    /**
+     * Detect Session Id
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @return string
+     */
+    protected static function getSessionId()
+    {
+        $session = static::$session;
+        if ($session === null) {
+
+            $config = new SessionConfig(Config::get('orbit.session'));
+
+            $session = new Session($config);
+            // There is possibility that the session are already expired
+            // So we need to catch those
+            try {
+                $session = $session->disableForceNew()->start();
+            } catch (Exception $e) {
+                // do nothing
+            }
+        }
+
+        return $session->getSessionId();
+    }
+
+    /**
+     * Save to campaign_page_views table
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveToCampaignPageViews()
+    {
+        // Save also the activity to particular `campaign_xyz` table
+        switch ($this->activity_name) {
+            case 'view_promotion':
+            case 'view_coupon':
+            case 'view_lucky_draw':
+            case 'view_event':
+            case 'view_news':
+                $campaign = new CampaignPageView();
+                $campaign->campaign_id = $this->object_id;
+                $campaign->user_id = $this->user_id;
+                $campaign->location_id = $this->location_id;
+                $campaign->activity_id = $this->activity_id;
+                $campaign->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
+                $campaign->save();
+                break;
+        }
+    }
+
+    /**
+     * Check, Create and Update Connected Now.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     * @throws Exception
+     */
+    protected function saveToConnectedNow()
+    {
+        $date = date('Y-m-d');
+        $hour = date('H');
+        $minute = date('i');
+
+        $activity = ConnectedNow::select('connected_now.*', 'list_connected_user.user_id')->leftJoin('list_connected_user', function ($join) {
+                $join->on('connected_now.connected_now_id', '=', 'list_connected_user.connected_now_id');
+                $join->where('list_connected_user.user_id', '=', $this->user_id);
+            })
+            ->where('merchant_id', '=', $this->location_id)
+            ->where('date', '=', $date)
+            ->where('hour', '=', $hour)
+            ->where('minute', '=', $minute)
+            ->first();
+
+        if (empty($activity)) {
+            $newConnected = new ConnectedNow();
+            $newConnected->merchant_id = $this->location_id;
+            $newConnected->customer_connected = 1;
+            $newConnected->date = $date;
+            $newConnected->hour = $hour;
+            $newConnected->minute = $minute;
+            $newConnected->save();
+
+            $newListConnectedUser = new ListConnectedUser();
+            $newListConnectedUser->connected_now_id = $newConnected->connected_now_id;
+            $newListConnectedUser->user_id = $this->user_id;
+            $newListConnectedUser->save();
+        } else {
+            if (is_null($activity->user_id)) {
+                $newListConnectedUser = new ListConnectedUser();
+                $newListConnectedUser->connected_now_id = $activity->connected_now_id;
+                $newListConnectedUser->user_id = $this->user_id;
+                $newListConnectedUser->save();
+
+                $activity->customer_connected += 1;
+                $activity->save();
+            }
+        }
+    }
+
+    /**
+     * Save to merchant_page_views table
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveToMerchantPageView()
+    {
+        $proceed = $this->activity_name === 'view_retailer' && $this->activity_name_long == 'View Tenant Detail';
+        if (! $proceed) {
+            return;
+        }
+
+        // Save also the activity to particular `campaign_xyz` table
+        $pageview = new MerchantPageView();
+        $pageview->merchant_id = $this->object_id;
+        $pageview->merchant_type = strtolower($this->object_name);
+        $pageview->user_id = $this->user_id;
+        $pageview->location_id = $this->location_id;
+        $pageview->activity_id = $this->activity_id;
+        $pageview->save();
+    }
+
+    /**
+     * Save to campaign_popup_views table
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return void
+     */
+    protected function saveToCampaignPopUpView()
+    {
+        $activity_name_long_array = array(
+            'View Coupon Pop Up'       => 'View Coupon Pop Up',
+            'View Promotion Pop Up'    => 'View Promotion Pop Up',
+            'View News Pop Up'         => 'View News Pop Up'
+        );
+        
+        $proceed = in_array($this->activity_name_long, $activity_name_long_array);
+        if (! $proceed) {
+            return;
+        }
+
+        // Save also the activity to particular `campaign_xyz` table
+        $popupview = new CampaignPopupView();
+        $popupview->campaign_id = $this->object_id;
+        $popupview->user_id = $this->user_id;
+        $popupview->location_id = $this->location_id;
+        $popupview->activity_id = $this->activity_id;
+        $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
+        $popupview->save();
+    }
+
+    /**
+     * Save to campaign_popup_views table
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return void
+     */
+    protected function saveToCampaignPopUpClick()
+    {
+        $activity_name_long_array = array(
+            'Click Coupon Pop Up'      => 'Click Coupon Pop Up',
+            'Click Promotion Pop Up'   => 'Click Promotion Pop Up',
+            'Click News Pop Up'        => 'Click News Pop Up',
+        );
+        
+        $proceed = in_array($this->activity_name_long, $activity_name_long_array);
+        if (! $proceed) {
+            return;
+        }
+
+        // Save also the activity to particular `campaign_xyz` table
+        $popupview = new CampaignClicks();
+        $popupview->campaign_id = $this->object_id;
+        $popupview->user_id = $this->user_id;
+        $popupview->location_id = $this->location_id;
+        $popupview->activity_id = $this->activity_id;
+        $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
+        $popupview->save();
+    }
+
+    /**
+     * Save to `connection_times` table. Only succesful operation (no failed response) recorded.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveToConnectionTime()
+    {
+        $proceed = ($this->activity_name === 'login_ok' || $this->activity_name === 'logout_ok') && $this->session_id;
+        if (! $proceed) {
+            return;
+        }
+
+        // Save also the activity to particular `campaign_xyz` table
+        $connection = ConnectionTime::where('session_id', $this->session_id)->first();
+        if (! is_object($connection)) {
+            $connection = new ConnectionTime();
+        }
+
+        $connection->session_id = $this->session_id;
+        $connection->user_id = $this->user_id;
+        $connection->location_id = $this->location_id;
+
+        $now = date('Y-m-d H:i:s');
+        if ($this->activity_name === 'login_ok') {
+            $connection->login_at = $now;
+        }
+        if ($this->activity_name === 'logout_ok') {
+            $connection->logout_at = $now;
+        }
+
+        $connection->save();
+    }
+
+    /**
+     * Save to `widget_clicks` table
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return void
+     */
+    protected function saveToWidgetClick()
+    {
+        if ($this->activity_name !== 'widget_click') {
+            return;
+        }
+
+        $click = new WidgetClick();
+        $click->widget_id = $this->object_id;
+        $click->user_id = $this->user_id;
+        $click->location_id = $this->location_id;
+        $click->activity_id = $this->activity_id;
+
+        $groupName = 'Unknown';
+        switch ($this->activity_name_long) {
+            case 'Widget Click Promotion':
+                $groupName = 'Promotion';
+                break;
+
+            case 'Widget Click News':
+                $groupName = 'News';
+                break;
+
+            case 'Widget Click Tenant':
+                $groupName = 'Tenant';
+                break;
+
+            case 'Widget Click Coupon':
+                $groupName = 'Coupon';
+                break;
+
+            case 'Widget Click Lucky Draw':
+                $groupName = 'Lucky Draw';
+                break;
+        }
+
+        $object = WidgetGroupName::get()->keyBy('widget_group_name')->get($groupName);
+        $click->widget_group_name_id = is_object($object) ? $object->widget_group_name_id : '0';
+
+        $return = $click->save();
+    }
+
+    /**
+     * Used to get the campaign group name id.
+     *
+     * @author Rio Astamal <rio@dominopos.com>
+     * @return string
+     */
+    private function campaignGroupNameIdFromActivityName()
+    {
+        $groupName = 'Unknown';
+
+        switch ($this->activity_name) {
+            case 'view_promotion':
+                $groupName = 'Promotion';
+                break;
+
+            case 'view_coupon':
+                $groupName = 'Coupon';
+                break;
+
+            case 'view_lucky_draw':
+                $groupName = 'Lucky Draw';
+                break;
+
+            case 'view_event':
+                $groupName = 'Event';
+                break;
+
+            case 'view_news':
+                $groupName = 'News';
+                break;
+
+            case 'view_promotion_popup':
+                $groupName = 'Promotion';
+                break;
+
+            case 'view_coupon_popup':
+                $groupName = 'Coupon';
+                break;
+
+            case 'view_news_popup':
+                $groupName = 'News';
+                break;
+
+            case 'click_promotion_popup':
+                $groupName = 'Promotion';
+                break;
+
+            case 'click_coupon_popup':
+                $groupName = 'Coupon';
+                break;
+
+            case 'click_news_popup':
+                $groupName = 'News';
+                break;
+        }
+
+        $object = CampaignGroupName::get()->keyBy('campaign_group_name')->get($groupName);
+
+        return is_object($object) ? $object->campaign_group_name_id : '0';
     }
 }

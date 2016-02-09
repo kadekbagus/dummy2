@@ -11,7 +11,7 @@ Route::post('/app/v1/lucky-draw-number/new', 'IntermediateAuthController@LuckyDr
 /**
  * Delete lucky draw number
  */
-Route::post('/app/v1/lucky-draw-number/delete', ['before' => 'orbit-settings', 'uses' => 'IntermediateAuthController@LuckyDrawNumber_postDeleteLuckyDrawNumber']);
+Route::post('/app/v1/lucky-draw-number/delete', 'IntermediateAuthController@LuckyDrawNumber_postDeleteLuckyDrawNumber');
 
 /**
  * Update lucky draw number
@@ -21,5 +21,5 @@ Route::post('/app/v1/lucky-draw-number/update', 'IntermediateAuthController@Luck
 /**
  * List and/or Search lucky draw number
  */
-Route::get('/app/v1/lucky-draw-number/{search}', 'IntermediateAuthController@LuckyDraw_getSearchLuckyDrawNumber')
+Route::get('/app/v1/lucky-draw-number/{search}', 'IntermediateAuthController@LuckyDrawNumber_getSearchLuckyDrawNumber')
      ->where('search', '(list|search)');

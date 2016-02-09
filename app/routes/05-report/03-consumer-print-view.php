@@ -4,6 +4,5 @@
 
 Route::get('/printer/consumer/list', [
     'as'        => 'printer-consumer-list',
-    'before'    => 'orbit-settings',
     'uses'      => 'Report\ConsumerPrinterController@getConsumerPrintView'
 ]);

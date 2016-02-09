@@ -5,286 +5,49 @@ use Config;
 use DB;
 use PDO;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Text as OrbitText;
-use User;
-use Role;
+use Mall;
+use Carbon\Carbon as Carbon;
+use UserAPIController;
+use Setting;
 
 class ConsumerPrinterController extends DataPrinterController
 {
     public function getConsumerPrintView()
     {
         $this->preparePDO();
-        $prefix = DB::getTablePrefix();
 
         $mode = OrbitInput::get('export', 'print');
         $user = $this->loggedUser;
-        $now = date('Y-m-d H:i:s');
 
-        // Available merchant to query
-        $listOfMerchantIds = [];
+        $current_mall = OrbitInput::get('current_mall');
+        $flagMembershipEnable = false;
 
-        // Available retailer to query
-        $listOfRetailerIds = [];
+        $timezone = $this->getTimeZone($current_mall);
 
-        $details = OrbitInput::get('details');
+        // read from setting table membership is enable or not
+        $membershipSetting = Setting::where('setting_name', '=','enable_membership_card')
+            ->where('object_id', '=', $current_mall)
+            ->first();
 
-        // Builder object
-        $users = User::Consumers()
-                    ->select('users.*',   
-                        'merchants.name as merchant_name',
-                        'user_details.city as city',
-                        'user_details.birthdate as birthdate',
-                        'user_details.gender as gender',
-                        'user_details.country as country',
-                        'user_details.phone as phone',
-                        'user_details.last_visit_any_shop as last_visit_date',
-                        'user_details.last_spent_any_shop as last_spent_amount',
-                        'user_details.relationship_status as relationship_status',
-                        'user_details.number_of_children as number_of_children',
-                        'user_details.occupation as occupation',
-                        'user_details.sector_of_activity as sector_of_activity',
-                        'user_details.last_education_degree as last_education_degree',
-                        'user_details.avg_annual_income1 as avg_annual_income1',
-                        'user_details.avg_monthly_spent1 as avg_monthly_spent1',
-                        'user_details.preferred_language as preferred_language',
-                        DB::raw("count({$prefix}tmp_lucky.user_id) as total_lucky_draw_number"),
-                        DB::raw("(select count(cp.user_id) from {$prefix}issued_coupons cp
-                                    where status='active' and cp.user_id={$prefix}users.user_id and
-                                    current_date() <= date(cp.expired_date)) as total_usable_coupon,
-                                    (select count(cp2.user_id) from {$prefix}issued_coupons cp2
-                                    where status='redeemed' and cp2.user_id={$prefix}users.user_id) as total_redeemed_coupon"))
-                         
-                    ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
-                    ->leftJoin(
-                                    // Table
-                                    DB::raw("(select ldn.user_id from `{$prefix}lucky_draw_numbers` ldn
-                                             join {$prefix}lucky_draws ld on ld.lucky_draw_id=ldn.lucky_draw_id
-                                             where ldn.status='active' and ld.status='active'
-                                             and (ldn.user_id is not null and ldn.user_id != 0))
-                                             {$prefix}tmp_lucky"),
-                                    // ON
-                                    'tmp_lucky.user_id', '=', 'users.user_id')
-                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'user_details.last_visit_shop_id')
-                    ->leftJoin('user_personal_interest', 'user_personal_interest.user_id', '=', 'users.user_id')
-                    ->leftJoin('personal_interests', 'personal_interests.personal_interest_id', '=', 'user_personal_interest.personal_interest_id')
-                    ->with(array('userDetail', 'userDetail.lastVisitedShop'))
-                    ->excludeDeleted('users')
-                    ->groupBy('users.user_id');
-
-        // Filter by merchant ids
-        OrbitInput::get('merchant_id', function($merchantIds) use ($users, $listOfMerchantIds) {
-            // $users->merchantIds($merchantIds);
-            $listOfMerchantIds = (array)$merchantIds;
-            // dd($listOfMerchantIds);
-        });
-        // dd($listOfMerchantIds);
-
-        // @To do: Replace this stupid hacks
-        if (! $user->isSuperAdmin()) {
-            $listOfMerchantIds = $user->getMyMerchantIds();
-
-            if (empty($listOfMerchantIds)) {
-                $listOfMerchantIds = [-1];
+        if (!empty($membershipSetting)) {
+            if ($membershipSetting->setting_value === 'true') {
+                $flagMembershipEnable = true;
             }
-
-            //$users->merchantIds($listOfMerchantIds);
-        } else {
-            // if (! empty($listOfMerchantIds)) {
-            //     $users->merchantIds($listOfMerchantIds);
-            // }
         }
 
-        // Filter by retailer (shop) ids
-        OrbitInput::get('retailer_id', function($retailerIds) use ($users) {
-            // $users->retailerIds($retailerIds);
-            $listOfRetailerIds = (array)$retailerIds;
-        });
+        // Instantiate the UserAPIController to get the query builder of Users
+        $response = UserAPIController::create('raw')
+            ->setReturnBuilder(true)
+            ->setDetail(true)
+            ->getConsumerListing();
 
-        // @To do: Repalce this stupid hacks
-        if (! $user->isSuperAdmin()) {
-            $listOfRetailerIds = $user->getMyRetailerIds();
-
-            if (empty($listOfRetailerIds)) {
-                $listOfRetailerIds = [-1];
-            }
-
-            //$users->retailerIds($listOfRetailerIds);
-        } else {
-            // if (! empty($listOfRetailerIds)) {
-            //     $users->retailerIds($listOfRetailerIds);
-            // }
+        if (! is_array($response)) {
+            return Response::make($response->message);
         }
 
-        if (! $user->isSuperAdmin()) {
-            // filter only by merchant_id, not include retailer_id yet.
-            // @TODO: include retailer_id.
-            // $users->where(function($query) use($listOfMerchantIds) {
-            //     // get users registered in shop.
-            //     $query->whereIn('users.user_id', function($query2) use($listOfMerchantIds) {
-            //         $query2->select('user_details.user_id')
-            //             ->from('user_details')
-            //             ->whereIn('user_details.merchant_id', $listOfMerchantIds);
-            //     })
-            //     // get users have transactions in shop.
-            //     ->orWhereIn('users.user_id', function($query3) use($listOfMerchantIds) {
-            //         $query3->select('customer_id')
-            //             ->from('transactions')
-            //             ->whereIn('merchant_id', $listOfMerchantIds)
-            //             ->groupBy('customer_id');
-            //     });
-            // });
-        }
-
-        // Filter user by Ids
-        OrbitInput::get('user_id', function ($userIds) use ($users) {
-            $users->whereIn('users.user_id', $userIds);
-        });
-
-        // Filter user by username
-        OrbitInput::get('username', function ($username) use ($users) {
-            $users->whereIn('users.username', $username);
-        });
-
-        // Filter user by matching username pattern
-        OrbitInput::get('username_like', function ($username) use ($users) {
-            $users->where('users.username', 'like', "%$username%");
-        });
-
-        // Filter user by their firstname
-        OrbitInput::get('firstname', function ($firstname) use ($users) {
-            $users->whereIn('users.user_firstname', $firstname);
-        });
-
-        // Filter user by their firstname pattern
-        OrbitInput::get('firstname_like', function ($firstname) use ($users) {
-            $users->where('users.user_firstname', 'like', "%$firstname%");
-        });
-
-        // Filter user by their lastname
-        OrbitInput::get('lastname', function ($lastname) use ($users) {
-            $users->whereIn('users.user_lastname', $lastname);
-        });
-
-        // Filter user by their lastname pattern
-        OrbitInput::get('lastname_like', function ($lastname) use ($users) {
-            $users->where('users.user_lastname', 'like', "%$lastname%");
-        });
-
-        // Filter user by their email
-        OrbitInput::get('email', function ($email) use ($users) {
-            $users->whereIn('users.user_email', $email);
-        });
-
-        // Filter user by their email pattern
-        OrbitInput::get('email_like', function ($email) use ($users) {
-            $users->where('users.user_email', 'like', "%$email%");
-        });
-
-        // Filter user by their status
-        OrbitInput::get('status', function ($status) use ($users) {
-            $users->whereIn('users.status', $status);
-        });
-
-        // Filter user by gender
-        OrbitInput::get('gender', function ($gender) use ($users) {
-            $users->whereHas('userdetail', function ($q) use ($gender) {
-                $q->whereIn('gender', $gender);
-            });
-        });
-
-        // Filter user by their location('city, country') pattern
-        OrbitInput::get('location_like', function ($location) use ($users) {
-            $users->whereHas('userdetail', function ($q) use ($location) {
-                $q->where(DB::raw('CONCAT(city, ", ", country)'), 'like', "%$location%");
-            });
-        });
-
-        // Filter user by their city pattern
-        OrbitInput::get('city_like', function ($city) use ($users) {
-            $users->whereHas('userdetail', function ($q) use ($city) {
-                $q->where('city', 'like', "%$city%");
-            });
-        });
-
-        // Filter user by their last_visit_shop pattern
-        OrbitInput::get('last_visit_shop_name_like', function ($shopName) use ($users) {
-            $users->whereHas('userdetail', function ($q) use ($shopName) {
-                $q->whereHas('lastVisitedShop', function ($q) use ($shopName) {
-                    $q->where('name', 'like', "%$shopName%");
-                });
-            });
-        });
-
-        // Filter user by last_visit_begin_date
-        OrbitInput::get('last_visit_begin_date', function($begindate) use ($users)
-        {
-            $users->whereHas('userdetail', function ($q) use ($begindate) {
-                $q->where('last_visit_any_shop', '>=', $begindate);
-            });
-        });
-
-        // Filter user by last_visit_end_date
-        OrbitInput::get('last_visit_end_date', function($enddate) use ($users)
-        {
-            $users->whereHas('userdetail', function ($q) use ($enddate) {
-                $q->where('last_visit_any_shop', '<=', $enddate);
-            });
-        });
-
-        // Filter user by created_at for begin_date
-        OrbitInput::get('created_begin_date', function($begindate) use ($users)
-        {
-            $users->where('users.created_at', '>=', $begindate);
-        });
-
-        // Filter user by created_at for end_date
-        OrbitInput::get('created_end_date', function($enddate) use ($users)
-        {
-            $users->where('users.created_at', '<=', $enddate);
-        });
-
-        // Clone the query builder which still does not include the take,
-        // skip, and order by
-        $_users = clone $users;
-
-        // Default sort by
-        $sortBy = 'users.user_email';
-        // Default sort mode
-        $sortMode = 'asc';
-
-        OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
-            // Map the sortby request to the real column name
-            $sortByMapping = array(
-                'registered_date'         => 'users.created_at',
-                'username'                => 'users.username',
-                'email'                   => 'users.user_email',
-                'lastname'                => 'users.user_lastname',
-                'firstname'               => 'users.user_firstname',
-                'gender'                  => 'gender',
-                'city'                    => 'city',
-                'mobile_phone'            => 'user_details.phone',
-                'membership_number'       => 'users.membership_number',
-                'status'                  => 'users.status',
-                'last_visit_shop'         => 'merchants.name',
-                'last_visit_date'         => 'user_details.last_visit_any_shop',
-                'last_spent_amount'       => 'user_details.last_spent_any_shop',
-                'total_usable_coupon'     => 'total_usable_coupon',
-                'total_redeemed_coupon'   => 'total_redeemed_coupon',
-                'total_lucky_draw_number' => 'total_lucky_draw_number'
-            );
-
-            $sortBy = $sortByMapping[$_sortBy];
-        });
-
-        OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
-            if (strtolower($_sortMode) !== 'asc') {
-                $sortMode = 'desc';
-            }
-        });
-        $users->orderBy($sortBy, $sortMode);
-
-        $totalRec = RecordCounter::create($_users)->count();
+        $users = $response['builder'];
+        $totalRec = $response['count'];
 
         $this->prepareUnbufferedQuery();
 
@@ -294,38 +57,45 @@ class ConsumerPrinterController extends DataPrinterController
         $statement = $this->pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'Consumer';
+        $pageTitle = 'Customer';
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Consumer List', '', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Consumer', $totalRec, '', '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Customer List', '', '', '', '', '','','','','');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Customers', $totalRec, '', '', '', '','','','','');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Gender', 'Location', 'Last Visited Store', 'Last Visit Date', 'Last Spent Amount', 'Customer Since', 'First Name', 'Last Name', 'Date of Birth', 'Relationship Status', 'Number of Children', 'Occupation', 'Sector of Activity', 'Education Level', 'Preferred Language', 'Annual Income (IDR)', 'Average Monthly Shopping Spent', 'Personal Interest');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','');
-                
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
+                if ($flagMembershipEnable) {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Membership Join Date', 'Membership Number', 'Issued Coupon', 'Redeemed Coupon', 'Issued Lucky Draw Numbers', 'Status', 'Last Update Date & Time');
+                }
+                else {
+                    printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Email', 'Name', 'Gender', 'Mobile Phone', 'First Visit Date & Time', 'Issued Coupon', 'Redeemed Coupon', 'Issued Lucky Draw Numbers', 'Status', 'Last Update Date & Time');
+                }
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','','');
+
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
-                    $customer_since = $this->printCustomerSince($row);
                     $gender = $this->printGender($row);
-                    $address = $this->printAddress($row);
-                    $birthdate = $this->printBirthDate($row);
-                    $last_visit_date = $this->printLastVisitDate($row);
-                    $preferred_language = $this->printLanguage($row);
-                    $occupation = $this->printOccupation($row);
-                    $sector_of_activity = $this->printSectorOfActivity($row);
-                    $avg_annual_income = $this->printAverageAnnualIncome($row);
-                    $avg_monthly_spent = $this->printAverageShopping($row);
+                    $customerSince = $this->printDateTime($row->first_visit_date, $timezone, 'no');
+                    $lastUpdateDate = $this->printDateTime($row->updated_at, $timezone, 'no');
+                    $membershipJoinDate = $this->printDateTime($row->join_date, $timezone, 'Y-m-d');
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\", %s,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", 
-                        '', $row->user_email, $gender, $address, $this->printUtf8($row->merchant_name), $row->last_visit_date, $row->last_spent_amount, $row->created_at,
-                        $this->printUtf8($row->user_firstname), $this->printUtf8($row->user_lastname), $row->birthdate, $row->relationship_status, $row->number_of_children, $occupation, $sector_of_activity,
-                        $row->last_education_degree, $preferred_language, $avg_annual_income, $avg_monthly_spent, $row->personal_interest_list);
+                    if ($flagMembershipEnable) {
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                            '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),
+                            $gender, $row->phone, $customerSince, $membershipJoinDate, $row->membership_number,
+                            $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->total_lucky_draw_number), $this->printUtf8($row->status), $lastUpdateDate);
+                    }
+                    else {
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                            '', $row->user_email,$this->printUtf8($row->user_firstname) . ' ' . $this->printUtf8($row->user_lastname),$gender, $row->phone, $customerSince,
+                            $this->printUtf8($row->total_usable_coupon), $this->printUtf8($row->total_redeemed_coupon), $this->printUtf8($row->total_lucky_draw_number), $this->printUtf8($row->status), $lastUpdateDate);
+                    }
+
                 }
                 break;
 
@@ -340,7 +110,7 @@ class ConsumerPrinterController extends DataPrinterController
     {
         try {
             $retailer_id = Config::get('orbit.shop.id');
-            $retailer = \Retailer::with('parent')->where('merchant_id', $retailer_id)->first();
+            $retailer = \Mall::with('parent')->where('merchant_id', $retailer_id)->first();
 
             return $retailer;
         } catch (ACLForbiddenException $e) {
@@ -438,18 +208,52 @@ class ConsumerPrinterController extends DataPrinterController
 
 
     /**
+     * Print date and time friendly name.
+     *
+     * @param string $datetime
+     * @param string $format
+     * @return string
+     */
+    public function printDateTime($datetime, $timezone, $format='d M Y')
+    {
+        if (empty($datetime) || $datetime === '0000-00-00 00:00:00') {
+            return '';
+        } else {
+
+            // change to correct timezone
+            if (!empty($timezone) || $timezone != null) {
+                $date = Carbon::createFromFormat('Y-m-d H:i:s', $datetime, 'UTC');
+                $date->setTimezone($timezone);
+                $datetime = $date;
+            } else {
+                $datetime = $datetime;
+            }
+        }
+
+        // format the datetime if needed
+        if ($format == 'no') {
+            $result = $datetime;
+        } else {
+            $time = strtotime($datetime);
+            $result = date($format, $time);
+        }
+
+        return $result;
+    }
+
+    /**
      * Print date friendly name.
      *
      * @param $consumer $consumer
      * @return string
      */
-    public function printCustomerSince($consumer)
+    public function printMemberSince($consumer)
     {
-        if($consumer->created_at==NULL || empty($consumer->created_at) || $consumer->created_at=="0000-00-00 00:00:00"){
+        if($consumer->membership_since == null || empty($consumer->membership_since) || $consumer->membership_since=="0000-00-00 00:00:00"){
             $result = "";
         }
         else {
-            $date = $consumer->created_at;
+            $date = $consumer->membership_since;
             $date = explode(' ',$date);
             $time = strtotime($date[0]);
             $newformat = date('d F Y',$time);
@@ -458,7 +262,7 @@ class ConsumerPrinterController extends DataPrinterController
 
 
         return $result;
-    }    
+    }
 
 
     /**
@@ -469,8 +273,8 @@ class ConsumerPrinterController extends DataPrinterController
      */
     public function printBirthDate($consumer)
     {
-        if($consumer->birthdate==NULL || empty($consumer->birthdate)){
-            $result = "";
+        if($consumer->birthdate == null || empty($consumer->birthdate)) {
+            $result = '';
         }
         else {
             $date = $consumer->birthdate;
@@ -481,7 +285,7 @@ class ConsumerPrinterController extends DataPrinterController
         }
 
         return $result;
-    }   
+    }
 
 
     /**
@@ -493,9 +297,10 @@ class ConsumerPrinterController extends DataPrinterController
     public function printLastVisitDate($consumer)
     {
         $date = $consumer->last_visit_date;
-        if($consumer->last_visit_date==NULL || empty($consumer->last_visit_date)){
-            $result = ""; 
-        }else {
+        if ($consumer->last_visit_date == null || empty($consumer->last_visit_date)) {
+            $result = '';
+        }
+        else {
             $date = explode(' ',$date);
             $time = strtotime($date[0]);
             $newformat = date('d F Y',$time);
@@ -503,7 +308,7 @@ class ConsumerPrinterController extends DataPrinterController
         }
 
         return $result;
-    } 
+    }
 
     /**
      * Print Last Spent Amount friendly name.
@@ -515,7 +320,7 @@ class ConsumerPrinterController extends DataPrinterController
     {
         $retailer = $this->getRetailerInfo();
         $currency = strtolower($retailer->parent->currency);
-        if($currency=='usd'){
+        if ($currency == 'usd') {
             $result = number_format($consumer->last_spent_amount, 2);
         } else {
             $result = number_format($consumer->last_spent_amount);
@@ -545,7 +350,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'v':
                 $result = 'Voluntary';
                 break;
-            
+
             case 'u':
                 $result = 'Unemployed';
                 break;
@@ -587,7 +392,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'cm':
                 $result = 'Computer and Mathematical';
                 break;
-            
+
             case 'ae':
                 $result = 'Architecture and Engineering';
                 break;
@@ -611,7 +416,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'ad':
                 $result = 'Arts, Design, Entertainment, Sports, and Media';
                 break;
-            
+
             case 'hp':
                 $result = 'Healthcare Practitioners and Technical';
                 break;
@@ -635,7 +440,7 @@ class ConsumerPrinterController extends DataPrinterController
             case 'pc':
                 $result = 'Personal Care and Services';
                 break;
-            
+
             case 'sr':
                 $result = 'Sales and Related';
                 break;
@@ -693,7 +498,7 @@ class ConsumerPrinterController extends DataPrinterController
             case ($avg_income > 50000000 && $avg_income <= 100000000):
                 $result = '50.000.000 - 100.000.000';
                 break;
-            
+
             case ($avg_income > 100000000 && $avg_income <= 200000000):
                 $result = '100.000.000 - 200.000.000';
                 break;
@@ -731,7 +536,7 @@ class ConsumerPrinterController extends DataPrinterController
             case ($avg_monthly_spent > 500000 && $avg_monthly_spent <= 1000000):
                 $result = '500.000 - 1.000.000';
                 break;
-            
+
             case ($avg_monthly_spent > 1000000 && $avg_monthly_spent <= 2000000):
                 $result = '1.000.000 - 2.000.000';
                 break;
@@ -761,6 +566,34 @@ class ConsumerPrinterController extends DataPrinterController
     public function printUtf8($input)
     {
         return utf8_encode($input);
+    }
+
+    /**
+     * output timezone name.
+     *
+     * @param string
+     * @return string
+     */
+    public function getTimeZone($currentMall) {
+        // get timezone based on current_mall
+        if (!empty($currentMall)) {
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                ->where('merchants.merchant_id','=', $currentMall)
+                ->first();
+
+            // if timezone not found
+            if (count($timezone)==0) {
+                $timezone = null;
+            }
+            else {
+                $timezone = $timezone->timezone_name; // if timezone found
+            }
+        }
+        else {
+            $timezone = null;
+        }
+
+        return $timezone;
     }
 
 }

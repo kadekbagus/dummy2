@@ -35,7 +35,7 @@ class Coupon extends Eloquent
 
     public function mall()
     {
-        return $this->belongsTo('Retailer', 'merchant_id', 'merchant_id')->isMall();
+        return $this->belongsTo('Mall', 'merchant_id', 'merchant_id')->isMall();
     }
 
     public function creator()
@@ -50,12 +50,49 @@ class Coupon extends Eloquent
 
     public function tenants()
     {
-        return $this->belongsToMany('Retailer', 'promotion_retailer', 'promotion_id', 'retailer_id');
+        return $this->belongsToMany('Tenant', 'promotion_retailer_redeem', 'promotion_id', 'retailer_id');
+    }
+
+    public function employee()
+    {
+        return $this->belongsToMany('User', 'promotion_employee', 'promotion_id', 'user_id');
+    }
+
+    public function linkToTenants()
+    {
+        return $this->belongsToMany('Tenant', 'promotion_retailer', 'promotion_id', 'retailer_id');
     }
 
     public function issuedCoupons()
     {
         return $this->hasMany('IssuedCoupon', 'promotion_id', 'promotion_id');
+    }
+
+    public function genders()
+    {
+        return $this->hasMany('CampaignGender', 'campaign_id', 'promotion_id');
+    }
+
+    public function ages()
+    {
+        return $this->hasMany('CampaignAge', 'campaign_id', 'promotion_id')
+                    ->join('age_ranges', 'age_ranges.age_range_id', '=', 'campaign_age.age_range_id');
+    }
+
+    public function keywords()
+    {
+        return $this->hasMany('KeywordObject', 'object_id', 'promotion_id')
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+    }
+
+    /**
+     * Coupon strings can be translated to many languages.
+     */
+    public function translations()
+    {
+        return $this->hasMany('CouponTranslation', 'promotion_id', 'promotion_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
     }
 
     /**
@@ -215,8 +252,24 @@ class Coupon extends Eloquent
     public function getImageAttribute($value)
     {
         if (empty($value)) {
-            return 'mobile-ci/images/default_product.png';
+            return 'mobile-ci/images/default_coupon.png';
         }
         return ($value);
+    }
+
+    public function scopeOfMerchantId($query, $merchantId)
+    {
+        return $query->where('merchant_id', $merchantId);
+    }
+
+    /**
+     * Runnning Date dynamic scope
+     * 
+     * @author Qosdil A. <qosdil@dominopos.com>
+     * @todo Make a trait for such method
+     */
+    public function scopeOfRunningDate($query, $date)
+    {
+        return $query->where('begin_date', '<=', $date)->where('end_date', '>=', $date);
     }
 }

@@ -4,10 +4,16 @@
  *
  * @author Rio Astamal <me@rioastamal.net>
  */
+use Orbit\CloudMAC;
 use OrbitShop\API\v1\ResponseProvider;
 use MobileCI\MobileCIAPIController;
 use Net\Security\Firewall;
-use \Cookie;
+use Orbit\Helper\Security\Encrypter;
+use Orbit\Helper\Net\Domain;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitSession\Session as OrbitSession;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
@@ -125,7 +131,51 @@ class IntermediateLoginController extends IntermediateBaseController
      */
     public function postLoginMallCustomerService()
     {
-        $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
+        // this additional code is for checking url of cs portal to match the cs user on the correct mall
+        // for bug fix OM-685 Takashimaya:Employee Setup(Role:CS) from another mall can login to My CS Portal
+
+            $csUrl = trim(OrbitInput::post('url'));
+            $email = trim(OrbitInput::post('email'));
+
+            $searchUrl = array('http://cs.', 'https://cs.', 'http://cs-', 'https://cs-');
+            $replaceUrl = array('dom:', 'dom:', 'dom:', 'dom:');
+            $seetingUrl = str_replace($searchUrl, $replaceUrl, $csUrl);
+            $seetingUrl = preg_replace('{/$}', '', $seetingUrl);
+
+            $setting = Setting::where('setting_name', '=', $seetingUrl)->first();
+
+            if (is_object($setting)) {
+                $mallId = $setting->setting_value;
+            } else {
+                $mallId = 0;
+            }
+
+        if (trim($email) === '') {
+            $response = new stdclass();
+            $response->code = 14;
+            $response->status = 'error';
+            $response->message = Lang::get('validation.required', array('attribute' => 'email'));
+            $response->data = null;
+        } else {
+            $user = User::excludeDeleted('users')
+                      ->leftJoin('employees','employees.user_id', '=', 'users.user_id')
+                      ->leftJoin('employee_retailer','employee_retailer.employee_id','=','employees.employee_id')
+                      ->where('user_email', '=', $email)
+                      ->where('employee_retailer.retailer_id', '=', $mallId)
+                      ->first();
+
+            if (is_object($user) || $user != null) {
+                $response = LoginAPIController::create('raw')->postLoginMallCustomerService();
+            } else {
+                $response = new stdclass();
+                $response->code = 13;
+                $response->status = 'error';
+                $response->message = Lang::get('validation.orbit.access.loginfailed');
+                $response->data = null;
+            }
+
+        }
+
         if ($response->code === 0)
         {
             $user = $response->data;
@@ -151,9 +201,468 @@ class IntermediateLoginController extends IntermediateBaseController
     }
 
     /**
+     * @param @see LoginAPIController::postLoginCustomer
+     * @return Response
+     */
+    public function postLoginCustomer()
+    {
+        $response = LoginAPIController::create('raw')->postLoginCustomer();
+        if ($response->code === 0)
+        {
+            $user = $response->data;
+            $user->setHidden(array('user_password', 'apikey'));
+            // Auth::login($user);
+
+            // Start the orbit session
+            $data = array(
+                'logged_in' => TRUE,
+                'user_id'   => $user->user_id,
+                'email'     => $user->user_email,
+                'role'      => $user->role->role_name
+            );
+            $this->session->enableForceNew()->start($data);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+        }
+
+        return $this->render($response);
+    }
+
+    /**
+     *
+     * Calls: MobileCIAPIController getCloudLogin
+     * Passed: GET[email, retailer_id, callback_url]
+     *
+     * Returns: redirect to callback with
+     *   GET[status=, message=(if error), user_id=(if success), user_email=(if success)]
+     *
+     * @return Symfony\Component\HttpFoundation\Response
+     */
+    public function getCloudLogin()
+    {
+        $callback_url = OrbitInput::get('callback_url', '');
+        $email = OrbitInput::get('email', '');
+        $retailer_id = OrbitInput::get('retailer_id', '');
+        $payload = OrbitInput::get('payload', '');
+        $from = OrbitInput::get('from', '');
+        $full_data = OrbitInput::get('full_data', '');
+        $check_only = OrbitInput::get('check_only', '');
+        $auto_login = OrbitInput::get('auto_login', 'no');
+        $from_captive = OrbitInput::get('from_captive', 'no');
+
+        $mac = OrbitInput::get('mac', '');
+        $timestamp = (int)OrbitInput::get('timestamp', 0);
+
+        if (!CloudMAC::validateDataFromBox($mac, $timestamp, [
+            'email' => $email,
+            'retailer_id' => $retailer_id,
+            'callback_url' => $callback_url,
+            'payload' => $payload,
+            'from' => $from,
+            'full_data' => $full_data,
+            'check_only' => $check_only,
+            'auto_login' => $auto_login,
+            'from_captive' => $from_captive
+        ])) {
+            return $this->displayValidationError();
+        }
+
+        $full_data = ($full_data === 'yes');
+        $check_only = ($check_only === 'yes');
+
+        /** @var MobileCIAPIController $controllerAPI */
+        $controllerAPI = MobileCIAPIController::create('raw');
+        $response = $controllerAPI->getCloudLogin(!$full_data, !$check_only);
+
+        $params = ['status' => $response->status];
+        if ($response->status === 'success') {
+            if (isset($response->data->user_id)) {
+                $params['user_id'] = $response->data->user_id;
+                $params['user_status'] = $response->data->user_status;
+                $params['user_detail_id'] = $response->data->user_detail_id;
+                $params['apikey_id'] = $response->data->apikey_id;
+                $params['user_email'] = $response->data->user_email;
+                $params['payload'] = $payload;
+                $params['user_acquisition_id'] = $response->data->user_acquisition_id;
+            } else {
+                $params['user_id'] = '';
+                $params['user_status'] = '';
+                $params['user_detail_id'] = '';
+                $params['apikey_id'] = '';
+                $params['user_email'] = '';
+                $params['payload'] = '';
+                $params['user_acquisition_id'] = '';
+            }
+
+            $params['auto_login'] = $auto_login;
+            $params['from_captive'] = $from_captive;
+        } else {
+            $params['message'] = $response->message;
+        }
+        if ($full_data) {
+            $response = new stdclass();
+            $response->code = 0;
+            $response->status = $params['status'];
+            $response->message = '';
+            if ($params['status'] === 'success') {
+                $params['user'] = '';
+                $params['user_detail'] = '';
+                if ($params['user_id'] !== '') {
+                    // technically this will also serialize any *loaded* relation, but we are
+                    // loading the entity from the ID without loading any relations.
+                    $u = \User::find($params['user_id']);
+                    if (isset($u)) {
+                        $params['user'] = $u->toJson();
+                    }
+                    $ud = \UserDetail::find($params['user_detail_id']);
+                    if (isset($ud)) {
+                        $params['user_detail'] = $ud->toJson();
+                    }
+                    // api key does not need syncing as it is one way only (cloud -> box) plus it contains
+                    // secret data so...
+                    // user personal interest is always reloaded as it should not conflict (???)
+                }
+            }
+            $params = CloudMAC::wrapDataFromCloud($params);
+            $response->data = $params;
+            if ($check_only) {
+                if ($params['user_id'] != '') {
+                    // this is so that the frontend can display this (translated) error message
+                    $response->message = Lang::get('validation.orbit.email.exists');
+                }
+            }
+            return $this->render($response);
+        } else {
+            // we use this to assemble a normalized URL.
+            $params = CloudMAC::wrapDataFromCloud($params);
+            $req = \Symfony\Component\HttpFoundation\Request::create($callback_url, 'GET', $params);
+            return Redirect::away($req->getUri(), 302, $this->getCORSHeaders());
+        }
+    }
+
+    /**
+     * Cloud login callback function.
+     *
+     * User is redirected to here by cloud after cloud determines user id for given email.
+     *
+     * Gets: GET[user_email, user_id, user_detail_id, apikey_id]
+     *
+     * This should insert the user and associated objects using the given email and ids.
+     *
+     * Returns [true, user_id, user_email] or [false, string_error]
+     */
+    private function internalCloudLoginCallback()
+    {
+        $email = OrbitInput::get('user_email', '');
+        $user_id = OrbitInput::get('user_id', '');
+        $user_detail_id = OrbitInput::get('user_detail_id', '');
+        $apikey_id = OrbitInput::get('apikey_id', '');
+        $payload = OrbitInput::get('payload', '');
+        $user_acquisition_id = OrbitInput::get('user_acquisition_id', '');
+        $user_status = OrbitInput::get('user_status', '');
+        $auto_login = OrbitInput::get('auto_login', 'no');
+        $from_captive = OrbitInput::get('from_captive', 'no');
+
+        $mac = OrbitInput::get('mac', '');
+        $timestamp = (int)OrbitInput::get('timestamp', 0);
+
+        $status = OrbitInput::get('status', 'failed');
+        if ($status !== 'success') {
+            $message = OrbitInput::get('message');
+            if (!CloudMAC::validateDataFromCloud($mac, $timestamp, [
+                'status' => $status,
+                'message' => $message,
+            ])) {
+                return [false, $this->displayValidationError()];
+            }
+            return [false, $this->displayError($message)];
+        }
+
+        // else success
+
+        if (!CloudMAC::validateDataFromCloud($mac, $timestamp, [
+            'status' => $status,
+            'user_email' => $email,
+            'user_status' => $user_status,
+            'user_id' => $user_id,
+            'user_detail_id' => $user_detail_id,
+            'apikey_id' => $apikey_id,
+            'payload' => $payload,
+            'user_acquisition_id' => $user_acquisition_id,
+            'auto_login' => $auto_login,
+            'from_captive' => $from_captive
+        ])) {
+            return [false, $this->displayValidationError()];
+        }
+
+        $user = NULL;
+        DB::connection()->beginTransaction();
+        /** @var LoginAPIController $login */
+        $login = LoginAPIController::create('raw');
+        $login->setUseTransaction(false);
+        try {
+            // try getting user again, if found do not insert, just use that.
+            $user = User::with('apikey', 'userdetail', 'role')
+                ->excludeDeleted()
+                ->where('user_email', $email)
+                ->whereHas(
+                    'role',
+                    function ($query) {
+                        $query->where('role_name', 'Consumer');
+                        // guest not included here because guest logins should be seeded in initial sync
+                        // and there should be no need to go to cloud for guest login
+                    }
+                )->sharedLock()
+                ->first();
+
+            if (!isset($user)) {
+                list($user, $userdetail, $apikey) = $login->createCustomerUser($email, $user_id, $user_detail_id, $apikey_id, $user_status);
+            }
+
+            $acq = UserAcquisition::where('user_acquisition_id', $user_acquisition_id)
+                ->lockForUpdate()
+                ->first();
+            if (!isset($acq)) {
+                $acq = new \UserAcquisition();
+                $acq->user_acquisition_id = $user_acquisition_id;
+                $acq->user_id = $user->user_id;
+                $acq->acquirer_id = Config::get('orbit.shop.id');
+                $acq->save();
+            }
+
+            DB::connection()->commit();
+            return [true, $user->user_id, $email];
+        } catch (Exception $e) {
+            DB::connection()->rollBack();
+            throw $e; // TODO display error?
+        }
+    }
+
+    /**
+     * Cloud login callback function.
+     *
+     * User is redirected to here by cloud after cloud determines user id for given email.
+     *
+     * Common logic (validate parameters, insert if not found) in internalCloudLoginCallback
+     *
+     * After the user is inserted this returns the user ID as JSON.
+     *
+     */
+    public function getCloudLoginCallbackShowId()
+    {
+        $callback_result = $this->internalCloudLoginCallback();
+        if ($callback_result[0] === false) {
+            // error, returns [false, string_error]
+            // we return response
+            $response = new ResponseProvider();
+            $response->code = Status::UNKNOWN_ERROR;
+            $response->status = 'error';
+            $response->message = $callback_result[1];
+            return $this->render($response);
+        }
+        // else ok return [true, user_id, user_email]
+        $response = new ResponseProvider();
+        $response->code = 0;
+        $response->status = 'ok';
+        $response->data = ['user_id' => $callback_result[1]];
+        return $this->render($response);
+    }
+
+    /**
+     * Cloud login callback function.
+     *
+     * User is redirected to here by cloud after cloud determines user id for given email.
+     *
+     * Common logic (validate parameters, insert if not found) in internalCloudLoginCallback
+     *
+     * After the user is inserted this performs the same logic as the regular mobile CI POST login, then directly
+     * redirects to the landing url.
+     *
+     */
+    public function getCloudLoginCallback()
+    {
+        $callback_result = $this->internalCloudLoginCallback();
+        if ($callback_result[0] === false) {
+            // error, returns [false, string_error]
+            // we return the error as is
+            return $callback_result[1];
+        }
+        // else ok return [true, user_id, user_email]
+        $email = $callback_result[2];
+
+        // do the usual login stuff
+        $_POST['email'] = $email;
+
+        $this->postLoginMobileCI(); // sets cookies & inserts activity - we ignore the JSON result
+
+        $proceed = OrbitInput::get('from_captive', 'no') === 'yes' && OrbitInput::get('auto_login', 'yes');
+        if ($proceed) {
+            $sid = $this->session->getSessionId();
+            $url = URL::Route("captive-portal") . sprintf('&loadsession=%s&fname=&email=%s', $sid, $email);
+
+            return Redirect::to($url);
+        }
+
+        /** @var \MobileCI\MobileCIAPIController $mobile_ci */
+        $mobile_ci = MobileCIAPIController::create('raw');
+
+        // hack: we get the landing URL from the sign in view's data so we don't duplicate logic.
+        $view = $mobile_ci->getSignInView();
+        $view_data = $view->getData();
+        return Redirect::away($view_data['landing_url']);
+    }
+
+    /**
+     * This accepts the "full data" returned by IntermediateLoginController::getCloudLogin as a POST
+     * and inserts the corresponding items.
+     *
+     */
+    public function postAcceptCloudLoginFullData()
+    {
+        $email = OrbitInput::post('user_email', '');
+        $user_id = OrbitInput::post('user_id', '');
+        $user_detail_id = OrbitInput::post('user_detail_id', '');
+        $apikey_id = OrbitInput::post('apikey_id', '');
+        $payload = OrbitInput::post('payload', '');
+        $user_acquisition_id = OrbitInput::post('user_acquisition_id', '');
+        $user_status = OrbitInput::post('user_status', '');
+        /** @var string $user */
+        $user = OrbitInput::post('user');
+        $user_detail = OrbitInput::post('user_detail');
+
+        $mac = OrbitInput::post('mac', '');
+        $timestamp = (int)OrbitInput::post('timestamp', 0);
+
+        $status = OrbitInput::post('status', 'failed');
+        if ($status !== 'success') {
+            $message = OrbitInput::post('message');
+            if (!CloudMAC::validateDataFromCloud($mac, $timestamp, [
+                'status' => $status,
+                'message' => $message,
+            ])) {
+                return $this->displayValidationError(true);
+            }
+            return $this->displayError($message, true);
+        }
+
+
+        // else success
+
+        if (!CloudMAC::validateDataFromCloud($mac, $timestamp, [
+            'status' => $status,
+            'user_email' => $email,
+            'user_status' => $user_status,
+            'user_id' => $user_id,
+            'user_detail_id' => $user_detail_id,
+            'apikey_id' => $apikey_id,
+            'payload' => $payload,
+            'user_acquisition_id' => $user_acquisition_id,
+            'user' => $user,
+            'user_detail' => $user_detail,
+        ])) {
+            return $this->displayValidationError(true);
+        }
+
+        $user_entity = NULL;
+        DB::connection()->beginTransaction();
+        /** @var LoginAPIController $login */
+        $login = LoginAPIController::create('raw');
+        $login->setUseTransaction(false);
+        try {
+            // try getting user again, if found do not insert, just use that.
+            $user_entity = User::with('apikey', 'userdetail', 'role')
+                ->excludeDeleted()
+                ->where('user_email', $email)
+                ->whereHas(
+                    'role',
+                    function ($query) {
+                        $query->where('role_name', 'Consumer');
+                        // guest not included here because guest logins should be seeded in initial sync
+                        // and there should be no need to go to cloud for guest login
+                    }
+                )->sharedLock()
+                ->first();
+
+            if (!isset($user_entity)) {
+                $user_entity = new User();
+                $user_fields = json_decode($user, true);
+                foreach ($user_fields as $k => $v) {
+                    $user_entity->$k = $v;
+                }
+                $user_entity->save();
+                $user_detail_entity = new UserDetail();
+                $user_detail_fields = json_decode($user_detail, true);
+                foreach ($user_detail_fields as $k => $v) {
+                    $user_detail_entity->$k = $v;
+                }
+                $user_detail_entity->save();
+                $apikey = $user_entity->createApiKey($apikey_id);
+            }
+
+            $acq = UserAcquisition::where('user_acquisition_id', $user_acquisition_id)
+                ->lockForUpdate()
+                ->first();
+            if (!isset($acq)) {
+                $acq = new \UserAcquisition();
+                $acq->user_acquisition_id = $user_acquisition_id;
+                $acq->user_id = $user_entity->user_id;
+                $acq->acquirer_id = Config::get('orbit.shop.id');
+                $acq->save();
+            }
+
+            DB::connection()->commit();
+
+            $response = new stdClass();
+            $response->code = Status::OK;
+            $response->status = 'error';
+            $response->message = Status::OK_MSG;
+            $response->data = ['user_id' => $user_entity->user_id];
+            return $this->render($response);
+
+        } catch (Exception $e) {
+            DB::connection()->rollBack();
+            throw $e; // TODO display error?
+        }
+
+    }
+
+    private function displayValidationError($json = false)
+    {
+        if ($json) {
+            $response = new stdClass();
+            $response->code = Status::UNKNOWN_ERROR;
+            $response->status = 'error';
+            $response->message = 'Validation error occurred';
+            $response->data = null;
+            return $this->render($response);
+        } else {
+            return 'Validation error occurred'; // TODO
+        }
+    }
+
+    private function displayError($message, $json = false)
+    {
+        if ($json) {
+            $response = new stdClass();
+            $response->code = Status::UNKNOWN_ERROR;
+            $response->status = 'error';
+            $response->message = $message;
+            $response->data = null;
+            return $this->render($response);
+        } else {
+            return $message; // TODO
+        }
+    }
+
+    /**
      * Clear the session
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
      * @return Response
      */
     public function getLogout()
@@ -198,10 +707,15 @@ class IntermediateLoginController extends IntermediateBaseController
             $this->session->destroy();
             $response->data = NULL;
 
+            // Store session id only from mobile-ci login & logout
+            if($from == 'mobile-ci'){
+                $activity->setSessionId($this->session->getSessionId());
+            }
+
             // Successfull logout
             $activity->setUser($user)
                      ->setActivityName('logout_ok')
-                     ->setActivityNameLong('Sign out')
+                     ->setActivityNameLong('Sign Out')
                      ->setModuleName('Application')
                      ->responseOK();
         } catch (Exception $e) {
@@ -216,7 +730,7 @@ class IntermediateLoginController extends IntermediateBaseController
 
             $activity->setUser('guest')
                      ->setActivityName('logout_failed')
-                     ->setActivityNameLong('Sign out Failed')
+                     ->setActivityNameLong('Sign Out Failed')
                      ->setNotes($e->getMessage())
                      ->setModuleName('Application')
                      ->responseFailed();
@@ -245,6 +759,35 @@ class IntermediateLoginController extends IntermediateBaseController
             } else {
                 $response->data = 'Not in debug mode.';
             }
+        } catch (Exception $e) {
+            $response->code = $e->getCode();
+            $response->status = 'error';
+            $response->message = $e->getMessage();
+        }
+
+        return $this->render($response);
+    }
+
+    /**
+     * Check the session login status.
+     *
+     * @author Rio Astamal <me@rioastamal.net>
+     * @return Response
+     */
+    public function getSessionLoginInfo()
+    {
+        $response = new ResponseProvider();
+
+        try {
+            $this->session->start(array(), 'no-session-creation');
+
+            $userId = $this->session->read('user_id');
+
+            if ($this->session->read('logged_in') !== true || ! $userId) {
+                throw new Exception('User not logged in', OrbitSession::ERR_UNKNOWN);
+            }
+
+            $response->data = sprintf('User id %s logged in', $userId);
         } catch (Exception $e) {
             $response->code = $e->getCode();
             $response->status = 'error';
@@ -295,11 +838,45 @@ class IntermediateLoginController extends IntermediateBaseController
         return $this->render(TokenAPIController::create('raw')->getSearchToken());
     }
 
+
+    /**
+     * Mobile-CI Intermediate check email exist in sign in mobile CI
+     * succeed.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string        `email`             (optional)
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function checkEmailSignUp()
+    {
+        $email = OrbitInput::post('email');
+        $validator = Validator::make(
+            array(
+                'email' => $email,
+            ),
+            array(
+                'email' => 'required',
+            )
+        );
+
+        $users = User::select('users.user_email', 'users.user_firstname', 'users.user_lastname', 'users.user_lastname', 'users.user_id', 'user_details.birthdate', 'user_details.gender', 'users.status')
+                ->join('user_details', 'user_details.user_id', '=', 'users.user_id')
+                ->where('users.user_email', $email)
+                ->get();
+
+        return $users;
+    }
+
     /**
      * Mobile-CI Intermediate call by registering client mac address when login
      * succeed.
      *
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
      * @param @see MobileCIAPIController::postLoginInShop()
      * @return Response
      */
@@ -309,6 +886,7 @@ class IntermediateLoginController extends IntermediateBaseController
                             ->setActivityType('login');
 
         $response = MobileCIAPIController::create('raw')->postLoginInShop();
+
         if ($response->code === 0)
         {
             // Register User Mac Address to the Router
@@ -341,6 +919,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $data = array(
                 'logged_in' => TRUE,
                 'user_id'   => $user->user_id,
+                'location_id' => Config::get('orbit.shop.id')
             );
 
             /**
@@ -350,18 +929,44 @@ class IntermediateLoginController extends IntermediateBaseController
             $this->session->getSessionConfig()->setConfig('session_origin.header.name', $this->mobileCISessionName['header']);
             $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
             $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
+            $this->session->getSessionConfig()->setConfig('application_id', MobileCIAPIController::APPLICATION_ID);
             $this->session->enableForceNew()->start($data);
 
             // Send the session id via HTTP header
             $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
             $sessionHeader = 'Set-' . $sessionHeader;
             $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+            $login_from_cookie = isset($_COOKIE['login_from']) ? $_COOKIE['login_from'] : 'Form';
+
+
+            if ($user->role->role_name === 'Consumer') {
+                // For login page
+                $expireTime = time() + 3600 * 24 * 365 * 5;
+
+                setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                setcookie('login_from', $login_from_cookie, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            }
+
+            if (Config::get('orbit.shop.guest_mode')) {
+                if ($user->role->role_name === 'Guest') {
+                    $expireTime = time() + 3600 * 24 * 365 * 5;
+                    $guest = User::whereHas('role', function ($q) {
+                        $q->where('role_name', 'Guest');
+                    })->excludeDeleted()->first();
+                    setcookie('orbit_email', $guest->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                    setcookie('orbit_firstname', 'Orbit Guest', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+                }
+            }
 
             // Successfull login
             $activity->setUser($user)
                      ->setActivityName('login_ok')
                      ->setActivityNameLong('Sign In')
+                     ->setSessionId($this->session->getSessionId())
                      ->responseOK();
+
+            static::proceedPayload($activity, $user->registration_activity_id);
         } else {
             // Login Failed
             $activity->setUser('guest')
@@ -374,6 +979,39 @@ class IntermediateLoginController extends IntermediateBaseController
 
         // Save the activity
         $activity->setModuleName('Application')->save();
+
+        // save to user signin table
+        if ($response->code === 0) {
+
+            $signin_via = 'form';
+            $payload = '';
+
+            if (! empty(OrbitInput::get('payload'))) {
+                $payload = OrbitInput::get('payload');
+            } else {
+                $payload = OrbitInput::post('payload');
+            }
+
+            if (! empty($payload)) {
+                $key = md5('--orbit-mall--');
+                $payload = (new Encrypter($key))->decrypt($payload);
+                Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload));
+                parse_str($payload, $data);
+
+                if ($data['login_from'] === 'facebook') {
+                    $signin_via = 'facebook';
+                } else if ($data['login_from'] === 'google') {
+                    $signin_via = 'google';
+                }
+            }
+
+            $newUserSignin = new UserSignin();
+            $newUserSignin->user_id = $user->user_id;
+            $newUserSignin->signin_via = $signin_via;
+            $newUserSignin->location_id = Config::get('orbit.shop.id');
+            $newUserSignin->activity_id = $activity->activity_id;
+            $newUserSignin->save();
+        }
 
         return $this->render($response);
     }
@@ -394,6 +1032,11 @@ class IntermediateLoginController extends IntermediateBaseController
         $this->session->getSessionConfig()->setConfig('session_origin.header.name', $this->mobileCISessionName['header']);
         $this->session->getSessionConfig()->setConfig('session_origin.query_string.name', $this->mobileCISessionName['query_string']);
         $this->session->getSessionConfig()->setConfig('session_origin.cookie.name', $this->mobileCISessionName['cookie']);
+
+        if (isset($_GET['not_me'])) {
+            setcookie('orbit_email', 'foo', time() - 3600, '/');
+            setcookie('orbit_firstname', 'foo', time() - 3600, '/');
+        }
 
         $response = json_decode($this->getLogout()->getContent());
         $cookie = Cookie::make('event', '', 365*5);
@@ -423,6 +1066,198 @@ class IntermediateLoginController extends IntermediateBaseController
     }
 
     /**
+    * Process payload in $_POST[payload] or $_GET[payload].
+    *
+    * @param $activity Activity|null log in activity so we can change the activity name
+    * @param $registration_activity_id string|null ID of registration activity if present so we can change the activity name
+    */
+    public static function proceedPayload($activity, $registration_activity_id = null)
+    {
+        // The sign-in view put the payload from query string to post body on AJAX call
+        if (isset($_POST['payload'])) {
+            $payload = $_POST['payload'];
+        } elseif (isset($_GET['payload'])) {
+            // possibly from cloud login callback
+            $payload = $_GET['payload'];
+        } else {
+            return;
+        }
+
+        Log::info('[PAYLOAD] Payload found -- ' . serialize($payload));
+
+        // Decrypt the payload
+        $key = md5('--orbit-mall--');
+        $payload = (new Encrypter($key))->decrypt($payload);
+        Log::info('[PAYLOAD] Payload decrypted -- ' . serialize($payload));
+
+        // The data is in url encoded
+        parse_str($payload, $data);
+
+        Log::info('[PAYLOAD] Payload extracted -- ' . serialize($data));
+
+        // email, fname, lname, gender, mac, ip, login_from
+        $email = isset($data['email']) ? $data['email'] : '';
+        $fname = isset($data['fname']) ? $data['fname'] : '';
+        $lname = isset($data['lname']) ? $data['lname'] : '';
+        $gender = isset($data['gender']) ? $data['gender'] : '';
+        $birthdate = isset($data['birthdate']) ? $data['birthdate'] : '';
+        $mac = isset($data['mac']) ? $data['mac'] : '';
+        $ip = isset($data['ip']) ? $data['ip'] : '';
+        $from = isset($data['login_from']) ? $data['login_from'] : '';
+        $captive = isset($data['is_captive']) ? $data['is_captive'] : '';
+        $recognized = isset($data['recognized']) ? $data['recognized'] : '';
+
+        if (! $email) {
+            Log::error('Email from payload is not valid or empty.');
+
+            return;
+        }
+
+        // Try to get the email to update user data
+        $customer = User::consumers()->excludeDeleted()->where('user_email', $email)->first();
+        if (is_object($customer)) {
+            // Update first name if necessary
+            if (empty($customer->user_firstname)) {
+                $customer->user_firstname = $fname;
+            }
+
+            // Update last name if necessary
+            if (empty($customer->user_lastname)) {
+                $customer->user_lastname = $lname;
+            }
+
+            // Update gender if necessary
+            $gender = strtolower($gender);
+            $male = ['male', 'm', 'men', 'man'];
+            if (in_array($gender, $male)) {
+                $customer->userdetail->gender = 'm';
+            }
+
+            $female = ['female', 'f', 'women', 'woman'];
+            if (in_array($gender, $female)) {
+                $customer->userdetail->gender = 'f';
+            }
+
+            if (($from === 'google' || $from === 'facebook') && $customer->status === 'pending') {
+                // Only set if the previous status is pending
+                $customer->status = 'active';   // make it active
+            }
+
+            // Update birthdate if necessary
+            if (empty($customer->birthdate)) {
+                $customer->userdetail->birthdate = $birthdate;
+            }
+
+            $customer->save();
+            $customer->userdetail->save();
+
+            Log::info('[PAYLOAD] Consumer data saved -- ' . serialize($customer));
+        }
+
+        // Try to update the mac address table
+        if (! empty($mac)) {
+            $macModel = MacAddress::excludeDeleted()
+                                  ->where('mac_address', $mac)
+                                  ->where('user_email', $email)
+                                  ->orderBy('created_at', 'desc')
+                                  ->first();
+
+            if (! is_object($macModel)) {
+                $macModel = new MacAddress();
+                $macModel->mac_address = $mac;
+                $macModel->user_email = $email;
+                $macModel->status = 'active';
+            } else {
+                // always update updated_at
+                $macModel->setUpdatedAt($macModel->freshTimestamp());
+            }
+
+            $macModel->ip_address = $ip;
+            $macModel->save();
+
+            Log::info('[PAYLOAD] Mac saved -- ' . serialize($macModel));
+        }
+
+        // this is passed up from LoginAPIController::postRegisterUserInShop, to MobileCIAPIController::postLoginInShop
+        // to here, so if this login automatically registered the user, we can update this based on where
+        // the registration is coming from.
+        if (isset($registration_activity_id) && isset($customer)) {
+            $registration_activity = Activity::where('activity_id', '=', $registration_activity_id)
+                ->where('activity_name', '=', 'registration_ok')
+                ->where('user_id', '=', $customer->user_id)
+                ->first();
+            if (isset($registration_activity)) {
+                if (isset($from)) {
+                    if ($from === 'facebook') {
+                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Facebook)';
+                        $registration_activity->save();
+
+                        // @author Irianto Pratama <irianto@dominopos.com>
+                        // send email if user status active
+                        if ($customer->status === 'active') {
+                            // Send email process to the queue
+                            \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                                'user_id' => $customer->user_id
+                            ]);
+                        }
+                    } else if ($from === 'form') {
+                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Email Address)';
+                        $registration_activity->save();
+                    } else if ($from === 'google') {
+                        $registration_activity->activity_name_long = 'Sign Up via Mobile (Google+)';
+                        $registration_activity->save();
+
+                        // @author Irianto Pratama <irianto@dominopos.com>
+                        // send email if user status active
+                        if ($customer->status === 'active') {
+                            // Send email process to the queue
+                            \Queue::push('Orbit\\Queue\\NewPasswordMail', [
+                                'user_id' => $customer->user_id
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Try to update the activity
+        if ($captive === 'yes') {
+            switch ($from) {
+                case 'facebook':
+                    $activityNameLong = 'Sign In'; //Sign In via Facebook
+                    break;
+
+                case 'google':
+                    $activityNameLong = 'Sign In'; //Sign In via Google
+                    break;
+
+                case 'form':
+                    $activityNameLong = 'Sign In via Email (Captive)';
+                    break;
+
+                default:
+                    $activityNameLong = 'Sign In';
+            }
+
+            switch ($recognized) {
+                case 'auto_mac':
+                    $activityNameLong = 'Sign In via Automatic MAC Recognition (Captive)';
+                    break;
+
+                case 'auto_email':
+                    $activityNameLong = 'Sign In via Automatic Email Recognition (Captive)';
+                    break;
+
+                default:
+                    // do nothing
+            }
+            if (isset($activity)) {
+                $activity->setActivityNameLong($activityNameLong);
+            }
+        }
+    }
+
+    /**
      * Captive Portal related tricks.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -440,18 +1275,27 @@ class IntermediateLoginController extends IntermediateBaseController
 
             try {
                 $retailer_id = Config::get('orbit.shop.id');
-                $retailer = Retailer::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
+                $retailer = Mall::with('settings', 'parent')->where('merchant_id', $retailer_id)->first();
 
-                $bg = Setting::getFromList($retailer->settings, 'background_image');
+                try {
+                    $bg = Media::where('object_id', $retailer->merchant_id)
+                        ->where('media_name_id', 'retailer_background')
+                        ->where('media_name_long', 'retailer_background_orig')
+                        ->where('object_name', 'mall')
+                        ->first();
+                } catch (Exception $e) {
+                }
             } catch (Exception $e) {
-                $retailer = new stdClass();
-                // Fake some properties
-                $retailer->parent = new stdClass();
-                $retailer->parent->logo = '';
+            }
+
+            $display_name = Input::get('fname', '');
+
+            if (empty($display_name)) {
+                $display_name = Input::get('email', '');
             }
 
             // Display a view which showing that page is loading
-            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg]);
+            return View::make('mobile-ci/captive-loading', ['retailer' => $retailer, 'bg' => $bg, 'display_name' => $display_name]);
         }
 
         if (isset($_GET['createsession'])) {
@@ -461,7 +1305,7 @@ class IntermediateLoginController extends IntermediateBaseController
             $sessionId = $_GET['createsession'];
 
             // Send cookie so our app have an idea about the session
-            setcookie($cookieName, $sessionId, time() + $expireTime, '/', NULL, FALSE, TRUE);
+            setcookie($cookieName, $sessionId, time() + $expireTime, '/', NULL, FALSE, FALSE);
 
             // Used for internal session object since sending cookie above
             // only affects on next request
@@ -476,7 +1320,24 @@ class IntermediateLoginController extends IntermediateBaseController
             $newData = $this->session->getSession();
 
             $sessionName = $this->mobileCISessionName['query_string'];
-            $redirectTo = sprintf('/customer/?%s=%s', $sessionName, $sessionId);
+
+            $userId = $this->session->read('user_id');
+            $user = User::excludeDeleted()->find($userId);
+
+            $key = md5('--orbit-mall--');
+            $query = [
+                'time' => time(),
+                'email' => $user->email,
+                'fname' => $user->user_firstname
+            ];
+
+            $payload = (new Encrypter($key))->encrypt(http_build_query($query));
+            $redirectTo = sprintf('/customer?%s=%s&payload_login=%s', $sessionName, $sessionId, $payload);
+
+            $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
+            setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+            setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
             return Redirect::to($redirectTo);
         }
 

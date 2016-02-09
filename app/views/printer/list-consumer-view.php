@@ -39,6 +39,7 @@
         table tr td, table tr th {
             border-bottom: 1px solid #ccc;
             padding: 1px;
+            <?php if($flagMembershipEnable) { ?> padding: 5px; <?php } ?>
         }
         table.noborder tr td, table.noborder tr th {
             border: 0;
@@ -105,7 +106,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">Consumer List</h2>
+    <h2 style="margin-bottom:0.5em;">Customer List</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -113,7 +114,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total Consumer</td>
+            <td>Total Customers</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec, 0, '.', '.'); ?></strong></td>
         </tr>
@@ -121,14 +122,20 @@
 
     <table style="width:100%">
         <thead>
-            <th style="text-align:left;">Email </th>
-            <th style="text-align:left;">Name</th>
-            <th style="text-align:left;">Gender</th>
-            <th style="text-align:left;">Mobile Phone</th>
-            <th style="text-align:left;">Join Date</th>
-            <th style="text-align:left;">Membership Number</th>
-            <th style="text-align:left;">Issued Coupon</th>
-            <th style="text-align:left;">Redeemed Coupon</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Email </th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Name</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Gender</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Mobile Phone</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">First Visit Date & Time</th>
+            <?php if($flagMembershipEnable) { ?>
+                <th style="text-align:left; width:10%">Membership Join Date</th>
+                <th style="text-align:left; width:10%">Membership Number</th>
+            <?php } ?>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:5%; <?php } ?>">Issued Coupon</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Redeemed Coupon</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Issued Lucky Draw Numbers</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:2%; <?php } ?>">Status</th>
+            <th style="text-align:left; <?php if($flagMembershipEnable) { ?> width:10%; <?php } ?>">Last Update Date & Time</th>
         </thead>
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
@@ -137,10 +144,16 @@
                 <td><?php echo $me->printUtf8($row->user_firstname) . ' ' . $me->printUtf8($row->user_lastname); ?></td>
                 <td><?php echo $me->printGender($row); ?></td>
                 <td><?php echo $me->printUtf8($row->phone); ?></td>
-                <td><?php echo $me->printCustomerSince($row); ?></td>
-                <td><?php echo ($row->membership_number); ?></td>
+                <td><?php echo $me->printDateTime($row->first_visit_date, $timezone, 'd F Y  H:i:s'); ?></td>
+                <?php if($flagMembershipEnable) { ?>
+                    <td><?php echo $me->printDateTime($row->join_date, $timezone, 'd F Y'); ?></td>
+                    <td><?php echo ($row->membership_number); ?></td>
+                <?php } ?>
                 <td><?php echo ($row->total_usable_coupon); ?></td>
                 <td><?php echo ($row->total_redeemed_coupon); ?></td>
+                <td><?php echo ($row->total_lucky_draw_number); ?></td>
+                <td><?php echo ($row->status); ?></td>
+                <td><?php echo $me->printDateTime($row->updated_at, $timezone, 'd F Y  H:i:s'); ?></td>
             </tr>
         <?php endwhile; ?>
         </tbody>

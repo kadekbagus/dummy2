@@ -1,6 +1,7 @@
 <?php namespace Orbit;
 
 use Str;
+use Carbon\Carbon as Carbon;
 
 class Text
 {
@@ -62,8 +63,8 @@ class Text
         return static::formatNumber($number, 0);
     }
 
-    public static function exportFilename($pageTitle, $ext = ".csv")
+    public static function exportFilename($pageTitle, $ext = ".csv", $timezone = "UTC")
     {
-        return 'orbit-export-' . Str::slug($pageTitle) . '-' . date('D_d_M_Y_Hi') . $ext;
+        return 'orbit-export-' . Str::slug($pageTitle) . '-' . Carbon::now($timezone)->format('D_d_M_Y_Hi') . $ext;
     }
 }

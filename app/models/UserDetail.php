@@ -33,7 +33,12 @@ class UserDetail extends Eloquent
 
     public function merchant()
     {
-        return $this->belongsTo('Merchant', 'merchant_id', 'merchant_id');
+        return $this->belongsTo('MallGroup', 'merchant_id', 'merchant_id');
+    }
+
+    public function retailer()
+    {
+        return $this->belongsTo('Mall', 'retailer_id', 'merchant_id');
     }
 
     public function country()

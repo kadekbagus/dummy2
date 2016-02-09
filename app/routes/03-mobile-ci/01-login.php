@@ -5,11 +5,35 @@ Route::group(
     function () {
 
         Route::get(
-            '/customer',
+            '/customer', ['as' => 'mobile-ci.signin',
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getSignInView();
-            }
+            }]
+        );
+
+        Route::post(
+            '/customer/social-login', ['as' => 'mobile-ci.social_login',
+                function () {
+                    return MobileCI\MobileCIAPIController::create()->postSocialLoginView();
+                },
+            ]
+        );
+
+        Route::get(
+            '/customer/social-login-callback', ['as' => 'mobile-ci.social_login_callback',
+                function () {
+                    return MobileCI\MobileCIAPIController::create()->getSocialLoginCallbackView();
+                },
+            ]
+        );
+
+        Route::get(
+            '/customer/social-google-callback', ['as' => 'mobile-ci.social_google_callback',
+                function () {
+                    return MobileCI\MobileCIAPIController::create()->getGoogleCallbackView();
+                },
+            ]
         );
 
         Route::get(
@@ -123,6 +147,39 @@ Route::group(
             }
         );
 
+        // Route::get(
+        //     '/customer/notifications',
+        //     function () {
+
+        //         return MobileCI\MobileCIControllerNotifications::create()->getNotificationsView();
+        //     }
+        // );
+
+        Route::get(
+            '/customer/messages',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getNotificationsView();
+            }
+        );
+
+        // Route::get(
+        //     '/customer/notification/detail',
+        //     function () {
+
+        //         return MobileCI\MobileCIControllerNotifications::create()->getNotificationDetailView();
+        //         //return View::make('mobile-ci.mall-notifications-list');
+        //     }
+        // );
+
+        Route::get(
+            '/customer/message/detail',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getNotificationDetailView();
+            }
+        );
+
         Route::get(
             '/customer/coupon',
             function () {
@@ -146,8 +203,6 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->getActivationView();
             }
         );
-
-        Route::post('/app/v1/customer/login', 'IntermediateLoginController@postLoginMobileCI');
 
         Route::get('/customer/logout', 'IntermediateLoginController@getLogoutMobileCI');
 
@@ -306,6 +361,17 @@ Route::group(
             })
         );
 
+        // track coupon popup display activity
+        Route::post(
+            '/app/v1/customer/displaycouponpopupactivity',
+            array(
+            'as' => 'display-coupon-popup-activity',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->postDisplayCouponPopUpActivity();
+            })
+        );
+
         // track widget click activity
         Route::post(
             '/app/v1/customer/widgetclickactivity',
@@ -395,12 +461,26 @@ Route::group(
                     }]
                 );
 
+                Route::get(
+                    '/customer/luckydraws', ['as' => 'ci-luckydraw-list',
+                    function () {
+                        return MobileCI\MobileCIAPIController::create()->getLuckyDrawListView();
+                    }]
+                );
+
                 Route::post(
                     '/app/v1/customer/luckydrawnumberpopup',
                     function () {
 
                         return MobileCI\MobileCIAPIController::create()->postLuckyNumberPopup();
                     }
+                );
+
+                Route::get(
+                    '/customer/luckydraw-announcement', ['as' => 'ci-luckydraw-announcement',
+                    function () {
+                        return MobileCI\MobileCIAPIController::create()->getLuckyDrawAnnouncementView();
+                    }]
                 );
             }
         );
@@ -417,6 +497,14 @@ Route::group(
             function () {
 
                 return MobileCI\MobileCIAPIController::create()->getMallCouponDetailView();
+            }
+        );
+
+        Route::get(
+            '/customer/mallcouponcampaign',
+            function () {
+
+                return MobileCI\MobileCIAPIController::create()->getMallCouponCampaignDetailView();
             }
         );
 
@@ -445,7 +533,6 @@ Route::group(
         Route::get(
             '/customer/mallnewsdetail',
             function () {
-
                 return MobileCI\MobileCIAPIController::create()->getMallNewsDetailView();
             }
         );
@@ -456,5 +543,131 @@ Route::group(
                 return MobileCI\MobileCIAPIController::create()->getMallLuckyDrawDownloadList();
             }]
         );
+
+        // set language from pop up selected language to cookies
+        Route::post(
+            '/customer/setlanguage',
+            function () {
+                return MobileCI\MobileCIAPIController::create()->postLanguagebySelected();
+            }
+        );
+
+
+        /**
+         * Read / flag the alert as read
+         */
+        Route::post('/app/v1/inbox/read', function()
+        {
+            return InboxAPIController::create()->postReadAlert();
+        });
+
+        /**
+         * Flag the alert as read / unread
+         */
+        Route::post('/app/v1/inbox/read-unread', function()
+        {
+            return InboxAPIController::create()->postReadUnreadAlert();
+        });
+
+        /**
+         * Delete the alert
+         */
+        Route::post('/app/v1/inbox/delete', function()
+        {
+            return InboxAPIController::create()->postDeleteAlert();
+        });
+
+        /**
+         * Poll new alert
+         */
+        Route::get('/app/v1/inbox/unread-count', function()
+        {
+            return InboxAPIController::create()->getPollMessages();
+        });
+
+        /**
+         * Search inbox
+         */
+        Route::get('/app/v1/inbox/list', function()
+        {
+            return InboxAPIController::create()->getSearchInbox();
+        });
+
+        /**
+         * My Account
+         */
+        Route::get('/customer/my-account', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getMyAccountView();
+        });
+
+        /**
+         * Search campaign popup
+         */
+        Route::get('/app/v1/campaign/list', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchCampaignCardsPopUp();
+        });
+
+        /**
+         * Campaign popup activities
+         */
+        Route::post('/app/v1/campaign/activities', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->postCampaignPopUpActivities();
+        });
+
+        /**
+         * The power search
+         */
+        Route::get('/app/v1/keyword/search', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getPowerSearch();
+        });
+	
+	/**
+         * Tenant load more
+         */
+        Route::get('/app/v1/tenant/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchTenant();
+        });
+
+        /**
+         * Promotion load more
+         */
+        Route::get('/app/v1/promotion/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchPromotion();
+        });
+
+        /**
+         * News load more
+         */
+        Route::get('/app/v1/news/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchNews();
+        });
+
+        /**
+         * My coupon load more
+         */
+        Route::get('/app/v1/my-coupon/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchCoupon();
+        });
+
+        /**
+         * Lucky draw load more
+         */
+        Route::get('/app/v1/lucky-draw/load-more', function()
+        {
+            return MobileCI\MobileCIAPIController::create()->getSearchLuckyDraw();
+        });
+
+        Route::get('/app/v1/customer/login-callback', ['as' => 'customer-login-callback', 'uses' => 'IntermediateLoginController@getCloudLoginCallback']);
+        Route::get('/app/v1/customer/login-callback-show-id', ['as' => 'customer-login-callback-show-id', 'uses' => 'IntermediateLoginController@getCloudLoginCallbackShowId']);
     }
 );
+
+

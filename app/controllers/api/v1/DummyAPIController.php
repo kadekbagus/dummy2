@@ -349,15 +349,15 @@ class DummyAPIController extends ControllerAPI
 
             Event::fire('orbit.dummy.postreguser.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.dummy.postreguser.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $newuser = new User();
             $newuser->username = $email;

@@ -28,12 +28,17 @@ class Employee extends Eloquent
         return $this->hasOne('UserDetail', 'user_id', 'user_id');
     }
 
+    public function userVerificationNumber()
+    {
+        return $this->hasOne('UserVerificationNumber', 'user_id', 'user_id');
+    }
+
     /**
      * Employee could belongs to and has many retailers
      */
     public function retailers()
     {
-        return $this->belongsToMany('Retailer', 'employee_retailer', 'employee_id', 'retailer_id');
+        return $this->belongsToMany('Mall', 'employee_retailer', 'employee_id', 'retailer_id');
     }
 
     /**

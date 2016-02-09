@@ -25,10 +25,15 @@ return array(
             'lucky_draw'     => 'Lucky Draw has been successfully deleted.',
             'news'           => 'News has been successfully deleted.',
             'object'         => 'Object has been successfully deleted.',
+            'mall'           => 'Mall has been successfully deleted.',
+            'mallgroup'      => 'Mall group has been successfully deleted.',
+            'tenant'         => 'Tenant has been successfully deleted.',
+            'membership'     => 'Membership has been successfully deleted.',
         ),
         'updated'   => array(
             'user'           => 'User has been successfully updated.',
-            'your_password'  => 'Your password has been successfully updated.'
+            'your_password'  => 'Your password has been successfully updated.',
+            'serviceagreement'  => 'Service Agreement has been successfully updated.',
         ),
         'nodata'    => array(
             'user'          => 'There is no user that matched your search criteria.',
@@ -51,9 +56,16 @@ return array(
             'role'          => 'There is no role that matched your search criteria.',
             'token'         => 'There is no token that matched your search criteria.',
             'lucky_draw'    => 'There is no lucky draw that matched your search criteria.',
+            'lucky_draw_number_receipt' => 'There is no lucky draw number receipt that matched your search criteria.',
+            'lucky_draw_number' => 'There is no lucky draw number that matched your search criteria.',
+            'lucky_draw_prize' => 'There is no lucky draw prize that matched your search criteria.',
             'news'          => 'There is no news that matched your search criteria.',
             'object'        => 'There is no object that matched your search criteria.',
             'activity'      => 'There is no activity that matched your search criteria.',
+            'mall'          => 'There is no mall that matched your search criteria.',
+            'mallgroup'     => 'There is no mall group that matched your search criteria.',
+            'tenant'        => 'There is no tenant that matched your search criteria.',
+            'membership'    => 'There is no membership that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
@@ -62,8 +74,12 @@ return array(
             ),
             'retailer' => array(
                 'logo'  => 'Retailer logo has been successfully uploaded.',
+                'delete_logo'   => 'Retailer logo has been successfully deleted.',
+                'delete_image'  => 'Retailer images has been successfully deleted.'
             ),
             'mall' => array(
+                'logo'               => 'Mall logo has been successfully uploaded.',
+                'delete_logo'        => 'Mall logo has been successfully deleted.',
                 'background'         => 'Background image has been successfully uploaded.',
                 'delete_background'  => 'Background image has been successfully deleted.'
             ),
@@ -83,6 +99,10 @@ return array(
                 'main'          => 'Event image has been successfully uploaded.',
                 'delete_image'  => 'Event image has been successfully deleted.'
             ),
+            'event_translation' => array(
+                'main'          => 'Event Translation image has been successfully uploaded.',
+                'delete_image'  => 'Event Translation image has been successfully deleted.'
+            ),
             'user' => array(
                 'profile_picture'           => 'Profile image has been successfully uploaded.',
                 'profile_picture_deleted'   => 'Profile image has been successfully deleted.'
@@ -95,10 +115,21 @@ return array(
                 'main'          => 'Lucky Draw image has been successfully uploaded.',
                 'delete_image'  => 'Lucky Draw image has been successfully deleted.'
             ),
+            'lucky_draw_translation' => array(
+                'main'          => 'Lucky Draw Translation image has been successfully uploaded.',
+                'delete_image'  => 'Lucky Draw Translation image has been successfully deleted.'
+            ),
             'news' => array(
                 'main'          => 'News image has been successfully uploaded.',
                 'delete_image'  => 'News image has been successfully deleted.'
             ),
+            'membership' => array(
+                'main'          => 'Membership image has been successfully uploaded.',
+                'delete_image'  => 'Membership image has been successfully deleted.'
+            ),
+        ),
+        'activate'   => array(
+            'account'  => 'Your account has been successfully activate.'
         )
     )
 );

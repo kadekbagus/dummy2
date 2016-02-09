@@ -37,4 +37,8 @@ class LuckyDrawWinner extends Eloquent
         return $this->belongsTo('User', 'modified_by', 'user_id');
     }
 
+    public function prize()
+    {
+        return $this->belongsTo('LuckyDrawPrize', 'lucky_draw_prize_id', 'lucky_draw_prize_id');
+    }
 }

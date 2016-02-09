@@ -45,6 +45,11 @@ class Merchant extends Eloquent
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
 
+    public function timezone()
+    {
+        return $this->belongsTo('Timezone', 'timezone_id', 'timezone_id');
+    }
+
     public function retailers()
     {
         return $this->hasMany('Retailer', 'parent_id', 'merchant_id')->excludeDeleted();
@@ -255,6 +260,24 @@ class Merchant extends Eloquent
     public function mediaLogo()
     {
         return $this->media()->where('media_name_id', 'merchant_logo');
+    }
+
+    /**
+     * Merchant has many languages for translations.
+     */
+    public function languages()
+    {
+        return $this->hasMany('MerchantLanguage', 'merchant_id', 'merchant_id')->excludeDeleted();
+    }
+
+    /**
+     * Merchant strings can be translated to many languages.
+     */
+    public function translations()
+    {
+        return $this->hasMany('MerchantTranslation', 'merchant_id', 'merchant_id')->excludeDeleted()->whereHas('language', function($has) {
+            $has->where('merchant_languages.status', 'active');
+        });
     }
 
     /**

@@ -68,7 +68,7 @@ class ObjectAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('current_mall');;
             $object_name = OrbitInput::post('object_name');
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
@@ -81,7 +81,7 @@ class ObjectAPIController extends ControllerAPI
                     'status'             => $status,
                 ),
                 array(
-                    'merchant_id'        => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'        => 'required|orbit.empty.merchant',
                     'object_name'        => 'required|orbit.exists.object_name',
                     'object_type'        => 'required|orbit.empty.object_object_type',
                     'status'             => 'required|orbit.empty.object_status',
@@ -90,6 +90,9 @@ class ObjectAPIController extends ControllerAPI
 
             Event::fire('orbit.object.postnewobject.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -97,9 +100,6 @@ class ObjectAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.object.postnewobject.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             // save Object.
             $newobject = new Object();
@@ -271,7 +271,7 @@ class ObjectAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $object_id = OrbitInput::post('object_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $merchant_id = OrbitInput::post('current_mall');;
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
 
@@ -290,8 +290,8 @@ class ObjectAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
-                    'object_id'        => 'required|numeric|orbit.empty.object',
-                    'merchant_id'      => 'numeric|orbit.empty.merchant',
+                    'object_id'        => 'required|orbit.empty.object',
+                    'merchant_id'      => 'orbit.empty.merchant',
                     'object_name'      => 'sometimes|required|object_name_exists_but_me',
                     'object_type'      => 'orbit.empty.object_object_type',
                     'status'           => 'orbit.empty.object_status',
@@ -303,15 +303,15 @@ class ObjectAPIController extends ControllerAPI
 
             Event::fire('orbit.object.postupdateobject.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.object.postupdateobject.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $updatedobject = Object::excludeDeleted()->where('object_id', $object_id)->first();
 
@@ -498,15 +498,18 @@ class ObjectAPIController extends ControllerAPI
 
             $object_id = OrbitInput::post('object_id');
             $password = OrbitInput::post('password');
+            $mall_id = OrbitInput::post('current_mall');;
 
             $validator = Validator::make(
                 array(
+                    'merchant_id'=> $mall_id,
                     'object_id'  => $object_id,
                     'password'   => $password,
                 ),
                 array(
-                    'object_id'  => 'required|numeric|orbit.empty.object',
-                    'password'   => 'required|orbit.masterpassword.delete',
+                    'merchant_id'=> 'required|orbit.empty.mall',
+                    'object_id'  => 'required|orbit.empty.object',
+                    'password'   => 'required|orbit.masterpassword.delete:' . $mall_id,
                 ),
                 array(
                     'required.password'             => 'The master is password is required.',
@@ -516,15 +519,15 @@ class ObjectAPIController extends ControllerAPI
 
             Event::fire('orbit.object.postdeleteobject.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.object.postdeleteobject.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $deleteobject = Object::excludeDeleted()->where('object_id', $object_id)->first();
             $deleteobject->status = 'deleted';
@@ -705,7 +708,7 @@ class ObjectAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,object_name,object_type,status',
+                    'sort_by' => 'in:registered_date,object_name,object_type,status,object_order',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.object_sortby'),
@@ -751,7 +754,7 @@ class ObjectAPIController extends ControllerAPI
 
             // Filter object by merchant Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($object) {
-                $object->whereIn('objects.merchant_id', $merchantIds);
+                $object->whereIn('objects.merchant_id', (array)$merchantIds);
             });
 
             // Filter object by object name
@@ -829,6 +832,7 @@ class ObjectAPIController extends ControllerAPI
                     'registered_date'   => 'objects.created_at',
                     'object_name'       => 'objects.object_name',
                     'object_type'       => 'objects.object_type',
+                    'object_order'      => 'objects.object_order',
                     'status'            => 'objects.status'
                 );
 
@@ -925,7 +929,7 @@ class ObjectAPIController extends ControllerAPI
 
         // Check the existance of merchant id
         Validator::extend('orbit.empty.merchant', function ($attribute, $value, $parameters) {
-            $merchant = Retailer::excludeDeleted()
+            $merchant = Mall::excludeDeleted()
                                 ->where('merchant_id', $value)
                                 ->first();
 
@@ -995,7 +999,7 @@ class ObjectAPIController extends ControllerAPI
         // Object deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {
             // Current Mall location
-            $currentMall = Config::get('orbit.shop.id');
+            $currentMall = $parameters[0];
 
             // Get the master password from settings table
             $masterPassword = Setting::getMasterPasswordFor($currentMall);
@@ -1010,6 +1014,21 @@ class ObjectAPIController extends ControllerAPI
                 $message = 'The master password is incorrect.';
                 ACL::throwAccessForbidden($message);
             }
+
+            return TRUE;
+        });
+
+        // Check the existance of merchant id
+        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mall', $mall);
 
             return TRUE;
         });

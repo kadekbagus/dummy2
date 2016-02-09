@@ -37,7 +37,7 @@
             </div>
             <div class="row vertically-spaced">
                 <div class="col-xs-12 text-center">
-                    <img class="img-responsive" src="{{ asset($retailer->parent->logo) }}" />
+                    <img class="img-responsive" src="{{ asset($retailer->bigLogo) }}" />
                 </div>
             </div>
         </header>
@@ -46,7 +46,7 @@
                 <input type="text" class="form-control" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}" />
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-info btn-block submit-btn">{{ Lang::get('mobileci.signin.login_button') }}</button>
+                <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
             </div>
         </form>
     </div>
@@ -69,7 +69,7 @@
                     <input type="hidden" class="form-control" name="email" id="emailSigned" />
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-info btn-block submit-btn2">{{ Lang::get('mobileci.signin.start_button') }}</button>
+                    <button type="submit" class="btn btn-info btn-block">{{ Config::get('shop.start_button_label') }}</button>
                 </div>
             </form>
         </div>
@@ -107,7 +107,7 @@
     /**
      * Get Query String from the URL
      *
-     * @author Rio Astamal <me@rioastamal.net> 
+     * @author Rio Astamal <me@rioastamal.net>
      * @param string n - Name of the parameter
      */
     function get(n) {
@@ -128,6 +128,7 @@
         // 'Set-X-Orbit-Session: SESSION_ID
         // To do: replace this hardcode session name
         var session_id = xhr.getResponseHeader('Set-X-Orbit-Session');
+        var prefix = '?';
         console.log('Session ID: ' + session_id);
 
         // We will pass this session id to the application inside real browser
@@ -136,6 +137,11 @@
         var create_session_url = '{{ URL::Route("captive-portal") }}';
         console.log('Create session URL: ' + create_session_url);
 
+        // Check for the '?' mark
+        if (create_session_url.indexOf('?') > 0) {
+            // There is already query string
+            prefix = '&';
+        }
         window.location = create_session_url + '?loadsession=' + session_id;
 
         return;
@@ -235,13 +241,13 @@
           $('#errorModalText').text('{{ Lang::get('mobileci.modals.email_error') }}');
           $('#errorModal').modal();
         }else{
-          
+
           if(isValidEmailAddress($('#email').val().trim())){
             $('.submit-btn').attr('disabled', 'disabled');
             $('.submit-btn2').attr('disabled', 'disabled');
             $('.submit-btn').text('{{ Lang::get('mobileci.signin.logging_in_button') }}');
             $('.submit-btn2').text('{{ Lang::get('mobileci.signin.logging_in_button') }}');
-            
+
             $.ajax({
               method:'POST',
               url:apiPath+'customer/login',

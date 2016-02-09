@@ -8,6 +8,8 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Text as OrbitText;
 use Activity;
+use Mall;
+use Carbon\Carbon as Carbon;
 
 class DatabaseSimulationPrinterController extends DataPrinterController
 {
@@ -26,6 +28,26 @@ class DatabaseSimulationPrinterController extends DataPrinterController
         OrbitInput::get('with', function($_with) use (&$with) {
             $with = array_merge($with, $_with);
         });
+
+        $current_mall = OrbitInput::get('current_mall');
+
+        // get timezone based on current_mall
+        if (!empty($current_mall)) {
+            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                          ->where('merchants.merchant_id','=', $current_mall)
+                          ->first();
+
+            // if timezone not found
+            if (count($timezone)==0) {
+                $timezone = null;
+            } 
+            else {
+                $timezone = $timezone->timezone_name; // if timezone found
+            }
+        } 
+        else {
+            $timezone = null;    
+        }
 
         $activities = Activity::with($with)->select('activities.activity_id',
                                                     'activities.activity_name',
@@ -67,6 +89,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                                                     'activities.response_status',
                                                     'activities.created_at',
                                                     'activities.updated_at',
+                                                    'activities.object_display_name',
                                                     DB::Raw("DATE_FORMAT({$prefix}activities.created_at, '%d-%m-%Y %H:%i:%s') as created_at_reverse"),
                                                     'user_details.gender as gender')
                                             ->leftJoin('user_details', 'user_details.user_id', '=', 'activities.user_id')
@@ -116,13 +139,13 @@ class DatabaseSimulationPrinterController extends DataPrinterController
 
         // Filter by merchant ids
         OrbitInput::get('merchant_ids', function($merchantIds) use ($activities) {
-            $activities->merchantIds($merchantIds);
+            $activities->whereIn('activities.location_id', $merchantIds);
         });
 
         // Filter by retailer ids
-        OrbitInput::get('retailer_ids', function($retailerIds) use ($activities) {
-            $activities->whereIn('activities.location_id', $retailerIds);
-        });
+        // OrbitInput::get('retailer_ids', function($retailerIds) use ($activities) {
+        //     $activities->whereIn('activities.location_id', $retailerIds);
+        // });
 
         // Filter by user emails
         OrbitInput::get('user_emails', function($emails) use ($activities) {
@@ -136,7 +159,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
 
         // Filter by gender
         OrbitInput::get('genders', function($genders) use ($activities) {
-            $activities->whereIn('activities.gender', $genders);
+            $activities->whereIn('user_details.gender', $genders);
         });
 
         // Filter by groups
@@ -145,7 +168,18 @@ class DatabaseSimulationPrinterController extends DataPrinterController
                 $activities->whereIn('activities.group', $groups);
             });
         } else {
-            $activities->whereIn('activities.group', ['mobile-ci', 'pos']);
+            $activities->where(function($q) use ($prefix) {
+                $q->whereIn('activities.group', ['mobile-ci', 'pos'])
+                  ->orWhere(function($q) {
+                        $q->where('activities.activity_name', 'registration_ok')
+                          ->where('activities.group', 'cs-portal');
+                  })
+                  ->orWhere(function($q) use ($prefix) {
+                        $q->whereIn('activities.activity_name', ['activation_ok','issue_lucky_draw'])
+                          ->whereIn('activities.activity_name_long', ['Customer Activation','Lucky Draw Number Issuance'])
+                          ->where('activities.group', 'portal');
+                  });
+                });
         }
 
         // Filter by matching group pattern
@@ -160,7 +194,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
 
         // Filter by object ids
         OrbitInput::get('object_ids', function($objectIds) use ($activities) {
-            $activities->whereIn('activities.object_id', $roleIds);
+            $activities->whereIn('activities.object_id', $objectIds);
         });
 
         // Filter by object names
@@ -310,6 +344,9 @@ class DatabaseSimulationPrinterController extends DataPrinterController
         // skip, and order by
         $_activities = clone $activities;
 
+        // Prevent query leak, we select only field which should guarantee to be indexed
+        $_activities->select('activities.activity_id');
+
         // Default sort by
         $sortBy = 'activities.activity_id';
         // Default sort mode
@@ -367,22 +404,22 @@ class DatabaseSimulationPrinterController extends DataPrinterController
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle));
+                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Data List', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Data', $totalRec, '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'CRM Data', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Total CRM Data', $totalRec, '', '', '', '', '', '', '', '');
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Promotions', 'Coupons');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '');
-                
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Customer', 'Gender', 'Date & Time', 'Action', 'Tenant', 'News', 'Promotions', 'Coupons', 'Lucky Draws');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '', '');
+
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     $gender = $this->printGender($row);
-                    $date = $this->printDateTime($row);
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $row->created_at, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name));
+                    $date = $this->printDateTime($row, $timezone, 'no');
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $count, $row->user_email, $gender, $date, $row->activity_name_long, $this->printUtf8($row->retailer_name), $this->printUtf8($row->news_name), $this->printUtf8($row->promotion_news_name), $this->printUtf8($row->coupon_name), $this->printUtf8($row->object_display_name));
                     $count++;
 
                 }
@@ -403,7 +440,7 @@ class DatabaseSimulationPrinterController extends DataPrinterController
      * @return string
      */
     public function printGender($databasesimulation)
-    {     
+    {
         $gender = $databasesimulation->gender;
         $gender = strtolower($gender);
         switch ($gender) {
@@ -427,17 +464,32 @@ class DatabaseSimulationPrinterController extends DataPrinterController
      * @param $databasesimulation $databasesimulation
      * @return string
      */
-    public function printDateTime($databasesimulation)
+    public function printDateTime($databasesimulation, $timezone, $format='yes')
     {
-        if($databasesimulation->created_at==NULL || empty($databasesimulation->created_at)){
+        if ($databasesimulation->created_at==NULL || empty($databasesimulation->created_at)) {
             $result = "";
         }
         else {
-            $date = $databasesimulation->created_at;
-            $date = explode(' ',$date);
-            $time = strtotime($date[0]);
-            $newformat = date('d F Y',$time);
-            $result = $newformat.' '.$date[1];
+                // change to correct timezone
+                if (!empty($timezone) || $timezone != null) {
+                    $date = Carbon::createFromFormat('Y-m-d H:i:s', $databasesimulation->created_at, 'UTC');
+                    $date->setTimezone($timezone);
+                    $_date = $date;
+                } 
+                else {
+                    $_date = $databasesimulation->created_at;
+                }
+
+                // show in format if needed
+                if ($format == 'yes') {
+                    $date = explode(' ',$_date);
+                    $time = strtotime($date[0]);
+                    $newformat = date('d F Y',$time);
+                    $result = $newformat.' '.$date[1];
+                }
+                else {
+                    $result = $_date;
+                }
         }
 
         return $result;

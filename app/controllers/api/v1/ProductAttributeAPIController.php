@@ -297,7 +297,7 @@ class ProductAttributeAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('current_mall');;
             $attributeName = OrbitInput::post('attribute_name');
             $attributeValue = OrbitInput::post('attribute_value');
 
@@ -312,7 +312,7 @@ class ProductAttributeAPIController extends ControllerAPI
                     'attribute_value'       => $attributeValue
                 ),
                 array(
-                    'merchant_id'       => 'required|numeric|orbit.empty.merchant',
+                    'merchant_id'       => 'required|orbit.empty.merchant',
                     'attribute_name'    => 'required|orbit.attribute.unique',
                 ),
                 array(
@@ -322,15 +322,15 @@ class ProductAttributeAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postnewattribute.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postnewattribute.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $attribute = new ProductAttribute();
             $attribute->merchant_id = $merchantId;
@@ -516,7 +516,7 @@ class ProductAttributeAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $attributeId = OrbitInput::post('product_attribute_id');
-            $merchantId = OrbitInput::post('merchant_id');
+            $merchantId = OrbitInput::post('current_mall');;
             $attributeName = OrbitInput::post('attribute_name');
             $is_validation = OrbitInput::post('is_validation');
 
@@ -531,8 +531,8 @@ class ProductAttributeAPIController extends ControllerAPI
                     'attribute_name'        => $attributeName,
                 ),
                 array(
-                    'product_attribute_id'      => 'required|numeric|orbit.empty.attribute',
-                    'merchant_id'               => 'numeric|orbit.empty.merchant',
+                    'product_attribute_id'      => 'required|orbit.empty.attribute',
+                    'merchant_id'               => 'orbit.empty.merchant',
                     'attribute_name'            => 'orbit.exists.product_attribute_name_have_transaction:'.$attributeId.'|orbit.exists.product_attribute_name_have_product:'.$attributeId.'|orbit.attribute.unique.butme',
                     'attribute_value_deleted'   => 'array',
                 ),
@@ -545,15 +545,15 @@ class ProductAttributeAPIController extends ControllerAPI
 
             Event::fire('orbit.product.postupdateattribute.before.validation', array($this, $validator));
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.product.postupdateattribute.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $attribute = App::make('orbit.empty.attribute');
 
@@ -897,11 +897,14 @@ class ProductAttributeAPIController extends ControllerAPI
                     'product_attribute_id'  => $attributeId,
                 ),
                 array(
-                    'product_attribute_id'  => 'required|numeric|orbit.empty.attribute|orbit.exists.product_attribute_have_transaction|orbit.exists.product_attribute_have_product',
+                    'product_attribute_id'  => 'required|orbit.empty.attribute|orbit.exists.product_attribute_have_transaction|orbit.exists.product_attribute_have_product',
                 )
             );
 
             Event::fire('orbit.product.postdeleteattribute.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -917,9 +920,6 @@ class ProductAttributeAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.product.postdeleteattribute.after.validation', array($this, $validator));
-
-            // Begin database transaction
-            $this->beginTransaction();
 
             $attribute = App::make('orbit.empty.attribute');
 
