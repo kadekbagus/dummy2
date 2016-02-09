@@ -66,6 +66,8 @@ class CampaignReportPrinterController extends DataPrinterController
         $status = OrbitInput::get('status');
 
         $pageTitle = 'Campaign Summary Report';
+        // $pageTitle = 'Redeemed Coupon Report for ' . $couponName;
+
 
         switch ($mode) {
             case 'csv':
@@ -80,8 +82,8 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', $totalRecord, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopUpViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', $totalSpending, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost', $totalEstimatedCost, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost (IDR)', $totalEstimatedCost, '', '', '','');
 
                 // Filtering
                 if($startDate != '' && $endDate != ''){
@@ -95,7 +97,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 } elseif($tenant != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
                 } elseif($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Location : ', htmlentities($mallName), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall : ', htmlentities($mallName), '', '', '','');
                 } elseif($status != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status :', $status, '', '', '','');
                 }
@@ -193,7 +195,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopupViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up clicks', $totalPopupClicks, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', $totalSpending, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
@@ -203,27 +205,28 @@ class CampaignReportPrinterController extends DataPrinterController
                 if ($tenant != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
                 } elseif($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Location : ', htmlentities($mallName), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Mall : ', htmlentities($mallName), '', '', '','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location', 'Unique Users', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Tenants', 'Mall', 'Unique Users', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $this->printDateTime($row->campaign_date, $timezone, 'd M Y'),
+                            $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
+                            $row->total_tenant,
                             htmlentities($row->mall_name),
                             $row->unique_users,
                             $row->campaign_pages_views,
-                            $row->campaign_pages_view_rate,
+                            round($row->campaign_pages_view_rate, 2),
                             $row->popup_views,
-                            $row->popup_view_rate,
+                            round($row->popup_view_rate, 2),
                             $row->popup_clicks,
-                            $row->popup_click_rate,
-                            $row->spending
+                            round($row->popup_click_rate, 2),
+                            number_format($row->spending, 0)
                     );
                     $count++;
                 }
