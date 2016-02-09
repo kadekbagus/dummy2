@@ -203,27 +203,28 @@ class CampaignReportPrinterController extends DataPrinterController
                 if ($tenant != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
                 } elseif($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Location : ', htmlentities($mallName), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Mall : ', htmlentities($mallName), '', '', '','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Location', 'Unique Users', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Tenants', 'Mall', 'Unique Users', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $this->printDateTime($row->campaign_date, $timezone, 'd M Y'),
+                            $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
+                            $row->total_tenant,
                             htmlentities($row->mall_name),
                             $row->unique_users,
                             $row->campaign_pages_views,
-                            $row->campaign_pages_view_rate,
+                            round($row->campaign_pages_view_rate, 2),
                             $row->popup_views,
-                            $row->popup_view_rate,
+                            round($row->popup_view_rate, 2),
                             $row->popup_clicks,
-                            $row->popup_click_rate,
-                            $row->spending
+                            round($row->popup_click_rate, 2),
+                            number_format($row->spending, 0)
                     );
                     $count++;
                 }
