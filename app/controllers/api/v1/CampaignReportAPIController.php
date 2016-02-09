@@ -658,13 +658,13 @@ class CampaignReportAPIController extends ControllerAPI
                         AND DATE(created_at) = campaign_date
                     ) AS popup_clicks,
                     (
-                        SELECT IFNULL ( ROUND((campaign_pages_views / unique_users), 0) * 100, 0 )
+                        SELECT IFNULL(ROUND((campaign_pages_views / unique_users) * 100, 2), 0)
                     ) AS campaign_pages_view_rate,
                     (
-                        SELECT IFNULL (ROUND((popup_views / unique_users), 0) * 100, 0)
+                        SELECT IFNULL (ROUND((popup_views / unique_users) * 100, 2), 0)
                     ) AS popup_view_rate,
                     (
-                        SELECT IFNULL (ROUND((popup_clicks / popup_views), 0) * 100, 0)
+                        SELECT IFNULL (ROUND((popup_clicks / popup_views) * 100, 2), 0)
                     ) AS popup_click_rate
                     FROM
                     tmp_campaign_cost_detail
