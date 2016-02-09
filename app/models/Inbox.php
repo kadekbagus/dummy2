@@ -63,6 +63,14 @@ class Inbox extends Eloquent
     }
 
     /**
+     * Get the inbox notified status.
+     */
+    public function scopeIsNotNotified($query)
+    {
+        return $query->where('is_notified', 'N');
+    }
+
+    /**
      * Insert issued lucky draw numbers into inbox table.
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
