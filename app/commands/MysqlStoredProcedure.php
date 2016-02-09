@@ -63,10 +63,17 @@ class MysqlStoredProcedure extends Command {
 		$procDDL = file_get_contents(app_path('database/procs/prc_campaign_detailed_cost.sql'));
 		$procDDL = str_replace('orb_', DB::getTablePrefix(), $procDDL);
 
+		// Fix definer
+		$definer = '`'.Config::get('database.connections.mysql.username').'`'
+			.'@'
+			.'`'.Config::get('database.connections.mysql.write.host').'`';
+
+		$procDDL = str_replace('`orbitdev`@`192.168.0.0/255.255.255.0`', $definer, $procDDL);
+
 		// Create it
 		DB::unprepared($procDDL);
 
-		$this->info('Successfully created prod "prc_campaign_detailed_cost".');
+		$this->info('Successfully created proc "prc_campaign_detailed_cost".');
 	}
 
 
