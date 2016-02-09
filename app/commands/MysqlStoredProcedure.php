@@ -73,7 +73,7 @@ class MysqlStoredProcedure extends Command {
 		// Create it
 		DB::unprepared($procDDL);
 
-		$this->info('Successfully created prod "prc_campaign_detailed_cost".');
+		$this->info('Successfully created proc "prc_campaign_detailed_cost".');
 	}
 
 
