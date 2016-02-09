@@ -36,20 +36,27 @@ class UploadAPIController extends ControllerAPI
             if ($type === null) {
                 OrbitShopAPI::throwInvalidArgument('Type required');
             }
-            $type = (string)$type;
-            if (!preg_match('/^[a-z.]+$/', $type)) {
-                OrbitShopAPI::throwInvalidArgument('Type must be alphabetic separated by dots');
-            }
-            $config = Config::get('orbit.upload.' . $type, null);
-            if (!is_array($config)) {
-                OrbitShopAPI::throwInvalidArgument('Type unknown');
-            }
 
-            if (!isset($config['file_size'])) {
-                OrbitShopAPI::throwInvalidArgument('Type does not set file size');
-            }
+            $keys = (array)$type;
+            $data = [];
 
-            $this->response->data = ['bytes' => $config['file_size']];
+            foreach($keys as $key) {
+                $type = (string)$key;
+                if (!preg_match('/^[a-z._]+$/', $type)) {
+                    OrbitShopAPI::throwInvalidArgument('Type must be alphabetic separated by dots');
+                }
+                $config = Config::get('orbit.upload.' . $type, null);
+                if (!is_array($config)) {
+                    OrbitShopAPI::throwInvalidArgument('Type unknown');
+                }
+
+                if (!isset($config['file_size'])) {
+                    OrbitShopAPI::throwInvalidArgument('Type does not set file size');
+                }
+
+                $data['file_size'][$key] = $config['file_size'];
+            }
+            $this->response->data = $data;
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';

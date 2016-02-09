@@ -47,6 +47,14 @@ class Inbox extends Eloquent
     }
 
     /**
+     * Get the not alert type inbox.
+     */
+    public function scopeIsNotAlert($query)
+    {
+        return $query->where('inbox_type', '<>', 'alert');
+    }
+
+    /**
      * Get the inbox read status.
      */
     public function scopeIsNotRead($query)
