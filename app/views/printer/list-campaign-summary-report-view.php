@@ -119,27 +119,27 @@
         <tr>
             <td>Number of campaigns</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRecord, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRecord, 0); ?></strong></td>
         </tr>
         <tr>
             <td>Total page views</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalPageViews, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
         <tr>
             <td>Total pop up views</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalPopUpViews, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalPopUpViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total spending</td>
+            <td>Total spending (IDR)</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Estimated total cost</td>
+            <td>Estimated total cost (IDR)</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalEstimatedCost, 0); ?></strong></td>
         </tr>
 
 
@@ -172,7 +172,7 @@
             </tr>
         <?php } elseif($mallName != '') { ?>
             <tr>
-                <td>Filter by  Location</td>
+                <td>Filter by Mall</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>

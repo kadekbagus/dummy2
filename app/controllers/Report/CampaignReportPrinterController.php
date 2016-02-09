@@ -66,6 +66,8 @@ class CampaignReportPrinterController extends DataPrinterController
         $status = OrbitInput::get('status');
 
         $pageTitle = 'Campaign Summary Report';
+        // $pageTitle = 'Redeemed Coupon Report for ' . $couponName;
+
 
         switch ($mode) {
             case 'csv':
@@ -80,8 +82,8 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', $totalRecord, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopUpViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', $totalSpending, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost', $totalEstimatedCost, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost (IDR)', $totalEstimatedCost, '', '', '','');
 
                 // Filtering
                 if($startDate != '' && $endDate != ''){
@@ -95,7 +97,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 } elseif($tenant != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
                 } elseif($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Location : ', htmlentities($mallName), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall : ', htmlentities($mallName), '', '', '','');
                 } elseif($status != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status :', $status, '', '', '','');
                 }
@@ -193,7 +195,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopupViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up clicks', $totalPopupClicks, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending', $totalSpending, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
