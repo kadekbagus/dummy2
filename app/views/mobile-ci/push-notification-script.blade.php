@@ -4,6 +4,7 @@
 <script>
 
     $(document).ready(function() {
+        var untoasteds = [];
         var langs = {};
         langs.coupon = {};
         langs.lucky_draw = {};
@@ -73,6 +74,10 @@
                     $('.notification-badge-txt').text('0');
                     $('.notification-badge-txt').hide();
                 }
+                if (resp.data.untoasted_records.length > 0) {
+                    untoasteds = []; // reset untoasted stack
+                    untoasteds = resp.data.untoasted_records;
+                }
             }).fail(function(resp) {
                 $('.notification-badge-txt').text('0');
                 $('.notification-badge-txt').hide();
@@ -86,6 +91,30 @@
         setInterval(function() {
             getNotif()
         }, pushNotificationDelay);
+
+        setInterval(function() {
+            if (untoasteds.length > 0) {
+                var inboxId = untoasteds[0].inbox_id;
+                toastr.options = {
+                    closeButton: true,
+                    closeDuration: 2000,
+                    onShown: function() {
+                        $.ajax({
+                            url: apiPath + 'inbox/notified'
+                            method: 'POST',
+                            data: {
+                                inbox_id: 
+                            }
+                        }).done(function(resp) {
+                            for(var i = untoasteds.length-1; i >= 0; i--) { // remove inbox with the last notified inbox_id
+                                if( untoasteds[i].inbox_id == inboxId) untoasteds.splice(i,1);
+                            }
+                        });
+                    }
+                };
+                toastr.info(untoasteds[0].subject);
+            }
+        }, 2000);
 
         $(document).on('hidden.bs.modal', '.modal', function () {
             $('.modal:visible').length && $(document.body).addClass('modal-open');
