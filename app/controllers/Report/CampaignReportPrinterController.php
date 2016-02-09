@@ -91,15 +91,15 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 if ($campaignName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name : ', htmlentities($campaignName), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name', htmlentities($campaignName), '', '', '','');
                 } elseif($campaignType != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type :', htmlentities($campaignType), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type', htmlentities($campaignType), '', '', '','');
                 } elseif($tenant != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant', htmlentities($tenant), '', '', '','');
                 } elseif($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall : ', htmlentities($mallName), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall', htmlentities($mallName), '', '', '','');
                 } elseif($status != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status :', $status, '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', $status, '', '', '','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
@@ -161,6 +161,7 @@ class CampaignReportPrinterController extends DataPrinterController
         $totalPopupViews = $response['totalPopupViews'];
         $totalPopupClicks = $response['totalPopupClicks'];
         $totalSpending = $response['totalSpending'];
+        $campaignName = $response['campaignName'];
 
         $pdo = DB::Connection()->getPdo();
 
@@ -179,7 +180,7 @@ class CampaignReportPrinterController extends DataPrinterController
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
 
-        $pageTitle = 'Campaign Detail Report';
+        $pageTitle = 'Campaign Detail Report for' . $campaignName;
 
         switch ($mode) {
             case 'csv':
@@ -203,9 +204,9 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 if ($tenant != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant :', htmlentities($tenant), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant', htmlentities($tenant), '', '', '','');
                 } elseif($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Mall : ', htmlentities($mallName), '', '', '','');
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Mall', htmlentities($mallName), '', '', '','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');

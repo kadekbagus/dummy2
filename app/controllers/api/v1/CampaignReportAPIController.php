@@ -772,6 +772,19 @@ class CampaignReportAPIController extends ControllerAPI
                 }
             });
 
+            // Get title campaign
+            $campaignName = '';
+            if ($campaign_type === 'news' or $campaign_type === 'promotion') {
+                $getTitleCampaign = News::selectraw('news_name')
+                    ->where('news_id', $campaign_id)
+                    ->get();
+                $campaignName = htmlentities($getTitleCampaign[0]->news_name);
+            } elseif ($campaign_type === 'coupon') {
+                $getTitleCampaign = Promotion::selectraw('promotion_name')
+                    ->where('promotion_id', $campaign_id)
+                    ->get();
+                $campaignName = htmlentities($getTitleCampaign[0]->promotion_name);
+            }
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
@@ -781,7 +794,8 @@ class CampaignReportAPIController extends ControllerAPI
                     'totalPageViews' => $totalPageViews,
                     'totalPopupViews' => $totalPopupViews,
                     'totalPopupClicks' => $totalPopupClicks,
-                    'totalSpending' => $totalSpending
+                    'totalSpending' => $totalSpending,
+                    'campaignName' => $campaignName,
                 ];
             }
 
