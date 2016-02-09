@@ -210,7 +210,7 @@
                     <td><?php echo htmlentities($row->campaign_type); ?></td>
                     <td><?php echo $row->total_tenant; ?></td>
                     <td><?php echo htmlentities($row->mall_name); ?></td>
-                    <td><?php echo $this->printDateTime($row->begin_date, $timezone, 'd M Y') . ' - ' . $this->printDateTime($row->end_date, $timezone, 'd M Y'); ?></td>
+                    <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
                     <td><?php echo $row->page_views; ?></td>
                     <td><?php echo $row->popup_views; ?></td>
                     <td><?php echo $row->popup_clicks; ?></td>
