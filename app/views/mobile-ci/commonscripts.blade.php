@@ -680,6 +680,7 @@
                 zoomer.featherlight();
             }
             resetImage();
+            $('.slide-menu-middle-container').css('height', ($(window).height() - $('.header-buttons-container').height()) + 'px');
         });
 
         $(document).on('click', '.featherlight-close', function(){
@@ -705,6 +706,7 @@
                 menuOpen = true;
             }
             // $('html, body').animate({scrollTop:0}, 'fast');
+            $('.slide-menu-middle-container').css('height', ($(window).height() - $('.header-buttons-container').height()) + 'px');
             $('.slide-menu-container').toggle('slide', {direction: 'right'}, 'slow');
             $('.slide-menu-backdrop').toggle('fade', 'slow');
             if(menuOpen) {

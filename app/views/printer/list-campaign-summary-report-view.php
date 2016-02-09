@@ -119,27 +119,27 @@
         <tr>
             <td>Number of campaigns</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalRecord, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalRecord, 0); ?></strong></td>
         </tr>
         <tr>
             <td>Total page views</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalPageViews, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
         <tr>
             <td>Total pop up views</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalPopUpViews, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalPopUpViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total spending</td>
+            <td>Total spending (IDR)</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalSpending, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Estimated total cost</td>
+            <td>Estimated total cost (IDR)</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalEstimatedCost, 0, '.', '.'); ?></strong></td>
+            <td><strong><?php echo number_format($totalEstimatedCost, 0); ?></strong></td>
         </tr>
 
 
@@ -172,7 +172,7 @@
             </tr>
         <?php } elseif($mallName != '') { ?>
             <tr>
-                <td>Filter by  Location</td>
+                <td>Filter by Mall</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($mallName); ?></strong></td>
             </tr>
@@ -210,7 +210,7 @@
                     <td><?php echo htmlentities($row->campaign_type); ?></td>
                     <td><?php echo $row->total_tenant; ?></td>
                     <td><?php echo htmlentities($row->mall_name); ?></td>
-                    <td><?php echo $this->printDateTime($row->begin_date, $timezone, 'd M Y') . ' - ' . $this->printDateTime($row->end_date, $timezone, 'd M Y'); ?></td>
+                    <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
                     <td><?php echo $row->page_views; ?></td>
                     <td><?php echo $row->popup_views; ?></td>
                     <td><?php echo $row->popup_clicks; ?></td>
