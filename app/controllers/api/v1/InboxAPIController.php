@@ -38,7 +38,8 @@ class InboxAPIController extends ControllerAPI
 
             $alerts = Inbox::excludeDeleted()
                             ->where('user_id', $user->user_id)
-                            ->where('merchant_id', $retailer->merchant_id);
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->isNotAlert();
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -169,7 +170,7 @@ class InboxAPIController extends ControllerAPI
      * ----------------------
      * @return Illuminate\Support\Facades\Response
      */
-    public function getPollAlert()
+    public function getPollMessages()
     {
         try {
             $httpCode = 200;
@@ -179,7 +180,8 @@ class InboxAPIController extends ControllerAPI
 
             $alerts = Inbox::where('user_id', $user->user_id)
                             ->where('merchant_id', $retailer->merchant_id)
-                            ->isNotRead();
+                            ->isNotRead()
+                            ->isNotAlert();
 
             // Clone the query builder which still does not include the take,
             // skip, and order by

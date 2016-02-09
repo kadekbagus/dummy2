@@ -17,7 +17,7 @@
         <div class="logged-in-container hide">
             <div class="row">
                 <div class="col-xs-12 sign-in-button">
-                    <button id="logged-in-signin-button" type="button" class="btn btn-block btn-primary">Sign in</button>
+                    <button id="logged-in-signin-button" type="button" class="btn btn-block btn-primary">{{ Lang::get('mobileci.signin.sign_in') }}</button>
                 </div>
             </div>
             <br/>
