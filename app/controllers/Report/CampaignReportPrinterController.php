@@ -66,8 +66,6 @@ class CampaignReportPrinterController extends DataPrinterController
         $status = OrbitInput::get('status');
 
         $pageTitle = 'Campaign Summary Report';
-        // $pageTitle = 'Redeemed Coupon Report for ' . $couponName;
-
 
         switch ($mode) {
             case 'csv':
@@ -180,7 +178,7 @@ class CampaignReportPrinterController extends DataPrinterController
         $startDate = OrbitInput::get('start_date');
         $endDate = OrbitInput::get('end_date');
 
-        $pageTitle = 'Campaign Detail Report for' . $campaignName;
+        $pageTitle = 'Campaign Detail Report for ' . $campaignName;
 
         switch ($mode) {
             case 'csv':
@@ -189,7 +187,7 @@ class CampaignReportPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Detail Report', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', $pageTitle, '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active campaign days', $totalCampaign, '', '', '','');
