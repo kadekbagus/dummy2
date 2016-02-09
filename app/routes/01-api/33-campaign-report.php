@@ -21,6 +21,22 @@ Route::get('/api/v1/campaign-report-detail/list', function()
 });
 
 /**
+ * Get Tenant Campaign Summary
+ */
+Route::get('/api/v1/tenant-campaign-summary/list', function()
+{
+    return CampaignReportAPIController::create()->getTenantCampaignSummary();
+});
+
+/**
+ * Get Tenant Campaign Detail
+ */
+Route::get('/api/v1/tenant-campaign-detail/list', function()
+{
+    return CampaignReportAPIController::create()->getTenantCampaignDetail();
+});
+
+/**
  * Get Campaign Demographic
  */
 Route::get('/api/v1/campaign-report/campaign-demographic', function()
