@@ -4811,20 +4811,24 @@ class DashboardAPIController extends ControllerAPI
                                                 AND merchant_id = {$this->quote($merchant_id)}
                                             "));
 
-            $total = $totalnews[0]->campaign_total_cost + $totalpromotion[0]->campaign_total_cost + $totalcoupon[0]->campaign_total_cost;
+            $news = floatval($totalnews[0]->campaign_total_cost);
+            $promotions = floatval($totalpromotion[0]->campaign_total_cost);
+            $coupon = floatval($totalcoupon[0]->campaign_total_cost);
+
+            $total = $news + $promotions + $coupon ;
 
             if (empty($without)) {
                 if($total != 0) {
                     $data['records'] = array (
-                        array('campaign_type'=>'news', 'campaign_spending'=>$totalnews[0]->campaign_total_cost, 'percentage'=>number_format(($totalnews[0]->campaign_total_cost/$total*100),2)),
-                        array('campaign_type'=>'promotions', 'campaign_spending'=>$totalpromotion[0]->campaign_total_cost, 'percentage'=>number_format(($totalpromotion[0]->campaign_total_cost/$total*100),2)),
-                        array('campaign_type'=>'coupons', 'campaign_spending'=>$totalcoupon[0]->campaign_total_cost, 'percentage'=>number_format(($totalcoupon[0]->campaign_total_cost/$total*100),2))
+                        array('campaign_type'=>'news', 'campaign_spending'=>$news , 'percentage'=>number_format(($news/$total*100),2)),
+                        array('campaign_type'=>'promotions', 'campaign_spending'=>$promotions , 'percentage'=>number_format(($promotions/$total*100),2)),
+                        array('campaign_type'=>'coupons', 'campaign_spending'=>$coupon , 'percentage'=>number_format(($coupon/$total*100),2))
                     );
                 } else {
                     $data['records'] = array (
-                        array('campaign_type'=>'news', 'campaign_spending'=>$totalnews[0]->campaign_total_cost, 'percentage'=>0),
-                        array('campaign_type'=>'promotions', 'campaign_spending'=>$totalpromotion[0]->campaign_total_cost, 'percentage'=>0),
-                        array('campaign_type'=>'coupons', 'campaign_spending'=>$totalcoupon[0]->campaign_total_cost, 'percentage'=>0)
+                        array('campaign_type'=>'news', 'campaign_spending'=>$news, 'percentage'=>0),
+                        array('campaign_type'=>'promotions', 'campaign_spending'=>$promotions, 'percentage'=>0),
+                        array('campaign_type'=>'coupons', 'campaign_spending'=>$coupon, 'percentage'=>0)
                     );
                 }
                 
