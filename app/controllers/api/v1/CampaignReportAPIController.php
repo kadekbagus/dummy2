@@ -672,7 +672,8 @@ class CampaignReportAPIController extends ControllerAPI
                     (
                         SELECT count(campaign_click_id) AS value
                         FROM {$tablePrefix}campaign_clicks
-                        WHERE location_id = {$this->quote($current_mall)}
+                        WHERE campaign_id = tmp_campaign_cost_detail.campaign_id
+                        AND location_id = {$this->quote($current_mall)}
                         AND DATE(created_at) = campaign_date
                     ) AS popup_clicks,
                     (
