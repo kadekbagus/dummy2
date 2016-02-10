@@ -86,9 +86,11 @@ class CampaignReportAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $current_mall = OrbitInput::get('current_mall');
+            $sort_by = OrbitInput::get('sortby');
+
+            // Filter by date
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
-            $sort_by = OrbitInput::get('sortby');
 
             $this->registerCustomValidation();
 
@@ -144,7 +146,6 @@ class CampaignReportAPIController extends ControllerAPI
             // Builder object
             $tablePrefix = DB::getTablePrefix();
 
-            //get total cost news
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
@@ -295,6 +296,17 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Filter by range date
             if($start_date != '' && $end_date != ''){
+
+                // Convert UTC to Mall Time
+                $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
+                $startConvert->setTimezone($timezone);
+
+                $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
+                $endConvert->setTimezone($timezone);
+
+                $start_date = $startConvert->toDateString();
+                $end_date = $endConvert->toDateString();
+
                 $campaign->where(function ($q) use ($start_date, $end_date) {
                             $q->where(function ($r) use ($start_date, $end_date) {
                                     $r->whereRaw("begin_date between ? and ?", [$start_date, $end_date])
