@@ -138,6 +138,8 @@ class CampaignReportAPIController extends ControllerAPI
 
             $mall = App::make('orbit.empty.mall');
             $now = Carbon::now($mall->timezone->timezone_name);
+            $now_ymd = $now->toDateString();
+
             $timezone = $this->getTimezone($mall->merchant_id);
 
             // Get now date with timezone
@@ -1010,12 +1012,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ON om.merchant_id = och.campaign_external_value
                         WHERE
                             och.campaign_history_action_id IN ('KcCyuvkMAg-XeXqh', 'KcCyuvkMAg-XeXqi')
-                            AND och.campaign_external_value NOT IN
-                                (SELECT campaign_external_value
-                                FROM {$tablePrefix}campaign_histories
-                                WHERE campaign_history_action_id = 'KcCyuvkMAg-XeXqi'
-                                AND {$tablePrefix}campaign_histories.campaign_id = och.campaign_id
-                                AND DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') = {$this->quote($now)})
                             AND och.campaign_type COLLATE utf8_unicode_ci = {$this->quote($campaign_type)} COLLATE utf8_unicode_ci
                             AND och.campaign_id = {$this->quote($campaign_id)}
                             AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') = {$this->quote($now)}
@@ -1193,12 +1189,6 @@ class CampaignReportAPIController extends ControllerAPI
                         ON om.merchant_id = och.campaign_external_value
                         WHERE
                             och.campaign_history_action_id IN ('KcCyuvkMAg-XeXqh', 'KcCyuvkMAg-XeXqi')
-                            AND och.campaign_external_value NOT IN
-                                (SELECT campaign_external_value
-                                FROM {$tablePrefix}campaign_histories
-                                WHERE campaign_history_action_id = 'KcCyuvkMAg-XeXqi'
-                                AND {$tablePrefix}campaign_histories.campaign_id = och.campaign_id
-                                AND DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($campaign_date)})
                             AND och.campaign_type COLLATE utf8_unicode_ci = {$this->quote($campaign_type)} COLLATE utf8_unicode_ci
                             AND och.campaign_id =  {$this->quote($campaign_id)}
                             AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($campaign_date)}
