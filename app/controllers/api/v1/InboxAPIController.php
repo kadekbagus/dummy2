@@ -189,6 +189,9 @@ class InboxAPIController extends ControllerAPI
                             ->isNotAlert()
                             ->get();
 
+            foreach ($untoastedAlerts as $untoastedAlert) {
+                $untoastedAlert->url = URL::to('customer/message/detail?id=' . $untoastedAlert->inbox_id);
+            }
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_alerts = clone $alerts;
