@@ -131,6 +131,9 @@ return array(
             // if TRUE then winner can have another same prize on the same campaign
             'more_than_one_single_prize_enabled' => TRUE,
         ),
+
+        // no existing lucky draw custom message
+        'custom_message' => '',
     ),
 
     // Default Pagination
