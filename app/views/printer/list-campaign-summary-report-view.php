@@ -132,14 +132,14 @@
             <td><strong><?php echo number_format($totalPopUpViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total spending (IDR)</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
-        </tr>
-        <tr>
             <td>Estimated total cost (IDR)</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalEstimatedCost, 0); ?></strong></td>
+        </tr>
+        <tr>
+            <td>Total spending (IDR)</td>
+            <td>:</td>
+            <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
         </tr>
 
 
@@ -214,7 +214,7 @@
                     <td><?php echo $row->page_views; ?></td>
                     <td><?php echo $row->popup_views; ?></td>
                     <td><?php echo $row->popup_clicks; ?></td>
-                    <td><?php echo number_format($row->base_price, 0); ?></td>
+                    <td><?php echo number_format($row->daily, 0); ?></td>
                     <td><?php echo number_format($row->estimated_total, 0); ?></td>
                     <td><?php echo number_format($row->spending, 0); ?></td>
                     <td><?php echo $row->status; ?></td>

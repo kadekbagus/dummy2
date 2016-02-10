@@ -20,6 +20,7 @@ class MallGroupAPIController extends ControllerAPI
      * @author Kadek <kadek@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
      * @author Tian <tian@dominopos.com>
+     * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -34,6 +35,7 @@ class MallGroupAPIController extends ControllerAPI
      * @param integer    `postal_code`             (optional) - Postal code
      * @param integer    `city_id`                 (optional) - City id
      * @param string     `city`                    (optional) - Name of the city
+     * @param string     `province`                (optional) - Name of the province
      * @param string     `phone`                   (optional) - Phone of the merchant
      * @param string     `fax`                     (optional) - Fax of the merchant
      * @param string     `start_date_activity`     (optional) - Start date activity of the merchant
@@ -102,6 +104,7 @@ class MallGroupAPIController extends ControllerAPI
             $postal_code = OrbitInput::post('postal_code');
             $city_id = OrbitInput::post('city_id');
             $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
             $country = OrbitInput::post('country');
             $phone = OrbitInput::post('phone');
             $fax = OrbitInput::post('fax');
@@ -199,6 +202,7 @@ class MallGroupAPIController extends ControllerAPI
             $newmallgroup->postal_code = $postal_code;
             $newmallgroup->city_id = $city_id;
             $newmallgroup->city = $city;
+            $newmallgroup->province = $province;
             $newmallgroup->country_id = $country;
             $newmallgroup->country = $countryName;
             $newmallgroup->phone = $phone;
@@ -913,6 +917,8 @@ class MallGroupAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $omid = OrbitInput::post('omid');
             $url = OrbitInput::post('url');
+            $password = OrbitInput::post('password');
+            $password2 = OrbitInput::post('password_confirmation');
 
             $validator = Validator::make(
                 array(
@@ -922,6 +928,8 @@ class MallGroupAPIController extends ControllerAPI
                     'status'            => $status,
                     'omid'              => $omid,
                     'url'               => $url,
+                    'password'                => $password,
+                    'password_confirmation'   => $password2,
                 ),
                 array(
                     'current_mall'      => 'required|orbit.empty.mallgroup',
@@ -929,7 +937,8 @@ class MallGroupAPIController extends ControllerAPI
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.mall_status',
                     'omid'              => 'omid_exists_but_me',
-                    'url'               => 'orbit.formaterror.url.web'
+                    'url'               => 'orbit.formaterror.url.web',
+                    'password'                => 'min:6|confirmed'
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
@@ -948,6 +957,20 @@ class MallGroupAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.mallgroup.postupdatemallgroup.after.validation', array($this, $validator));
+
+            $updatedUser = App::make('orbit.empty.user');
+
+            OrbitInput::post('password', function($password) use ($updatedUser) {
+                if (! empty(trim($password))) {
+                    $updatedUser->user_password = Hash::make($password);
+                }
+            });
+
+            $updatedUser->modified_by = $this->api->user->user_id;
+
+            Event::fire('orbit.mallgroup.postupdateuser.before.save', array($this, $updatedUser));
+
+            $updatedUser->save();
 
             $updatedmallgroup = MallGroup::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
 
