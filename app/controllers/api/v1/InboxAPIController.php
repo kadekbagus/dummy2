@@ -183,6 +183,15 @@ class InboxAPIController extends ControllerAPI
                             ->isNotRead()
                             ->isNotAlert();
 
+            $untoastedAlerts = Inbox::where('user_id', $user->user_id)
+                            ->where('merchant_id', $retailer->merchant_id)
+                            ->isNotNotified()
+                            ->isNotAlert()
+                            ->get();
+
+            foreach ($untoastedAlerts as $untoastedAlert) {
+                $untoastedAlert->url = URL::to('customer/message/detail?id=' . $untoastedAlert->inbox_id);
+            }
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_alerts = clone $alerts;
@@ -194,6 +203,7 @@ class InboxAPIController extends ControllerAPI
             $data->total_records = $totalAlerts;
             $data->returned_records = count($listOfAlerts);
             $data->records = $listOfAlerts;
+            $data->untoasted_records = $untoastedAlerts;
 
             if ($listOfAlerts > 9) {
                 $data->records = '9+';
@@ -487,6 +497,120 @@ class InboxAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    /**
+     * POST - Change notified flag of the inbox to notified
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postNotifiedMessage()
+    {
+        try {
+            $httpCode = 200;
+
+            $user = $this->getLoggedInUser();
+            $retailer = $this->getRetailerInfo();
+
+            $this->registerCustomValidation();
+
+            $alertId = OrbitInput::post('inbox_id');
+            $validator = Validator::make(
+                array(
+                    'inbox_id'             => $alertId,
+                ),
+                array(
+                    'inbox_id'             => 'required|orbit.empty.alert',
+                )
+            );
+
+            Event::fire('orbit.inbox.postnotifiedmessage.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.inbox.postnotifiedmessage.after.validation', array($this, $validator));
+
+            $inbox = App::make('orbit.empty.alert');
+            
+            $inbox->is_notified = 'Y';
+            $inbox->save();
+
+            Event::fire('orbit.inbox.postnotifiedmessage.after.save', array($this, $inbox));
+            $this->response->message = 'Message has been flagged as notified';
+            $this->response->data = null;
+            $this->response->status = 'success';
+            $this->response->code = 0;
+
+            // Commit the changes
+            $this->commit();
+
+            Event::fire('orbit.inbox.postnotifiedmessage.after.commit', array($this, $inbox));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.inbox.postnotifiedmessage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.inbox.postnotifiedmessage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (QueryException $e) {
+            Event::fire('orbit.inbox.postnotifiedmessage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+        } catch (Exception $e) {
+            Event::fire('orbit.inbox.postnotifiedmessage.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+
+            if (Config::get('app.debug')) {
+                $this->response->data = $e->__toString();
+            } else {
+                $this->response->data = null;
+            }
+
+            // Rollback the changes
+            $this->rollBack();
+        }
+
+        return $this->render($httpCode);
+    }
     /**
      * POST - Change status of the alert to deleted
      *

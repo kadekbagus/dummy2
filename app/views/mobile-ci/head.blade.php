@@ -21,7 +21,7 @@
 
 {{-- HTML::style('mobile-ci/stylesheet/bootstrap-tour.min.css') --}}
 {{ HTML::style('mobile-ci/stylesheet/' . Orbit\Helper\Asset\Stylesheet::create()->getMallCss()) }}
-{{ HTML::style('mobile-ci/vendor/toastr/toastr.min.css') }}
+{{-- HTML::style('mobile-ci/vendor/toastr/toastr.min.css') --}}
 {{ HTML::script(Config::get('orbit.cdn.jquery.2_1_1', 'mobile-ci/scripts/jquery-2.1.1.min.js')) }}
 {{-- Script fallback --}}
 <script>window.jQuery || document.write('<script src="{{asset('mobile-ci/scripts/jquery-2.1.1.min.js')}}">\x3C/script>')</script>
