@@ -308,15 +308,12 @@ class CampaignReportAPIController extends ControllerAPI
                 $end_date = $endConvert->toDateString();
 
                 $campaign->where(function ($q) use ($start_date, $end_date) {
-                            $q->where(function ($r) use ($start_date, $end_date) {
-                                    $r->whereRaw("begin_date between ? and ?", [$start_date, $end_date])
-                                      ->orWhereRaw("end_date between ? and ?", [$start_date, $end_date]);
-                                })
-                              ->orWhere(function ($s) use ($start_date, $end_date) {
-                                    $s->whereRaw(" ? between begin_date and end_date", [$start_date])
-                                      ->orWhereRaw(" ? between begin_date and end_date", [$end_date]);
-                                });
-                        });
+                    $q->WhereRaw("DATE_FORMAT(begin_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT(begin_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
+                      ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT(end_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
+                      ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') >= DATE_FORMAT(begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT(end_date, '%Y-%m-%d')")
+                      ->orWhereRaw("DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT(begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') <= DATE_FORMAT(end_date, '%Y-%m-%d')")
+                      ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT(begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT(end_date, '%Y-%m-%d')");
+                });
             }
 
             OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
