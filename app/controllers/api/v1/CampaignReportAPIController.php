@@ -873,7 +873,7 @@ class CampaignReportAPIController extends ControllerAPI
 
 
     /**
-     * GET - Get Tenant Per Campaign
+     * GET - Get Tenant Per Campaign In Campaign Detail
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
@@ -977,12 +977,11 @@ class CampaignReportAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $linkToTenants = DB::select(DB::raw("
-                        SELECT
-                            om.name
-                        FROM
-                            {$tablePrefix}campaign_histories och
-                        LEFT JOIN
-                            {$tablePrefix}campaign_history_actions ocha
+                    SELECT * FROM
+                    (
+                        SELECT om.name
+                        FROM {$tablePrefix}campaign_histories och
+                        LEFT JOIN {$tablePrefix}campaign_history_actions ocha
                         ON och.campaign_history_action_id = ocha.campaign_history_action_id
                         LEFT JOIN
                             {$tablePrefix}merchants om
@@ -1000,6 +999,8 @@ class CampaignReportAPIController extends ControllerAPI
                             AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($campaign_date)}
                         group by och.campaign_external_value
                         ORDER BY och.created_at DESC, ocha.action_name
+                    ) as a
+                    ORDER by name asc
                 "));
 
 
@@ -1056,7 +1057,7 @@ class CampaignReportAPIController extends ControllerAPI
 
 
     /**
-     * GET - Get Tenant Per Campaign
+     * GET - Get Tenant Per Campaign In Campaign Summary
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
@@ -1151,12 +1152,14 @@ class CampaignReportAPIController extends ControllerAPI
                     ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                     ->where('news_merchant.news_id', $campaign_id)
                     ->where('merchants.status', 'active')
+                    ->orderBy('merchants.name','asc')
                     ->get();
             } elseif ($campaign_type === 'coupon') {
                 $linkToTenants = DB::table('promotion_retailer')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
                     ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                     ->where('promotion_retailer.promotion_id', $campaign_id)
                     ->where('merchants.status', 'active')
+                    ->orderBy('merchants.name','asc')
                     ->get();
             }
 
