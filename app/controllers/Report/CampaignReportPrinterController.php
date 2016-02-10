@@ -79,8 +79,8 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', $totalRecord, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopUpViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost (IDR)', $totalEstimatedCost, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
 
                 // Filtering
                 if($startDate != '' && $endDate != ''){
