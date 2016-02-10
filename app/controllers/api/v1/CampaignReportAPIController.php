@@ -774,7 +774,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get title campaign
             $campaignName = '';
-            echo $campaign_id;
             if ($campaign_type === 'news' or $campaign_type === 'promotion') {
                 echo "string";
                 die();
