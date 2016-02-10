@@ -44,7 +44,6 @@ class CampaignReportPrinterController extends DataPrinterController
         $totalEstimatedCost = $response['totalEstimatedCost'];
         $totalSpending = $response['totalSpending'];
 
-
         $pdo = DB::Connection()->getPdo();
 
         $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
@@ -117,7 +116,7 @@ class CampaignReportPrinterController extends DataPrinterController
                             $row->page_views,
                             $row->popup_views,
                             $row->popup_clicks,
-                            number_format($row->base_price, 0),
+                            number_format($row->daily, 0),
                             number_format($row->estimated_total, 0),
                             number_format($row->spending, 0),
                             $row->status

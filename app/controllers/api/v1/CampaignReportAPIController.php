@@ -404,9 +404,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign->orderBy($sortBy, $sortMode);
 
-            $totalCampaign = $_campaign->count();
-            $listOfCampaign = $campaign->get();
-
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
                 return [
@@ -418,6 +415,9 @@ class CampaignReportAPIController extends ControllerAPI
                     'totalEstimatedCost' => $totalEstimated,
                 ];
             }
+
+            $totalCampaign = $_campaign->count();
+            $listOfCampaign = $campaign->get();
 
             $data = new stdclass();
             $data->total_records = $totalCampaign;
@@ -774,17 +774,23 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get title campaign
             $campaignName = '';
+            echo $campaign_id;
             if ($campaign_type === 'news' or $campaign_type === 'promotion') {
+                echo "string";
+                die();
                 $getTitleCampaign = News::selectraw('news_name')
                     ->where('news_id', $campaign_id)
                     ->get();
                 $campaignName = htmlentities($getTitleCampaign[0]->news_name);
             } elseif ($campaign_type === 'coupon') {
-                $getTitleCampaign = Promotion::selectraw('promotion_name')
+                $getTitleCampaign = Coupon::selectraw('promotion_name')
                     ->where('promotion_id', $campaign_id)
+                    ->where('is_coupon', 'Y')
                     ->get();
                 $campaignName = htmlentities($getTitleCampaign[0]->promotion_name);
             }
+
+            $campaign->orderBy($sortBy, $sortMode);
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
@@ -798,8 +804,6 @@ class CampaignReportAPIController extends ControllerAPI
                     'campaignName' => $campaignName,
                 ];
             }
-
-            $campaign->orderBy($sortBy, $sortMode);
 
             $totalCampaign = $_campaign->count();
             $listOfCampaign = $campaign->get();
