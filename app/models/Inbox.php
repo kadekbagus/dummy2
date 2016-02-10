@@ -103,6 +103,7 @@ class Inbox extends Eloquent
         $inbox->inbox_type = $type;
         $inbox->status = 'active';
         $inbox->is_read = 'N';
+        $inbox->is_notified = 'N';
 
         $retailer = Mall::where('merchant_id', $retailerId)->first();
 
