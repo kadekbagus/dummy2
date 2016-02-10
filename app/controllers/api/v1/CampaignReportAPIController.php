@@ -363,7 +363,6 @@ class CampaignReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $campaign->take($take);
 
             // skip, and order by
             $skip = 0;
@@ -375,7 +374,14 @@ class CampaignReportAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $campaign->skip($skip);
+
+            // If request page from export (print/csv), showing without page limitation
+            $export = OrbitInput::get('export');
+
+            if(!isset($export)){
+                $campaign->take($take);
+                $campaign->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'updated_at';
@@ -736,7 +742,6 @@ class CampaignReportAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $campaign->take($take);
 
             // skip, and order by
             $skip = 0;
@@ -748,7 +753,14 @@ class CampaignReportAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $campaign->skip($skip);
+
+            // If request page from export (print/csv), showing without page limitation
+            $export = OrbitInput::get('export');
+
+            if(!isset($export)){
+                $campaign->take($take);
+                $campaign->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'campaign_date';
