@@ -775,8 +775,6 @@ class CampaignReportAPIController extends ControllerAPI
             // Get title campaign
             $campaignName = '';
             if ($campaign_type === 'news' or $campaign_type === 'promotion') {
-                echo "string";
-                die();
                 $getTitleCampaign = News::selectraw('news_name')
                     ->where('news_id', $campaign_id)
                     ->get();
