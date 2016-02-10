@@ -86,9 +86,11 @@ class CampaignReportAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $current_mall = OrbitInput::get('current_mall');
+            $sort_by = OrbitInput::get('sortby');
+
+            // Filter by date
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
-            $sort_by = OrbitInput::get('sortby');
 
             $this->registerCustomValidation();
 
@@ -144,7 +146,6 @@ class CampaignReportAPIController extends ControllerAPI
             // Builder object
             $tablePrefix = DB::getTablePrefix();
 
-            //get total cost news
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
@@ -295,6 +296,17 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Filter by range date
             if($start_date != '' && $end_date != ''){
+
+                // Convert UTC to Mall Time
+                $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
+                $startConvert->setTimezone($timezone);
+
+                $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
+                $endConvert->setTimezone($timezone);
+
+                $start_date = $startConvert->toDateString();
+                $end_date = $endConvert->toDateString();
+
                 $campaign->where(function ($q) use ($start_date, $end_date) {
                             $q->where(function ($r) use ($start_date, $end_date) {
                                     $r->whereRaw("begin_date between ? and ?", [$start_date, $end_date])
@@ -404,9 +416,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign->orderBy($sortBy, $sortMode);
 
-            $totalCampaign = $_campaign->count();
-            $listOfCampaign = $campaign->get();
-
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
                 return [
@@ -418,6 +427,9 @@ class CampaignReportAPIController extends ControllerAPI
                     'totalEstimatedCost' => $totalEstimated,
                 ];
             }
+
+            $totalCampaign = $_campaign->count();
+            $listOfCampaign = $campaign->get();
 
             $data = new stdclass();
             $data->total_records = $totalCampaign;
@@ -780,11 +792,14 @@ class CampaignReportAPIController extends ControllerAPI
                     ->get();
                 $campaignName = htmlentities($getTitleCampaign[0]->news_name);
             } elseif ($campaign_type === 'coupon') {
-                $getTitleCampaign = Promotion::selectraw('promotion_name')
+                $getTitleCampaign = Coupon::selectraw('promotion_name')
                     ->where('promotion_id', $campaign_id)
+                    ->where('is_coupon', 'Y')
                     ->get();
                 $campaignName = htmlentities($getTitleCampaign[0]->promotion_name);
             }
+
+            $campaign->orderBy($sortBy, $sortMode);
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
@@ -798,8 +813,6 @@ class CampaignReportAPIController extends ControllerAPI
                     'campaignName' => $campaignName,
                 ];
             }
-
-            $campaign->orderBy($sortBy, $sortMode);
 
             $totalCampaign = $_campaign->count();
             $listOfCampaign = $campaign->get();
@@ -872,7 +885,7 @@ class CampaignReportAPIController extends ControllerAPI
 
 
     /**
-     * GET - Get Tenant Per Campaign
+     * GET - Get Tenant Per Campaign In Campaign Detail
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
@@ -976,12 +989,11 @@ class CampaignReportAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $linkToTenants = DB::select(DB::raw("
-                        SELECT
-                            om.name
-                        FROM
-                            {$tablePrefix}campaign_histories och
-                        LEFT JOIN
-                            {$tablePrefix}campaign_history_actions ocha
+                    SELECT * FROM
+                    (
+                        SELECT om.name
+                        FROM {$tablePrefix}campaign_histories och
+                        LEFT JOIN {$tablePrefix}campaign_history_actions ocha
                         ON och.campaign_history_action_id = ocha.campaign_history_action_id
                         LEFT JOIN
                             {$tablePrefix}merchants om
@@ -999,6 +1011,8 @@ class CampaignReportAPIController extends ControllerAPI
                             AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($campaign_date)}
                         group by och.campaign_external_value
                         ORDER BY och.created_at DESC, ocha.action_name
+                    ) as a
+                    ORDER by name asc
                 "));
 
 
@@ -1055,7 +1069,7 @@ class CampaignReportAPIController extends ControllerAPI
 
 
     /**
-     * GET - Get Tenant Per Campaign
+     * GET - Get Tenant Per Campaign In Campaign Summary
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
@@ -1150,12 +1164,14 @@ class CampaignReportAPIController extends ControllerAPI
                     ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                     ->where('news_merchant.news_id', $campaign_id)
                     ->where('merchants.status', 'active')
+                    ->orderBy('merchants.name','asc')
                     ->get();
             } elseif ($campaign_type === 'coupon') {
                 $linkToTenants = DB::table('promotion_retailer')->selectraw(DB::raw("{$tablePrefix}merchants.name"))
                     ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                     ->where('promotion_retailer.promotion_id', $campaign_id)
                     ->where('merchants.status', 'active')
+                    ->orderBy('merchants.name','asc')
                     ->get();
             }
 
