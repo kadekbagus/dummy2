@@ -97,13 +97,20 @@
                 var inboxId = untoasteds[0].inbox_id;
                 toastr.options = {
                     closeButton: true,
-                    closeDuration: 2000,
+                    closeHtml: '<button>×</button>',
+                    closeDuration: 200,
+                    showDuration: 30,
+                    timeOut: 2500,
+                    positionClass: 'toast-bottom-right',
+                    onclick: function() {
+                        window.location.href = untoasteds[0].url;
+                    },
                     onShown: function() {
                         $.ajax({
-                            url: apiPath + 'inbox/notified'
+                            url: apiPath + 'inbox/notified',
                             method: 'POST',
                             data: {
-                                inbox_id: 
+                                inbox_id: inboxId
                             }
                         }).done(function(resp) {
                             for(var i = untoasteds.length-1; i >= 0; i--) { // remove inbox with the last notified inbox_id
@@ -114,7 +121,7 @@
                 };
                 toastr.info(untoasteds[0].subject);
             }
-        }, 2000);
+        }, 2730);
 
         $(document).on('hidden.bs.modal', '.modal', function () {
             $('.modal:visible').length && $(document.body).addClass('modal-open');
