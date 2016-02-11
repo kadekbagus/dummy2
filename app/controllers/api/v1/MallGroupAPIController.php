@@ -467,6 +467,8 @@ class MallGroupAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
+
             $mallgroups = MallGroup::excludeDeleted('merchants')
                                 ->allowedForUser($user)
                                 ->select('merchants.*', DB::raw('count(mall.merchant_id) AS total_mall'))
@@ -680,6 +682,11 @@ class MallGroupAPIController extends ControllerAPI
             // Filter mall by pos_language
             OrbitInput::get('pos_language', function ($pos_language) use ($mallgroups) {
                 $mallgroups->whereIn('merchants.pos_language', $pos_language);
+            });
+
+            // Filter mall group by location (city country)
+            OrbitInput::get('location', function($data) use ($mallgroups, $prefix) {
+                $mallgroups->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
             });
 
             // Add new relation based on request
