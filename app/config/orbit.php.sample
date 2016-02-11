@@ -2794,6 +2794,17 @@ return array(
         'Search'                                       => 'Search',
     ),
 
+    'activity_sections' => [
+        'coupon'        => 'Coupons',
+        'news'          => 'News',
+        'promotion'     => 'Promotions',
+        'lucky_draw'    => 'Lucky draws',
+        'pop_up'        => 'Pop ups',
+        'widget'        => 'Widgets',
+        'tenant'        => 'Tenants',
+        'notification'  => 'Notifications',
+    ],
+
     'menus' => array(
         'mall' => array(
             'mall_dashboard',
