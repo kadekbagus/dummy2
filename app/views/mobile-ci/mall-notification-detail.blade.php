@@ -21,3 +21,9 @@
     </div>
     @endif
 @stop
+
+@section('ext_script_bot')
+    <script type="text/javascript">
+        notInMessagesPage = false;
+    </script>
+@stop
