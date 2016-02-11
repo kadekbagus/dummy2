@@ -148,7 +148,7 @@ class MallGroupAPIController extends ControllerAPI
                     'status'        => 'required|orbit.empty.mall_status',
                     'country'       => 'required|orbit.empty.country',
                     'url'           => 'orbit.formaterror.url.web',
-                    'password'      => 'required|min:6|confirmed'
+                    'password'      => 'required|min:6'
                 )
             );
 
@@ -938,7 +938,7 @@ class MallGroupAPIController extends ControllerAPI
                     'status'            => 'orbit.empty.mall_status',
                     'omid'              => 'omid_exists_but_me',
                     'url'               => 'orbit.formaterror.url.web',
-                    'password'                => 'min:6|confirmed'
+                    'password'                => 'min:6'
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
