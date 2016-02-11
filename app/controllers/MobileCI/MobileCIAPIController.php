@@ -1750,6 +1750,14 @@ class MobileCIAPIController extends ControllerAPI
                 $landing_url = URL::route('ci-mall-news');
                 break;
 
+            case 'my-coupon':
+                $landing_url = URL::route('ci-mall-coupons');
+                break;
+
+            case 'lucky-draw':
+                $landing_url = URL::route('ci-luckydraw-list');
+                break;
+
             case 'widget':
             default:
                 $landing_url = URL::route('ci-customer-home');
