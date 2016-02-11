@@ -14,6 +14,15 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class MallGroupAPIController extends ControllerAPI
 {
+    /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+    protected $printExport = FALSE;
+
+
      /**
      * POST - Add new mall group
      *
@@ -59,7 +68,6 @@ class MallGroupAPIController extends ControllerAPI
      * @param string     `slavebox_number`         (optional) - Slavebox number
      * @param string     `mobile_default_language` (optional) - Mobile default language
      * @param string     `pos_language`            (optional) - POS language
-     * @param string     `logo`                    (optional) - Logo of the mall group
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -131,7 +139,6 @@ class MallGroupAPIController extends ControllerAPI
             $slavebox_number = OrbitInput::post('slavebox_number');
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $pos_language = OrbitInput::post('pos_language');
-            $logo = OrbitInput::post('logo');
 
             $validator = Validator::make(
                 array(
@@ -230,7 +237,6 @@ class MallGroupAPIController extends ControllerAPI
             $newmallgroup->mobile_default_language = $mobile_default_language;
             $newmallgroup->pos_language = $pos_language;
             $newmallgroup->modified_by = $this->api->user->user_id;
-            $newmallgroup->logo = $logo;
 
             Event::fire('orbit.mallgroup.postnewmallgroup.before.save', array($this, $newmallgroup));
 
@@ -470,7 +476,6 @@ class MallGroupAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $mallgroups = MallGroup::excludeDeleted('merchants')
-                                ->allowedForUser($user)
                                 ->select('merchants.*', DB::raw('count(mall.merchant_id) AS total_mall'))
                                 ->leftJoin('merchants AS mall', function($join) {
                                         $join->on(DB::raw('mall.parent_id'), '=', 'merchants.merchant_id')
@@ -478,6 +483,14 @@ class MallGroupAPIController extends ControllerAPI
                                             ->where(DB::raw('mall.object_type'), '=', 'mall');
                                     })
                                 ->groupBy('merchants.merchant_id');
+
+            if (! $this->printExport) {
+                $mallgroups->allowedForUser($user);
+            }
+
+            if ($this->printExport) {
+                $mallgroups->addSelect(DB::raw('(mall.name) AS mall_name'));
+            }
 
             // Filter mall by Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($mallgroups) {
@@ -712,29 +725,32 @@ class MallGroupAPIController extends ControllerAPI
 
             $_mallgroups = clone $mallgroups;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            // if not printing / exporting data then do pagination.
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $mallgroups->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $mallgroups->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function ($_skip) use (&$skip, $mallgroups) {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function ($_skip) use (&$skip, $mallgroups) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $mallgroups->skip($skip);
+                    $skip = $_skip;
+                });
+                $mallgroups->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'merchants.name';
@@ -775,6 +791,11 @@ class MallGroupAPIController extends ControllerAPI
                 }
             });
             $mallgroups->orderBy($sortBy, $sortMode);
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $mallgroups, 'count' => RecordCounter::create($_mallgroups)->count()];
+            }
 
             $totalRec = RecordCounter::create($_mallgroups)->count();
             $listOfRec = $mallgroups->get();
@@ -1139,10 +1160,6 @@ class MallGroupAPIController extends ControllerAPI
                     $pos_language = NULL;
                 }
                 $updatedmallgroup->pos_language = $pos_language;
-            });
-
-            OrbitInput::post('logo', function($logo) use ($updatedmallgroup) {
-                // do nothing
             });
 
             $updatedmallgroup->modified_by = $this->api->user->user_id;
@@ -1633,5 +1650,19 @@ class MallGroupAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
+    }
+
+    public function setPrintExport($bool)
+    {
+        $this->printExport = $bool;
+
+        return $this;
     }
 }
