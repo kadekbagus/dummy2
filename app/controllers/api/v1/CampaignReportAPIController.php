@@ -1061,30 +1061,38 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Builder object
             $linkToTenants = DB::select(DB::raw("
-                    SELECT * FROM
-                    (
-                        SELECT om.name
-                        FROM {$tablePrefix}campaign_histories och
-                        LEFT JOIN {$tablePrefix}campaign_history_actions ocha
-                        ON och.campaign_history_action_id = ocha.campaign_history_action_id
-                        LEFT JOIN
-                            {$tablePrefix}merchants om
-                        ON om.merchant_id = och.campaign_external_value
-                        WHERE
-                            och.campaign_history_action_id IN ('KcCyuvkMAg-XeXqh', 'KcCyuvkMAg-XeXqi')
-                            AND och.campaign_external_value NOT IN
-                                (SELECT campaign_external_value
-                                FROM {$tablePrefix}campaign_histories
-                                WHERE campaign_history_action_id = 'KcCyuvkMAg-XeXqi'
-                                AND {$tablePrefix}campaign_histories.campaign_id = och.campaign_id
-                                AND DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') < {$this->quote($now)})
-                            AND och.campaign_type COLLATE utf8_unicode_ci = {$this->quote($campaign_type)} COLLATE utf8_unicode_ci
-                            AND och.campaign_id =  {$this->quote($campaign_id)}
-                            AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($now)}
-                        group by och.campaign_external_value
-                        ORDER BY och.created_at DESC, ocha.action_name
-                    ) as a
-                    ORDER by name asc
+                    SELECT name FROM
+                        (SELECT * FROM
+                            (
+                                SELECT
+                                    och.campaign_id,
+                                    och.campaign_history_action_id,
+                                    ocha.action_name,
+                                    och.campaign_external_value,
+                                    om.name,
+                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                                FROM
+                                    {$tablePrefix}campaign_histories och
+                                LEFT JOIN
+                                    {$tablePrefix}campaign_history_actions ocha
+                                ON och.campaign_history_action_id = ocha.campaign_history_action_id
+                                LEFT JOIN
+                                    {$tablePrefix}merchants om
+                                ON om.merchant_id = och.campaign_external_value
+                                WHERE
+                                    och.campaign_history_action_id IN ('KcCyuvkMAg-XeXqh', 'KcCyuvkMAg-XeXqi')
+                                    AND och.campaign_type = {$this->quote($campaign_type)}
+                                    AND och.campaign_id = {$this->quote($campaign_id)}
+                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= {$this->quote($now)}
+                                ORDER BY och.created_at DESC
+                            ) as A
+                        group by campaign_external_value) as B
+                    WHERE (
+                        case when action_name = 'delete_tenant'
+                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < {$this->quote($now)}
+                        then action_name != 'delete_tenant' else true end
+                    )
+                     ORDER by name asc
                 "));
 
             $this->response->data = $linkToTenants;
@@ -1244,30 +1252,38 @@ class CampaignReportAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $linkToTenants = DB::select(DB::raw("
-                    SELECT * FROM
-                    (
-                        SELECT om.name
-                        FROM {$tablePrefix}campaign_histories och
-                        LEFT JOIN {$tablePrefix}campaign_history_actions ocha
-                        ON och.campaign_history_action_id = ocha.campaign_history_action_id
-                        LEFT JOIN
-                            {$tablePrefix}merchants om
-                        ON om.merchant_id = och.campaign_external_value
-                        WHERE
-                            och.campaign_history_action_id IN ('KcCyuvkMAg-XeXqh', 'KcCyuvkMAg-XeXqi')
-                            AND och.campaign_external_value NOT IN
-                                (SELECT campaign_external_value
-                                FROM {$tablePrefix}campaign_histories
-                                WHERE campaign_history_action_id = 'KcCyuvkMAg-XeXqi'
-                                AND {$tablePrefix}campaign_histories.campaign_id = och.campaign_id
-                                AND DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') < {$this->quote($campaign_date)})
-                            AND och.campaign_type COLLATE utf8_unicode_ci = {$this->quote($campaign_type)} COLLATE utf8_unicode_ci
-                            AND och.campaign_id =  {$this->quote($campaign_id)}
-                            AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($campaign_date)}
-                        group by och.campaign_external_value
-                        ORDER BY och.created_at DESC, ocha.action_name
-                    ) as a
-                    ORDER by name asc
+                    SELECT name FROM
+                        (SELECT * FROM
+                            (
+                                SELECT
+                                    och.campaign_id,
+                                    och.campaign_history_action_id,
+                                    ocha.action_name,
+                                    och.campaign_external_value,
+                                    om.name,
+                                    DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
+                                FROM
+                                    {$tablePrefix}campaign_histories och
+                                LEFT JOIN
+                                    {$tablePrefix}campaign_history_actions ocha
+                                ON och.campaign_history_action_id = ocha.campaign_history_action_id
+                                LEFT JOIN
+                                    {$tablePrefix}merchants om
+                                ON om.merchant_id = och.campaign_external_value
+                                WHERE
+                                    och.campaign_history_action_id IN ('KcCyuvkMAg-XeXqh', 'KcCyuvkMAg-XeXqi')
+                                    AND och.campaign_type = {$this->quote($campaign_type)}
+                                    AND och.campaign_id = {$this->quote($campaign_id)}
+                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= {$this->quote($campaign_date)}
+                                ORDER BY och.created_at DESC
+                            ) as A
+                        group by campaign_external_value) as B
+                    WHERE (
+                        case when action_name = 'delete_tenant'
+                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < {$this->quote($campaign_date)}
+                        then action_name != 'delete_tenant' else true end
+                    )
+                     ORDER by name asc
                 "));
 
 
@@ -1321,6 +1337,7 @@ class CampaignReportAPIController extends ControllerAPI
 
         return $output;
     }
+
 
 
     /**
