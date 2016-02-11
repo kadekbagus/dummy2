@@ -121,7 +121,7 @@ class MallAPIController extends ControllerAPI
             $start_date_activity = OrbitInput::post('start_date_activity');
             $end_date_activity = OrbitInput::post('end_date_activity');
             $status = OrbitInput::post('status');
-            $logo = OrbitInput::post('logo');
+            // $logo = OrbitInput::post('logo');
             $currency = OrbitInput::post('currency');
             $currency_symbol = OrbitInput::post('currency_symbol');
             $tax_code1 = OrbitInput::post('tax_code1');
@@ -221,7 +221,7 @@ class MallAPIController extends ControllerAPI
             $newmall->start_date_activity = $start_date_activity;
             $newmall->end_date_activity = $end_date_activity;
             $newmall->status = $status;
-            $newmall->logo = $logo;
+            // $newmall->logo = $logo;
             $newmall->currency = $currency;
             $newmall->currency_symbol = $currency_symbol;
             $newmall->tax_code1 = $tax_code1;
