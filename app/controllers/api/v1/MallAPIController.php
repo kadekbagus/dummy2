@@ -41,7 +41,7 @@ class MallAPIController extends ControllerAPI
      * @param integer    `postal_code`             (optional) - Postal code
      * @param integer    `city_id`                 (optional) - City id
      * @param string     `city`                    (optional) - Name of the city
-     * @param integer    `country_id`              (optional) - Country id
+     * @param string     `province`                (optional) - Name of the province
      * @param string     `country`                 (optional) - Name of the country
      * @param string     `phone`                   (optional) - Phone of the merchant
      * @param string     `fax`                     (optional) - Fax of the merchant
@@ -114,7 +114,7 @@ class MallAPIController extends ControllerAPI
             $postal_code = OrbitInput::post('postal_code');
             $city_id = OrbitInput::post('city_id');
             $city = OrbitInput::post('city');
-            $country_id = OrbitInput::post('country_id');
+            $province = OrbitInput::post('province');
             $country = OrbitInput::post('country');
             $phone = OrbitInput::post('phone');
             $fax = OrbitInput::post('fax');
@@ -146,18 +146,20 @@ class MallAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'         => $email,
-                    'name'          => $name,
-                    'status'        => $status,
-                    'country'       => $country,
-                    'url'           => $url,
+                    'email'    => $email,
+                    'name'     => $name,
+                    'status'   => $status,
+                    'country'  => $country,
+                    'url'      => $url,
+                    'password' => $password,
                 ),
                 array(
                     'email'         => 'required|email|orbit.exists.email',
                     'name'          => 'required',
                     'status'        => 'required|orbit.empty.mall_status',
-                    'country'       => 'required|numeric',
-                    'url'           => 'orbit.formaterror.url.web'
+                    'country'       => 'required|orbit.empty.country',
+                    'url'           => 'orbit.formaterror.url.web',
+                    'password'      => 'required|min:6'
                 )
             );
 
@@ -181,11 +183,7 @@ class MallAPIController extends ControllerAPI
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_email = $email;
-            // lock the password unless specified
-            $newuser->user_password = '!';
-            OrbitInput::post('password', function ($password) use ($newuser) {
-                $newuser->user_password = Hash::make($password);
-            });
+            $newuser->user_password = Hash::make($password);
             $newuser->status = $status;
             $newuser->user_role_id = $roleMerchant->role_id;
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
@@ -198,7 +196,7 @@ class MallAPIController extends ControllerAPI
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $countryName = '';
-            $countryObject = Country::find($country);
+            $countryObject = App::make('orbit.empty.country');
             if (is_object($countryObject)) {
                 $countryName = $countryObject->name;
             }
@@ -215,6 +213,7 @@ class MallAPIController extends ControllerAPI
             $newmall->postal_code = $postal_code;
             $newmall->city_id = $city_id;
             $newmall->city = $city;
+            $newmall->province = $province;
             $newmall->country_id = $country;
             $newmall->country = $countryName;
             $newmall->phone = $phone;
@@ -1635,6 +1634,20 @@ class MallAPIController extends ControllerAPI
             }
 
             App::instance('orbit.validation.mall', $mall);
+
+            return TRUE;
+        });
+
+        // Check country not empty
+        Validator::extend('orbit.empty.country', function ($attribute, $value, $parameters) {
+            $country = Country::where('country_id', $value)
+                        ->first();
+
+            if (empty($country)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.country', $country);
 
             return TRUE;
         });

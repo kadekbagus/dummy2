@@ -192,7 +192,7 @@ class MallGroupAPIController extends ControllerAPI
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $countryName = '';
-            $countryObject = App::make('orbit.empty.country');;
+            $countryObject = App::make('orbit.empty.country');
             if (is_object($countryObject)) {
                 $countryName = $countryObject->name;
             }
