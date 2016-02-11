@@ -59,6 +59,7 @@ class MallGroupAPIController extends ControllerAPI
      * @param string     `slavebox_number`         (optional) - Slavebox number
      * @param string     `mobile_default_language` (optional) - Mobile default language
      * @param string     `pos_language`            (optional) - POS language
+     * @param string     `logo`                    (optional) - Logo of the mall group
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -130,6 +131,7 @@ class MallGroupAPIController extends ControllerAPI
             $slavebox_number = OrbitInput::post('slavebox_number');
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $pos_language = OrbitInput::post('pos_language');
+            $logo = OrbitInput::post('logo');
 
             $validator = Validator::make(
                 array(
@@ -143,7 +145,7 @@ class MallGroupAPIController extends ControllerAPI
                     'email'         => 'required|email|orbit.exists.email',
                     'name'          => 'required',
                     'status'        => 'required|orbit.empty.mall_status',
-                    'country'       => 'required',
+                    'country'       => 'required|orbit.empty.country',
                     'url'           => 'orbit.formaterror.url.web'
                 )
             );
@@ -185,7 +187,7 @@ class MallGroupAPIController extends ControllerAPI
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $countryName = '';
-            $countryObject = Country::find($country);
+            $countryObject = App::make('orbit.empty.country');;
             if (is_object($countryObject)) {
                 $countryName = $countryObject->name;
             }
@@ -230,6 +232,7 @@ class MallGroupAPIController extends ControllerAPI
             $newmallgroup->mobile_default_language = $mobile_default_language;
             $newmallgroup->pos_language = $pos_language;
             $newmallgroup->modified_by = $this->api->user->user_id;
+            $newmallgroup->logo = $logo;
 
             Event::fire('orbit.mallgroup.postnewmallgroup.before.save', array($this, $newmallgroup));
 
@@ -876,6 +879,7 @@ class MallGroupAPIController extends ControllerAPI
      * @param string     `slavebox_number`          (optional) - Slavebox number
      * @param string     `mobile_default_language`  (optional) - Mobile default language
      * @param string     `pos_language`             (optional) - POS language
+     * @param string     `logo`                     (optional) - logo
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1126,6 +1130,10 @@ class MallGroupAPIController extends ControllerAPI
                     $pos_language = NULL;
                 }
                 $updatedmallgroup->pos_language = $pos_language;
+            });
+
+            OrbitInput::post('logo', function($logo) use ($updatedmallgroup) {
+                // do nothing
             });
 
             $updatedmallgroup->modified_by = $this->api->user->user_id;
@@ -1485,6 +1493,20 @@ class MallGroupAPIController extends ControllerAPI
             }
 
             App::instance('orbit.validation.mallgroup', $mall);
+
+            return TRUE;
+        });
+
+        // Check country not empty
+        Validator::extend('orbit.empty.country', function ($attribute, $value, $parameters) {
+            $country = Country::where('country_id', $value)
+                        ->first();
+
+            if (empty($country)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.country', $country);
 
             return TRUE;
         });

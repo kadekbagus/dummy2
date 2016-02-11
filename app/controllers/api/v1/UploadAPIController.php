@@ -7439,6 +7439,413 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload logo for Mall Group.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param char    `merchant_id`                 (required) - ID of the merchant
+     * @param file|array `images`                   (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadMallGroupLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadmallgrouplogo.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadmalllogo.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadmallgrouplogo.before.authz', array($this, $user));
+
+/*
+                if (! ACL::create($user)->isAllowed('update_retailer')) {
+                    Event::fire('orbit.upload.postuploadmalllogo.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postuploadmallgrouplogo.after.authz', array($this, $user));
+            } else {
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.mallgroup.logo');
+            $elementName = $uploadLogoConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchant_id,
+                    $elementName  => $images,
+                ),
+                array(
+                    'merchant_id'   => 'required|orbit.empty.mallgroup',
+                    $elementName    => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadmallgrouplogo.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadmallgrouplogo.after.validation', array($this, $validator));
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.mallgroup');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'mallgroup')
+                              ->where('media_name_id', 'mallgroup_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($merchant)
+            {
+                $merchant_id = $merchant->merchant_id;
+                $slug = Str::slug($merchant->name);
+                $file['new']->name = sprintf('%s-%s-%s', $merchant_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadmallgrouplogo.before.save', array($this, $merchant, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $merchant->merchant_id,
+                'name'          => 'mallgroup',
+                'media_name_id' => 'mallgroup_logo',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $merchant->logo = $uploaded[0]['path'];
+                $merchant->save();
+            }
+
+            Event::fire('orbit.upload.postuploadmallgrouplogo.after.save', array($this, $merchant, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.mallgroup.logo');
+
+            // Commit the changes
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadmallgrouplogo.after.commit', array($this, $merchant, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadmallgrouplogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadmallgrouplogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadmallgrouplogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadmallgrouplogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadmallgrouplogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete logo for a mall group.
+     *
+     * @author Irianto <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param char    `merchant_id`                  (required) - ID of the mall group
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteMallGroupLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletemallgrouplogo.before.auth', array($this));
+
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletemallgrouplogo.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletemallgrouplogo.before.authz', array($this, $user));
+/*
+                if (! ACL::create($user)->isAllowed('update_mall')) {
+                    Event::fire('orbit.upload.postdeletemalllogo.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+*/
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeletemallgrouplogo.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $merchant_id = OrbitInput::post('merchant_id');
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id'   => $merchant_id,
+                ),
+                array(
+                    'merchant_id'   => 'required|orbit.empty.mallgroup',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletemallgrouplogo.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletemallgrouplogo.after.validation', array($this, $validator));
+
+            // We already had Product instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $merchant = App::make('orbit.empty.mallgroup');
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $merchant->merchant_id)
+                              ->where('object_name', 'mallgroup')
+                              ->where('media_name_id', 'mallgroup_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletemallgrouplogo.before.save', array($this, $merchant));
+
+            // Update the `logo` field which store the original path of the logo
+            // This is temporary since right now the business rules actually
+            // only allows one logo per merchant
+            $merchant->logo = NULL;
+            $merchant->save();
+
+            Event::fire('orbit.upload.postdeletemallgrouplogo.after.save', array($this, $merchant));
+
+            $this->response->data = $merchant;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.mallgroup.delete_logo');
+
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletemallgrouplogo.after.commit', array($this, $merchant));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletemallgrouplogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletemallgrouplogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletemallgrouplogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletemallgrouplogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('mallgroup.new, mallgroup.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletemallgrouplogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -7485,6 +7892,21 @@ class UploadAPIController extends ControllerAPI
                 }
 
                 App::instance('orbit.empty.mall', $merchant);
+
+                return TRUE;
+            });
+
+            // @Todo: Refactor by adding allowedForUser for mall group
+            Validator::extend('orbit.empty.mallgroup', function ($attribute, $value, $parameters) use ($user) {
+                $merchant = MallGroup::excludeDeleted()
+                            ->where('merchant_id', $value)
+                            ->first();
+
+                if (empty($merchant)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.mallgroup', $merchant);
 
                 return TRUE;
             });

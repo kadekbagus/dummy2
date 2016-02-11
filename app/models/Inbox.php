@@ -112,7 +112,7 @@ class Inbox extends Eloquent
         $listItem = null;
         switch ($type) {
             case 'activation':
-                $inbox->subject = "Account Activation";
+                $inbox->subject = "Please activate your account";
                 break;
 
             case 'lucky_draw_issuance':
