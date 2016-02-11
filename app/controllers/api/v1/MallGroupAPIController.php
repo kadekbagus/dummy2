@@ -98,7 +98,6 @@ class MallGroupAPIController extends ControllerAPI
             $email = OrbitInput::post('email');
             $name = OrbitInput::post('name');
             $password = OrbitInput::post('password');
-            $password2 = OrbitInput::post('password_confirmation');
             $description = OrbitInput::post('description');
             $address_line1 = OrbitInput::post('address_line1');
             $address_line2 = OrbitInput::post('address_line2');
@@ -142,7 +141,6 @@ class MallGroupAPIController extends ControllerAPI
                     'country'               => $country,
                     'url'                   => $url,
                     'password'              => $password,
-                    'password_confirmation' => $password2,
                 ),
                 array(
                     'email'         => 'required|email|orbit.exists.email',
@@ -922,7 +920,6 @@ class MallGroupAPIController extends ControllerAPI
             $omid = OrbitInput::post('omid');
             $url = OrbitInput::post('url');
             $password = OrbitInput::post('password');
-            $password2 = OrbitInput::post('password_confirmation');
 
             $validator = Validator::make(
                 array(
@@ -933,7 +930,6 @@ class MallGroupAPIController extends ControllerAPI
                     'omid'              => $omid,
                     'url'               => $url,
                     'password'                => $password,
-                    'password_confirmation'   => $password2,
                 ),
                 array(
                     'current_mall'      => 'required|orbit.empty.mallgroup',
