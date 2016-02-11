@@ -145,7 +145,7 @@ class MallGroupAPIController extends ControllerAPI
                     'email'         => 'required|email|orbit.exists.email',
                     'name'          => 'required',
                     'status'        => 'required|orbit.empty.mall_status',
-                    'country'       => 'required',
+                    'country'       => 'required|orbit.empty.country',
                     'url'           => 'orbit.formaterror.url.web'
                 )
             );
@@ -187,7 +187,7 @@ class MallGroupAPIController extends ControllerAPI
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $countryName = '';
-            $countryObject = Country::find($country);
+            $countryObject = App::make('orbit.empty.country');;
             if (is_object($countryObject)) {
                 $countryName = $countryObject->name;
             }
@@ -1493,6 +1493,20 @@ class MallGroupAPIController extends ControllerAPI
             }
 
             App::instance('orbit.validation.mallgroup', $mall);
+
+            return TRUE;
+        });
+
+        // Check country not empty
+        Validator::extend('orbit.empty.country', function ($attribute, $value, $parameters) {
+            $country = Country::where('country_id', $value)
+                        ->first();
+
+            if (empty($country)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.country', $country);
 
             return TRUE;
         });
