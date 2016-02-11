@@ -180,11 +180,13 @@ class InboxAPIController extends ControllerAPI
 
             $alerts = Inbox::where('user_id', $user->user_id)
                             ->where('merchant_id', $retailer->merchant_id)
+                            ->isNotDeleted()
                             ->isNotRead()
                             ->isNotAlert();
 
             $untoastedAlerts = Inbox::where('user_id', $user->user_id)
                             ->where('merchant_id', $retailer->merchant_id)
+                            ->isNotDeleted()
                             ->isNotNotified()
                             ->isNotAlert()
                             ->get();
@@ -201,7 +203,7 @@ class InboxAPIController extends ControllerAPI
 
             $data = new stdclass();
             $data->total_records = $totalAlerts;
-            $data->returned_records = count($listOfAlerts);
+            $data->returned_records = $listOfAlerts;
             $data->records = $listOfAlerts;
             $data->untoasted_records = $untoastedAlerts;
 
