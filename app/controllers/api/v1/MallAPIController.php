@@ -482,6 +482,8 @@ class MallAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
+
             $malls = Mall::excludeDeleted('merchants')
                                 ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'))
                                 ->leftJoin('merchants AS tenant', function($join) {
@@ -704,6 +706,11 @@ class MallAPIController extends ControllerAPI
             // Filter mall by pos_language
             OrbitInput::get('pos_language', function ($pos_language) use ($malls) {
                 $malls->whereIn('merchants.pos_language', $pos_language);
+            });
+
+            // Filter mall by location (city country)
+            OrbitInput::get('location', function($data) use ($malls, $prefix) {
+                $malls->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
             });
 
             // Add new relation based on request
