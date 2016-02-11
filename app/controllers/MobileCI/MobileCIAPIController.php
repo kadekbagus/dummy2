@@ -1292,7 +1292,7 @@ class MobileCIAPIController extends ControllerAPI
                     'languages' => $languages
                 ));
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view Page: My Account, user Id: %s', $user->user_id);
+            $activityPageNotes = sprintf('Failed to view Page: My Account');
             $activityPage->setUser($user)
                 ->setActivityName('view_my_account')
                 ->setActivityNameLong('View My Account Failed')
