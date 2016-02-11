@@ -149,7 +149,27 @@ class CampaignReportAPIController extends ControllerAPI
             $tablePrefix = DB::getTablePrefix();
 
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
-                COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
+                (
+                    SELECT COUNT(och.campaign_history_id) as total_tenant
+                    FROM {$tablePrefix}campaign_histories och
+                    LEFT JOIN {$tablePrefix}campaign_history_actions ocha
+                    ON och.campaign_history_action_id = ocha.campaign_history_action_id
+                    WHERE ocha.action_name IN ('add_tenant', 'delete_tenant')
+                    AND och.campaign_external_value NOT IN
+                        (
+                            SELECT och2.campaign_external_value
+                            FROM {$tablePrefix}campaign_histories och2
+                            LEFT JOIN {$tablePrefix}campaign_history_actions ocha2
+                            ON och2.campaign_history_action_id = ocha2.campaign_history_action_id
+                            WHERE ocha2.action_name = 'delete_tenant'
+                            AND och2.campaign_id = och.campaign_id
+                            AND DATE_FORMAT(CONVERT_TZ(och2.created_at, '+00:00', '+08:00' ), '%Y-%m-%d') < {$this->quote($now)}
+                        )
+                    AND och.campaign_type = {$tablePrefix}news.object_type
+                    AND och.campaign_id = {$tablePrefix}news.news_id
+                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($now)}
+                ) AS total_tenant,
+                merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
@@ -186,7 +206,27 @@ class CampaignReportAPIController extends ControllerAPI
                         ;
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
-                COUNT({$tablePrefix}news_merchant.news_merchant_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
+                (
+                    SELECT COUNT(och.campaign_history_id) as total_tenant
+                    FROM {$tablePrefix}campaign_histories och
+                    LEFT JOIN {$tablePrefix}campaign_history_actions ocha
+                    ON och.campaign_history_action_id = ocha.campaign_history_action_id
+                    WHERE ocha.action_name IN ('add_tenant', 'delete_tenant')
+                    AND och.campaign_external_value NOT IN
+                        (
+                            SELECT och2.campaign_external_value
+                            FROM {$tablePrefix}campaign_histories och2
+                            LEFT JOIN {$tablePrefix}campaign_history_actions ocha2
+                            ON och2.campaign_history_action_id = ocha2.campaign_history_action_id
+                            WHERE ocha2.action_name = 'delete_tenant'
+                            AND och2.campaign_id = och.campaign_id
+                            AND DATE_FORMAT(CONVERT_TZ(och2.created_at, '+00:00', '+08:00' ), '%Y-%m-%d') < {$this->quote($now)}
+                        )
+                    AND och.campaign_type = {$tablePrefix}news.object_type
+                    AND och.campaign_id = {$tablePrefix}news.news_id
+                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($now)}
+                ) AS total_tenant,
+                merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
@@ -223,7 +263,27 @@ class CampaignReportAPIController extends ControllerAPI
                         ;
 
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
-                COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) AS total_tenant, merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
+                (
+                    SELECT COUNT(och.campaign_history_id) as total_tenant
+                    FROM {$tablePrefix}campaign_histories och
+                    LEFT JOIN {$tablePrefix}campaign_history_actions ocha
+                    ON och.campaign_history_action_id = ocha.campaign_history_action_id
+                    WHERE ocha.action_name IN ('add_tenant', 'delete_tenant')
+                    AND och.campaign_external_value NOT IN
+                        (
+                            SELECT och2.campaign_external_value
+                            FROM {$tablePrefix}campaign_histories och2
+                            LEFT JOIN {$tablePrefix}campaign_history_actions ocha2
+                            ON och2.campaign_history_action_id = ocha2.campaign_history_action_id
+                            WHERE ocha2.action_name = 'delete_tenant'
+                            AND och2.campaign_id = och.campaign_id
+                            AND DATE_FORMAT(CONVERT_TZ(och2.created_at, '+00:00', '+08:00' ), '%Y-%m-%d') < {$this->quote($now)}
+                        )
+                    AND och.campaign_type = campaign_type
+                    AND och.campaign_id = {$tablePrefix}promotions.promotion_id
+                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)} ), '%Y-%m-%d') <= {$this->quote($now)}
+                ) AS total_tenant,
+                merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price AS daily,
                 COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 (
