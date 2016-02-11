@@ -2075,7 +2075,7 @@ class CouponAPIController extends ControllerAPI
             // Builder object
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::with('couponRule')
-                ->select(DB::raw($table_prefix . "promotions.*, " . $table_prefix . "campaign_price.campaign_price_id,
+                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}campaign_price.campaign_price_id,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
                         WHEN 'product_discount_by_percentage' THEN 'percentage'
@@ -2101,12 +2101,14 @@ class CouponAPIController extends ControllerAPI
                         END
                     ELSE
                         {$table_prefix}promotions.status
-                    END as 'coupon_status'")
+                    END as 'coupon_status'"),
+                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (COUNT({$table_prefix}promotion_retailer.promotion_retailer_id))) AS estimated")
                 )
                 ->leftJoin('campaign_price', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
                               ->where('campaign_price.campaign_type', '=', 'coupon');
                   })
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
 
@@ -2146,7 +2148,7 @@ class CouponAPIController extends ControllerAPI
             // Filter coupon by promotion name
             OrbitInput::get('promotion_name', function($promotionName) use ($coupons)
             {
-                $coupons->whereIn('promotions.promotion_name', $promotionName);
+                $coupons->where('promotions.promotion_name', '=', $promotionName);
             });
 
             // Filter coupon by matching promotion name pattern
@@ -2185,16 +2187,16 @@ class CouponAPIController extends ControllerAPI
                 $coupons->where('promotions.long_description', 'like', "%$long_description%");
             });
 
-            // Filter coupon by begin date
-            OrbitInput::get('begin_date', function($beginDate) use ($coupons)
-            {
-                $coupons->where('promotions.begin_date', '<=', $beginDate);
-            });
-
-            // Filter coupon by end date
+            // Filter coupon by date
             OrbitInput::get('end_date', function($endDate) use ($coupons)
             {
-                $coupons->where('promotions.end_date', '>=', $endDate);
+                $coupons->where('promotions.begin_date', '<=', $endDate);
+            });
+
+            // Filter coupon by date
+            OrbitInput::get('begin_date', function($begindate) use ($coupons)
+            {
+                $coupons->where('promotions.end_date', '>=', $begindate);
             });
 
             // Filter coupon by is permanent
@@ -2338,6 +2340,15 @@ class CouponAPIController extends ControllerAPI
                 $coupons->whereHas('couponrule', function ($q) use ($endDate) {
                     $q->where('rule_end_date', '>=', $endDate);
                 });
+            });
+
+            // Filter coupon by estimated total cost
+            OrbitInput::get('etc_to', function ($etcto) use ($coupons) {
+                $etcfrom = OrbitInput::get('etc_from');
+                if (empty($etcfrom)) {
+                    $etcfrom = 0;
+                }
+                $coupons->havingRaw('estimated between ' . $etcfrom . ' and '. $etcto);
             });
 
             $from_cs = OrbitInput::get('from_cs', 'no');

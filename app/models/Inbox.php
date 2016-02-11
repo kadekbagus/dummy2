@@ -63,6 +63,14 @@ class Inbox extends Eloquent
     }
 
     /**
+     * Get the inbox notified status.
+     */
+    public function scopeIsNotNotified($query)
+    {
+        return $query->where('is_notified', 'N');
+    }
+
+    /**
      * Insert issued lucky draw numbers into inbox table.
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
@@ -95,6 +103,7 @@ class Inbox extends Eloquent
         $inbox->inbox_type = $type;
         $inbox->status = 'active';
         $inbox->is_read = 'N';
+        $inbox->is_notified = 'N';
 
         $retailer = Mall::where('merchant_id', $retailerId)->first();
 
@@ -103,7 +112,7 @@ class Inbox extends Eloquent
         $listItem = null;
         switch ($type) {
             case 'activation':
-                $inbox->subject = "Account Activation";
+                $inbox->subject = "Please activate your account";
                 break;
 
             case 'lucky_draw_issuance':

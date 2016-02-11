@@ -944,6 +944,77 @@ return array(
             ),
         ),
 
+        'mallgroup'  => array(
+            'logo'  => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 150000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/mallgroups/logo',
+
+                // Default HTML element name
+                'name'          => 'logo',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+        ),
+
         'retailer'  => array(
             'logo'  => array(
                 // Allowed Extension

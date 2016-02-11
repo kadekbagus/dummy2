@@ -1498,12 +1498,15 @@ class NewsAPIController extends ControllerAPI
 
             // Builder object
             $prefix = DB::getTablePrefix();
-            $news = News::select('news.*', 'campaign_price.campaign_price_id', DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price"))
+            $news = News::select('news.*', 'campaign_price.campaign_price_id', DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, 
+                            ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (COUNT({$prefix}news_merchant.news_merchant_id))) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
                                      ->where('campaign_price.campaign_type', '=', $object_type);
                           })
-                        ->excludeDeleted('news');
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->excludeDeleted('news')
+                        ->groupBy('news.news_id');
 
             // Filter news by Ids
             OrbitInput::get('news_id', function($newsIds) use ($news)
@@ -1512,19 +1515,21 @@ class NewsAPIController extends ControllerAPI
             });
 
             // Filter news by mall Ids
-            OrbitInput::get('mall_id', function ($mallIds) use ($news) {
+            OrbitInput::get('mall_id', function ($mallIds) use ($news) 
+            {
                 $news->whereIn('news.mall_id', (array)$mallIds);
             });
 
             // Filter news by mall Ids / dupes, same as above
-            OrbitInput::get('merchant_id', function ($mallIds) use ($news) {
+            OrbitInput::get('merchant_id', function ($mallIds) use ($news) 
+            {
                 $news->whereIn('news.mall_id', (array)$mallIds);
             });
 
             // Filter news by news name
             OrbitInput::get('news_name', function($newsname) use ($news)
             {
-                $news->whereIn('news.news_name', $newsname);
+                $news->where('news.news_name', '=', $newsname);
             });
 
             // Filter news by matching news name pattern
@@ -1551,16 +1556,16 @@ class NewsAPIController extends ControllerAPI
                 $news->where('news.description', 'like', "%$description%");
             });
 
-            // Filter news by begin date
-            OrbitInput::get('begin_date', function($begindate) use ($news)
-            {
-                $news->where('news.begin_date', '<=', $begindate);
-            });
-
-            // Filter news by end date
+            // Filter news by date
             OrbitInput::get('end_date', function($enddate) use ($news)
             {
-                $news->where('news.end_date', '>=', $enddate);
+                $news->where('news.begin_date', '<=', $enddate);
+            });
+
+            // Filter news by date
+            OrbitInput::get('begin_date', function($begindate) use ($news)
+            {
+                $news->where('news.end_date', '>=', $begindate);
             });
 
             // Filter news by sticky order
@@ -1583,6 +1588,15 @@ class NewsAPIController extends ControllerAPI
                 $news->whereHas('tenants', function($q) use ($retailerIds) {
                     $q->whereIn('merchant_id', $retailerIds);
                 });
+            });
+
+            // Filter news by estimated total cost
+            OrbitInput::get('etc_to', function ($etcto) use ($news) {
+                $etcfrom = OrbitInput::get('etc_from');
+                if (empty($etcfrom)) {
+                    $etcfrom = 0;
+                }
+                $news->havingRaw('estimated between ' . $etcfrom . ' and '. $etcto);
             });
 
             // Add new relation based on request
