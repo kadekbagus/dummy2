@@ -135,18 +135,20 @@ class MallGroupAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'         => $email,
-                    'name'          => $name,
-                    'status'        => $status,
-                    'country'       => $country,
-                    'url'           => $url,
+                    'email'                 => $email,
+                    'name'                  => $name,
+                    'status'                => $status,
+                    'country'               => $country,
+                    'url'                   => $url,
+                    'password'              => $password,
                 ),
                 array(
                     'email'         => 'required|email|orbit.exists.email',
                     'name'          => 'required',
                     'status'        => 'required|orbit.empty.mall_status',
                     'country'       => 'required|orbit.empty.country',
-                    'url'           => 'orbit.formaterror.url.web'
+                    'url'           => 'orbit.formaterror.url.web',
+                    'password'      => 'required|min:6'
                 )
             );
 
@@ -170,11 +172,7 @@ class MallGroupAPIController extends ControllerAPI
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_email = $email;
-            // lock the password unless specified
-            $newuser->user_password = '!';
-            OrbitInput::post('password', function ($password) use ($newuser) {
-                $newuser->user_password = Hash::make($password);
-            });
+            $newuser->user_password = Hash::make($password);
             $newuser->status = $status;
             $newuser->user_role_id = $roleMerchant->role_id;
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
@@ -469,6 +467,8 @@ class MallGroupAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
+
             $mallgroups = MallGroup::excludeDeleted('merchants')
                                 ->allowedForUser($user)
                                 ->select('merchants.*', DB::raw('count(mall.merchant_id) AS total_mall'))
@@ -682,6 +682,11 @@ class MallGroupAPIController extends ControllerAPI
             // Filter mall by pos_language
             OrbitInput::get('pos_language', function ($pos_language) use ($mallgroups) {
                 $mallgroups->whereIn('merchants.pos_language', $pos_language);
+            });
+
+            // Filter mall group by location (city country)
+            OrbitInput::get('location', function($data) use ($mallgroups, $prefix) {
+                $mallgroups->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
             });
 
             // Add new relation based on request
@@ -916,33 +921,31 @@ class MallGroupAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $merchant_id = OrbitInput::post('current_mall');;
-            $user_id = OrbitInput::post('user_id');
+            // $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
             $omid = OrbitInput::post('omid');
             $url = OrbitInput::post('url');
             $password = OrbitInput::post('password');
-            $password2 = OrbitInput::post('password_confirmation');
 
             $validator = Validator::make(
                 array(
                     'current_mall'      => $merchant_id,
-                    'user_id'           => $user_id,
+                    // 'user_id'           => $user_id,
                     'email'             => $email,
                     'status'            => $status,
                     'omid'              => $omid,
                     'url'               => $url,
                     'password'                => $password,
-                    'password_confirmation'   => $password2,
                 ),
                 array(
                     'current_mall'      => 'required|orbit.empty.mallgroup',
-                    'user_id'           => 'orbit.empty.user',
+                    // 'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
                     'status'            => 'orbit.empty.mall_status',
                     'omid'              => 'omid_exists_but_me',
                     'url'               => 'orbit.formaterror.url.web',
-                    'password'                => 'min:6|confirmed'
+                    'password'                => 'min:6'
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
@@ -962,7 +965,11 @@ class MallGroupAPIController extends ControllerAPI
             }
             Event::fire('orbit.mallgroup.postupdatemallgroup.after.validation', array($this, $validator));
 
-            $updatedUser = App::make('orbit.empty.user');
+            $updatedmallgroup = MallGroup::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
+
+            $updatedUser = User::excludeDeleted()
+                            ->where('user_id', '=', $updatedmallgroup->user_id)
+                            ->first();
 
             OrbitInput::post('password', function($password) use ($updatedUser) {
                 if (! empty(trim($password))) {
@@ -975,8 +982,6 @@ class MallGroupAPIController extends ControllerAPI
             Event::fire('orbit.mallgroup.postupdateuser.before.save', array($this, $updatedUser));
 
             $updatedUser->save();
-
-            $updatedmallgroup = MallGroup::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
 
             OrbitInput::post('omid', function($omid) use ($updatedmallgroup) {
                 $updatedmallgroup->omid = $omid;
@@ -1016,6 +1021,10 @@ class MallGroupAPIController extends ControllerAPI
 
             OrbitInput::post('city', function($city) use ($updatedmallgroup) {
                 $updatedmallgroup->city = $city;
+            });
+
+            OrbitInput::post('province', function($province) use ($updatedmallgroup) {
+                $updatedmallgroup->province = $province;
             });
 
             OrbitInput::post('country', function($country_id) use ($updatedmallgroup) {
