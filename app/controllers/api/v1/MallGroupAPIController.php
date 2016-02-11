@@ -951,22 +951,22 @@ class MallGroupAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'current_mall'      => $merchant_id,
-                    // 'user_id'           => $user_id,
-                    'email'             => $email,
-                    'status'            => $status,
-                    'omid'              => $omid,
-                    'url'               => $url,
-                    'password'                => $password,
+                    'current_mall' => $merchant_id,
+                    // 'user_id'   => $user_id,
+                    'email'        => $email,
+                    'status'       => $status,
+                    'omid'         => $omid,
+                    'url'          => $url,
+                    'password'     => $password,
                 ),
                 array(
-                    'current_mall'      => 'required|orbit.empty.mallgroup',
-                    // 'user_id'           => 'orbit.empty.user',
-                    'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.mall_status',
-                    'omid'              => 'omid_exists_but_me',
-                    'url'               => 'orbit.formaterror.url.web',
-                    'password'                => 'min:6'
+                    'current_mall' => 'required|orbit.empty.mallgroup',
+                    // 'user_id'   => 'orbit.empty.user',
+                    'email'        => 'email|email_exists_but_me',
+                    'status'       => 'orbit.empty.mall_status',
+                    'omid'         => 'omid_exists_but_me',
+                    'url'          => 'orbit.formaterror.url.web',
+                    'password'     => 'min:6'
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
@@ -1048,14 +1048,14 @@ class MallGroupAPIController extends ControllerAPI
                 $updatedmallgroup->province = $province;
             });
 
-            OrbitInput::post('country', function($country_id) use ($updatedmallgroup) {
+            OrbitInput::post('country', function($country) use ($updatedmallgroup) {
                 $countryName = '';
-                $countryObject = Country::find($country_id);
+                $countryObject = Country::find($country);
                 if (is_object($countryObject)) {
                     $countryName = $countryObject->name;
                 }
 
-                $updatedmallgroup->country_id = $country_id;
+                $updatedmallgroup->country_id = $country;
                 $updatedmallgroup->country = $countryName;
             });
 

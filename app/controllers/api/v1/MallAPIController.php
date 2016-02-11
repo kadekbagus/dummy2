@@ -28,6 +28,7 @@ class MallAPIController extends ControllerAPI
      *
      * @author Kadek <kadek@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -903,6 +904,7 @@ class MallAPIController extends ControllerAPI
      * @author Kadek <kadek@dominopos.com>
      * @author Tian <tian@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -987,34 +989,37 @@ class MallAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $merchant_id = OrbitInput::post('current_mall');;
-            $user_id = OrbitInput::post('user_id');
+            // $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
             $orid = OrbitInput::post('orid');
             $ticket_header = OrbitInput::post('ticket_header');
             $ticket_footer = OrbitInput::post('ticket_footer');
             $url = OrbitInput::post('url');
+            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'current_mall'      => $merchant_id,
-                    'user_id'           => $user_id,
-                    'email'             => $email,
-                    'status'            => $status,
-                    'orid'              => $orid,
-                    'ticket_header'     => $ticket_header,
-                    'ticket_footer'     => $ticket_footer,
-                    'url'               => $url,
+                    'current_mall'  => $merchant_id,
+                    // 'user_id'    => $user_id,
+                    'email'         => $email,
+                    'status'        => $status,
+                    'orid'          => $orid,
+                    'ticket_header' => $ticket_header,
+                    'ticket_footer' => $ticket_footer,
+                    'url'           => $url,
+                    'password'      => $password,
                 ),
                 array(
-                    'current_mall'      => 'required|orbit.empty.mall',
-                    'user_id'           => 'orbit.empty.user',
-                    'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
-                    'orid'              => 'orid_exists_but_me',
-                    'ticket_header'     => 'ticket_header_max_length',
-                    'ticket_footer'     => 'ticket_footer_max_length',
-                    'url'               => 'orbit.formaterror.url.web'
+                    'current_mall'  => 'required|orbit.empty.mall',
+                    // 'user_id'    => 'orbit.empty.user',
+                    'email'         => 'email|email_exists_but_me',
+                    'status'        => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    'orid'          => 'orid_exists_but_me',
+                    'ticket_header' => 'ticket_header_max_length',
+                    'ticket_footer' => 'ticket_footer_max_length',
+                    'url'           => 'orbit.formaterror.url.web',
+                    'password'      => 'min:6'
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
@@ -1038,15 +1043,31 @@ class MallAPIController extends ControllerAPI
 
             $updatedmall = Mall::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
 
+            $updatedUser = User::excludeDeleted()
+                            ->where('user_id', '=', $updatedmall->user_id)
+                            ->first();
+
+            OrbitInput::post('password', function($password) use ($updatedUser) {
+                if (! empty(trim($password))) {
+                    $updatedUser->user_password = Hash::make($password);
+                }
+            });
+
+            $updatedUser->modified_by = $this->api->user->user_id;
+
+            Event::fire('orbit.mallgroup.postupdateuser.before.save', array($this, $updatedUser));
+
+            $updatedUser->save();
+
             OrbitInput::post('orid', function($orid) use ($updatedmall) {
                 $updatedmall->orid = $orid;
             });
 
-            OrbitInput::post('user_id', function($user_id) use ($updatedmall) {
-                // Right know the interface does not provide a way to change
-                // the user so it's better to skip it.
-                // $updatedmall->user_id = $user_id;
-            });
+            // OrbitInput::post('user_id', function($user_id) use ($updatedmall) {
+            //     // Right know the interface does not provide a way to change
+            //     // the user so it's better to skip it.
+            //     // $updatedmall->user_id = $user_id;
+            // });
 
             OrbitInput::post('email', function($email) use ($updatedmall) {
                 $updatedmall->email = $email;
@@ -1084,14 +1105,18 @@ class MallAPIController extends ControllerAPI
                 $updatedmall->city = $city;
             });
 
-            OrbitInput::post('country', function($country_id) use ($updatedmall) {
+            OrbitInput::post('province', function($province) use ($updatedmall) {
+                $updatedmall->province = $province;
+            });
+
+            OrbitInput::post('country', function($country) use ($updatedmall) {
                 $countryName = '';
-                $countryObject = Country::find($country_id);
+                $countryObject = Country::find($country);
                 if (is_object($countryObject)) {
                     $countryName = $countryObject->name;
                 }
 
-                $updatedmall->country_id = $country_id;
+                $updatedmall->country_id = $country;
                 $updatedmall->country = $countryName;
             });
 
