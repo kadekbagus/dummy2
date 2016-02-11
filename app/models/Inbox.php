@@ -47,6 +47,14 @@ class Inbox extends Eloquent
     }
 
     /**
+     * Get the alert type inbox.
+     */
+    public function scopeIsNotDeleted($query)
+    {
+        return $query->where('status', '<>', 'deleted');
+    }
+
+    /**
      * Get the not alert type inbox.
      */
     public function scopeIsNotAlert($query)
