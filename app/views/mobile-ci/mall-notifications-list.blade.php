@@ -24,6 +24,7 @@
 
 @section('ext_script_bot')
     <script type="text/javascript">
+        notInMessagesPage = false;
         var skip = 0;
         var total_page = 0;
         /**
