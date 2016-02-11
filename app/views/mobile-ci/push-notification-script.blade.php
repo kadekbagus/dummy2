@@ -94,7 +94,9 @@
 
         setInterval(function() {
             if (untoasteds.length > 0) {
-                var inboxId = untoasteds[0].inbox_id;
+                var inboxId = untoasteds[0].inbox_id,
+                    inboxUrl = untoasteds[0].url,
+                    inboxSubject = untoasteds[0].subject;
                 toastr.options = {
                     closeButton: true,
                     closeHtml: '<button>×</button>',
@@ -103,7 +105,7 @@
                     timeOut: 2500,
                     positionClass: 'toast-bottom-right',
                     onclick: function() {
-                        window.location.href = untoasteds[0].url;
+                        window.location.href = inboxUrl;
                     },
                     onShown: function() {
                         $.ajax({
@@ -119,7 +121,7 @@
                         });
                     }
                 };
-                toastr.info(untoasteds[0].subject);
+                toastr.info(inboxSubject);
             }
         }, 2730);
 
