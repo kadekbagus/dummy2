@@ -3041,9 +3041,18 @@ class ActivityAPIController extends ControllerAPI
                     group by 1, 2;";
 
             // Filter with activity names (activity_name_long)
-            $longActivityNameWhere = ($activityGroups) ? "AND activity_name_long IN ('".implode("','", $activityGroups)."')" : '';
-            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
+            $longActivityNameWhere = '';
+            if ($activityGroups) {
+                foreach ($activityGroups as $activityGroup) {
+                    foreach (Config::get('orbit_activity.groups.'.$activityGroup) as $key) {
+                        $activityValues[] = Config::get('orbit.activity_columns.'.$key);
+                    }
+                }
 
+                $longActivityNameWhere = ($activityGroups) ? "AND activity_name_long IN ('".implode("','", $activityValues)."')" : '';
+            }
+            
+            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
             $activities = DB::select($sql, array($timezoneOffset, $current_mall, $start_date, $end_date));
 
             $responses = [];
