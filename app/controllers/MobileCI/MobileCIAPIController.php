@@ -7264,9 +7264,9 @@ class MobileCIAPIController extends ControllerAPI
             //set cookies
             if ($lang_count > 0) {
                 $date_of_expiry = time() + (31556926 * 5) ; // where 31556926 is total seconds for a year.
-                setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry );
+                setcookie( "orbit_preferred_language", $lang_name, $date_of_expiry, '/' );
             } else {
-                setcookie( "orbit_preferred_language", null, -3600 );
+                setcookie( "orbit_preferred_language", null, -3600, '/' );
             }
         }
 
