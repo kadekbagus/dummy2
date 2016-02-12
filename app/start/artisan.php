@@ -38,6 +38,9 @@ Artisan::add(new BasePrice);
 //Create/install function and stored procedure
 Artisan::add(new MysqlStoredProcedure);
 
+// Delete Inactive CI sessions
+Artisan::add(new MerchantLogoCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

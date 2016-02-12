@@ -111,7 +111,7 @@ return array(
         'login_button'      => 'Masuk',
         'start_button'      => 'Mulai Belanja',
         'not'               => 'Bukan',
-        'click_here'        => 'klik disini',
+        'click_here'        => 'Klik disini',
         'email_not_valid'   => 'Alamat email tidak valid',
         'logging_in_button' => 'Sedang login. Harap tunggu...',
         'login_via_facebook' => 'Login via Facebook',

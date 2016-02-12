@@ -23,7 +23,7 @@
             <br/>
             <div class="row">
                 <div class="col-xs-12 text-center">
-                    <em>{{ Lang::get('mobileci.signin.not') }} {{$display_name}}?</em>
+                    <em>{{ Lang::get('mobileci.signin.not') }} {{$display_name}}?&nbsp;&nbsp;</em>
                     <a id='not-me'>{{ Lang::get('mobileci.signin.click_here') }}</a>
                 </div>
             </div>
