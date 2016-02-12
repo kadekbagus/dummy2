@@ -1292,7 +1292,7 @@ class MobileCIAPIController extends ControllerAPI
                     'languages' => $languages
                 ));
         } catch (Exception $e) {
-            $activityPageNotes = sprintf('Failed to view Page: My Account, user Id: %s', $user->user_id);
+            $activityPageNotes = sprintf('Failed to view Page: My Account');
             $activityPage->setUser($user)
                 ->setActivityName('view_my_account')
                 ->setActivityNameLong('View My Account Failed')
@@ -1748,6 +1748,14 @@ class MobileCIAPIController extends ControllerAPI
 
             case 'news':
                 $landing_url = URL::route('ci-mall-news');
+                break;
+
+            case 'my-coupon':
+                $landing_url = URL::route('ci-mall-coupons');
+                break;
+
+            case 'lucky-draw':
+                $landing_url = URL::route('ci-luckydraw-list');
                 break;
 
             case 'widget':

@@ -300,6 +300,7 @@ return array(
             'mall_have_membership_card'   => 'Mall membership card not exists.',
             'enable_membership_card' => 'The enable membership card argument you specified is not valid, the valid values are: true, false',
             'lucky_draw_announcement' => 'The lucky draw announcement you specified is not found',
+            'country' => 'Country does not on list',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query.',
         'jsonerror'  => array(

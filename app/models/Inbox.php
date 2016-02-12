@@ -47,6 +47,14 @@ class Inbox extends Eloquent
     }
 
     /**
+     * Get the alert type inbox.
+     */
+    public function scopeIsNotDeleted($query)
+    {
+        return $query->where('status', '<>', 'deleted');
+    }
+
+    /**
      * Get the not alert type inbox.
      */
     public function scopeIsNotAlert($query)
@@ -112,7 +120,7 @@ class Inbox extends Eloquent
         $listItem = null;
         switch ($type) {
             case 'activation':
-                $inbox->subject = "Account Activation";
+                $inbox->subject = "Please activate your account";
                 break;
 
             case 'lucky_draw_issuance':

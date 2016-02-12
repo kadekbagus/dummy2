@@ -1091,6 +1091,16 @@ class LuckyDrawAPIController extends ControllerAPI
                 $luckydraws->where('lucky_draws.minimum_amount', '=', $data);
             });
 
+            // Filter by starting minimum amount
+            OrbitInput::get('from_minimum_amount', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.minimum_amount', '>=', $data);
+            });
+
+            // Filter by ending minimum amount
+            OrbitInput::get('to_minimum_amount', function($data) use ($luckydraws) {
+                $luckydraws->where('lucky_draws.minimum_amount', '<=', $data);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($luckydraws, $user) {
                 $with = (array) $with;
