@@ -160,7 +160,10 @@ class MallAPIController extends ControllerAPI
                     'country'       => 'required|orbit.empty.country',
                     'url'           => 'orbit.formaterror.url.web',
                     'password'      => 'required|min:6'
-                )
+                ),
+                array(
+                    'name.required' => 'Mall name is required',
+                ),
             );
 
             Event::fire('orbit.mall.postnewmall.before.validation', array($this, $validator));

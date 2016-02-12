@@ -156,7 +156,10 @@ class MallGroupAPIController extends ControllerAPI
                     'country'       => 'required|orbit.empty.country',
                     'url'           => 'orbit.formaterror.url.web',
                     'password'      => 'required|min:6'
-                )
+                ),
+                array(
+                    'name.required' => 'Mall Group name is required',
+                ),
             );
 
             Event::fire('orbit.mallgroup.postnewmallgroup.before.validation', array($this, $validator));
