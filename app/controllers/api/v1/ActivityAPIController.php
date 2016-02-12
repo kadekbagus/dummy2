@@ -2964,6 +2964,7 @@ class ActivityAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $current_mall = OrbitInput::get('current_mall');
+            $activityGroups = OrbitInput::get('activity_groups');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -3034,17 +3035,46 @@ class ActivityAPIController extends ControllerAPI
                     where (`group` = 'mobile-ci'
                         or (`group` = 'portal' and activity_type in ('activation','create'))
                         or (`group` = 'cs-portal' and activity_type in ('registration')))
+                        {{where:longActivityName}}
                         and response_status = 'OK' and location_id = ?
                         and created_at between ? and ?
                     group by 1, 2;";
+
+            // Filter with activity names (activity_name_long)
+            $longActivityNameWhere = ($activityGroups) ? "AND activity_name_long IN ('".implode("','", $activityGroups)."')" : '';
+            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
 
             $activities = DB::select($sql, array($timezoneOffset, $current_mall, $start_date, $end_date));
 
             $responses = [];
             $records = [];
 
-            // get column name from config
-            $records['columns'] = Config::get('orbit.activity_columns');
+            // sel = selected
+            $selActivityGroups = $activityGroups;
+            if ($selActivityGroups) {
+
+                $columns = [];
+
+                foreach ($selActivityGroups as $selActivityGroup) {
+
+                    // Retrieve from config
+                    $selActivityGroupArray = Config::get('orbit_activity.groups.'.$selActivityGroup);
+
+                    // Not found in config
+                    if (!$selActivityGroupArray) {
+                        continue;
+                    }
+
+                    foreach ($selActivityGroupArray as $key) {
+                        $columns = array_merge($columns, [$key => Config::get('orbit.activity_columns.'.$key)]);
+                    }
+                }
+
+                $records['columns'] = $columns;
+            } else {
+                // get column name from config
+                $records['columns'] = Config::get('orbit.activity_columns');
+            }
 
             foreach ( $dateRange as $key => $value ) {
 
