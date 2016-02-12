@@ -153,7 +153,7 @@ return array(
         'login_button'      => 'Enter',
         'start_button'      => 'Start Shopping',
         'not'               => 'Not',
-        'click_here'        => 'click here',
+        'click_here'        => 'Click here',
         'email_not_valid'   => 'Email address is not valid',
         'logging_in_button' => 'Logging in. Please wait...',
         'loading_orbit'     => 'Loading Orbit, please wait...',

@@ -139,7 +139,7 @@
                 <td><?php echo $me->printDateTime($row->start_date_activity, 'UTC'); ?></td>
                 <td><?php echo $me->printDateTime($row->end_date_activity, 'UTC'); ?></td>
                 <td><?php echo ($row->total_mall); ?></td>
-                <td><?php echo $me->printUtf8($row->mall_name); ?></td>
+                <td><?php echo $me->printUtf8($row->malls); ?></td>
                 <td><?php echo ($row->status); ?></td>
             </tr>
         <?php $count++; endwhile; ?>

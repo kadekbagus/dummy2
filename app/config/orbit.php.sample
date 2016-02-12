@@ -2797,24 +2797,6 @@ return array(
         'Search'                                       => 'Search',
     ),
 
-    // Key = see 'module_name' in 'activities' table
-    // Value = for the module names in the UI
-    'activity_modules' => [
-        'Coupon'        => 'Coupons',
-        'News'          => 'News',
-        'Promotion'     => 'Promotions',
-        'LuckDraw'      => 'Lucky draws',
-
-        // not fixed
-        // 'PopUp'        => 'Pop ups',
-
-        'Widget'        => 'Widgets',
-        'Tenant'        => 'Tenants',
-
-        // not fixed
-        // 'Notification'  => 'Notifications',
-    ],
-
     'menus' => array(
         'mall' => array(
             'mall_dashboard',
