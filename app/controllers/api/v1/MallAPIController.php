@@ -20,7 +20,6 @@ class MallAPIController extends ControllerAPI
      * @var Builder
      */
     protected $returnBuilder = FALSE;
-    protected $withMallGroup = FALSE;
 
 
      /**
@@ -204,7 +203,7 @@ class MallAPIController extends ControllerAPI
 
             $newmall = new Mall();
             $newmall->user_id = $newuser->user_id;
-            $newmall->omid = '';
+            // $newmall->omid = '';
             $newmall->email = $email;
             $newmall->name = $name;
             $newmall->description = $description;
@@ -248,10 +247,6 @@ class MallAPIController extends ControllerAPI
 
             Event::fire('orbit.mall.postnewmall.before.save', array($this, $newmall));
 
-            $newmall->save();
-
-            // add orid to newly created mall (mall have orid and mall group have omid)
-            $newmall->orid = Mall::ORID_INCREMENT + $newmall->merchant_id;
             $newmall->save();
 
             Event::fire('orbit.mall.postnewmall.after.save', array($this, $newmall));
@@ -446,7 +441,7 @@ class MallAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:merchant_orid,registered_date,merchant_name,merchant_email,merchant_userid,merchant_description,merchantid,merchant_address1,merchant_address2,merchant_address3,merchant_cityid,merchant_city,merchant_countryid,merchant_country,merchant_phone,merchant_fax,merchant_status,merchant_currency,start_date_activity,total_retailer',
+                    'sort_by' => 'in:merchant_orid,registered_date,merchant_name,merchant_email,merchant_userid,merchant_description,merchantid,merchant_address1,merchant_address2,merchant_address3,merchant_cityid,merchant_city,merchant_countryid,merchant_country,merchant_phone,merchant_fax,merchant_status,merchant_currency,start_date_activity,total_retailer,mallgroup',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.merchant_sortby'),
@@ -485,23 +480,15 @@ class MallAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $malls = Mall::excludeDeleted('merchants')
-                                ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'))
+                                ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'), DB::raw('mall_group.name AS mall_group_name'))
                                 ->leftJoin('merchants AS tenant', function($join) {
                                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('tenant.status'), '!=', 'deleted')
                                             ->where(DB::raw('tenant.object_type'), '=', 'tenant');
                                     })
+                                ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                                 ->groupBy('merchants.merchant_id');
-
-            // for print and export
-            if ($this->withMallGroup) {
-                $malls->addSelect(DB::raw('(mallgroup.name) AS mallgroup'))
-                      ->leftJoin('merchants AS mallgroup', function($join) {
-                        $join->on(DB::raw('mallgroup.merchant_id'), '=', 'merchants.parent_id')
-                            ->where(DB::raw('mallgroup.status'), '!=', 'deleted')
-                            ->where(DB::raw('mallgroup.object_type'), '=', 'mall_group');
-                    });
-            }
+                                
 
             // Filter mall by Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($malls) {
@@ -815,6 +802,7 @@ class MallAPIController extends ControllerAPI
                     'start_date_activity'  => 'merchants.start_date_activity',
                     'end_date_activity'    => 'merchants.end_date_activity',
                     'total_retailer'       => 'total_retailer',
+                    'mallgroup'            => 'mall_group_name',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -1001,11 +989,11 @@ class MallAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('merchant_id');
             // $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
-            $orid = OrbitInput::post('orid');
+            // $orid = OrbitInput::post('orid');
             $ticket_header = OrbitInput::post('ticket_header');
             $ticket_footer = OrbitInput::post('ticket_footer');
             $url = OrbitInput::post('url');
@@ -1013,22 +1001,22 @@ class MallAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'current_mall'  => $merchant_id,
+                    'merchant_id'  => $merchant_id,
                     // 'user_id'    => $user_id,
                     'email'         => $email,
                     'status'        => $status,
-                    'orid'          => $orid,
+                    // 'orid'          => $orid,
                     'ticket_header' => $ticket_header,
                     'ticket_footer' => $ticket_footer,
                     'url'           => $url,
                     'password'      => $password,
                 ),
                 array(
-                    'current_mall'  => 'required|orbit.empty.mall',
+                    'merchant_id'  => 'required|orbit.empty.mall',
                     // 'user_id'    => 'orbit.empty.user',
                     'email'         => 'email|email_exists_but_me',
                     'status'        => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
-                    'orid'          => 'orid_exists_but_me',
+                    // 'orid'          => 'orid_exists_but_me',
                     'ticket_header' => 'ticket_header_max_length',
                     'ticket_footer' => 'ticket_footer_max_length',
                     'url'           => 'orbit.formaterror.url.web',
@@ -1036,7 +1024,7 @@ class MallAPIController extends ControllerAPI
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
-                   'orid_exists_but_me'       => Lang::get('validation.orbit.exists.orid'),
+                   // 'orid_exists_but_me'       => Lang::get('validation.orbit.exists.orid'),
                    'ticket_header_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
                    'ticket_footer_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
@@ -1072,9 +1060,9 @@ class MallAPIController extends ControllerAPI
 
             $updatedUser->save();
 
-            OrbitInput::post('orid', function($orid) use ($updatedmall) {
-                $updatedmall->orid = $orid;
-            });
+            // OrbitInput::post('orid', function($orid) use ($updatedmall) {
+            //     $updatedmall->orid = $orid;
+            // });
 
             // OrbitInput::post('user_id', function($user_id) use ($updatedmall) {
             //     // Right know the interface does not provide a way to change
@@ -1482,16 +1470,16 @@ class MallAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('current_mall');;
+            $merchant_id = OrbitInput::post('merchant_id');
             $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'current_mall'=> $merchant_id,
+                    'merchant_id'=> $merchant_id,
                     'password'    => $password,
                 ),
                 array(
-                    'current_mall'=> 'required|orbit.empty.mall|orbit.exists.mall_have_tenant',
+                    'merchant_id'=> 'required|orbit.empty.mall|orbit.exists.mall_have_tenant',
                     'password'    => 'required|orbit.access.wrongpassword',
                 )
             );
@@ -1692,7 +1680,7 @@ class MallAPIController extends ControllerAPI
 
         // Check user email address, it should not exists (for update)
         Validator::extend('email_exists_but_me', function ($attribute, $value, $parameters) {
-            $mall_id = OrbitInput::post('current_mall');;
+            $mall_id = OrbitInput::post('merchant_id');
             $mall = Mall::excludeDeleted()
                         ->where('email', $value)
                         ->where('merchant_id', '!=', $mall_id)
@@ -1709,7 +1697,7 @@ class MallAPIController extends ControllerAPI
 
         // Check ORID, it should not exists (for update)
         Validator::extend('orid_exists_but_me', function ($attribute, $value, $parameters) {
-            $mall_id = OrbitInput::post('current_mall');;
+            $mall_id = OrbitInput::post('merchant_id');
             $mall = Mall::excludeDeleted()
                         ->where('orid', $value)
                         ->where('merchant_id', '!=', $mall_id)
@@ -2121,10 +2109,4 @@ class MallAPIController extends ControllerAPI
         return $this;
     }
 
-    public function setWithMallGroup($bool)
-    {
-        $this->withMallGroup = $bool;
-
-        return $this;
-    }
 }

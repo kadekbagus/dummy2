@@ -28,7 +28,6 @@ class MallPrinterController extends DataPrinterController
         // Instantiate the MallAPIController to get the query builder of Malls
         $response = MallAPIController::create('raw')
             ->setReturnBuilder(true)
-            ->setWithMallGroup(true)
             ->getSearchMall();
 
         if (! is_array($response)) {
@@ -70,7 +69,7 @@ class MallPrinterController extends DataPrinterController
                             $this->printLocation($row), 
                             $this->printDateTime($row->start_date_activity, 'UTC', 'Y-m-d H:i:s'),
                             $this->printDateTime($row->end_date_activity, 'UTC', 'Y-m-d H:i:s'),
-                            $this->printUtf8($row->mallgroup),
+                            $this->printUtf8($row->mall_group_name),
                             $row->status
                        );
 
