@@ -779,6 +779,7 @@ class MallGroupAPIController extends ControllerAPI
                     'merchant_status'      => 'merchants.status',
                     'merchant_currency'    => 'merchants.currency',
                     'start_date_activity'  => 'merchants.start_date_activity',
+                    'end_date_activity'    => 'merchants.end_date_activity',
                     'total_mall'           => 'total_mall',
                 );
 
