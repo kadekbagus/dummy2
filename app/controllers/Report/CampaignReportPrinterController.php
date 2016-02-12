@@ -44,7 +44,6 @@ class CampaignReportPrinterController extends DataPrinterController
         $totalEstimatedCost = $response['totalEstimatedCost'];
         $totalSpending = $response['totalSpending'];
 
-
         $pdo = DB::Connection()->getPdo();
 
         $prepareUnbufferedQuery = $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
@@ -80,8 +79,8 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of campaigns', $totalRecord, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total page views', $totalPageViews, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total pop up views', $totalPopUpViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated total cost (IDR)', $totalEstimatedCost, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total spending (IDR)', $totalSpending, '', '', '','');
 
                 // Filtering
                 if($startDate != '' && $endDate != ''){
@@ -117,7 +116,7 @@ class CampaignReportPrinterController extends DataPrinterController
                             $row->page_views,
                             $row->popup_views,
                             $row->popup_clicks,
-                            number_format($row->base_price, 0),
+                            number_format($row->daily, 0),
                             number_format($row->estimated_total, 0),
                             number_format($row->spending, 0),
                             $row->status
@@ -208,12 +207,12 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Tenants', 'Mall', 'Unique Users', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Date', 'Tenants', 'Mall', 'Unique Users', 'Campaign Page Views', 'Campaign Page View Rate (%)', 'Pop Up Views', 'Pop Up View Rate (%)', 'Pop Up Clicks', 'Pop Up Click Rate (%)', 'Spending (IDR)');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
                             $row->total_tenant,
