@@ -2794,7 +2794,7 @@ return array(
         'Search'                                       => 'Search',
     ),
 
-    'activity_sections' => [
+    'activity_modules' => [
         'coupon'        => 'Coupons',
         'news'          => 'News',
         'promotion'     => 'Promotions',
