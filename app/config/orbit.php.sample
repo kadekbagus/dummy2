@@ -2794,15 +2794,22 @@ return array(
         'Search'                                       => 'Search',
     ),
 
+    // Key = see 'module_name' in 'activities' table
+    // Value = for the module names in the UI
     'activity_modules' => [
-        'coupon'        => 'Coupons',
-        'news'          => 'News',
-        'promotion'     => 'Promotions',
-        'lucky_draw'    => 'Lucky draws',
-        'pop_up'        => 'Pop ups',
-        'widget'        => 'Widgets',
-        'tenant'        => 'Tenants',
-        'notification'  => 'Notifications',
+        'Coupon'        => 'Coupons',
+        'News'          => 'News',
+        'Promotion'     => 'Promotions',
+        'LuckDraw'      => 'Lucky draws',
+
+        // not fixed
+        // 'PopUp'        => 'Pop ups',
+
+        'Widget'        => 'Widgets',
+        'Tenant'        => 'Tenants',
+
+        // not fixed
+        // 'Notification'  => 'Notifications',
     ],
 
     'menus' => array(
