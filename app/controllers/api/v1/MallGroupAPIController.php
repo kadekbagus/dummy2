@@ -702,6 +702,18 @@ class MallGroupAPIController extends ControllerAPI
                 $mallgroups->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
             });
 
+            // Filter user by first_visit date begin_date
+            OrbitInput::get('start_date_activity', function($begindate) use ($mallgroups)
+            {
+                $mallgroups->where('merchants.start_date_activity', '>=', $begindate);
+            });
+
+            // Filter user by first visit date end_date
+            OrbitInput::get('end_date_activity', function($enddate) use ($mallgroups)
+            {
+                $mallgroups->where('merchants.end_date_activity', '<=', $enddate);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($mallgroups) {
                 $with = (array) $with;
