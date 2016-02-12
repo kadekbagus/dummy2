@@ -223,13 +223,13 @@ class CampaignReportAPIController extends ControllerAPI
                                                 WHERE
                                                     och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
                                                     AND och.campaign_type = 'news'
-                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= end_date
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                                 ORDER BY och.created_at DESC
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
                                         case when action_name = 'delete_tenant'
-                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < end_date
+                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                         then action_name != 'delete_tenant' else true end
                                     )
                                     group by campaign_id
@@ -243,6 +243,7 @@ class CampaignReportAPIController extends ControllerAPI
                         ->where('news.object_type', '=', 'news')
                         ->groupBy('news.news_id')
                         ;
+
 
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
@@ -300,13 +301,13 @@ class CampaignReportAPIController extends ControllerAPI
                                                 WHERE
                                                     och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
                                                     AND och.campaign_type = 'promotion'
-                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= end_date
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                                 ORDER BY och.created_at DESC
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
                                         case when action_name = 'delete_tenant'
-                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < end_date
+                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                         then action_name != 'delete_tenant' else true end
                                     )
                                     group by campaign_id
@@ -378,13 +379,13 @@ class CampaignReportAPIController extends ControllerAPI
                                                 WHERE
                                                     och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
                                                     AND och.campaign_type = 'coupon'
-                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= end_date
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                                 ORDER BY och.created_at DESC
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
                                         case when action_name = 'delete_tenant'
-                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < end_date
+                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                         then action_name != 'delete_tenant' else true end
                                     )
                                     group by campaign_id
