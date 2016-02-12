@@ -14,12 +14,22 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class MallGroupAPIController extends ControllerAPI
 {
+    /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+    protected $printExport = FALSE;
+
+
      /**
      * POST - Add new mall group
      *
      * @author Kadek <kadek@dominopos.com>
      * @author Rio Astamal <me@rioastamal.net>
      * @author Tian <tian@dominopos.com>
+     * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -34,6 +44,7 @@ class MallGroupAPIController extends ControllerAPI
      * @param integer    `postal_code`             (optional) - Postal code
      * @param integer    `city_id`                 (optional) - City id
      * @param string     `city`                    (optional) - Name of the city
+     * @param string     `province`                (optional) - Name of the province
      * @param string     `phone`                   (optional) - Phone of the merchant
      * @param string     `fax`                     (optional) - Fax of the merchant
      * @param string     `start_date_activity`     (optional) - Start date activity of the merchant
@@ -102,6 +113,7 @@ class MallGroupAPIController extends ControllerAPI
             $postal_code = OrbitInput::post('postal_code');
             $city_id = OrbitInput::post('city_id');
             $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
             $country = OrbitInput::post('country');
             $phone = OrbitInput::post('phone');
             $fax = OrbitInput::post('fax');
@@ -130,18 +142,20 @@ class MallGroupAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'         => $email,
-                    'name'          => $name,
-                    'status'        => $status,
-                    'country'       => $country,
-                    'url'           => $url,
+                    'email'                 => $email,
+                    'name'                  => $name,
+                    'status'                => $status,
+                    'country'               => $country,
+                    'url'                   => $url,
+                    'password'              => $password,
                 ),
                 array(
                     'email'         => 'required|email|orbit.exists.email',
                     'name'          => 'required',
                     'status'        => 'required|orbit.empty.mall_status',
-                    'country'       => 'required',
-                    'url'           => 'orbit.formaterror.url.web'
+                    'country'       => 'required|orbit.empty.country',
+                    'url'           => 'orbit.formaterror.url.web',
+                    'password'      => 'required|min:6'
                 )
             );
 
@@ -165,11 +179,7 @@ class MallGroupAPIController extends ControllerAPI
             $newuser = new User();
             $newuser->username = $email;
             $newuser->user_email = $email;
-            // lock the password unless specified
-            $newuser->user_password = '!';
-            OrbitInput::post('password', function ($password) use ($newuser) {
-                $newuser->user_password = Hash::make($password);
-            });
+            $newuser->user_password = Hash::make($password);
             $newuser->status = $status;
             $newuser->user_role_id = $roleMerchant->role_id;
             $newuser->user_ip = $_SERVER['REMOTE_ADDR'];
@@ -182,7 +192,7 @@ class MallGroupAPIController extends ControllerAPI
             $userdetail = $newuser->userdetail()->save($userdetail);
 
             $countryName = '';
-            $countryObject = Country::find($country);
+            $countryObject = App::make('orbit.empty.country');
             if (is_object($countryObject)) {
                 $countryName = $countryObject->name;
             }
@@ -199,6 +209,7 @@ class MallGroupAPIController extends ControllerAPI
             $newmallgroup->postal_code = $postal_code;
             $newmallgroup->city_id = $city_id;
             $newmallgroup->city = $city;
+            $newmallgroup->province = $province;
             $newmallgroup->country_id = $country;
             $newmallgroup->country = $countryName;
             $newmallgroup->phone = $phone;
@@ -462,8 +473,9 @@ class MallGroupAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
+
             $mallgroups = MallGroup::excludeDeleted('merchants')
-                                ->allowedForUser($user)
                                 ->select('merchants.*', DB::raw('count(mall.merchant_id) AS total_mall'))
                                 ->leftJoin('merchants AS mall', function($join) {
                                         $join->on(DB::raw('mall.parent_id'), '=', 'merchants.merchant_id')
@@ -471,6 +483,14 @@ class MallGroupAPIController extends ControllerAPI
                                             ->where(DB::raw('mall.object_type'), '=', 'mall');
                                     })
                                 ->groupBy('merchants.merchant_id');
+
+            if (! $this->printExport) {
+                $mallgroups->allowedForUser($user);
+            }
+
+            if ($this->printExport) {
+                $mallgroups->addSelect(DB::raw('(mall.name) AS mall_name'));
+            }
 
             // Filter mall by Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($mallgroups) {
@@ -677,6 +697,23 @@ class MallGroupAPIController extends ControllerAPI
                 $mallgroups->whereIn('merchants.pos_language', $pos_language);
             });
 
+            // Filter mall group by location (city country)
+            OrbitInput::get('location', function($data) use ($mallgroups, $prefix) {
+                $mallgroups->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
+            });
+
+            // Filter user by first_visit date begin_date
+            OrbitInput::get('start_date_activity', function($begindate) use ($mallgroups)
+            {
+                $mallgroups->where('merchants.start_date_activity', '>=', $begindate);
+            });
+
+            // Filter user by first visit date end_date
+            OrbitInput::get('end_date_activity', function($enddate) use ($mallgroups)
+            {
+                $mallgroups->where('merchants.end_date_activity', '<=', $enddate);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($mallgroups) {
                 $with = (array) $with;
@@ -700,29 +737,32 @@ class MallGroupAPIController extends ControllerAPI
 
             $_mallgroups = clone $mallgroups;
 
-            // Get the take args
-            $take = $perPage;
-            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                if ($_take > $maxRecord) {
-                    $_take = $maxRecord;
-                }
-                $take = $_take;
+            // if not printing / exporting data then do pagination.
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
 
-                if ((int)$take <= 0) {
-                    $take = $maxRecord;
-                }
-            });
-            $mallgroups->take($take);
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $mallgroups->take($take);
 
-            $skip = 0;
-            OrbitInput::get('skip', function ($_skip) use (&$skip, $mallgroups) {
-                if ($_skip < 0) {
-                    $_skip = 0;
-                }
+                $skip = 0;
+                OrbitInput::get('skip', function ($_skip) use (&$skip, $mallgroups) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
 
-                $skip = $_skip;
-            });
-            $mallgroups->skip($skip);
+                    $skip = $_skip;
+                });
+                $mallgroups->skip($skip);
+            }
 
             // Default sort by
             $sortBy = 'merchants.name';
@@ -751,6 +791,7 @@ class MallGroupAPIController extends ControllerAPI
                     'merchant_status'      => 'merchants.status',
                     'merchant_currency'    => 'merchants.currency',
                     'start_date_activity'  => 'merchants.start_date_activity',
+                    'end_date_activity'    => 'merchants.end_date_activity',
                     'total_mall'           => 'total_mall',
                 );
 
@@ -763,6 +804,11 @@ class MallGroupAPIController extends ControllerAPI
                 }
             });
             $mallgroups->orderBy($sortBy, $sortMode);
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $mallgroups, 'count' => RecordCounter::create($_mallgroups)->count()];
+            }
 
             $totalRec = RecordCounter::create($_mallgroups)->count();
             $listOfRec = $mallgroups->get();
@@ -872,6 +918,7 @@ class MallGroupAPIController extends ControllerAPI
      * @param string     `slavebox_number`          (optional) - Slavebox number
      * @param string     `mobile_default_language`  (optional) - Mobile default language
      * @param string     `pos_language`             (optional) - POS language
+     * @param string     `logo`                     (optional) - logo
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -908,28 +955,31 @@ class MallGroupAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $merchant_id = OrbitInput::post('current_mall');;
-            $user_id = OrbitInput::post('user_id');
+            // $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
             $status = OrbitInput::post('status');
             $omid = OrbitInput::post('omid');
             $url = OrbitInput::post('url');
+            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'current_mall'      => $merchant_id,
-                    'user_id'           => $user_id,
-                    'email'             => $email,
-                    'status'            => $status,
-                    'omid'              => $omid,
-                    'url'               => $url,
+                    'current_mall' => $merchant_id,
+                    // 'user_id'   => $user_id,
+                    'email'        => $email,
+                    'status'       => $status,
+                    'omid'         => $omid,
+                    'url'          => $url,
+                    'password'     => $password,
                 ),
                 array(
-                    'current_mall'      => 'required|orbit.empty.mallgroup',
-                    'user_id'           => 'orbit.empty.user',
-                    'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.mall_status',
-                    'omid'              => 'omid_exists_but_me',
-                    'url'               => 'orbit.formaterror.url.web'
+                    'current_mall' => 'required|orbit.empty.mallgroup',
+                    // 'user_id'   => 'orbit.empty.user',
+                    'email'        => 'email|email_exists_but_me',
+                    'status'       => 'orbit.empty.mall_status',
+                    'omid'         => 'omid_exists_but_me',
+                    'url'          => 'orbit.formaterror.url.web',
+                    'password'     => 'min:6'
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
@@ -950,6 +1000,22 @@ class MallGroupAPIController extends ControllerAPI
             Event::fire('orbit.mallgroup.postupdatemallgroup.after.validation', array($this, $validator));
 
             $updatedmallgroup = MallGroup::with('taxes')->excludeDeleted()->allowedForUser($user)->where('merchant_id', $merchant_id)->first();
+
+            $updatedUser = User::excludeDeleted()
+                            ->where('user_id', '=', $updatedmallgroup->user_id)
+                            ->first();
+
+            OrbitInput::post('password', function($password) use ($updatedUser) {
+                if (! empty(trim($password))) {
+                    $updatedUser->user_password = Hash::make($password);
+                }
+            });
+
+            $updatedUser->modified_by = $this->api->user->user_id;
+
+            Event::fire('orbit.mallgroup.postupdateuser.before.save', array($this, $updatedUser));
+
+            $updatedUser->save();
 
             OrbitInput::post('omid', function($omid) use ($updatedmallgroup) {
                 $updatedmallgroup->omid = $omid;
@@ -991,14 +1057,18 @@ class MallGroupAPIController extends ControllerAPI
                 $updatedmallgroup->city = $city;
             });
 
-            OrbitInput::post('country', function($country_id) use ($updatedmallgroup) {
+            OrbitInput::post('province', function($province) use ($updatedmallgroup) {
+                $updatedmallgroup->province = $province;
+            });
+
+            OrbitInput::post('country', function($country) use ($updatedmallgroup) {
                 $countryName = '';
-                $countryObject = Country::find($country_id);
+                $countryObject = Country::find($country);
                 if (is_object($countryObject)) {
                     $countryName = $countryObject->name;
                 }
 
-                $updatedmallgroup->country_id = $country_id;
+                $updatedmallgroup->country_id = $country;
                 $updatedmallgroup->country = $countryName;
             });
 
@@ -1466,6 +1536,20 @@ class MallGroupAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // Check country not empty
+        Validator::extend('orbit.empty.country', function ($attribute, $value, $parameters) {
+            $country = Country::where('country_id', $value)
+                        ->first();
+
+            if (empty($country)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.country', $country);
+
+            return TRUE;
+        });
+
         // Check user email address, it should not exists (for update)
         Validator::extend('email_exists_but_me', function ($attribute, $value, $parameters) {
             $mall_id = OrbitInput::post('current_mall');;
@@ -1579,5 +1663,19 @@ class MallGroupAPIController extends ControllerAPI
 
             return TRUE;
         });
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
+    }
+
+    public function setPrintExport($bool)
+    {
+        $this->printExport = $bool;
+
+        return $this;
     }
 }

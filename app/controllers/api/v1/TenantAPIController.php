@@ -1677,6 +1677,18 @@ class TenantAPIController extends ControllerAPI
                 $tenants->whereIn('merchants.unit', $unit);
             });
 
+            // Filter tenant by floor
+            OrbitInput::get('floor_like', function($floor) use ($tenants)
+            {
+                $tenants->where('merchants.floor', 'like', "%$floor%");
+            });
+
+            // Filter tenant by unit
+            OrbitInput::get('unit_like', function($unit) use ($tenants)
+            {
+                $tenants->where('merchants.unit', 'like', "%$unit%");
+            });
+
             // Filter tenant by location (floor - unit)
             OrbitInput::get('location', function($data) use ($tenants)
             {

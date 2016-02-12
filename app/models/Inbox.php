@@ -47,6 +47,14 @@ class Inbox extends Eloquent
     }
 
     /**
+     * Get the alert type inbox.
+     */
+    public function scopeIsNotDeleted($query)
+    {
+        return $query->where('status', '<>', 'deleted');
+    }
+
+    /**
      * Get the not alert type inbox.
      */
     public function scopeIsNotAlert($query)
@@ -60,6 +68,14 @@ class Inbox extends Eloquent
     public function scopeIsNotRead($query)
     {
         return $query->where('is_read', 'N');
+    }
+
+    /**
+     * Get the inbox notified status.
+     */
+    public function scopeIsNotNotified($query)
+    {
+        return $query->where('is_notified', 'N');
     }
 
     /**
@@ -95,6 +111,7 @@ class Inbox extends Eloquent
         $inbox->inbox_type = $type;
         $inbox->status = 'active';
         $inbox->is_read = 'N';
+        $inbox->is_notified = 'N';
 
         $retailer = Mall::where('merchant_id', $retailerId)->first();
 
@@ -103,7 +120,7 @@ class Inbox extends Eloquent
         $listItem = null;
         switch ($type) {
             case 'activation':
-                $inbox->subject = "Account Activation";
+                $inbox->subject = "Please activate your account";
                 break;
 
             case 'lucky_draw_issuance':

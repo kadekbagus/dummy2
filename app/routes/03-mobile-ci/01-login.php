@@ -561,6 +561,15 @@ Route::group(
             return InboxAPIController::create()->postReadAlert();
         });
 
+
+        /**
+         * Read / flag the alert as notified
+         */
+        Route::post('/app/v1/inbox/notified', function()
+        {
+            return InboxAPIController::create()->postNotifiedMessage();
+        });
+
         /**
          * Flag the alert as read / unread
          */
