@@ -32,6 +32,9 @@ Artisan::add(new ConfigAgreement);
 // Delete Inactive CI sessions
 Artisan::add(new DeleteInactiveCISessions);
 
+// Delete Inactive CI sessions
+Artisan::add(new MerchantLogoCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
