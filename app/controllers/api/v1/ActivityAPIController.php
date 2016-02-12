@@ -3195,6 +3195,18 @@ class ActivityAPIController extends ControllerAPI
         }
     }
 
+    public function getModules()
+    {
+        $this->checkAuth();
+        foreach (Config::get('orbit.activity_modules') as $code => $name) {
+            $data[] = [compact('code', 'name')];
+        }
+
+        $this->response->data = $data;
+
+        return $this->render(200);
+    }
+
     public function categorizeUserAgent($ua)
     {
         if (preg_match('/Linux.*?Android/', $ua)) {
