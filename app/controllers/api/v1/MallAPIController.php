@@ -20,7 +20,6 @@ class MallAPIController extends ControllerAPI
      * @var Builder
      */
     protected $returnBuilder = FALSE;
-    protected $withMallGroup = FALSE;
 
 
      /**
@@ -442,7 +441,7 @@ class MallAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:merchant_orid,registered_date,merchant_name,merchant_email,merchant_userid,merchant_description,merchantid,merchant_address1,merchant_address2,merchant_address3,merchant_cityid,merchant_city,merchant_countryid,merchant_country,merchant_phone,merchant_fax,merchant_status,merchant_currency,start_date_activity,total_retailer',
+                    'sort_by' => 'in:merchant_orid,registered_date,merchant_name,merchant_email,merchant_userid,merchant_description,merchantid,merchant_address1,merchant_address2,merchant_address3,merchant_cityid,merchant_city,merchant_countryid,merchant_country,merchant_phone,merchant_fax,merchant_status,merchant_currency,start_date_activity,total_retailer,mallgroup',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.merchant_sortby'),
@@ -481,23 +480,15 @@ class MallAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $malls = Mall::excludeDeleted('merchants')
-                                ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'))
+                                ->select('merchants.*', DB::raw('count(tenant.merchant_id) AS total_tenant'), DB::raw('mall_group.name AS mall_group_name'))
                                 ->leftJoin('merchants AS tenant', function($join) {
                                         $join->on(DB::raw('tenant.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('tenant.status'), '!=', 'deleted')
                                             ->where(DB::raw('tenant.object_type'), '=', 'tenant');
                                     })
+                                ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                                 ->groupBy('merchants.merchant_id');
-
-            // for print and export
-            if ($this->withMallGroup) {
-                $malls->addSelect(DB::raw('(mallgroup.name) AS mallgroup'))
-                      ->leftJoin('merchants AS mallgroup', function($join) {
-                        $join->on(DB::raw('mallgroup.merchant_id'), '=', 'merchants.parent_id')
-                            ->where(DB::raw('mallgroup.status'), '!=', 'deleted')
-                            ->where(DB::raw('mallgroup.object_type'), '=', 'mall_group');
-                    });
-            }
+                                
 
             // Filter mall by Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($malls) {
@@ -709,6 +700,18 @@ class MallAPIController extends ControllerAPI
                 $malls->where(DB::raw("CONCAT(COALESCE({$prefix}merchants.city, ''), ' ', COALESCE({$prefix}merchants.country, ''))"), 'like', "%$data%");
             });
 
+            // Filter user by first_visit date begin_date
+            OrbitInput::get('start_date_activity', function($begindate) use ($malls)
+            {
+                $malls->where('merchants.start_date_activity', '>=', $begindate);
+            });
+
+            // Filter user by first visit date end_date
+            OrbitInput::get('end_date_activity', function($enddate) use ($malls)
+            {
+                $malls->where('merchants.end_date_activity', '<=', $enddate);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($malls) {
                 $with = (array) $with;
@@ -797,7 +800,9 @@ class MallAPIController extends ControllerAPI
                     'merchant_status'      => 'merchants.status',
                     'merchant_currency'    => 'merchants.currency',
                     'start_date_activity'  => 'merchants.start_date_activity',
+                    'end_date_activity'    => 'merchants.end_date_activity',
                     'total_retailer'       => 'total_retailer',
+                    'mallgroup'            => 'mall_group_name',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -2104,10 +2109,4 @@ class MallAPIController extends ControllerAPI
         return $this;
     }
 
-    public function setWithMallGroup($bool)
-    {
-        $this->withMallGroup = $bool;
-
-        return $this;
-    }
 }
