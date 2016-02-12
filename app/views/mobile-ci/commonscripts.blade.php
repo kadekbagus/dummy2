@@ -222,8 +222,8 @@
             btn.html('{{Lang::get('mobileci.notification.load_more_btn')}}');
         });
     }
-
-    var tabOpen = false; // this var is for tabs on tenant detail views
+    var notInMessagesPage = true; {{-- this var is used to enable/disable pop up notification --}}
+    var tabOpen = false; {{-- this var is for tabs on tenant detail views --}}
     $(document).ready(function(){
         var menuOpen = false;
         navigator.getBrowser= (function(){

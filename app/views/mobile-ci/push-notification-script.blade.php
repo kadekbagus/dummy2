@@ -92,38 +92,40 @@
             getNotif()
         }, pushNotificationDelay);
 
-        setInterval(function() {
-            if (untoasteds.length > 0) {
-                var inboxId = untoasteds[0].inbox_id,
-                    inboxUrl = untoasteds[0].url,
-                    inboxSubject = untoasteds[0].subject;
-                toastr.options = {
-                    closeButton: true,
-                    closeHtml: '<button>×</button>',
-                    closeDuration: 200,
-                    showDuration: 30,
-                    timeOut: 2500,
-                    positionClass: 'toast-bottom-right',
-                    onclick: function() {
-                        window.location.href = inboxUrl;
-                    },
-                    onShown: function() {
-                        $.ajax({
-                            url: apiPath + 'inbox/notified',
-                            method: 'POST',
-                            data: {
-                                inbox_id: inboxId
-                            }
-                        }).done(function(resp) {
-                            for(var i = untoasteds.length-1; i >= 0; i--) { // remove inbox with the last notified inbox_id
-                                if( untoasteds[i].inbox_id == inboxId) untoasteds.splice(i,1);
-                            }
-                        });
-                    }
-                };
-                toastr.info(inboxSubject);
-            }
-        }, 2730);
+        if(notInMessagesPage){
+            setInterval(function() {
+                if (untoasteds.length > 0) {
+                    var inboxId = untoasteds[0].inbox_id,
+                        inboxUrl = untoasteds[0].url,
+                        inboxSubject = untoasteds[0].subject;
+                    toastr.options = {
+                        closeButton: true,
+                        closeHtml: '<button>×</button>',
+                        closeDuration: 200,
+                        showDuration: 30,
+                        timeOut: 2500,
+                        positionClass: 'toast-bottom-right',
+                        onclick: function() {
+                            window.location.href = inboxUrl;
+                        },
+                        onShown: function() {
+                            $.ajax({
+                                url: apiPath + 'inbox/notified',
+                                method: 'POST',
+                                data: {
+                                    inbox_id: inboxId
+                                }
+                            }).done(function(resp) {
+                                for(var i = untoasteds.length-1; i >= 0; i--) { // remove inbox with the last notified inbox_id
+                                    if( untoasteds[i].inbox_id == inboxId) untoasteds.splice(i,1);
+                                }
+                            });
+                        }
+                    };
+                    toastr.info(inboxSubject);
+                }
+            }, 2730);
+        }
 
         $(document).on('hidden.bs.modal', '.modal', function () {
             $('.modal:visible').length && $(document.body).addClass('modal-open');

@@ -583,6 +583,18 @@ class ActivityAPIController extends ControllerAPI
         return $output;
     }
 
+    public function getSections()
+    {
+        $this->checkAuth();
+        foreach (Config::get('orbit.activity_sections') as $code => $name) {
+            $data[] = [compact('code', 'name')];
+        }
+
+        $this->response->data = $data;
+
+        return $this->render(200);
+    }
+
     public function getSignUpStatistics()
     {
         try {
