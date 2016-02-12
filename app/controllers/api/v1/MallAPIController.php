@@ -488,7 +488,6 @@ class MallAPIController extends ControllerAPI
                                     })
                                 ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                                 ->groupBy('merchants.merchant_id');
-                                
 
             // Filter mall by Ids
             OrbitInput::get('merchant_id', function ($merchantIds) use ($malls) {
@@ -1001,22 +1000,22 @@ class MallAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'  => $merchant_id,
+                    'merchant_id'   => $merchant_id,
                     // 'user_id'    => $user_id,
                     'email'         => $email,
                     'status'        => $status,
-                    // 'orid'          => $orid,
+                    // 'orid'       => $orid,
                     'ticket_header' => $ticket_header,
                     'ticket_footer' => $ticket_footer,
                     'url'           => $url,
                     'password'      => $password,
                 ),
                 array(
-                    'merchant_id'  => 'required|orbit.empty.mall',
+                    'merchant_id'   => 'required|orbit.empty.mall',
                     // 'user_id'    => 'orbit.empty.user',
                     'email'         => 'email|email_exists_but_me',
                     'status'        => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
-                    // 'orid'          => 'orid_exists_but_me',
+                    // 'orid'       => 'orid_exists_but_me',
                     'ticket_header' => 'ticket_header_max_length',
                     'ticket_footer' => 'ticket_footer_max_length',
                     'url'           => 'orbit.formaterror.url.web',
@@ -1475,11 +1474,11 @@ class MallAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'=> $merchant_id,
+                    'merchant_id' => $merchant_id,
                     'password'    => $password,
                 ),
                 array(
-                    'merchant_id'=> 'required|orbit.empty.mall|orbit.exists.mall_have_tenant',
+                    'merchant_id' => 'required|orbit.empty.mall|orbit.exists.mall_have_tenant',
                     'password'    => 'required|orbit.access.wrongpassword',
                 )
             );
