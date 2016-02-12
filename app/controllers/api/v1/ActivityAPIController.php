@@ -3049,7 +3049,7 @@ class ActivityAPIController extends ControllerAPI
                     }
                 }
 
-                $longActivityNameWhere = ($activityGroups) ? "AND activity_name_long IN ('".implode("','", $activityValues)."')" : '';
+                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityValues)."')";
             }
             
             $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
