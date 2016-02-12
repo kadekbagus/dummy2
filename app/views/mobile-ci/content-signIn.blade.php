@@ -7,7 +7,7 @@
 <div class="content-signin">
     <div class="slogan-container" id="slogan-container">
         <div class="logged-in-user hide">
-            Welcome, {{$display_name}}
+            {{ Lang::get('mobileci.greetings.welcome') }}, {{$display_name}}
         </div>
         <div class="slogan">
             {{ Config::get('shop.start_button_label') }}
