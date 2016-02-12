@@ -413,7 +413,7 @@ class TenantAPIController extends ControllerAPI
             $contact_person_phone = OrbitInput::post('contact_person_phone');
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
-            $sector_of_activity = OrbitInput::post('sector_of_activity'); 
+            $sector_of_activity = OrbitInput::post('sector_of_activity');
 
             $url = OrbitInput::post('url');
             $box_url = OrbitInput::post('box_url');
@@ -869,7 +869,7 @@ class TenantAPIController extends ControllerAPI
                     'retailer_id'       => 'required|orbit.empty.tenant',
                     'user_id'           => 'orbit.empty.user',
                     'email'             => 'email|email_exists_but_me',
-                    'status'            => 'orbit.empty.tenant_status',
+                    'status'            => 'orbit.empty.tenant_status' . '|orbit.exists.tenant_on_inactive_have_linked',
                     'parent_id'         => 'orbit.empty.mall',
                     'url'               => 'orbit.formaterror.url.web',
                     'masterbox_number'  => 'alpha_num|orbit_unique_verification_number:' . $mall_id . ',' . $retailer_id,
