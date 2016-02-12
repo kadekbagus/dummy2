@@ -970,6 +970,15 @@ class ActivityAPIController extends ControllerAPI
         return $output;
     }
 
+    public function getGroups()
+    {
+        $this->checkAuth();
+
+        $this->response->data = array_keys(Config::get('orbit_activity.groups'));
+
+        return $this->render(200);
+    }
+
     public function getUserGenderStatistics()
     {
         try {
@@ -3193,18 +3202,6 @@ class ActivityAPIController extends ControllerAPI
                 return [$mall->merchant_id];
             }
         }
-    }
-
-    public function getModules()
-    {
-        $this->checkAuth();
-        foreach (Config::get('orbit.activity_modules') as $code => $name) {
-            $data[] = [compact('code', 'name')];
-        }
-
-        $this->response->data = $data;
-
-        return $this->render(200);
     }
 
     public function categorizeUserAgent($ua)
