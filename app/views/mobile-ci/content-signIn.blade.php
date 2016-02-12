@@ -7,7 +7,7 @@
 <div class="content-signin">
     <div class="slogan-container" id="slogan-container">
         <div class="logged-in-user hide">
-            Welcome, {{$display_name}}
+            {{ Lang::get('mobileci.greetings.welcome') }} {{$display_name}}
         </div>
         <div class="slogan">
             {{ Config::get('shop.start_button_label') }}
@@ -23,8 +23,8 @@
             <br/>
             <div class="row">
                 <div class="col-xs-12 text-center">
-                    <em>Not {{$display_name}}?</em>
-                    <a id='not-me'>Click here</a>
+                    <em>{{ Lang::get('mobileci.signin.not') }} {{$display_name}}?&nbsp;</em>
+                    <a id='not-me'>{{ Lang::get('mobileci.signin.click_here') }}</a>
                 </div>
             </div>
         </div>
