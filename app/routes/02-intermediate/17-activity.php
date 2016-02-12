@@ -19,4 +19,4 @@ Route::get('/app/v1/activity/connected-now-statistics', 'IntermediateAuthControl
 Route::get('/app/v1/activity/customer-average-connected-time', 'IntermediateAuthController@Activity_getCustomerAverageConnectedTime');
 Route::get('/app/v1/activity/customer-connected-hourly', 'IntermediateAuthController@Activity_getCustomerConnectedHourly');
 Route::get('/app/v1/activity/crm-summary-report', 'IntermediateAuthController@Activity_getCRMSummaryReport');
-Route::get('/app/v1/activity/sections', 'IntermediateAuthController@Activity_getSections');
+Route::get('/app/v1/activity/modules', 'IntermediateAuthController@Activity_getModules');
