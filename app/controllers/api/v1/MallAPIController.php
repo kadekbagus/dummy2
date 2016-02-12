@@ -163,7 +163,7 @@ class MallAPIController extends ControllerAPI
                 ),
                 array(
                     'name.required' => 'Mall name is required',
-                ),
+                )
             );
 
             Event::fire('orbit.mall.postnewmall.before.validation', array($this, $validator));

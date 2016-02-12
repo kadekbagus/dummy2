@@ -159,7 +159,7 @@ class MallGroupAPIController extends ControllerAPI
                 ),
                 array(
                     'name.required' => 'Mall Group name is required',
-                ),
+                )
             );
 
             Event::fire('orbit.mallgroup.postnewmallgroup.before.validation', array($this, $validator));
