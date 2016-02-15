@@ -146,23 +146,44 @@ class MallAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'    => $email,
-                    'name'     => $name,
-                    'status'   => $status,
-                    'country'  => $country,
-                    'url'      => $url,
-                    'password' => $password,
+                    'name'                     => $name,
+                    'email'                    => $email,
+                    'password'                 => $password,
+                    'address_line1'            => $address_line1,
+                    'city'                     => $city,
+                    'country'                  => $country,
+                    'phone'                    => $phone,
+                    'url'                      => $url,
+                    'contact_person_firstname' => $contact_person_firstname,
+                    'contact_person_lastname'  => $contact_person_lastname,
+                    'contact_person_phone'     => $contact_person_phone,
+                    'contact_person_email'     => $contact_person_email,
+                    'status'                   => $status,
                 ),
                 array(
-                    'email'         => 'required|email|orbit.exists.email',
-                    'name'          => 'required',
-                    'status'        => 'required|orbit.empty.mall_status',
-                    'country'       => 'required|orbit.empty.country',
-                    'url'           => 'orbit.formaterror.url.web',
-                    'password'      => 'required|min:6'
+                    'name'                     => 'required',
+                    'email'                    => 'required|email|orbit.exists.email',
+                    'password'                 => 'required|min:6',
+                    'address_line1'            => 'required',
+                    'city'                     => 'required',
+                    'country'                  => 'required|orbit.empty.country',
+                    'phone'                    => 'required',
+                    'url'                      => 'orbit.formaterror.url.web',
+                    'contact_person_firstname' => 'required',
+                    'contact_person_lastname'  => 'required',
+                    'contact_person_phone'     => 'required',
+                    'contact_person_email'     => 'required|email',
+                    'status'                   => 'required|orbit.empty.mall_status'
                 ),
                 array(
                     'name.required' => 'Mall name is required',
+                    'email.required' => 'The email address is required',
+                    'address_line1.required' => 'The address is required',
+                    'phone.required' => 'The mall phone number is required',
+                    'contact_person_firstname.required' => 'The first name is required',
+                    'contact_person_lastname.required' => 'The last name is required',
+                    'contact_person_phone.required' => 'The phone number 1 is required',
+                    'contact_person_email.required' => 'The email address is required',
                 )
             );
 
