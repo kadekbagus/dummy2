@@ -85,16 +85,18 @@
                 </tr>
                 @if(! empty($prize->winners))
                     @foreach($prize->winners as $winner)
-                        @if ($winner->number->user->user_id === $user->user_id)
-                            <tr>
-                                <td><span style="color:#337AB7">{{ $winner->number->user->getFullName() }}</span></td>
-                                <td><span style="color:#337AB7">{{ $winner->lucky_draw_winner_code }}</span></td>
-                            </tr>
-                        @else
-                            <tr>
-                                <td>{{ $winner->number->user->getFullName() }}</td>
-                                <td>{{ $winner->lucky_draw_winner_code }}</td>
-                            </tr>
+                        @if (isset($winner->number->user))
+                            @if ($winner->number->user->user_id === $user->user_id)
+                                <tr>
+                                    <td><span style="color:#337AB7">{{ $winner->number->user->getFullName() }}</span></td>
+                                    <td><span style="color:#337AB7">{{ $winner->lucky_draw_winner_code }}</span></td>
+                                </tr>
+                            @else
+                                <tr>
+                                    <td>{{ $winner->number->user->getFullName() }}</td>
+                                    <td>{{ $winner->lucky_draw_winner_code }}</td>
+                                </tr>
+                            @endif
                         @endif
                     @endforeach
                 @endif

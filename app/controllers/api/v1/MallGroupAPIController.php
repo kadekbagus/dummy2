@@ -475,7 +475,7 @@ class MallGroupAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $mallgroups = MallGroup::excludeDeleted('merchants')
-                                ->select('merchants.*', DB::raw('count(mall.merchant_id) AS total_mall'))
+                                ->select('merchants.*', DB::raw('count(mall.merchant_id) AS total_mall'), DB::raw("GROUP_CONCAT(`mall`.`name` SEPARATOR ', ') as malls"))
                                 ->leftJoin('merchants AS mall', function($join) {
                                         $join->on(DB::raw('mall.parent_id'), '=', 'merchants.merchant_id')
                                             ->where(DB::raw('mall.status'), '!=', 'deleted')
@@ -485,10 +485,6 @@ class MallGroupAPIController extends ControllerAPI
 
             if (! $this->printExport) {
                 $mallgroups->allowedForUser($user);
-            }
-
-            if ($this->printExport) {
-                $mallgroups->addSelect(DB::raw('(mall.name) AS mall_name'));
             }
 
             // Filter mall by Ids
