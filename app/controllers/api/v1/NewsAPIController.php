@@ -1535,7 +1535,11 @@ class NewsAPIController extends ControllerAPI
             // Filter news by matching news name pattern
             OrbitInput::get('news_name_like', function($newsname) use ($news)
             {
-                $news->where('news.news_name', 'like', "%$newsname%");
+                $news->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                    ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'news_translations.merchant_language_id')
+                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                    ->where('news_translations.news_name', 'like', "%$newsname%")
+                    ->where('languages.name', '=', 'en');
             });
 
             // Filter news by object type
