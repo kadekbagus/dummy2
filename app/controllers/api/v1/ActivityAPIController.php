@@ -2965,6 +2965,7 @@ class ActivityAPIController extends ControllerAPI
 
             $current_mall = OrbitInput::get('current_mall');
             $activityGroups = OrbitInput::get('activity_groups');
+            $activityGroupSearch = OrbitInput::get('activity_group_search');
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -3041,20 +3042,38 @@ class ActivityAPIController extends ControllerAPI
                     group by 1, 2;";
 
             // Filter with activity names (activity_name_long)
-            $longActivityNameWhere = ($activityGroups) ? "AND activity_name_long IN ('".implode("','", $activityGroups)."')" : '';
-            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
+            $longActivityNameWhere = '';
+            $activityValues = [];
+            if ($activityGroups) {
+                foreach ($activityGroups as $activityGroup) {
+                    foreach (Config::get('orbit_activity.groups.'.$activityGroup) as $key) {
+                        $activityValues[] = Config::get('orbit.activity_columns.'.$key);
+                    }
+                }
+            }
 
+            if ($activityGroupSearch) {
+                $column = Config::get('orbit.activity_columns.'.ucwords($activityGroupSearch));
+
+                if ($column) {
+                    $activityValues[] = $column;
+                }
+            }
+
+            if ($activityValues) {
+                $longActivityNameWhere = "AND activity_name_long IN ('".implode("','", $activityValues)."')";
+            }
+            
+            $sql = str_replace('{{where:longActivityName}}', $longActivityNameWhere, $sql);
             $activities = DB::select($sql, array($timezoneOffset, $current_mall, $start_date, $end_date));
 
             $responses = [];
             $records = [];
+            $columns = [];
 
             // sel = selected
             $selActivityGroups = $activityGroups;
             if ($selActivityGroups) {
-
-                $columns = [];
-
                 foreach ($selActivityGroups as $selActivityGroup) {
 
                     // Retrieve from config
@@ -3069,12 +3088,24 @@ class ActivityAPIController extends ControllerAPI
                         $columns = array_merge($columns, [$key => Config::get('orbit.activity_columns.'.$key)]);
                     }
                 }
-
-                $records['columns'] = $columns;
-            } else {
-                // get column name from config
-                $records['columns'] = Config::get('orbit.activity_columns');
             }
+
+            // e.g. 'Email sign up'
+            if ($activityGroupSearch) {
+                $key = ucwords($activityGroupSearch);
+                $column = Config::get('orbit.activity_columns.'.$key);
+
+                if ($column) {
+                    $columns = array_merge($columns, [$key => $column]);
+                }
+            }
+
+            if (!($selActivityGroups || $activityGroupSearch)) {
+                // get column name from config
+                $columns = Config::get('orbit.activity_columns');
+            }
+
+            $records['columns'] = $columns;
 
             foreach ( $dateRange as $key => $value ) {
 
