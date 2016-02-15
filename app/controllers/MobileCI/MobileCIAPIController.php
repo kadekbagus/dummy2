@@ -6472,7 +6472,7 @@ class MobileCIAPIController extends ControllerAPI
                 ->where('merchants.status', 'active')
                 ->where('parent_id', $retailer->merchant_id)
                 ->where(function($q) use ($keyword) {
-                    $q->where('merchant_translations.name', 'like', "%$keyword%")
+                    $q->where('merchants.name', 'like', "%$keyword%")
                         ->orWhere('merchant_translations.description', 'like', "%$keyword%")
                         ->orWhere('keyword', '=', $keyword);
                 })
