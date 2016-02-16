@@ -1146,19 +1146,14 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('country', function($country) use ($updatedmall) {
-                if (empty($country)) {
-                    $updatedmall->country_id = null;
-                    $updatedmall->country = null;
-                } else {
-                    $countryName = '';
-                    $countryObject = Country::find($country);
-                    if (is_object($countryObject)) {
-                        $countryName = $countryObject->name;
-                    }
-
-                    $updatedmall->country_id = $country;
-                    $updatedmall->country = $countryName;
+                $countryName = '';
+                $countryObject = Country::find($country);
+                if (is_object($countryObject)) {
+                    $countryName = $countryObject->name;
                 }
+
+                $updatedmall->country_id = $country;
+                $updatedmall->country = $countryName;
             });
 
             OrbitInput::post('phone', function($phone) use ($updatedmall) {
