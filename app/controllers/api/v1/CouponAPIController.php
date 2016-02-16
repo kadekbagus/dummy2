@@ -2352,7 +2352,7 @@ class CouponAPIController extends ControllerAPI
                 if (empty($etcfrom)) {
                     $etcfrom = 0;
                 }
-                $coupons->havingRaw('estimated between ' . $etcfrom . ' and '. $etcto);
+                $coupons->havingRaw('estimated between ' . floatval(str_replace(',', '', $etcfrom)) . ' and '. floatval(str_replace(',', '', $etcto)));
             });
 
             $from_cs = OrbitInput::get('from_cs', 'no');
