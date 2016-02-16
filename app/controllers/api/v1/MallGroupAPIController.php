@@ -155,6 +155,8 @@ class MallGroupAPIController extends ControllerAPI
                     'contact_person_phone'     => $contact_person_phone,
                     'contact_person_email'     => $contact_person_email,
                     'status'                   => $status,
+                    'start_date_activity'      => $start_date_activity,
+                    'end_date_activity'        => $end_date_activity,
                 ),
                 array(
                     'name'                     => 'required',
@@ -169,7 +171,9 @@ class MallGroupAPIController extends ControllerAPI
                     'contact_person_lastname'  => 'required',
                     'contact_person_phone'     => 'required',
                     'contact_person_email'     => 'required|email',
-                    'status'        => 'required|orbit.empty.mall_status'
+                    'status'                   => 'required|orbit.empty.mall_status',
+                    'start_date_activity'      => 'date_format:Y-m-d H:i:s',
+                    'end_date_activity'        => 'date_format:Y-m-d H:i:s'
                 ),
                 array(
                     'name.required'                     => 'Mall group name is required',
@@ -979,6 +983,8 @@ class MallGroupAPIController extends ControllerAPI
             $contact_person_email = OrbitInput::post('contact_person_email');
             // $user_id = OrbitInput::post('user_id');
             $status = OrbitInput::post('status');
+            $start_date_activity = OrbitInput::post('start_date_activity');
+            $end_date_activity = OrbitInput::post('end_date_activity');
             // $omid = OrbitInput::post('omid');
 
             $validator = Validator::make(
@@ -991,6 +997,8 @@ class MallGroupAPIController extends ControllerAPI
                     'contact_person_email' => $contact_person_email,
                     // 'user_id'           => $user_id,
                     'status'               => $status,
+                    'start_date_activity'  => $start_date_activity,
+                    'end_date_activity'    => $end_date_activity,
                     // 'omid'              => $omid,
                 ),
                 array(
@@ -1001,7 +1009,9 @@ class MallGroupAPIController extends ControllerAPI
                     'url'                  => 'orbit.formaterror.url.web',
                     'contact_person_email' => 'email',
                     // 'user_id'           => 'orbit.empty.user',
-                    'status'               => 'orbit.empty.mall_status'
+                    'status'               => 'orbit.empty.mall_status',
+                    'start_date_activity'  => 'date_format:Y-m-d H:i:s',
+                    'end_date_activity'    => 'date_format:Y-m-d H:i:s'
                     // 'omid'              => 'omid_exists_but_me',
                 ),
                 array(
