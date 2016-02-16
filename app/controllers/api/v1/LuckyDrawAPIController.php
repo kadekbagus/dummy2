@@ -1024,15 +1024,15 @@ class LuckyDrawAPIController extends ControllerAPI
             });
 
             // Filter lucky draw by start date
-            OrbitInput::get('start_date', function($startDate) use ($luckydraws)
+            OrbitInput::get('begin_date', function($beginDate) use ($luckydraws)
             {
-                $luckydraws->where('lucky_draws.start_date', '<=', $startDate);
+                $luckydraws->where('lucky_draws.end_date', '>=', $beginDate);
             });
 
             // Filter lucky draw by end date
             OrbitInput::get('end_date', function($endDate) use ($luckydraws)
             {
-                $luckydraws->where('lucky_draws.end_date', '>=', $endDate);
+                $luckydraws->where('lucky_draws.start_date', '<=', $endDate);
             });
 
             // Filter lucky draw by draw date
