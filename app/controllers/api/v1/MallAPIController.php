@@ -1014,42 +1014,52 @@ class MallAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
-            // $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
+            $merchant_id = OrbitInput::post('merchant_id');
+            $password = OrbitInput::post('password');
+            $country = OrbitInput::post('country');
+            $url = OrbitInput::post('url');
+            $contact_person_email = OrbitInput::post('contact_person_email');
+            // $user_id = OrbitInput::post('user_id');
             $status = OrbitInput::post('status');
+            $parent_id = OrbitInput::post('parent_id');
             // $orid = OrbitInput::post('orid');
             $ticket_header = OrbitInput::post('ticket_header');
             $ticket_footer = OrbitInput::post('ticket_footer');
-            $url = OrbitInput::post('url');
-            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id'   => $merchant_id,
-                    // 'user_id'    => $user_id,
-                    'email'         => $email,
-                    'status'        => $status,
-                    // 'orid'       => $orid,
-                    'ticket_header' => $ticket_header,
-                    'ticket_footer' => $ticket_footer,
-                    'url'           => $url,
-                    'password'      => $password,
+                    'email'                => $email,
+                    'merchant_id'          => $merchant_id,
+                    'password'             => $password,
+                    'country'              => $country,
+                    'url'                  => $url,
+                    'contact_person_email' => $contact_person_email,
+                    // 'user_id'           => $user_id,
+                    'status'               => $status,
+                    'parent_id'            => $parent_id,
+                    // 'orid'              => $orid,
+                    'ticket_header'        => $ticket_header,
+                    'ticket_footer'        => $ticket_footer,
                 ),
                 array(
-                    'merchant_id'   => 'required|orbit.empty.mall',
-                    // 'user_id'    => 'orbit.empty.user',
-                    'email'         => 'email|email_exists_but_me',
-                    'status'        => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
-                    // 'orid'       => 'orid_exists_but_me',
-                    'ticket_header' => 'ticket_header_max_length',
-                    'ticket_footer' => 'ticket_footer_max_length',
-                    'url'           => 'orbit.formaterror.url.web',
-                    'password'      => 'min:6'
+                    'email'                => 'email|email_exists_but_me',
+                    'merchant_id'          => 'required|orbit.empty.mall',
+                    'password'             => 'min:6',
+                    'country'              => 'orbit.empty.country',
+                    'url'                  => 'orbit.formaterror.url.web',
+                    'contact_person_email' => 'email',
+                    // 'user_id'           => 'orbit.empty.user',
+                    'status'               => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    'parent_id'            => 'orbit.empty.mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    // 'orid'              => 'orid_exists_but_me',
+                    'ticket_header'        => 'ticket_header_max_length',
+                    'ticket_footer'        => 'ticket_footer_max_length'
                 ),
                 array(
                    'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
-                   // 'orid_exists_but_me'       => Lang::get('validation.orbit.exists.orid'),
+                   // 'orid_exists_but_me'    => Lang::get('validation.orbit.exists.orid'),
+                   'orbit.empty.mall_status'  => 'Mall status you specified is not found',
                    'ticket_header_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
                    'ticket_footer_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
