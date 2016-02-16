@@ -971,35 +971,43 @@ class MallGroupAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $merchant_id = OrbitInput::post('merchant_id');
-            // $user_id = OrbitInput::post('user_id');
             $email = OrbitInput::post('email');
+            $merchant_id = OrbitInput::post('merchant_id');
+            $password = OrbitInput::post('password');
+            $country = OrbitInput::post('country');
+            $url = OrbitInput::post('url');
+            $contact_person_email = OrbitInput::post('contact_person_email');
+            // $user_id = OrbitInput::post('user_id');
             $status = OrbitInput::post('status');
             // $omid = OrbitInput::post('omid');
-            $url = OrbitInput::post('url');
-            $password = OrbitInput::post('password');
 
             $validator = Validator::make(
                 array(
-                    'merchant_id' => $merchant_id,
-                    // 'user_id'  => $user_id,
-                    'email'       => $email,
-                    'status'      => $status,
-                    // 'omid'        => $omid,
-                    'url'         => $url,
-                    'password'    => $password,
+                    'email'                => $email,
+                    'merchant_id'          => $merchant_id,
+                    'password'             => $password,
+                    'country'              => $country,
+                    'url'                  => $url,
+                    'contact_person_email' => $contact_person_email,
+                    // 'user_id'           => $user_id,
+                    'status'               => $status,
+                    // 'omid'              => $omid,
                 ),
                 array(
-                    'merchant_id' => 'required|orbit.empty.mallgroup',
-                    // 'user_id'  => 'orbit.empty.user',
-                    'email'       => 'email|email_exists_but_me',
-                    'status'      => 'orbit.empty.mall_status',
-                    // 'omid'        => 'omid_exists_but_me',
-                    'url'         => 'orbit.formaterror.url.web',
-                    'password'    => 'min:6'
+                    'email'                => 'email|email_exists_but_me',
+                    'merchant_id'          => 'required|orbit.empty.mallgroup',
+                    'password'             => 'min:6',
+                    'country'              => 'orbit.empty.country',
+                    'url'                  => 'orbit.formaterror.url.web',
+                    'contact_person_email' => 'email',
+                    // 'user_id'           => 'orbit.empty.user',
+                    'status'               => 'orbit.empty.mall_status'
+                    // 'omid'              => 'omid_exists_but_me',
                 ),
                 array(
-                   'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
+                   'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
+                   'contact_person_email.email' => 'Email must be a valid email address',
+                   'orbit.empty.mall_status'    => 'Mall group status you specified is not found',
                    // 'omid_exists_but_me'       => Lang::get('validation.orbit.exists.omid'),
                )
             );

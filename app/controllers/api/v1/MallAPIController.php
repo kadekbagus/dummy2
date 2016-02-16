@@ -1058,11 +1058,12 @@ class MallAPIController extends ControllerAPI
                     'ticket_footer'        => 'ticket_footer_max_length'
                 ),
                 array(
-                   'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
-                   // 'orid_exists_but_me'    => Lang::get('validation.orbit.exists.orid'),
-                   'orbit.empty.mall_status'  => 'Mall status you specified is not found',
-                   'ticket_header_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
-                   'ticket_footer_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
+                   'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
+                   'contact_person_email.email' => 'Email must be a valid email address',
+                   // 'orid_exists_but_me'      => Lang::get('validation.orbit.exists.orid'),
+                   'orbit.empty.mall_status'    => 'Mall status you specified is not found',
+                   'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
+                   'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
             );
 
