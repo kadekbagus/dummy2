@@ -103,23 +103,21 @@ class MallGroupAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $email = OrbitInput::post('email');
             $name = OrbitInput::post('name');
+            $email = OrbitInput::post('email');
             $password = OrbitInput::post('password');
             $description = OrbitInput::post('description');
             $address_line1 = OrbitInput::post('address_line1');
             $address_line2 = OrbitInput::post('address_line2');
             $address_line3 = OrbitInput::post('address_line3');
-            $postal_code = OrbitInput::post('postal_code');
             $city_id = OrbitInput::post('city_id');
             $city = OrbitInput::post('city');
             $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
             $country = OrbitInput::post('country');
             $phone = OrbitInput::post('phone');
             $fax = OrbitInput::post('fax');
-            $start_date_activity = OrbitInput::post('start_date_activity');
-            $end_date_activity = OrbitInput::post('end_date_activity');
-            $status = OrbitInput::post('status');
+            $url = OrbitInput::post('url');
             $currency = OrbitInput::post('currency');
             $currency_symbol = OrbitInput::post('currency_symbol');
             $tax_code1 = OrbitInput::post('tax_code1');
@@ -134,31 +132,55 @@ class MallGroupAPIController extends ControllerAPI
             $contact_person_phone2 = OrbitInput::post('contact_person_phone2');
             $contact_person_email = OrbitInput::post('contact_person_email');
             $sector_of_activity = OrbitInput::post('sector_of_activity');
-            $url = OrbitInput::post('url');
             $masterbox_number = OrbitInput::post('masterbox_number');
             $slavebox_number = OrbitInput::post('slavebox_number');
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $pos_language = OrbitInput::post('pos_language');
+            $end_date_activity = OrbitInput::post('end_date_activity');
+            $start_date_activity = OrbitInput::post('start_date_activity');
+            $status = OrbitInput::post('status');
 
             $validator = Validator::make(
                 array(
-                    'email'                 => $email,
-                    'name'                  => $name,
-                    'status'                => $status,
-                    'country'               => $country,
-                    'url'                   => $url,
-                    'password'              => $password,
+                    'name'                     => $name,
+                    'email'                    => $email,
+                    'password'                 => $password,
+                    'address_line1'            => $address_line1,
+                    'city'                     => $city,
+                    'country'                  => $country,
+                    'phone'                    => $phone,
+                    'url'                      => $url,
+                    'contact_person_firstname' => $contact_person_firstname,
+                    'contact_person_lastname'  => $contact_person_lastname,
+                    'contact_person_phone'     => $contact_person_phone,
+                    'contact_person_email'     => $contact_person_email,
+                    'status'                   => $status,
                 ),
                 array(
-                    'email'         => 'required|email|orbit.exists.email',
-                    'name'          => 'required',
-                    'status'        => 'required|orbit.empty.mall_status',
-                    'country'       => 'required|orbit.empty.country',
-                    'url'           => 'orbit.formaterror.url.web',
-                    'password'      => 'required|min:6'
+                    'name'                     => 'required',
+                    'email'                    => 'required|email|orbit.exists.email',
+                    'password'                 => 'required|min:6',
+                    'address_line1'            => 'required',
+                    'city'                     => 'required',
+                    'country'                  => 'required|orbit.empty.country',
+                    'phone'                    => 'required',
+                    'url'                      => 'orbit.formaterror.url.web',
+                    'contact_person_firstname' => 'required',
+                    'contact_person_lastname'  => 'required',
+                    'contact_person_phone'     => 'required',
+                    'contact_person_email'     => 'required|email',
+                    'status'        => 'required|orbit.empty.mall_status'
                 ),
                 array(
-                    'name.required' => 'Mall Group name is required',
+                    'name.required'                     => 'Mall group name is required',
+                    'email.required'                    => 'Email address is required',
+                    'address_line1.required'            => 'Address is required',
+                    'phone.required'                    => 'Mall group phone number is required',
+                    'contact_person_firstname.required' => 'First name is required',
+                    'contact_person_lastname.required'  => 'Last name is required',
+                    'contact_person_phone.required'     => 'Phone number 1 is required',
+                    'contact_person_email.required'     => 'Email address is required',
+                    'orbit.empty.mall_status'           => 'Mall group status you specified is not found',
                 )
             );
 
