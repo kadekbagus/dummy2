@@ -1713,8 +1713,8 @@ class CampaignReportAPIController extends ControllerAPI
             ->where('created_at', '<', $campaignBeginDateTime)
             ->orderBy('campaign_history_id', 'desc')->first();
 
-        $activationActionId = CampaignHistoryActions::whereActionName('activate')->first()->campaign_history_action_id;
-        $deactivationActionId = CampaignHistoryActions::whereActionName('deactivate')->first()->campaign_history_action_id;
+        $activationActionId = CampaignHistoryAction::whereActionName('activate')->first()->campaign_history_action_id;
+        $deactivationActionId = CampaignHistoryAction::whereActionName('deactivate')->first()->campaign_history_action_id;
 
         if ($campaignLog) {
 

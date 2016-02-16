@@ -2188,12 +2188,12 @@ class EmployeeAPIController extends ControllerAPI
 
             // Filter user by their employee_id_char
             OrbitInput::get('employee_id_char', function ($idChars) use ($users, $joined) {
-                $users->whereIn('employess.employee_id_char', $idChars);
+                $users->whereIn('employees.employee_id_char', $idChars);
             });
 
            // Filter user by their employee_id_char pattern
             OrbitInput::get('employee_id_char_like', function ($idCharLike) use ($users, $joined) {
-                $users->whereIn('employess.employee_id_char', 'like', "%$idCharLike%");
+                $users->where('employees.employee_id_char', 'like', "%$idCharLike%");
             });
 
             // Filter user by their firstname pattern

@@ -1,9 +1,9 @@
 <?php
 
-class CampaignHistoryActions extends Eloquent
+class CampaignHistoryAction extends Eloquent
 {
     /**
-     * CampaignBasePrices Model
+     * CampaignHistoryAction Model
      *
      * @author Shelgi <shelgi@dominopos.com>
      */
@@ -19,7 +19,7 @@ class CampaignHistoryActions extends Eloquent
 
     public static function getIdFromAction($action)
     {
-        return CampaignHistoryActions::where('action_name', '=', $action)->pluck('campaign_history_action_id');
+        return CampaignHistoryAction::where('action_name', '=', $action)->pluck('campaign_history_action_id');
     }
 
 }
