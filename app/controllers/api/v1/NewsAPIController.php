@@ -1600,7 +1600,7 @@ class NewsAPIController extends ControllerAPI
                 if (empty($etcfrom)) {
                     $etcfrom = 0;
                 }
-                $news->havingRaw('estimated between ' . $etcfrom . ' and '. $etcto);
+                $news->havingRaw('estimated between ' . floatval(str_replace(',', '', $etcfrom)) . ' and '. floatval(str_replace(',', '', $etcto)));
             });
 
             // Add new relation based on request
