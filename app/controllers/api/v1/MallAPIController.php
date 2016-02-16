@@ -268,7 +268,11 @@ class MallAPIController extends ControllerAPI
             $newmall->contact_person_email = $contact_person_email;
             $newmall->sector_of_activity = $sector_of_activity;
             $newmall->object_type = $object_type;
-            $newmall->parent_id = $parent_id;
+            if (empty($parent_id)) {
+                $newmall->parent_id = null;
+            } else {
+                $newmall->parent_id = $parent_id;
+            }
             $newmall->url = $url;
             $newmall->masterbox_number = $masterbox_number;
             $newmall->slavebox_number = $slavebox_number;
