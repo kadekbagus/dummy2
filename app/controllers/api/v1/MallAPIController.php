@@ -178,14 +178,15 @@ class MallAPIController extends ControllerAPI
                     'parent_id'                => 'orbit.empty.mallgroup'
                 ),
                 array(
-                    'name.required' => 'Mall name is required',
-                    'email.required' => 'The email address is required',
-                    'address_line1.required' => 'The address is required',
-                    'phone.required' => 'The mall phone number is required',
+                    'name.required'                     => 'Mall name is required',
+                    'email.required'                    => 'The email address is required',
+                    'address_line1.required'            => 'The address is required',
+                    'phone.required'                    => 'The mall phone number is required',
                     'contact_person_firstname.required' => 'The first name is required',
-                    'contact_person_lastname.required' => 'The last name is required',
-                    'contact_person_phone.required' => 'The phone number 1 is required',
-                    'contact_person_email.required' => 'The email address is required',
+                    'contact_person_lastname.required'  => 'The last name is required',
+                    'contact_person_phone.required'     => 'The phone number 1 is required',
+                    'contact_person_email.required'     => 'The email address is required',
+                    'orbit.empty.mall_status'           => 'Mall status you specified is not found',
                 )
             );
 
@@ -467,7 +468,7 @@ class MallAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:merchant_orid,registered_date,merchant_name,merchant_email,merchant_userid,merchant_description,merchantid,merchant_address1,merchant_address2,merchant_address3,merchant_cityid,merchant_city,merchant_countryid,merchant_country,merchant_phone,merchant_fax,merchant_status,merchant_currency,start_date_activity,total_retailer,mallgroup',
+                    'sort_by' => 'in:merchant_orid,registered_date,merchant_name,merchant_email,merchant_userid,merchant_description,merchantid,merchant_address1,merchant_address2,merchant_address3,merchant_cityid,merchant_city,merchant_countryid,merchant_country,merchant_phone,merchant_fax,merchant_status,merchant_currency,start_date_activity,end_date_activity,total_retailer,mallgroup',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.merchant_sortby'),
@@ -1057,11 +1058,12 @@ class MallAPIController extends ControllerAPI
                     'ticket_footer'        => 'ticket_footer_max_length'
                 ),
                 array(
-                   'email_exists_but_me'      => Lang::get('validation.orbit.exists.email'),
-                   // 'orid_exists_but_me'    => Lang::get('validation.orbit.exists.orid'),
-                   'orbit.empty.mall_status'  => 'Mall status you specified is not found',
-                   'ticket_header_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
-                   'ticket_footer_max_length' => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
+                   'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
+                   'contact_person_email.email' => 'Email must be a valid email address',
+                   // 'orid_exists_but_me'      => Lang::get('validation.orbit.exists.orid'),
+                   'orbit.empty.mall_status'    => 'Mall status you specified is not found',
+                   'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
+                   'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
             );
 
