@@ -160,6 +160,8 @@ class MallAPIController extends ControllerAPI
                     'contact_person_email'     => $contact_person_email,
                     'status'                   => $status,
                     'parent_id'                => $parent_id,
+                    'start_date_activity'      => $start_date_activity,
+                    'end_date_activity'        => $end_date_activity,
                 ),
                 array(
                     'name'                     => 'required',
@@ -175,7 +177,9 @@ class MallAPIController extends ControllerAPI
                     'contact_person_phone'     => 'required',
                     'contact_person_email'     => 'required|email',
                     'status'                   => 'required|orbit.empty.mall_status',
-                    'parent_id'                => 'orbit.empty.mallgroup'
+                    'parent_id'                => 'orbit.empty.mallgroup',
+                    'start_date_activity'      => 'date_format:Y-m-d H:i:s',
+                    'end_date_activity'        => 'date_format:Y-m-d H:i:s'
                 ),
                 array(
                     'name.required'                     => 'Mall name is required',
@@ -1027,6 +1031,8 @@ class MallAPIController extends ControllerAPI
             // $orid = OrbitInput::post('orid');
             $ticket_header = OrbitInput::post('ticket_header');
             $ticket_footer = OrbitInput::post('ticket_footer');
+            $start_date_activity = OrbitInput::post('start_date_activity');
+            $end_date_activity = OrbitInput::post('end_date_activity');
 
             $validator = Validator::make(
                 array(
@@ -1042,6 +1048,8 @@ class MallAPIController extends ControllerAPI
                     // 'orid'              => $orid,
                     'ticket_header'        => $ticket_header,
                     'ticket_footer'        => $ticket_footer,
+                    'start_date_activity'      => $start_date_activity,
+                    'end_date_activity'        => $end_date_activity,
                 ),
                 array(
                     'email'                => 'email|email_exists_but_me',
@@ -1055,7 +1063,9 @@ class MallAPIController extends ControllerAPI
                     'parent_id'            => 'orbit.empty.mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     // 'orid'              => 'orid_exists_but_me',
                     'ticket_header'        => 'ticket_header_max_length',
-                    'ticket_footer'        => 'ticket_footer_max_length'
+                    'ticket_footer'        => 'ticket_footer_max_length',
+                    'start_date_activity'      => 'date_format:Y-m-d H:i:s',
+                    'end_date_activity'        => 'date_format:Y-m-d H:i:s'
                 ),
                 array(
                    'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
