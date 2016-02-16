@@ -571,7 +571,7 @@ class CouponAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
             //save campaign price
-            $campaignbaseprice = CampaignBasePrices::where('merchant_id', '=', $newcoupon->merchant_id)
+            $campaignbaseprice = CampaignBasePrice::where('merchant_id', '=', $newcoupon->merchant_id)
                                             ->where('campaign_type', '=', 'coupon')
                                             ->first();
 
@@ -593,8 +593,8 @@ class CouponAPIController extends ControllerAPI
             if ($status === 'inactive') {
                 $actionstatus = 'deactivate';
             }
-            $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
-            $addtenantid = CampaignHistoryActions::getIdFromAction('add_tenant');
+            $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
+            $addtenantid = CampaignHistoryAction::getIdFromAction('add_tenant');
 
             // save campaign history status
             $campaignhistory = new CampaignHistory();
@@ -965,7 +965,7 @@ class CouponAPIController extends ControllerAPI
                 $deactivate = substr($enddatedb, 0, 10) . " " . '23:59:59';
                 $utcenddatedb = Carbon::createFromFormat('Y-m-d H:i:s', $deactivate, $mall->timezone->timezone_name);
                 $utcenddatedb->setTimezone('UTC');
-                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
@@ -985,7 +985,7 @@ class CouponAPIController extends ControllerAPI
                 if ($status === 'inactive') {
                     $actionstatus = 'deactivate';
                 }
-                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
@@ -1005,7 +1005,7 @@ class CouponAPIController extends ControllerAPI
                 if ($status === 'inactive') {
                     $actionstatus = 'deactivate';
                 }
-                $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
                 $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
                 // campaign history status
                 if (! empty($rowcost)) {
@@ -1027,7 +1027,7 @@ class CouponAPIController extends ControllerAPI
                     if ($statusdb === 'inactive') {
                         $actionstatus = 'deactivate';
                     }
-                    $activeid = CampaignHistoryActions::getIdFromAction($actionstatus);
+                    $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
                     $rowcost = CampaignHistory::getRowCost($promotion_id, $status, $action, $now, TRUE)->first();
                     // campaign history status
                     if (! empty($rowcost)) {
@@ -1049,7 +1049,7 @@ class CouponAPIController extends ControllerAPI
             $addtenant = array_diff($retailernew, $retailerdb);
             if (! empty($removetenant)) {
                 $actionhistory = 'delete';
-                $addtenantid = CampaignHistoryActions::getIdFromAction('delete_tenant');
+                $addtenantid = CampaignHistoryAction::getIdFromAction('delete_tenant');
                 //save histories
                 foreach ($removetenant as $retailer_id) {
                     // insert tenant/merchant to campaign history
@@ -1073,7 +1073,7 @@ class CouponAPIController extends ControllerAPI
             }
             if (! empty($addtenant)) {
                 $actionhistory = 'add';
-                $addtenantid = CampaignHistoryActions::getIdFromAction('add_tenant');
+                $addtenantid = CampaignHistoryAction::getIdFromAction('add_tenant');
                 //save histories
                 foreach ($addtenant as $retailer_id) {
                     // insert tenant/merchant to campaign history

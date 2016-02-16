@@ -1,9 +1,9 @@
 <?php
 
-class CampaignBasePrices extends Eloquent
+class CampaignBasePrice extends Eloquent
 {
     /**
-     * CampaignBasePrices Model
+     * CampaignBasePrice Model
      *
      * @author Shelgi <shelgi@dominopos.com>
      */

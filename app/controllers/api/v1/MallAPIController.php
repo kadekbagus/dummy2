@@ -2097,7 +2097,7 @@ class MallAPIController extends ControllerAPI
             $this->registerCustomValidation();
             $merchant_id = OrbitInput::get('merchant_id', null);
 
-            $base_price = CampaignBasePrices::where('merchant_id', '=', $merchant_id);
+            $base_price = CampaignBasePrice::where('merchant_id', '=', $merchant_id);
 
             // Filter base price by campaign_type
             OrbitInput::get('campaign_type', function ($campaign_type) use ($base_price) {
