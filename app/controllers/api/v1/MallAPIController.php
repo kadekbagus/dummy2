@@ -178,14 +178,15 @@ class MallAPIController extends ControllerAPI
                     'parent_id'                => 'orbit.empty.mallgroup'
                 ),
                 array(
-                    'name.required' => 'Mall name is required',
-                    'email.required' => 'The email address is required',
-                    'address_line1.required' => 'The address is required',
-                    'phone.required' => 'The mall phone number is required',
+                    'name.required'                     => 'Mall name is required',
+                    'email.required'                    => 'The email address is required',
+                    'address_line1.required'            => 'The address is required',
+                    'phone.required'                    => 'The mall phone number is required',
                     'contact_person_firstname.required' => 'The first name is required',
-                    'contact_person_lastname.required' => 'The last name is required',
-                    'contact_person_phone.required' => 'The phone number 1 is required',
-                    'contact_person_email.required' => 'The email address is required',
+                    'contact_person_lastname.required'  => 'The last name is required',
+                    'contact_person_phone.required'     => 'The phone number 1 is required',
+                    'contact_person_email.required'     => 'The email address is required',
+                    'orbit.empty.mall_status'           => 'Mall status you specified is not found',
                 )
             );
 
