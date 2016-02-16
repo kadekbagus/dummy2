@@ -159,6 +159,7 @@ class MallAPIController extends ControllerAPI
                     'contact_person_phone'     => $contact_person_phone,
                     'contact_person_email'     => $contact_person_email,
                     'status'                   => $status,
+                    'parent_id'                => $parent_id,
                 ),
                 array(
                     'name'                     => 'required',
@@ -173,7 +174,8 @@ class MallAPIController extends ControllerAPI
                     'contact_person_lastname'  => 'required',
                     'contact_person_phone'     => 'required',
                     'contact_person_email'     => 'required|email',
-                    'status'                   => 'required|orbit.empty.mall_status'
+                    'status'                   => 'required|orbit.empty.mall_status',
+                    'parent_id'                => 'orbit.empty.mallgroup'
                 ),
                 array(
                     'name.required' => 'Mall name is required',
@@ -1668,6 +1670,21 @@ class MallAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.mall', $mall);
+
+            return TRUE;
+        });
+
+        // Check the existance of parent id
+        Validator::extend('orbit.empty.mallgroup', function ($attribute, $value, $parameters) {
+            $mallgroup = MallGroup::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->first();
+
+            if (empty($mallgroup)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.mallgroup', $mallgroup);
 
             return TRUE;
         });
