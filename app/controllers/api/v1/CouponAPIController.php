@@ -2346,6 +2346,14 @@ class CouponAPIController extends ControllerAPI
                 });
             });
 
+            // Filter news by estimated total cost
+            OrbitInput::get('etc_from', function ($etcfrom) use ($news) {
+                $etcto = OrbitInput::get('etc_to');
+                if (empty($etcto)) {
+                    $news->havingRaw('estimated > ' . floatval(str_replace(',', '', $etcfrom)));
+                }
+            });
+
             // Filter coupon by estimated total cost
             OrbitInput::get('etc_to', function ($etcto) use ($coupons) {
                 $etcfrom = OrbitInput::get('etc_from');
