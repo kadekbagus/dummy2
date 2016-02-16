@@ -1146,14 +1146,19 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('country', function($country) use ($updatedmall) {
-                $countryName = '';
-                $countryObject = Country::find($country);
-                if (is_object($countryObject)) {
-                    $countryName = $countryObject->name;
-                }
+                if (empty($country)) {
+                    $updatedmall->country_id = null;
+                    $updatedmall->country = null;
+                } else {
+                    $countryName = '';
+                    $countryObject = Country::find($country);
+                    if (is_object($countryObject)) {
+                        $countryName = $countryObject->name;
+                    }
 
-                $updatedmall->country_id = $country;
-                $updatedmall->country = $countryName;
+                    $updatedmall->country_id = $country;
+                    $updatedmall->country = $countryName;
+                }
             });
 
             OrbitInput::post('phone', function($phone) use ($updatedmall) {
@@ -1237,7 +1242,11 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('parent_id', function($parent_id) use ($updatedmall) {
-                $updatedmall->parent_id = $parent_id;
+                if (empty($parent_id)) {
+                    $updatedmall->parent_id = null;
+                } else {
+                    $updatedmall->parent_id = $parent_id;
+                }
             });
 
             OrbitInput::post('url', function($url) use ($updatedmall) {
