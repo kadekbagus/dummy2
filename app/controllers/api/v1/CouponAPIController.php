@@ -2154,7 +2154,11 @@ class CouponAPIController extends ControllerAPI
             // Filter coupon by matching promotion name pattern
             OrbitInput::get('promotion_name_like', function($promotionName) use ($coupons)
             {
-                $coupons->where('promotions.promotion_name', 'like', "%$promotionName%");
+                $coupons->leftJoin('promotion_translations', 'promotion_translations.promotion_id', '=', 'promotions.promotion_id')
+                    ->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'promotion_translations.merchant_language_id')
+                    ->leftJoin('languages', 'languages.language_id', '=', 'merchant_languages.language_id')
+                    ->where('promotions.promotion_name', 'like', "%$promotionName%")
+                    ->where('languages.name', '=', 'en');
             });
 
             // Filter coupon by promotion type

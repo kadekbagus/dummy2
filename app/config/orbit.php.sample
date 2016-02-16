@@ -131,6 +131,9 @@ return array(
             // if TRUE then winner can have another same prize on the same campaign
             'more_than_one_single_prize_enabled' => TRUE,
         ),
+
+        // no existing lucky draw custom message
+        'custom_message' => '',
     ),
 
     // Default Pagination
@@ -2793,24 +2796,6 @@ return array(
         'Click News Pop Up'                            => 'Click News Pop Up',
         'Search'                                       => 'Search',
     ),
-
-    // Key = see 'module_name' in 'activities' table
-    // Value = for the module names in the UI
-    'activity_modules' => [
-        'Coupon'        => 'Coupons',
-        'News'          => 'News',
-        'Promotion'     => 'Promotions',
-        'LuckDraw'      => 'Lucky draws',
-
-        // not fixed
-        // 'PopUp'        => 'Pop ups',
-
-        'Widget'        => 'Widgets',
-        'Tenant'        => 'Tenants',
-
-        // not fixed
-        // 'Notification'  => 'Notifications',
-    ],
 
     'menus' => array(
         'mall' => array(

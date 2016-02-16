@@ -20,7 +20,7 @@ body.bg {
 @else
     background: url('{{ asset('mobile-ci/images/skelatal_weave.png') }}');
 @endif
-    background-size: 100% 100%;
+    background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     position: absolute;

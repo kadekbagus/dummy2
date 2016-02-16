@@ -2171,6 +2171,16 @@ class EmployeeAPIController extends ControllerAPI
                 $users->where('users.username', 'like', "%$username%");
             });
 
+            // Filter user by user email
+            OrbitInput::get('user_email', function ($data) use ($users) {
+                $users->whereIn('users.user_email', $data);
+            });
+
+            // Filter user by matching user email pattern
+            OrbitInput::get('user_email_like', function ($data) use ($users) {
+                $users->where('users.user_email', 'like', "%$data%");
+            });
+
             // Filter user by their firstname
             OrbitInput::get('firstnames', function ($firstname) use ($users) {
                 $users->whereIn('users.user_firstname', $firstname);
@@ -2201,6 +2211,11 @@ class EmployeeAPIController extends ControllerAPI
                 $users->where('users.user_lastname', 'like', "%$firstname%");
             });
 
+            // Filter retailer by name_like (first_name last_name)
+            OrbitInput::get('full_name_like', function($data) use ($users) {
+                $users->where(DB::raw('CONCAT(COALESCE(user_firstname, ""), " ", COALESCE(user_lastname, ""))'), 'like', "%$data%");
+            });
+
             // Filter user by their status
             OrbitInput::get('statuses', function ($status) use ($users) {
                 $status = (array)$status;
@@ -2227,6 +2242,47 @@ class EmployeeAPIController extends ControllerAPI
                 });
             } else {
                 $users->whereIn('roles.role_name', ['mall admin', 'mall customer service']);
+            }
+
+            // Filter user by their role name
+            if (! is_null(OrbitInput::get('role_name_like', NULL))) {
+                OrbitInput::get('role_name_like', function ($data) use ($users) {
+                    $portal = null;
+                    $notfound = TRUE;
+                    $searchable_roles_mall = ['mall admin', 'mall customer service'];
+                    $searchable_roles_pmp = ['campaign owner', 'campaign employee'];
+                    if (in_array($role, $searchable_roles_mall)) { // determine the where the user came from
+                        $portal = 'mall';
+                    } elseif (in_array($role, $searchable_roles_pmp)) {
+                        $portal = 'pmp';
+                    } else {
+                        $portal = 'mall';
+                    }
+
+                    if ($portal == 'pmp') { // search only roles on pmp
+                        foreach ($searchable_roles_pmp as $searchable_role_pmp) {
+                            if (stripos($data, $searchable_role_pmp) !== FALSE) {
+                                $notfound = $notfound && FALSE;
+                            }
+                        }
+                        if (! $notfound) {
+                            $users->where('roles.role_name', 'like', "%$data%");
+                        } else {
+                            $users->whereIsNull('roles.role_name');
+                        }
+                    } else {
+                        foreach ($searchable_roles_mall as $searchable_role_mall) {
+                            if (stripos($data, $searchable_role_mall) !== FALSE) {
+                                $notfound = $notfound && FALSE;
+                            }
+                        }
+                        if (! $notfound) {
+                            $users->where('roles.role_name', 'like', "%$data%");
+                        } else {
+                            $users->whereIsNull('roles.role_name');
+                        }
+                    }
+                });
             }
 
             // Clone the query builder which still does not include the take,
