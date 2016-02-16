@@ -227,6 +227,12 @@ class MobileCIAPIController extends ControllerAPI
 
             $alternateLanguage = $this->getAlternateMerchantLanguage($user, $retailer);
 
+            $widget_flags = new stdclass();
+            $widget_flags->enable_coupon = $this->getObjFromArray($retailer->settings, 'enable_coupon');
+            $widget_flags->enable_coupon_widget = $this->getObjFromArray($retailer->settings, 'enable_coupon_widget');
+            $widget_flags->enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
+            $widget_flags->enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
+
             $widgets = Widget::with('media')
                 ->active()
                 ->where('merchant_id', $retailer->merchant_id)
@@ -235,8 +241,17 @@ class MobileCIAPIController extends ControllerAPI
                     function ($q) use ($retailer) {
                         $q->where('retailer_id', $retailer->merchant_id);
                     }
-                )
-                ->orderBy('widget_order', 'ASC')
+                );
+
+            if ($widget_flags->enable_lucky_draw_widget->setting_value !== 'true') {
+                $widgets->where('widget_type', '<>', 'lucky_draw');
+            }
+
+            if ($widget_flags->enable_coupon_widget->setting_value !== 'true') {
+                $widgets->where('widget_type', '<>', 'coupon');
+            }
+
+            $widgets = $widgets->orderBy('widget_order', 'ASC')
                 ->groupBy('widget_type')
                 ->take(5)
                 ->get();
@@ -560,12 +575,6 @@ class MobileCIAPIController extends ControllerAPI
                     $widget->url = 'luckydraws';
                 }
             }
-
-            $widget_flags = new stdclass();
-            $widget_flags->enable_coupon = $this->getObjFromArray($retailer->settings, 'enable_coupon');
-            $widget_flags->enable_coupon_widget = $this->getObjFromArray($retailer->settings, 'enable_coupon_widget');
-            $widget_flags->enable_lucky_draw = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw');
-            $widget_flags->enable_lucky_draw_widget = $this->getObjFromArray($retailer->settings, 'enable_lucky_draw_widget');
 
             $languages = $this->getListLanguages($retailer);
 
