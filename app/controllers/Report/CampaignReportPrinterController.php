@@ -83,20 +83,39 @@ class CampaignReportPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)', $totalSpending, '', '', '','');
 
                 // Filtering
-                if($startDate != '' && $endDate != ''){
+                if ($startDate != '' && $endDate != ''){
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'), '', '', '','');
                 }
 
                 if ($campaignName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Name', htmlentities($campaignName), '', '', '','');
-                } elseif($campaignType != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type', htmlentities($campaignType), '', '', '','');
-                } elseif($tenantName != '') {
+                }
+
+                if ( is_array($campaignType) && count($campaignType) > 0) {
+                    $campaignTypeString = '';
+                    foreach ($campaignType as $key => $valCampaignType){
+                        $campaignTypeString .= $valCampaignType . ', ';
+                    }
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Campaign Type', htmlentities(rtrim($campaignTypeString, ', ')), '', '', '','');
+                }
+
+                if ($tenantName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant', htmlentities($tenantName), '', '', '','');
-                } elseif($mallName != '') {
+                }
+
+                if ($mallName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall', htmlentities($mallName), '', '', '','');
-                } elseif($status != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', $status, '', '', '','');
+                }
+
+                if ( is_array($status) && count($status) > 0) {
+                    $statusString = '';
+                    foreach ($status as $key => $valstatus){
+                        $statusString .= $valstatus . ', ';
+                    }
+                    echo htmlentities(rtrim($statusString, ', '));
+
+
+                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', htmlentities(rtrim($statusString, ', ')), '', '', '','');
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
@@ -202,7 +221,9 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 if ($tenantName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant', htmlentities($tenantName), '', '', '','');
-                } elseif($mallName != '') {
+                }
+
+                if ($mallName != '') {
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by  Mall', htmlentities($mallName), '', '', '','');
                 }
 
