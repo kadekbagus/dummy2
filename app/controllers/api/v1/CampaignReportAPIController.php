@@ -1007,6 +1007,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Grouping after filter
             $campaign->groupBy('campaign_date');
 
+
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
             $__campaign = clone $campaign;
@@ -1020,18 +1021,11 @@ class CampaignReportAPIController extends ControllerAPI
 
             $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
 
-            // Get total page views
-            $totalPageViews = round($total[0]->campaign_pages_views, 2);
-
-            // Get total popup views
-            $totalPopupViews = round($total[0]->popup_views, 2);
-
-            // Get total estimate
-            $totalPopupClicks = round($total[0]->popup_clicks, 2);
-
-            // Get total spending
-            $totalSpending = $total[0]->spending;
-
+            // Get info total bottom page
+            $totalPageViews = round(isset($total[0]->campaign_pages_views)?$total[0]->campaign_pages_views:0, 2);
+            $totalPopupViews = round(isset($total[0]->popup_views)?$total[0]->popup_views:0, 2);
+            $totalPopupClicks = round(isset($total[0]->popup_clicks)?$total[0]->popup_clicks:0, 2);
+            $totalSpending = isset($total[0]->spending)?$total[0]->spending:0;
 
             $_campaign->select('campaign_date');
 
@@ -1192,7 +1186,7 @@ class CampaignReportAPIController extends ControllerAPI
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = 'null';
+            $this->response->data = null;
         }
 
         $output = $this->render($httpCode);
