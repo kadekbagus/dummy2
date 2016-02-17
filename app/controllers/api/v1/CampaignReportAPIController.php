@@ -169,12 +169,11 @@ class CampaignReportAPIController extends ControllerAPI
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
-                COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
-                COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
+                total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
+                total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'news', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                )
-                as spending,
+                ) as spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -194,9 +193,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status"))
-                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         // Join for get mall name
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Join for get total tenant percampaign
@@ -213,23 +210,23 @@ class CampaignReportAPIController extends ControllerAPI
                                                     om.name,
                                                     DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
                                                     DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
-                                                FROM orb_campaign_histories och
-                                                LEFT JOIN orb_campaign_history_actions ocha
+                                                FROM {$tablePrefix}campaign_histories och
+                                                LEFT JOIN {$tablePrefix}campaign_history_actions ocha
                                                 ON och.campaign_history_action_id = ocha.campaign_history_action_id
-                                                LEFT JOIN orb_merchants om
+                                                LEFT JOIN {$tablePrefix}merchants om
                                                 ON om.merchant_id = och.campaign_external_value
-                                                LEFT JOIN orb_news j_on
+                                                LEFT JOIN {$tablePrefix}news j_on
                                                 ON j_on.news_id = och.campaign_id
                                                 WHERE
                                                     och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
                                                     AND och.campaign_type = 'news'
-                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= end_date
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                                 ORDER BY och.created_at DESC
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
                                         case when action_name = 'delete_tenant'
-                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < end_date
+                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                         then action_name != 'delete_tenant' else true end
                                     )
                                     group by campaign_id
@@ -247,12 +244,11 @@ class CampaignReportAPIController extends ControllerAPI
             $promotions = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id, news_name AS campaign_name, {$tablePrefix}news.object_type AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 merchants2.name AS mall_name, {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
-                COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price AS daily,
-                COUNT({$tablePrefix}news_merchant.news_merchant_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
+                total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
+                total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
                 (
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'promotion', {$tablePrefix}news.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                )
-                as spending,
+                ) as spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -272,9 +268,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}news.status"))
-                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->leftJoin('merchants as merchants2', 'news.mall_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
                         ->leftJoin(DB::raw("
@@ -290,23 +284,23 @@ class CampaignReportAPIController extends ControllerAPI
                                                     om.name,
                                                     DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
                                                     DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
-                                                FROM orb_campaign_histories och
-                                                LEFT JOIN orb_campaign_history_actions ocha
+                                                FROM {$tablePrefix}campaign_histories och
+                                                LEFT JOIN {$tablePrefix}campaign_history_actions ocha
                                                 ON och.campaign_history_action_id = ocha.campaign_history_action_id
-                                                LEFT JOIN orb_merchants om
+                                                LEFT JOIN {$tablePrefix}merchants om
                                                 ON om.merchant_id = och.campaign_external_value
-                                                LEFT JOIN orb_news j_on
+                                                LEFT JOIN {$tablePrefix}news j_on
                                                 ON j_on.news_id = och.campaign_id
                                                 WHERE
                                                     och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
                                                     AND och.campaign_type = 'promotion'
-                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= end_date
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                                 ORDER BY och.created_at DESC
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
                                         case when action_name = 'delete_tenant'
-                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < end_date
+                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                         then action_name != 'delete_tenant' else true end
                                     )
                                     group by campaign_id
@@ -325,12 +319,11 @@ class CampaignReportAPIController extends ControllerAPI
             $coupons = DB::table('promotions')->selectraw(DB::raw("{$tablePrefix}promotions.promotion_id AS campaign_id, promotion_name AS campaign_name, IF(1=1,'coupon', '') AS campaign_type,
                 IFNULL(total_tenant, 0) AS total_tenant,
                 merchants2.name AS mall_name, {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
-                COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price AS daily,
-                COUNT({$tablePrefix}promotion_retailer.promotion_retailer_id) * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
+                total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
+                total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
                 (
                     SELECT IFNULL(fnc_campaign_cost(campaign_id, 'coupon', {$tablePrefix}promotions.begin_date, {$this->quote($now)}, {$this->quote($timezoneOffset)}), 0.00) AS campaign_total_cost
-                )
-                as spending,
+                ) as spending,
                 (
                     select count(campaign_page_view_id) as value
                     from {$tablePrefix}campaign_page_views
@@ -350,9 +343,7 @@ class CampaignReportAPIController extends ControllerAPI
                     and location_id = {$this->quote($current_mall)}
                 ) as popup_clicks,
                 {$tablePrefix}promotions.status"))
-                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
-                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                         ->leftJoin('merchants as merchants2', 'promotions.merchant_id', '=', DB::raw('merchants2.merchant_id'))
                         // Joint for get total tenant percampaign
                         ->leftJoin(DB::raw("
@@ -368,23 +359,23 @@ class CampaignReportAPIController extends ControllerAPI
                                                     om.name,
                                                     DATE_FORMAT(j_on.end_date, '%Y-%m-%d') AS end_date,
                                                     DATE_FORMAT(och.created_at, '%Y-%m-%d %H:00:00') AS history_created_date
-                                                FROM orb_campaign_histories och
-                                                LEFT JOIN orb_campaign_history_actions ocha
+                                                FROM {$tablePrefix}campaign_histories och
+                                                LEFT JOIN {$tablePrefix}campaign_history_actions ocha
                                                 ON och.campaign_history_action_id = ocha.campaign_history_action_id
-                                                LEFT JOIN orb_merchants om
+                                                LEFT JOIN {$tablePrefix}merchants om
                                                 ON om.merchant_id = och.campaign_external_value
-                                                LEFT JOIN orb_promotions j_on
+                                                LEFT JOIN {$tablePrefix}promotions j_on
                                                 ON j_on.promotion_id = och.campaign_id
                                                 WHERE
                                                     och.campaign_history_action_id IN ({$this->quote($idAddTenant)}, {$this->quote($idDeleteTenant)})
                                                     AND och.campaign_type = 'coupon'
-                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', '+08:00'), '%Y-%m-%d') <= end_date
+                                                    AND DATE_FORMAT(CONVERT_TZ(och.created_at, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') <= IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                                 ORDER BY och.created_at DESC
                                             ) as A
                                         group by campaign_id, campaign_external_value) as B
                                     WHERE (
                                         case when action_name = 'delete_tenant'
-                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', '+08:00'), '%Y-%m-%d') < end_date
+                                        and DATE_FORMAT(CONVERT_TZ(history_created_date, '+00:00', {$this->quote($timezoneOffset)}), '%Y-%m-%d') < IF( DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d') < end_date, DATE_FORMAT({$this->quote($now)}, '%Y-%m-%d'), end_date )
                                         then action_name != 'delete_tenant' else true end
                                     )
                                     group by campaign_id
@@ -1722,8 +1713,8 @@ class CampaignReportAPIController extends ControllerAPI
             ->where('created_at', '<', $campaignBeginDateTime)
             ->orderBy('campaign_history_id', 'desc')->first();
 
-        $activationActionId = CampaignHistoryActions::whereActionName('activate')->first()->campaign_history_action_id;
-        $deactivationActionId = CampaignHistoryActions::whereActionName('deactivate')->first()->campaign_history_action_id;
+        $activationActionId = CampaignHistoryAction::whereActionName('activate')->first()->campaign_history_action_id;
+        $deactivationActionId = CampaignHistoryAction::whereActionName('deactivate')->first()->campaign_history_action_id;
 
         if ($campaignLog) {
 

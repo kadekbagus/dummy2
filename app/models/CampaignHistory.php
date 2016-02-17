@@ -12,9 +12,9 @@ class CampaignHistory extends Eloquent
 
     protected $primaryKey = 'campaign_history_id';
 
-    public function campaignHistoryActions()
+    public function campaignHistoryAction()
     {
-        return $this->belongsTo('CampaignHistoryActions', 'campaign_history_action_id', 'campaign_history_action_id');
+        return $this->belongsTo('CampaignHistoryAction', 'campaign_history_action_id', 'campaign_history_action_id');
     }
 
     public static function getRowCost($campaignid, $status, $action, $now, $iscoupon)

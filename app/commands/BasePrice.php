@@ -49,13 +49,13 @@ class BasePrice extends Command {
         $type = $this->option('type');
         $price = $this->option('price');
 
-        $baseprice = CampaignBasePrices::where('merchant_id', $merchantId)
+        $baseprice = CampaignBasePrice::where('merchant_id', $merchantId)
                      ->where('campaign_type', $type)
                      ->first();
 
         if (empty($baseprice)) {
             // Insert
-            $campaignbaseprice = new CampaignBasePrices();
+            $campaignbaseprice = new CampaignBasePrice();
             $campaignbaseprice->merchant_id = $merchantId;
             $campaignbaseprice->price = $price;
             $campaignbaseprice->campaign_type = $type;
