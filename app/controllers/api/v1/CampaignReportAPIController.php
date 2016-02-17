@@ -509,6 +509,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Make union result subquery
             $campaign = DB::table(DB::raw('(' . $sql . ') as a'));
 
+
             // Filter by campaign name
             OrbitInput::get('campaign_name', function($campaign_name) use ($campaign) {
                 $campaign->where('campaign_name', 'like', "%$campaign_name%");
@@ -565,7 +566,20 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
-            $__campaign = clone $campaign;
+
+            // Need to sub select after group by
+            $_campaign_sql = $_campaign->toSql();
+
+            //Cek exist binding
+            if (count($campaign->getBindings()) > 0) {
+                foreach($campaign->getBindings() as $binding)
+                {
+                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $_campaign_sql = preg_replace('/\?/', $value, $_campaign_sql, 1);
+                }
+            }
+
+            $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
                 'SUM(page_views) AS page_views',
@@ -574,7 +588,7 @@ class CampaignReportAPIController extends ControllerAPI
                 'SUM(spending) AS spending'
             );
 
-            $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
+            $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
 
             // Get total page views
             $totalPageViews = isset($total[0]->page_views)?$total[0]->page_views:0;
