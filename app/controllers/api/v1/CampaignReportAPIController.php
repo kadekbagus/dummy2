@@ -535,7 +535,7 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             // Filter by range date
-            if($start_date != '' && $end_date != ''){
+            if ($start_date != '' && $end_date != ''){
 
                 // Convert UTC to Mall Time
                 $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
@@ -617,7 +617,7 @@ class CampaignReportAPIController extends ControllerAPI
             // If request page from export (print/csv), showing without page limitation
             $export = OrbitInput::get('export');
 
-            if(!isset($export)){
+            if (!isset($export)){
                 $campaign->take($take);
                 $campaign->skip($skip);
             }
@@ -1000,7 +1000,7 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaign->where('tenant_name', 'like', "%$tenant_name%");
             });
 
-            if($start_date != '' && $end_date != ''){
+            if ($start_date != '' && $end_date != ''){
                 $campaign->whereRaw("campaign_date between ? and ?", [$start_date, $end_date]);
             }
 
@@ -1056,7 +1056,7 @@ class CampaignReportAPIController extends ControllerAPI
             // If request page from export (print/csv), showing without page limitation
             $export = OrbitInput::get('export');
 
-            if(!isset($export)){
+            if (!isset($export)){
                 $campaign->take($take);
                 $campaign->skip($skip);
             }
@@ -1732,8 +1732,8 @@ class CampaignReportAPIController extends ControllerAPI
             $total = 0;
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
-                if( $demograhicFemale[0]->$ageRange !== null ) {
-                    if($demograhicFemale[0]->total !== 0){
+                if ( $demograhicFemale[0]->$ageRange !== null ) {
+                    if ($demograhicFemale[0]->total !== 0){
                         $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
                         $total = $demograhicFemale[0]->$ageRange;
                     }
@@ -1745,8 +1745,8 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
-                if( $demograhicMale[0]->$ageRange !== null ) {
-                    if($demograhicMale[0]->total !== 0){
+                if ( $demograhicMale[0]->$ageRange !== null ) {
+                    if ($demograhicMale[0]->total !== 0){
                         $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
                         $total = $demograhicMale[0]->$ageRange;
                     }
