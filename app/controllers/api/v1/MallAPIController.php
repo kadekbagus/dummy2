@@ -1181,11 +1181,19 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmall) {
-                $updatedmall->start_date_activity = $start_date_activity;
+                if (empty(trim($start_date_activity))) {
+                    $updatedmall->start_date_activity = null;
+                } else {
+                    $updatedmall->start_date_activity = $start_date_activity;
+                }
             });
 
             OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmall) {
-                $updatedmall->end_date_activity = $end_date_activity;
+                if (empty(trim($end_date_activity))) {
+                    $updatedmall->end_date_activity = null;
+                } else {
+                    $updatedmall->end_date_activity = $end_date_activity;
+                }
             });
 
             OrbitInput::post('status', function($status) use ($updatedmall) {
@@ -1253,7 +1261,7 @@ class MallAPIController extends ControllerAPI
             });
 
             OrbitInput::post('parent_id', function($parent_id) use ($updatedmall) {
-                if (empty($parent_id)) {
+                if (empty(trim($parent_id))) {
                     $updatedmall->parent_id = null;
                 } else {
                     $updatedmall->parent_id = $parent_id;
