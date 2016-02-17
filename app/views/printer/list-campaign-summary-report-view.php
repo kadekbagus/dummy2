@@ -117,27 +117,27 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Number of campaigns</td>
+            <td>Number of Campaigns</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRecord, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total page views</td>
+            <td>Total Page Views</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total pop up views</td>
+            <td>Total Pop Up Views</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalPopUpViews, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Estimated total cost (IDR)</td>
+            <td>Estimated Total Cost (IDR)</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalEstimatedCost, 0); ?></strong></td>
         </tr>
         <tr>
-            <td>Total spending (IDR)</td>
+            <td>Total Spending (IDR)</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
         </tr>
@@ -146,7 +146,7 @@
         <!-- Filtering -->
         <?php if($startDate != '' && $endDate != ''){ ?>
             <tr>
-                <td>Campaign date</td>
+                <td>Campaign Date</td>
                 <td>:</td>
                 <td><strong><?php echo $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'); ?></strong></td>
             </tr>
@@ -164,11 +164,11 @@
                 <td>:</td>
                 <td><strong><?php echo htmlentities($campaignType); ?></strong></td>
             </tr>
-        <?php } elseif($tenant != '') { ?>
+        <?php } elseif($tenantName != '') { ?>
             <tr>
                 <td>Filter by Tenant</td>
                 <td>:</td>
-                <td><strong><?php echo htmlentities($tenant); ?></strong></td>
+                <td><strong><?php echo htmlentities($tenantName); ?></strong></td>
             </tr>
         <?php } elseif($mallName != '') { ?>
             <tr>

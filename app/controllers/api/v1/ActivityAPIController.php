@@ -2600,7 +2600,9 @@ class ActivityAPIController extends ControllerAPI
                     left join (
                         select DATE_FORMAT(login_at, '%Y-%m-%d') `dt`,
                         ROUND(AVG(IFNULL(timestampdiff(minute, login_at, logout_at), 15))) connect_time
-                        from {$tablePrefix}connection_times GROUP BY 1
+                        from {$tablePrefix}connection_times
+                        WHERE location_id = {$quote($current_mall)}
+                        GROUP BY 1
                     ) ct on `tmp`.`date` = `ct`.`dt`
                 ") );
 
