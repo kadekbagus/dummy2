@@ -1021,10 +1021,19 @@ class CampaignReportAPIController extends ControllerAPI
             // Grouping after filter
             $campaign->groupBy('campaign_date');
 
-
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
-            $__campaign = clone $campaign;
+
+            // Need to sub select after group by
+            $_campaign_sql = $_campaign->toSql();
+
+            foreach($campaign->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+              $_campaign_sql = preg_replace('/\?/', $value, $_campaign_sql, 1);
+            }
+
+            $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
                 'SUM(spending) AS spending',
@@ -1033,7 +1042,7 @@ class CampaignReportAPIController extends ControllerAPI
                 'SUM(popup_clicks) AS popup_clicks'
             );
 
-            $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
+            $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
 
             // Get info total bottom page
             $totalPageViews = round(isset($total[0]->campaign_pages_views)?$total[0]->campaign_pages_views:0, 2);
@@ -1126,7 +1135,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign->orderBy($sortBy, $sortMode);
 
-            $totalCampaign = count($_campaign->get());
+            $totalCampaign = $_campaign->count();
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
