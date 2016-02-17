@@ -2228,12 +2228,28 @@ class EmployeeAPIController extends ControllerAPI
                 $users->whereIn('users.user_role_id', $roleId);
             });
 
+            $portal = null;
+            $searchable_roles = null;
+            $searchable_roles_mall = ['mall admin', 'mall customer service'];
+            $searchable_roles_pmp = ['campaign owner', 'campaign employee'];
+
+            if (in_array(strtolower($role->role_name), $searchable_roles_mall)) { // determine the where the user came from
+                $portal = 'mall';
+                $searchable_roles = $searchable_roles_mall;
+            } elseif (in_array(strtolower($role->role_name), $searchable_roles_pmp)) {
+                $portal = 'pmp';
+                $searchable_roles = $searchable_roles_pmp;
+            } else {
+                $portal = 'mall';
+                $searchable_roles = $searchable_roles_mall;
+            }
+
             // Filter user by their role name
             if (! is_null(OrbitInput::get('role_names', NULL))) {
-                OrbitInput::get('role_names', function ($data) use ($users) {
+                OrbitInput::get('role_names', function ($data) use ($users, $searchable_roles) {
                     $data = (array)$data;
                     foreach ($data as $employeeRoleName) {
-                        if (! in_array(strtolower($employeeRoleName), ['mall admin', 'mall customer service', 'campaign owner', 'campaign employee'])) {
+                        if (! in_array(strtolower($employeeRoleName), $searchable_roles)) {
                             $errorMessage = 'Employee role_name argument is not valid.';
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -2241,46 +2257,15 @@ class EmployeeAPIController extends ControllerAPI
                     $users->whereIn('roles.role_name', $data);
                 });
             } else {
-                $users->whereIn('roles.role_name', ['mall admin', 'mall customer service']);
+                $users->whereIn('roles.role_name', $searchable_roles);
             }
 
-            // Filter user by their role name
+            // Filter user by their role name like
             if (! is_null(OrbitInput::get('role_name_like', NULL))) {
-                OrbitInput::get('role_name_like', function ($data) use ($users) {
-                    $portal = null;
-                    $notfound = TRUE;
-                    $searchable_roles_mall = ['mall admin', 'mall customer service'];
-                    $searchable_roles_pmp = ['campaign owner', 'campaign employee'];
-                    if (in_array($role, $searchable_roles_mall)) { // determine the where the user came from
-                        $portal = 'mall';
-                    } elseif (in_array($role, $searchable_roles_pmp)) {
-                        $portal = 'pmp';
-                    } else {
-                        $portal = 'mall';
-                    }
-
-                    if ($portal == 'pmp') { // search only roles on pmp
-                        foreach ($searchable_roles_pmp as $searchable_role_pmp) {
-                            if (stripos($data, $searchable_role_pmp) !== FALSE) {
-                                $notfound = $notfound && FALSE;
-                            }
-                        }
-                        if (! $notfound) {
-                            $users->where('roles.role_name', 'like', "%$data%");
-                        } else {
-                            $users->whereIsNull('roles.role_name');
-                        }
-                    } else {
-                        foreach ($searchable_roles_mall as $searchable_role_mall) {
-                            if (stripos($data, $searchable_role_mall) !== FALSE) {
-                                $notfound = $notfound && FALSE;
-                            }
-                        }
-                        if (! $notfound) {
-                            $users->where('roles.role_name', 'like', "%$data%");
-                        } else {
-                            $users->whereIsNull('roles.role_name');
-                        }
+                OrbitInput::get('role_name_like', function ($data) use ($users, $searchable_roles) {
+                    $data = (array)$data;
+                    foreach ($data as $employeeRoleName) {
+                        $users->where('roles.role_name', 'like', "%$employeeRoleName%");
                     }
                 });
             }
