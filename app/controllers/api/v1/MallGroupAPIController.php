@@ -975,8 +975,8 @@ class MallGroupAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $email = OrbitInput::post('email');
             $merchant_id = OrbitInput::post('merchant_id');
+            $email = OrbitInput::post('email');
             $password = OrbitInput::post('password');
             $country = OrbitInput::post('country');
             $url = OrbitInput::post('url');
@@ -989,8 +989,8 @@ class MallGroupAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'email'                => $email,
                     'merchant_id'          => $merchant_id,
+                    'email'                => $email,
                     'password'             => $password,
                     'country'              => $country,
                     'url'                  => $url,
@@ -1002,8 +1002,8 @@ class MallGroupAPIController extends ControllerAPI
                     // 'omid'              => $omid,
                 ),
                 array(
-                    'email'                => 'email|email_exists_but_me',
                     'merchant_id'          => 'required|orbit.empty.mallgroup',
+                    'email'                => 'email|email_exists_but_me',
                     'password'             => 'min:6',
                     'country'              => 'orbit.empty.country',
                     'url'                  => 'orbit.formaterror.url.web',
