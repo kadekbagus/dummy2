@@ -2217,7 +2217,7 @@ class EmployeeAPIController extends ControllerAPI
             });
 
             // Filter user by their status
-            OrbitInput::get('statuses', function ($status) use ($users) {
+            OrbitInput::get('status', function ($status) use ($users) {
                 $status = (array)$status;
                 $users->whereIn('users.status', $status);
             });
