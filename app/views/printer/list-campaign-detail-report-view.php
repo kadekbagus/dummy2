@@ -149,7 +149,19 @@
             <tr>
                 <td>Campaign Date</td>
                 <td>:</td>
-                <td><strong><?php echo $this->printDateTime($startDate, $timezone, 'd M Y') . ' - ' . $this->printDateTime($endDate, $timezone, 'd M Y'); ?></strong></td>
+                <td>
+                    <?php
+                        if ($startDate != '' && $endDate != ''){
+                            $startDateRangeMallTime = $this->printDateTime($startDate, $timezone, 'd M Y');
+                            $endDateRangeMallTime = $this->printDateTime($endDate, $timezone, 'd M Y');
+                            $dateRange = $startDateRangeMallTime . ' - ' . $endDateRangeMallTime;
+                            if ($startDateRangeMallTime === $endDateRangeMallTime) {
+                                $dateRange = $startDateRangeMallTime;
+                            }
+                        }
+                    ?>
+                    <strong><?php echo $dateRange; ?></strong>
+                </td>
             </tr>
         <?php } ?>
 
