@@ -1116,11 +1116,19 @@ class MallGroupAPIController extends ControllerAPI
             });
 
             OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmallgroup) {
-                $updatedmallgroup->start_date_activity = $start_date_activity;
+                if (empty(trim($start_date_activity))) {
+                    $updatedmallgroup->start_date_activity = NUll;
+                } else {
+                    $updatedmallgroup->start_date_activity = $start_date_activity;
+                }
             });
 
             OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmallgroup) {
-                $updatedmallgroup->end_date_activity = $end_date_activity;
+                if (empty(trim($end_date_activity))) {
+                    $updatedmallgroup->end_date_activity = NULL;
+                } else {
+                    $updatedmallgroup->end_date_activity = $end_date_activity;
+                }
             });
 
             OrbitInput::post('status', function($status) use ($updatedmallgroup) {

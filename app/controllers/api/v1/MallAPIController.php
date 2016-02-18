@@ -1182,7 +1182,7 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('start_date_activity', function($start_date_activity) use ($updatedmall) {
                 if (empty(trim($start_date_activity))) {
-                    $updatedmall->start_date_activity = null;
+                    $updatedmall->start_date_activity = NULL;
                 } else {
                     $updatedmall->start_date_activity = $start_date_activity;
                 }
@@ -1190,7 +1190,7 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('end_date_activity', function($end_date_activity) use ($updatedmall) {
                 if (empty(trim($end_date_activity))) {
-                    $updatedmall->end_date_activity = null;
+                    $updatedmall->end_date_activity = NULL;
                 } else {
                     $updatedmall->end_date_activity = $end_date_activity;
                 }
@@ -1262,7 +1262,7 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('parent_id', function($parent_id) use ($updatedmall) {
                 if (empty(trim($parent_id))) {
-                    $updatedmall->parent_id = null;
+                    $updatedmall->parent_id = NULL;
                 } else {
                     $updatedmall->parent_id = $parent_id;
                 }

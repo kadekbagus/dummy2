@@ -35,4 +35,20 @@ Route::get('/api/v1/mallgroup/{search}', function()
     return MallGroupAPIController::create()->getSearchMallGroup();
 })->where('search', '(list|search)');
 
+/**
+ * Upload mall group logo
+ */
+Route::post('/api/v1/mallgroup-logo/upload', function()
+{
+    return UploadAPIController::create()->postUploadMallGroupLogo();
+});
+
+/**
+ * Delete mall group logo
+ */
+Route::post('/api/v1/mallgroup-logo/delete', function()
+{
+    return UploadAPIController::create()->postDeleteMallGroupLogo();
+});
+
 ?>
