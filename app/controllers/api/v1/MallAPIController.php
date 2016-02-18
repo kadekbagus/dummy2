@@ -1063,7 +1063,7 @@ class MallAPIController extends ControllerAPI
                     'url'                  => 'orbit.formaterror.url.web',
                     'contact_person_email' => 'email',
                     // 'user_id'           => 'orbit.empty.user',
-                    'status'               => 'orbit.empty.mall_status',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
+                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     'parent_id'            => 'orbit.empty.mallgroup',//|orbit.exists.merchant_retailers_is_box_current_retailer:'.$merchant_id,
                     // 'orid'              => 'orid_exists_but_me',
                     'ticket_header'        => 'ticket_header_max_length',
@@ -1076,6 +1076,7 @@ class MallAPIController extends ControllerAPI
                    'contact_person_email.email' => 'Email must be a valid email address',
                    // 'orid_exists_but_me'      => Lang::get('validation.orbit.exists.orid'),
                    'orbit.empty.mall_status'    => 'Mall status you specified is not found',
+                   'orbit_check_link_mallgroup' => 'Please active mall group to active mall',
                    'ticket_header_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_header.max_length'),
                    'ticket_footer_max_length'   => Lang::get('validation.orbit.formaterror.merchant.ticket_footer.max_length')
                )
@@ -1787,6 +1788,23 @@ class MallAPIController extends ControllerAPI
 
             App::instance('orbit.validation.mall', $mall);
 
+            return TRUE;
+        });
+
+        // Check link mall group, it should active (for update)
+        Validator::extend('orbit_check_link_mallgroup', function ($attribute, $value, $parameters) {
+            $mallgroup_id = OrbitInput::post('parent_id');
+
+            if ($value === 'active') {
+                $mallgroup = MallGroup::excludeDeleted()
+                            ->where('merchant_id', '=', $mallgroup_id)
+                            ->where('status', '=', 'inactive')
+                            ->first();
+
+                if (! empty($mallgroup)) {
+                    return FALSE;
+                }
+            }
             return TRUE;
         });
 

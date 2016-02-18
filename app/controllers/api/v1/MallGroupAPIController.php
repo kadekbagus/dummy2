@@ -1633,16 +1633,14 @@ class MallGroupAPIController extends ControllerAPI
             $mallgroup_id = OrbitInput::post('merchant_id');
 
             if ($value === 'inactive') {
-                $mallgroup = Mall::excludeDeleted()
+                $mall = Mall::excludeDeleted()
                             ->where('parent_id', '=', $mallgroup_id)
                             ->where('status', '=', 'active')
                             ->first();
 
-                if (! empty($mallgroup)) {
+                if (! empty($mall)) {
                     return FALSE;
                 }
-
-                App::instance('orbit.validation.mallgroup', $mallgroup);
             }
 
             return TRUE;
