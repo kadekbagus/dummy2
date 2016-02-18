@@ -1,6 +1,8 @@
 <div class="row header-signin">
     <div class="col-xs-12 text-center">
+    @if (!empty($retailer->logo))
         <img class="img-responsive header-logo" src="{{asset($retailer->logo)}}" />
+    @endif
     </div>
 </div>
 
@@ -106,7 +108,7 @@
                     <button type="button" class="close close-form" data-dismiss="modal" aria-label="Close">
                         <i class="fa fa-times"></i>
                     </button>
-                    
+
                     <span class="mandatory-label">{{ Lang::get('mobileci.signup.fields_are_mandatory') }}</span>
                     <div class="form-group">
                         <input type="email" value="{{{ $user_email }}}" class="form-control orbit-auto-login" name="email" id="email" placeholder="{{ Lang::get('mobileci.signin.email_placeholder') }}">
@@ -174,9 +176,9 @@
 <script type="text/javascript">
     toastr.options.closeButton = true;
     toastr.options.closeDuration = 300;
-    
+
     $('.content-signin').height('100%');
-    
+
     $('#formModal').on('show.bs.modal', function () {
         $('#slogan-container, #social-media-wraper').addClass('hide');
     });
