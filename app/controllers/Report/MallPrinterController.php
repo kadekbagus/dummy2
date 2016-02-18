@@ -22,6 +22,7 @@ class MallPrinterController extends DataPrinterController
         $user = $this->loggedUser;
 
         $current_mall = OrbitInput::get('current_mall');
+        $current_date_and_time = OrbitInput::get('currentDateAndTime');
 
         $timezone = $this->getTimeZone($current_mall);
 
@@ -46,11 +47,19 @@ class MallPrinterController extends DataPrinterController
         $statement->execute($binds);
 
         $pageTitle = 'Mall List';
+
+        // the frontend send the current date and time, because admin doesn't have timezone
+        if ( !empty($current_date_and_time) ) {
+            $filename = $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $current_date_and_time);
+        } else {
+            $filename = OrbitText::exportFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', $timezone);
+        }
+
         switch ($mode) {
             case 'csv':
                 @header('Content-Description: File Transfer');
                 @header('Content-Type: text/csv');
-                @header('Content-Disposition: attachment; filename=' . OrbitText::exportFilename($pageTitle, '.csv', $timezone));
+                @header('Content-Disposition: attachment; filename=' . $filename );
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '','','','','');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Mall List', '', '', '', '', '','','','','');
@@ -192,6 +201,15 @@ class MallPrinterController extends DataPrinterController
     public function printLocation($row)
     {
         return utf8_encode($row->city.", ".$row->country);
+    }
+
+
+    public function getFilename($pageTitle, $ext = ".csv", $current_date_and_time=null)
+    {
+        if (empty($current_date_and_time)) {
+            $current_date_and_time = Carbon::now();
+        }
+        return 'orbit-export-' . $pageTitle . '-' . Carbon::createFromFormat('Y-m-d H:i:s', $current_date_and_time)->format('D_d_M_Y_Hi') . $ext;
     }
 
 }
