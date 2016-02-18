@@ -1009,7 +1009,7 @@ class MallGroupAPIController extends ControllerAPI
                     'url'                  => 'orbit.formaterror.url.web',
                     'contact_person_email' => 'email',
                     // 'user_id'           => 'orbit.empty.user',
-                    'status'               => 'orbit.empty.mall_status',
+                    'status'               => 'orbit.empty.mall_status|orbit_check_link_mall',
                     'start_date_activity'  => 'date_format:Y-m-d H:i:s',
                     'end_date_activity'    => 'date_format:Y-m-d H:i:s'
                     // 'omid'              => 'omid_exists_but_me',
@@ -1018,6 +1018,7 @@ class MallGroupAPIController extends ControllerAPI
                    'email_exists_but_me'        => Lang::get('validation.orbit.exists.email'),
                    'contact_person_email.email' => 'Email must be a valid email address',
                    'orbit.empty.mall_status'    => 'Mall group status you specified is not found',
+                   'orbit_check_link_mall'      => 'Please inactive mall to inactive mall group',
                    // 'omid_exists_but_me'       => Lang::get('validation.orbit.exists.omid'),
                )
             );
@@ -1623,6 +1624,24 @@ class MallGroupAPIController extends ControllerAPI
             }
 
             App::instance('orbit.validation.mallgroup', $mall);
+
+            return TRUE;
+        });
+
+        // Check link mall, it should not inactive (for update)
+        Validator::extend('orbit_check_link_mall', function ($attribute, $value, $parameters) {
+            $mallgroup_id = OrbitInput::post('merchant_id');
+
+            if ($value === 'inactive') {
+                $mall = Mall::excludeDeleted()
+                            ->where('parent_id', '=', $mallgroup_id)
+                            ->where('status', '=', 'active')
+                            ->first();
+
+                if (! empty($mall)) {
+                    return FALSE;
+                }
+            }
 
             return TRUE;
         });
