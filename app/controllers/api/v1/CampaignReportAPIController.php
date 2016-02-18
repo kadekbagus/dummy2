@@ -509,6 +509,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Make union result subquery
             $campaign = DB::table(DB::raw('(' . $sql . ') as a'));
 
+
             // Filter by campaign name
             OrbitInput::get('campaign_name', function($campaign_name) use ($campaign) {
                 $campaign->where('campaign_name', 'like', "%$campaign_name%");
@@ -535,7 +536,7 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             // Filter by range date
-            if($start_date != '' && $end_date != ''){
+            if ($start_date != '' && $end_date != ''){
 
                 // Convert UTC to Mall Time
                 $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
@@ -565,7 +566,20 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
-            $__campaign = clone $campaign;
+
+            // Need to sub select after group by
+            $_campaign_sql = $_campaign->toSql();
+
+            //Cek exist binding
+            if (count($campaign->getBindings()) > 0) {
+                foreach($campaign->getBindings() as $binding)
+                {
+                  $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+                  $_campaign_sql = preg_replace('/\?/', $value, $_campaign_sql, 1);
+                }
+            }
+
+            $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
                 'SUM(page_views) AS page_views',
@@ -574,7 +588,7 @@ class CampaignReportAPIController extends ControllerAPI
                 'SUM(spending) AS spending'
             );
 
-            $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
+            $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
 
             // Get total page views
             $totalPageViews = isset($total[0]->page_views)?$total[0]->page_views:0;
@@ -617,7 +631,7 @@ class CampaignReportAPIController extends ControllerAPI
             // If request page from export (print/csv), showing without page limitation
             $export = OrbitInput::get('export');
 
-            if(!isset($export)){
+            if (!isset($export)){
                 $campaign->take($take);
                 $campaign->skip($skip);
             }
@@ -1000,17 +1014,26 @@ class CampaignReportAPIController extends ControllerAPI
                 $campaign->where('tenant_name', 'like', "%$tenant_name%");
             });
 
-            if($start_date != '' && $end_date != ''){
+            if ($start_date != '' && $end_date != ''){
                 $campaign->whereRaw("campaign_date between ? and ?", [$start_date, $end_date]);
             }
 
             // Grouping after filter
             $campaign->groupBy('campaign_date');
 
-
             // Clone the query builder which still does not include the take,
             $_campaign = clone $campaign;
-            $__campaign = clone $campaign;
+
+            // Need to sub select after group by
+            $_campaign_sql = $_campaign->toSql();
+
+            foreach($campaign->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : "'" . $binding . "'";
+              $_campaign_sql = preg_replace('/\?/', $value, $_campaign_sql, 1);
+            }
+
+            $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
                 'SUM(spending) AS spending',
@@ -1019,7 +1042,7 @@ class CampaignReportAPIController extends ControllerAPI
                 'SUM(popup_clicks) AS popup_clicks'
             );
 
-            $total = $__campaign->selectRaw(implode(',', $query_sum))->get();
+            $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
 
             // Get info total bottom page
             $totalPageViews = round(isset($total[0]->campaign_pages_views)?$total[0]->campaign_pages_views:0, 2);
@@ -1056,7 +1079,7 @@ class CampaignReportAPIController extends ControllerAPI
             // If request page from export (print/csv), showing without page limitation
             $export = OrbitInput::get('export');
 
-            if(!isset($export)){
+            if (!isset($export)){
                 $campaign->take($take);
                 $campaign->skip($skip);
             }
@@ -1112,7 +1135,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign->orderBy($sortBy, $sortMode);
 
-            $totalCampaign = count($_campaign->get());
+            $totalCampaign = $_campaign->count();
 
             // Return the instance of Query Builder
             if ($this->returnBuilder) {
@@ -1732,8 +1755,8 @@ class CampaignReportAPIController extends ControllerAPI
             $total = 0;
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
-                if( $demograhicFemale[0]->$ageRange !== null ) {
-                    if($demograhicFemale[0]->total !== 0){
+                if ( $demograhicFemale[0]->$ageRange !== null ) {
+                    if ($demograhicFemale[0]->total !== 0){
                         $percent = ($demograhicFemale[0]->$ageRange / $demograhicFemale[0]->total) * 100;
                         $total = $demograhicFemale[0]->$ageRange;
                     }
@@ -1745,8 +1768,8 @@ class CampaignReportAPIController extends ControllerAPI
             }
 
             foreach (Config::get('orbit.age_ranges') as $key => $ageRange) {
-                if( $demograhicMale[0]->$ageRange !== null ) {
-                    if($demograhicMale[0]->total !== 0){
+                if ( $demograhicMale[0]->$ageRange !== null ) {
+                    if ($demograhicMale[0]->total !== 0){
                         $percent = ($demograhicMale[0]->$ageRange / $demograhicMale[0]->total) * 100;
                         $total = $demograhicMale[0]->$ageRange;
                     }
