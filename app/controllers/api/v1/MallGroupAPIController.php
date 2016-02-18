@@ -1023,7 +1023,7 @@ class MallGroupAPIController extends ControllerAPI
                    'email_exists_but_me'          => Lang::get('validation.orbit.exists.email'),
                    'contact_person_email.email'   => 'Email must be a valid email address',
                    'orbit.empty.mall_status'      => 'Mall group status you specified is not found',
-                   'orbit_check_link_mall'        => 'Please inactive mall to inactive mall group',
+                   'orbit_check_link_mall'        => 'Mall group is linked to active mall',
                    // 'omid_exists_but_me'        => Lang::get('validation.orbit.exists.omid'),
                )
             );
